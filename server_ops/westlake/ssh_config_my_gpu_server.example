@@ -1,0 +1,10 @@
+﻿Host my-gpu-server
+  HostName 172.16.78.10
+  User root
+  Port 36319
+  IdentityFile C:/Users/namew/.ssh/id_ed25519_my_gpu_server
+  IdentitiesOnly yes
+  PreferredAuthentications publickey,password
+  StrictHostKeyChecking accept-new
+  ServerAliveInterval 60
+  ServerAliveCountMax 3

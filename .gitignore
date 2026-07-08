@@ -1,0 +1,82 @@
+# Python/cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environment and credentials
+.env
+*.env
+!*.env.example
+*.local
+*.local.*
+server_ops/westlake/platform_handoff/scripts/.cache/
+server_ops/westlake/platform_handoff/last_*
+
+# Large datasets, checkpoints, and generated artifacts
+*.npz
+*.npy
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.zst
+*.rar
+*.7z
+*.log
+*.pid
+
+# Generated media and report outputs
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.avi
+*.mov
+*.webm
+*.pdf
+*.html
+
+# Project output/scratch directories
+dist/
+reports/
+visuals/
+rebuild_reports_20260704/
+server_outputs/
+server_live_20260703/
+server_pull/
+server_patch/
+.remote_state/
+.agents/
+remote_current/
+remote_repo_patch/
+model_training_oldline_baidu_20260624/
+model_training/third_party_references/
+model_training/scratch/
+model_training/analysis_outputs/
+model_training/diagnostics/
+server_ops/logs/
+server_ops/outputs/
+server_ops/tmp_*
+reset_easyconnect.*
+
+# Platform probes and old unrelated server examples
+server_ops/westlake/platform_handoff/frontend_probe/
+server_ops/westlake/platform_handoff/westlake_jobs_rts_reference/
+server_ops/westlake/configs/
+server_ops/westlake/scripts/
+
+# Local archives exported from modules
+data_processing_*.tar.gz

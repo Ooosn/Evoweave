@@ -1,0 +1,5 @@
+numpy>=1.23
+matplotlib>=3.6
+pandas>=1.5
+PyYAML>=6.0
+huggingface_hub>=0.20

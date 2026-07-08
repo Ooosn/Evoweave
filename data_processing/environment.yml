@@ -1,0 +1,12 @@
+name: evoweave-data
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy>=1.23
+  - matplotlib>=3.6
+  - pandas>=1.5
+  - pyyaml>=6.0
+  - pip
+  - pip:
+      - huggingface_hub>=0.20

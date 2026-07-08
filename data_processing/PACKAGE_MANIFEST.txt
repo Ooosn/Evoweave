@@ -1,0 +1,33 @@
+Evoweave data-processing package contents
+=========================================
+
+Included:
+
+- README.md
+- RUNBOOK_80K_REBUILD.md
+- environment.yml
+- requirements.txt
+- run_rebuild_from_originals.sh
+- configs/rebuild_paths.env.example
+- docs/CURRENT_DATASET.md
+- docs/DATA_PIPELINE_CONTRACT.md
+- docs/VERSION_HISTORY.md
+- scripts/*.py
+- src/rigweave/data/*.py
+- src/rigweave/dynamic_rig/*.py
+
+Not included:
+
+- Raw source data
+- Old official NPZ archives
+- Rebuilt Pass1/rootless/final NPZ outputs
+- Training/model code
+- Visualization tools outside the data contract
+- Temporary diagnostics, smoke-test scripts, post-hoc quarantine scripts
+- Python cache files
+
+Required external dependencies:
+
+- Blender executable
+- UniRig checkout with tokenizer config
+- Original transfer manifest and preserved original asset tree

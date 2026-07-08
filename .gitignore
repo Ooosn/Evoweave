@@ -64,6 +64,7 @@ remote_current/
 remote_repo_patch/
 model_training_oldline_baidu_20260624/
 model_training/third_party_references/
+model_training/external/
 model_training/scratch/
 model_training/analysis_outputs/
 model_training/diagnostics/

@@ -33,40 +33,7 @@ def _target_namespace(batch: dict) -> SimpleNamespace:
 
 
 def _forced_logits(model, batch: dict):
-    tokenizer = model.tokenizer
-    cond = model.build_condition(batch)
-    token_batch = tokenizer.make_batch(
-        batch["target_joints"].to(cond.device),
-        batch["target_parents"].to(cond.device),
-        batch["joint_count"].to(cond.device),
-        batch["path"],
-    )
-    token_embeds = model._token_embeds(token_batch).to(dtype=cond.dtype)
-    cond_type = torch.zeros((cond.shape[0], cond.shape[1]), device=cond.device, dtype=torch.long)
-    cond = cond + model.decoder.model.decoder.cond_embed(cond_type).to(dtype=cond.dtype)
-    inputs_embeds = torch.cat([cond, token_embeds], dim=1)
-    attention = torch.cat(
-        [
-            torch.ones((cond.shape[0], cond.shape[1]), device=cond.device, dtype=token_batch.attention_mask.dtype),
-            token_batch.attention_mask.to(cond.device),
-        ],
-        dim=1,
-    )
-    full_labels = torch.cat(
-        [
-            torch.full((cond.shape[0], cond.shape[1]), -100, device=cond.device, dtype=torch.long),
-            token_batch.labels.to(cond.device),
-        ],
-        dim=1,
-    )
-    out = model.decoder(
-        input_ids=token_batch.input_ids.to(cond.device),
-        inputs_embeds=inputs_embeds,
-        attention_mask=attention,
-        labels=full_labels,
-        use_cache=False,
-    )
-    logits = out.logits[:, cond.shape[1] - 1 : cond.shape[1] - 1 + token_batch.labels.shape[1]]
+    logits, token_batch, _loss = model.teacher_forced_logits(batch)
     return logits, token_batch
 
 

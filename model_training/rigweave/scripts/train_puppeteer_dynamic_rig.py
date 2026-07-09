@@ -181,7 +181,7 @@ def build_optimizer(model: PuppeteerDynamicRigModel, args: argparse.Namespace) -
     )
     add_parameter_group(
         groups,
-        name="target_aware_pos_embed",
+        name="joint_slot_embedding",
         parameter=model.target_aware_pos_embed,
         lr=args.lr_decoder,
         seen=seen,
@@ -351,7 +351,8 @@ def main() -> None:
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16", "fp32"], default="bf16")
     parser.add_argument("--local-files-only", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--allow-resize-positions", action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument("--random-init-smoke", action="store_true", help="Allow decoder random initialization for code smoke only.")
+    parser.add_argument("--random-init", action="store_true", help="Train this decoder route from random initialization.")
+    parser.add_argument("--random-init-smoke", action="store_true", help="Deprecated alias for --random-init.")
     parser.add_argument("--tiny-random-decoder", action="store_true", help="Use a small random SkeletonOPT config for development smoke only.")
     parser.add_argument("--decoder-hidden-size", type=int, default=256)
     parser.add_argument("--decoder-layers", type=int, default=4)
@@ -362,6 +363,7 @@ def main() -> None:
     parser.add_argument("--decoder-activation-dropout", type=float, default=0.0)
     parser.add_argument("--decoder-layerdrop", type=float, default=0.0)
     parser.add_argument("--decoder-checkpointing", action="store_true")
+    parser.add_argument("--no-joint-slot-embedding", action="store_true")
     parser.add_argument("--freeze-surface-tokenizer", action="store_true")
     parser.add_argument("--freeze-conditioner", action="store_true")
     parser.add_argument("--freeze-decoder", action="store_true")
@@ -369,7 +371,11 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20260707)
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--preflight-forward", action="store_true")
+    parser.add_argument("--preflight-contract-sanity", action="store_true")
+    parser.add_argument("--preflight-contract-max-positions", type=int, default=32)
+    parser.add_argument("--preflight-contract-max-diff", type=float, default=5.0e-3)
     args = parser.parse_args()
+    args.random_init = bool(args.random_init or args.random_init_smoke)
 
     if args.train_manifest is None:
         raise ValueError("--train-manifest is required")
@@ -379,13 +385,13 @@ def main() -> None:
         raise FileNotFoundError(args.train_manifest)
     if not args.val_manifest.exists():
         raise FileNotFoundError(args.val_manifest)
-    if args.puppeteer_checkpoint is None and not args.random_init_smoke:
+    if args.puppeteer_checkpoint is None and not args.random_init:
         raise RuntimeError(
-            "Puppeteer checkpoint is required for a formal Puppeteer run. "
-            "Use --random-init-smoke only for development mechanics checks."
+            "Set --puppeteer-checkpoint for optional pretrained initialization, "
+            "or set --random-init to train this route from scratch."
         )
-    if args.tiny_random_decoder and not args.random_init_smoke:
-        raise RuntimeError("--tiny-random-decoder is only allowed with --random-init-smoke")
+    if args.tiny_random_decoder and not args.random_init:
+        raise RuntimeError("--tiny-random-decoder requires --random-init")
     if args.n_max_joints > args.n_discrete_size:
         raise ValueError(
             f"n_max_joints={args.n_max_joints} must be <= n_discrete_size={args.n_discrete_size} "
@@ -449,7 +455,7 @@ def main() -> None:
         else:
             decoder_report = {
                 "checkpoint": None,
-                "random_init_smoke": True,
+                "random_init": True,
                 "tiny_random_decoder": bool(args.tiny_random_decoder),
                 "target_aware_pos_embed_loaded": False,
                 "target_aware_pos_embed_shape": None,
@@ -472,6 +478,8 @@ def main() -> None:
             query_tokens=args.query_tokens,
             cond_length=args.cond_length,
             projector_heads=args.projector_heads,
+            max_joints=args.n_max_joints,
+            use_joint_slot_embedding=not args.no_joint_slot_embedding,
             target_aware_pos_embed=target_aware_pos_embed,
         )
         if args.freeze_surface_tokenizer:
@@ -522,6 +530,7 @@ def main() -> None:
                     "tail_tokens": False,
                     "tokenization": "joint-token: x,y,z,parent_index",
                     "max_joints": args.n_max_joints,
+                    "joint_slot_embedding": not args.no_joint_slot_embedding,
                     "train_raw_rows": train_dataset.raw_rows,
                     "train_rows_after_max_joint_filter": len(train_dataset),
                     "train_filtered_over_max_joints": train_dataset.filtered_over_max_joints,
@@ -535,7 +544,7 @@ def main() -> None:
                     "grad_accum_steps": args.grad_accum_steps,
                     "effective_batch": effective_batch,
                     "sample_milestones": sample_milestones,
-                    "random_init_smoke": bool(args.random_init_smoke),
+                    "random_init": bool(args.random_init),
                 },
             )
         log(
@@ -589,6 +598,17 @@ def main() -> None:
                 with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=device.type == "cuda" and amp_dtype != torch.float32):
                     out = model(batch)
                 log(rank, f"preflight forward loss={float(out['loss'].detach().cpu()):.6f}")
+            if args.preflight_contract_sanity:
+                if int(batch["frame_vertices"].shape[0]) != 1:
+                    raise ValueError("--preflight-contract-sanity requires --batch-size 1")
+                with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=device.type == "cuda" and amp_dtype != torch.float32):
+                    sanity = model.teacher_forcing_generation_alignment(
+                        batch,
+                        max_positions=args.preflight_contract_max_positions,
+                    )
+                log(rank, "preflight contract sanity=" + json.dumps(sanity, sort_keys=True))
+                if int(sanity["checked_positions"]) <= 0 or float(sanity["max_abs_logit_diff"]) > float(args.preflight_contract_max_diff):
+                    raise RuntimeError(f"teacher-forcing/generation logits are not aligned: {sanity}")
             optimizer = build_optimizer(model, args)
             log(
                 rank,
@@ -620,7 +640,7 @@ def main() -> None:
                 "world_size": world_size,
                 "effective_batch": effective_batch,
                 "train_rows": train_rows,
-                "random_init_smoke": bool(args.random_init_smoke),
+                "random_init": bool(args.random_init),
                 "decoder_checkpoint": str(args.puppeteer_checkpoint) if args.puppeteer_checkpoint else None,
                 "optimizer_groups": optimizer_group_report(optimizer),
             },

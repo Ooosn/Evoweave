@@ -741,6 +741,7 @@ def _apply_puppeteer_checkpoint_defaults(args: argparse.Namespace) -> dict[str, 
         "attn_implementation": "flash_attention_2",
         "local_files_only": True,
         "allow_resize_positions": True,
+        "random_init": False,
         "random_init_smoke": False,
         "tiny_random_decoder": False,
         "decoder_hidden_size": 256,
@@ -752,6 +753,7 @@ def _apply_puppeteer_checkpoint_defaults(args: argparse.Namespace) -> dict[str, 
         "decoder_activation_dropout": 0.0,
         "decoder_layerdrop": 0.0,
         "motion_checkpointing": False,
+        "no_joint_slot_embedding": False,
     }
     for name, default in defaults.items():
         if getattr(args, name, None) is None:
@@ -804,8 +806,19 @@ def _build_puppeteer_model(args: argparse.Namespace, device: torch.device) -> to
         query_tokens=args.query_tokens,
         cond_length=args.cond_length,
         projector_heads=args.projector_heads,
+        max_joints=args.n_max_joints,
+        use_joint_slot_embedding=not args.no_joint_slot_embedding,
         target_aware_pos_embed=target_aware_pos_embed,
     )
+    if "target_aware_pos_embed" in state:
+        current_slots = model.state_dict()["target_aware_pos_embed"]
+        loaded_slots = state["target_aware_pos_embed"]
+        if tuple(loaded_slots.shape) != tuple(current_slots.shape):
+            resized = current_slots.detach().clone()
+            rows = min(int(loaded_slots.shape[1]), int(resized.shape[1]))
+            resized[:, :rows].copy_(loaded_slots[:, :rows].to(dtype=resized.dtype))
+            state = dict(state)
+            state["target_aware_pos_embed"] = resized
     missing, unexpected = model.load_state_dict(state, strict=True)
     if missing or unexpected:
         raise RuntimeError(f"Puppeteer checkpoint state mismatch: missing={len(missing)} unexpected={len(unexpected)}")

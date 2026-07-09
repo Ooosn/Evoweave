@@ -12,7 +12,8 @@ data-processing code.
 The current model module has two active baselines:
 
 - flat UniRig on rootless-v3 data;
-- Puppeteer decoder on rootless-v3 data.
+- Evoweave joint-token AR decoder on rootless-v3 data, optionally initialized
+  from Puppeteer decoder weights.
 
 Do not treat historical experiments as current context unless a new task
 explicitly asks for them.
@@ -66,7 +67,7 @@ model_training/jobs/run_rootless_flat_unirig_motion_baseline_20260706.sh
 model_training/jobs/westlake_rootless_flat_unirig_motion_fullft_20260707.sh
 ```
 
-Puppeteer baseline:
+Joint-token AR baseline:
 
 ```text
 model_training/jobs/run_rootless_puppeteer_motion_baseline_20260707.sh
@@ -74,6 +75,7 @@ model_training/jobs/westlake_rootless_puppeteer_motion_fullft_20260708.sh
 ```
 
 Both baselines use the finalized rootless-v3 train/valid manifests. The
-Puppeteer route has its own decoder/tokenizer contract and a 101-joint runtime
-filter inherited from the released Puppeteer checkpoint. That filter does not
-modify the rootless-v3 manifests and does not affect UniRig.
+joint-token route has its own decoder/tokenizer contract, with explicit
+`(x, y, z, parent_index)` tokens and learned joint-slot embeddings. Puppeteer
+weights are optional initialization, not a model-design requirement, and this
+route must also pass from-scratch contract sanity checks.

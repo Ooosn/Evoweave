@@ -50,9 +50,9 @@ export RIGWEAVE_VAL_EVERY="${JOB_VAL_EVERY:-200}"
 export RIGWEAVE_VAL_STEPS="${JOB_VAL_STEPS:-16}"
 export RIGWEAVE_NUM_WORKERS="${JOB_NUM_WORKERS:-0}"
 
-# Puppeteer decoder profile. This is not a conservative low-LR finetune:
-# the target distribution differs from Puppeteer's released static skeleton
-# task, so the decoder and Evoweave condition modules use the same baseline LR.
+# Joint-token decoder profile. This is not a conservative low-LR finetune:
+# the decoder and Evoweave condition modules use the same baseline LR whether
+# initialized from Puppeteer weights or trained from scratch.
 export RIGWEAVE_LR_SURFACE="${JOB_LR_SURFACE:-1e-4}"
 export RIGWEAVE_LR_MOTION="${JOB_LR_MOTION:-1e-4}"
 export RIGWEAVE_LR_PREFIX="${JOB_LR_PREFIX:-1e-4}"
@@ -64,10 +64,8 @@ export RIGWEAVE_ONECYCLE_DIV_FACTOR="${JOB_ONECYCLE_DIV_FACTOR:-5.0}"
 export RIGWEAVE_ONECYCLE_FINAL_DIV_FACTOR="${JOB_ONECYCLE_FINAL_DIV_FACTOR:-10.0}"
 
 export RIGWEAVE_N_DISCRETE_SIZE="${JOB_N_DISCRETE_SIZE:-128}"
-# The released Puppeteer skeleton checkpoint was trained with
-# cond_length=257 and 101 joint-token slots. Keeping the formal baseline at
-# 101 preserves its learned absolute position table instead of training with a
-# mostly random resized table.
+# The default keeps the current checkpoint-compatible data subset. It is a
+# route configuration, not a data-processing rule.
 export RIGWEAVE_N_MAX_JOINTS="${JOB_N_MAX_JOINTS:-101}"
 export RIGWEAVE_TARGET_COORD_SCALE="${JOB_TARGET_COORD_SCALE:-0.25}"
 export RIGWEAVE_COND_LENGTH="${JOB_COND_LENGTH:-257}"
@@ -82,11 +80,10 @@ export RIGWEAVE_MOTION_HEADS="${JOB_MOTION_HEADS:-8}"
 export RIGWEAVE_MOTION_FPS_RATIO="${JOB_MOTION_FPS_RATIO:-0.7}"
 export RIGWEAVE_MOTION_VERTEX_SAMPLES="${JOB_MOTION_VERTEX_SAMPLES:-512}"
 
-export RANDOM_INIT_SMOKE="${RANDOM_INIT_SMOKE:-0}"
+export RANDOM_INIT="${RANDOM_INIT:-${RANDOM_INIT_SMOKE:-0}}"
 export TINY_RANDOM_DECODER="${TINY_RANDOM_DECODER:-0}"
-if [[ "${RANDOM_INIT_SMOKE}" != "1" && -z "${PUPPETEER_CHECKPOINT}" ]]; then
-  echo "[puppeteer baseline] ERROR: set PUPPETEER_CHECKPOINT/JOB_PUPPETEER_CHECKPOINT for a formal Puppeteer run." >&2
-  echo "[puppeteer baseline] For code-smoke only, set RANDOM_INIT_SMOKE=1 TINY_RANDOM_DECODER=1 JOB_NPROC=1 JOB_MAX_STEPS=20." >&2
+if [[ "${RANDOM_INIT}" != "1" && -z "${PUPPETEER_CHECKPOINT}" ]]; then
+  echo "[puppeteer baseline] ERROR: set PUPPETEER_CHECKPOINT/JOB_PUPPETEER_CHECKPOINT for optional pretrained init, or RANDOM_INIT=1 for from-scratch training." >&2
   exit 2
 fi
 
@@ -152,8 +149,8 @@ CMD=(
 if [[ -n "${PUPPETEER_CHECKPOINT}" ]]; then
   CMD+=(--puppeteer-checkpoint "${PUPPETEER_CHECKPOINT}")
 fi
-if [[ "${RANDOM_INIT_SMOKE}" == "1" ]]; then
-  CMD+=(--random-init-smoke)
+if [[ "${RANDOM_INIT}" == "1" ]]; then
+  CMD+=(--random-init)
 fi
 if [[ "${TINY_RANDOM_DECODER}" == "1" ]]; then
   CMD+=(--tiny-random-decoder)
@@ -170,6 +167,9 @@ fi
 if [[ "${RIGWEAVE_PREFLIGHT_FORWARD:-0}" == "1" ]]; then
   CMD+=(--preflight-forward)
 fi
+if [[ "${RIGWEAVE_PREFLIGHT_CONTRACT_SANITY:-0}" == "1" ]]; then
+  CMD+=(--preflight-contract-sanity)
+fi
 
 echo "[puppeteer baseline] start $(date -Is)"
 echo "[puppeteer baseline] model_root=${MODEL_ROOT}"
@@ -177,7 +177,7 @@ echo "[puppeteer baseline] manifest_root=${MANIFEST_ROOT}"
 echo "[puppeteer baseline] train_manifest=${EVOWEAVE_TRAIN_MANIFEST}"
 echo "[puppeteer baseline] valid_manifest=${EVOWEAVE_VAL_MANIFEST}"
 echo "[puppeteer baseline] output=${EVOWEAVE_OUTPUT_DIR}"
-echo "[puppeteer baseline] checkpoint=${PUPPETEER_CHECKPOINT:-<random-init-smoke>}"
+echo "[puppeteer baseline] checkpoint=${PUPPETEER_CHECKPOINT:-<random-init>}"
 echo "[puppeteer baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SIZE * RIGWEAVE_GRAD_ACCUM))"
 echo "[puppeteer baseline] profile=SkeletonOPT joint-token parent-index; tail_tokens=off; full_finetune=on"
 printf '[puppeteer baseline] command:'

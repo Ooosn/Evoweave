@@ -66,6 +66,17 @@ Verify the target after login:
 ssh my-gpu-server "hostname; pwd; nvidia-smi; ls -lah /ssdwork/liuhaohan"
 ```
 
+## Resource Priority
+
+If the user has already created or named a development environment, use that
+environment first. For Evoweave work, prefer the huangxiangru resource group
+and the user's supplied `wpName` / `wpId` over creating a new default dev
+environment.
+
+Do not pause a running development environment unless the user explicitly asks.
+Do not rename platform-side development environments or training tasks; record
+local aliases in notes instead.
+
 If no suitable environment is running, follow
 `platform_handoff/README.md`. The important rule from the old project is to use
 image name `liuhaohan_w`, run `plan` before state-changing operations, and keep
@@ -135,4 +146,3 @@ bash /ssdwork/liuhaohan/jobs/<job-id>/run_a.sh
 ```
 
 See `platform_handoff/westlake_jobs_rts_reference/` for the old examples.
-

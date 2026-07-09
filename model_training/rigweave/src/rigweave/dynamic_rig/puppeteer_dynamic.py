@@ -449,7 +449,12 @@ class ConditionPrefixProjector(nn.Module):
 
 
 class PuppeteerDynamicRigModel(nn.Module):
-    """Evoweave dynamic condition prefix plus Puppeteer SkeletonOPT decoder."""
+    """Evoweave dynamic condition prefix plus a joint-token AR decoder.
+
+    Puppeteer weights may initialize the decoder, but this wrapper owns the
+    sequence contract: condition tokens, `[BOS]`, `(x, y, z, parent_index)*`,
+    then `[EOS]`.
+    """
 
     def __init__(
         self,
@@ -462,6 +467,8 @@ class PuppeteerDynamicRigModel(nn.Module):
         query_tokens: int,
         cond_length: int = 257,
         projector_heads: int = 8,
+        max_joints: int = 128,
+        use_joint_slot_embedding: bool = True,
         target_aware_pos_embed: torch.Tensor | None = None,
     ) -> None:
         super().__init__()
@@ -471,22 +478,38 @@ class PuppeteerDynamicRigModel(nn.Module):
         hidden_size = int(getattr(self.decoder.config, "word_embed_proj_dim", self.decoder.config.hidden_size))
         surface_dim = int(getattr(self.conditioner.motion_encoder, "dim"))
         self.prefix_projector = ConditionPrefixProjector(surface_dim, hidden_size, cond_length=cond_length, heads=projector_heads)
-        if target_aware_pos_embed is not None:
-            target_aware = target_aware_pos_embed.detach().to(dtype=torch.float32).clone()
-            if target_aware.ndim != 3 or int(target_aware.shape[0]) != 1 or int(target_aware.shape[2]) != hidden_size:
-                raise ValueError(
-                    "Puppeteer target_aware_pos_embed must have shape "
-                    f"(1, N, {hidden_size}), got {tuple(target_aware.shape)}"
-                )
+        self.max_joints = int(max_joints)
+        if self.max_joints <= 0:
+            raise ValueError(f"max_joints must be positive, got {self.max_joints}")
+        if use_joint_slot_embedding:
+            slot_count = self.max_joints + 1
+            target_aware = torch.empty((1, slot_count, hidden_size), dtype=torch.float32)
+            nn.init.trunc_normal_(target_aware, mean=0.0, std=0.02)
+            if target_aware_pos_embed is not None:
+                source = target_aware_pos_embed.detach().to(dtype=torch.float32)
+                if source.ndim != 3 or int(source.shape[0]) != 1 or int(source.shape[2]) != hidden_size:
+                    raise ValueError(
+                        "Puppeteer target_aware_pos_embed must have shape "
+                        f"(1, N, {hidden_size}), got {tuple(source.shape)}"
+                    )
+                rows = min(int(source.shape[1]), slot_count)
+                target_aware[:, :rows].copy_(source[:, :rows])
             self.target_aware_pos_embed = nn.Parameter(target_aware)
+        elif target_aware_pos_embed is not None:
+            raise ValueError("target_aware_pos_embed requires use_joint_slot_embedding=True")
         else:
             self.target_aware_pos_embed = None
+        if self.target_aware_pos_embed is not None and int(self.target_aware_pos_embed.shape[1]) < self.max_joints + 1:
+            raise ValueError(
+                "joint slot embedding must contain condition slot plus every joint slot: "
+                f"shape={tuple(self.target_aware_pos_embed.shape)} max_joints={self.max_joints}"
+            )
         self.num_surface_samples = int(num_surface_samples)
         self.vertex_samples = int(vertex_samples)
         self.query_tokens = int(query_tokens)
         self.cond_length = int(cond_length)
 
-    def sample_references(self, batch: dict[str, Any]) -> Any:
+    def sample_references(self, batch: dict[str, Any], *, generator: torch.Generator | None = None) -> Any:
         return sample_trackable_surface(
             batch["frame_vertices"][:, 0],
             batch["faces"],
@@ -495,10 +518,11 @@ class PuppeteerDynamicRigModel(nn.Module):
             query_tokens=self.query_tokens,
             vertex_counts=batch.get("vertex_count"),
             face_counts=batch.get("face_count"),
+            generator=generator,
         )
 
-    def build_condition(self, batch: dict[str, Any]) -> torch.Tensor:
-        refs = self.sample_references(batch)
+    def build_condition(self, batch: dict[str, Any], *, generator: torch.Generator | None = None) -> torch.Tensor:
+        refs = self.sample_references(batch, generator=generator)
         cond = self.conditioner(
             batch["frame_vertices"],
             batch["faces"],
@@ -507,6 +531,19 @@ class PuppeteerDynamicRigModel(nn.Module):
             face_normals=batch.get("face_normals"),
         )
         return self.prefix_projector(cond)
+
+    def _make_token_batch(self, batch: dict[str, Any], device: torch.device) -> PuppeteerTokenBatch:
+        return self.tokenizer.make_batch(
+            batch["target_joints"].to(device),
+            batch["target_parents"].to(device),
+            batch["joint_count"].to(device),
+            batch["path"],
+        )
+
+    def _condition_embeds_from_raw(self, cond: torch.Tensor) -> torch.Tensor:
+        cond_type = torch.zeros((cond.shape[0], cond.shape[1]), device=cond.device, dtype=torch.long)
+        cond = cond + self._target_aware_condition_bias(cond)
+        return cond + self.decoder.model.decoder.cond_embed(cond_type).to(dtype=cond.dtype)
 
     def _token_embeds(self, token_batch: PuppeteerTokenBatch) -> torch.Tensor:
         dec = self.decoder.model.decoder
@@ -544,14 +581,13 @@ class PuppeteerDynamicRigModel(nn.Module):
                     continue
                 joint_index = payload_index // self.tokenizer.bone_per_token
                 payload_index += 1
-                if joint_index == 0:
-                    continue
-                if joint_index >= max_target_joints:
+                slot_index = joint_index + 1
+                if slot_index >= max_target_joints:
                     raise ValueError(
                         f"Puppeteer target-aware embedding has {max_target_joints} joint slots, "
-                        f"but token payload needs joint index {joint_index}"
+                        f"but token payload needs joint slot {slot_index}"
                     )
-                out[b, pos] = target_aware[0, joint_index]
+                out[b, pos] = target_aware[0, slot_index]
         return out
 
     def _prefix_token_roles(self, input_ids: torch.LongTensor) -> torch.LongTensor:
@@ -584,9 +620,7 @@ class PuppeteerDynamicRigModel(nn.Module):
 
     def _condition_embeds(self, batch: dict[str, Any]) -> torch.Tensor:
         cond = self.build_condition(batch)
-        cond_type = torch.zeros((cond.shape[0], cond.shape[1]), device=cond.device, dtype=torch.long)
-        cond = cond + self._target_aware_condition_bias(cond)
-        return cond + self.decoder.model.decoder.cond_embed(cond_type).to(dtype=cond.dtype)
+        return self._condition_embeds_from_raw(cond)
 
     def _next_token_logits(self, cond: torch.Tensor, prefix_ids: torch.LongTensor) -> torch.Tensor:
         token_embeds = self._prefix_embeds(prefix_ids).to(dtype=cond.dtype)
@@ -599,6 +633,86 @@ class PuppeteerDynamicRigModel(nn.Module):
             use_cache=False,
         )
         return out.logits[:, -1, :]
+
+    def teacher_forced_logits(
+        self,
+        batch: dict[str, Any],
+        *,
+        cond: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, PuppeteerTokenBatch, torch.Tensor]:
+        if cond is None:
+            cond = self._condition_embeds(batch)
+        token_batch = self._make_token_batch(batch, cond.device)
+        token_embeds = self._token_embeds(token_batch).to(dtype=cond.dtype)
+        inputs_embeds = torch.cat([cond, token_embeds], dim=1)
+        full_attention = torch.cat(
+            [
+                torch.ones((cond.shape[0], cond.shape[1]), device=cond.device, dtype=token_batch.attention_mask.dtype),
+                token_batch.attention_mask.to(cond.device),
+            ],
+            dim=1,
+        )
+        full_labels = torch.cat(
+            [
+                torch.full((cond.shape[0], cond.shape[1]), -100, device=cond.device, dtype=torch.long),
+                token_batch.labels.to(cond.device),
+            ],
+            dim=1,
+        )
+        out = self.decoder(
+            input_ids=token_batch.input_ids.to(cond.device),
+            inputs_embeds=inputs_embeds,
+            attention_mask=full_attention,
+            labels=full_labels,
+            use_cache=False,
+        )
+        logits = out.logits[:, cond.shape[1] - 1 : cond.shape[1] - 1 + token_batch.labels.shape[1]]
+        return logits, token_batch, out.loss
+
+    @torch.no_grad()
+    def teacher_forcing_generation_alignment(
+        self,
+        batch: dict[str, Any],
+        *,
+        max_positions: int = 32,
+    ) -> dict[str, float | int]:
+        if int(batch["frame_vertices"].shape[0]) != 1:
+            raise ValueError("alignment sanity expects batch_size=1")
+        was_training = self.training
+        self.eval()
+        try:
+            cond = self._condition_embeds(batch)
+            forced_logits, token_batch, _loss = self.teacher_forced_logits(batch, cond=cond)
+            labels = token_batch.labels.to(cond.device)
+            valid_positions = (labels[0] != -100).nonzero(as_tuple=False).flatten().tolist()
+            checked = 0
+            max_abs = 0.0
+            mean_abs_total = 0.0
+            first_pos = -1
+            first_pos_max_abs = 0.0
+            for pos in valid_positions[: max(0, int(max_positions))]:
+                if pos <= 0:
+                    continue
+                prefix = token_batch.input_ids[:, :pos].to(cond.device)
+                step_logits = self._next_token_logits(cond, prefix)
+                diff = (forced_logits[:, pos] - step_logits).float().abs()
+                item_max = float(diff.max().detach().cpu())
+                item_mean = float(diff.mean().detach().cpu())
+                if checked == 0:
+                    first_pos = int(pos)
+                    first_pos_max_abs = item_max
+                max_abs = max(max_abs, item_max)
+                mean_abs_total += item_mean
+                checked += 1
+            return {
+                "checked_positions": int(checked),
+                "max_abs_logit_diff": float(max_abs),
+                "mean_abs_logit_diff": float(mean_abs_total / max(checked, 1)),
+                "first_checked_position": int(first_pos),
+                "first_position_max_abs_logit_diff": float(first_pos_max_abs),
+            }
+        finally:
+            self.train(was_training)
 
     def _apply_generation_mask(self, logits: torch.Tensor, generated_count: int, *, max_joints: int) -> torch.Tensor:
         masked = torch.full_like(logits, torch.finfo(logits.dtype).min)
@@ -672,7 +786,7 @@ class PuppeteerDynamicRigModel(nn.Module):
             if value is not None and float(value) != 1.0 and int(value) != 0:
                 raise ValueError(f"Puppeteer manual generation does not support {unsupported}={value}")
         do_sample = bool(kwargs.get("do_sample", False))
-        max_joints = int(max_joints or getattr(self.decoder.config, "n_discrete_size", self.tokenizer.n_discrete_size))
+        max_joints = int(max_joints or self.max_joints)
         max_joints = min(max_joints, self.tokenizer.n_discrete_size)
         cond = self._condition_embeds(batch)
         prefix = torch.tensor([[self.tokenizer.bos_token_id]], device=cond.device, dtype=torch.long)
@@ -701,53 +815,20 @@ class PuppeteerDynamicRigModel(nn.Module):
         return decoded
 
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        cond = self.build_condition(batch)
-        token_batch = self.tokenizer.make_batch(
-            batch["target_joints"].to(cond.device),
-            batch["target_parents"].to(cond.device),
-            batch["joint_count"].to(cond.device),
-            batch["path"],
-        )
-        token_embeds = self._token_embeds(token_batch).to(dtype=cond.dtype)
-        cond_type = torch.zeros((cond.shape[0], cond.shape[1]), device=cond.device, dtype=torch.long)
-        cond = cond + self._target_aware_condition_bias(cond)
-        cond = cond + self.decoder.model.decoder.cond_embed(cond_type).to(dtype=cond.dtype)
-        inputs_embeds = torch.cat([cond, token_embeds], dim=1)
-        full_attention = torch.cat(
-            [
-                torch.ones((cond.shape[0], cond.shape[1]), device=cond.device, dtype=token_batch.attention_mask.dtype),
-                token_batch.attention_mask.to(cond.device),
-            ],
-            dim=1,
-        )
-        full_labels = torch.cat(
-            [
-                torch.full((cond.shape[0], cond.shape[1]), -100, device=cond.device, dtype=torch.long),
-                token_batch.labels.to(cond.device),
-            ],
-            dim=1,
-        )
-        out = self.decoder(
-            input_ids=token_batch.input_ids.to(cond.device),
-            inputs_embeds=inputs_embeds,
-            attention_mask=full_attention,
-            labels=full_labels,
-            use_cache=False,
-        )
-        logits = out.logits[:, cond.shape[1] - 1 : cond.shape[1] - 1 + token_batch.labels.shape[1]]
-        labels = token_batch.labels.to(cond.device)
+        logits, token_batch, loss = self.teacher_forced_logits(batch)
+        labels = token_batch.labels.to(logits.device)
         pred = logits.argmax(dim=-1)
         valid = labels != -100
         token_acc = (pred[valid] == labels[valid]).float().mean() if valid.any() else logits.new_zeros(())
         eos_mask = labels == self.tokenizer.eos_token_id
         eos_acc = (pred[eos_mask] == labels[eos_mask]).float().mean() if eos_mask.any() else logits.new_zeros(())
-        role = token_batch.token_role.to(cond.device)
+        role = token_batch.token_role.to(logits.device)
         coord_mask = valid & (role >= self.tokenizer.offset) & ((role - self.tokenizer.offset) < 3)
         parent_mask = valid & (role == self.tokenizer.offset + 3)
         coord_acc = (pred[coord_mask] == labels[coord_mask]).float().mean() if coord_mask.any() else logits.new_zeros(())
         parent_acc = (pred[parent_mask] == labels[parent_mask]).float().mean() if parent_mask.any() else logits.new_zeros(())
         return {
-            "loss": out.loss,
+            "loss": loss,
             "token_acc": token_acc,
             "coord_acc": coord_acc,
             "parent_acc": parent_acc,

@@ -24,10 +24,11 @@ Use this section as the source of truth before discussing next model work.
   It is not a pending baseline.
 - The current model module has two active baselines:
   - flat UniRig on rootless-v3 data;
-  - Puppeteer decoder on rootless-v3 data.
-- Puppeteer is a separate decoder-family route. Its 101-joint runtime filter is
-  local to the Puppeteer checkpoint/slot-embedding contract and does not modify
-  the rootless-v3 manifests or the UniRig route.
+  - Evoweave joint-token AR decoder on rootless-v3 data, optionally initialized
+    from Puppeteer decoder weights.
+- The joint-token route is our own model contract. It must pass fixed-prefix
+  teacher-forcing/generation logit alignment and from-scratch sanity checks;
+  Puppeteer weights are optional initialization only.
 
 ## Current Code Snapshot
 
@@ -57,6 +58,9 @@ Important scripts:
   evaluation.
 - `rigweave/scripts/eval_dynamic_rig_ce.py`: cross-entropy / teacher-forcing
   evaluation.
+- `rigweave/scripts/train_puppeteer_dynamic_rig.py`: joint-token AR training
+  entry point. Despite the historical filename, this is not allowed to depend
+  on Puppeteer pretraining for correctness.
 - `rigweave/scripts/audit_skeleton_token_self_consistency.py`: tokenizer /
   representation self-consistency audit.
 
@@ -79,7 +83,8 @@ The current model-side questions are:
 
 - how the flat UniRig baseline behaves on the remaining rootless-v3 failure
   cases;
-- how the Puppeteer baseline compares under the same rootless-v3 data contract;
+- how the joint-token AR baseline compares under the same rootless-v3 data
+  contract;
 - whether the model condition should use motion evidence more explicitly after
   the two baselines are measured cleanly.
 

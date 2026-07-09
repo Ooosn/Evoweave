@@ -35,9 +35,9 @@ Evoweave 80k dynamic checkpoint. Supplying `JOB_INIT_CHECKPOINT` changes the
 experiment into a continuation/probe variant and should not be labeled as this
 clean baseline.
 
-## Puppeteer Variant
+## Joint-Token AR Variant
 
-The Puppeteer decoder-backbone launcher is:
+The joint-token AR launcher is:
 
 ```text
 run_rootless_puppeteer_motion_baseline_20260707.sh
@@ -51,9 +51,10 @@ rigweave/scripts/train_puppeteer_dynamic_rig.py
 
 This route must not call `rigweave/scripts/run_dynamic_ar_train.sh`, because
 the target representation and decoder family are different from the UniRig AR
-route.
+route. It may initialize its decoder from Puppeteer weights, but the model
+contract is Evoweave-owned and must also work from random initialization.
 
-The target is Puppeteer joint-token form:
+The target is joint-token form:
 
 ```text
 x, y, z, parent_index
@@ -63,17 +64,16 @@ The data contract is the current rootless NPZ: `target_joints_rootspace` plus
 `target_parents`, with joint 0 as the single rootless skeleton root. Tail rows
 are not generated target tokens.
 
-A formal Puppeteer run requires:
+A pretrained-initialized run uses:
 
 ```text
 PUPPETEER_CHECKPOINT=/path/to/puppeteer_skeleton_w_diverse_pose.pth
 ```
 
-For code-smoke only, not for baseline claims:
+For from-scratch training:
 
 ```text
-RANDOM_INIT_SMOKE=1 TINY_RANDOM_DECODER=1 JOB_NPROC=1 JOB_MAX_STEPS=20 \
-  bash jobs/run_rootless_puppeteer_motion_baseline_20260707.sh
+RANDOM_INIT=1 bash jobs/run_rootless_puppeteer_motion_baseline_20260707.sh
 ```
 
 The Puppeteer baseline trains all modules at the baseline LR scale rather than
@@ -81,7 +81,7 @@ using a conservative decoder finetune LR:
 
 ```text
 decoder lr: 1e-4
-target_aware_pos_embed lr: 1e-4
+joint_slot_embedding lr: 1e-4
 surface/motion/prefix lr: 1e-4
 weight_decay: 0.04
 scheduler: onecycle
@@ -94,9 +94,14 @@ effective_batch: 48
 coordinate token range. It is not clipping. Smaller scales are required because
 some accepted rootless-v3 skeletons extend beyond the query mesh bbox.
 
-The Puppeteer route is a separate wrapper. It uses ordinary DDP by default;
+The joint-token route is a separate wrapper. It uses ordinary DDP by default;
 enable `--ddp-find-unused-parameters` only for diagnostics if a future branch
 creates unused trainable parameters.
+
+Before formal training, run a one-GPU preflight with batch size 1 and
+`RIGWEAVE_PREFLIGHT_CONTRACT_SANITY=1`. This verifies that teacher-forcing
+logits and manual generation logits match for the same prefix; if it fails, the
+training/generation contract is wrong and no training job should be submitted.
 
 For a single-GPU development check, use:
 

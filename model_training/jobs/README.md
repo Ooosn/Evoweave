@@ -43,6 +43,15 @@ The joint-token AR launcher is:
 run_rootless_puppeteer_motion_baseline_20260707.sh
 ```
 
+The Westlake four-GPU wrapper for the same route is:
+
+```text
+westlake_rootless_puppeteer_motion_fullft_20260708.sh
+```
+
+It defaults to random initialization. Set `JOB_PUPPETEER_CHECKPOINT` only for a
+deliberate pretrained-initialized variant.
+
 It uses a separate training entry point:
 
 ```text

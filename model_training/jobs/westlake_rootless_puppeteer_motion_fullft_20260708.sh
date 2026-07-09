@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODEL_ROOT="${MODEL_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_model_training_20260706}"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+DEFAULT_MODEL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+MODEL_ROOT="${MODEL_ROOT:-${DEFAULT_MODEL_ROOT}}"
 MANIFEST_ROOT="${EVOWEAVE_MANIFEST_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests}"
-RUN_NAME="${JOB_RUN_NAME:-rootless_puppeteer_motion_fullft_20260708_hxr4gpu_j101_lr1e4_taware}"
+RUN_NAME="${JOB_RUN_NAME:-rootless_jointtoken_motion_fullft_hxr4gpu_j101_lr1e4_randominit}"
 JOB_LOG_DIR="${JOB_LOG_DIR:-/ssdwork/liuhaohan/jobs/evoweave_rootless_puppeteer_motion_fullft_20260708/logs}"
 
 TRAIN_MANIFEST="${MANIFEST_ROOT}/train_manifest.jsonl"
 VALID_MANIFEST="${MANIFEST_ROOT}/valid_manifest.jsonl"
 LAUNCHER="${MODEL_ROOT}/jobs/run_rootless_puppeteer_motion_baseline_20260707.sh"
-PUPPETEER_CKPT="${JOB_PUPPETEER_CHECKPOINT:-${MODEL_ROOT}/third_party_references/Puppeteer/skeleton/skeleton_ckpts/puppeteer_skeleton_w_diverse_pose.pth}"
+PUPPETEER_CKPT="${JOB_PUPPETEER_CHECKPOINT:-}"
 
 mkdir -p "${JOB_LOG_DIR}"
 exec > >(tee -a "${JOB_LOG_DIR}/job.log") 2>&1
@@ -21,7 +25,7 @@ echo "[westlake puppeteer baseline] manifest_root=${MANIFEST_ROOT}"
 echo "[westlake puppeteer baseline] train_manifest=${TRAIN_MANIFEST}"
 echo "[westlake puppeteer baseline] valid_manifest=${VALID_MANIFEST}"
 echo "[westlake puppeteer baseline] run_name=${RUN_NAME}"
-echo "[westlake puppeteer baseline] checkpoint=${PUPPETEER_CKPT}"
+echo "[westlake puppeteer baseline] checkpoint=${PUPPETEER_CKPT:-<random-init>}"
 
 if [[ ! -f "${LAUNCHER}" ]]; then
   echo "[westlake puppeteer baseline] ERROR: missing launcher ${LAUNCHER}" >&2
@@ -31,7 +35,7 @@ if [[ ! -f "${TRAIN_MANIFEST}" || ! -f "${VALID_MANIFEST}" ]]; then
   echo "[westlake puppeteer baseline] ERROR: missing final train/valid manifests" >&2
   exit 2
 fi
-if [[ ! -f "${PUPPETEER_CKPT}" ]]; then
+if [[ -n "${PUPPETEER_CKPT}" && ! -f "${PUPPETEER_CKPT}" ]]; then
   echo "[westlake puppeteer baseline] ERROR: missing Puppeteer checkpoint ${PUPPETEER_CKPT}" >&2
   exit 2
 fi
@@ -58,7 +62,11 @@ export EVOWEAVE_MANIFEST_ROOT="${MANIFEST_ROOT}"
 export JOB_TRAIN_MANIFEST="${TRAIN_MANIFEST}"
 export JOB_VAL_MANIFEST="${VALID_MANIFEST}"
 export JOB_TEST_MANIFEST=""
-export JOB_PUPPETEER_CHECKPOINT="${PUPPETEER_CKPT}"
+if [[ -n "${PUPPETEER_CKPT}" ]]; then
+  export JOB_PUPPETEER_CHECKPOINT="${PUPPETEER_CKPT}"
+else
+  export RANDOM_INIT=1
+fi
 
 export JOB_NPROC=4
 export JOB_BATCH_SIZE=3

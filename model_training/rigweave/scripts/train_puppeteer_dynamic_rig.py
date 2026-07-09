@@ -373,7 +373,7 @@ def main() -> None:
     parser.add_argument("--preflight-forward", action="store_true")
     parser.add_argument("--preflight-contract-sanity", action="store_true")
     parser.add_argument("--preflight-contract-max-positions", type=int, default=32)
-    parser.add_argument("--preflight-contract-max-diff", type=float, default=5.0e-3)
+    parser.add_argument("--preflight-contract-max-diff", type=float, default=3.0e-2)
     args = parser.parse_args()
     args.random_init = bool(args.random_init or args.random_init_smoke)
 

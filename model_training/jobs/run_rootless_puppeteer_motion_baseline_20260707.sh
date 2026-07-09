@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODEL_ROOT="${MODEL_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_model_training_20260706}"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+DEFAULT_MODEL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+MODEL_ROOT="${MODEL_ROOT:-${DEFAULT_MODEL_ROOT}}"
 MANIFEST_ROOT="${EVOWEAVE_MANIFEST_ROOT:-${EVOWEAVE_ROOTLESS_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests}}"
 RUN_NAME="${JOB_RUN_NAME:-rootless_puppeteer_motion_fullft_20260707}"
 OUTPUT_BASE="${EVOWEAVE_MODEL_OUTPUT_BASE:-/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs}"
@@ -28,10 +32,10 @@ fi
 export EVOWEAVE_MANIFEST_ROOT="${MANIFEST_ROOT}"
 export EVOWEAVE_TRAIN_MANIFEST="${JOB_TRAIN_MANIFEST:-${MANIFEST_ROOT}/train_manifest.jsonl}"
 export EVOWEAVE_VAL_MANIFEST="${JOB_VAL_MANIFEST:-${MANIFEST_ROOT}/valid_manifest.jsonl}"
-export EVOWEAVE_UNIRIG_ROOT="${JOB_UNIRIG_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_repo/external/UniRig}"
+export EVOWEAVE_UNIRIG_ROOT="${JOB_UNIRIG_ROOT:-${MODEL_ROOT}/third_party_references/UniRig}"
 export EVOWEAVE_MODEL_CONFIG="${JOB_MODEL_CONFIG:-${EVOWEAVE_UNIRIG_ROOT}/configs/model/unirig_ar_350m_1024_81920_float32.yaml}"
 export EVOWEAVE_TOKENIZER_CONFIG="${JOB_TOKENIZER_CONFIG:-${EVOWEAVE_UNIRIG_ROOT}/configs/tokenizer/tokenizer_parts_articulationxl_256.yaml}"
-export EVOWEAVE_UNIRIG_CKPT="${JOB_UNIRIG_CKPT:-/ssdwork/liuhaohan/evorig/evoweave_repo/external/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt}"
+export EVOWEAVE_UNIRIG_CKPT="${JOB_UNIRIG_CKPT:-${MODEL_ROOT}/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt}"
 export PUPPETEER_ROOT="${JOB_PUPPETEER_ROOT:-${MODEL_ROOT}/third_party_references/Puppeteer}"
 export PUPPETEER_CHECKPOINT="${JOB_PUPPETEER_CHECKPOINT:-${PUPPETEER_CHECKPOINT:-}}"
 export PUPPETEER_LLM="${JOB_PUPPETEER_LLM:-facebook/opt-350m}"
@@ -69,6 +73,11 @@ export RIGWEAVE_N_DISCRETE_SIZE="${JOB_N_DISCRETE_SIZE:-128}"
 export RIGWEAVE_N_MAX_JOINTS="${JOB_N_MAX_JOINTS:-101}"
 export RIGWEAVE_TARGET_COORD_SCALE="${JOB_TARGET_COORD_SCALE:-0.25}"
 export RIGWEAVE_COND_LENGTH="${JOB_COND_LENGTH:-257}"
+export RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS="${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS:-32}"
+# FlashAttention bf16 is not bit-exact between full teacher-forcing and
+# incremental-prefix sequence lengths. Real prefix/index bugs are much larger
+# than this tolerance; measured one-token shifts are about 0.4 max logit diff.
+export RIGWEAVE_PREFLIGHT_CONTRACT_MAX_DIFF="${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_DIFF:-3.0e-2}"
 
 export RIGWEAVE_FRAMES="${JOB_FRAMES:-24}"
 export RIGWEAVE_SURFACE_SAMPLES="${JOB_SURFACE_SAMPLES:-65536}"
@@ -88,7 +97,7 @@ if [[ "${RANDOM_INIT}" != "1" && -z "${PUPPETEER_CHECKPOINT}" ]]; then
 fi
 
 mkdir -p "${EVOWEAVE_OUTPUT_DIR}"
-cp -f "${BASH_SOURCE[0]}" "${EVOWEAVE_OUTPUT_DIR}/launch.sh"
+cp -f "${SCRIPT_PATH}" "${EVOWEAVE_OUTPUT_DIR}/launch.sh"
 python3 - <<'PY_ENV' > "${EVOWEAVE_OUTPUT_DIR}/resolved_env.txt"
 import os
 
@@ -169,6 +178,8 @@ if [[ "${RIGWEAVE_PREFLIGHT_FORWARD:-0}" == "1" ]]; then
 fi
 if [[ "${RIGWEAVE_PREFLIGHT_CONTRACT_SANITY:-0}" == "1" ]]; then
   CMD+=(--preflight-contract-sanity)
+  CMD+=(--preflight-contract-max-positions "${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS}")
+  CMD+=(--preflight-contract-max-diff "${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_DIFF}")
 fi
 
 echo "[puppeteer baseline] start $(date -Is)"

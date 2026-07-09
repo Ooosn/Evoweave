@@ -76,6 +76,18 @@ For from-scratch training:
 RANDOM_INIT=1 bash jobs/run_rootless_puppeteer_motion_baseline_20260707.sh
 ```
 
+When launched from this repository, the job script resolves `MODEL_ROOT` from
+its own location and uses the bundled third-party references:
+
+```text
+${MODEL_ROOT}/third_party_references/UniRig
+${MODEL_ROOT}/third_party_references/UniRig_hf
+${MODEL_ROOT}/third_party_references/Puppeteer
+```
+
+Do not point this launcher at the older standalone model-training copy unless
+that is the explicit experiment being run.
+
 The Puppeteer baseline trains all modules at the baseline LR scale rather than
 using a conservative decoder finetune LR:
 
@@ -100,8 +112,11 @@ creates unused trainable parameters.
 
 Before formal training, run a one-GPU preflight with batch size 1 and
 `RIGWEAVE_PREFLIGHT_CONTRACT_SANITY=1`. This verifies that teacher-forcing
-logits and manual generation logits match for the same prefix; if it fails, the
-training/generation contract is wrong and no training job should be submitted.
+logits and manual generation logits match for the same prefix; if it fails by a
+large margin, the training/generation contract is wrong and no training job
+should be submitted. The default bf16 FlashAttention tolerance is `3e-2`; a
+one-token forced/prefix shift is much larger, about `4e-1` max logit diff in the
+current diagnostic.
 
 For a single-GPU development check, use:
 

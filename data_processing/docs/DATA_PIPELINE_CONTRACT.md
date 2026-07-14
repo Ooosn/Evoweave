@@ -42,6 +42,13 @@ rows for this source, its generated source manifest should simply be empty.
    Blender exports raw dynamic Pass1 NPZ from original assets. Export failures
    are the first reject layer.
 
+   A Blender process timeout is an execution failure, not a data-quality
+   decision. The Objaverse batch runner repeats the exact same export command
+   according to `EVOWEAVE_PASS1_TIMEOUT_RETRIES` before recording a final
+   reject. A retry must not change the source asset, Blender options, target
+   contract, or use an old NPZ; the manifest records `batch_attempts` and any
+   transient timeout reason.
+
    Pass1 must use the row-skeleton contract:
 
    - joints are explicit Blender bone rows / heads;

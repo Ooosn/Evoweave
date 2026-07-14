@@ -48,6 +48,7 @@ ROOTLESS_WORKERS="${EVOWEAVE_ROOTLESS_WORKERS:-12}"
 AUDIT_WORKERS="${EVOWEAVE_AUDIT_WORKERS:-12}"
 BLENDER_THREADS="${EVOWEAVE_BLENDER_THREADS:-2}"
 PASS1_TIMEOUT_SEC="${EVOWEAVE_PASS1_TIMEOUT_SEC:-360}"
+PASS1_TIMEOUT_RETRIES="${EVOWEAVE_PASS1_TIMEOUT_RETRIES:-1}"
 MAX_JOINTS="${EVOWEAVE_MAX_JOINTS:-256}"
 RAW_MIN_VERTICES="${EVOWEAVE_RAW_MIN_VERTICES:-1}"
 MAX_VERTICES="${EVOWEAVE_MAX_VERTICES:-300000}"
@@ -208,6 +209,7 @@ for source_name in objaverse_xl objaverse_xl_more_anim; do
     --frames "${SEQUENCE_FRAMES}" \
     --motion-fps-descriptor-vertices "${MOTION_FPS_DESCRIPTOR_VERTICES}" \
     --timeout-sec "${PASS1_TIMEOUT_SEC}" \
+    --timeout-retries "${PASS1_TIMEOUT_RETRIES}" \
     --workers "${workers}" \
     --limit "${LIMIT}" \
     --max-joints "${MAX_JOINTS}" \

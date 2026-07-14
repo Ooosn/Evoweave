@@ -26,6 +26,21 @@ def _tensor_delta_report(left: torch.Tensor, right: torch.Tensor) -> dict[str, f
     }
 
 
+def _masked_logit_delta_report(
+    left: torch.Tensor,
+    right: torch.Tensor,
+    mask: torch.Tensor,
+) -> dict[str, float | int]:
+    selected_left = left.detach().float()[mask]
+    selected_right = right.detach().float()[mask]
+    if selected_left.numel() == 0:
+        raise ValueError("logit delta audit received an empty token mask")
+    return {
+        "positions": int(selected_left.shape[0]),
+        **_tensor_delta_report(selected_left, selected_right),
+    }
+
+
 def pose_target_contract_audit(batch: dict[str, Any]) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     for item_index, path_text in enumerate(batch["path"]):
@@ -126,6 +141,50 @@ def condition_path_audit(model: PuppeteerDynamicRigModel, batch: dict[str, Any])
         logits_static = model._next_token_logits(cond_static, bos)
         logits_rotated = model._next_token_logits(cond_rotated, bos)
         logits_zero = model._next_token_logits(cond_zero, bos)
+
+        forced_real, token_batch, loss_real = model.teacher_forced_logits(batch, cond=cond_real)
+        forced_static, _static_tokens, loss_static = model.teacher_forced_logits(batch, cond=cond_static)
+        forced_rotated, _rotated_tokens, loss_rotated = model.teacher_forced_logits(batch, cond=cond_rotated)
+        forced_zero, _zero_tokens, loss_zero = model.teacher_forced_logits(batch, cond=cond_zero)
+        valid = token_batch.labels.to(device) != -100
+        role = token_batch.token_role.to(device)
+        coord = valid & (role >= model.tokenizer.offset) & ((role - model.tokenizer.offset) < 3)
+        parent = valid & (role == model.tokenizer.offset + 3)
+        eos = valid & (token_batch.labels.to(device) == model.tokenizer.eos_token_id)
+
+        forced_reports: dict[str, Any] = {}
+        for name, candidate in (
+            ("static", forced_static),
+            ("rotated_query", forced_rotated),
+            ("zero_condition", forced_zero),
+        ):
+            forced_reports[name] = {
+                "all_valid": _masked_logit_delta_report(forced_real, candidate, valid),
+                "coordinate": _masked_logit_delta_report(forced_real, candidate, coord),
+                "parent": _masked_logit_delta_report(forced_real, candidate, parent),
+                "eos": _masked_logit_delta_report(forced_real, candidate, eos),
+            }
+
+        forced_losses = {
+            "real": float(loss_real.detach().cpu()),
+            "static": float(loss_static.detach().cpu()),
+            "rotated_query": float(loss_rotated.detach().cpu()),
+            "zero_condition": float(loss_zero.detach().cpu()),
+            "static_minus_real": float((loss_static - loss_real).detach().cpu()),
+            "rotated_query_minus_real": float((loss_rotated - loss_real).detach().cpu()),
+            "zero_condition_minus_real": float((loss_zero - loss_real).detach().cpu()),
+        }
+        if int(cond_real.shape[0]) > 1:
+            cond_swapped = torch.roll(cond_real, shifts=1, dims=0)
+            forced_swapped, _swapped_tokens, loss_swapped = model.teacher_forced_logits(batch, cond=cond_swapped)
+            forced_reports["batch_swapped"] = {
+                "all_valid": _masked_logit_delta_report(forced_real, forced_swapped, valid),
+                "coordinate": _masked_logit_delta_report(forced_real, forced_swapped, coord),
+                "parent": _masked_logit_delta_report(forced_real, forced_swapped, parent),
+                "eos": _masked_logit_delta_report(forced_real, forced_swapped, eos),
+            }
+            forced_losses["batch_swapped"] = float(loss_swapped.detach().cpu())
+            forced_losses["batch_swapped_minus_real"] = float((loss_swapped - loss_real).detach().cpu())
         return {
             "raw_condition_shape": list(raw_real.shape),
             "projected_condition_shape": list(projected_real.shape),
@@ -142,6 +201,8 @@ def condition_path_audit(model: PuppeteerDynamicRigModel, batch: dict[str, Any])
                 "rotated_query": logits_rotated.argmax(dim=-1).detach().cpu().tolist(),
                 "zero_condition": logits_zero.argmax(dim=-1).detach().cpu().tolist(),
             },
+            "teacher_forced_logit_deltas": forced_reports,
+            "teacher_forced_losses": forced_losses,
             "raw_condition_std": float(raw_real.float().std().cpu()),
             "projected_condition_std": float(projected_real.float().std().cpu()),
             "projected_tokenwise_std_mean": float(projected_real.float().std(dim=1).mean().cpu()),

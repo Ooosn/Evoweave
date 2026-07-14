@@ -116,7 +116,7 @@ def _paired_pose_response(
     *,
     cond_a: torch.Tensor,
     cond_b: torch.Tensor,
-) -> dict[str, float | int | bool | list[int]]:
+) -> dict[str, object]:
     if batch_a["path"] != batch_b["path"]:
         raise ValueError(f"paired pose paths differ: {batch_a['path']} vs {batch_b['path']}")
 
@@ -124,6 +124,11 @@ def _paired_pose_response(
     ids_b = _target_ids(model, batch_b)
     if ids_a.shape != ids_b.shape:
         raise ValueError(f"paired target token shapes differ: {tuple(ids_a.shape)} vs {tuple(ids_b.shape)}")
+    payload_a = ids_a[:-1].reshape(-1, model.tokenizer.bone_per_token)
+    payload_b = ids_b[:-1].reshape(-1, model.tokenizer.bone_per_token)
+    payload_changed = payload_a != payload_b
+    joint_changed = payload_changed.any(dim=1)
+    changed_joint_indices = joint_changed.nonzero(as_tuple=False).flatten()
 
     cond_a_f = cond_a.float()
     cond_b_f = cond_b.float()
@@ -134,7 +139,10 @@ def _paired_pose_response(
 
     logits_aa, token_batch_a, _loss = model.teacher_forced_logits(batch_a, cond=cond_a)
     logits_ba, _token_batch_ba, _loss = model.teacher_forced_logits(batch_a, cond=cond_b)
+    logits_ab, token_batch_b, _loss = model.teacher_forced_logits(batch_b, cond=cond_a)
     valid = token_batch_a.labels.to(logits_aa.device) != -100
+    if not torch.equal(valid, token_batch_b.labels.to(logits_aa.device) != -100):
+        raise ValueError("paired pose token masks differ")
     shared_a = logits_aa[valid].float()
     shared_b = logits_ba[valid].float()
     shared_diff = shared_a - shared_b
@@ -143,6 +151,28 @@ def _paired_pose_response(
     )
     probs_a = torch.softmax(shared_a, dim=-1)
     probs_b = torch.softmax(shared_b, dim=-1)
+
+    input_a = token_batch_a.input_ids.to(logits_aa.device)
+    input_b = token_batch_b.input_ids.to(logits_aa.device)
+    input_diff = input_a != input_b
+    prefix_diverged_before = torch.cat(
+        [
+            torch.zeros_like(input_diff[:, :1]),
+            input_diff.cumsum(dim=1)[:, :-1] > 0,
+        ],
+        dim=1,
+    )
+    prefix_mask = valid & prefix_diverged_before
+    prefix_ref = logits_aa[prefix_mask].float()
+    prefix_changed_logits = logits_ab[prefix_mask].float()
+    condition_changed_logits = logits_ba[prefix_mask].float()
+    prefix_delta = prefix_ref - prefix_changed_logits
+    condition_delta = prefix_ref - condition_changed_logits
+    prefix_scale = 0.5 * (
+        torch.linalg.vector_norm(prefix_ref) + torch.linalg.vector_norm(prefix_changed_logits)
+    )
+    prefix_probs = torch.softmax(prefix_ref, dim=-1)
+    prefix_changed_probs = torch.softmax(prefix_changed_logits, dim=-1)
 
     joints_a = batch_a["target_joints"][0, : int(batch_a["joint_count"][0].item())].float()
     joints_b = batch_b["target_joints"][0, : int(batch_b["joint_count"][0].item())].float()
@@ -160,6 +190,17 @@ def _paired_pose_response(
         "target_token_count": int(ids_a.numel()),
         "target_token_changes": int((ids_a != ids_b).sum().item()),
         "target_token_change_rate": float((ids_a != ids_b).float().mean().item()),
+        "target_changed_joint_count": int(joint_changed.sum().item()),
+        "target_first_changed_joint": (
+            int(changed_joint_indices[0].item()) if changed_joint_indices.numel() else -1
+        ),
+        "target_first_joint_token_changes": int(payload_changed[0].sum().item()),
+        "target_role_change_counts": {
+            "x": int(payload_changed[:, 0].sum().item()),
+            "y": int(payload_changed[:, 1].sum().item()),
+            "z": int(payload_changed[:, 2].sum().item()),
+            "parent": int(payload_changed[:, 3].sum().item()),
+        },
         "target_joint_rms": float(torch.sqrt(torch.mean((joints_a - joints_b) ** 2)).item()),
         "query_mesh_rms": float(torch.sqrt(torch.mean((query_a - query_b) ** 2)).item()),
         "condition_rel_l2": float(
@@ -181,6 +222,22 @@ def _paired_pose_response(
             (shared_a.argmax(dim=-1) != shared_b.argmax(dim=-1)).float().mean().item()
         ),
         "shared_prefix_probability_l1_mean": float((probs_a - probs_b).abs().sum(dim=-1).mean().item()),
+        "prefix_diverged_prediction_positions": int(prefix_mask.sum().item()),
+        "same_condition_prefix_logit_rel_l2": float(
+            (torch.linalg.vector_norm(prefix_delta) / prefix_scale.clamp_min(1.0e-12)).item()
+        ),
+        "same_condition_prefix_argmax_change_rate": float(
+            (prefix_ref.argmax(dim=-1) != prefix_changed_logits.argmax(dim=-1)).float().mean().item()
+        ),
+        "same_condition_prefix_probability_l1_mean": float(
+            (prefix_probs - prefix_changed_probs).abs().sum(dim=-1).mean().item()
+        ),
+        "condition_to_prefix_logit_l2_ratio": float(
+            (
+                torch.linalg.vector_norm(condition_delta)
+                / torch.linalg.vector_norm(prefix_delta).clamp_min(1.0e-12)
+            ).item()
+        ),
         "target_tokens_identical": bool(torch.equal(ids_a, ids_b)),
         "selected_frames_a": batch_a["selected_frames"][0].detach().cpu().numpy().astype(int).tolist(),
         "selected_frames_b": batch_b["selected_frames"][0].detach().cpu().numpy().astype(int).tolist(),

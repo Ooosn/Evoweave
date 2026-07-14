@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import struct
 import sys
 import tempfile
 import unittest
@@ -13,6 +15,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import texverse_quality_audit  # noqa: E402
+from export_texverse_clip import sanitize_glb_import_source  # noqa: E402
 from texverse_archive_utils import find_import_candidates  # noqa: E402
 
 
@@ -21,7 +24,65 @@ def write_sized_file(path: Path, size: int) -> None:
     path.write_bytes(b"x" * size)
 
 
+def write_test_glb(path: Path, gltf: dict) -> None:
+    json_bytes = json.dumps(gltf, separators=(",", ":")).encode("utf-8")
+    json_chunk = json_bytes + b" " * ((4 - len(json_bytes) % 4) % 4)
+    bin_chunk = b"\0\0\0\0"
+    total_len = 12 + 8 + len(json_chunk) + 8 + len(bin_chunk)
+    path.write_bytes(
+        struct.pack("<III", 0x46546C67, 2, total_len)
+        + struct.pack("<II", len(json_chunk), 0x4E4F534A)
+        + json_chunk
+        + struct.pack("<II", len(bin_chunk), 0x004E4942)
+        + bin_chunk
+    )
+
+
 class TexVerseSourceDiscoveryTest(unittest.TestCase):
+    def test_glb_sanitizer_does_not_mutate_draco_attribute_maps(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "draco.glb"
+            write_test_glb(
+                source,
+                {
+                    "asset": {"version": "2.0"},
+                    "meshes": [
+                        {
+                            "primitives": [
+                                {
+                                    "attributes": {
+                                        "POSITION": 0,
+                                        "COLOR_0": 1,
+                                        "JOINTS_0": 2,
+                                        "WEIGHTS_0": 3,
+                                    },
+                                    "extensions": {
+                                        "KHR_draco_mesh_compression": {
+                                            "bufferView": 0,
+                                            "attributes": {
+                                                "POSITION": 0,
+                                                "COLOR_0": 1,
+                                                "JOINTS_0": 2,
+                                                "WEIGHTS_0": 3,
+                                            },
+                                        }
+                                    },
+                                }
+                            ]
+                        }
+                    ],
+                },
+            )
+
+            import_source, meta = sanitize_glb_import_source(source, root)
+
+            self.assertEqual(import_source, source)
+            self.assertEqual(
+                meta["glb_sanitization_skipped_draco_attributes"], ["COLOR_0"]
+            )
+            self.assertNotIn("glb_import_sanitized", meta)
+
     def test_audit_json_survives_blender_warning_interleaving(self) -> None:
         expected = {
             "asset_id": "asset",

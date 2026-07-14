@@ -76,15 +76,25 @@ def sanitize_glb_import_source(source: Path, tmp_dir: Path) -> tuple[Path, dict]
 
     gltf = json.loads(chunks[0][1].decode("utf-8").rstrip("\x00 "))
     removed: list[str] = []
+    skipped_draco: list[str] = []
     for mesh in gltf.get("meshes", []) or []:
         for prim in mesh.get("primitives", []) or []:
             attrs = prim.get("attributes") or {}
+            extensions = prim.get("extensions") or {}
+            if "KHR_draco_mesh_compression" in extensions:
+                skipped_draco.extend(
+                    str(name) for name in attrs if not glb_attribute_needed(name)
+                )
+                continue
             for name in list(attrs.keys()):
                 if not glb_attribute_needed(name):
                     removed.append(str(name))
                     del attrs[name]
     if not removed:
-        return source, {}
+        meta = {}
+        if skipped_draco:
+            meta["glb_sanitization_skipped_draco_attributes"] = sorted(set(skipped_draco))
+        return source, meta
 
     json_bytes = json.dumps(gltf, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     json_pad = (4 - len(json_bytes) % 4) % 4
@@ -100,11 +110,14 @@ def sanitize_glb_import_source(source: Path, tmp_dir: Path) -> tuple[Path, dict]
 
     sanitized = tmp_dir / f"{source.stem}.rigweave_sanitized.glb"
     sanitized.write_bytes(out)
-    return sanitized, {
+    meta = {
         "original_source": str(source),
         "glb_import_sanitized": True,
         "glb_removed_vertex_attributes": sorted(set(removed)),
     }
+    if skipped_draco:
+        meta["glb_sanitization_skipped_draco_attributes"] = sorted(set(skipped_draco))
+    return sanitized, meta
 
 
 def blender_export_script(

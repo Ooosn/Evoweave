@@ -22,6 +22,22 @@ def write_sized_file(path: Path, size: int) -> None:
 
 
 class TexVerseSourceDiscoveryTest(unittest.TestCase):
+    def test_audit_json_survives_blender_warning_interleaving(self) -> None:
+        expected = {
+            "asset_id": "asset",
+            "status": "ok",
+            "usable": True,
+            "reject_reasons": [],
+        }
+        stdout = (
+            "Dependency cycle via "
+            + texverse_quality_audit.AUDIT_OUTPUT_MARKER
+            + '{"asset_id":"asset","status":"ok","usable":true,"reject_reasons":[]}'
+            + " trailing dependency warning\nBlender quit\n"
+        )
+
+        self.assertEqual(texverse_quality_audit.parse_blender_audit_output(stdout), expected)
+
     def test_candidate_ranking_ignores_macos_sidecars_and_prefers_skin(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

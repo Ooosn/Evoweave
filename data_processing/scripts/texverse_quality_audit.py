@@ -34,6 +34,7 @@ from texverse_archive_utils import expand_nested_archives, find_import_candidate
 
 TEXVERSE_REPO = "YiboZhang2001/TexVerse-Skeleton-Animation"
 TEXVERSE_URL = f"https://huggingface.co/datasets/{TEXVERSE_REPO}/resolve/main"
+AUDIT_OUTPUT_MARKER = "RIGWEAVE_AUDIT_JSON "
 
 
 @dataclass
@@ -333,6 +334,23 @@ print("RIGWEAVE_AUDIT_JSON " + json.dumps(record, ensure_ascii=False))
     )
 
 
+def parse_blender_audit_output(stdout: str) -> dict | None:
+    """Recover the audit record even when Blender warnings share its output line."""
+    search_end = len(stdout)
+    decoder = json.JSONDecoder()
+    while True:
+        marker_index = stdout.rfind(AUDIT_OUTPUT_MARKER, 0, search_end)
+        if marker_index < 0:
+            return None
+        payload = stdout[marker_index + len(AUDIT_OUTPUT_MARKER) :].lstrip()
+        try:
+            record, _ = decoder.raw_decode(payload)
+        except json.JSONDecodeError:
+            search_end = marker_index
+            continue
+        return record if isinstance(record, dict) else None
+
+
 def run_blender_audit(
     blender: str,
     candidate: Path,
@@ -374,9 +392,9 @@ def run_blender_audit(
     finally:
         Path(script_path).unlink(missing_ok=True)
 
-    for line in reversed(proc.stdout.splitlines()):
-        if line.startswith("RIGWEAVE_AUDIT_JSON "):
-            return json.loads(line[len("RIGWEAVE_AUDIT_JSON ") :])
+    record = parse_blender_audit_output(proc.stdout)
+    if record is not None:
+        return record
     return {
         "asset_id": asset_id,
         "candidate": str(candidate),

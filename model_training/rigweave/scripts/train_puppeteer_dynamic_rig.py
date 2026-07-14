@@ -160,6 +160,44 @@ def add_parameter_group(
     groups.append({"name": name, "params": [parameter], "lr": float(lr)})
 
 
+def decoder_block_modules(model: PuppeteerDynamicRigModel) -> list[torch.nn.Module]:
+    decoder = model.decoder.model.decoder
+    modules: list[torch.nn.Module] = [decoder.layers]
+    final_layer_norm = getattr(decoder, "final_layer_norm", None)
+    if final_layer_norm is not None:
+        modules.append(final_layer_norm)
+    return modules
+
+
+def add_parameters_group(
+    groups: list[dict[str, Any]],
+    *,
+    name: str,
+    parameters: list[torch.nn.Parameter],
+    lr: float,
+    seen: set[int],
+) -> None:
+    params = []
+    for parameter in parameters:
+        if not parameter.requires_grad or id(parameter) in seen:
+            continue
+        seen.add(id(parameter))
+        params.append(parameter)
+    if params:
+        groups.append({"name": name, "params": params, "lr": float(lr)})
+
+
+def suppress_decoder_block_gradients(model: PuppeteerDynamicRigModel) -> int:
+    suppressed = 0
+    for module in decoder_block_modules(model):
+        for parameter in module.parameters():
+            if parameter.grad is None:
+                continue
+            suppressed += int(parameter.numel())
+            parameter.grad = None
+    return suppressed
+
+
 def build_optimizer(model: PuppeteerDynamicRigModel, args: argparse.Namespace) -> torch.optim.Optimizer:
     seen: set[int] = set()
     groups: list[dict[str, Any]] = []
@@ -191,9 +229,17 @@ def build_optimizer(model: PuppeteerDynamicRigModel, args: argparse.Namespace) -
         lr=args.lr_decoder,
         seen=seen,
     )
+    if args.lr_decoder_blocks >= 0:
+        add_parameters_group(
+            groups,
+            name="decoder_blocks",
+            parameters=[parameter for module in decoder_block_modules(model) for parameter in module.parameters()],
+            lr=args.lr_decoder_blocks,
+            seen=seen,
+        )
     add_param_group(
         groups,
-        name="decoder",
+        name="decoder_token_path" if args.lr_decoder_blocks >= 0 else "decoder",
         module=model.decoder,
         lr=args.lr_decoder,
         seen=seen,
@@ -334,6 +380,7 @@ def main() -> None:
     parser.add_argument("--lr-motion", type=float, default=1.0e-4)
     parser.add_argument("--lr-prefix", type=float, default=1.0e-4)
     parser.add_argument("--lr-decoder", type=float, default=2.0e-5)
+    parser.add_argument("--lr-decoder-blocks", type=float, default=-1.0)
     parser.add_argument("--weight-decay", type=float, default=0.04)
     parser.add_argument("--adam-beta1", type=float, default=0.9)
     parser.add_argument("--adam-beta2", type=float, default=0.95)
@@ -368,6 +415,7 @@ def main() -> None:
     parser.add_argument("--decoder-activation-dropout", type=float, default=0.0)
     parser.add_argument("--decoder-layerdrop", type=float, default=0.0)
     parser.add_argument("--decoder-checkpointing", action="store_true")
+    parser.add_argument("--decoder-block-warmup-steps", type=int, default=0)
     parser.add_argument("--no-joint-slot-embedding", action="store_true")
     parser.add_argument("--freeze-surface-tokenizer", action="store_true")
     parser.add_argument("--freeze-conditioner", action="store_true")
@@ -400,6 +448,10 @@ def main() -> None:
         )
     if args.tiny_random_decoder and not args.random_init:
         raise RuntimeError("--tiny-random-decoder requires --random-init")
+    if args.decoder_block_warmup_steps < 0:
+        raise ValueError("--decoder-block-warmup-steps must be non-negative")
+    if args.decoder_block_warmup_steps > 0 and args.lr_decoder_blocks < 0:
+        raise ValueError("--decoder-block-warmup-steps requires an explicit --lr-decoder-blocks")
     if args.n_max_joints > args.n_discrete_size:
         raise ValueError(
             f"n_max_joints={args.n_max_joints} must be <= n_discrete_size={args.n_discrete_size} "
@@ -695,6 +747,7 @@ def main() -> None:
         accum_t0 = time.time()
         accum_sums = {"loss": 0.0, "token_acc": 0.0, "coord_acc": 0.0, "parent_acc": 0.0, "eos_acc": 0.0}
         accum_path = ""
+        decoder_block_grads_suppressed = 0
         optimizer.zero_grad(set_to_none=True)
         train_model.train()
         while step < args.max_steps:
@@ -714,6 +767,10 @@ def main() -> None:
                         raw_loss = out["loss"]
                         loss = raw_loss / max(1, args.grad_accum_steps)
                     loss.backward()
+                    if step < args.decoder_block_warmup_steps:
+                        decoder_block_grads_suppressed = suppress_decoder_block_gradients(unwrap_model(train_model))
+                    else:
+                        decoder_block_grads_suppressed = 0
                 accum_sums["loss"] += float(raw_loss.detach().cpu())
                 for key in ("token_acc", "coord_acc", "parent_acc", "eos_acc"):
                     accum_sums[key] += float(out[key].detach().cpu())
@@ -745,6 +802,8 @@ def main() -> None:
                         "path": accum_path,
                         "grad_accum": args.grad_accum_steps,
                         "micro_batch_per_gpu": args.batch_size,
+                        "decoder_block_warmup_active": step <= args.decoder_block_warmup_steps,
+                        "decoder_block_grads_suppressed": decoder_block_grads_suppressed,
                         "lrs": {group.get("name", str(i)): group["lr"] for i, group in enumerate(optimizer.param_groups)},
                         **accounting,
                     }

@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from process_utils import run_process_group
+
 
 RETRYABLE_REJECT_REASONS = frozenset(
     {
@@ -179,7 +181,7 @@ def run_one(row: dict, args: argparse.Namespace) -> dict:
         str(args.active_skin_threshold),
     ]
     try:
-        proc = subprocess.run(
+        proc = run_process_group(
             cmd,
             cwd=str(repo_root),
             stdout=subprocess.PIPE,

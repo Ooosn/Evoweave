@@ -21,6 +21,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from process_utils import run_process_group
 from texverse_archive_utils import (
     expand_nested_archives,
     find_import_candidates,
@@ -282,7 +283,7 @@ def run_export_attempt(
     remove_outputs(out_npz, out_json)
     cmd = export_cmd(source, asset_id, out_npz, out_json, args)
     try:
-        proc = subprocess.run(
+        proc = run_process_group(
             cmd,
             cwd=str(repo_root),
             stdout=subprocess.PIPE,

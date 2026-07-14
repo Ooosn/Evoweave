@@ -71,7 +71,7 @@ class ObjaverseBatchRetryTest(unittest.TestCase):
                 )
                 return SimpleNamespace(returncode=0, stdout="clean")
 
-            with mock.patch.object(batch.subprocess, "run", side_effect=fake_run):
+            with mock.patch.object(batch, "run_process_group", side_effect=fake_run):
                 row = {"asset_id": "asset", "path": str(source)}
                 initial_record = batch.run_one(row, args)
                 self.assertEqual(calls, 1)
@@ -117,7 +117,7 @@ class ObjaverseBatchRetryTest(unittest.TestCase):
                 return SimpleNamespace(returncode=0, stdout="clean")
 
             row = {"asset_id": "asset", "path": str(source)}
-            with mock.patch.object(batch.subprocess, "run", side_effect=fake_run):
+            with mock.patch.object(batch, "run_process_group", side_effect=fake_run):
                 initial_record = batch.run_one(row, args)
                 self.assertEqual(initial_record["reject_reasons"], ["batch_export_timeout"])
                 self.assertFalse(out_json.exists())

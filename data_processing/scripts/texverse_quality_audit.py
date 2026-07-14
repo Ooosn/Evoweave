@@ -29,6 +29,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
+from process_utils import run_process_group
 from texverse_archive_utils import expand_nested_archives, find_import_candidates, safe_extract_zip
 
 
@@ -373,7 +374,7 @@ def run_blender_audit(
         if args.blender_threads > 0:
             cmd.extend(["--threads", str(args.blender_threads)])
         cmd.extend(["--python", script_path])
-        proc = subprocess.run(
+        proc = run_process_group(
             cmd,
             check=False,
             text=True,

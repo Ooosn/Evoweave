@@ -14,6 +14,8 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+from process_utils import run_process_group
+
 
 IMPORT_SUFFIX_ORDER = {".fbx": 0, ".glb": 1, ".gltf": 2, ".dae": 3, ".blend": 4}
 IMPORTABLE_SUFFIXES = set(IMPORT_SUFFIX_ORDER)
@@ -116,7 +118,7 @@ def expand_nested_archives(
                 str(archive),
             ]
             try:
-                proc = subprocess.run(
+                proc = run_process_group(
                     cmd,
                     check=False,
                     stdout=subprocess.PIPE,

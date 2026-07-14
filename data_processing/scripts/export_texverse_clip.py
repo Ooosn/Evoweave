@@ -19,6 +19,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from process_utils import run_process_group
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -896,7 +898,7 @@ def main() -> None:
                 env.setdefault("OMP_NUM_THREADS", str(int(args.blender_threads)))
                 env.setdefault("OPENBLAS_NUM_THREADS", str(int(args.blender_threads)))
                 env.setdefault("MKL_NUM_THREADS", str(int(args.blender_threads)))
-            proc = subprocess.run(
+            proc = run_process_group(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,

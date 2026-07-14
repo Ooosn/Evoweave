@@ -752,6 +752,7 @@ def _apply_puppeteer_checkpoint_defaults(args: argparse.Namespace) -> dict[str, 
         "decoder_attention_dropout": 0.0,
         "decoder_activation_dropout": 0.0,
         "decoder_layerdrop": 0.0,
+        "decoder_norm_style": "config",
         "motion_checkpointing": False,
         "no_joint_slot_embedding": False,
     }
@@ -1647,6 +1648,7 @@ def main() -> None:
     parser.add_argument("--decoder-attention-dropout", type=float, default=None)
     parser.add_argument("--decoder-activation-dropout", type=float, default=None)
     parser.add_argument("--decoder-layerdrop", type=float, default=None)
+    parser.add_argument("--decoder-norm-style", choices=["config", "pre", "post"], default=None)
     parser.add_argument("--frames", type=int, default=None)
     parser.add_argument("--surface-samples", type=int, default=None)
     parser.add_argument("--vertex-samples", type=int, default=None)

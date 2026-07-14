@@ -105,6 +105,8 @@ def build_decoder_config(args: argparse.Namespace, SkeletonOPTConfig: type[Any])
             vocab_size=vocab_size,
             _attn_implementation=args.attn_implementation,
         )
+    if args.decoder_norm_style != "config":
+        config.do_layer_norm_before = args.decoder_norm_style == "pre"
     config.joint_token = True
     config.bos_token_id = 0
     config.eos_token_id = 1
@@ -414,6 +416,12 @@ def main() -> None:
     parser.add_argument("--decoder-attention-dropout", type=float, default=0.0)
     parser.add_argument("--decoder-activation-dropout", type=float, default=0.0)
     parser.add_argument("--decoder-layerdrop", type=float, default=0.0)
+    parser.add_argument(
+        "--decoder-norm-style",
+        choices=["config", "pre", "post"],
+        default="config",
+        help="Keep the backbone norm placement or explicitly select pre/post layer norm.",
+    )
     parser.add_argument("--decoder-checkpointing", action="store_true")
     parser.add_argument("--decoder-block-warmup-steps", type=int, default=0)
     parser.add_argument("--no-joint-slot-embedding", action="store_true")
@@ -520,6 +528,17 @@ def main() -> None:
                 "target_aware_pos_embed_loaded": False,
                 "target_aware_pos_embed_shape": None,
             }
+        decoder_report["resolved_config"] = {
+            "hidden_size": int(config.hidden_size),
+            "ffn_dim": int(config.ffn_dim),
+            "num_hidden_layers": int(config.num_hidden_layers),
+            "num_attention_heads": int(config.num_attention_heads),
+            "dropout": float(config.dropout),
+            "attention_dropout": float(config.attention_dropout),
+            "activation_dropout": float(config.activation_dropout),
+            "layerdrop": float(config.layerdrop),
+            "do_layer_norm_before": bool(config.do_layer_norm_before),
+        }
         if is_main(rank):
             save_json(args.output_dir / "puppeteer_decoder_load_report.json", decoder_report)
         log(rank, f"Puppeteer decoder built in {time.time() - stage_t0:.2f}s")

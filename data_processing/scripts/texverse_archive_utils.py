@@ -144,11 +144,23 @@ def find_import_candidates(extract_dir: Path, max_candidates: int) -> tuple[list
         path
         for path in extract_dir.rglob("*")
         if path.is_file() and path.suffix.lower() in IMPORT_SUFFIX_ORDER
+        and not any(part.lower() == "__macosx" for part in path.parts)
+        and not path.name.startswith("._")
     ]
 
-    def candidate_key(path: Path) -> tuple[int, int, int, int, str]:
+    def candidate_key(path: Path) -> tuple[int, int, int, int, int, str]:
         lower_path = str(path).lower()
         lower_name = path.name.lower()
+        compact_name = re.sub(r"[^a-z0-9]+", "", lower_name)
+        explicitly_unskinned = any(
+            marker in compact_name
+            for marker in ("withoutskin", "noskin", "unskinned")
+        )
+        explicitly_skinned = not explicitly_unskinned and any(
+            marker in compact_name
+            for marker in ("withskin", "skinned")
+        )
+        skin_score = 100 if explicitly_skinned else (-100 if explicitly_unskinned else 0)
         animation_score = 0
         if "all animations" in lower_name or "all_animations" in lower_name or "all-animations" in lower_name:
             animation_score += 100
@@ -164,6 +176,7 @@ def find_import_candidates(extract_dir: Path, max_candidates: int) -> tuple[list
             size = 0
         return (
             IMPORT_SUFFIX_ORDER[path.suffix.lower()],
+            -skin_score,
             -animation_score,
             -size,
             len(path.parts),
@@ -171,6 +184,8 @@ def find_import_candidates(extract_dir: Path, max_candidates: int) -> tuple[list
         )
 
     files.sort(key=candidate_key)
+    if max_candidates <= 0:
+        return files, len(files)
     return files[:max_candidates], len(files)
 
 

@@ -70,7 +70,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--target-usable", type=int, default=0)
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--progress-every", type=int, default=25)
-    parser.add_argument("--max-candidates-per-zip", type=int, default=4)
+    parser.add_argument(
+        "--max-candidates-per-zip",
+        type=int,
+        default=4,
+        help=(
+            "Initial candidate audit budget per archive. If none of these candidates is "
+            "usable, source discovery continues through the remaining ranked candidates "
+            "before the asset is rejected. Use 0 to audit every candidate."
+        ),
+    )
     parser.add_argument("--min-bones", type=int, default=4)
     parser.add_argument("--min-skinned-vertices", type=int, default=100)
     parser.add_argument("--min-skin-coverage", type=float, default=0.0)
@@ -432,7 +441,7 @@ def audit_one_asset(asset_id: str, rel_path: str, args: argparse.Namespace) -> t
             max_archive_mb=args.max_nested_archive_mb,
             timeout_sec=args.nested_archive_timeout_sec,
         )
-        candidates, candidate_count = find_import_candidates(extract_dir, args.max_candidates_per_zip)
+        candidates, candidate_count = find_import_candidates(extract_dir, 0)
         if not candidates:
             records.append(
                 asdict(zip_record)
@@ -445,17 +454,37 @@ def audit_one_asset(asset_id: str, rel_path: str, args: argparse.Namespace) -> t
                 }
             )
             return asset_id, records, False
-        for candidate in candidates:
+        candidate_limit = max(0, int(args.max_candidates_per_zip))
+        initial_count = len(candidates) if candidate_limit == 0 else min(candidate_limit, len(candidates))
+        attempted_count = 0
+
+        def audit_candidate(candidate: Path) -> bool:
+            nonlocal attempted_count
             record = run_blender_audit(args.blender, candidate, asset_id, args)
             record["zip_path"] = zip_record.zip_path
             record["texverse_rel_path"] = rel_path
             record["candidate_count"] = candidate_count
-            record["candidates_imported"] = len(candidates)
             if nested_archives:
                 record["nested_archives"] = nested_archives
             records.append(record)
-            if record.get("usable") is True:
+            attempted_count += 1
+            return record.get("usable") is True
+
+        for candidate in candidates[:initial_count]:
+            if audit_candidate(candidate):
                 asset_usable = True
+
+        if not asset_usable and initial_count < len(candidates):
+            for candidate in candidates[initial_count:]:
+                if audit_candidate(candidate):
+                    asset_usable = True
+                    break
+
+        search_extended = attempted_count > initial_count
+        for record in records:
+            record["candidates_imported"] = attempted_count
+            record["candidate_initial_budget"] = candidate_limit
+            record["candidate_search_extended"] = search_extended
         return asset_id, records, asset_usable
     except Exception as exc:  # noqa: BLE001
         records.append(

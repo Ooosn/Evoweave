@@ -15,7 +15,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import texverse_quality_audit  # noqa: E402
-from export_texverse_clip import sanitize_glb_import_source  # noqa: E402
+from export_texverse_clip import blender_export_script, sanitize_glb_import_source  # noqa: E402
 from texverse_archive_utils import find_import_candidates  # noqa: E402
 
 
@@ -39,6 +39,32 @@ def write_test_glb(path: Path, gltf: dict) -> None:
 
 
 class TexVerseSourceDiscoveryTest(unittest.TestCase):
+    def test_fbx_export_disables_recursive_missing_image_search(self) -> None:
+        args = SimpleNamespace(
+            source=Path("asset.fbx"),
+            asset_id="asset",
+            out_npz=Path("asset.npz"),
+            out_json=Path("asset.json"),
+            frames=40,
+            min_vertices=1,
+            max_joints=256,
+            max_vertices=300000,
+            max_faces=600000,
+            bbox_ratio_hard_min=0.0,
+            bbox_ratio_hard_max=0.0,
+            min_motion_p95_bbox=0.0,
+            topk_weights=8,
+            active_skin_threshold=0.0,
+            motion_fps_descriptor_vertices=1024,
+        )
+
+        script = blender_export_script(args, args.source, {})
+
+        self.assertIn(
+            "bpy.ops.import_scene.fbx(filepath=path, use_image_search=False)",
+            script,
+        )
+
     def test_glb_sanitizer_does_not_mutate_draco_attribute_maps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

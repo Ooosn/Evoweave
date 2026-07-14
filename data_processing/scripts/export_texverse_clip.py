@@ -192,7 +192,9 @@ def reset_scene():
 def import_asset(path):
     suffix = os.path.splitext(path)[1].lower()
     if suffix == ".fbx":
-        bpy.ops.import_scene.fbx(filepath=path)
+        # Materials are not exported. Disable Blender's recursive missing-image
+        # search so an embedded absolute media path cannot scan shared storage.
+        bpy.ops.import_scene.fbx(filepath=path, use_image_search=False)
     elif suffix in (".glb", ".gltf"):
         bpy.ops.import_scene.gltf(filepath=path)
     elif suffix == ".dae":

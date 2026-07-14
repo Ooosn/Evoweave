@@ -738,6 +738,7 @@ def _apply_puppeteer_checkpoint_defaults(args: argparse.Namespace) -> dict[str, 
         "no_strict_target_range": False,
         "cond_length": 257,
         "projector_heads": 8,
+        "condition_projection": "cross_attention",
         "attn_implementation": "flash_attention_2",
         "local_files_only": True,
         "allow_resize_positions": True,
@@ -807,6 +808,7 @@ def _build_puppeteer_model(args: argparse.Namespace, device: torch.device) -> to
         query_tokens=args.query_tokens,
         cond_length=args.cond_length,
         projector_heads=args.projector_heads,
+        condition_projection=args.condition_projection,
         max_joints=args.n_max_joints,
         use_joint_slot_embedding=not args.no_joint_slot_embedding,
         target_aware_pos_embed=target_aware_pos_embed,
@@ -1635,6 +1637,11 @@ def main() -> None:
     parser.add_argument("--no-strict-target-range", action="store_true", default=None)
     parser.add_argument("--cond-length", type=int, default=None)
     parser.add_argument("--projector-heads", type=int, default=None)
+    parser.add_argument(
+        "--condition-projection",
+        choices=["cross_attention", "identity"],
+        default=None,
+    )
     parser.add_argument("--attn-implementation", choices=["flash_attention_2"], default=None)
     parser.add_argument("--local-files-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--allow-resize-positions", action=argparse.BooleanOptionalAction, default=None)

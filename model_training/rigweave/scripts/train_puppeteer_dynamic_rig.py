@@ -401,6 +401,11 @@ def main() -> None:
     parser.add_argument("--no-strict-target-range", action="store_true")
     parser.add_argument("--cond-length", type=int, default=257)
     parser.add_argument("--projector-heads", type=int, default=8)
+    parser.add_argument(
+        "--condition-projection",
+        choices=["cross_attention", "identity"],
+        default="cross_attention",
+    )
     parser.add_argument("--attn-implementation", choices=["flash_attention_2"], default="flash_attention_2")
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16", "fp32"], default="bf16")
     parser.add_argument("--local-files-only", action=argparse.BooleanOptionalAction, default=True)
@@ -557,6 +562,7 @@ def main() -> None:
             query_tokens=args.query_tokens,
             cond_length=args.cond_length,
             projector_heads=args.projector_heads,
+            condition_projection=args.condition_projection,
             max_joints=args.n_max_joints,
             use_joint_slot_embedding=not args.no_joint_slot_embedding,
             target_aware_pos_embed=target_aware_pos_embed,

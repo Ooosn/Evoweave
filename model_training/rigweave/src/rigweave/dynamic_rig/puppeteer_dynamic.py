@@ -448,6 +448,30 @@ class ConditionPrefixProjector(nn.Module):
         return self.out_norm(out).to(dtype=cond.dtype)
 
 
+class IdentityConditionProjector(nn.Module):
+    """Pass condition tokens through without changing their order or length."""
+
+    def __init__(self, input_dim: int, output_dim: int, cond_length: int) -> None:
+        super().__init__()
+        if int(input_dim) != int(output_dim):
+            raise ValueError(
+                "identity condition projection requires matching dimensions: "
+                f"input_dim={input_dim} output_dim={output_dim}"
+            )
+        self.cond_length = int(cond_length)
+        self.output_dim = int(output_dim)
+
+    def forward(self, cond: torch.Tensor) -> torch.Tensor:
+        if cond.ndim != 3:
+            raise ValueError(f"identity condition projection expects [B,N,C], got {tuple(cond.shape)}")
+        if int(cond.shape[1]) != self.cond_length or int(cond.shape[2]) != self.output_dim:
+            raise ValueError(
+                "identity condition projection contract mismatch: "
+                f"expected [B,{self.cond_length},{self.output_dim}], got {tuple(cond.shape)}"
+            )
+        return cond
+
+
 class PuppeteerDynamicRigModel(nn.Module):
     """Evoweave dynamic condition prefix plus a joint-token AR decoder.
 
@@ -467,6 +491,7 @@ class PuppeteerDynamicRigModel(nn.Module):
         query_tokens: int,
         cond_length: int = 257,
         projector_heads: int = 8,
+        condition_projection: str = "cross_attention",
         max_joints: int = 128,
         use_joint_slot_embedding: bool = True,
         target_aware_pos_embed: torch.Tensor | None = None,
@@ -477,7 +502,23 @@ class PuppeteerDynamicRigModel(nn.Module):
         self.tokenizer = tokenizer
         hidden_size = int(getattr(self.decoder.config, "word_embed_proj_dim", self.decoder.config.hidden_size))
         surface_dim = int(getattr(self.conditioner.motion_encoder, "dim"))
-        self.prefix_projector = ConditionPrefixProjector(surface_dim, hidden_size, cond_length=cond_length, heads=projector_heads)
+        if condition_projection == "cross_attention":
+            self.prefix_projector = ConditionPrefixProjector(
+                surface_dim,
+                hidden_size,
+                cond_length=cond_length,
+                heads=projector_heads,
+            )
+        elif condition_projection == "identity":
+            if int(cond_length) != int(query_tokens):
+                raise ValueError(
+                    "identity condition projection requires cond_length == query_tokens: "
+                    f"cond_length={cond_length} query_tokens={query_tokens}"
+                )
+            self.prefix_projector = IdentityConditionProjector(surface_dim, hidden_size, cond_length)
+        else:
+            raise ValueError(f"unsupported condition_projection={condition_projection!r}")
+        self.condition_projection = str(condition_projection)
         self.max_joints = int(max_joints)
         if self.max_joints <= 0:
             raise ValueError(f"max_joints must be positive, got {self.max_joints}")

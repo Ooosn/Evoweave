@@ -55,6 +55,11 @@ from rigweave.dynamic_rig import (  # noqa: E402
     load_puppeteer_target_aware_pos_embed,
     puppeteer_dynamic_collate,
 )
+from rigweave.dynamic_rig.puppeteer_diagnostics import (  # noqa: E402
+    condition_path_audit,
+    gradient_path_audit,
+    pose_target_contract_audit,
+)
 
 
 def log(rank: int, message: str) -> None:
@@ -374,6 +379,9 @@ def main() -> None:
     parser.add_argument("--preflight-contract-sanity", action="store_true")
     parser.add_argument("--preflight-contract-max-positions", type=int, default=32)
     parser.add_argument("--preflight-contract-max-diff", type=float, default=3.0e-2)
+    parser.add_argument("--preflight-pose-audit", action="store_true")
+    parser.add_argument("--preflight-condition-audit", action="store_true")
+    parser.add_argument("--preflight-gradient-audit", action="store_true")
     args = parser.parse_args()
     args.random_init = bool(args.random_init or args.random_init_smoke)
 
@@ -582,6 +590,7 @@ def main() -> None:
         if args.preflight_only:
             batch = next(iter(train_loader))
             batch = move_batch(batch, device)
+            preflight_audit: dict[str, Any] = {}
             token_batch = joint_tokenizer.make_batch(
                 batch["target_joints"],
                 batch["target_parents"],
@@ -594,6 +603,21 @@ def main() -> None:
                 f"batch={len(batch['path'])} max_joints={int(batch['joint_count'].max().item())} "
                 f"token_len={int(token_batch.input_ids.shape[1])} first={batch['path'][0]}",
             )
+            if args.preflight_pose_audit:
+                preflight_audit["pose_target_contract"] = pose_target_contract_audit(batch)
+                log(
+                    rank,
+                    "preflight pose target contract="
+                    + json.dumps(preflight_audit["pose_target_contract"], sort_keys=True),
+                )
+            if args.preflight_condition_audit:
+                with torch.autocast(
+                    device_type="cuda",
+                    dtype=amp_dtype,
+                    enabled=device.type == "cuda" and amp_dtype != torch.float32,
+                ):
+                    preflight_audit["condition_path"] = condition_path_audit(model, batch)
+                log(rank, "preflight condition path=" + json.dumps(preflight_audit["condition_path"], sort_keys=True))
             if args.preflight_forward:
                 with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=device.type == "cuda" and amp_dtype != torch.float32):
                     out = model(batch)
@@ -609,6 +633,23 @@ def main() -> None:
                 log(rank, "preflight contract sanity=" + json.dumps(sanity, sort_keys=True))
                 if int(sanity["checked_positions"]) <= 0 or float(sanity["max_abs_logit_diff"]) > float(args.preflight_contract_max_diff):
                     raise RuntimeError(f"teacher-forcing/generation logits are not aligned: {sanity}")
+            if args.preflight_gradient_audit:
+                was_training = model.training
+                model.train()
+                torch.manual_seed(args.seed + 991)
+                if device.type == "cuda":
+                    torch.cuda.manual_seed_all(args.seed + 991)
+                with torch.autocast(
+                    device_type="cuda",
+                    dtype=amp_dtype,
+                    enabled=device.type == "cuda" and amp_dtype != torch.float32,
+                ):
+                    gradient_out = model(batch)
+                preflight_audit["gradient_path"] = gradient_path_audit(model, gradient_out["loss"])
+                model.train(was_training)
+                log(rank, "preflight gradient path=" + json.dumps(preflight_audit["gradient_path"], sort_keys=True))
+            if preflight_audit and is_main(rank):
+                save_json(args.output_dir / "preflight_audit.json", preflight_audit)
             optimizer = build_optimizer(model, args)
             log(
                 rank,

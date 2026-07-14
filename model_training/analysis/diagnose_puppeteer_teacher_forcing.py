@@ -32,14 +32,19 @@ def _target_namespace(batch: dict) -> SimpleNamespace:
     return SimpleNamespace(joints=joints, parents=parents)
 
 
-def _forced_logits(model, batch: dict):
-    logits, token_batch, _loss = model.teacher_forced_logits(batch)
+def _forced_logits(model, batch: dict, *, cond: torch.Tensor | None = None):
+    logits, token_batch, _loss = model.teacher_forced_logits(batch, cond=cond)
     return logits, token_batch
 
 
-def _forced_argmax_ids(model, batch: dict) -> tuple[list[int], dict[str, float | int]]:
+def _forced_argmax_ids(
+    model,
+    batch: dict,
+    *,
+    cond: torch.Tensor | None = None,
+) -> tuple[list[int], dict[str, float | int]]:
     tokenizer = model.tokenizer
-    logits, token_batch = _forced_logits(model, batch)
+    logits, token_batch = _forced_logits(model, batch, cond=cond)
     labels = token_batch.labels[0].to(logits.device)
     roles = token_batch.token_role[0].to(logits.device)
     pred = logits[0].argmax(dim=-1)
@@ -65,9 +70,15 @@ def _forced_argmax_ids(model, batch: dict) -> tuple[list[int], dict[str, float |
     return pred_ids, stats
 
 
-def _condition_sensitivity(model, batch: dict) -> dict[str, object]:
+def _condition_sensitivity(
+    model,
+    batch: dict,
+    *,
+    cond: torch.Tensor | None = None,
+) -> dict[str, object]:
     tokenizer = model.tokenizer
-    cond = model._condition_embeds(batch)
+    if cond is None:
+        cond = model._condition_embeds(batch)
     zero = torch.zeros_like(cond)
     prefix = torch.tensor([[tokenizer.bos_token_id]], device=cond.device, dtype=torch.long)
     real_logits = model._next_token_logits(cond, prefix).float()
@@ -84,12 +95,107 @@ def _condition_sensitivity(model, batch: dict) -> dict[str, object]:
     }
 
 
+def _condition_with_seed(model, batch: dict, seed: int) -> torch.Tensor:
+    device = batch["frame_vertices"].device
+    generator = torch.Generator(device=device)
+    generator.manual_seed(int(seed))
+    raw = model.build_condition(batch, generator=generator)
+    return model._condition_embeds_from_raw(raw)
+
+
+def _target_ids(model, batch: dict) -> torch.Tensor:
+    token_batch = model._make_token_batch(batch, batch["target_joints"].device)
+    labels = token_batch.labels[0]
+    return labels[labels != -100]
+
+
+def _paired_pose_response(
+    model,
+    batch_a: dict,
+    batch_b: dict,
+    *,
+    cond_a: torch.Tensor,
+    cond_b: torch.Tensor,
+) -> dict[str, float | int | bool | list[int]]:
+    if batch_a["path"] != batch_b["path"]:
+        raise ValueError(f"paired pose paths differ: {batch_a['path']} vs {batch_b['path']}")
+
+    ids_a = _target_ids(model, batch_a)
+    ids_b = _target_ids(model, batch_b)
+    if ids_a.shape != ids_b.shape:
+        raise ValueError(f"paired target token shapes differ: {tuple(ids_a.shape)} vs {tuple(ids_b.shape)}")
+
+    cond_a_f = cond_a.float()
+    cond_b_f = cond_b.float()
+    cond_diff = cond_a_f - cond_b_f
+    cond_scale = 0.5 * (
+        torch.linalg.vector_norm(cond_a_f) + torch.linalg.vector_norm(cond_b_f)
+    )
+
+    logits_aa, token_batch_a, _loss = model.teacher_forced_logits(batch_a, cond=cond_a)
+    logits_ba, _token_batch_ba, _loss = model.teacher_forced_logits(batch_a, cond=cond_b)
+    valid = token_batch_a.labels.to(logits_aa.device) != -100
+    shared_a = logits_aa[valid].float()
+    shared_b = logits_ba[valid].float()
+    shared_diff = shared_a - shared_b
+    shared_scale = 0.5 * (
+        torch.linalg.vector_norm(shared_a) + torch.linalg.vector_norm(shared_b)
+    )
+    probs_a = torch.softmax(shared_a, dim=-1)
+    probs_b = torch.softmax(shared_b, dim=-1)
+
+    joints_a = batch_a["target_joints"][0, : int(batch_a["joint_count"][0].item())].float()
+    joints_b = batch_b["target_joints"][0, : int(batch_b["joint_count"][0].item())].float()
+    if joints_a.shape != joints_b.shape:
+        raise ValueError(f"paired target joint shapes differ: {tuple(joints_a.shape)} vs {tuple(joints_b.shape)}")
+
+    query_a = batch_a["frame_vertices"][:, 0].float()
+    query_b = batch_b["frame_vertices"][:, 0].float()
+    if query_a.shape != query_b.shape:
+        raise ValueError(f"paired query mesh shapes differ: {tuple(query_a.shape)} vs {tuple(query_b.shape)}")
+
+    return {
+        "query_frame_a": int(batch_a["selected_frames"][0, 0].item()),
+        "query_frame_b": int(batch_b["selected_frames"][0, 0].item()),
+        "target_token_count": int(ids_a.numel()),
+        "target_token_changes": int((ids_a != ids_b).sum().item()),
+        "target_token_change_rate": float((ids_a != ids_b).float().mean().item()),
+        "target_joint_rms": float(torch.sqrt(torch.mean((joints_a - joints_b) ** 2)).item()),
+        "query_mesh_rms": float(torch.sqrt(torch.mean((query_a - query_b) ** 2)).item()),
+        "condition_rel_l2": float(
+            (torch.linalg.vector_norm(cond_diff) / cond_scale.clamp_min(1.0e-12)).item()
+        ),
+        "condition_cosine": float(
+            torch.nn.functional.cosine_similarity(
+                cond_a_f.reshape(1, -1), cond_b_f.reshape(1, -1), dim=-1
+            )[0].item()
+        ),
+        "condition_token_cosine_mean": float(
+            torch.nn.functional.cosine_similarity(cond_a_f, cond_b_f, dim=-1).mean().item()
+        ),
+        "shared_prefix_logit_rel_l2": float(
+            (torch.linalg.vector_norm(shared_diff) / shared_scale.clamp_min(1.0e-12)).item()
+        ),
+        "shared_prefix_logit_max_abs": float(shared_diff.abs().max().item()),
+        "shared_prefix_argmax_change_rate": float(
+            (shared_a.argmax(dim=-1) != shared_b.argmax(dim=-1)).float().mean().item()
+        ),
+        "shared_prefix_probability_l1_mean": float((probs_a - probs_b).abs().sum(dim=-1).mean().item()),
+        "target_tokens_identical": bool(torch.equal(ids_a, ids_b)),
+        "selected_frames_a": batch_a["selected_frames"][0].detach().cpu().numpy().astype(int).tolist(),
+        "selected_frames_b": batch_b["selected_frames"][0].detach().cpu().numpy().astype(int).tolist(),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-root", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=16)
+    parser.add_argument("--pose-seed-a", type=int, default=None)
+    parser.add_argument("--pose-seed-b", type=int, default=None)
+    parser.add_argument("--surface-seed", type=int, default=20260715)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -121,35 +227,61 @@ def main() -> None:
     _apply_puppeteer_checkpoint_defaults(ns)
     model = _build_puppeteer_model(ns, device)
     tokenizer = model.tokenizer
+    default_pose_seed = ns.seed if hasattr(ns, "seed") else 20260527
+    pose_seed_a = default_pose_seed if args.pose_seed_a is None else int(args.pose_seed_a)
     dataset = PuppeteerDynamicRigDataset(
         args.manifest,
         frame_count=ns.frames,
         limit=args.limit,
         random_query=False,
-        seed=ns.seed if hasattr(ns, "seed") else 20260527,
+        seed=pose_seed_a,
         motion_fps_ratio=ns.motion_fps_ratio,
         motion_vertex_samples=ns.motion_vertex_samples,
         max_joints=ns.n_max_joints,
     )
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=puppeteer_dynamic_collate)
+    paired_loader = None
+    if args.pose_seed_b is not None:
+        paired_dataset = PuppeteerDynamicRigDataset(
+            args.manifest,
+            frame_count=ns.frames,
+            limit=args.limit,
+            random_query=False,
+            seed=int(args.pose_seed_b),
+            motion_fps_ratio=ns.motion_fps_ratio,
+            motion_vertex_samples=ns.motion_vertex_samples,
+            max_joints=ns.n_max_joints,
+        )
+        if dataset.paths != paired_dataset.paths:
+            raise RuntimeError("paired pose datasets resolved different manifest rows")
+        paired_loader = DataLoader(
+            paired_dataset,
+            batch_size=1,
+            shuffle=False,
+            num_workers=0,
+            collate_fn=puppeteer_dynamic_collate,
+        )
     continuous_range = _puppeteer_metric_range(tokenizer)
     rows = []
     model.eval()
     with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device.type == "cuda"):
+        paired_iter = iter(paired_loader) if paired_loader is not None else None
         for idx, batch in enumerate(loader):
             batch = _move_batch(batch, device)
+            paired_batch = None if paired_iter is None else _move_batch(next(paired_iter), device)
             target = _target_namespace(batch)
-            forced_ids, forced_stats = _forced_argmax_ids(model, batch)
+            cond = _condition_with_seed(model, batch, args.surface_seed + idx)
+            forced_ids, forced_stats = _forced_argmax_ids(model, batch, cond=cond)
             try:
                 forced_pred = _decode_generated_ids(tokenizer, forced_ids)
                 forced_metrics = _output_metrics(forced_pred, target, continuous_range)
             except Exception as exc:
                 forced_metrics = {"detokenize_error": repr(exc)}
-            sens = _condition_sensitivity(model, batch)
-            rows.append(
-                {
+            sens = _condition_sensitivity(model, batch, cond=cond)
+            row = {
                     "index": idx,
                     "path": batch["path"][0],
+                    "pose_seed_a": int(pose_seed_a),
                     "target_joint_count": int(target.joints.shape[0]),
                     **forced_stats,
                     "forced_pred_joint_count": forced_metrics.get("pred_joint_count"),
@@ -157,8 +289,18 @@ def main() -> None:
                     "forced_joint_chamfer_mean": forced_metrics.get("joint_chamfer", {}).get("mean"),
                     **sens,
                 }
-            )
-            print(json.dumps(rows[-1], ensure_ascii=False), flush=True)
+            if paired_batch is not None:
+                paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
+                row["pose_seed_b"] = int(args.pose_seed_b)
+                row["paired_pose_response"] = _paired_pose_response(
+                    model,
+                    batch,
+                    paired_batch,
+                    cond_a=cond,
+                    cond_b=paired_cond,
+                )
+            rows.append(row)
+            print(json.dumps(row, ensure_ascii=False), flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps({"rows": rows}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

@@ -511,7 +511,9 @@ def main() -> None:
         config = build_decoder_config(args, SkeletonOPTConfig)
         decoder = SkeletonOPT(config)
         if args.decoder_checkpointing:
-            decoder.model.decoder.gradient_checkpointing = True
+            decoder.gradient_checkpointing_enable(
+                gradient_checkpointing_kwargs={"use_reentrant": False}
+            )
         decoder_report: dict[str, Any]
         target_aware_pos_embed = None
         if args.puppeteer_checkpoint is not None:

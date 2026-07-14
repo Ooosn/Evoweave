@@ -3,6 +3,18 @@
 This file records contract-level data-processing changes. It is documentation
 only; old code paths are not kept as fallback implementations.
 
+## 2026-07-14: Deterministic Blender Process and FBX Media Handling
+
+- Formal Blender subprocesses run in separate process groups. Timeout and
+  interruption terminate the complete process tree, so a failed attempt cannot
+  leave an exporter running while the next attempt starts.
+- FBX import disables Blender's external image search. Textures are not part of
+  Pass1 NPZ output, and missing media references must not trigger recursive
+  scans of unrelated shared storage.
+- The affected Objaverse asset was compared against its official oracle NPZ;
+  all shared geometry, animation, skinning, skeleton, transform, action, and
+  selected-frame arrays were exactly equal.
+
 ## 2026-07-06: Rootless Dynamic NPZ v3
 
 - Canonical schema is `rootless_dynamic_npz_v3`.

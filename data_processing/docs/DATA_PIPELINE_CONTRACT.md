@@ -47,7 +47,14 @@ rows for this source, its generated source manifest should simply be empty.
    according to `EVOWEAVE_PASS1_TIMEOUT_RETRIES` before recording a final
    reject. A retry must not change the source asset, Blender options, target
    contract, or use an old NPZ; the manifest records `batch_attempts` and any
-   transient timeout reason.
+   transient timeout reason. Every Blender subprocess runs in its own process
+   group; timeout or interruption must terminate the complete descendant tree
+   before the retry starts.
+
+   FBX import uses `use_image_search=False`. Pass1 does not consume textures,
+   and allowing Blender to search for missing embedded media can recursively
+   scan unrelated shared-storage paths. Disabling that search changes no mesh,
+   armature, animation, skinning, or row-skeleton field.
 
    Pass1 must use the row-skeleton contract:
 

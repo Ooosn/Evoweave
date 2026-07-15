@@ -334,6 +334,26 @@ def save_json(path: Path, payload: dict[str, Any]) -> None:
         f.write("\n")
 
 
+def load_full_model_checkpoint(model: torch.nn.Module, checkpoint: Path) -> dict[str, Any]:
+    """Initialize the complete model with an exact Evoweave checkpoint state."""
+
+    checkpoint = checkpoint.expanduser().resolve()
+    if not checkpoint.is_file():
+        raise FileNotFoundError(checkpoint)
+    payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    if not isinstance(payload, dict) or not isinstance(payload.get("model"), dict):
+        raise TypeError(f"{checkpoint} is not an Evoweave training checkpoint with a model state")
+    model.load_state_dict(payload["model"], strict=True)
+    return {
+        "checkpoint": str(checkpoint),
+        "source_step": int(payload.get("step", -1)),
+        "source_sample_seen": payload.get("sample_seen"),
+        "strict": True,
+        "optimizer_loaded": False,
+        "scheduler_loaded": False,
+    }
+
+
 def validate_query_preserving_baseline_args(args: argparse.Namespace) -> None:
     if not args.require_query_preserving_baseline_contract:
         return
@@ -387,6 +407,12 @@ def main() -> None:
     parser.add_argument("--unirig-checkpoint", type=Path, default=Path(os.environ.get("EVOWEAVE_UNIRIG_CKPT", "external/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt")))
     parser.add_argument("--puppeteer-root", type=Path, default=Path(os.environ.get("PUPPETEER_ROOT", REPO / "third_party_references" / "Puppeteer")))
     parser.add_argument("--puppeteer-checkpoint", type=Path, default=Path(os.environ["PUPPETEER_CHECKPOINT"]) if os.environ.get("PUPPETEER_CHECKPOINT") else None)
+    parser.add_argument(
+        "--init-checkpoint",
+        type=Path,
+        default=Path(os.environ["EVOWEAVE_INIT_CHECKPOINT"]) if os.environ.get("EVOWEAVE_INIT_CHECKPOINT") else None,
+        help="Strictly initialize the complete model state; optimizer and scheduler start fresh.",
+    )
     parser.add_argument("--puppeteer-llm", type=str, default=os.environ.get("PUPPETEER_LLM", "facebook/opt-350m"))
     parser.add_argument("--output-dir", type=Path, default=Path(os.environ.get("EVOWEAVE_OUTPUT_DIR", "outputs/puppeteer_dynamic")))
     parser.add_argument("--limit-train", type=int, default=int(os.environ.get("RIGWEAVE_LIMIT_TRAIN", "0")))
@@ -501,9 +527,12 @@ def main() -> None:
         raise FileNotFoundError(args.train_manifest)
     if not args.val_manifest.exists():
         raise FileNotFoundError(args.val_manifest)
-    if args.puppeteer_checkpoint is None and not args.random_init:
+    if args.puppeteer_checkpoint is not None and args.init_checkpoint is not None:
+        raise ValueError("--puppeteer-checkpoint and --init-checkpoint are mutually exclusive")
+    if args.puppeteer_checkpoint is None and args.init_checkpoint is None and not args.random_init:
         raise RuntimeError(
-            "Set --puppeteer-checkpoint for optional pretrained initialization, "
+            "Set --puppeteer-checkpoint for decoder-only pretrained initialization, "
+            "set --init-checkpoint for complete-model initialization, "
             "or set --random-init to train this route from scratch."
         )
     if args.tiny_random_decoder and not args.random_init:
@@ -620,6 +649,16 @@ def main() -> None:
             use_joint_slot_embedding=not args.no_joint_slot_embedding,
             target_aware_pos_embed=target_aware_pos_embed,
         )
+        full_init_report = None
+        if args.init_checkpoint is not None:
+            full_init_report = load_full_model_checkpoint(model, args.init_checkpoint)
+            if is_main(rank):
+                save_json(args.output_dir / "full_model_init_report.json", full_init_report)
+            log(
+                rank,
+                "complete model initialized strictly from "
+                f"{full_init_report['checkpoint']} source_step={full_init_report['source_step']}",
+            )
         if args.require_query_preserving_baseline_contract:
             if model.condition_projection != "identity":
                 raise RuntimeError(
@@ -702,6 +741,7 @@ def main() -> None:
                     "effective_batch": effective_batch,
                     "sample_milestones": sample_milestones,
                     "random_init": bool(args.random_init),
+                    "full_model_init": full_init_report,
                 },
             )
         log(
@@ -854,6 +894,7 @@ def main() -> None:
                 "train_rows": train_rows,
                 "random_init": bool(args.random_init),
                 "decoder_checkpoint": str(args.puppeteer_checkpoint) if args.puppeteer_checkpoint else None,
+                "init_checkpoint": str(args.init_checkpoint) if args.init_checkpoint else None,
                 "optimizer_groups": optimizer_group_report(optimizer),
             },
         )

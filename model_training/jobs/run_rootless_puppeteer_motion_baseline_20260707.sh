@@ -44,6 +44,7 @@ export EVOWEAVE_TOKENIZER_CONFIG="${JOB_TOKENIZER_CONFIG:-${EVOWEAVE_UNIRIG_ROOT
 export EVOWEAVE_UNIRIG_CKPT="${JOB_UNIRIG_CKPT:-${MODEL_ROOT}/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt}"
 export PUPPETEER_ROOT="${JOB_PUPPETEER_ROOT:-${MODEL_ROOT}/third_party_references/Puppeteer}"
 export PUPPETEER_CHECKPOINT="${JOB_PUPPETEER_CHECKPOINT:-${PUPPETEER_CHECKPOINT:-}}"
+export EVOWEAVE_INIT_CHECKPOINT="${JOB_INIT_CHECKPOINT:-${EVOWEAVE_INIT_CHECKPOINT:-}}"
 export PUPPETEER_LLM="${JOB_PUPPETEER_LLM:-facebook/opt-350m}"
 export EVOWEAVE_OUTPUT_DIR="${JOB_OUTPUT_DIR:-${OUTPUT_BASE}/${RUN_NAME}}"
 export EVOWEAVE_TRAIN_ROWS="${JOB_TRAIN_ROWS:-$(wc -l < "${EVOWEAVE_TRAIN_MANIFEST}")}"
@@ -104,8 +105,12 @@ export RIGWEAVE_MOTION_VERTEX_SAMPLES="${JOB_MOTION_VERTEX_SAMPLES:-512}"
 
 export RANDOM_INIT="${RANDOM_INIT:-${RANDOM_INIT_SMOKE:-0}}"
 export TINY_RANDOM_DECODER="${TINY_RANDOM_DECODER:-0}"
-if [[ "${RANDOM_INIT}" != "1" && -z "${PUPPETEER_CHECKPOINT}" ]]; then
-  echo "[puppeteer baseline] ERROR: set PUPPETEER_CHECKPOINT/JOB_PUPPETEER_CHECKPOINT for optional pretrained init, or RANDOM_INIT=1 for from-scratch training." >&2
+if [[ -n "${PUPPETEER_CHECKPOINT}" && -n "${EVOWEAVE_INIT_CHECKPOINT}" ]]; then
+  echo "[puppeteer baseline] ERROR: decoder-only PUPPETEER_CHECKPOINT and complete-model EVOWEAVE_INIT_CHECKPOINT are mutually exclusive." >&2
+  exit 2
+fi
+if [[ "${RANDOM_INIT}" != "1" && -z "${PUPPETEER_CHECKPOINT}" && -z "${EVOWEAVE_INIT_CHECKPOINT}" ]]; then
+  echo "[puppeteer baseline] ERROR: set a decoder-only PUPPETEER_CHECKPOINT, set a complete-model EVOWEAVE_INIT_CHECKPOINT, or use RANDOM_INIT=1." >&2
   exit 2
 fi
 
@@ -172,6 +177,9 @@ CMD=(
 
 if [[ -n "${PUPPETEER_CHECKPOINT}" ]]; then
   CMD+=(--puppeteer-checkpoint "${PUPPETEER_CHECKPOINT}")
+fi
+if [[ -n "${EVOWEAVE_INIT_CHECKPOINT}" ]]; then
+  CMD+=(--init-checkpoint "${EVOWEAVE_INIT_CHECKPOINT}")
 fi
 if [[ "${RANDOM_INIT}" == "1" ]]; then
   CMD+=(--random-init)

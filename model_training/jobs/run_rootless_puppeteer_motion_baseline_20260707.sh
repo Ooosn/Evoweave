@@ -75,6 +75,8 @@ export RIGWEAVE_ONECYCLE_DIV_FACTOR="${JOB_ONECYCLE_DIV_FACTOR:-5.0}"
 export RIGWEAVE_ONECYCLE_FINAL_DIV_FACTOR="${JOB_ONECYCLE_FINAL_DIV_FACTOR:-10.0}"
 
 export RIGWEAVE_N_DISCRETE_SIZE="${JOB_N_DISCRETE_SIZE:-128}"
+export RIGWEAVE_TOKEN_LOSS_REDUCTION="${JOB_TOKEN_LOSS_REDUCTION:-token_mean}"
+export RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT="${JOB_TERMINATION_DECISION_LOSS_WEIGHT:-0.0}"
 # The default keeps the current checkpoint-compatible data subset. It is a
 # route configuration, not a data-processing rule.
 export RIGWEAVE_N_MAX_JOINTS="${JOB_N_MAX_JOINTS:-101}"
@@ -167,6 +169,8 @@ CMD=(
   --onecycle-div-factor "${RIGWEAVE_ONECYCLE_DIV_FACTOR}"
   --onecycle-final-div-factor "${RIGWEAVE_ONECYCLE_FINAL_DIV_FACTOR}"
   --n-discrete-size "${RIGWEAVE_N_DISCRETE_SIZE}"
+  --token-loss-reduction "${RIGWEAVE_TOKEN_LOSS_REDUCTION}"
+  --termination-decision-loss-weight "${RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT}"
   --n-max-joints "${RIGWEAVE_N_MAX_JOINTS}"
   --target-coord-scale "${RIGWEAVE_TARGET_COORD_SCALE}"
   --cond-length "${RIGWEAVE_COND_LENGTH}"
@@ -222,6 +226,7 @@ echo "[puppeteer baseline] output=${EVOWEAVE_OUTPUT_DIR}"
 echo "[puppeteer baseline] checkpoint=${PUPPETEER_CHECKPOINT:-<random-init>}"
 echo "[puppeteer baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SIZE * RIGWEAVE_GRAD_ACCUM))"
 echo "[puppeteer baseline] condition_projection=${RIGWEAVE_CONDITION_PROJECTION} cond_length=${RIGWEAVE_COND_LENGTH} decoder_norm=${RIGWEAVE_DECODER_NORM_STYLE}"
+echo "[puppeteer baseline] token_loss_reduction=${RIGWEAVE_TOKEN_LOSS_REDUCTION} termination_decision_loss_weight=${RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT}"
 echo "[puppeteer baseline] profile=SkeletonOPT joint-token parent-index; tail_tokens=off; full_finetune=on"
 printf '[puppeteer baseline] command:'
 printf ' %q' "${CMD[@]}"

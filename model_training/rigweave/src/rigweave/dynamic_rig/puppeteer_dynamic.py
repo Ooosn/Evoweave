@@ -34,6 +34,108 @@ class PuppeteerTokenBatch:
     token_role: torch.LongTensor
 
 
+def _sequence_cross_entropy(
+    logits: torch.Tensor,
+    labels: torch.LongTensor,
+    *,
+    reduction: str,
+    token_mean_reference: torch.Tensor | None = None,
+) -> torch.Tensor:
+    """Compute token CE without making longer skeletons count as more samples."""
+
+    if reduction == "token_mean":
+        if token_mean_reference is not None:
+            return token_mean_reference
+        return nn.functional.cross_entropy(
+            logits.float().transpose(1, 2),
+            labels,
+            ignore_index=-100,
+        )
+    if reduction != "sequence_mean":
+        raise ValueError(f"unsupported token loss reduction={reduction!r}")
+
+    token_loss = nn.functional.cross_entropy(
+        logits.float().transpose(1, 2),
+        labels,
+        ignore_index=-100,
+        reduction="none",
+    )
+    valid = labels != -100
+    valid_count = valid.sum(dim=1)
+    if bool((valid_count == 0).any().item()):
+        raise ValueError("Puppeteer sequence loss received a sample without target tokens")
+    per_sequence = (token_loss * valid).sum(dim=1) / valid_count
+    return per_sequence.mean()
+
+
+def _termination_decision_metrics(
+    logits: torch.Tensor,
+    labels: torch.LongTensor,
+    token_role: torch.LongTensor,
+    *,
+    regular_start: int,
+    regular_end: int,
+    eos_token_id: int,
+) -> dict[str, torch.Tensor]:
+    """Score EOS versus a next-joint x token at every legal joint boundary.
+
+    The existing vocabulary and decoder logits are reused.  The continuation
+    score is the log-sum-exp over every coordinate bin; no count head or new
+    model parameter is introduced.  Each sequence contributes equal stop and
+    continuation mass so its terminal decision is not diluted by its length.
+    """
+
+    sample_losses: list[torch.Tensor] = []
+    stop_correct: list[torch.Tensor] = []
+    continue_correct: list[torch.Tensor] = []
+    for batch_index in range(int(labels.shape[0])):
+        sample_labels = labels[batch_index]
+        sample_roles = token_role[batch_index]
+        x_positions = (
+            (sample_labels != -100)
+            & (sample_roles == int(regular_start))
+        ).nonzero(as_tuple=False).flatten()
+        eos_positions = (sample_labels == int(eos_token_id)).nonzero(as_tuple=False).flatten()
+        if int(eos_positions.numel()) != 1:
+            raise ValueError(
+                "Puppeteer termination loss expects exactly one EOS target per sequence, "
+                f"got {int(eos_positions.numel())}"
+            )
+        if int(x_positions.numel()) == 0:
+            raise ValueError("Puppeteer termination loss expects at least one joint x target")
+
+        # Generation cannot stop before joint 0, so its x token is not a
+        # stop/continue decision.  Every later x position means continue.
+        continue_positions = x_positions[1:]
+        decision_positions = torch.cat([continue_positions, eos_positions])
+        selected = logits[batch_index, decision_positions].float()
+        continue_logits = torch.logsumexp(selected[:, regular_start:regular_end], dim=-1)
+        stop_logits = selected[:, eos_token_id]
+        binary_logits = torch.stack([continue_logits, stop_logits], dim=-1)
+        targets = torch.cat(
+            [
+                torch.zeros(int(continue_positions.numel()), device=labels.device, dtype=torch.long),
+                torch.ones(1, device=labels.device, dtype=torch.long),
+            ]
+        )
+        per_decision = nn.functional.cross_entropy(binary_logits, targets, reduction="none")
+        stop_loss = per_decision[-1]
+        if int(continue_positions.numel()) > 0:
+            sample_loss = 0.5 * (per_decision[:-1].mean() + stop_loss)
+            continue_correct.append((binary_logits[:-1].argmax(dim=-1) == 0).float().mean())
+        else:
+            sample_loss = stop_loss
+        sample_losses.append(sample_loss)
+        stop_correct.append((binary_logits[-1].argmax(dim=-1) == 1).float())
+
+    zero = logits.new_zeros((), dtype=torch.float32)
+    return {
+        "loss": torch.stack(sample_losses).mean() if sample_losses else zero,
+        "stop_acc": torch.stack(stop_correct).mean() if stop_correct else zero,
+        "continue_acc": torch.stack(continue_correct).mean() if continue_correct else zero,
+    }
+
+
 class PuppeteerJointTokenizer:
     """Puppeteer joint-token representation for rootless Evoweave skeletons.
 
@@ -495,6 +597,8 @@ class PuppeteerDynamicRigModel(nn.Module):
         max_joints: int = 128,
         use_joint_slot_embedding: bool = True,
         target_aware_pos_embed: torch.Tensor | None = None,
+        token_loss_reduction: str = "token_mean",
+        termination_decision_loss_weight: float = 0.0,
     ) -> None:
         super().__init__()
         self.conditioner = conditioner
@@ -522,6 +626,12 @@ class PuppeteerDynamicRigModel(nn.Module):
         self.max_joints = int(max_joints)
         if self.max_joints <= 0:
             raise ValueError(f"max_joints must be positive, got {self.max_joints}")
+        if token_loss_reduction not in {"token_mean", "sequence_mean"}:
+            raise ValueError(f"unsupported token_loss_reduction={token_loss_reduction!r}")
+        if float(termination_decision_loss_weight) < 0.0:
+            raise ValueError("termination_decision_loss_weight must be non-negative")
+        self.token_loss_reduction = str(token_loss_reduction)
+        self.termination_decision_loss_weight = float(termination_decision_loss_weight)
         if use_joint_slot_embedding:
             slot_count = self.max_joints + 1
             target_aware = torch.empty((1, slot_count, hidden_size), dtype=torch.float32)
@@ -856,14 +966,29 @@ class PuppeteerDynamicRigModel(nn.Module):
         return decoded
 
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        logits, token_batch, loss = self.teacher_forced_logits(batch)
+        logits, token_batch, decoder_token_mean_loss = self.teacher_forced_logits(batch)
         labels = token_batch.labels.to(logits.device)
+        role = token_batch.token_role.to(logits.device)
+        token_ce_loss = _sequence_cross_entropy(
+            logits,
+            labels,
+            reduction=self.token_loss_reduction,
+            token_mean_reference=decoder_token_mean_loss,
+        )
+        termination = _termination_decision_metrics(
+            logits,
+            labels,
+            role,
+            regular_start=self.tokenizer.offset,
+            regular_end=self.tokenizer.offset + self.tokenizer.n_discrete_size,
+            eos_token_id=self.tokenizer.eos_token_id,
+        )
+        loss = token_ce_loss + self.termination_decision_loss_weight * termination["loss"]
         pred = logits.argmax(dim=-1)
         valid = labels != -100
         token_acc = (pred[valid] == labels[valid]).float().mean() if valid.any() else logits.new_zeros(())
         eos_mask = labels == self.tokenizer.eos_token_id
         eos_acc = (pred[eos_mask] == labels[eos_mask]).float().mean() if eos_mask.any() else logits.new_zeros(())
-        role = token_batch.token_role.to(logits.device)
         coord_mask = valid & (role >= self.tokenizer.offset) & ((role - self.tokenizer.offset) < 3)
         parent_mask = valid & (role == self.tokenizer.offset + 3)
         coord_acc = (pred[coord_mask] == labels[coord_mask]).float().mean() if coord_mask.any() else logits.new_zeros(())
@@ -874,6 +999,10 @@ class PuppeteerDynamicRigModel(nn.Module):
             "coord_acc": coord_acc,
             "parent_acc": parent_acc,
             "eos_acc": eos_acc,
+            "token_ce_loss": token_ce_loss,
+            "termination_decision_loss": termination["loss"],
+            "termination_stop_acc": termination["stop_acc"],
+            "termination_continue_acc": termination["continue_acc"],
         }
 
 

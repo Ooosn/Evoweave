@@ -454,6 +454,18 @@ def main() -> None:
     parser.add_argument("--onecycle-final-div-factor", type=float, default=10.0)
     parser.add_argument("--n-discrete-size", type=int, default=128)
     parser.add_argument(
+        "--token-loss-reduction",
+        choices=["token_mean", "sequence_mean"],
+        default="token_mean",
+        help="token_mean reproduces Puppeteer/HF CE; sequence_mean gives every skeleton equal CE mass.",
+    )
+    parser.add_argument(
+        "--termination-decision-loss-weight",
+        type=float,
+        default=0.0,
+        help="Auxiliary EOS-versus-next-joint loss at legal joint boundaries; uses existing decoder logits.",
+    )
+    parser.add_argument(
         "--n-max-joints",
         type=int,
         default=101,
@@ -648,6 +660,8 @@ def main() -> None:
             max_joints=args.n_max_joints,
             use_joint_slot_embedding=not args.no_joint_slot_embedding,
             target_aware_pos_embed=target_aware_pos_embed,
+            token_loss_reduction=args.token_loss_reduction,
+            termination_decision_loss_weight=args.termination_decision_loss_weight,
         )
         full_init_report = None
         if args.init_checkpoint is not None:
@@ -735,6 +749,8 @@ def main() -> None:
                         args.require_query_preserving_baseline_contract
                     ),
                     "first_joint_contract": "joint0 is the single rootless skeleton root; no synthetic root",
+                    "token_loss_reduction": args.token_loss_reduction,
+                    "termination_decision_loss_weight": args.termination_decision_loss_weight,
                     "world_size": world_size,
                     "micro_batch_per_gpu": args.batch_size,
                     "grad_accum_steps": args.grad_accum_steps,
@@ -905,7 +921,17 @@ def main() -> None:
         epoch = 0
         accum_count = 0
         accum_t0 = time.time()
-        accum_sums = {"loss": 0.0, "token_acc": 0.0, "coord_acc": 0.0, "parent_acc": 0.0, "eos_acc": 0.0}
+        tracked_metrics = (
+            "token_acc",
+            "coord_acc",
+            "parent_acc",
+            "eos_acc",
+            "token_ce_loss",
+            "termination_decision_loss",
+            "termination_stop_acc",
+            "termination_continue_acc",
+        )
+        accum_sums = {"loss": 0.0, **{key: 0.0 for key in tracked_metrics}}
         accum_path = ""
         decoder_block_grads_suppressed = 0
         optimizer.zero_grad(set_to_none=True)
@@ -932,7 +958,7 @@ def main() -> None:
                     else:
                         decoder_block_grads_suppressed = 0
                 accum_sums["loss"] += float(raw_loss.detach().cpu())
-                for key in ("token_acc", "coord_acc", "parent_acc", "eos_acc"):
+                for key in tracked_metrics:
                     accum_sums[key] += float(out[key].detach().cpu())
                 accum_path = batch["path"][0]
                 accum_count += 1
@@ -954,10 +980,7 @@ def main() -> None:
                         "step": step,
                         "epoch": epoch,
                         "loss": accum_sums["loss"] / micro_count,
-                        "token_acc": accum_sums["token_acc"] / micro_count,
-                        "coord_acc": accum_sums["coord_acc"] / micro_count,
-                        "parent_acc": accum_sums["parent_acc"] / micro_count,
-                        "eos_acc": accum_sums["eos_acc"] / micro_count,
+                        **{key: accum_sums[key] / micro_count for key in tracked_metrics},
                         "seconds": round(time.time() - accum_t0, 3),
                         "path": accum_path,
                         "grad_accum": args.grad_accum_steps,
@@ -971,7 +994,7 @@ def main() -> None:
                         row["gpu_peak_gb"] = round(torch.cuda.max_memory_allocated(device) / (1024**3), 3)
                         torch.cuda.reset_peak_memory_stats(device)
                     write_json_log(metrics_log, row)
-                accum_sums = {"loss": 0.0, "token_acc": 0.0, "coord_acc": 0.0, "parent_acc": 0.0, "eos_acc": 0.0}
+                accum_sums = {"loss": 0.0, **{key: 0.0 for key in tracked_metrics}}
                 accum_path = ""
                 accum_t0 = time.time()
 

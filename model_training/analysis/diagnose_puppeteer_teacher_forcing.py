@@ -216,6 +216,83 @@ def _trace_pre_norm_encoder_layer(
 
 
 @torch.no_grad()
+def _pose_attention_routing(
+    layer: torch.nn.TransformerEncoderLayer,
+    attention_input: torch.Tensor,
+    *,
+    batch_size: int,
+    frame_count: int,
+    slot_count: int,
+    anchor_start: int,
+) -> dict[str, float | int]:
+    frame0 = attention_input.reshape(batch_size, frame_count, slot_count, -1)[:, 0]
+    _output, weights = layer.self_attn(
+        frame0,
+        frame0,
+        frame0,
+        need_weights=True,
+        average_attn_weights=False,
+    )
+    anchor_rows = weights.float()[:, :, anchor_start:, :]
+    probabilities = anchor_rows.clamp_min(1.0e-12)
+    entropy = -(probabilities * probabilities.log()).sum(dim=-1)
+    normalized_entropy = entropy / np.log(float(slot_count))
+    mean_row = anchor_rows.mean(dim=-2, keepdim=True)
+    top_keys = anchor_rows.argmax(dim=-1)
+    anchor_square = anchor_rows[..., anchor_start:]
+    self_mass = anchor_square.diagonal(dim1=-2, dim2=-1)
+    return {
+        "role_key_mass": float(anchor_rows[..., 0].mean().item()),
+        "register_key_mass": float(anchor_rows[..., 1:anchor_start].sum(dim=-1).mean().item()),
+        "anchor_key_mass": float(anchor_rows[..., anchor_start:].sum(dim=-1).mean().item()),
+        "self_anchor_mass": float(self_mass.mean().item()),
+        "normalized_entropy": float(normalized_entropy.mean().item()),
+        "row_l1_to_mean": float((anchor_rows - mean_row).abs().sum(dim=-1).mean().item()),
+        "max_key_mass": float(anchor_rows.max(dim=-1).values.mean().item()),
+        "top_key_role_rate": float((top_keys == 0).float().mean().item()),
+        "top_key_register_rate": float(
+            ((top_keys > 0) & (top_keys < anchor_start)).float().mean().item()
+        ),
+        "top_key_anchor_rate": float((top_keys >= anchor_start).float().mean().item()),
+        "top_key_unique_count": int(torch.unique(top_keys).numel()),
+    }
+
+
+@torch.no_grad()
+def _temporal_attention_routing(
+    layer: torch.nn.TransformerEncoderLayer,
+    attention_input: torch.Tensor,
+    *,
+    batch_size: int,
+    frame_count: int,
+    slot_count: int,
+    anchor_start: int,
+) -> dict[str, float | int]:
+    anchors = attention_input.reshape(batch_size, slot_count, frame_count, -1)[:, anchor_start:]
+    anchors = anchors.reshape(batch_size * (slot_count - anchor_start), frame_count, -1)
+    _output, weights = layer.self_attn(
+        anchors,
+        anchors,
+        anchors,
+        need_weights=True,
+        average_attn_weights=False,
+    )
+    query_frame0 = weights.float()[:, :, 0, :]
+    probabilities = query_frame0.clamp_min(1.0e-12)
+    entropy = -(probabilities * probabilities.log()).sum(dim=-1)
+    normalized_entropy = entropy / np.log(float(frame_count))
+    top_frames = query_frame0.argmax(dim=-1)
+    return {
+        "query_frame_key_mass": float(query_frame0[..., 0].mean().item()),
+        "evidence_frame_key_mass": float(query_frame0[..., 1:].sum(dim=-1).mean().item()),
+        "normalized_entropy": float(normalized_entropy.mean().item()),
+        "max_frame_mass": float(query_frame0.max(dim=-1).values.mean().item()),
+        "top_key_is_query_rate": float((top_frames == 0).float().mean().item()),
+        "top_key_unique_frame_count": int(torch.unique(top_frames).numel()),
+    }
+
+
+@torch.no_grad()
 def _condition_stage_trace(
     model,
     batch: dict,
@@ -226,6 +303,7 @@ def _condition_stage_trace(
     pose_mlp_scale: float = 1.0,
     temporal_attention_scale: float = 1.0,
     temporal_mlp_scale: float = 1.0,
+    trace_attention_routing: bool = False,
 ) -> dict[str, object]:
     from rigweave.dynamic_rig.sampling import materialize_trackable_surface
 
@@ -289,6 +367,7 @@ def _condition_stage_trace(
         "motion_input_frame0": z[:, 0, anchor_start:],
     }
     slot_count = int(z.shape[2])
+    attention_routing: dict[str, dict[str, float | int]] = {}
     for block_index, block in enumerate(motion_encoder.blocks):
         pose_input = z.reshape(batch_size * frame_count, slot_count, dim)
         pose_output, pose_trace = _trace_pre_norm_encoder_layer(
@@ -311,6 +390,23 @@ def _condition_stage_trace(
         z = temporal_output.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
 
         if block_index == 0:
+            if trace_attention_routing:
+                attention_routing["block_00_pose_inner"] = _pose_attention_routing(
+                    block.pose_inner,
+                    pose_trace["attention_input"],
+                    batch_size=batch_size,
+                    frame_count=frame_count,
+                    slot_count=slot_count,
+                    anchor_start=anchor_start,
+                )
+                attention_routing["block_00_anchor_temporal"] = _temporal_attention_routing(
+                    block.anchor_temporal,
+                    temporal_trace["attention_input"],
+                    batch_size=batch_size,
+                    frame_count=frame_count,
+                    slot_count=slot_count,
+                    anchor_start=anchor_start,
+                )
             for stage_name, value in pose_trace.items():
                 value_4d = value.reshape(
                     batch_size,
@@ -358,6 +454,7 @@ def _condition_stage_trace(
         "condition": decoder_condition,
         "trace_validation": trace_validation,
         "intervention_active": intervention_active,
+        "attention_routing": attention_routing,
     }
 
 
@@ -628,6 +725,7 @@ def main() -> None:
     parser.add_argument("--pose-mlp-scale", type=float, default=1.0)
     parser.add_argument("--temporal-attention-scale", type=float, default=1.0)
     parser.add_argument("--temporal-mlp-scale", type=float, default=1.0)
+    parser.add_argument("--attention-routing", action="store_true")
     parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -639,6 +737,8 @@ def main() -> None:
     )
     if any(float(scale) != 1.0 for scale in intervention_scales) and not args.stage_trace:
         raise ValueError("motion residual interventions require --stage-trace")
+    if args.attention_routing and not args.stage_trace:
+        raise ValueError("--attention-routing requires --stage-trace")
     if args.greedy_prefix_tokens < 0:
         raise ValueError("--greedy-prefix-tokens must be non-negative")
 
@@ -725,6 +825,7 @@ def main() -> None:
                     pose_mlp_scale=args.pose_mlp_scale,
                     temporal_attention_scale=args.temporal_attention_scale,
                     temporal_mlp_scale=args.temporal_mlp_scale,
+                    trace_attention_routing=args.attention_routing,
                 )
                 cond = trace_a["condition"]
             else:
@@ -764,6 +865,7 @@ def main() -> None:
                         pose_mlp_scale=args.pose_mlp_scale,
                         temporal_attention_scale=args.temporal_attention_scale,
                         temporal_mlp_scale=args.temporal_mlp_scale,
+                        trace_attention_routing=args.attention_routing,
                     )
                     paired_cond = trace_b["condition"]
                 else:
@@ -788,12 +890,18 @@ def main() -> None:
                         pose_mlp_scale=args.pose_mlp_scale,
                         temporal_attention_scale=args.temporal_attention_scale,
                         temporal_mlp_scale=args.temporal_mlp_scale,
+                        trace_attention_routing=args.attention_routing,
                     )
                     row["condition_stage_trace"] = {
                         "manual_forward_validation": {
                             "pose_a": trace_a["trace_validation"],
                             "pose_b": trace_b["trace_validation"],
                             "pose_b_shared_references": shared_trace_b["trace_validation"],
+                        },
+                        "attention_routing": {
+                            "pose_a": trace_a["attention_routing"],
+                            "pose_b": trace_b["attention_routing"],
+                            "pose_b_shared_references": shared_trace_b["attention_routing"],
                         },
                         "independent_references": {
                             "reference_match": _reference_pair_report(trace_a["refs"], trace_b["refs"]),
@@ -848,6 +956,7 @@ def main() -> None:
             "pose_mlp_scale": float(args.pose_mlp_scale),
             "temporal_attention_scale": float(args.temporal_attention_scale),
             "temporal_mlp_scale": float(args.temporal_mlp_scale),
+            "attention_routing": bool(args.attention_routing),
             "greedy_prefix_tokens": int(args.greedy_prefix_tokens),
         },
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),

@@ -93,6 +93,25 @@ UniRig 路线同时具备：
 
 训练入口默认启用 `--require-query-preserving-baseline-contract`。任一条件不满足会在构建模型前直接终止，不能再静默启动正式任务。`training_contract.json` 会保存这些 resolved 字段。
 
+## 修复后真实数据 preflight
+
+在 HGC 单张 H100、rootless-v3 HGC manifest 上重新构建随机初始化的完整 24 层模型，得到：
+
+- resolved condition shape 为 `[1, 1024, 1024]`，projection 为 identity，decoder 为 pre-LN；
+- 随机 query 为 frame 8，不是 frame 0；mesh-query 和 target-query 最大绝对误差均为 `0`；
+- 当前 target 与 frame 0 target 的 RMS 差异为 `0.12856`，排除了固定 reset-pose GT；
+- 旋转 query 后 condition relative L2 为 `0.58355`，初始化路径没有条件坍塌；
+- teacher forcing 与逐 token generation 对相同 prefix 检查 32 个位置，max logit difference 为 `0`；
+- 反向传播中 surface、motion、joint-slot embedding、decoder blocks 和 decoder token path 均收到有限的非零梯度；identity projector 本身没有参数，因此该组梯度元素为 0 是预期行为；
+- 没有未分配的可训练参数。
+
+完整 condition/pose/contract audit 与 gradient audit 分开执行，以保持单卡诊断显存有界：
+
+```text
+/home/wangyy/evorig/diagnostics/puppeteer_fixed_contract_full_preflight_20260715
+/home/wangyy/evorig/diagnostics/puppeteer_fixed_contract_gradient_preflight_20260715
+```
+
 ## 尚未被证明的部分
 
 上述实验已经证明旧实现为何学不动、为何会丢掉 mesh/pose 条件，也证明新 contract 能学习并保留 condition 差异；它还没有证明全量自由生成质量已经达标。下一次正式训练仍需用固定失败样本做 greedy generation、拓扑 F1、joint count 和 condition-swap 检查，不能只看 teacher-forcing accuracy。

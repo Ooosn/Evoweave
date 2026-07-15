@@ -126,8 +126,32 @@ def _tensor_pair_report(left: torch.Tensor, right: torch.Tensor) -> dict[str, fl
         ),
     }
     if left_f.ndim >= 3 and int(left_f.shape[-2]) > 1:
+        left_slot_mean = left_f.mean(dim=-2, keepdim=True)
+        right_slot_mean = right_f.mean(dim=-2, keepdim=True)
+        left_centered = left_f - left_slot_mean
+        right_centered = right_f - right_slot_mean
+        left_rms = torch.sqrt(torch.mean(left_f.square())).clamp_min(1.0e-12)
+        right_rms = torch.sqrt(torch.mean(right_f.square())).clamp_min(1.0e-12)
         report["slot_cosine_mean"] = float(
             torch.nn.functional.cosine_similarity(left_f, right_f, dim=-1).mean().item()
+        )
+        report["left_slot_mean_rms"] = float(
+            torch.sqrt(torch.mean(left_slot_mean.square())).item()
+        )
+        report["right_slot_mean_rms"] = float(
+            torch.sqrt(torch.mean(right_slot_mean.square())).item()
+        )
+        report["left_slot_centered_rms"] = float(
+            torch.sqrt(torch.mean(left_centered.square())).item()
+        )
+        report["right_slot_centered_rms"] = float(
+            torch.sqrt(torch.mean(right_centered.square())).item()
+        )
+        report["left_slot_mean_rms_fraction"] = float(
+            (torch.sqrt(torch.mean(left_slot_mean.square())) / left_rms).item()
+        )
+        report["right_slot_mean_rms_fraction"] = float(
+            (torch.sqrt(torch.mean(right_slot_mean.square())) / right_rms).item()
         )
     return report
 
@@ -358,6 +382,74 @@ def _paired_pose_response(
     )
     probs_a = torch.softmax(shared_a, dim=-1)
     probs_b = torch.softmax(shared_b, dim=-1)
+    condition_position_rel_l2 = torch.linalg.vector_norm(shared_diff, dim=-1) / (
+        0.5
+        * (
+            torch.linalg.vector_norm(shared_a, dim=-1)
+            + torch.linalg.vector_norm(shared_b, dim=-1)
+        )
+    ).clamp_min(1.0e-12)
+    condition_position_probability_l1 = (probs_a - probs_b).abs().sum(dim=-1)
+    valid_labels = token_batch_a.labels.to(logits_aa.device)[valid]
+    valid_roles = token_batch_a.token_role.to(logits_aa.device)[valid]
+    role_names = ("x", "y", "z", "parent")
+    condition_swap_by_role = {}
+    for role_offset, role_name in enumerate(role_names):
+        role_mask = valid_roles == tokenizer.offset + role_offset
+        if bool(role_mask.any()):
+            condition_swap_by_role[role_name] = {
+                "positions": int(role_mask.sum().item()),
+                "relative_l2_mean": float(condition_position_rel_l2[role_mask].mean().item()),
+                "probability_l1_mean": float(
+                    condition_position_probability_l1[role_mask].mean().item()
+                ),
+                "argmax_change_rate": float(
+                    (
+                        shared_a[role_mask].argmax(dim=-1)
+                        != shared_b[role_mask].argmax(dim=-1)
+                    )
+                    .float()
+                    .mean()
+                    .item()
+                ),
+            }
+    eos_mask = valid_labels == tokenizer.eos_token_id
+    if bool(eos_mask.any()):
+        condition_swap_by_role["eos"] = {
+            "positions": int(eos_mask.sum().item()),
+            "relative_l2_mean": float(condition_position_rel_l2[eos_mask].mean().item()),
+            "probability_l1_mean": float(
+                condition_position_probability_l1[eos_mask].mean().item()
+            ),
+            "argmax_change_rate": float(
+                (shared_a[eos_mask].argmax(dim=-1) != shared_b[eos_mask].argmax(dim=-1))
+                .float()
+                .mean()
+                .item()
+            ),
+        }
+    first_condition_swap_positions = []
+    for position in range(min(12, int(shared_a.shape[0]))):
+        role_value = int(valid_roles[position].item())
+        if tokenizer.offset <= role_value < tokenizer.offset + len(role_names):
+            role_name = role_names[role_value - tokenizer.offset]
+        elif int(valid_labels[position].item()) == tokenizer.eos_token_id:
+            role_name = "eos"
+        else:
+            role_name = "other"
+        first_condition_swap_positions.append(
+            {
+                "position": position,
+                "joint_index": position // tokenizer.bone_per_token,
+                "role": role_name,
+                "target_id": int(valid_labels[position].item()),
+                "relative_l2": float(condition_position_rel_l2[position].item()),
+                "probability_l1": float(condition_position_probability_l1[position].item()),
+                "argmax_changed": bool(
+                    shared_a[position].argmax().item() != shared_b[position].argmax().item()
+                ),
+            }
+        )
 
     input_a = token_batch_a.input_ids.to(logits_aa.device)
     input_b = token_batch_b.input_ids.to(logits_aa.device)
@@ -429,6 +521,8 @@ def _paired_pose_response(
             (shared_a.argmax(dim=-1) != shared_b.argmax(dim=-1)).float().mean().item()
         ),
         "shared_prefix_probability_l1_mean": float((probs_a - probs_b).abs().sum(dim=-1).mean().item()),
+        "condition_swap_by_target_role": condition_swap_by_role,
+        "first_condition_swap_positions": first_condition_swap_positions,
         "prefix_diverged_prediction_positions": int(prefix_mask.sum().item()),
         "same_condition_prefix_logit_rel_l2": float(
             (torch.linalg.vector_norm(prefix_delta) / prefix_scale.clamp_min(1.0e-12)).item()
@@ -528,6 +622,8 @@ def main() -> None:
         )
     continuous_range = _puppeteer_metric_range(tokenizer)
     rows = []
+    condition_a_cache: list[tuple[str, torch.Tensor]] = []
+    condition_b_cache: list[tuple[str, torch.Tensor]] = []
     model.eval()
     with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device.type == "cuda"):
         paired_iter = iter(paired_loader) if paired_loader is not None else None
@@ -541,6 +637,7 @@ def main() -> None:
                 cond = trace_a["condition"]
             else:
                 cond = _condition_with_seed(model, batch, args.surface_seed + idx)
+            condition_a_cache.append((batch["path"][0], cond.detach().cpu()))
             forced_ids, forced_stats = _forced_argmax_ids(model, batch, cond=cond)
             try:
                 forced_pred = _decode_generated_ids(tokenizer, forced_ids)
@@ -567,6 +664,7 @@ def main() -> None:
                     paired_cond = trace_b["condition"]
                 else:
                     paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
+                condition_b_cache.append((paired_batch["path"][0], paired_cond.detach().cpu()))
                 row["pose_seed_b"] = int(args.pose_seed_b)
                 row["paired_pose_response"] = _paired_pose_response(
                     model,
@@ -600,9 +698,31 @@ def main() -> None:
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    same_asset_pose_pairs = []
+    for (path_a, cond_a), (path_b, cond_b) in zip(condition_a_cache, condition_b_cache):
+        if path_a != path_b:
+            raise ValueError(f"condition cache paths differ: {path_a} vs {path_b}")
+        same_asset_pose_pairs.append({"path": path_a, **_tensor_pair_report(cond_a, cond_b)})
+    different_asset_pairs = []
+    for left_index in range(len(condition_a_cache)):
+        for right_index in range(left_index + 1, len(condition_a_cache)):
+            left_path, left_cond = condition_a_cache[left_index]
+            right_path, right_cond = condition_a_cache[right_index]
+            different_asset_pairs.append(
+                {
+                    "left_path": left_path,
+                    "right_path": right_path,
+                    **_tensor_pair_report(left_cond, right_cond),
+                }
+            )
+
     report = {
         "checkpoint": str(args.checkpoint),
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
+        "condition_separation": {
+            "same_asset_different_pose": same_asset_pose_pairs,
+            "different_asset_pose_a": different_asset_pairs,
+        },
         "rows": rows,
     }
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

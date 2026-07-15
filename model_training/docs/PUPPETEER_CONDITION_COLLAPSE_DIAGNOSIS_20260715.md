@@ -1,93 +1,153 @@
 # Puppeteer 条件坍塌诊断
 
-状态：2026-07-15 已在 HGC 单张 H100 上完成因果验证。
+状态：2026-07-15 已在 HGC 单张 H100 上完成分层追踪、对照实验与因果旁路。
 
-## 结论
+## 最终结论
 
-此前 Puppeteer 路线生成固定错误姿态，不是 GT 读成 reset pose，也不是训练与生成代码错位。直接原因是：
+此前 Puppeteer 路线会为不同 query pose，甚至不同 mesh，生成同一套完整但错误的骨架。根因不在 GT 读取、FPS、Puppeteer 预训练权重或训练/生成位置对齐，而在当前 Evoweave motion encoder 的联合训练方式：
 
-1. 可训练的 motion conditioner 把同一资产的不同 pose 编码成近乎相同的条件 token，主要保留资产身份，丢掉 pose。
-2. 标准 teacher forcing 会把当前 GT pose 的历史坐标 token 放进前缀。
-3. decoder 因而可以忽略 condition，改从 GT 前缀恢复后续 pose。
-4. 自由生成没有 GT 前缀，只能从一个模态/模板姿态开始，随后自洽地生成整套错误骨架。
+1. 输入的 1024 个 surface tokens 原本包含清楚的 anchor、mesh 和 pose 差异。
+2. 每层 `pose_inner` attention 允许一帧内所有 anchors 全连接。该分支天然产生一个会广播给所有 anchors 的全局 pooled 分量。
+3. 纯 teacher-forcing CE 允许 decoder 从 GT 坐标前缀恢复 pose，因而没有要求 condition 保留 query geometry。
+4. 联合训练把 `pose_inner` attention 的公共方向选择性放大。block 0 的 `out_proj` 对公共分量的实际增益从初始化时约 `0.57x` 变为约 `3.89x`，对局部分量只有约 `1.55x`。
+5. 这个公共向量在 12 层 pre-LN 残差流中反复相加，MLP 再进一步放大。最终残差 RMS 约为 `687`，而 pose 差异绝对 RMS 仍只有约 `3`。
+6. 最后的 LayerNorm 把巨大公共向量归一化，得到几乎相同的 1024 个 condition tokens。多数不同 pose 和不同 mesh 都被映射到同一个近常量 soft prompt。
+7. teacher forcing 下，decoder 仍可依靠 GT 历史 token 降低损失；自由生成没有 GT 历史，只能从这个通用 prompt 生成一个模板姿态，再自洽地延续成整套错误骨架。
 
-这是一条经干预验证的因果链，不是根据低 F1 做出的猜测。
+因此，这不是“模型学得不够好”，而是当前目标函数允许、当前 motion encoder 结构又放大的条件不可辨识性。继续增加训练步数会让坍塌更严重。
 
 ## 定义
 
-- **query pose**：一次数据读取随机选择的目标帧。输入 mesh 和监督骨架都来自这同一帧。
-- **condition tokens**：surface tokenizer 和 motion encoder 输出的 1024 个、送入 AR decoder 的条件向量。
-- **teacher-forcing prefix**：训练时，在预测当前位置 token 前喂给 decoder 的 GT 历史 skeleton token。
-- **free generation**：推理时只从 BOS 开始，后续前缀全部由模型自己的预测组成。
-- **condition collapse**：不同 query pose 对应的 condition tokens 在数值上趋于相同，无法再可靠区分姿态。
-- **condition swap**：保持同一 GT 前缀，只把 pose A 的 condition 换成 pose B，用于测 condition 对 logits 的真实影响。
-- **prefix swap**：保持同一 condition，只把 teacher-forcing 前缀换成另一个 pose，用于测 GT 前缀泄露了多少 pose 信息。
+- **query pose**：一次数据读取随机选择的目标帧。输入 mesh 和监督骨架来自同一帧。
+- **surface tokens**：surface tokenizer 对 query/evidence meshes 产生的逐 anchor 连续向量。
+- **condition tokens**：motion encoder 输出并送入 AR decoder 的 1024 个连续向量。
+- **slot 公共分量**：一个样本的 1024 个 token 在 slot 维求均值后得到的向量。其 RMS 占总 RMS 的比例接近 1，表示各 slot 几乎相同。
+- **teacher-forcing prefix**：预测当前位置时提供给 decoder 的 GT 历史 skeleton tokens。
+- **condition swap**：保持同一个 GT prefix，只交换 pose A/B 的 condition，用来隔离 condition 对 logits 的影响。
+- **prefix swap**：保持 condition 不变，只替换 GT prefix，用来测量 decoder 对 GT 历史的依赖。
+- **残差旁路**：不改 checkpoint，只在推理时把指定 attention/MLP 的更新量乘 0，用来验证该支路是否是信息擦除的原因。
 
 ## 已排除项
 
-- 输入 mesh 与 target skeleton 使用相同的随机 query frame；不存在固定用 reset-pose GT 的读取错误。
-- teacher forcing 与逐 token generation 在相同前缀上的 logits 已对齐；不是训练/推理位置偏移。
-- pre-LN 的随机初始化 decoder 能拟合，说明不是必须依赖 Puppeteer 预训练权重。
-- joint-slot / target-aware embedding 不是这次固定错误姿态的根因。
-- 单纯增加训练步数不能解决；可训练 conditioner 的 pose collapse 会随训练加重。
+- 输入 mesh 与 target skeleton 使用同一个随机 query frame，不存在固定读取 reset-pose GT。
+- 两种 pose 的 query mesh、target joints 和离散 GT tokens 都实际发生变化。
+- 强制两种 pose 使用完全相同的 vertex/face/barycentric/FPS references 后，坍塌仍存在，因此不是采样差异导致。
+- teacher forcing 与逐 token generation 在相同 prefix 上的 logits 对齐，不是位置偏移或 token shift 错误。
+- surface tokenizer 输出在坍塌前能区分 pose 和 mesh。
+- 同一随机初始化 decoder 配冻结 conditioner 可以学习并生成 pose-sensitive 结果，因此不是必须依赖 Puppeteer 预训练权重。
+- joint-slot/target-aware embedding 不是这次固定模板故障的根因。
+- learned role/register tokens 不是主要劫持源。训练后 block 0 的 pose-inner anchor queries 约 `95.4%` attention mass 仍落在真实 anchors，register 约 `4.6%`。
 
-## 对照实验
+## 信息在哪里第一次丢失
 
-共同设置：32 个 train 资产、8 个 valid 资产、随机 query pose、identity-1024 条件、随机初始化 24 层 pre-LN decoder、batch size 1。唯一主要变量是 conditioner 是否训练。
+4 个训练资产、pose seeds 101/202 的分层中位数：
 
-| 指标（8 个成对 pose 的中位数） | conditioner 可训练 step1000 | conditioner 可训练 step5000 | conditioner 冻结 step1000 | conditioner 冻结 step3000 |
-|---|---:|---:|---:|---:|
-| condition 相对 L2 | 0.0191 | 0.00490 | 1.247 | 1.251 |
-| condition cosine | 0.9998 | 0.99999 | 0.222 | 0.218 |
-| condition swap 的 logit 相对 L2 | 0.000725 | 0.00142 | 0.0528 | 0.0874 |
-| prefix swap 的 logit 相对 L2 | 0.0289 | 0.145 | 0.0339 | 0.0896 |
-| condition/prefix logit 影响比 | 0.0245 | 0.0108 | 1.43 | 0.866 |
-| condition swap 的 argmax 变化率 | 0% | 0% | 12.9% | 18.6% |
+| 阶段 | 左侧 RMS | pose 相对 L2 |
+|---|---:|---:|
+| raw surface tokens | 1.689 | 1.311 |
+| trainable step1000, block 0 | 6.349 | 0.534 |
+| trainable step1000, block 11 | 166.325 | 0.0206 |
+| trainable step5000, block 0 | 23.228 | 0.151 |
+| trainable step5000, block 11 | 686.959 | 0.00536 |
+| trainable step5000, final condition | 1.008 | 0.00505 |
+| frozen step3000, block 11 | 2.455 | 1.230 |
+| frozen step3000, final condition | 0.996 | 1.233 |
 
-可训练路线到 step5000 时，GT token 在两个 pose 间改变 32% 到 63%，但 7/8 资产的 condition 几乎完全相同。相同 GT 前缀下替换 condition，decoder argmax 基本不变；替换 GT pose 前缀则会改变约 28% 的 argmax。
+step1000 已经开始坍塌；step5000 时 block 0 就丢掉大部分相对差异。最终 LayerNorm 只把绝对尺度恢复到约 1，不会恢复已经被公共方向淹没的信息。
 
-冻结 conditioner 后，condition 与 GT prefix 对 logits 的影响恢复到同一量级，证明不是 decoder 天生无法使用 pose，而是联合训练找到了 teacher-forcing shortcut。
+### block 0 子层
 
-## 自由生成证据
+| 子层更新 | 冻结 RMS | 可训练 step5000 RMS | 可训练输出的 slot 公共占比 |
+|---|---:|---:|---:|
+| pose-inner attention delta | 0.134 | 3.10 | 0.977 |
+| pose-inner MLP delta | 0.198 | 13.34 | 0.994 |
+| anchor-temporal attention delta | 0.378 | 2.96 | 0.996 |
+| anchor-temporal MLP delta | 0.195 | 5.93 | 0.9997 |
 
-可训练 conditioner：
+参数整体 RMS 只改变约 10%，所以不能把它描述成普通的权重数值爆炸。真正变化是投影矩阵与全局 pooled 特征方向对齐：
 
-- step1000 与 step5000 的前 4 个 train 资产，在两种明显不同 pose 下，4/4 生成 token 序列完全相同。
-- step5000 的两个大骨架都退化为同一棵 4-joint 树。
+- `V projection` RMS 只增加约 `1.4x`；
+- attention 加权后的 pre-out RMS 增加约 `4.1x`；
+- `out_proj` 后 attention 输出 RMS 增加约 `26.5x`；
+- `out_proj` 对公共分量的实际增益约为 `3.89x`，对局部分量约为 `1.55x`；
+- 冻结初始化时两者都约为 `0.57x`。
 
-冻结 conditioner，step3000：
+## 不只是 pose 坍塌
 
-- 前 4 个 train 资产 joint 数全部正确，全部正常 EOS，0 hitmax。
-- 两种 pose 的平均 topology F1 为 0.75/0.80，平均 J2J 约 0.024。
-- 3/4 资产的生成 token 随 pose 改变；剩余资产的两帧本身只有 1/4 joint 变化。
-- 8/8 valid 资产的生成 token 都随 pose 改变，全部正常 EOS，0 hitmax。
-- valid 平均 topology F1 仍只有 0.12/0.16，且常过生成 joint；这是只训练 32 个资产的泛化限制，不能把该消融当成最终模型质量。
+step5000 的 4 个资产中：
 
-## 修复边界
+- 同一资产不同 pose 的 condition 相对 L2 为 `0.0042, 0.0058, 0.5859, 0.0043`；
+- 不同资产之间为 `0.0047` 到 `0.6637`；
+- 资产 0、1、3 之间只有约 `0.005`，与它们各自的 pose 差异同量级；
+- 资产 2 是唯一保持差异的离群样本。
 
-`freeze_conditioner` 是根因消融和可用的阶段一训练方式，但不是最终“全量微调”方案。它证明了保留 pose condition 可以消除固定姿态故障；它没有证明应该永久冻结一个随机 motion encoder。
+最终 condition 的 slot 公共分量占比为 `0.999993`，slot-centered RMS 只有约 `0.0037`。这直接解释了为什么一个 mesh 会得到另一个 mesh 的完整骨架：多数 mesh 在进入 decoder 前已经变成同一个条件。
 
-正式全量微调至少需要同时满足：
+冻结 conditioner 的严格对照中：
 
-1. condition tokens 必须有直接的 query-geometry 保真约束，例如逐 anchor 重建当前 query point，或不可被 motion encoder 抹掉的几何 skip。
-2. decoder 不能只在泄露完整 GT pose 的坐标前缀上学习；需要让一部分训练状态使用模型坐标前缀，同时保持合法 tree/topology contract。
-3. 训练期间必须持续运行 paired-pose audit。若 condition cosine 再次接近 1，或 condition swap 的 argmax 变化回到 0，应立即判定路线失败，而不是继续烧卡。
+- 同一资产不同 pose 的 condition 距离为 `1.21` 到 `1.26`；
+- 不同资产距离为 `1.30` 到 `1.32`；
+- 最终 slot 公共分量占比约 `0.45`，局部 anchor 结构仍存在。
 
-在上述约束落地前，不应再次提交“conditioner 全量可训练 + 纯 teacher forcing”的正式 Puppeteer 任务。
+两组使用同一 seed、同一 motion encoder 初始化、同一数据和同一随机 decoder；唯一主要变量是 motion encoder 是否接收梯度。
+
+## 分支因果旁路
+
+在坏 checkpoint 上不重新训练，只旁路残差更新：
+
+| 保留的 motion 分支 | 同资产 pose 距离 | 不同资产距离 | slot 公共占比 |
+|---|---:|---:|---:|
+| 原模型全部分支 | 约 0.005 | 多数约 0.005 | 0.999993 |
+| 只保留 pose-inner attention | 0.0104/0.0109 | 0.0127 | 0.999973 |
+| 只保留 anchor-temporal attention | 1.342/1.397 | 1.382 | 0.24 到 0.31 |
+| 只保留 MLP，旁路全部 attention | 0.419/0.386 | 0.389 | 约 0.96 |
+| 全部 motion 更新旁路 | 1.27 到 1.33 | 1.35 到 1.37 | 约 0.35 |
+
+所以首要擦除器已经定位为 `pose_inner` attention；MLP 会放大坍塌，但不是唯一来源。全旁路后，前两个明显运动样本的前 8 个 greedy tokens 也重新随 pose 变化，说明该支路与固定生成之间存在直接因果关系。坏 decoder 只在坍塌条件上训练过，因此旁路 checkpoint 本身不会立刻变成高质量最终模型。
+
+## teacher forcing 为什么允许它发生
+
+每个 joint 被序列化为 `(x, y, z, parent_index)`。训练时预测当前 token 会看到此前所有 GT tokens。除最早的少数坐标外，大部分位置都能从已经提供的同一 pose 坐标前缀恢复后续姿态。
+
+在可训练 step5000 checkpoint 上：
+
+- condition swap 的 argmax 变化率为 0%；
+- prefix swap 会在明显运动样本上改变约 20% 到 37% 的 argmax；
+- condition/prefix logit 影响比通常只有 `0.006` 到 `0.012`。
+
+冻结 conditioner 后，condition/prefix 影响比恢复到约 `0.72` 到 `1.32`，condition swap 能改变 logits 和部分 argmax。decoder 并非结构上无法使用 condition；联合训练只是找到了更容易的 GT-prefix shortcut。
+
+## 为什么 UniRig 路线没有同样退化
+
+差异不是“用了哪个预训练权重”这么简单。UniRig 路线的静态 mesh-to-skeleton 条件语义已经被其训练路径固定；当前 Puppeteer 试验则让随机 decoder 与一个没有保真约束的 12 层 motion encoder 同时自由协同。在纯 CE 下，中间 condition 没有唯一语义，二者可以共同退化为“通用 soft prompt + GT prefix”。
+
+冻结随机 conditioner 的对照仍能学习，说明 Puppeteer decoder 不依赖某个神奇预训练初始化。真正缺失的是联合训练时对 query geometry 和 condition 使用方式的约束。
+
+## 修复要求
+
+下一版不能只改学习率、增加训练步数或永久冻结 conditioner。需要同时阻断编码器擦除和 decoder 逃逸：
+
+1. **query-preserving path**：最终 condition 必须包含一条 motion encoder 无法覆盖的 query surface token 路径。可以采用逐 anchor query skip，再以有界 gate 融入 motion context。
+2. **pose-inner LayerScale**：`pose_inner` attention/MLP 的残差更新需要小尺度初始化和有界控制，防止全局 pooled 方向在 pre-LN 残差流中无限累积。
+3. **matched-vs-swapped condition loss**：从同一序列取两个 query poses。固定 pose A 的同一个 GT prefix，分别输入 condition A/B，只在真实发生变化的 coordinate positions 上要求 matched condition 的目标似然高于 swapped condition。这样直接监督“condition 必须解释 pose”，不会把错误坐标前缀强绑到 GT tree。
+4. **训练中硬审计**：持续记录 slot-centered RMS、同资产 paired-pose condition L2、不同资产 condition L2、condition-swap logits/argmax。任何一项重新接近坍塌值都应终止任务。
+5. **顺序**：先证明 condition 保真和 condition usage，再讨论 oracle/model-prefix rollout。否则 rollout loss 只是在已经不可辨识的 condition 上增加另一层变量。
+
+在上述四项至少完成 query-preserving path、condition-swap supervision 和在线审计前，不应再次提交“motion encoder 全量可训练 + 纯 teacher forcing”的正式任务。
 
 ## 证据位置
 
-HGC：
+HGC checkpoints：
 
 ```text
 /home/wangyy/evorig/diagnostics/puppeteer_hgc_identity1024_preln_motion_decoder_32asset_5000step_6dd6d30
 /home/wangyy/evorig/diagnostics/puppeteer_hgc_identity1024_preln_frozen_conditioner_32asset_3000step_1bd9785
 ```
 
-本地可视化与 JSON：
+HGC causal traces：
 
 ```text
-D:\evoweave\outputs\puppeteer_hgc_oneh100_20260715
+/home/wangyy/evorig/diagnostics/puppeteer_condition_stage_trace_20260715
 ```
 
 诊断实现：

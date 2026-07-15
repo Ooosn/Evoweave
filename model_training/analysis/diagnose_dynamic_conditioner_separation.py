@@ -260,7 +260,7 @@ def main() -> None:
     dataset_kwargs = {
         "frame_count": int(train_args.get("frames", 24)),
         "limit": max(int(args.index), int(args.other_index)) + 1,
-        "random_query": True,
+        "random_query": False,
         "motion_fps_ratio": float(train_args.get("motion_fps_ratio", 0.7)),
         "motion_vertex_samples": int(train_args.get("motion_vertex_samples", 512)),
         "max_joints": int(train_args.get("n_max_joints", 101)),

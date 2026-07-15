@@ -103,6 +103,120 @@ def _condition_with_seed(model, batch: dict, seed: int) -> torch.Tensor:
     return model._condition_embeds_from_raw(raw)
 
 
+def _tensor_pair_report(left: torch.Tensor, right: torch.Tensor) -> dict[str, float | list[int]]:
+    left_f = left.float()
+    right_f = right.float()
+    if left_f.shape != right_f.shape:
+        raise ValueError(f"stage tensor shapes differ: {tuple(left_f.shape)} vs {tuple(right_f.shape)}")
+    diff = left_f - right_f
+    left_norm = torch.linalg.vector_norm(left_f)
+    right_norm = torch.linalg.vector_norm(right_f)
+    scale = 0.5 * (left_norm + right_norm)
+    report: dict[str, float | list[int]] = {
+        "shape": list(left_f.shape),
+        "left_rms": float(torch.sqrt(torch.mean(left_f.square())).item()),
+        "right_rms": float(torch.sqrt(torch.mean(right_f.square())).item()),
+        "diff_rms": float(torch.sqrt(torch.mean(diff.square())).item()),
+        "diff_max_abs": float(diff.abs().max().item()),
+        "relative_l2": float((torch.linalg.vector_norm(diff) / scale.clamp_min(1.0e-12)).item()),
+        "cosine": float(
+            torch.nn.functional.cosine_similarity(
+                left_f.reshape(1, -1), right_f.reshape(1, -1), dim=-1
+            )[0].item()
+        ),
+    }
+    if left_f.ndim >= 3 and int(left_f.shape[-2]) > 1:
+        report["slot_cosine_mean"] = float(
+            torch.nn.functional.cosine_similarity(left_f, right_f, dim=-1).mean().item()
+        )
+    return report
+
+
+@torch.no_grad()
+def _condition_stage_trace(
+    model,
+    batch: dict,
+    seed: int,
+    *,
+    refs=None,
+) -> dict[str, object]:
+    from rigweave.dynamic_rig.sampling import materialize_trackable_surface
+
+    device = batch["frame_vertices"].device
+    if refs is None:
+        generator = torch.Generator(device=device)
+        generator.manual_seed(int(seed))
+        refs = model.sample_references(batch, generator=generator)
+
+    frame_tokens = []
+    frame_query_points = []
+    for frame_index in range(int(batch["frame_vertices"].shape[1])):
+        vertex_normals = batch.get("vertex_normals")
+        face_normals = batch.get("face_normals")
+        samples = materialize_trackable_surface(
+            batch["frame_vertices"][:, frame_index],
+            batch["faces"],
+            refs,
+            vertex_normals=None if vertex_normals is None else vertex_normals[:, frame_index],
+            face_normals=None if face_normals is None else face_normals[:, frame_index],
+        )
+        frame_tokens.append(
+            model.conditioner.surface_tokenizer(
+                samples.dense_points,
+                samples.dense_normals,
+                samples.query_points,
+                samples.query_normals,
+            )
+        )
+        frame_query_points.append(samples.query_points)
+
+    surface_sequence = torch.stack(frame_tokens, dim=1)
+    query_sequence = torch.stack(frame_query_points, dim=1)
+    motion_encoder = model.conditioner.motion_encoder
+    anchor_start = 1 + int(motion_encoder.register_tokens)
+    block_outputs: list[torch.Tensor] = []
+    handles = []
+
+    def capture_block(_module, _inputs, output):
+        block_outputs.append(output[:, 0, anchor_start:].detach())
+
+    for block in motion_encoder.blocks:
+        handles.append(block.register_forward_hook(capture_block))
+    try:
+        motion_output = motion_encoder(surface_sequence, query_points=query_sequence)
+    finally:
+        for handle in handles:
+            handle.remove()
+
+    projected = model.prefix_projector(motion_output)
+    decoder_condition = model._condition_embeds_from_raw(projected)
+    stages: dict[str, torch.Tensor] = {
+        "query_points_frame0": query_sequence[:, 0],
+        "surface_tokens_frame0": surface_sequence[:, 0],
+    }
+    for block_index, output in enumerate(block_outputs):
+        stages[f"motion_block_{block_index:02d}_frame0"] = output
+    stages["motion_output_frame0"] = motion_output
+    stages["projected_condition"] = projected
+    stages["decoder_condition"] = decoder_condition
+    return {"refs": refs, "stages": stages, "condition": decoder_condition}
+
+
+def _reference_pair_report(left, right) -> dict[str, float]:
+    return {
+        "vertex_index_match_rate": float((left.vertex_indices == right.vertex_indices).float().mean().item()),
+        "face_index_match_rate": float((left.face_indices == right.face_indices).float().mean().item()),
+        "query_index_match_rate": float((left.query_indices == right.query_indices).float().mean().item()),
+        "barycentric_rms": float(torch.sqrt(torch.mean((left.barycentric - right.barycentric).float().square())).item()),
+    }
+
+
+def _stage_pair_report(left: dict[str, torch.Tensor], right: dict[str, torch.Tensor]) -> dict[str, object]:
+    if left.keys() != right.keys():
+        raise ValueError(f"stage trace keys differ: {left.keys()} vs {right.keys()}")
+    return {name: _tensor_pair_report(left[name], right[name]) for name in left}
+
+
 def _target_ids(model, batch: dict) -> torch.Tensor:
     token_batch = model._make_token_batch(batch, batch["target_joints"].device)
     labels = token_batch.labels[0]
@@ -253,6 +367,7 @@ def main() -> None:
     parser.add_argument("--pose-seed-a", type=int, default=None)
     parser.add_argument("--pose-seed-b", type=int, default=None)
     parser.add_argument("--surface-seed", type=int, default=20260715)
+    parser.add_argument("--stage-trace", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -327,7 +442,12 @@ def main() -> None:
             batch = _move_batch(batch, device)
             paired_batch = None if paired_iter is None else _move_batch(next(paired_iter), device)
             target = _target_namespace(batch)
-            cond = _condition_with_seed(model, batch, args.surface_seed + idx)
+            trace_a = None
+            if args.stage_trace:
+                trace_a = _condition_stage_trace(model, batch, args.surface_seed + idx)
+                cond = trace_a["condition"]
+            else:
+                cond = _condition_with_seed(model, batch, args.surface_seed + idx)
             forced_ids, forced_stats = _forced_argmax_ids(model, batch, cond=cond)
             try:
                 forced_pred = _decode_generated_ids(tokenizer, forced_ids)
@@ -345,9 +465,15 @@ def main() -> None:
                     "forced_topology_f1": forced_metrics.get("topology", {}).get("edge_f1"),
                     "forced_joint_chamfer_mean": forced_metrics.get("joint_chamfer", {}).get("mean"),
                     **sens,
-                }
+            }
             if paired_batch is not None:
-                paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
+                trace_b = None
+                if args.stage_trace:
+                    assert trace_a is not None
+                    trace_b = _condition_stage_trace(model, paired_batch, args.surface_seed + idx)
+                    paired_cond = trace_b["condition"]
+                else:
+                    paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
                 row["pose_seed_b"] = int(args.pose_seed_b)
                 row["paired_pose_response"] = _paired_pose_response(
                     model,
@@ -356,6 +482,23 @@ def main() -> None:
                     cond_a=cond,
                     cond_b=paired_cond,
                 )
+                if args.stage_trace:
+                    assert trace_a is not None and trace_b is not None
+                    shared_trace_b = _condition_stage_trace(
+                        model,
+                        paired_batch,
+                        args.surface_seed + idx,
+                        refs=trace_a["refs"],
+                    )
+                    row["condition_stage_trace"] = {
+                        "independent_references": {
+                            "reference_match": _reference_pair_report(trace_a["refs"], trace_b["refs"]),
+                            "stages": _stage_pair_report(trace_a["stages"], trace_b["stages"]),
+                        },
+                        "shared_pose_a_references": {
+                            "stages": _stage_pair_report(trace_a["stages"], shared_trace_b["stages"]),
+                        },
+                    }
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)

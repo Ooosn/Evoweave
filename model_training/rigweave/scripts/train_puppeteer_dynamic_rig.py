@@ -745,6 +745,11 @@ def main() -> None:
         )
 
         if args.preflight_only:
+            def release_preflight_memory() -> None:
+                trim_host_allocator()
+                if device.type == "cuda":
+                    torch.cuda.empty_cache()
+
             batch = next(iter(train_loader))
             batch = move_batch(batch, device)
             preflight_audit: dict[str, Any] = {}
@@ -775,10 +780,17 @@ def main() -> None:
                 ):
                     preflight_audit["condition_path"] = condition_path_audit(model, batch)
                 log(rank, "preflight condition path=" + json.dumps(preflight_audit["condition_path"], sort_keys=True))
+                release_preflight_memory()
             if args.preflight_forward:
-                with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=device.type == "cuda" and amp_dtype != torch.float32):
+                with torch.no_grad(), torch.autocast(
+                    device_type="cuda",
+                    dtype=amp_dtype,
+                    enabled=device.type == "cuda" and amp_dtype != torch.float32,
+                ):
                     out = model(batch)
                 log(rank, f"preflight forward loss={float(out['loss'].detach().cpu()):.6f}")
+                del out
+                release_preflight_memory()
             if args.preflight_contract_sanity:
                 if int(batch["frame_vertices"].shape[0]) != 1:
                     raise ValueError("--preflight-contract-sanity requires --batch-size 1")
@@ -790,7 +802,9 @@ def main() -> None:
                 log(rank, "preflight contract sanity=" + json.dumps(sanity, sort_keys=True))
                 if int(sanity["checked_positions"]) <= 0 or float(sanity["max_abs_logit_diff"]) > float(args.preflight_contract_max_diff):
                     raise RuntimeError(f"teacher-forcing/generation logits are not aligned: {sanity}")
+                release_preflight_memory()
             if args.preflight_gradient_audit:
+                release_preflight_memory()
                 was_training = model.training
                 model.train()
                 torch.manual_seed(args.seed + 991)

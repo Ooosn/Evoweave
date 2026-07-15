@@ -162,3 +162,14 @@ JOB_NPROC=4 JOB_BATCH_SIZE=3 JOB_GRAD_ACCUM=4
 Resource selection is operational policy rather than part of the model
 contract. Follow the current Westlake/HGC workflow instructions and do not
 encode resource-group fallbacks in this launcher.
+
+The same launcher can run in an already allocated HGC shell by overriding the
+environment bootstrap without changing the model profile:
+
+```text
+JOB_CONDA_SH=/home/wangyy/miniconda3/etc/profile.d/conda.sh
+JOB_CONDA_ENV=mygs
+```
+
+Set `RIGWEAVE_NO_SAVE_OPTIMIZER=1` for checkpoint-only training runs where
+resumption with optimizer state is not required.

@@ -10,9 +10,15 @@ MANIFEST_ROOT="${EVOWEAVE_MANIFEST_ROOT:-${EVOWEAVE_ROOTLESS_ROOT:-/ssdwork/liuh
 RUN_NAME="${JOB_RUN_NAME:-rootless_puppeteer_motion_fullft_20260707}"
 OUTPUT_BASE="${EVOWEAVE_MODEL_OUTPUT_BASE:-/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs}"
 
-source /opt/conda/etc/profile.d/conda.sh
+CONDA_SH="${JOB_CONDA_SH:-/opt/conda/etc/profile.d/conda.sh}"
+CONDA_ENV="${JOB_CONDA_ENV:-evoweave}"
+if [[ ! -f "${CONDA_SH}" ]]; then
+  echo "[puppeteer baseline] ERROR: conda initialization script does not exist: ${CONDA_SH}" >&2
+  exit 2
+fi
+source "${CONDA_SH}"
 set +u
-conda activate evoweave
+conda activate "${CONDA_ENV}"
 set -u
 
 cd "${MODEL_ROOT}"
@@ -178,6 +184,9 @@ if [[ "${RIGWEAVE_MOTION_CHECKPOINTING:-1}" == "1" ]]; then
 fi
 if [[ "${RIGWEAVE_DECODER_CHECKPOINTING:-0}" == "1" ]]; then
   CMD+=(--decoder-checkpointing)
+fi
+if [[ "${RIGWEAVE_NO_SAVE_OPTIMIZER:-0}" == "1" ]]; then
+  CMD+=(--no-save-optimizer)
 fi
 if [[ "${RIGWEAVE_PREFLIGHT_ONLY:-0}" == "1" ]]; then
   CMD+=(--preflight-only)

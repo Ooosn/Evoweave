@@ -216,6 +216,21 @@ def _trace_pre_norm_encoder_layer(
 
 
 @torch.no_grad()
+def _slot_structure(tensor: torch.Tensor) -> dict[str, float]:
+    value = tensor.float()
+    slot_mean = value.mean(dim=-2, keepdim=True)
+    centered = value - slot_mean
+    rms = torch.sqrt(torch.mean(value.square())).clamp_min(1.0e-12)
+    mean_rms = torch.sqrt(torch.mean(slot_mean.square()))
+    return {
+        "rms": float(rms.item()),
+        "slot_mean_rms": float(mean_rms.item()),
+        "slot_centered_rms": float(torch.sqrt(torch.mean(centered.square())).item()),
+        "slot_mean_rms_fraction": float((mean_rms / rms).item()),
+    }
+
+
+@torch.no_grad()
 def _pose_attention_routing(
     layer: torch.nn.TransformerEncoderLayer,
     attention_input: torch.Tensor,
@@ -241,7 +256,29 @@ def _pose_attention_routing(
     top_keys = anchor_rows.argmax(dim=-1)
     anchor_square = anchor_rows[..., anchor_start:]
     self_mass = anchor_square.diagonal(dim1=-2, dim2=-1)
-    return {
+    embed_dim = int(frame0.shape[-1])
+    head_count = int(weights.shape[1])
+    head_dim = embed_dim // head_count
+    in_proj_bias = layer.self_attn.in_proj_bias
+    value_bias = None if in_proj_bias is None else in_proj_bias[2 * embed_dim :]
+    value_vectors = torch.nn.functional.linear(
+        frame0,
+        layer.self_attn.in_proj_weight[2 * embed_dim :],
+        value_bias,
+    )
+    value_heads = value_vectors.reshape(
+        int(frame0.shape[0]), slot_count, head_count, head_dim
+    ).permute(0, 2, 1, 3)
+    attended_heads = torch.matmul(weights.float(), value_heads.float())
+    attended_pre_out = attended_heads.permute(0, 2, 1, 3).reshape(
+        int(frame0.shape[0]), slot_count, embed_dim
+    )
+    attention_output = torch.nn.functional.linear(
+        attended_pre_out,
+        layer.self_attn.out_proj.weight,
+        layer.self_attn.out_proj.bias,
+    )
+    report: dict[str, float | int] = {
         "role_key_mass": float(anchor_rows[..., 0].mean().item()),
         "register_key_mass": float(anchor_rows[..., 1:anchor_start].sum(dim=-1).mean().item()),
         "anchor_key_mass": float(anchor_rows[..., anchor_start:].sum(dim=-1).mean().item()),
@@ -255,7 +292,18 @@ def _pose_attention_routing(
         ),
         "top_key_anchor_rate": float((top_keys >= anchor_start).float().mean().item()),
         "top_key_unique_count": int(torch.unique(top_keys).numel()),
+        "attention_output_reconstruction_max_abs": float(
+            (attention_output[:, anchor_start:] - _output[:, anchor_start:].float()).abs().max().item()
+        ),
     }
+    for stage_name, stage_value in (
+        ("value_projection", value_vectors[:, anchor_start:]),
+        ("attended_pre_out", attended_pre_out[:, anchor_start:]),
+        ("attention_output", attention_output[:, anchor_start:]),
+    ):
+        for metric_name, metric_value in _slot_structure(stage_value).items():
+            report[f"{stage_name}_{metric_name}"] = metric_value
+    return report
 
 
 @torch.no_grad()

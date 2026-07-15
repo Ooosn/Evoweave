@@ -348,6 +348,7 @@ def _paired_pose_response(
     cond_a: torch.Tensor,
     cond_b: torch.Tensor,
 ) -> dict[str, object]:
+    tokenizer = model.tokenizer
     if batch_a["path"] != batch_b["path"]:
         raise ValueError(f"paired pose paths differ: {batch_a['path']} vs {batch_b['path']}")
 

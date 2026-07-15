@@ -111,6 +111,25 @@ formal A100 run: nproc=4, micro_batch=3, grad_accum=4
 effective_batch: 48
 ```
 
+The formal condition/decoder contract is:
+
+```text
+query_tokens: 1024
+cond_length: 1024
+condition_projection: identity
+decoder_norm_style: pre
+joint_slot_embedding: enabled
+train_random_query: enabled
+scheduler: onecycle
+```
+
+The identity route preserves all 1024 ordered surface-anchor tokens. The old
+learned-query `cross_attention` route compressed them to 257 anonymous slots
+and collapsed mesh/pose separation in controlled retraining. The old inherited
+post-LN decoder also failed to learn from random initialization. The training
+entry point enforces the approved contract by default; disable the check only
+inside an explicitly named diagnostic run.
+
 `target_coord_scale` is strict affine scaling into Puppeteer's `[-0.5, 0.5]`
 coordinate token range. It is not clipping. Smaller scales are required because
 some accepted rootless-v3 skeletons extend beyond the query mesh bbox.
@@ -140,6 +159,6 @@ the same effective batch:
 JOB_NPROC=4 JOB_BATCH_SIZE=3 JOB_GRAD_ACCUM=4
 ```
 
-The preferred formal training resource group is Westlake
-`huangxiangru` (`groupId=c965c1ec-1ad4-43b6-a1d3-3bccad2667ba`) on 80GB A100
-nodes such as `gvna17`. Do not submit this baseline to 40GB A100 nodes.
+Resource selection is operational policy rather than part of the model
+contract. Follow the current Westlake/HGC workflow instructions and do not
+encode resource-group fallbacks in this launcher.

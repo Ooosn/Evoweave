@@ -334,6 +334,42 @@ def save_json(path: Path, payload: dict[str, Any]) -> None:
         f.write("\n")
 
 
+def validate_query_preserving_baseline_args(args: argparse.Namespace) -> None:
+    if not args.require_query_preserving_baseline_contract:
+        return
+
+    errors: list[str] = []
+    if int(args.query_tokens) != 1024:
+        errors.append(f"query_tokens must be 1024, got {args.query_tokens}")
+    if int(args.cond_length) != int(args.query_tokens):
+        errors.append(
+            "cond_length must equal query_tokens for a one-to-one condition path, "
+            f"got cond_length={args.cond_length} query_tokens={args.query_tokens}"
+        )
+    if args.condition_projection != "identity":
+        errors.append(
+            "condition_projection must be identity; the learned-query cross-attention "
+            "projector is not approved for the baseline"
+        )
+    if args.decoder_norm_style != "pre":
+        errors.append(
+            "decoder_norm_style must be pre; the inherited Puppeteer post-LN config "
+            "failed the controlled training check"
+        )
+    if args.scheduler != "onecycle":
+        errors.append(
+            "scheduler must be onecycle; sustained constant full learning rate collapsed "
+            "the direct-condition control"
+        )
+    if args.no_joint_slot_embedding:
+        errors.append("joint-slot embedding must be enabled for the joint-token baseline")
+    if not args.train_random_query:
+        errors.append("train_random_query must be enabled so input and target use sampled query poses")
+    if errors:
+        details = "\n  - ".join(errors)
+        raise ValueError(f"query-preserving Puppeteer baseline contract failed:\n  - {details}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train Evoweave dynamic condition + Puppeteer SkeletonOPT decoder.")
     parser.add_argument(
@@ -399,12 +435,12 @@ def main() -> None:
     )
     parser.add_argument("--target-coord-scale", type=float, default=0.25)
     parser.add_argument("--no-strict-target-range", action="store_true")
-    parser.add_argument("--cond-length", type=int, default=257)
+    parser.add_argument("--cond-length", type=int, default=1024)
     parser.add_argument("--projector-heads", type=int, default=8)
     parser.add_argument(
         "--condition-projection",
         choices=["cross_attention", "identity"],
-        default="cross_attention",
+        default="identity",
     )
     parser.add_argument("--attn-implementation", choices=["flash_attention_2"], default="flash_attention_2")
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16", "fp32"], default="bf16")
@@ -424,8 +460,18 @@ def main() -> None:
     parser.add_argument(
         "--decoder-norm-style",
         choices=["config", "pre", "post"],
-        default="config",
+        default="pre",
         help="Keep the backbone norm placement or explicitly select pre/post layer norm.",
+    )
+    parser.add_argument(
+        "--require-query-preserving-baseline-contract",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Require the validated 1024-token identity condition path, pre-LN decoder, "
+            "joint-slot embedding, random query poses, and OneCycle schedule. Disable only "
+            "for an explicitly named diagnostic experiment."
+        ),
     )
     parser.add_argument("--decoder-checkpointing", action="store_true")
     parser.add_argument("--decoder-block-warmup-steps", type=int, default=0)
@@ -445,6 +491,7 @@ def main() -> None:
     parser.add_argument("--preflight-gradient-audit", action="store_true")
     args = parser.parse_args()
     args.random_init = bool(args.random_init or args.random_init_smoke)
+    validate_query_preserving_baseline_args(args)
 
     if args.train_manifest is None:
         raise ValueError("--train-manifest is required")
@@ -509,6 +556,10 @@ def main() -> None:
         stage_t0 = time.time()
         SkeletonOPTConfig, SkeletonOPT = import_puppeteer_decoder(args.puppeteer_root)
         config = build_decoder_config(args, SkeletonOPTConfig)
+        if args.require_query_preserving_baseline_contract and not bool(config.do_layer_norm_before):
+            raise RuntimeError(
+                "resolved decoder config is post-LN despite the required pre-LN baseline contract"
+            )
         decoder = SkeletonOPT(config)
         if args.decoder_checkpointing:
             decoder.gradient_checkpointing_enable(
@@ -569,6 +620,16 @@ def main() -> None:
             use_joint_slot_embedding=not args.no_joint_slot_embedding,
             target_aware_pos_embed=target_aware_pos_embed,
         )
+        if args.require_query_preserving_baseline_contract:
+            if model.condition_projection != "identity":
+                raise RuntimeError(
+                    f"resolved condition projection is {model.condition_projection!r}, expected 'identity'"
+                )
+            if model.cond_length != model.query_tokens:
+                raise RuntimeError(
+                    "resolved condition length does not preserve the query-token sequence: "
+                    f"cond_length={model.cond_length} query_tokens={model.query_tokens}"
+                )
         if args.freeze_surface_tokenizer:
             set_requires_grad(model.conditioner.surface_tokenizer, False)
             model.conditioner.surface_tokenizer.eval()
@@ -625,6 +686,15 @@ def main() -> None:
                     "val_rows_after_max_joint_filter": len(val_dataset),
                     "val_filtered_over_max_joints": val_dataset.filtered_over_max_joints,
                     "condition": "Evoweave dynamic surface motion prefix",
+                    "query_tokens": args.query_tokens,
+                    "condition_length": args.cond_length,
+                    "condition_projection": args.condition_projection,
+                    "decoder_norm_style": args.decoder_norm_style,
+                    "resolved_do_layer_norm_before": bool(config.do_layer_norm_before),
+                    "scheduler": args.scheduler,
+                    "query_preserving_baseline_contract_required": bool(
+                        args.require_query_preserving_baseline_contract
+                    ),
                     "first_joint_contract": "joint0 is the single rootless skeleton root; no synthetic root",
                     "world_size": world_size,
                     "micro_batch_per_gpu": args.batch_size,
@@ -641,6 +711,14 @@ def main() -> None:
             f"filtered_over_max_joints="
             f"{train_dataset.filtered_over_max_joints}/{val_dataset.filtered_over_max_joints} "
             f"max_joints={args.n_max_joints} effective_batch={effective_batch}",
+        )
+        log(
+            rank,
+            "condition contract: "
+            f"projection={args.condition_projection} "
+            f"query_tokens={args.query_tokens} cond_length={args.cond_length} "
+            f"decoder_norm={'pre' if config.do_layer_norm_before else 'post'} "
+            f"scheduler={args.scheduler}",
         )
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True) if world_size > 1 else None

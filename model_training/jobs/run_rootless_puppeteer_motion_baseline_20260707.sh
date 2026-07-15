@@ -72,7 +72,14 @@ export RIGWEAVE_N_DISCRETE_SIZE="${JOB_N_DISCRETE_SIZE:-128}"
 # route configuration, not a data-processing rule.
 export RIGWEAVE_N_MAX_JOINTS="${JOB_N_MAX_JOINTS:-101}"
 export RIGWEAVE_TARGET_COORD_SCALE="${JOB_TARGET_COORD_SCALE:-0.25}"
-export RIGWEAVE_COND_LENGTH="${JOB_COND_LENGTH:-257}"
+export RIGWEAVE_COND_LENGTH="${JOB_COND_LENGTH:-1024}"
+export RIGWEAVE_CONDITION_PROJECTION="${JOB_CONDITION_PROJECTION:-identity}"
+export RIGWEAVE_DECODER_NORM_STYLE="${JOB_DECODER_NORM_STYLE:-pre}"
+export RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT="${RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT:-1}"
+if [[ "${RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT}" != "0" && "${RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT}" != "1" ]]; then
+  echo "[puppeteer baseline] ERROR: RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT must be 0 or 1." >&2
+  exit 2
+fi
 export RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS="${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS:-32}"
 # FlashAttention bf16 is not bit-exact between full teacher-forcing and
 # incremental-prefix sequence lengths. Real prefix/index bugs are much larger
@@ -152,6 +159,8 @@ CMD=(
   --n-max-joints "${RIGWEAVE_N_MAX_JOINTS}"
   --target-coord-scale "${RIGWEAVE_TARGET_COORD_SCALE}"
   --cond-length "${RIGWEAVE_COND_LENGTH}"
+  --condition-projection "${RIGWEAVE_CONDITION_PROJECTION}"
+  --decoder-norm-style "${RIGWEAVE_DECODER_NORM_STYLE}"
   --amp-dtype "${RIGWEAVE_AMP_DTYPE:-bf16}"
 )
 
@@ -181,6 +190,11 @@ if [[ "${RIGWEAVE_PREFLIGHT_CONTRACT_SANITY:-0}" == "1" ]]; then
   CMD+=(--preflight-contract-max-positions "${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_POSITIONS}")
   CMD+=(--preflight-contract-max-diff "${RIGWEAVE_PREFLIGHT_CONTRACT_MAX_DIFF}")
 fi
+if [[ "${RIGWEAVE_REQUIRE_QUERY_PRESERVING_BASELINE_CONTRACT}" == "1" ]]; then
+  CMD+=(--require-query-preserving-baseline-contract)
+else
+  CMD+=(--no-require-query-preserving-baseline-contract)
+fi
 
 echo "[puppeteer baseline] start $(date -Is)"
 echo "[puppeteer baseline] model_root=${MODEL_ROOT}"
@@ -190,6 +204,7 @@ echo "[puppeteer baseline] valid_manifest=${EVOWEAVE_VAL_MANIFEST}"
 echo "[puppeteer baseline] output=${EVOWEAVE_OUTPUT_DIR}"
 echo "[puppeteer baseline] checkpoint=${PUPPETEER_CHECKPOINT:-<random-init>}"
 echo "[puppeteer baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SIZE * RIGWEAVE_GRAD_ACCUM))"
+echo "[puppeteer baseline] condition_projection=${RIGWEAVE_CONDITION_PROJECTION} cond_length=${RIGWEAVE_COND_LENGTH} decoder_norm=${RIGWEAVE_DECODER_NORM_STYLE}"
 echo "[puppeteer baseline] profile=SkeletonOPT joint-token parent-index; tail_tokens=off; full_finetune=on"
 printf '[puppeteer baseline] command:'
 printf ' %q' "${CMD[@]}"

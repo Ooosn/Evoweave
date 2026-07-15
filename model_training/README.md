@@ -81,9 +81,11 @@ joint-token route has its own decoder/tokenizer contract, with explicit
 weights are optional initialization, not a model-design requirement, and this
 route must also pass from-scratch contract sanity checks.
 
-The joint-token route currently has a verified failure mode: end-to-end
-conditioner training with pure teacher forcing can collapse pose conditioning
-and learn pose from the GT prefix instead. Read
-`docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md` before submitting a
-full Puppeteer run. The existing full-finetune job is not approved until its
-training objective preserves query-pose information.
+The failed joint-token runs had two verified configuration defects: the
+randomly initialized 24-layer decoder inherited Puppeteer's post-LN setting,
+and a learned-query projector compressed 1024 ordered condition tokens into
+257 anonymous slots. The approved baseline contract is now pre-LN,
+identity-1024 condition transfer, joint-slot embedding, random query poses,
+and OneCycle scheduling. The trainer enforces this contract before model
+construction. Read `docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`
+for the controlled retraining evidence and remaining generation checks.

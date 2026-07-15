@@ -47,6 +47,7 @@ from rigweave.dynamic_rig import (  # noqa: E402
     AnchorWiseAlternatingMotionEncoder,
     DynamicRigConditioner,
     FixedQuerySurfaceTokenizer,
+    JointCountMixtureSampler,
     PuppeteerDynamicRigDataset,
     PuppeteerDynamicRigModel,
     PuppeteerJointTokenizer,
@@ -54,6 +55,7 @@ from rigweave.dynamic_rig import (  # noqa: E402
     load_puppeteer_decoder_state,
     load_puppeteer_target_aware_pos_embed,
     puppeteer_dynamic_collate,
+    parse_joint_count_bin_uppers,
 )
 from rigweave.dynamic_rig.puppeteer_diagnostics import (  # noqa: E402
     condition_path_audit,
@@ -432,6 +434,21 @@ def main() -> None:
     parser.add_argument("--train-random-query", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--batch-size", type=int, default=2)
     parser.add_argument("--grad-accum-steps", type=int, default=8)
+    parser.add_argument(
+        "--joint-count-balance-alpha",
+        type=float,
+        default=0.0,
+        help=(
+            "Mix natural row-uniform sampling with uniform-over-joint-count-bin sampling. "
+            "0 preserves the baseline distribution; 1 makes configured bins equiprobable."
+        ),
+    )
+    parser.add_argument(
+        "--joint-count-bin-uppers",
+        type=str,
+        default="10,20,40,60,80,101",
+        help="Inclusive upper bounds for joint-count-balanced sampling bins.",
+    )
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=50000)
     parser.add_argument("--sample-milestones", type=str, default="5000,10000,20000,30000,50000,80000")
@@ -718,10 +735,42 @@ def main() -> None:
             max_joints=args.n_max_joints,
         )
         train_rows = len(train_dataset)
+        joint_count_bin_uppers = parse_joint_count_bin_uppers(args.joint_count_bin_uppers)
+        if not 0.0 <= float(args.joint_count_balance_alpha) <= 1.0:
+            raise ValueError(
+                f"--joint-count-balance-alpha must be in [0, 1], got {args.joint_count_balance_alpha}"
+            )
+        if float(args.joint_count_balance_alpha) > 0.0 and joint_count_bin_uppers[-1] < args.n_max_joints:
+            raise ValueError(
+                "final joint-count bin must cover n_max_joints when balancing is enabled: "
+                f"last_bin={joint_count_bin_uppers[-1]} n_max_joints={args.n_max_joints}"
+            )
         effective_batch = int(world_size * args.batch_size * args.grad_accum_steps)
         args.effective_batch = effective_batch
         args.train_rows = train_rows
         sample_milestones = parse_sample_milestones(args.sample_milestones)
+        if float(args.joint_count_balance_alpha) > 0.0:
+            train_sampler = JointCountMixtureSampler(
+                train_dataset.manifest_joint_counts,
+                bin_upper_bounds=joint_count_bin_uppers,
+                mixture_alpha=args.joint_count_balance_alpha,
+                num_replicas=world_size,
+                rank=rank,
+                seed=args.seed,
+            )
+            joint_count_sampling = train_sampler.report()
+        else:
+            train_sampler = (
+                DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+                if world_size > 1
+                else None
+            )
+            joint_count_sampling = {
+                "mode": "natural_row_uniform",
+                "mixture_alpha": 0.0,
+                "bin_upper_bounds": list(joint_count_bin_uppers),
+            }
+
         if is_main(rank):
             save_json(
                 args.output_dir / "training_contract.json",
@@ -751,6 +800,7 @@ def main() -> None:
                     "first_joint_contract": "joint0 is the single rootless skeleton root; no synthetic root",
                     "token_loss_reduction": args.token_loss_reduction,
                     "termination_decision_loss_weight": args.termination_decision_loss_weight,
+                    "joint_count_sampling": joint_count_sampling,
                     "world_size": world_size,
                     "micro_batch_per_gpu": args.batch_size,
                     "grad_accum_steps": args.grad_accum_steps,
@@ -776,8 +826,8 @@ def main() -> None:
             f"decoder_norm={'pre' if config.do_layer_norm_before else 'post'} "
             f"scheduler={args.scheduler}",
         )
+        log(rank, f"joint-count sampling: {json.dumps(joint_count_sampling, sort_keys=True)}")
 
-        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True) if world_size > 1 else None
         val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
         train_loader = DataLoader(
             train_dataset,

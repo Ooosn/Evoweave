@@ -344,7 +344,12 @@ class PuppeteerDynamicRigDataset(Dataset):
         motion_vertex_samples: int = 512,
         max_joints: int = 128,
     ) -> None:
-        self.paths, self.raw_rows, self.filtered_over_max_joints = _load_puppeteer_manifest(
+        (
+            self.paths,
+            self.manifest_joint_counts,
+            self.raw_rows,
+            self.filtered_over_max_joints,
+        ) = _load_puppeteer_manifest(
             Path(manifest),
             limit=limit,
             max_joints=max_joints,
@@ -393,6 +398,12 @@ class PuppeteerDynamicRigDataset(Dataset):
         if self.max_joints > 0 and posed_joints.shape[1] > self.max_joints:
             raise ValueError(
                 f"{path} has {posed_joints.shape[1]} target joints, exceeding Puppeteer max_joints={self.max_joints}"
+            )
+        manifest_joint_count = self.manifest_joint_counts[int(index)]
+        if manifest_joint_count is not None and int(manifest_joint_count) != int(posed_joints.shape[1]):
+            raise ValueError(
+                f"{path} manifest target_joint_count={manifest_joint_count} "
+                f"does not match NPZ target joints={posed_joints.shape[1]}"
             )
         roots = [int(i) for i, p in enumerate(target_parent_array.tolist()) if int(p) < 0]
         if roots != [0]:
@@ -466,8 +477,14 @@ def _manifest_joint_count(row: dict[str, Any]) -> int | None:
     return None
 
 
-def _load_puppeteer_manifest(path: Path, *, limit: int = 0, max_joints: int = 128) -> tuple[list[Path], int, int]:
+def _load_puppeteer_manifest(
+    path: Path,
+    *,
+    limit: int = 0,
+    max_joints: int = 128,
+) -> tuple[list[Path], list[int | None], int, int]:
     paths: list[Path] = []
+    joint_counts: list[int | None] = []
     raw_rows = 0
     filtered_over_max_joints = 0
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -485,11 +502,13 @@ def _load_puppeteer_manifest(path: Path, *, limit: int = 0, max_joints: int = 12
                 filtered_over_max_joints += 1
                 continue
             paths.append(_resolve_manifest_path(value))
+            joint_counts.append(joint_count)
         else:
             paths.append(_resolve_manifest_path(line))
+            joint_counts.append(None)
         if limit > 0 and len(paths) >= limit:
             break
-    return paths, raw_rows, filtered_over_max_joints
+    return paths, joint_counts, raw_rows, filtered_over_max_joints
 
 
 def puppeteer_dynamic_collate(batch: list[dict[str, Any]]) -> dict[str, Any]:

@@ -132,6 +132,54 @@ def _tensor_pair_report(left: torch.Tensor, right: torch.Tensor) -> dict[str, fl
     return report
 
 
+def _parameter_report(module: torch.nn.Module) -> dict[str, dict[str, float | int | list[int] | bool]]:
+    report = {}
+    for name, parameter in module.named_parameters():
+        value = parameter.detach().float()
+        report[name] = {
+            "shape": list(value.shape),
+            "count": int(value.numel()),
+            "trainable": bool(parameter.requires_grad),
+            "mean": float(value.mean().item()),
+            "rms": float(torch.sqrt(torch.mean(value.square())).item()),
+            "std": float(value.std(unbiased=False).item()),
+            "max_abs": float(value.abs().max().item()),
+            "l2": float(torch.linalg.vector_norm(value).item()),
+        }
+    return report
+
+
+def _trace_pre_norm_encoder_layer(
+    layer: torch.nn.TransformerEncoderLayer,
+    tokens: torch.Tensor,
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    if not layer.norm_first:
+        raise ValueError("internal stage trace currently requires norm_first=True")
+
+    attention_input = layer.norm1(tokens)
+    attention_output = layer.self_attn(
+        attention_input,
+        attention_input,
+        attention_input,
+        need_weights=False,
+    )[0]
+    attention_delta = layer.dropout1(attention_output)
+    after_attention = tokens + attention_delta
+
+    mlp_input = layer.norm2(after_attention)
+    mlp_output = layer.linear2(layer.dropout(layer.activation(layer.linear1(mlp_input))))
+    mlp_delta = layer.dropout2(mlp_output)
+    output = after_attention + mlp_delta
+    return output, {
+        "attention_input": attention_input,
+        "attention_delta": attention_delta,
+        "after_attention": after_attention,
+        "mlp_input": mlp_input,
+        "mlp_delta": mlp_delta,
+        "output": output,
+    }
+
+
 @torch.no_grad()
 def _condition_stage_trace(
     model,
@@ -174,32 +222,77 @@ def _condition_stage_trace(
     query_sequence = torch.stack(frame_query_points, dim=1)
     motion_encoder = model.conditioner.motion_encoder
     anchor_start = 1 + int(motion_encoder.register_tokens)
-    block_outputs: list[torch.Tensor] = []
-    handles = []
+    if motion_encoder.use_motion_features:
+        motion = motion_encoder._motion_features(query_sequence).to(dtype=surface_sequence.dtype)
+        z = surface_sequence + motion_encoder.motion_feature_mlp(motion)
+    else:
+        z = surface_sequence
 
-    def capture_block(_module, _inputs, output):
-        block_outputs.append(output[:, 0, anchor_start:].detach())
+    batch_size, frame_count, _, dim = z.shape
+    if motion_encoder.register_tokens > 0:
+        regs = motion_encoder.register.view(1, 1, motion_encoder.register_tokens, dim).expand(
+            batch_size, frame_count, -1, -1
+        )
+    else:
+        regs = z.new_empty((batch_size, frame_count, 0, dim))
+    canonical_role = motion_encoder.role_token[:, 0:1].expand(batch_size, 1, -1, -1)
+    motion_roles = motion_encoder.role_token[:, 1:2].expand(
+        batch_size, max(0, frame_count - 1), -1, -1
+    )
+    role = torch.cat([canonical_role, motion_roles], dim=1)
+    z = torch.cat([role, regs, z], dim=2)
+    if motion_encoder.use_time_embedding:
+        z = z + motion_encoder.time_embed[:frame_count].view(1, frame_count, 1, dim)
 
-    for block in motion_encoder.blocks:
-        handles.append(block.register_forward_hook(capture_block))
-    try:
-        motion_output = motion_encoder(surface_sequence, query_points=query_sequence)
-    finally:
-        for handle in handles:
-            handle.remove()
-
-    projected = model.prefix_projector(motion_output)
-    decoder_condition = model._condition_embeds_from_raw(projected)
     stages: dict[str, torch.Tensor] = {
         "query_points_frame0": query_sequence[:, 0],
         "surface_tokens_frame0": surface_sequence[:, 0],
+        "motion_input_frame0": z[:, 0, anchor_start:],
     }
-    for block_index, output in enumerate(block_outputs):
-        stages[f"motion_block_{block_index:02d}_frame0"] = output
+    slot_count = int(z.shape[2])
+    for block_index, block in enumerate(motion_encoder.blocks):
+        pose_input = z.reshape(batch_size * frame_count, slot_count, dim)
+        pose_output, pose_trace = _trace_pre_norm_encoder_layer(block.pose_inner, pose_input)
+        pose_output_4d = pose_output.reshape(batch_size, frame_count, slot_count, dim)
+
+        temporal_input = pose_output_4d.permute(0, 2, 1, 3).reshape(
+            batch_size * slot_count, frame_count, dim
+        )
+        temporal_output, temporal_trace = _trace_pre_norm_encoder_layer(
+            block.anchor_temporal, temporal_input
+        )
+        z = temporal_output.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
+
+        if block_index == 0:
+            for stage_name, value in pose_trace.items():
+                value_4d = value.reshape(batch_size, frame_count, slot_count, dim)
+                stages[f"motion_block_00_pose_{stage_name}_frame0"] = value_4d[
+                    :, 0, anchor_start:
+                ]
+            for stage_name, value in temporal_trace.items():
+                value_4d = value.reshape(batch_size, slot_count, frame_count, dim).permute(
+                    0, 2, 1, 3
+                )
+                stages[f"motion_block_00_temporal_{stage_name}_frame0"] = value_4d[
+                    :, 0, anchor_start:
+                ]
+        stages[f"motion_block_{block_index:02d}_frame0"] = z[:, 0, anchor_start:]
+
+    traced_motion_output = motion_encoder.norm(z)[:, 0, anchor_start:]
+    motion_output = motion_encoder(surface_sequence, query_points=query_sequence)
+    trace_validation = _tensor_pair_report(traced_motion_output, motion_output)
+
+    projected = model.prefix_projector(motion_output)
+    decoder_condition = model._condition_embeds_from_raw(projected)
     stages["motion_output_frame0"] = motion_output
     stages["projected_condition"] = projected
     stages["decoder_condition"] = decoder_condition
-    return {"refs": refs, "stages": stages, "condition": decoder_condition}
+    return {
+        "refs": refs,
+        "stages": stages,
+        "condition": decoder_condition,
+        "trace_validation": trace_validation,
+    }
 
 
 def _reference_pair_report(left, right) -> dict[str, float]:
@@ -491,6 +584,11 @@ def main() -> None:
                         refs=trace_a["refs"],
                     )
                     row["condition_stage_trace"] = {
+                        "manual_forward_validation": {
+                            "pose_a": trace_a["trace_validation"],
+                            "pose_b": trace_b["trace_validation"],
+                            "pose_b_shared_references": shared_trace_b["trace_validation"],
+                        },
                         "independent_references": {
                             "reference_match": _reference_pair_report(trace_a["refs"], trace_b["refs"]),
                             "stages": _stage_pair_report(trace_a["stages"], trace_b["stages"]),
@@ -502,7 +600,12 @@ def main() -> None:
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps({"rows": rows}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    report = {
+        "checkpoint": str(args.checkpoint),
+        "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
+        "rows": rows,
+    }
+    args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -176,6 +176,9 @@ def _parameter_report(module: torch.nn.Module) -> dict[str, dict[str, float | in
 def _trace_pre_norm_encoder_layer(
     layer: torch.nn.TransformerEncoderLayer,
     tokens: torch.Tensor,
+    *,
+    attention_scale: float = 1.0,
+    mlp_scale: float = 1.0,
 ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
     if not layer.norm_first:
         raise ValueError("internal stage trace currently requires norm_first=True")
@@ -187,18 +190,26 @@ def _trace_pre_norm_encoder_layer(
         attention_input,
         need_weights=False,
     )[0]
-    attention_delta = layer.dropout1(attention_output)
+    attention_delta_raw = layer.dropout1(attention_output)
+    attention_delta = attention_delta_raw * float(attention_scale)
     after_attention = tokens + attention_delta
 
     mlp_input = layer.norm2(after_attention)
-    mlp_output = layer.linear2(layer.dropout(layer.activation(layer.linear1(mlp_input))))
-    mlp_delta = layer.dropout2(mlp_output)
+    mlp_pre_activation = layer.linear1(mlp_input)
+    mlp_activation = layer.activation(mlp_pre_activation)
+    mlp_output = layer.linear2(layer.dropout(mlp_activation))
+    mlp_delta_raw = layer.dropout2(mlp_output)
+    mlp_delta = mlp_delta_raw * float(mlp_scale)
     output = after_attention + mlp_delta
     return output, {
         "attention_input": attention_input,
+        "attention_delta_raw": attention_delta_raw,
         "attention_delta": attention_delta,
         "after_attention": after_attention,
         "mlp_input": mlp_input,
+        "mlp_pre_activation": mlp_pre_activation,
+        "mlp_activation": mlp_activation,
+        "mlp_delta_raw": mlp_delta_raw,
         "mlp_delta": mlp_delta,
         "output": output,
     }
@@ -211,6 +222,10 @@ def _condition_stage_trace(
     seed: int,
     *,
     refs=None,
+    pose_attention_scale: float = 1.0,
+    pose_mlp_scale: float = 1.0,
+    temporal_attention_scale: float = 1.0,
+    temporal_mlp_scale: float = 1.0,
 ) -> dict[str, object]:
     from rigweave.dynamic_rig.sampling import materialize_trackable_surface
 
@@ -276,35 +291,61 @@ def _condition_stage_trace(
     slot_count = int(z.shape[2])
     for block_index, block in enumerate(motion_encoder.blocks):
         pose_input = z.reshape(batch_size * frame_count, slot_count, dim)
-        pose_output, pose_trace = _trace_pre_norm_encoder_layer(block.pose_inner, pose_input)
+        pose_output, pose_trace = _trace_pre_norm_encoder_layer(
+            block.pose_inner,
+            pose_input,
+            attention_scale=pose_attention_scale,
+            mlp_scale=pose_mlp_scale,
+        )
         pose_output_4d = pose_output.reshape(batch_size, frame_count, slot_count, dim)
 
         temporal_input = pose_output_4d.permute(0, 2, 1, 3).reshape(
             batch_size * slot_count, frame_count, dim
         )
         temporal_output, temporal_trace = _trace_pre_norm_encoder_layer(
-            block.anchor_temporal, temporal_input
+            block.anchor_temporal,
+            temporal_input,
+            attention_scale=temporal_attention_scale,
+            mlp_scale=temporal_mlp_scale,
         )
         z = temporal_output.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
 
         if block_index == 0:
             for stage_name, value in pose_trace.items():
-                value_4d = value.reshape(batch_size, frame_count, slot_count, dim)
+                value_4d = value.reshape(
+                    batch_size,
+                    frame_count,
+                    slot_count,
+                    int(value.shape[-1]),
+                )
                 stages[f"motion_block_00_pose_{stage_name}_frame0"] = value_4d[
                     :, 0, anchor_start:
                 ]
             for stage_name, value in temporal_trace.items():
-                value_4d = value.reshape(batch_size, slot_count, frame_count, dim).permute(
-                    0, 2, 1, 3
-                )
+                value_4d = value.reshape(
+                    batch_size,
+                    slot_count,
+                    frame_count,
+                    int(value.shape[-1]),
+                ).permute(0, 2, 1, 3)
                 stages[f"motion_block_00_temporal_{stage_name}_frame0"] = value_4d[
                     :, 0, anchor_start:
                 ]
         stages[f"motion_block_{block_index:02d}_frame0"] = z[:, 0, anchor_start:]
 
     traced_motion_output = motion_encoder.norm(z)[:, 0, anchor_start:]
-    motion_output = motion_encoder(surface_sequence, query_points=query_sequence)
-    trace_validation = _tensor_pair_report(traced_motion_output, motion_output)
+    unmodified_motion_output = motion_encoder(surface_sequence, query_points=query_sequence)
+    trace_validation = _tensor_pair_report(traced_motion_output, unmodified_motion_output)
+    intervention_active = any(
+        float(scale) != 1.0
+        for scale in (
+            pose_attention_scale,
+            pose_mlp_scale,
+            temporal_attention_scale,
+            temporal_mlp_scale,
+        )
+    )
+    motion_output = traced_motion_output if intervention_active else unmodified_motion_output
 
     projected = model.prefix_projector(motion_output)
     decoder_condition = model._condition_embeds_from_raw(projected)
@@ -316,7 +357,34 @@ def _condition_stage_trace(
         "stages": stages,
         "condition": decoder_condition,
         "trace_validation": trace_validation,
+        "intervention_active": intervention_active,
     }
+
+
+@torch.no_grad()
+def _greedy_prefix_ids(model, cond: torch.Tensor, token_count: int) -> list[int]:
+    prefix = torch.tensor(
+        [[model.tokenizer.bos_token_id]],
+        device=cond.device,
+        dtype=torch.long,
+    )
+    generated = []
+    for _ in range(max(0, int(token_count))):
+        logits = model._next_token_logits(cond, prefix)
+        logits = model._apply_generation_mask(
+            logits,
+            len(generated),
+            max_joints=model.max_joints,
+        )
+        token = int(logits.argmax(dim=-1).item())
+        generated.append(token)
+        prefix = torch.cat(
+            [prefix, torch.tensor([[token]], device=prefix.device, dtype=torch.long)],
+            dim=1,
+        )
+        if token == model.tokenizer.eos_token_id:
+            break
+    return generated
 
 
 def _reference_pair_report(left, right) -> dict[str, float]:
@@ -556,8 +624,23 @@ def main() -> None:
     parser.add_argument("--pose-seed-b", type=int, default=None)
     parser.add_argument("--surface-seed", type=int, default=20260715)
     parser.add_argument("--stage-trace", action="store_true")
+    parser.add_argument("--pose-attention-scale", type=float, default=1.0)
+    parser.add_argument("--pose-mlp-scale", type=float, default=1.0)
+    parser.add_argument("--temporal-attention-scale", type=float, default=1.0)
+    parser.add_argument("--temporal-mlp-scale", type=float, default=1.0)
+    parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    intervention_scales = (
+        args.pose_attention_scale,
+        args.pose_mlp_scale,
+        args.temporal_attention_scale,
+        args.temporal_mlp_scale,
+    )
+    if any(float(scale) != 1.0 for scale in intervention_scales) and not args.stage_trace:
+        raise ValueError("motion residual interventions require --stage-trace")
+    if args.greedy_prefix_tokens < 0:
+        raise ValueError("--greedy-prefix-tokens must be non-negative")
 
     import sys
 
@@ -634,7 +717,15 @@ def main() -> None:
             target = _target_namespace(batch)
             trace_a = None
             if args.stage_trace:
-                trace_a = _condition_stage_trace(model, batch, args.surface_seed + idx)
+                trace_a = _condition_stage_trace(
+                    model,
+                    batch,
+                    args.surface_seed + idx,
+                    pose_attention_scale=args.pose_attention_scale,
+                    pose_mlp_scale=args.pose_mlp_scale,
+                    temporal_attention_scale=args.temporal_attention_scale,
+                    temporal_mlp_scale=args.temporal_mlp_scale,
+                )
                 cond = trace_a["condition"]
             else:
                 cond = _condition_with_seed(model, batch, args.surface_seed + idx)
@@ -657,11 +748,23 @@ def main() -> None:
                     "forced_joint_chamfer_mean": forced_metrics.get("joint_chamfer", {}).get("mean"),
                     **sens,
             }
+            greedy_a = None
+            if args.greedy_prefix_tokens > 0:
+                greedy_a = _greedy_prefix_ids(model, cond, args.greedy_prefix_tokens)
+                row["greedy_pose_a_ids"] = greedy_a
             if paired_batch is not None:
                 trace_b = None
                 if args.stage_trace:
                     assert trace_a is not None
-                    trace_b = _condition_stage_trace(model, paired_batch, args.surface_seed + idx)
+                    trace_b = _condition_stage_trace(
+                        model,
+                        paired_batch,
+                        args.surface_seed + idx,
+                        pose_attention_scale=args.pose_attention_scale,
+                        pose_mlp_scale=args.pose_mlp_scale,
+                        temporal_attention_scale=args.temporal_attention_scale,
+                        temporal_mlp_scale=args.temporal_mlp_scale,
+                    )
                     paired_cond = trace_b["condition"]
                 else:
                     paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
@@ -681,6 +784,10 @@ def main() -> None:
                         paired_batch,
                         args.surface_seed + idx,
                         refs=trace_a["refs"],
+                        pose_attention_scale=args.pose_attention_scale,
+                        pose_mlp_scale=args.pose_mlp_scale,
+                        temporal_attention_scale=args.temporal_attention_scale,
+                        temporal_mlp_scale=args.temporal_mlp_scale,
                     )
                     row["condition_stage_trace"] = {
                         "manual_forward_validation": {
@@ -695,6 +802,23 @@ def main() -> None:
                         "shared_pose_a_references": {
                             "stages": _stage_pair_report(trace_a["stages"], shared_trace_b["stages"]),
                         },
+                    }
+                if args.greedy_prefix_tokens > 0:
+                    assert greedy_a is not None
+                    greedy_b = _greedy_prefix_ids(model, paired_cond, args.greedy_prefix_tokens)
+                    compare_count = min(len(greedy_a), len(greedy_b))
+                    changed = [
+                        position
+                        for position in range(compare_count)
+                        if greedy_a[position] != greedy_b[position]
+                    ]
+                    row["greedy_pose_b_ids"] = greedy_b
+                    row["greedy_pose_pair"] = {
+                        "compared_tokens": compare_count,
+                        "changed_tokens": len(changed),
+                        "first_changed_position": changed[0] if changed else -1,
+                        "length_a": len(greedy_a),
+                        "length_b": len(greedy_b),
                     }
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
@@ -719,6 +843,13 @@ def main() -> None:
 
     report = {
         "checkpoint": str(args.checkpoint),
+        "motion_intervention": {
+            "pose_attention_scale": float(args.pose_attention_scale),
+            "pose_mlp_scale": float(args.pose_mlp_scale),
+            "temporal_attention_scale": float(args.temporal_attention_scale),
+            "temporal_mlp_scale": float(args.temporal_mlp_scale),
+            "greedy_prefix_tokens": int(args.greedy_prefix_tokens),
+        },
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
         "condition_separation": {
             "same_asset_different_pose": same_asset_pose_pairs,

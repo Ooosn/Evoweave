@@ -95,6 +95,97 @@ def _condition_sensitivity(
     }
 
 
+def _target_likelihood_under_condition_swap(
+    model,
+    batch: dict,
+    *,
+    correct_cond: torch.Tensor,
+    swapped_cond: torch.Tensor,
+    swapped_path: str,
+) -> dict[str, object]:
+    """Measure whether the correct asset condition helps predict the fixed GT target."""
+
+    tokenizer = model.tokenizer
+    zero_cond = torch.zeros_like(correct_cond)
+    condition_logits: dict[str, torch.Tensor] = {}
+    token_batch = None
+    for name, cond in (
+        ("correct", correct_cond),
+        ("swapped", swapped_cond),
+        ("zero", zero_cond),
+    ):
+        logits, current_token_batch, _loss = model.teacher_forced_logits(batch, cond=cond)
+        condition_logits[name] = logits.float()
+        if token_batch is None:
+            token_batch = current_token_batch
+        elif not torch.equal(current_token_batch.labels, token_batch.labels):
+            raise ValueError("condition swap changed teacher-forcing labels")
+
+    assert token_batch is not None
+    labels = token_batch.labels.to(correct_cond.device)
+    roles = token_batch.token_role.to(correct_cond.device)
+    valid = labels != -100
+    coord = valid & (roles >= tokenizer.offset) & ((roles - tokenizer.offset) < 3)
+    role_masks = {
+        "all": valid,
+        "coord": coord,
+        "x": valid & (roles == tokenizer.offset),
+        "y": valid & (roles == tokenizer.offset + 1),
+        "z": valid & (roles == tokenizer.offset + 2),
+        "parent": valid & (roles == tokenizer.offset + 3),
+        "eos": valid & (labels == tokenizer.eos_token_id),
+    }
+
+    role_reports: dict[str, object] = {}
+    for role_name, mask in role_masks.items():
+        if not bool(mask.any()):
+            continue
+        role_labels = labels[mask]
+        per_condition: dict[str, dict[str, float]] = {}
+        for condition_name, logits in condition_logits.items():
+            role_logits = logits[mask]
+            nll = torch.nn.functional.cross_entropy(
+                role_logits,
+                role_labels,
+                reduction="none",
+            )
+            target_logits = role_logits.gather(1, role_labels[:, None]).squeeze(1)
+            target_ranks = (role_logits > target_logits[:, None]).sum(dim=1) + 1
+            per_condition[condition_name] = {
+                "nll": float(nll.mean().item()),
+                "target_probability": float(torch.exp(-nll).mean().item()),
+                "target_rank": float(target_ranks.float().mean().item()),
+                "top1_accuracy": float(
+                    (role_logits.argmax(dim=-1) == role_labels).float().mean().item()
+                ),
+            }
+        role_reports[role_name] = {
+            "positions": int(mask.sum().item()),
+            **per_condition,
+            "swapped_minus_correct_nll": float(
+                per_condition["swapped"]["nll"] - per_condition["correct"]["nll"]
+            ),
+            "zero_minus_correct_nll": float(
+                per_condition["zero"]["nll"] - per_condition["correct"]["nll"]
+            ),
+            "correct_vs_swapped_argmax_change_rate": float(
+                (
+                    condition_logits["correct"][mask].argmax(dim=-1)
+                    != condition_logits["swapped"][mask].argmax(dim=-1)
+                )
+                .float()
+                .mean()
+                .item()
+            ),
+        }
+
+    return {
+        "path": batch["path"][0],
+        "swapped_path": swapped_path,
+        "roles": role_reports,
+    }
+
+
 def _condition_with_seed(model, batch: dict, seed: int) -> torch.Tensor:
     device = batch["frame_vertices"].device
     generator = torch.Generator(device=device)
@@ -775,6 +866,7 @@ def main() -> None:
     parser.add_argument("--temporal-mlp-scale", type=float, default=1.0)
     parser.add_argument("--attention-routing", action="store_true")
     parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
+    parser.add_argument("--cross-asset-condition-swap", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     intervention_scales = (
@@ -978,6 +1070,36 @@ def main() -> None:
                     }
             rows.append(row)
             print(json.dumps(row, ensure_ascii=False), flush=True)
+
+        cross_asset_condition_swap = []
+        if args.cross_asset_condition_swap:
+            if len(condition_a_cache) < 2:
+                raise ValueError("--cross-asset-condition-swap requires at least two rows")
+            for idx, batch in enumerate(loader):
+                batch = _move_batch(batch, device)
+                correct_path, correct_cond_cpu = condition_a_cache[idx]
+                if batch["path"][0] != correct_path:
+                    raise ValueError(
+                        f"condition cache path differs on second pass: "
+                        f"{correct_path} vs {batch['path'][0]}"
+                    )
+                swapped_index = (idx + 1) % len(condition_a_cache)
+                swapped_path, swapped_cond_cpu = condition_a_cache[swapped_index]
+                swap_report = _target_likelihood_under_condition_swap(
+                    model,
+                    batch,
+                    correct_cond=correct_cond_cpu.to(device),
+                    swapped_cond=swapped_cond_cpu.to(device),
+                    swapped_path=swapped_path,
+                )
+                cross_asset_condition_swap.append(swap_report)
+                print(
+                    json.dumps(
+                        {"event": "cross_asset_condition_swap", "index": idx, **swap_report},
+                        ensure_ascii=False,
+                    ),
+                    flush=True,
+                )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     same_asset_pose_pairs = []
     for (path_a, cond_a), (path_b, cond_b) in zip(condition_a_cache, condition_b_cache):
@@ -1006,12 +1128,14 @@ def main() -> None:
             "temporal_mlp_scale": float(args.temporal_mlp_scale),
             "attention_routing": bool(args.attention_routing),
             "greedy_prefix_tokens": int(args.greedy_prefix_tokens),
+            "cross_asset_condition_swap": bool(args.cross_asset_condition_swap),
         },
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
         "condition_separation": {
             "same_asset_different_pose": same_asset_pose_pairs,
             "different_asset_pose_a": different_asset_pairs,
         },
+        "cross_asset_condition_swap": cross_asset_condition_swap,
         "rows": rows,
     }
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

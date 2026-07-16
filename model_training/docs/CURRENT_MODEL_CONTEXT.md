@@ -2,6 +2,8 @@
 
 更新时间：2026-07-16
 
+状态 ID：`model-puppeteer-20260716-001`
+
 本文档是模型模块的唯一当前状态入口。任何 agent 在训练、评测或解释
 Puppeteer 之前必须先读本文档。历史根因的完整证据见
 `PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`；本文只记录已经确认的

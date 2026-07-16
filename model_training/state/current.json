@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "state_id": "model-puppeteer-20260716-001",
+  "updated_at": "2026-07-16T15:20:00+09:00",
+  "module": "model_training",
+  "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md"
+  ],
+  "reference_runs": {
+    "flat_unirig": {
+      "status": "trained_but_missing_matched_heldout52_comparison",
+      "path": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/rootless_flat_unirig_motion_fullft_20260707_hxr4gpu"
+    },
+    "puppeteer": {
+      "status": "reference_checkpoint_not_accepted_as_usable_baseline",
+      "path": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715",
+      "checkpoints": [
+        "checkpoint_sample_10000.pt",
+        "checkpoint_sample_40000.pt",
+        "checkpoint_sample_80000.pt",
+        "checkpoint_best_val.pt",
+        "checkpoint_final.pt"
+      ],
+      "optimizer_steps": 1667,
+      "sample_exposures": 80016,
+      "trainable_parameters": 660557312
+    }
+  },
+  "verified_fixed_causes": [
+    "randomly initialized 24-layer SkeletonOPT used post-LN and barely learned",
+    "learned-query projection compressed 1024 ordered condition tokens to 257 anonymous slots and collapsed condition identity",
+    "long constant full-model 1e-4 learning rate collapsed direct-1024 conditioner separation"
+  ],
+  "locked_puppeteer_contract": [
+    "query_tokens=1024",
+    "cond_length=1024",
+    "condition_projection=identity",
+    "decoder_norm_style=pre",
+    "joint_slot_embedding=true",
+    "train_random_query=true",
+    "scheduler=onecycle",
+    "tail_tokens=false",
+    "synthetic_root=false"
+  ],
+  "rejected_followups": [
+    "control_ft200",
+    "balanced_ft200",
+    "mixture_alpha025_ft300",
+    "mixture_alpha050_ft300",
+    "sequence_mean_ft200",
+    "sequence_mean_termination025_ft200",
+    "combined_alpha050_sequence_ft200",
+    "combined_alpha075_sequence_ft200",
+    "balanced50_sequence_ft500_stopped_at_step50_without_checkpoint"
+  ],
+  "verified_open_facts": [
+    "no matched UniRig heldout52 result exists under the same pose normalization and metric implementation",
+    "Puppeteer heldout52 low-joint subsets are much worse than its common-joint subset",
+    "correct cross-asset condition improves low-joint coordinate likelihood for 16 of 16 samples",
+    "low-joint failure already exists under ground-truth prefix",
+    "the first free-generation mismatch on all heldout52 rows is joint0 coordinate"
+  ],
+  "unknowns": [
+    "which of sample80000 best_val and final has the best matched free-generation quality",
+    "Puppeteer absolute quality relative to the flat UniRig baseline",
+    "whether low-joint failure is caused by training distribution or rootless first-joint representation"
+  ],
+  "allowed_operations": [
+    "report",
+    "inspect",
+    "matched_eval",
+    "visualize"
+  ],
+  "blocked_operations": [
+    "train",
+    "submit"
+  ],
+  "next_required_result": "Run flat UniRig and Puppeteer sample80000 best_val final on the same heldout52 poses with the same J2J J2B B2B implementation and montage before any new training.",
+  "active_operation": null,
+  "last_operation": {
+    "name": "balanced50_sequence_ft500",
+    "status": "stopped",
+    "step": 50,
+    "checkpoint_saved": false,
+    "reason": "Stopped before an evaluable artifact; it does not change the reference checkpoint."
+  },
+  "receipt_max_age_minutes": 240
+}

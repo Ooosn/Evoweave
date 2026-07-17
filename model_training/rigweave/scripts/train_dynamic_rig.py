@@ -5,7 +5,7 @@ import argparse
 import ctypes
 from contextlib import contextmanager
 import gc
-import importlib
+import importlib.util
 import json
 import os
 import resource
@@ -350,20 +350,9 @@ def load_unirig(tokenizer: Any, model_config: Path, checkpoint: Path) -> Any:
     cfg = load_yaml(model_config)
     llm_cfg = cfg.get("llm")
     if isinstance(llm_cfg, dict) and llm_cfg.get("_attn_implementation") == "flash_attention_2":
-        force_sdpa = os.environ.get("RIGWEAVE_FORCE_SDPA", "0") == "1"
-        flash_error: Exception | None = None
-        if not force_sdpa:
-            try:
-                importlib.import_module("flash_attn")
-            except Exception as exc:
-                flash_error = exc
-                for module_name in tuple(sys.modules):
-                    if module_name == "flash_attn" or module_name.startswith("flash_attn."):
-                        sys.modules.pop(module_name, None)
-        if force_sdpa or flash_error is not None:
+        if importlib.util.find_spec("flash_attn") is None:
             llm_cfg["_attn_implementation"] = "sdpa"
-            reason = "forced by RIGWEAVE_FORCE_SDPA=1" if force_sdpa else f"import failed: {flash_error}"
-            print(f"[dynamic_rig] using OPT sdpa attention ({reason})", flush=True)
+            print("[dynamic_rig] flash_attn not installed; using OPT sdpa attention", flush=True)
     cfg["tokenizer"] = tokenizer
     with pushd(UNIRIG_ROOT):
         model = get_model(**cfg)

@@ -361,143 +361,140 @@ def _first_mismatch(
 
 
 @torch.no_grad()
-def _manual_free_trace(
+def _sequence_next_logits(
     model: torch.nn.Module,
-    tokenizer: Any,
-    batch: dict[str, Any],
     cond: torch.Tensor,
-    target_ids: list[int],
-    saved_ids: list[int],
-    max_new_tokens: int,
-) -> dict[str, Any]:
-    from eval_dynamic_rig_generation import _count_prefix_structure
-
+    ids: list[int],
+) -> torch.Tensor:
     cond = cond.to(dtype=model.transformer.dtype)
-    start_tokens = torch.tensor(
-        [tokenizer.bos, tokenizer.cls_name_to_token(batch["cls"][0])],
+    input_ids = torch.tensor(
+        [ids],
         device=cond.device,
         dtype=torch.long,
     )
-    start_mask = torch.ones((1, start_tokens.numel()), device=cond.device, dtype=torch.long)
-    start_embeds = model.token_inputs_embeds(start_tokens.unsqueeze(0), start_mask)
-    prompt = torch.cat([cond, start_embeds], dim=1)
+    token_attention = torch.ones_like(input_ids)
+    token_embeds = model.token_inputs_embeds(input_ids, token_attention)
+    prompt = torch.cat([cond, token_embeds], dim=1)
     attention_mask = torch.ones((1, prompt.shape[1]), device=cond.device, dtype=torch.long)
+    need_hidden = bool(getattr(model, "uses_action_group_bias", False))
     output = model.transformer(
         inputs_embeds=prompt,
         attention_mask=attention_mask,
-        use_cache=True,
-        output_hidden_states=bool(getattr(model, "uses_action_group_bias", False)),
+        use_cache=False,
+        output_hidden_states=need_hidden,
     )
-    past = output.past_key_values
-    next_logits = output.logits[:, -1, :].float()
-    if bool(getattr(model, "uses_action_group_bias", False)):
-        next_logits = model.apply_action_group_bias_row(
-            next_logits,
-            output.hidden_states[-1][:, -1],
-            cond,
+    logits = output.logits[:, cond.shape[1] :]
+    hidden = output.hidden_states[-1][:, cond.shape[1] :] if need_hidden else None
+    logits = model.apply_action_group_bias(logits, hidden, cond)
+    return logits[0].float()
+
+
+@torch.no_grad()
+def _saved_prefix_trace(
+    model: torch.nn.Module,
+    tokenizer: Any,
+    cond: torch.Tensor,
+    target_ids: list[int],
+    saved_ids: list[int],
+    target_joint_count: int,
+) -> dict[str, Any]:
+    from eval_dynamic_rig_generation import _count_prefix_structure
+
+    if len(saved_ids) < 3:
+        raise ValueError("saved generation does not contain a generated token")
+    if saved_ids[:2] != target_ids[:2]:
+        raise ValueError(
+            f"saved generation prefix {saved_ids[:2]} differs from target prefix {target_ids[:2]}"
         )
 
-    generated: list[int] = []
+    next_logits = _sequence_next_logits(model, cond, saved_ids)
     events: list[dict[str, Any]] = []
-    first_saved_divergence: dict[str, Any] | None = None
-    for step in range(max_new_tokens):
-        prefix_ids = start_tokens.detach().cpu().tolist() + generated
+    for position in range(2, len(saved_ids)):
+        prefix_ids = saved_ids[:position]
         possible = set(
             int(value)
             for value in tokenizer.next_posible_token(ids=np.asarray(prefix_ids, dtype=np.int64))
         )
-        possible_ids = torch.tensor(sorted(possible), device=cond.device, dtype=torch.long)
-        possible_logits = next_logits[0].index_select(0, possible_ids)
-        selected_offset = int(possible_logits.argmax().item())
-        selected = int(possible_ids[selected_offset].item())
+        selected = int(saved_ids[position])
+        if selected not in possible:
+            raise ValueError(
+                f"saved token {selected} is not grammar-valid at position {position}"
+            )
+        row_logits = next_logits[position - 1]
+        masked = _masked_target_stats(row_logits, possible, selected)
         groups = _possible_groups(tokenizer, possible)
-        target_position = len(prefix_ids)
-        target = int(target_ids[target_position]) if target_position < len(target_ids) else None
-        saved = int(saved_ids[target_position]) if target_position < len(saved_ids) else None
-        if first_saved_divergence is None and selected != saved:
-            top_count = min(5, int(possible_ids.numel()))
-            top_logits, top_offsets = possible_logits.topk(top_count)
-            first_saved_divergence = {
-                "step": step,
-                "position": target_position,
-                "manual_id": selected,
-                "saved_id": saved,
-                "manual_logit": float(next_logits[0, selected].item()),
-                "saved_logit": (
-                    float(next_logits[0, saved].item())
-                    if saved is not None
-                    else None
-                ),
-                "manual_minus_saved_logit": (
-                    float((next_logits[0, selected] - next_logits[0, saved]).item())
-                    if saved is not None
-                    else None
-                ),
-                "top_possible": [
-                    {
-                        "id": int(possible_ids[offset].item()),
-                        "logit": float(logit.item()),
-                    }
-                    for logit, offset in zip(top_logits, top_offsets, strict=True)
-                ],
-            }
+        target = int(target_ids[position]) if position < len(target_ids) else None
         if len(groups) > 1 or int(tokenizer.eos) in possible:
             joint_count, branch_count = _count_prefix_structure(tokenizer, prefix_ids)
-            group_report = _group_stats(tokenizer, next_logits[0], possible, target)
+            group_report = _group_stats(tokenizer, row_logits, possible, selected)
             events.append(
                 {
-                    "step": step,
-                    "position": target_position,
+                    "position": position,
                     "joint_count_before": int(joint_count),
                     "branch_count_before": int(branch_count),
-                    "selected_id": selected,
-                    "selected_group": _group_name(_token_group(tokenizer, selected)),
+                    "saved_id": selected,
+                    "saved_group": _group_name(_token_group(tokenizer, selected)),
+                    "saved_token_rank": int(masked["target_rank"]),
+                    "saved_token_probability": float(masked["target_probability"]),
+                    "masked_pred_id": int(masked["pred_id"]),
+                    "masked_pred_matches_saved": bool(int(masked["pred_id"]) == selected),
                     "target_id": target,
+                    "target_matches_saved": bool(target == selected),
                     **group_report,
                 }
             )
-        generated.append(selected)
-        if selected == int(tokenizer.eos):
-            break
-        next_token = torch.tensor([[selected]], device=cond.device, dtype=torch.long)
-        attention_mask = torch.ones(
-            (1, prompt.shape[1] + len(generated)),
-            device=cond.device,
-            dtype=torch.long,
-        )
-        output = model.transformer(
-            input_ids=next_token,
-            attention_mask=attention_mask,
-            past_key_values=past,
-            use_cache=True,
-            output_hidden_states=bool(getattr(model, "uses_action_group_bias", False)),
-        )
-        past = output.past_key_values
-        next_logits = output.logits[:, -1, :].float()
-        if bool(getattr(model, "uses_action_group_bias", False)):
-            next_logits = model.apply_action_group_bias_row(
-                next_logits,
-                output.hidden_states[-1][:, -1],
-                cond,
-            )
 
-    ids = start_tokens.detach().cpu().tolist() + generated
+    if saved_ids[-1] != int(tokenizer.eos):
+        prefix_ids = saved_ids
+        possible = set(
+            int(value)
+            for value in tokenizer.next_posible_token(ids=np.asarray(prefix_ids, dtype=np.int64))
+        )
+        row_logits = next_logits[-1]
+        groups = _possible_groups(tokenizer, possible)
+        joint_count, branch_count = _count_prefix_structure(tokenizer, prefix_ids)
+        possible_ids = torch.tensor(sorted(possible), device=row_logits.device, dtype=torch.long)
+        predicted = int(
+            possible_ids[row_logits.index_select(0, possible_ids).argmax()].item()
+        )
+        events.append(
+            {
+                "position": len(saved_ids),
+                "joint_count_before": int(joint_count),
+                "branch_count_before": int(branch_count),
+                "saved_id": None,
+                "saved_group": None,
+                "saved_token_rank": None,
+                "saved_token_probability": None,
+                "masked_pred_id": predicted,
+                "masked_pred_matches_saved": None,
+                "target_id": None,
+                "target_matches_saved": None,
+                "terminal_probe": True,
+                **_group_stats(tokenizer, row_logits, possible, None),
+            }
+        )
+
     eos_events = [
         event
         for event in events
         if "eos" in event["group_probabilities"]
     ]
-    target_joint_count, _target_branch_count = _count_prefix_structure(tokenizer, target_ids)
     at_target_count = [
         event
         for event in eos_events
         if int(event["joint_count_before"]) == int(target_joint_count)
     ]
+    generated_joint_count, generated_branch_count = _count_prefix_structure(
+        tokenizer,
+        saved_ids,
+    )
     return {
-        "generated_ids": ids,
-        "has_eos": bool(ids and ids[-1] == int(tokenizer.eos)),
-        "steps": len(generated),
-        "first_saved_divergence": first_saved_divergence,
+        "has_eos": bool(saved_ids and saved_ids[-1] == int(tokenizer.eos)),
+        "generated_new_tokens": len(saved_ids) - 2,
+        "generated_joint_count": int(generated_joint_count),
+        "generated_branch_count": int(generated_branch_count),
+        "joint_count_error": int(generated_joint_count) - int(target_joint_count),
         "decision_events": events,
         "eos_decision_count": len(eos_events),
         "max_eos_group_probability": (
@@ -509,6 +506,18 @@ def _manual_free_trace(
             max(event["group_probabilities"]["eos"] for event in at_target_count)
             if at_target_count
             else None
+        ),
+        "selected_eos_at_target_joint_count": any(
+            event.get("saved_id") == int(tokenizer.eos)
+            for event in at_target_count
+        ),
+        "first_event_after_target_joint_count": next(
+            (
+                event
+                for event in eos_events
+                if int(event["joint_count_before"]) > int(target_joint_count)
+            ),
+            None,
         ),
     }
 
@@ -569,11 +578,36 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ),
             "first_free_mismatch_roles": dict(role_counts),
             "free_max_eos_group_probability": _mean(
-                [row["manual_trace"]["max_eos_group_probability"] for row in group_rows]
+                [
+                    row["saved_prefix_trace"]["max_eos_group_probability"]
+                    for row in group_rows
+                ]
             ),
             "free_max_eos_probability_at_target_joint_count": _mean(
                 [
-                    row["manual_trace"]["max_eos_probability_at_target_joint_count"]
+                    row["saved_prefix_trace"]["max_eos_probability_at_target_joint_count"]
+                    for row in group_rows
+                ]
+            ),
+            "free_generated_joint_count": _mean(
+                [
+                    row["saved_prefix_trace"]["generated_joint_count"]
+                    for row in group_rows
+                ]
+            ),
+            "free_joint_count_error": _mean(
+                [
+                    row["saved_prefix_trace"]["joint_count_error"]
+                    for row in group_rows
+                ]
+            ),
+            "free_selected_eos_at_target_joint_count_rate": _mean(
+                [
+                    int(
+                        row["saved_prefix_trace"][
+                            "selected_eos_at_target_joint_count"
+                        ]
+                    )
                     for row in group_rows
                 ]
             ),
@@ -708,25 +742,30 @@ def main() -> None:
             condition_cache.append(cond.detach().cpu())
             teacher, _logits, _labels = _teacher_report(model, tokenizer, batch, cond)
             expected_generated = generation_row["dynamic"]["generated_ids"]
-            manual = _manual_free_trace(
-                model,
-                tokenizer,
-                batch,
-                cond,
-                target_ids,
-                expected_generated,
-                int(generation_row["max_new_tokens"]),
-            )
-            manual_ids = manual.pop("generated_ids")
-            manual["matches_saved_generation"] = bool(manual_ids == expected_generated)
-            manual["first_saved_mismatch"] = _first_mismatch(
-                tokenizer,
-                expected_generated,
-                manual_ids,
-            )
             generated_block = generation_row["dynamic"]
             hitmax = bool(generated_block.get("hit_max_without_eos"))
             target_joint_count, target_branch_count = _count_prefix_structure(tokenizer, target_ids)
+            max_new_tokens = int(generation_row["max_new_tokens"])
+            has_eos = int(tokenizer.eos) in expected_generated
+            if has_eos and expected_generated[-1] != int(tokenizer.eos):
+                raise ValueError(f"row {index} contains a non-terminal EOS token")
+            expected_hitmax = (
+                len(expected_generated) - 2 >= max_new_tokens
+                and not has_eos
+            )
+            if hitmax != expected_hitmax:
+                raise ValueError(
+                    f"row {index} inconsistent saved hitmax state: "
+                    f"flag={hitmax} derived={expected_hitmax}"
+                )
+            saved_prefix_trace = _saved_prefix_trace(
+                model,
+                tokenizer,
+                cond,
+                target_ids,
+                expected_generated,
+                int(target_joint_count),
+            )
             row = {
                 "index": index,
                 "path": batch["path"][0],
@@ -743,7 +782,7 @@ def main() -> None:
                     target_ids,
                     expected_generated,
                 ),
-                "manual_trace": manual,
+                "saved_prefix_trace": saved_prefix_trace,
             }
             rows.append(row)
             print(
@@ -755,17 +794,17 @@ def main() -> None:
                         "first_free_mismatch": row["first_free_mismatch"],
                         "teacher_joint0": teacher["by_role"]["joint0_coord"],
                         "teacher_eos": teacher["by_role"]["eos"],
-                        "trace_matches": manual["matches_saved_generation"],
+                        "free_generated_joint_count": saved_prefix_trace[
+                            "generated_joint_count"
+                        ],
+                        "free_eos_probability_at_target_count": saved_prefix_trace[
+                            "max_eos_probability_at_target_joint_count"
+                        ],
                     },
                     ensure_ascii=False,
                 ),
                 flush=True,
             )
-            if not manual["matches_saved_generation"]:
-                raise RuntimeError(
-                    "manual greedy trace differs from the saved generation at "
-                    f"row {index}: {manual['first_saved_divergence']}"
-                )
 
         for index, batch in enumerate(loader):
             batch = _move_batch(batch, device)

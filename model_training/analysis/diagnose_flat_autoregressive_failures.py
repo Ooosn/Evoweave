@@ -367,6 +367,7 @@ def _manual_free_trace(
     batch: dict[str, Any],
     cond: torch.Tensor,
     target_ids: list[int],
+    saved_ids: list[int],
     max_new_tokens: int,
 ) -> dict[str, Any]:
     from eval_dynamic_rig_generation import _count_prefix_structure
@@ -398,6 +399,7 @@ def _manual_free_trace(
 
     generated: list[int] = []
     events: list[dict[str, Any]] = []
+    first_saved_divergence: dict[str, Any] | None = None
     for step in range(max_new_tokens):
         prefix_ids = start_tokens.detach().cpu().tolist() + generated
         possible = set(
@@ -411,6 +413,34 @@ def _manual_free_trace(
         groups = _possible_groups(tokenizer, possible)
         target_position = len(prefix_ids)
         target = int(target_ids[target_position]) if target_position < len(target_ids) else None
+        saved = int(saved_ids[target_position]) if target_position < len(saved_ids) else None
+        if first_saved_divergence is None and selected != saved:
+            top_count = min(5, int(possible_ids.numel()))
+            top_logits, top_offsets = possible_logits.topk(top_count)
+            first_saved_divergence = {
+                "step": step,
+                "position": target_position,
+                "manual_id": selected,
+                "saved_id": saved,
+                "manual_logit": float(next_logits[0, selected].item()),
+                "saved_logit": (
+                    float(next_logits[0, saved].item())
+                    if saved is not None
+                    else None
+                ),
+                "manual_minus_saved_logit": (
+                    float((next_logits[0, selected] - next_logits[0, saved]).item())
+                    if saved is not None
+                    else None
+                ),
+                "top_possible": [
+                    {
+                        "id": int(possible_ids[offset].item()),
+                        "logit": float(logit.item()),
+                    }
+                    for logit, offset in zip(top_logits, top_offsets, strict=True)
+                ],
+            }
         if len(groups) > 1 or int(tokenizer.eos) in possible:
             joint_count, branch_count = _count_prefix_structure(tokenizer, prefix_ids)
             group_report = _group_stats(tokenizer, next_logits[0], possible, target)
@@ -467,6 +497,7 @@ def _manual_free_trace(
         "generated_ids": ids,
         "has_eos": bool(ids and ids[-1] == int(tokenizer.eos)),
         "steps": len(generated),
+        "first_saved_divergence": first_saved_divergence,
         "decision_events": events,
         "eos_decision_count": len(eos_events),
         "max_eos_group_probability": (
@@ -676,15 +707,16 @@ def main() -> None:
             cond = model.build_condition(batch, refs=refs)
             condition_cache.append(cond.detach().cpu())
             teacher, _logits, _labels = _teacher_report(model, tokenizer, batch, cond)
+            expected_generated = generation_row["dynamic"]["generated_ids"]
             manual = _manual_free_trace(
                 model,
                 tokenizer,
                 batch,
                 cond,
                 target_ids,
+                expected_generated,
                 int(generation_row["max_new_tokens"]),
             )
-            expected_generated = generation_row["dynamic"]["generated_ids"]
             manual_ids = manual.pop("generated_ids")
             manual["matches_saved_generation"] = bool(manual_ids == expected_generated)
             manual["first_saved_mismatch"] = _first_mismatch(
@@ -729,6 +761,11 @@ def main() -> None:
                 ),
                 flush=True,
             )
+            if not manual["matches_saved_generation"]:
+                raise RuntimeError(
+                    "manual greedy trace differs from the saved generation at "
+                    f"row {index}: {manual['first_saved_divergence']}"
+                )
 
         for index, batch in enumerate(loader):
             batch = _move_batch(batch, device)
@@ -761,14 +798,6 @@ def main() -> None:
                 ),
                 flush=True,
             )
-
-    if not all(row["manual_trace"]["matches_saved_generation"] for row in rows):
-        mismatched = [
-            row["index"]
-            for row in rows
-            if not row["manual_trace"]["matches_saved_generation"]
-        ]
-        raise RuntimeError(f"manual greedy trace did not reproduce saved generation for rows {mismatched}")
 
     report = {
         "checkpoint": str(args.checkpoint),

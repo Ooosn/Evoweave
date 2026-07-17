@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import defaultdict
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -42,7 +43,7 @@ def _forced_argmax_ids(
     batch: dict,
     *,
     cond: torch.Tensor | None = None,
-) -> tuple[list[int], dict[str, float | int]]:
+) -> tuple[list[int], dict[str, object]]:
     tokenizer = model.tokenizer
     logits, token_batch = _forced_logits(model, batch, cond=cond)
     labels = token_batch.labels[0].to(logits.device)
@@ -59,6 +60,41 @@ def _forced_argmax_ids(
     eos_rank = int((eos_logits > eos_logits[tokenizer.eos_token_id]).sum().item() + 1)
     coord_mask = valid & (roles >= tokenizer.offset) & ((roles - tokenizer.offset) < 3)
     parent_mask = valid & (roles == tokenizer.offset + 3)
+    valid_indices = valid.nonzero(as_tuple=False).flatten()
+    position_reports = []
+    payload_position = 0
+    role_names = ("x", "y", "z", "parent")
+    for tensor_position in valid_indices.tolist():
+        role_value = int(roles[tensor_position].item())
+        target_id = int(labels[tensor_position].item())
+        pred_id = int(pred[tensor_position].item())
+        target_logit = logits[0, tensor_position, target_id]
+        target_nll = torch.logsumexp(logits[0, tensor_position].float(), dim=-1) - target_logit.float()
+        target_rank = int(
+            (logits[0, tensor_position] > target_logit).sum().item() + 1
+        )
+        if tokenizer.offset <= role_value < tokenizer.offset + len(role_names):
+            role = role_names[role_value - tokenizer.offset]
+            joint_index = payload_position // tokenizer.bone_per_token
+            payload_position += 1
+        elif target_id == tokenizer.eos_token_id:
+            role = "eos"
+            joint_index = None
+        else:
+            role = "other"
+            joint_index = None
+        position_reports.append(
+            {
+                "tensor_position": tensor_position,
+                "joint_index": joint_index,
+                "role": role,
+                "target_id": target_id,
+                "pred_id": pred_id,
+                "correct": int(pred_id == target_id),
+                "target_nll": float(target_nll.detach().cpu()),
+                "target_rank": target_rank,
+            }
+        )
     stats = {
         "forced_token_acc": float((pred[valid] == labels[valid]).float().mean().detach().cpu()),
         "forced_coord_acc": float((pred[coord_mask] == labels[coord_mask]).float().mean().detach().cpu()),
@@ -66,8 +102,93 @@ def _forced_argmax_ids(
         "forced_eos_top1": int(pred[eos_pos].item() == tokenizer.eos_token_id),
         "forced_eos_rank": eos_rank,
         "forced_eos_prob": float(eos_prob.detach().cpu()),
+        "forced_positions": position_reports,
     }
     return pred_ids, stats
+
+
+def _manifest_metadata(manifest: Path) -> dict[str, dict[str, object]]:
+    metadata = {}
+    with manifest.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            path = str(Path(row["path"]))
+            metadata[path] = {
+                "eval_stratum": row.get("_eval_stratum"),
+                "split": row.get("split"),
+            }
+    return metadata
+
+
+def _aggregate_forced_positions(rows: list[dict[str, object]]) -> dict[str, object]:
+    grouped_rows: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for row in rows:
+        grouped_rows["all"].append(row)
+        stratum = row.get("eval_stratum")
+        split = row.get("split")
+        if stratum:
+            grouped_rows[str(stratum)].append(row)
+        if split:
+            grouped_rows[f"split:{split}"].append(row)
+        if split and stratum:
+            grouped_rows[f"split:{split}/stratum:{stratum}"].append(row)
+
+    report = {}
+    for group_name, group_rows in grouped_rows.items():
+        by_role: dict[str, list[dict[str, object]]] = defaultdict(list)
+        by_joint: dict[int, list[dict[str, object]]] = defaultdict(list)
+        for row in group_rows:
+            for position in row["forced_positions"]:
+                role = str(position["role"])
+                by_role[role].append(position)
+                joint_index = position["joint_index"]
+                if joint_index is not None:
+                    by_joint[int(joint_index)].append(position)
+
+        def summarize(positions: list[dict[str, object]]) -> dict[str, float | int]:
+            return {
+                "count": len(positions),
+                "accuracy": float(
+                    sum(int(position["correct"]) for position in positions) / len(positions)
+                ),
+                "target_nll": float(
+                    sum(float(position["target_nll"]) for position in positions) / len(positions)
+                ),
+                "target_rank": float(
+                    sum(int(position["target_rank"]) for position in positions) / len(positions)
+                ),
+            }
+
+        report[group_name] = {
+            "row_count": len(group_rows),
+            "by_role": {
+                role: summarize(positions)
+                for role, positions in sorted(by_role.items())
+            },
+            "by_joint_index": {
+                str(joint_index): {
+                    "all": summarize(positions),
+                    "coord": summarize(
+                        [
+                            position
+                            for position in positions
+                            if position["role"] in {"x", "y", "z"}
+                        ]
+                    ),
+                    "parent": summarize(
+                        [
+                            position
+                            for position in positions
+                            if position["role"] == "parent"
+                        ]
+                    ),
+                }
+                for joint_index, positions in sorted(by_joint.items())
+            },
+        }
+    return report
 
 
 def _condition_sensitivity(
@@ -922,6 +1043,7 @@ def main() -> None:
         motion_vertex_samples=ns.motion_vertex_samples,
         max_joints=ns.n_max_joints,
     )
+    manifest_metadata = _manifest_metadata(args.manifest)
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=puppeteer_dynamic_collate)
     paired_loader = None
     if args.pose_seed_b is not None:
@@ -981,6 +1103,7 @@ def main() -> None:
             row = {
                     "index": idx,
                     "path": batch["path"][0],
+                    **manifest_metadata.get(batch["path"][0], {}),
                     "pose_seed_a": int(pose_seed_a),
                     "target_joint_count": int(target.joints.shape[0]),
                     **forced_stats,
@@ -1135,6 +1258,7 @@ def main() -> None:
             "same_asset_different_pose": same_asset_pose_pairs,
             "different_asset_pose_a": different_asset_pairs,
         },
+        "forced_position_accuracy": _aggregate_forced_positions(rows),
         "cross_asset_condition_swap": cross_asset_condition_swap,
         "rows": rows,
     }

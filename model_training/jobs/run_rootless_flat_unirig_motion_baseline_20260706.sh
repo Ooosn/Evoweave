@@ -48,7 +48,8 @@ export EVOWEAVE_INIT_CHECKPOINT="${JOB_INIT_CHECKPOINT:-}"
 export EVOWEAVE_OUTPUT_DIR="${JOB_OUTPUT_DIR:-${OUTPUT_BASE}/${RUN_NAME}}"
 export EVOWEAVE_ENV_FILE="${JOB_ENV_FILE:-}"
 export EVOWEAVE_TRAIN_ROWS="${JOB_TRAIN_ROWS:-$(wc -l < "${EVOWEAVE_TRAIN_MANIFEST}")}"
-export PYTHONPATH="${MODEL_ROOT}/rigweave/src:${EVOWEAVE_UNIRIG_ROOT}:${PYTHONPATH:-}"
+EXTRA_PYTHONPATH="${JOB_EXTRA_PYTHONPATH:-}"
+export PYTHONPATH="${MODEL_ROOT}/rigweave/src:${EVOWEAVE_UNIRIG_ROOT}${EXTRA_PYTHONPATH:+:${EXTRA_PYTHONPATH}}:${PYTHONPATH:-}"
 
 # UniRig-line training profile. These defaults mirror the old dynamic UniRig
 # wrapper: LR=1e-4, AdamW weight decay=0.04, OneCycle schedule, and effective

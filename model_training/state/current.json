@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-17T20:13:00+09:00",
+  "updated_at": "2026-07-17T20:17:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -75,16 +75,16 @@
     "report",
     "inspect",
     "matched_eval",
-    "visualize"
+    "visualize",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "submit"
   ],
-  "next_required_result": "Add and verify optimizer/scheduler/step resume from checkpoint_sample_10000.pt, then continue the interrupted HGC flat-UniRig control without resetting its OneCycle schedule. Run the matched heldout52 comparison only after 80016 sample exposures.",
+  "next_required_result": "Resume the interrupted HGC flat-UniRig control from checkpoint_sample_10000.pt with model, optimizer, OneCycle scheduler, and step restored. Keep the foreground SSH/qlogin continuously supervised until 80016 sample exposures, then run the matched heldout52 comparison.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717",
-    "status": "interrupted",
+    "status": "authorized_resume_pending_gpu",
     "started_at": "2026-07-17T18:06:41+09:00",
     "server": "HGC pcg01 qlogin",
     "resources": "2xH100, s_vmem=256G",

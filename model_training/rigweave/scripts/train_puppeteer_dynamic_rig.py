@@ -82,6 +82,9 @@ def resolve_amp_dtype(name: str) -> torch.dtype:
 def build_decoder_config(args: argparse.Namespace, SkeletonOPTConfig: type[Any]) -> Any:
     max_length = int(args.cond_length + args.n_max_joints * 4 + 2)
     vocab_size = int(args.n_discrete_size + 3)
+    attn_implementation = (
+        "sdpa" if os.environ.get("RIGWEAVE_FORCE_SDPA", "0") == "1" else args.attn_implementation
+    )
     if args.tiny_random_decoder:
         ffn_dim = int(args.decoder_ffn_dim or args.decoder_hidden_size * 4)
         config = SkeletonOPTConfig(
@@ -105,7 +108,7 @@ def build_decoder_config(args: argparse.Namespace, SkeletonOPTConfig: type[Any])
             n_positions=max_length,
             max_position_embeddings=max_length,
             vocab_size=vocab_size,
-            _attn_implementation=args.attn_implementation,
+            _attn_implementation=attn_implementation,
         )
     if args.decoder_norm_style != "config":
         config.do_layer_norm_before = args.decoder_norm_style == "pre"
@@ -113,7 +116,7 @@ def build_decoder_config(args: argparse.Namespace, SkeletonOPTConfig: type[Any])
     config.bos_token_id = 0
     config.eos_token_id = 1
     config.pad_token_id = 2
-    config._attn_implementation = args.attn_implementation
+    config._attn_implementation = attn_implementation
     config.n_discrete_size = int(args.n_discrete_size)
     config.bone_per_token = 4
     config.cond_length = int(args.cond_length)
@@ -497,7 +500,11 @@ def main() -> None:
         choices=["cross_attention", "identity"],
         default="identity",
     )
-    parser.add_argument("--attn-implementation", choices=["flash_attention_2"], default="flash_attention_2")
+    parser.add_argument(
+        "--attn-implementation",
+        choices=["flash_attention_2", "sdpa", "eager"],
+        default="flash_attention_2",
+    )
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16", "fp32"], default="bf16")
     parser.add_argument("--local-files-only", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--allow-resize-positions", action=argparse.BooleanOptionalAction, default=True)

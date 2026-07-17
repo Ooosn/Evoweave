@@ -1642,11 +1642,7 @@ def main() -> None:
         choices=["cross_attention", "identity"],
         default=None,
     )
-    parser.add_argument(
-        "--attn-implementation",
-        choices=["flash_attention_2", "sdpa", "eager"],
-        default=None,
-    )
+    parser.add_argument("--attn-implementation", choices=["flash_attention_2"], default=None)
     parser.add_argument("--local-files-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--allow-resize-positions", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--random-init-smoke", action="store_true", default=None)

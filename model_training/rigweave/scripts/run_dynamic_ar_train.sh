@@ -169,6 +169,13 @@ CMD=(
 if [[ -n "${EVOWEAVE_INIT_CHECKPOINT:-}" ]]; then
   CMD+=(--init-checkpoint "${EVOWEAVE_INIT_CHECKPOINT}")
 fi
+if [[ -n "${EVOWEAVE_RESUME_CHECKPOINT:-}" ]]; then
+  CMD+=(--resume-checkpoint "${EVOWEAVE_RESUME_CHECKPOINT}")
+fi
+if [[ -n "${EVOWEAVE_INIT_CHECKPOINT:-}" && -n "${EVOWEAVE_RESUME_CHECKPOINT:-}" ]]; then
+  echo "[evoweave train] ERROR: EVOWEAVE_INIT_CHECKPOINT and EVOWEAVE_RESUME_CHECKPOINT are mutually exclusive." >&2
+  exit 2
+fi
 
 if [[ "${RIGWEAVE_MOTION_CHECKPOINTING:-1}" == "1" ]]; then
   CMD+=(--motion-checkpointing)

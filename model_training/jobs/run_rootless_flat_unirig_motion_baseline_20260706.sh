@@ -45,6 +45,7 @@ export EVOWEAVE_TOKENIZER_CONFIG="${JOB_TOKENIZER_CONFIG:-${EVOWEAVE_UNIRIG_ROOT
 export EVOWEAVE_UNIRIG_CKPT="${JOB_UNIRIG_CKPT:-/ssdwork/liuhaohan/evorig/evoweave_repo/external/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt}"
 export EVOWEAVE_OPT_CONFIG_ROOT="${JOB_OPT_CONFIG_ROOT:-}"
 export EVOWEAVE_INIT_CHECKPOINT="${JOB_INIT_CHECKPOINT:-}"
+export EVOWEAVE_RESUME_CHECKPOINT="${JOB_RESUME_CHECKPOINT:-}"
 export EVOWEAVE_OUTPUT_DIR="${JOB_OUTPUT_DIR:-${OUTPUT_BASE}/${RUN_NAME}}"
 export EVOWEAVE_ENV_FILE="${JOB_ENV_FILE:-}"
 export EVOWEAVE_TRAIN_ROWS="${JOB_TRAIN_ROWS:-$(wc -l < "${EVOWEAVE_TRAIN_MANIFEST}")}"
@@ -123,5 +124,9 @@ echo "[flat baseline] output=${EVOWEAVE_OUTPUT_DIR}"
 echo "[flat baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SIZE * RIGWEAVE_GRAD_ACCUM))"
 echo "[flat baseline] profile=unirig lr_ar=${RIGWEAVE_LR_AR} lr_motion=${RIGWEAVE_LR_MOTION} lr_surface=${RIGWEAVE_LR_SURFACE} weight_decay=${RIGWEAVE_WEIGHT_DECAY} scheduler=${RIGWEAVE_SCHEDULER}"
 echo "[flat baseline] decoder=UniRig flat AR"
-bash rigweave/scripts/run_dynamic_ar_train.sh 2>&1 | tee "${EVOWEAVE_OUTPUT_DIR}/train_frontend.log"
+TEE_ARGS=()
+if [[ -n "${EVOWEAVE_RESUME_CHECKPOINT}" ]]; then
+  TEE_ARGS=(-a)
+fi
+bash rigweave/scripts/run_dynamic_ar_train.sh 2>&1 | tee "${TEE_ARGS[@]}" "${EVOWEAVE_OUTPUT_DIR}/train_frontend.log"
 echo "[flat baseline] done $(date -Is)"

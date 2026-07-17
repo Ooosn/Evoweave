@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-17T18:17:42+09:00",
+  "updated_at": "2026-07-17T20:13:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -81,21 +81,39 @@
     "train",
     "submit"
   ],
-  "next_required_result": "Do not launch a duplicate run. Let the active HGC flat-UniRig control reach 80016 sample exposures, then run the matched heldout52 comparison.",
+  "next_required_result": "Add and verify optimizer/scheduler/step resume from checkpoint_sample_10000.pt, then continue the interrupted HGC flat-UniRig control without resetting its OneCycle schedule. Run the matched heldout52 comparison only after 80016 sample exposures.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717",
-    "status": "running",
+    "status": "interrupted",
     "started_at": "2026-07-17T18:06:41+09:00",
     "server": "HGC pcg01 qlogin",
     "resources": "2xH100, s_vmem=256G",
     "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
     "last_verified": {
-      "step": 20,
-      "sample_seen": 960,
-      "loss": 1.9019441455602646,
-      "seconds_per_step": 23.847,
-      "gpu_peak_gb": 68.376
-    }
+      "step": 230,
+      "sample_seen": 11040,
+      "loss": 1.3333352357149124,
+      "seconds_per_step": 24.915,
+      "gpu_peak_gb": 68.487
+    },
+    "last_safe_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_10000.pt",
+      "step": 209,
+      "sample_seen": 10032,
+      "includes_optimizer": true,
+      "includes_scheduler": true
+    },
+    "interrupted_job_id": 124448167,
+    "interruption_accounting": {
+      "exit_status": 137,
+      "failed": "100: assumedly after job",
+      "deleted_by": "NONE",
+      "maxvmem_gb": 212.353,
+      "svmem_limit_gb": 256.0,
+      "maxrss_gb": 9.2,
+      "memory_failcnt": 0
+    },
+    "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
   },
   "last_operation": {
     "name": "balanced50_sequence_ft500",

@@ -288,6 +288,107 @@ def write_json_log(path: Path | None, row: dict[str, Any]) -> None:
             f.write(text + "\n")
 
 
+def resume_contract_differences(
+    checkpoint: dict[str, Any],
+    args: argparse.Namespace,
+    *,
+    effective_batch: int,
+    train_rows: int,
+) -> list[str]:
+    saved_args = checkpoint.get("args")
+    if not isinstance(saved_args, dict):
+        return ["checkpoint.args is missing or is not a dictionary"]
+
+    mutable_keys = {
+        "init_checkpoint",
+        "resume_checkpoint",
+        "output_dir",
+        "log_every",
+        "val_every",
+        "val_steps",
+        "save_every",
+        "sample_milestones",
+        "sample_milestones_parsed",
+        "no_save_optimizer",
+        "num_workers",
+        "log_process_memory",
+    }
+    current_args = vars(args)
+    differences: list[str] = []
+    for key, saved_value in saved_args.items():
+        if key in mutable_keys or key not in current_args:
+            continue
+        current_value = json_safe(current_args[key])
+        if current_value != saved_value:
+            differences.append(f"args.{key}: checkpoint={saved_value!r} current={current_value!r}")
+
+    saved_effective_batch = checkpoint.get("effective_batch")
+    if int(saved_effective_batch or 0) != int(effective_batch):
+        differences.append(
+            f"effective_batch: checkpoint={saved_effective_batch!r} current={effective_batch!r}"
+        )
+    saved_train_rows = checkpoint.get("train_rows")
+    if int(saved_train_rows or 0) != int(train_rows):
+        differences.append(f"train_rows: checkpoint={saved_train_rows!r} current={train_rows!r}")
+    if not isinstance(checkpoint.get("optimizer"), dict):
+        differences.append("checkpoint.optimizer is missing")
+    if args.scheduler != "none" and not isinstance(checkpoint.get("scheduler"), dict):
+        differences.append("checkpoint.scheduler is missing")
+    if int(checkpoint.get("step", 0)) <= 0:
+        differences.append(f"checkpoint.step must be positive, got {checkpoint.get('step')!r}")
+    return differences
+
+
+def best_metrics_before_step(path: Path, max_step: int) -> tuple[float, int, float, int]:
+    best_val_ce = float("inf")
+    best_val_step = -1
+    best_val_eos_acc = -float("inf")
+    best_val_eos_step = -1
+    if not path.exists():
+        return best_val_ce, best_val_step, best_val_eos_acc, best_val_eos_step
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        row_step = int(row.get("step", -1))
+        if row_step < 0 or row_step > max_step:
+            continue
+        if row.get("event") == "best_val_checkpoint":
+            value = float(row.get("best_val_ce", float("inf")))
+            if value < best_val_ce:
+                best_val_ce = value
+                best_val_step = int(row.get("best_val_step", row_step))
+        if row.get("event") == "best_eos_checkpoint":
+            value = float(row.get("best_val_eos_acc", -float("inf")))
+            if value > best_val_eos_acc:
+                best_val_eos_acc = value
+                best_val_eos_step = int(row.get("best_val_eos_step", row_step))
+    return best_val_ce, best_val_step, best_val_eos_acc, best_val_eos_step
+
+
+def trim_metrics_log_to_resume_step(path: Path, resume_step: int) -> Path | None:
+    if not path.exists():
+        return None
+    original = path.read_text(encoding="utf-8")
+    archive = path.with_name(f"{path.stem}.interrupted_before_resume_step_{resume_step}_{int(time.time())}{path.suffix}")
+    archive.write_text(original, encoding="utf-8")
+
+    kept: list[str] = []
+    for line in original.splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            kept.append(line)
+            continue
+        row_step = row.get("step")
+        if row_step is None or int(row_step) <= resume_step:
+            kept.append(line)
+    path.write_text("\n".join(kept) + ("\n" if kept else ""), encoding="utf-8")
+    return archive
+
+
 def parse_sample_milestones(raw: str) -> list[int]:
     if not raw.strip():
         return []
@@ -539,6 +640,12 @@ def main() -> None:
     parser.add_argument("--model-config", type=Path, default=Path("external/UniRig/configs/model/unirig_ar_350m_1024_81920_float32.yaml"))
     parser.add_argument("--unirig-checkpoint", type=Path, default=Path("external/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt"))
     parser.add_argument("--init-checkpoint", type=Path, default=None)
+    parser.add_argument(
+        "--resume-checkpoint",
+        type=Path,
+        default=None,
+        help="Resume model, optimizer, scheduler, and optimizer step from an interrupted run.",
+    )
     parser.add_argument("--init-dynamic-encoder-checkpoint", type=Path, default=None)
     parser.add_argument("--init-surface-tokenizer-from-dynamic", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=Path("rigweave/outputs/dynamic_rig_runs/trackable_surface_ar"))
@@ -729,6 +836,8 @@ def main() -> None:
     parser.add_argument("--use-condition-action-group-bias", action="store_true")
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16"], default="bf16")
     args = parser.parse_args()
+    if args.init_checkpoint is not None and args.resume_checkpoint is not None:
+        parser.error("--init-checkpoint and --resume-checkpoint are mutually exclusive")
 
     device, rank, local_rank, world_size = setup_distributed()
     amp_dtype = torch.bfloat16 if args.amp_dtype == "bf16" else torch.float16
@@ -738,7 +847,8 @@ def main() -> None:
         log_dir = args.output_dir / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         RUN_LOG_PATH = log_dir / "run.log"
-        RUN_LOG_PATH.write_text("", encoding="utf-8")
+        if args.resume_checkpoint is None:
+            RUN_LOG_PATH.write_text("", encoding="utf-8")
 
     try:
         from functools import partial
@@ -871,7 +981,26 @@ def main() -> None:
         log(rank, f"model moved to device in {time.time() - stage_t0:.2f}s")
         log_process_memory(rank, "after_model_to_device", args.log_process_memory)
         stage_t0 = time.time()
-        if args.init_checkpoint is not None:
+        resume_payload: dict[str, Any] | None = None
+        if args.resume_checkpoint is not None:
+            resume_t0 = time.time()
+            resume_payload = torch.load(args.resume_checkpoint, map_location="cpu", weights_only=False)
+            if not isinstance(resume_payload, dict) or not isinstance(resume_payload.get("model"), dict):
+                raise ValueError(f"invalid resume checkpoint payload: {args.resume_checkpoint}")
+            state = resume_payload.pop("model")
+            missing, unexpected = model.load_state_dict(state, strict=True)
+            if missing or unexpected:
+                raise RuntimeError(
+                    f"strict resume model load returned missing={list(missing)} unexpected={list(unexpected)}"
+                )
+            del state
+            trim_host_allocator()
+            log(
+                rank,
+                f"resume model checkpoint={args.resume_checkpoint} step={resume_payload.get('step')} "
+                f"loaded_in={time.time() - resume_t0:.2f}s",
+            )
+        elif args.init_checkpoint is not None:
             init_t0 = time.time()
             ckpt = torch.load(args.init_checkpoint, map_location="cpu", weights_only=False)
             state = dict(ckpt["model"])
@@ -1068,23 +1197,83 @@ def main() -> None:
         setattr(args, "effective_batch", effective_batch)
         setattr(args, "train_rows", train_rows)
         setattr(args, "sample_milestones_parsed", sample_milestones)
+        resume_step = 0
+        resume_epoch = 0
+        resume_batches_to_skip = 0
+        if resume_payload is not None:
+            differences = resume_contract_differences(
+                resume_payload,
+                args,
+                effective_batch=effective_batch,
+                train_rows=train_rows,
+            )
+            if differences:
+                raise ValueError("resume checkpoint contract mismatch:\n  " + "\n  ".join(differences))
+            optimizer.load_state_dict(resume_payload["optimizer"])
+            if scheduler is not None:
+                scheduler.load_state_dict(resume_payload["scheduler"])
+            resume_step = int(resume_payload["step"])
+            microbatches_seen = int(resume_step * args.grad_accum_steps)
+            resume_epoch, resume_batches_to_skip = divmod(microbatches_seen, max(1, len(train_loader)))
+            scheduler_step = None if scheduler is None else int(scheduler.last_epoch)
+            if scheduler is not None and scheduler_step != resume_step:
+                raise ValueError(
+                    f"resume scheduler step mismatch: checkpoint step={resume_step} scheduler.last_epoch={scheduler_step}"
+                )
+            log(
+                rank,
+                "resume optimizer/scheduler "
+                f"step={resume_step} epoch={resume_epoch} skip_batches={resume_batches_to_skip} "
+                f"scheduler_step={scheduler_step} "
+                f"lrs={[float(group['lr']) for group in optimizer.param_groups]}",
+            )
+            del resume_payload
+            trim_host_allocator()
         if is_main(rank):
             args_json = json.loads(json.dumps(vars(args), default=str))
-            (args.output_dir / "args.json").write_text(json.dumps(args_json, indent=2) + "\n", encoding="utf-8")
             metrics_log = log_dir / "train.log"
-            metrics_log.write_text("", encoding="utf-8")
-            write_json_log(
-                metrics_log,
-                {
-                    "event": "run_config",
-                    "args": args_json,
-                    "world_size": world_size,
-                    "effective_batch": effective_batch,
-                    "train_rows": train_rows,
-                    "sample_milestones": sample_milestones,
-                },
-            )
-        saved_sample_milestones: set[int] = set()
+            if resume_step > 0:
+                (args.output_dir / f"args_resume_step_{resume_step}.json").write_text(
+                    json.dumps(args_json, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                archive = trim_metrics_log_to_resume_step(metrics_log, resume_step)
+                write_json_log(
+                    metrics_log,
+                    {
+                        "event": "resume",
+                        "resume_checkpoint": str(args.resume_checkpoint),
+                        "step": resume_step,
+                        **accounting_fields(resume_step, effective_batch, train_rows),
+                        "epoch": resume_epoch,
+                        "skipped_batches_in_epoch": resume_batches_to_skip,
+                        "archived_interrupted_log": None if archive is None else str(archive),
+                    },
+                )
+            else:
+                (args.output_dir / "args.json").write_text(
+                    json.dumps(args_json, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                metrics_log.write_text("", encoding="utf-8")
+                write_json_log(
+                    metrics_log,
+                    {
+                        "event": "run_config",
+                        "args": args_json,
+                        "world_size": world_size,
+                        "effective_batch": effective_batch,
+                        "train_rows": train_rows,
+                        "sample_milestones": sample_milestones,
+                    },
+                )
+        if dist.is_available() and dist.is_initialized():
+            dist.barrier()
+        saved_sample_milestones: set[int] = {
+            milestone
+            for milestone in sample_milestones
+            if milestone <= int(resume_step * effective_batch)
+        }
         log(rank, f"train rows={len(train_dataset)} val rows={len(val_dataset)}")
         log(rank, f"trainable params={count_trainable(model):,}")
         log(
@@ -1205,12 +1394,18 @@ def main() -> None:
             f"condition_control_ce_every={args.condition_control_ce_every}",
         )
 
-        step = 0
-        epoch = 0
-        best_val_ce = float("inf")
-        best_val_step = -1
-        best_val_eos_acc = -float("inf")
-        best_val_eos_step = -1
+        step = resume_step
+        epoch = resume_epoch
+        if is_main(rank):
+            best_val_ce, best_val_step, best_val_eos_acc, best_val_eos_step = best_metrics_before_step(
+                args.output_dir / "logs" / "train.log",
+                resume_step,
+            )
+        else:
+            best_val_ce = float("inf")
+            best_val_step = -1
+            best_val_eos_acc = -float("inf")
+            best_val_eos_step = -1
         accum_count = 0
         accum_t0 = time.time()
         accum_loss_sum = 0.0
@@ -1231,7 +1426,10 @@ def main() -> None:
         while step < args.max_steps:
             if train_sampler is not None:
                 train_sampler.set_epoch(epoch)
-            for batch in train_loader:
+            for batch_index, batch in enumerate(train_loader):
+                if resume_batches_to_skip > 0 and batch_index < resume_batches_to_skip:
+                    continue
+                resume_batches_to_skip = 0
                 if accum_count == 0:
                     accum_t0 = time.time()
                     if args.generated_prefix_recovery_every <= 0:

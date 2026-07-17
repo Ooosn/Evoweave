@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-16T15:20:00+09:00",
+  "updated_at": "2026-07-17T17:39:43+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -12,8 +12,10 @@
   ],
   "reference_runs": {
     "flat_unirig": {
-      "status": "trained_but_missing_matched_heldout52_comparison",
-      "path": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/rootless_flat_unirig_motion_fullft_20260707_hxr4gpu"
+      "status": "prior_westlake_run_unavailable_on_hgc_clean_retrain_authorized",
+      "path": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/rootless_flat_unirig_motion_fullft_20260707_hxr4gpu",
+      "hgc_output": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt"
     },
     "puppeteer": {
       "status": "reference_checkpoint_not_accepted_as_usable_baseline",
@@ -73,14 +75,20 @@
     "report",
     "inspect",
     "matched_eval",
-    "visualize"
+    "visualize",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "submit"
   ],
-  "next_required_result": "Run flat UniRig and Puppeteer sample80000 best_val final on the same heldout52 poses with the same J2J J2B B2B implementation and montage before any new training.",
-  "active_operation": null,
+  "next_required_result": "On the held HGC 2xH100 qlogin, pass the real rootless-v3 flat-UniRig preflight, train the clean 80016-sample-exposure control from the official static UniRig initialization, then run the matched heldout52 comparison.",
+  "active_operation": {
+    "name": "flat_unirig_hgc2h100_matched80k_20260717",
+    "status": "authorized_pending_preflight",
+    "server": "HGC pcg01 qlogin",
+    "resources": "2xH100",
+    "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717"
+  },
   "last_operation": {
     "name": "balanced50_sequence_ft500",
     "status": "stopped",

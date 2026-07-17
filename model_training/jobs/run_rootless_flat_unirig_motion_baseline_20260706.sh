@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MODEL_ROOT="${MODEL_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_model_training_20260706}"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+DEFAULT_MODEL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+MODEL_ROOT="${MODEL_ROOT:-${DEFAULT_MODEL_ROOT}}"
 MANIFEST_ROOT="${EVOWEAVE_MANIFEST_ROOT:-${EVOWEAVE_ROOTLESS_ROOT:-/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests}}"
 RUN_NAME="${JOB_RUN_NAME:-rootless_flat_unirig_motion_fullft_20260706}"
 OUTPUT_BASE="${EVOWEAVE_MODEL_OUTPUT_BASE:-/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs}"
 
-source /opt/conda/etc/profile.d/conda.sh
+CONDA_SH="${JOB_CONDA_SH:-/opt/conda/etc/profile.d/conda.sh}"
+CONDA_ENV="${JOB_CONDA_ENV:-evoweave}"
+if [[ ! -f "${CONDA_SH}" ]]; then
+  echo "[flat baseline] ERROR: conda initialization script does not exist: ${CONDA_SH}" >&2
+  exit 2
+fi
+source "${CONDA_SH}"
 set +u
-conda activate evoweave
+conda activate "${CONDA_ENV}"
 set -u
 
 cd "${MODEL_ROOT}"

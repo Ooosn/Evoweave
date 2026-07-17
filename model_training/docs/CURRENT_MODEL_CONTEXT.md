@@ -32,7 +32,9 @@ rootless-v3 dynamic NPZ
 
 ## 2. Flat UniRig baseline
 
-Flat UniRig rootless-v3 baseline 已经完成训练和评测，不是待训练项目。
+Flat UniRig rootless-v3 在 Westlake 有一份历史训练结果，但其动态 checkpoint 当前不在
+HGC，不能再把取得该 checkpoint 当作继续工作的前提。2026-07-17 已明确允许在 HGC
+从官方静态 UniRig skeleton checkpoint 重新训练一份干净的同预算对照线。
 
 Westlake 参考运行目录：
 
@@ -41,9 +43,10 @@ Westlake 参考运行目录：
 rootless_flat_unirig_motion_fullft_20260707_hxr4gpu
 ```
 
-当前缺口：HGC 尚无一份在固定 Puppeteer heldout-52 上、使用同一 pose、同一
-归一化和同一 CD 实现的 UniRig 结果。因此在补齐该对照前，不能用 Puppeteer
-单独的 CD 数值宣称“好”或“接近 UniRig”。
+HGC 重训固定使用当前 rootless-v3 train/valid manifest、随机 query pose、完整
+surface/motion/AR 全量训练、OneCycle、effective batch 48 和 80016 次样本暴露。
+不得加载旧 Evoweave 动态 checkpoint。训练完成后，在固定 Puppeteer heldout-52
+上使用同一 pose、同一归一化和同一 J2J/J2B/B2B 实现建立对照。
 
 ## 3. 已失败的旧 Puppeteer 实现
 
@@ -176,6 +179,8 @@ puppeteer_identity1024_preln_hgc2h100_full_20260715
 ## 10. 继续工作的硬规则
 
 - 现在不得从零重训 Puppeteer；先使用现有 `10k/40k/80k/best/final`。
+- 允许从官方静态 UniRig checkpoint 重训 flat UniRig 对照线；这不依赖旧动态
+  Evoweave checkpoint，也不改变 Puppeteer。
 - 任何“变好”结论必须来自同一 manifest、同一 pose、同一归一化、同一指标实现
   的 UniRig/Puppeteer 对照，并附自由生成可视化。
 - teacher-forcing accuracy、单独 CD 数值或 joint count 改善都不能作为验收。
@@ -186,6 +191,8 @@ puppeteer_identity1024_preln_hgc2h100_full_20260715
 
 ## 11. 下一项唯一允许的执行工作
 
-取得 flat UniRig 的可信 checkpoint，在现有 heldout-52 上用完全相同的 pose 和
-几何指标运行 UniRig、`sample_80000`、`best_val`、`final` 四方对照并生成 montage。
-完成该对照前，不提交新的长训练任务，也不修改数据契约。
+在当前已占用的 HGC `2 x H100` qlogin 中，先通过真实 rootless-v3 manifest 的
+flat UniRig preflight，然后从官方静态 UniRig 初始化训练 80016 样本暴露的 clean
+control。训练完成后，在现有 heldout-52 上用完全相同的 pose 和几何指标运行
+UniRig、Puppeteer `sample_80000`、`best_val`、`final` 四方对照并生成 montage。
+不修改数据契约，也不把这次重训混成 Puppeteer 改动。

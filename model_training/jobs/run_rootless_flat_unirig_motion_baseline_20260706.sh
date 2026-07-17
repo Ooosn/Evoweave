@@ -101,7 +101,7 @@ export RIGWEAVE_FREEZE_AR=0
 export RIGWEAVE_FREEZE_CONDITIONER=0
 
 mkdir -p "${EVOWEAVE_OUTPUT_DIR}"
-cp -f "${BASH_SOURCE[0]}" "${EVOWEAVE_OUTPUT_DIR}/launch.sh"
+cp -f "${SCRIPT_PATH}" "${EVOWEAVE_OUTPUT_DIR}/launch.sh"
 python3 - <<'PY_ENV' > "${EVOWEAVE_OUTPUT_DIR}/resolved_env.txt"
 import os
 

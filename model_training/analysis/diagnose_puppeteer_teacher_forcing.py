@@ -223,10 +223,19 @@ def _target_likelihood_under_condition_swap(
     correct_cond: torch.Tensor,
     swapped_cond: torch.Tensor,
     swapped_path: str,
+    scope: str,
 ) -> dict[str, object]:
     """Measure whether the correct asset condition helps predict the fixed GT target."""
 
     tokenizer = model.tokenizer
+    if scope == "joint0":
+        teacher_batch = dict(batch)
+        teacher_batch["joint_count"] = torch.ones_like(batch["joint_count"])
+    elif scope == "full":
+        teacher_batch = batch
+    else:
+        raise ValueError(f"unknown condition-swap scope {scope!r}")
+
     zero_cond = torch.zeros_like(correct_cond)
     condition_logits: dict[str, torch.Tensor] = {}
     token_batch = None
@@ -235,7 +244,10 @@ def _target_likelihood_under_condition_swap(
         ("swapped", swapped_cond),
         ("zero", zero_cond),
     ):
-        logits, current_token_batch, _loss = model.teacher_forced_logits(batch, cond=cond)
+        logits, current_token_batch, _loss = model.teacher_forced_logits(
+            teacher_batch,
+            cond=cond,
+        )
         condition_logits[name] = logits.float()
         if token_batch is None:
             token_batch = current_token_batch
@@ -311,6 +323,7 @@ def _target_likelihood_under_condition_swap(
     return {
         "path": batch["path"][0],
         "swapped_path": swapped_path,
+        "scope": scope,
         "roles": role_reports,
     }
 
@@ -997,6 +1010,11 @@ def main() -> None:
     parser.add_argument("--attention-routing", action="store_true")
     parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
     parser.add_argument("--cross-asset-condition-swap", action="store_true")
+    parser.add_argument(
+        "--condition-swap-scope",
+        choices=("full", "joint0"),
+        default="full",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     intervention_scales = (
@@ -1225,6 +1243,7 @@ def main() -> None:
                     correct_cond=correct_cond_cpu.to(device),
                     swapped_cond=swapped_cond_cpu.to(device),
                     swapped_path=swapped_path,
+                    scope=args.condition_swap_scope,
                 )
                 cross_asset_condition_swap.append(swap_report)
                 print(

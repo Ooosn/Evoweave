@@ -247,9 +247,17 @@ def _target_likelihood_under_condition_swap(
     roles = token_batch.token_role.to(correct_cond.device)
     valid = labels != -100
     coord = valid & (roles >= tokenizer.offset) & ((roles - tokenizer.offset) < 3)
+    joint0_coord = torch.zeros_like(valid)
+    joint0_positions = coord[0].nonzero(as_tuple=False).flatten()[:3]
+    if int(joint0_positions.numel()) != 3:
+        raise ValueError(
+            "Puppeteer condition swap expects exactly three joint-0 coordinate positions"
+        )
+    joint0_coord[0, joint0_positions] = True
     role_masks = {
         "all": valid,
         "coord": coord,
+        "joint0_coord": joint0_coord,
         "x": valid & (roles == tokenizer.offset),
         "y": valid & (roles == tokenizer.offset + 1),
         "z": valid & (roles == tokenizer.offset + 2),

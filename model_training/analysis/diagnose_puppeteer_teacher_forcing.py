@@ -976,6 +976,7 @@ def main() -> None:
     parser.add_argument("--model-root", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--puppeteer-llm", type=Path)
     parser.add_argument("--limit", type=int, default=16)
     parser.add_argument("--pose-seed-a", type=int, default=None)
     parser.add_argument("--pose-seed-b", type=int, default=None)
@@ -1027,6 +1028,8 @@ def main() -> None:
         "puppeteer_llm",
     ):
         setattr(ns, name, train_args.get(name))
+    if args.puppeteer_llm is not None:
+        ns.puppeteer_llm = str(args.puppeteer_llm)
     apply_checkpoint_eval_defaults(ns)
     _apply_puppeteer_checkpoint_defaults(ns)
     model = _build_puppeteer_model(ns, device)

@@ -169,6 +169,7 @@ environment bootstrap without changing the model profile:
 ```text
 JOB_CONDA_SH=/home/wangyy/miniconda3/etc/profile.d/conda.sh
 JOB_CONDA_ENV=mygs
+JOB_OPT_CONFIG_ROOT=/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m
 ```
 
 Set `RIGWEAVE_NO_SAVE_OPTIMIZER=1` for checkpoint-only training runs where

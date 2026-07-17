@@ -82,6 +82,12 @@ def main() -> int:
     ))
     existing_file(model_config, "EVOWEAVE_MODEL_CONFIG")
     existing_file(tokenizer_config, "EVOWEAVE_TOKENIZER_CONFIG")
+    if os.environ.get("EVOWEAVE_OPT_CONFIG_ROOT"):
+        opt_config_root = existing_dir(
+            os.environ["EVOWEAVE_OPT_CONFIG_ROOT"],
+            "EVOWEAVE_OPT_CONFIG_ROOT",
+        )
+        existing_file(opt_config_root / "config.json", "OPT config.json")
     if os.environ.get("EVOWEAVE_INIT_CHECKPOINT"):
         existing_file(os.environ["EVOWEAVE_INIT_CHECKPOINT"], "EVOWEAVE_INIT_CHECKPOINT")
 

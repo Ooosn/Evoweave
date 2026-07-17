@@ -43,6 +43,7 @@ export EVOWEAVE_UNIRIG_ROOT="${JOB_UNIRIG_ROOT:-/ssdwork/liuhaohan/evorig/evowea
 export EVOWEAVE_MODEL_CONFIG="${JOB_MODEL_CONFIG:-${EVOWEAVE_UNIRIG_ROOT}/configs/model/unirig_ar_350m_1024_81920_float32.yaml}"
 export EVOWEAVE_TOKENIZER_CONFIG="${JOB_TOKENIZER_CONFIG:-${EVOWEAVE_UNIRIG_ROOT}/configs/tokenizer/tokenizer_parts_articulationxl_256.yaml}"
 export EVOWEAVE_UNIRIG_CKPT="${JOB_UNIRIG_CKPT:-/ssdwork/liuhaohan/evorig/evoweave_repo/external/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt}"
+export EVOWEAVE_OPT_CONFIG_ROOT="${JOB_OPT_CONFIG_ROOT:-}"
 export EVOWEAVE_INIT_CHECKPOINT="${JOB_INIT_CHECKPOINT:-}"
 export EVOWEAVE_OUTPUT_DIR="${JOB_OUTPUT_DIR:-${OUTPUT_BASE}/${RUN_NAME}}"
 export EVOWEAVE_ENV_FILE="${JOB_ENV_FILE:-}"

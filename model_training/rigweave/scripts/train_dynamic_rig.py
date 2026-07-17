@@ -334,6 +334,9 @@ def load_unirig(tokenizer: Any, model_config: Path, checkpoint: Path) -> Any:
 
     def fast_opt_config(cls: type, pretrained_model_name_or_path: str, *args: Any, **kwargs: Any) -> Any:
         if str(pretrained_model_name_or_path).startswith("facebook/opt"):
+            local_config_root = os.environ.get("EVOWEAVE_OPT_CONFIG_ROOT")
+            if local_config_root:
+                pretrained_model_name_or_path = local_config_root
             kwargs.setdefault("local_files_only", True)
             return OPTConfig.from_pretrained(pretrained_model_name_or_path, *args, **kwargs)
         return original_from_pretrained(pretrained_model_name_or_path, *args, **kwargs)

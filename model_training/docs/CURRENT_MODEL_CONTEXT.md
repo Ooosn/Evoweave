@@ -45,8 +45,17 @@ rootless_flat_unirig_motion_fullft_20260707_hxr4gpu
 
 HGC 重训固定使用当前 rootless-v3 train/valid manifest、随机 query pose、完整
 surface/motion/AR 全量训练、OneCycle、effective batch 48 和 80016 次样本暴露。
-不得加载旧 Evoweave 动态 checkpoint。训练完成后，在固定 Puppeteer heldout-52
-上使用同一 pose、同一归一化和同一 J2J/J2B/B2B 实现建立对照。
+不得加载旧 Evoweave 动态 checkpoint。
+
+该重训已于 2026-07-18 完成：
+
+- 输出目录：
+  `/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717`
+- `2 x H100`，`1667` optimizer steps，累计 `80,016` 次样本输入；
+- `662,268,416` 个参数全部训练；
+- `checkpoint_sample_80000.pt` 包含 model、optimizer 和 scheduler；
+- step 1600 的验证集 CE 为 `1.165135`，EOS accuracy 为 `1.0`；
+- 训练 CE 不能作为生成质量验收，正式结论只使用第 6 节的 matched generation。
 
 ## 3. 已失败的旧 Puppeteer 实现
 
@@ -122,19 +131,56 @@ puppeteer_identity1024_preln_hgc2h100_full_20260715
 该运行是当前 Puppeteer source of truth。旧坍塌任务、短 overfit 和后续 probe
 都不能替代它，也不能混成当前 baseline 结论。
 
-## 6. 正式运行的已知评测结果
+## 6. 同协议 heldout-52 正式评测
 
-已经保存多随机种子自由生成、成功/失败 montage、teacher-pose diagnosis 和
-分层评测。固定 heldout-52 的当前结果：
+2026-07-18 已完成 flat UniRig 与三个 Puppeteer checkpoint 的四方自由生成对照。
+四份结果逐行硬校验了相同的 `path`、query frame、24 个 selected frames、
+query center/scale 和 GT joint count；因此这里不存在 pose、归一化或样本错配。
 
-| 子集 | 数量 | J2J | J2B | B2B | joint-count MAE |
-|---|---:|---:|---:|---:|---:|
-| train-low-joint | 16 | 0.0774 | 0.0641 | 0.0549 | 45.12 |
-| train-random/common | 16 | 0.0141 | 0.0120 | 0.0114 | 7.31 |
-| valid-low-joint | 20 | 0.0673 | 0.0581 | 0.0509 | 43.75 |
+结果目录：
 
-这些数值只证明 Puppeteer 内部存在明显分组差异。由于没有同协议 UniRig 对照，
-不得把 common 组的 `J2J=0.0141` 描述为“好”或“可用”。
+```text
+/home/wangyy/evorig/outputs/matched_heldout52_20260718
+```
+
+全量 52 行结果：
+
+| 路线 | 可解析 | hitmax | joint-count MAE | J2J | J2B | B2B | topology F1 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| flat UniRig sample80000 | 42/52 | 10 | 6.0952 | 0.038961 | 0.027517 | 0.022120 | 0.639410 |
+| Puppeteer sample80000 | 52/52 | 0 | 43.5192 | 0.053189 | 0.044258 | 0.038557 | 0.202308 |
+| Puppeteer best_val | 52/52 | 0 | 44.0000 | 0.054615 | 0.046626 | 0.040644 | 0.197214 |
+| Puppeteer final | 52/52 | 0 | 43.6154 | 0.052854 | 0.043918 | 0.038224 | 0.199103 |
+
+flat UniRig 的几何和拓扑统计只在 42 个成功解析的样本上计算；另外 10 个样本
+没有 EOS，达到 1400-token 上限后被 tokenizer 拒绝，整套输出不可用。不能用
+42 个成功样本的均值掩盖这 10 个失败。
+
+flat UniRig 与 Puppeteer sample80000 的分层结果：
+
+| 子集 | 路线 | 可解析 | joint-count MAE | J2J | topology F1 |
+|---|---|---:|---:|---:|---:|
+| train-low (16) | flat UniRig | 11/16 | 5.6364 | 0.056670 | 0.486790 |
+| train-low (16) | Puppeteer | 16/16 | 54.2500 | 0.080370 | 0.019744 |
+| train-common (16) | flat UniRig | 15/16 | 2.8667 | 0.006266 | 0.951028 |
+| train-common (16) | Puppeteer | 16/16 | 5.6250 | 0.013647 | 0.599009 |
+| valid-low (20) | flat UniRig | 16/20 | 9.4375 | 0.057437 | 0.452194 |
+| valid-low (20) | Puppeteer | 20/20 | 65.2500 | 0.063077 | 0.030999 |
+
+结论：
+
+- flat UniRig 在 common 组已经能生成高质量、可用的骨架，但仍有 10/52 个
+  hitmax，尚不能作为无条件可用的最终模型。
+- Puppeteer 三个 checkpoint 都能按语法结束，但低关节样本通常生成
+  `52/89/96/101` 等大量多余关节；语法成功不等于骨架可用。
+- Puppeteer sample80000 与 final 有 50/52 行 generated token 完全相同；
+  best_val 只与它们相同 6/52，且总体没有更好。后续以 sample80000 作为同预算
+  对照，final 仅视为近等价副本。
+- 旧文档中的 `45.12/43.75` 等 joint-count MAE 不对应当前保存的正式结果，
+  已被本节 matched evaluation 取代，不得继续引用。
+
+代表样本 montage 位于 `visuals/matched_montage.png`；10 个 flat hitmax 的专门
+对照位于 `visuals_flat_hitmax/matched_montage.png`。
 
 ## 7. 已做但未被接受的后续 probe
 
@@ -170,11 +216,14 @@ puppeteer_identity1024_preln_hgc2h100_full_20260715
 
 ## 9. 当前仍未解决的问题
 
-1. 尚未证明 `best_val/final/sample_80000` 中哪个自由生成最好。
-2. 尚未建立同协议 UniRig heldout-52 对照，无法判断 Puppeteer 绝对质量。
-3. low-joint 首关节坐标为什么泛化失败仍未最终定因；训练分布不足与首关节表示
-   不适配尚未完成决定性区分。
-4. 当前没有任何后续 probe 可以替代正式 Puppeteer checkpoint。
+1. flat UniRig 的 10 个 hitmax 为什么集中出现在 9 个低关节样本和 1 个
+   73-joint common 样本，尚未完成逐 token 因果定位。
+2. Puppeteer low-joint 的 `joint 0` 坐标在正确 GT prefix 下已经较差，随后又被
+   长骨架长度先验放大；训练分布不足与 `(x,y,z,parent_index)` 首关节表示不适配
+   尚未完成决定性区分。
+3. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
+   index 的确定连接优势。
+4. 当前没有任何后续 probe 可以替代正式 flat UniRig 或 Puppeteer checkpoint。
 
 ## 10. 继续工作的硬规则
 
@@ -191,8 +240,12 @@ puppeteer_identity1024_preln_hgc2h100_full_20260715
 
 ## 11. 下一项唯一允许的执行工作
 
-在当前已占用的 HGC `2 x H100` qlogin 中，先通过真实 rootless-v3 manifest 的
-flat UniRig preflight，然后从官方静态 UniRig 初始化训练 80016 样本暴露的 clean
-control。训练完成后，在现有 heldout-52 上用完全相同的 pose 和几何指标运行
-UniRig、Puppeteer `sample_80000`、`best_val`、`final` 四方对照并生成 montage。
-不修改数据契约，也不把这次重训混成 Puppeteer 改动。
+同预算 flat UniRig 重训和四方 matched evaluation 已完成。下一步不得立即再开
+正式训练；先在固定 heldout-52 上对以下两类失败做配对逐 token 诊断：
+
+1. flat UniRig 的 10 个无 EOS/hitmax 样本；
+2. Puppeteer 的 train-low/valid-low 首关节坐标与过长生成。
+
+诊断必须区分 condition evidence、首关节坐标预测、拓扑/长度先验和自由生成累计
+误差。只有得到能同时解释“flat common 成功、flat 部分 hitmax、Puppeteer low
+系统性过长”的因果证据后，才允许设计下一次训练改动。数据契约保持不变。

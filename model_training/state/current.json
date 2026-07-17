@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-17T20:17:00+09:00",
+  "updated_at": "2026-07-17T20:54:30+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -81,20 +81,22 @@
   "blocked_operations": [
     "submit"
   ],
-  "next_required_result": "Resume the interrupted HGC flat-UniRig control from checkpoint_sample_10000.pt with model, optimizer, OneCycle scheduler, and step restored. Keep the foreground SSH/qlogin continuously supervised until 80016 sample exposures, then run the matched heldout52 comparison.",
+  "next_required_result": "Keep HGC qlogin job 124452019 and its foreground SSH PTY continuously supervised until 80016 sample exposures, then run the matched heldout52 comparison.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717",
-    "status": "authorized_resume_pending_gpu",
+    "status": "running_resumed",
     "started_at": "2026-07-17T18:06:41+09:00",
+    "resumed_at": "2026-07-17T20:20:36+09:00",
     "server": "HGC pcg01 qlogin",
     "resources": "2xH100, s_vmem=256G",
     "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
     "last_verified": {
-      "step": 230,
-      "sample_seen": 11040,
-      "loss": 1.3333352357149124,
-      "seconds_per_step": 24.915,
-      "gpu_peak_gb": 68.487
+      "step": 210,
+      "sample_seen": 10080,
+      "loss": 1.4101094603538513,
+      "seconds_per_step": 70.874,
+      "gpu_peak_gb": 68.0,
+      "learning_rate": 9.978932858322358e-05
     },
     "last_safe_checkpoint": {
       "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_10000.pt",
@@ -103,7 +105,23 @@
       "includes_optimizer": true,
       "includes_scheduler": true
     },
+    "qlogin_job_id": 124452019,
+    "resume_contract": {
+      "checkpoint_step": 209,
+      "scheduler_step": 209,
+      "skipped_batches_in_epoch": 1672,
+      "restored_optimizer": true,
+      "restored_scheduler": true,
+      "next_verified_step": 210
+    },
     "interrupted_job_id": 124448167,
+    "pre_interruption_last_verified": {
+      "step": 230,
+      "sample_seen": 11040,
+      "loss": 1.3333352357149124,
+      "seconds_per_step": 24.915,
+      "gpu_peak_gb": 68.487
+    },
     "interruption_accounting": {
       "exit_status": 137,
       "failed": "100: assumedly after job",

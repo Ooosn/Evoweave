@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-17T20:54:30+09:00",
+  "updated_at": "2026-07-17T22:26:41+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -91,17 +91,17 @@
     "resources": "2xH100, s_vmem=256G",
     "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
     "last_verified": {
-      "step": 210,
-      "sample_seen": 10080,
-      "loss": 1.4101094603538513,
-      "seconds_per_step": 70.874,
-      "gpu_peak_gb": 68.0,
-      "learning_rate": 9.978932858322358e-05
+      "step": 420,
+      "sample_seen": 20160,
+      "loss": 1.1746512725949287,
+      "seconds_per_step": 28.055,
+      "gpu_peak_gb": 68.255,
+      "learning_rate": 9.321553197056643e-05
     },
     "last_safe_checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_10000.pt",
-      "step": 209,
-      "sample_seen": 10032,
+      "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_20000.pt",
+      "step": 417,
+      "sample_seen": 20016,
       "includes_optimizer": true,
       "includes_scheduler": true
     },

@@ -1101,6 +1101,160 @@ def _paired_pose_response(
     )
     prefix_probs = torch.softmax(prefix_ref, dim=-1)
     prefix_changed_probs = torch.softmax(prefix_changed_logits, dim=-1)
+    condition_changed_probs = torch.softmax(condition_changed_logits, dim=-1)
+    prefix_roles = token_batch_a.token_role.to(logits_aa.device)[prefix_mask]
+    prefix_labels = token_batch_a.labels.to(logits_aa.device)[prefix_mask]
+    prefix_vs_condition_by_role = {}
+    for role_offset, role_name in enumerate(role_names):
+        role_mask = prefix_roles == tokenizer.offset + role_offset
+        if not bool(role_mask.any()):
+            continue
+        role_prefix_delta = prefix_delta[role_mask]
+        role_condition_delta = condition_delta[role_mask]
+        role_prefix_ref = prefix_ref[role_mask]
+        role_prefix_changed = prefix_changed_logits[role_mask]
+        role_condition_changed = condition_changed_logits[role_mask]
+        role_scale = 0.5 * (
+            torch.linalg.vector_norm(role_prefix_ref, dim=-1)
+            + torch.linalg.vector_norm(role_prefix_changed, dim=-1)
+        ).clamp_min(1.0e-12)
+        prefix_vs_condition_by_role[role_name] = {
+            "positions": int(role_mask.sum().item()),
+            "prefix_relative_l2_mean": float(
+                (
+                    torch.linalg.vector_norm(role_prefix_delta, dim=-1)
+                    / role_scale
+                )
+                .mean()
+                .item()
+            ),
+            "condition_relative_l2_mean": float(
+                (
+                    torch.linalg.vector_norm(role_condition_delta, dim=-1)
+                    / role_scale
+                )
+                .mean()
+                .item()
+            ),
+            "prefix_probability_l1_mean": float(
+                (
+                    prefix_probs[role_mask]
+                    - prefix_changed_probs[role_mask]
+                )
+                .abs()
+                .sum(dim=-1)
+                .mean()
+                .item()
+            ),
+            "condition_probability_l1_mean": float(
+                (
+                    prefix_probs[role_mask]
+                    - condition_changed_probs[role_mask]
+                )
+                .abs()
+                .sum(dim=-1)
+                .mean()
+                .item()
+            ),
+            "prefix_argmax_change_rate": float(
+                (
+                    role_prefix_ref.argmax(dim=-1)
+                    != role_prefix_changed.argmax(dim=-1)
+                )
+                .float()
+                .mean()
+                .item()
+            ),
+            "condition_argmax_change_rate": float(
+                (
+                    role_prefix_ref.argmax(dim=-1)
+                    != role_condition_changed.argmax(dim=-1)
+                )
+                .float()
+                .mean()
+                .item()
+            ),
+            "condition_to_prefix_logit_l2_ratio": float(
+                (
+                    torch.linalg.vector_norm(role_condition_delta)
+                    / torch.linalg.vector_norm(role_prefix_delta).clamp_min(1.0e-12)
+                ).item()
+            ),
+        }
+    prefix_eos_mask = prefix_labels == tokenizer.eos_token_id
+    if bool(prefix_eos_mask.any()):
+        eos_prefix_delta = prefix_delta[prefix_eos_mask]
+        eos_condition_delta = condition_delta[prefix_eos_mask]
+        eos_prefix_ref = prefix_ref[prefix_eos_mask]
+        eos_prefix_changed = prefix_changed_logits[prefix_eos_mask]
+        eos_condition_changed = condition_changed_logits[prefix_eos_mask]
+        eos_scale = 0.5 * (
+            torch.linalg.vector_norm(eos_prefix_ref, dim=-1)
+            + torch.linalg.vector_norm(eos_prefix_changed, dim=-1)
+        ).clamp_min(1.0e-12)
+        prefix_vs_condition_by_role["eos"] = {
+            "positions": int(prefix_eos_mask.sum().item()),
+            "prefix_relative_l2_mean": float(
+                (
+                    torch.linalg.vector_norm(eos_prefix_delta, dim=-1)
+                    / eos_scale
+                )
+                .mean()
+                .item()
+            ),
+            "condition_relative_l2_mean": float(
+                (
+                    torch.linalg.vector_norm(eos_condition_delta, dim=-1)
+                    / eos_scale
+                )
+                .mean()
+                .item()
+            ),
+            "prefix_probability_l1_mean": float(
+                (
+                    prefix_probs[prefix_eos_mask]
+                    - prefix_changed_probs[prefix_eos_mask]
+                )
+                .abs()
+                .sum(dim=-1)
+                .mean()
+                .item()
+            ),
+            "condition_probability_l1_mean": float(
+                (
+                    prefix_probs[prefix_eos_mask]
+                    - condition_changed_probs[prefix_eos_mask]
+                )
+                .abs()
+                .sum(dim=-1)
+                .mean()
+                .item()
+            ),
+            "prefix_argmax_change_rate": float(
+                (
+                    eos_prefix_ref.argmax(dim=-1)
+                    != eos_prefix_changed.argmax(dim=-1)
+                )
+                .float()
+                .mean()
+                .item()
+            ),
+            "condition_argmax_change_rate": float(
+                (
+                    eos_prefix_ref.argmax(dim=-1)
+                    != eos_condition_changed.argmax(dim=-1)
+                )
+                .float()
+                .mean()
+                .item()
+            ),
+            "condition_to_prefix_logit_l2_ratio": float(
+                (
+                    torch.linalg.vector_norm(eos_condition_delta)
+                    / torch.linalg.vector_norm(eos_prefix_delta).clamp_min(1.0e-12)
+                ).item()
+            ),
+        }
 
     joints_a = batch_a["target_joints"][0, : int(batch_a["joint_count"][0].item())].float()
     joints_b = batch_b["target_joints"][0, : int(batch_b["joint_count"][0].item())].float()
@@ -1152,6 +1306,7 @@ def _paired_pose_response(
         "shared_prefix_probability_l1_mean": float((probs_a - probs_b).abs().sum(dim=-1).mean().item()),
         "condition_swap_by_target_role": condition_swap_by_role,
         "first_condition_swap_positions": first_condition_swap_positions,
+        "prefix_vs_condition_by_target_role": prefix_vs_condition_by_role,
         "prefix_diverged_prediction_positions": int(prefix_mask.sum().item()),
         "same_condition_prefix_logit_rel_l2": float(
             (torch.linalg.vector_norm(prefix_delta) / prefix_scale.clamp_min(1.0e-12)).item()

@@ -1070,6 +1070,12 @@ def main() -> None:
     parser.add_argument("--pose-seed-a", type=int, default=None)
     parser.add_argument("--pose-seed-b", type=int, default=None)
     parser.add_argument("--surface-seed", type=int, default=20260715)
+    parser.add_argument(
+        "--surface-seed-b",
+        type=int,
+        default=None,
+        help="Optional independent surface/FPS seed for the paired condition.",
+    )
     parser.add_argument("--stage-trace", action="store_true")
     parser.add_argument("--pose-attention-scale", type=float, default=1.0)
     parser.add_argument("--pose-mlp-scale", type=float, default=1.0)
@@ -1225,12 +1231,17 @@ def main() -> None:
                 row["greedy_pose_a_ids"] = greedy_a
             if paired_batch is not None:
                 trace_b = None
+                paired_surface_seed = (
+                    args.surface_seed
+                    if args.surface_seed_b is None
+                    else int(args.surface_seed_b)
+                )
                 if args.stage_trace:
                     assert trace_a is not None
                     trace_b = _condition_stage_trace(
                         model,
                         paired_batch,
-                        args.surface_seed + idx,
+                        paired_surface_seed + idx,
                         pose_attention_scale=args.pose_attention_scale,
                         pose_mlp_scale=args.pose_mlp_scale,
                         temporal_attention_scale=args.temporal_attention_scale,
@@ -1239,9 +1250,15 @@ def main() -> None:
                     )
                     paired_cond = trace_b["condition"]
                 else:
-                    paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
+                    paired_cond = _condition_with_seed(
+                        model,
+                        paired_batch,
+                        paired_surface_seed + idx,
+                    )
                 condition_b_cache.append((paired_batch["path"][0], paired_cond.detach().cpu()))
                 row["pose_seed_b"] = int(args.pose_seed_b)
+                row["surface_seed_a"] = int(args.surface_seed + idx)
+                row["surface_seed_b"] = int(paired_surface_seed + idx)
                 if args.same_asset_pose_condition_swap:
                     row["paired_pose_target_change"] = _paired_pose_target_change(
                         model,
@@ -1383,6 +1400,10 @@ def main() -> None:
                 args.same_asset_pose_condition_swap
             ),
             "condition_swap_scope": str(args.condition_swap_scope),
+            "surface_seed_a": int(args.surface_seed),
+            "surface_seed_b": (
+                None if args.surface_seed_b is None else int(args.surface_seed_b)
+            ),
         },
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
         "condition_separation": {

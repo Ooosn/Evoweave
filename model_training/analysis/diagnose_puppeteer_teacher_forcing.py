@@ -885,6 +885,186 @@ def _greedy_prefix_ids(model, cond: torch.Tensor, token_count: int) -> list[int]
     return generated
 
 
+@torch.no_grad()
+def _self_prefix_rollout_report(
+    model,
+    batch: dict,
+    *,
+    cond: torch.Tensor,
+) -> dict[str, object]:
+    """Compare each fixed target under its GT prefix and the model's own prefix."""
+
+    tokenizer = model.tokenizer
+    forced_logits, token_batch, _loss = model.teacher_forced_logits(batch, cond=cond)
+    labels = token_batch.labels.to(cond.device)
+    roles = token_batch.token_role.to(cond.device)
+    valid_positions = (labels[0] != -100).nonzero(as_tuple=False).flatten().tolist()
+    prefix = torch.tensor(
+        [[tokenizer.bos_token_id]],
+        device=cond.device,
+        dtype=torch.long,
+    )
+    position_reports: list[dict[str, object]] = []
+    first_error_position = -1
+    first_error_role = None
+    first_error_joint = -1
+
+    for generated_count, position in enumerate(valid_positions):
+        target_id = int(labels[0, position].item())
+        role_value = int(roles[0, position].item())
+        if target_id == tokenizer.eos_token_id:
+            role_name = "eos"
+        elif tokenizer.offset <= role_value < tokenizer.offset + tokenizer.bone_per_token:
+            role_name = ("x", "y", "z", "parent")[role_value - tokenizer.offset]
+        else:
+            role_name = "other"
+
+        gt_logits = model._apply_generation_mask(
+            forced_logits[:, position],
+            generated_count,
+            max_joints=model.max_joints,
+        ).float()
+        self_logits = model._apply_generation_mask(
+            model._next_token_logits(cond, prefix),
+            generated_count,
+            max_joints=model.max_joints,
+        ).float()
+        gt_log_probs = torch.log_softmax(gt_logits, dim=-1)
+        self_log_probs = torch.log_softmax(self_logits, dim=-1)
+        gt_prediction = int(gt_logits.argmax(dim=-1).item())
+        self_prediction = int(self_logits.argmax(dim=-1).item())
+        prefix_diverged_before = first_error_position >= 0
+
+        current_joint_xyz_correct = None
+        if role_name == "parent":
+            current_xyz = position_reports[-3:]
+            if len(current_xyz) != 3 or [row["role"] for row in current_xyz] != [
+                "x",
+                "y",
+                "z",
+            ]:
+                raise ValueError(
+                    "Puppeteer self-prefix audit expected x/y/z immediately before parent"
+                )
+            current_joint_xyz_correct = all(
+                int(row["self_prediction_id"]) == int(row["target_id"])
+                for row in current_xyz
+            )
+
+        row = {
+            "target_position": int(position),
+            "generated_count": int(generated_count),
+            "joint_index": int(generated_count // tokenizer.bone_per_token),
+            "role": role_name,
+            "target_id": target_id,
+            "gt_prefix_prediction_id": gt_prediction,
+            "self_prediction_id": self_prediction,
+            "gt_prefix_correct": bool(gt_prediction == target_id),
+            "self_prefix_correct": bool(self_prediction == target_id),
+            "gt_vs_self_argmax_changed": bool(gt_prediction != self_prediction),
+            "gt_prefix_target_nll": float(-gt_log_probs[0, target_id].item()),
+            "self_prefix_target_nll": float(-self_log_probs[0, target_id].item()),
+            "self_minus_gt_target_nll": float(
+                (gt_log_probs[0, target_id] - self_log_probs[0, target_id]).item()
+            ),
+            "prefix_diverged_before": bool(prefix_diverged_before),
+            "current_joint_xyz_correct": current_joint_xyz_correct,
+        }
+        position_reports.append(row)
+
+        if self_prediction != target_id and first_error_position < 0:
+            first_error_position = int(generated_count)
+            first_error_role = role_name
+            first_error_joint = int(generated_count // tokenizer.bone_per_token)
+
+        prefix = torch.cat(
+            [
+                prefix,
+                torch.tensor(
+                    [[self_prediction]],
+                    device=prefix.device,
+                    dtype=torch.long,
+                ),
+            ],
+            dim=1,
+        )
+        if self_prediction == tokenizer.eos_token_id:
+            break
+
+    by_role: dict[str, dict[str, float | int]] = {}
+    for role_name in ("x", "y", "z", "parent", "eos"):
+        role_rows = [row for row in position_reports if row["role"] == role_name]
+        if not role_rows:
+            continue
+        by_role[role_name] = {
+            "positions": len(role_rows),
+            "gt_prefix_accuracy": float(
+                np.mean([row["gt_prefix_correct"] for row in role_rows])
+            ),
+            "self_prefix_accuracy": float(
+                np.mean([row["self_prefix_correct"] for row in role_rows])
+            ),
+            "gt_vs_self_argmax_change_rate": float(
+                np.mean([row["gt_vs_self_argmax_changed"] for row in role_rows])
+            ),
+            "gt_prefix_target_nll": float(
+                np.mean([row["gt_prefix_target_nll"] for row in role_rows])
+            ),
+            "self_prefix_target_nll": float(
+                np.mean([row["self_prefix_target_nll"] for row in role_rows])
+            ),
+            "self_minus_gt_target_nll": float(
+                np.mean([row["self_minus_gt_target_nll"] for row in role_rows])
+            ),
+            "positions_after_prefix_diverged": int(
+                sum(bool(row["prefix_diverged_before"]) for row in role_rows)
+            ),
+        }
+
+    parent_by_xyz_state: dict[str, dict[str, float | int]] = {}
+    for state_name, state_value in (("xyz_correct", True), ("xyz_incorrect", False)):
+        state_rows = [
+            row
+            for row in position_reports
+            if row["role"] == "parent"
+            and row["current_joint_xyz_correct"] is state_value
+        ]
+        if not state_rows:
+            continue
+        parent_by_xyz_state[state_name] = {
+            "positions": len(state_rows),
+            "gt_prefix_accuracy": float(
+                np.mean([row["gt_prefix_correct"] for row in state_rows])
+            ),
+            "self_prefix_accuracy": float(
+                np.mean([row["self_prefix_correct"] for row in state_rows])
+            ),
+            "gt_vs_self_argmax_change_rate": float(
+                np.mean([row["gt_vs_self_argmax_changed"] for row in state_rows])
+            ),
+            "self_minus_gt_target_nll": float(
+                np.mean([row["self_minus_gt_target_nll"] for row in state_rows])
+            ),
+        }
+
+    return {
+        "target_positions": len(valid_positions),
+        "compared_positions": len(position_reports),
+        "rollout_reached_target_boundary": len(position_reports) == len(valid_positions),
+        "self_emitted_eos": bool(
+            position_reports
+            and int(position_reports[-1]["self_prediction_id"])
+            == tokenizer.eos_token_id
+        ),
+        "first_error_position": first_error_position,
+        "first_error_role": first_error_role,
+        "first_error_joint": first_error_joint,
+        "by_role": by_role,
+        "parent_by_current_joint_xyz_state": parent_by_xyz_state,
+        "positions": position_reports,
+    }
+
+
 def _reference_pair_report(left, right) -> dict[str, float]:
     return {
         "vertex_index_match_rate": float((left.vertex_indices == right.vertex_indices).float().mean().item()),
@@ -1352,6 +1532,7 @@ def main() -> None:
     parser.add_argument("--temporal-mlp-scale", type=float, default=1.0)
     parser.add_argument("--attention-routing", action="store_true")
     parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
+    parser.add_argument("--self-prefix-rollout", action="store_true")
     parser.add_argument("--cross-asset-condition-swap", action="store_true")
     parser.add_argument(
         "--same-asset-pose-condition-swap",
@@ -1504,6 +1685,12 @@ def main() -> None:
             if args.greedy_prefix_tokens > 0:
                 greedy_a = _greedy_prefix_ids(model, cond, args.greedy_prefix_tokens)
                 row["greedy_pose_a_ids"] = greedy_a
+            if args.self_prefix_rollout:
+                row["self_prefix_rollout"] = _self_prefix_rollout_report(
+                    model,
+                    batch,
+                    cond=cond,
+                )
             if paired_batch is not None:
                 trace_b = None
                 paired_surface_seed = (

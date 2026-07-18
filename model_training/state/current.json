@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-18T10:31:00+09:00",
+  "updated_at": "2026-07-18T14:01:12+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -62,7 +62,8 @@
     "sequence_mean_termination025_ft200",
     "combined_alpha050_sequence_ft200",
     "combined_alpha075_sequence_ft200",
-    "balanced50_sequence_ft500_stopped_at_step50_without_checkpoint"
+    "balanced50_sequence_ft500_stopped_at_step50_without_checkpoint",
+    "topology_alpha075_sequence_mean_ft300"
   ],
   "verified_open_facts": [
     "the four heldout52 results match path query frame selected frames query normalization and target joint count row by row",
@@ -78,26 +79,30 @@
     "the dominant exact 52-joint parent topology occurs 4930 times in training, while low-joint rows contain 142 topologies among 396 rows",
     "on valid-common60, topology training frequency remains strongly associated with coordinate NLL and topology F1 after controlling target joint count",
     "Puppeteer generalizes the frequent 52-joint family to unseen valid assets but fails rare and unseen topology families",
-    "low-joint mapping is already underfit under ground-truth prefix, then continuation and self-prefix rollout amplify it into overlong high-frequency templates"
+    "low-joint mapping is already underfit under ground-truth prefix, then continuation and self-prefix rollout amplify it into overlong high-frequency templates",
+    "heldout52 train-low and valid-low mean 4-10 joints, not low topology frequency; train-common is a random 22-92-joint training stratum",
+    "flat UniRig hitmax by exact target topology frequency is 0/12 for 100-plus, 2/20 for 10-99, 3/11 for 2-9, 3/3 for singleton, and 2/6 for unseen",
+    "the exact-topology alpha-0.75 sequence-mean 300-step probe slightly changed heldout52 F1 from 0.202308 to 0.208580 but degraded valid-common60 F1 from 0.475656 to 0.401310 and is rejected",
+    "baseline Puppeteer self-prefix rollout lowers coordinate accuracy from 0.5281 to 0.4075, parent accuracy from 0.9149 to 0.8149, and EOS accuracy from 0.4667 to 0.1556",
+    "sibling order currently contains a bone-name lexical tie-break defect, but unordered-tree auditing merges only 180 ordered singleton rows and does not explain the main long tail"
   ],
   "unknowns": [
-    "whether topology-family-balanced gradients recover rare and unseen topology mapping without materially degrading the frequent 52-joint family",
-    "whether residual long-tail failure after family balancing requires a different explicit-tree decoder representation",
-    "which decoder representation can preserve flat UniRig topology quality while predicting parent index explicitly"
+    "which topology and length decision representation can make parent and EOS depend directly on condition without destroying frequent-family geometry",
+    "whether a different explicit-tree decoder representation can preserve the flat UniRig prior while generalizing rare topology and predicting parent index explicitly"
   ],
   "allowed_operations": [
     "report",
     "inspect",
     "matched_eval",
-    "visualize",
-    "train"
+    "visualize"
   ],
   "blocked_operations": [
+    "train",
     "submit"
   ],
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
-    "status": "preflight_completed",
+    "status": "completed_rejected",
     "server": "HGC pcg01 foreground qlogin",
     "qlogin_job_id": 124452019,
     "resources": "2xH100, s_vmem=256G",
@@ -120,9 +125,28 @@
     },
     "preflight_output": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_preflight_20260718",
     "preflight_contract_max_abs_logit_diff": 0.0,
-    "sampling_distribution": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/topology_sampling_distribution_20260718.json"
+    "sampling_distribution": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/topology_sampling_distribution_20260718.json",
+    "output": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_ft300_20260718",
+    "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_ft300_20260718/checkpoint_sample_14400.pt",
+    "heldout52": {
+      "baseline_joint_count_mae": 43.51923076923077,
+      "probe_joint_count_mae": 39.88461538461539,
+      "baseline_j2j": 0.053189030852921024,
+      "probe_j2j": 0.053737,
+      "baseline_topology_f1": 0.20230810683187644,
+      "probe_topology_f1": 0.20858
+    },
+    "valid_common60": {
+      "baseline_j2j": 0.021722,
+      "probe_j2j": 0.024891,
+      "baseline_topology_f1": 0.475656,
+      "probe_topology_f1": 0.40131,
+      "j2j_rows_worse": 44,
+      "topology_f1_rows_worse": 43
+    },
+    "self_prefix_summary": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/topology_alpha075_seqmean_ft300/self_prefix_summary.json"
   },
-  "next_required_result": "Implement and audit a natural/topology-family-uniform mixture sampler, then run one 200-300-step sample80000 fine-tune with sequence-mean CE and no termination auxiliary. Evaluate heldout52 and valid-common60 by target topology frequency before any clean full-budget retraining.",
+  "next_required_result": "Define and audit a new topology/length decision representation or objective that makes parent and EOS depend directly on condition while preserving flat UniRig geometry; do not start another training run before code-level contract, gradient, GT-prefix, self-prefix, and matched-generation preflights are specified.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
     "status": "completed",
@@ -199,14 +223,16 @@
     "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
   },
   "last_operation": {
-    "name": "puppeteer_topology_long_tail_causal_diagnosis",
+    "name": "puppeteer_topology_sampler_and_self_prefix_causal_diagnosis",
     "status": "completed",
     "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
     "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
     "valid_common_manifest": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/valid_common60_seed20260718.jsonl",
-    "diagnosis": "The model uses the correct mesh and current pose, but natural row sampling plus token-mean CE trains frequent rig-family templates far more strongly than rare topology families. Rare-family mapping is already weak under a ground-truth prefix and autoregressive continuation then amplifies it.",
+    "diagnosis": "The model uses the correct mesh and current pose. Rare-family mapping is already weak under a ground-truth prefix and self-prefix rollout further degrades coordinates, parents, and EOS. Exact-topology resampling alone slightly changes heldout52 but materially degrades valid-common60, so frequency imbalance is real but not a sufficient standalone repair.",
     "diagnosis_document": "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md",
     "topology_frequency_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/puppeteer_valid_common60_topology_frequency.json",
+    "self_prefix_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/puppeteer_heldout52_self_prefix_seed101.json",
+    "topology_probe_self_prefix_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/topology_alpha075_seqmean_ft300/heldout52_step300_self_prefix_seed101.json",
     "qlogin_job_id": 124452019
   },
   "receipt_max_age_minutes": 240

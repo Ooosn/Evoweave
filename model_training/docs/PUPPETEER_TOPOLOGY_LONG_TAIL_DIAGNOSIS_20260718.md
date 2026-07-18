@@ -1,7 +1,8 @@
 # Puppeteer 拓扑长尾因果诊断
 
 状态：2026-07-18 已在 HGC 两张 H100 上完成固定协议评测、逐 token
-干预、全训练集 topology 审计和 valid-common 补充评测。
+干预、全训练集 topology 审计、valid-common 补充评测、300-step exact-topology
+重采样探针和 self-prefix rollout 审计。
 
 ## 结论
 
@@ -38,6 +39,17 @@ rig family 明显失败。
 
 flat UniRig 与 Puppeteer 的原始 matched generation 已逐行确认 path、query
 frame、selected frames、query center/scale 和 target joint count 一致。
+
+heldout-52 的三个名称只描述数据来源和 joint count，不描述 topology 频率：
+
+- `train-low`：训练 split 中选出的 16 行 4--10 joint 样本；
+- `train-common`：训练 split 中随机选出的 16 行，joint count 为 22--92；
+- `valid-low`：验证 split 中选出的 20 行 4--10 joint 样本。
+
+topology 频率是另一维统计。它以完整、有顺序的 `target_parents` tuple 为签名，
+在 15,541 个 `<=101` joints 的训练行中计数，并分为 `0`（unseen）、`1`
+（singleton）、`2..9`、`10..99` 和 `>=100`。不得再把 `train-low` 或
+`valid-low` 直接称为“低频 topology”。
 
 ## 已排除原因
 
@@ -194,12 +206,22 @@ rig family，不只是记住训练资产。
 长模板；区别是 Puppeteer 在正确 GT prefix 下已经失败，而 flat 的主要 hitmax
 机制发生在 self-prefix rollout。
 
-## 下一项受控修复
+flat UniRig 的 10 个 hitmax 按目标 topology 的真实训练频率分层为：
 
-不得重复此前的 joint-count-bin sampler probe。该 probe 只平衡长度分桶，
-不能平衡同一长度内 4,930 次对 1 次的 topology family skew。
+| topology 训练频率 | 样本数 | hitmax |
+|---|---:|---:|
+| `>=100` | 12 | 0 |
+| `10..99` | 20 | 2 |
+| `2..9` | 11 | 3 |
+| `1` | 3 | 3 |
+| `0` | 6 | 2 |
 
-正式启动前对 15,541 个训练行完成了 exact-topology sampler 审计：
+这说明频率与 flat hitmax 也有关，但 heldout-52 样本量不足以把它单独解释成
+唯一原因。
+
+## Exact-topology 重采样探针
+
+对 15,541 个训练行完成的 sampler 审计为：
 
 - 完整 topology family 共 `2,890` 个；
 - 单例 family 共 `2,143` 个，占 family 的 `74.15%`，自然采样只获得
@@ -211,24 +233,88 @@ rig family，不只是记住训练资产。
 - 在 300 step、effective batch 48 的 14,400 次暴露中，高频 family 仍有约
   2,143 次暴露，因此该设置不是完全删除 common family。
 
-下一项只允许：
-
-1. 新增 natural/topology-family-uniform mixture sampler；
-2. sampler 以完整 `target_parents` 签名定义 rig family；
-3. 使用 sequence-mean CE，避免短 skeleton 每行因 token 少再次被降权；
-4. 第一轮不加 termination auxiliary loss，单独判断 topology-frequency
-   修复是否改善长尾坐标和 topology；
-5. 同时评测 heldout-52 与 valid-common60，且按 topology frequency 分层；
-6. 52-joint 高频 family 不得明显退化，长尾 coordinate NLL、count、J2J 和 F1
-   必须同时改善，不能只报告 EOS 或 teacher-forcing accuracy。
-
-短程 checkpoint fine-tune 只能作为因果 probe，不能直接替代正式 baseline。
-如果短程 probe 显示方向成立，正式结论必须来自同预算、从干净初始化开始的训练。
-
-本次探针固定为 300 optimizer steps，每 100 step 保存一次；从
+探针固定为 300 optimizer steps，每 100 step 保存一次；从
 `checkpoint_sample_80000.pt` 严格加载完整模型，四组峰值学习率都为 `2e-5`，
 OneCycle 重新开始，optimizer/scheduler 不从旧 checkpoint 恢复。除
 topology-family mixture 与 `sequence_mean` 外，模型和数据契约保持不变。
+
+结果没有通过验收：
+
+| 集合 | checkpoint | count MAE | J2J | topology F1 |
+|---|---|---:|---:|---:|
+| heldout-52 | baseline | 43.5192 | 0.053189 | 0.202308 |
+| heldout-52 | step 300 | 39.8846 | 0.053737 | 0.208580 |
+| valid-common60 | baseline | - | 0.021722 | 0.475656 |
+| valid-common60 | step 300 | - | 0.024891 | 0.401310 |
+
+valid-common60 中 44/60 行 J2J 恶化，43/60 行 F1 恶化。未见 topology 的
+GT-prefix coordinate NLL 从 `2.5024` 略降到 `2.4456`，但自由生成 J2J 从
+`0.04329` 恶化到 `0.04894`，F1 从 `0.12945` 恶化到 `0.08294`。因此：
+
+- topology frequency 是真实的质量预测变量和训练暴露问题；
+- 但只改变采样和 token loss reduction 不足以修复 condition-to-skeleton
+  映射，并会破坏 common family；
+- 该 step-300 checkpoint 已否定，不能升级为 baseline，也不得据此启动全量重训。
+
+## Self-prefix rollout 审计
+
+对 heldout-52 的每个目标位置分别计算：
+
+1. 使用完整 GT prefix 时的下一个 token；
+2. 使用模型从 BOS 开始自行 greedy 生成的 prefix 时的同一目标 token。
+
+baseline 共比较 2,827 个 coordinate、940 个 parent 和 45 个到达的 EOS
+位置：
+
+| token 角色 | GT-prefix accuracy | self-prefix accuracy | self-prefix NLL 增量 |
+|---|---:|---:|---:|
+| coordinate | 0.5281 | 0.4075 | +1.7582 |
+| parent | 0.9149 | 0.8149 | +0.8388 |
+| EOS | 0.4667 | 0.1556 | +0.9654 |
+
+按 heldout joint-count 分组，coordinate accuracy 为：
+
+| 子集 | GT prefix | self prefix |
+|---|---:|---:|
+| train-low | 0.2904 | 0.1683 |
+| train-common | 0.6048 | 0.4789 |
+| valid-low | 0.2980 | 0.2071 |
+
+所以当前故障不是二选一：
+
+- 稀有/少关节目标在正确 GT prefix 下已经欠拟合；
+- 第一个错误出现后，self-prefix 又让 coordinate、parent 和 EOS 全部进一步
+  恶化，最终形成过长高频模板。
+
+step-300 重采样模型的整体 coordinate accuracy 为 `0.5190 -> 0.3837`，
+parent 为 `0.9107 -> 0.7741`，没有修复 rollout。审计自产 prefix 与正式
+generation 在 baseline 51/52 行、probe 50/52 行完全一致；其余差异仅为少数
+相邻量化 token，结论不依赖另一套生成协议。
+
+## Sibling 顺序审计
+
+Pass1 exporter 的 sibling 排序注释写的是 geometry order，但实际 key 使用
+parent head，导致 sibling 几何 key 相同，再由名称打破平局，因此当前
+`target_parents` 隐含了 bone-name lexical order。这是一个真实的表示契约缺陷。
+
+但全训练集无序树审计显示，它不是长尾的主来源：
+
+- 当前有序 topology `2,890` 种、singleton `2,143` 种；
+- 忽略 sibling order 后仍有 `2,710` 种、singleton `1,963` 种；
+- 仅 180 个有序 singleton 因忽略顺序而合并，占训练行约 `1.16%`；
+- 改成 rest-geometry order 反而得到 `2,972` 种 topology，且当前 pose 下按
+  geometry 动态排序会随动作变化，不能直接作为修复。
+
+因此不能在没有新稳定 canonical-order 契约前重写数据顺序，也不能把主要失败
+归因于名称排序。
+
+## 当前边界
+
+不得继续重复 joint-count-bin、exact-topology sampler、sequence-mean、
+termination auxiliary、root/joint-0 或 FPS probe。它们已经回答了各自问题。
+下一步必须改变表示或训练目标，使 topology/长度决策真正由 condition 支配，
+同时保留 flat UniRig 已有的骨架先验；在该设计被代码级审计前不启动新的正式
+多卡训练。
 
 ## 证据文件
 
@@ -244,4 +330,20 @@ valid_common60_seed20260718.jsonl
 puppeteer_valid_common60_teacher_seed101.json
 puppeteer_valid_common60_generation_seed101.json
 puppeteer_valid_common60_topology_frequency.json
+puppeteer_heldout52_topology_frequency.json
+puppeteer_heldout52_parent_counterfactual_seed101.json
+puppeteer_heldout52_pose_prefix_vs_condition_seed101_202.json
+puppeteer_heldout52_self_prefix_seed101.json
+sibling_order_audit_quick.json
+topology_order_ambiguity_quick.json
+
+/home/wangyy/evorig/outputs/matched_heldout52_20260718/topology_alpha075_seqmean_ft300/
+heldout52_step300_generation.json
+heldout52_step300_teacher.json
+heldout52_step300_topology_frequency.json
+valid_common60_step300_generation.json
+valid_common60_step300_teacher.json
+valid_common60_step300_topology_frequency.json
+heldout52_step300_self_prefix_seed101.json
+self_prefix_summary.json
 ```

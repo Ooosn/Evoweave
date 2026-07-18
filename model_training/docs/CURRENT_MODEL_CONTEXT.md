@@ -167,6 +167,16 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
 | valid-low (20) | flat UniRig | 16/20 | 9.4375 | 0.057437 | 0.452194 |
 | valid-low (20) | Puppeteer | 20/20 | 65.2500 | 0.063077 | 0.030999 |
 
+这里的 `low` 只表示 joint count 少，不表示 topology 频率低：
+
+- `train-low` 是训练 split 中 16 行 4--10 joint 样本；
+- `train-common` 是训练 split 中随机抽取的 16 行 22--92 joint 样本；
+- `valid-low` 是验证 split 中 20 行 4--10 joint 样本。
+
+topology 频率另以完整、有顺序的 `target_parents` tuple 在 15,541 个训练行中的
+出现次数定义，分为 `0`、`1`、`2..9`、`10..99`、`>=100`。不得混用这两个
+分组维度。
+
 结论：
 
 - flat UniRig 在 common 组已经能生成高质量、可用的骨架，但仍有 10/52 个
@@ -201,6 +211,19 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
 2026-07-16 启动的 50% low-joint + 50% common 全参数实验已在 step 50 停止，
 没有保存 checkpoint，也没有改变当前 source of truth。
 
+2026-07-18 又完成了一次严格的 exact-topology probe：
+
+- natural/topology-family-uniform mixture alpha `0.75`；
+- `sequence_mean` CE，termination auxiliary 为 `0`；
+- 从正式 sample80000 完整加载，300 optimizer steps、14,400 次样本暴露；
+- heldout-52 count MAE `43.5192 -> 39.8846`，F1 `0.202308 -> 0.208580`，
+  但 J2J `0.053189 -> 0.053737`；
+- valid-common60 J2J `0.021722 -> 0.024891`，F1
+  `0.475656 -> 0.401310`，分别有 44/60 和 43/60 行恶化。
+
+该探针同样被否定。topology frequency 是强预测变量，但只重采样和改 loss
+reduction 不能修复映射，并会破坏常见 family。
+
 ## 8. 已确认的诊断事实
 
 - GT-prefix teacher forcing 下，common 组 coordinate accuracy 约 `0.6046`，
@@ -232,26 +255,39 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
   condition-to-skeleton 映射。
 - 低 joint 边界的经验停止率只有约 `0.28%~0.74%`。长尾映射欠拟合后，自回归
   rollout 会被强 continuation prior 放大并停在 52/100/101 等长度 hazard。
+- self-prefix rollout 审计比较了同一目标位置的 GT prefix 与模型自产 prefix。
+  baseline 的 coordinate accuracy 为 `0.5281 -> 0.4075`，parent 为
+  `0.9149 -> 0.8149`，EOS 为 `0.4667 -> 0.1556`；对应目标 NLL 分别增加
+  `1.7582/0.8388/0.9654`。因此正确 prefix 下的欠拟合与 rollout 放大同时存在。
+- exact-topology step-300 模型的 coordinate accuracy 为
+  `0.5190 -> 0.3837`，parent 为 `0.9107 -> 0.7741`，没有缓解 rollout。
+- flat UniRig 的 10 个 hitmax 按目标 topology 训练频率分层为：
+  `>=100` 为 `0/12`、`10..99` 为 `2/20`、`2..9` 为 `3/11`、`1` 为
+  `3/3`、`0` 为 `2/6`。频率相关，但 heldout-52 不足以证明它是唯一原因。
+- exporter 当前 sibling order 实际由 bone-name lexical tie-break 决定，这是
+  真实契约缺陷；但忽略 sibling order 只让 180 个有序 singleton 合并，约占
+  训练行 `1.16%`，不能解释主要长尾失败。按 pose geometry 动态排序又不稳定，
+  当前不得直接重写。
 
 完整因果证据、数值和文件路径见
 `docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md`。
 
 ## 9. 当前仍未解决的问题
 
-1. 尚未验证在保持架构、数据契约和初始化不变时，直接平衡完整 parent topology
-   family 的梯度质量，能否恢复长尾 condition-to-skeleton 映射且不破坏 52-joint
-   高频 family。
-2. topology-family 频率是已确认的强因果候选和质量预测变量，但仍可能代理某些
-   topology 内在难度。下一次受控采样实验负责区分“频率不足”与“表示能力不足”。
-3. flat UniRig 的 10 个 hitmax 已定位为 GT-prefix 下多数会 EOS、self-prefix
+1. topology-family 频率是已确认的质量预测变量和暴露问题，但 exact-topology
+   重采样已证明它不是可独立修复问题的充分手段。仍需区分表示能力、条件到拓扑
+   决策路径和 topology 内在难度。
+2. flat UniRig 的 10 个 hitmax 已定位为 GT-prefix 下多数会 EOS、self-prefix
    下 EOS 被抑制的 exposure mismatch；如何修复而不产生垃圾骨架仍未验证。
-4. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
+3. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
    index 的确定连接优势。
+4. sibling canonical order 当前依赖名称；需要稳定、跨 pose、不依赖资产命名的
+   表示契约，但现有证据表明它不是当前主要瓶颈。
 
 ## 10. 继续工作的硬规则
 
-- 当前只允许从 Puppeteer `sample80000` 做一次短程拓扑族采样因果探针；它不能
-  被称为 baseline，也不能替代同预算干净初始化训练。
+- exact-topology 短程因果探针已经完成并被否定，不得继续重复 sampler alpha、
+  sequence-mean 或 termination 权重搜索。
 - 允许从官方静态 UniRig checkpoint 重训 flat UniRig 对照线；这不依赖旧动态
   Evoweave checkpoint，也不改变 Puppeteer。
 - 任何“变好”结论必须来自同一 manifest、同一 pose、同一归一化、同一指标实现
@@ -264,18 +300,15 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
 
 ## 11. 下一项唯一允许的执行工作
 
-同预算 flat UniRig 重训、四方 matched evaluation 和逐 token 因果诊断已经完成。
-下一项只允许：
+同预算 flat UniRig 重训、matched evaluation、逐 token 因果诊断、
+exact-topology probe 和 self-prefix rollout 审计已经完成。下一项只能是：
 
-1. 以完整 `target_parents` tuple 定义 topology family；
-2. 实现 natural row-uniform 与 topology-family-uniform 的 mixture sampler；
-3. 使用 `sequence_mean` CE，避免短 skeleton 因 token 少再次被降权；
-4. 第一轮保持 termination auxiliary weight 为 `0`，不混入 EOS 新变量；
-5. 从 Puppeteer `sample80000` 进行 200~300 step 短程全参数因果探针；
-6. 同时评测 heldout-52 与 valid-common60，并按目标 topology 训练频率分层；
-7. 只有长尾 coordinate NLL、count、J2J、F1 同时改善且 52-joint 高频 family
-   不明显退化，才允许安排同预算、干净初始化的正式训练。
+1. 在代码级定义新的 topology/length 决策表示或训练目标；
+2. 明确 condition 如何直接影响 parent 与 EOS，而不是只依赖已生成坐标；
+3. 保留 flat UniRig 已验证的静态骨架先验，不以“没有 hitmax”代替骨架质量；
+4. 先通过 GT-prefix、自前缀、跨 condition、梯度和自由生成可视化审计；
+5. 只有 heldout-52 长尾与 valid-common60 同时改善，才允许新的正式多卡训练。
 
-不得重复 joint-count-bin sampler、单独 sequence-mean、termination auxiliary 或
-root/joint-0 probe；它们已经回答过不同问题。数据、tokenizer、condition 与
-decoder 架构契约保持不变。
+不得重复 joint-count-bin、exact-topology sampler、单独 sequence-mean、
+termination auxiliary、root/joint-0、FPS 或当前 pose geometry sibling-sort
+probe；它们已经回答过不同问题。

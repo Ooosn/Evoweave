@@ -228,9 +228,13 @@ def _target_likelihood_under_condition_swap(
     """Measure whether the correct asset condition helps predict the fixed GT target."""
 
     tokenizer = model.tokenizer
+    original_joint_count = batch["joint_count"]
     if scope == "joint0":
         teacher_batch = dict(batch)
-        teacher_batch["joint_count"] = torch.ones_like(batch["joint_count"])
+        teacher_batch["joint_count"] = torch.ones_like(original_joint_count)
+    elif scope == "first10":
+        teacher_batch = dict(batch)
+        teacher_batch["joint_count"] = torch.clamp(original_joint_count, max=10)
     elif scope == "full":
         teacher_batch = batch
     else:
@@ -324,6 +328,8 @@ def _target_likelihood_under_condition_swap(
         "path": batch["path"][0],
         "swapped_path": swapped_path,
         "scope": scope,
+        "original_joint_count": int(original_joint_count[0].item()),
+        "evaluated_joint_count": int(teacher_batch["joint_count"][0].item()),
         "roles": role_reports,
     }
 
@@ -786,6 +792,68 @@ def _target_ids(model, batch: dict) -> torch.Tensor:
     return labels[labels != -100]
 
 
+def _paired_pose_target_change(
+    model,
+    batch_a: dict,
+    batch_b: dict,
+    *,
+    prefix_joint_count: int = 10,
+) -> dict[str, object]:
+    """Describe how much the fixed asset target changes between two sampled poses."""
+
+    if batch_a["path"] != batch_b["path"]:
+        raise ValueError(f"paired pose paths differ: {batch_a['path']} vs {batch_b['path']}")
+    joint_count_a = int(batch_a["joint_count"][0].item())
+    joint_count_b = int(batch_b["joint_count"][0].item())
+    if joint_count_a != joint_count_b:
+        raise ValueError(
+            f"paired pose joint counts differ: {joint_count_a} vs {joint_count_b}"
+        )
+
+    joints_a = batch_a["target_joints"][0, :joint_count_a].float()
+    joints_b = batch_b["target_joints"][0, :joint_count_b].float()
+    prefix_count = min(int(prefix_joint_count), joint_count_a)
+    delta = joints_a - joints_b
+    prefix_delta = delta[:prefix_count]
+    ids_a = _target_ids(model, batch_a)
+    ids_b = _target_ids(model, batch_b)
+    if ids_a.shape != ids_b.shape:
+        raise ValueError(
+            f"paired target token shapes differ: {tuple(ids_a.shape)} vs {tuple(ids_b.shape)}"
+        )
+
+    payload_a = ids_a[:-1].reshape(-1, model.tokenizer.bone_per_token)
+    payload_b = ids_b[:-1].reshape(-1, model.tokenizer.bone_per_token)
+    payload_changed = payload_a != payload_b
+    query_a = batch_a["frame_vertices"][:, 0].float()
+    query_b = batch_b["frame_vertices"][:, 0].float()
+    if query_a.shape != query_b.shape:
+        raise ValueError(
+            f"paired query mesh shapes differ: {tuple(query_a.shape)} vs {tuple(query_b.shape)}"
+        )
+
+    return {
+        "query_frame_a": int(batch_a["selected_frames"][0, 0].item()),
+        "query_frame_b": int(batch_b["selected_frames"][0, 0].item()),
+        "same_query_frame": bool(
+            batch_a["selected_frames"][0, 0].item()
+            == batch_b["selected_frames"][0, 0].item()
+        ),
+        "joint_count": joint_count_a,
+        "evaluated_prefix_joint_count": prefix_count,
+        "root_joint_l2": float(torch.linalg.vector_norm(delta[0]).item()),
+        "prefix_joint_rms": float(torch.sqrt(torch.mean(prefix_delta.square())).item()),
+        "all_joint_rms": float(torch.sqrt(torch.mean(delta.square())).item()),
+        "query_mesh_rms": float(torch.sqrt(torch.mean((query_a - query_b).square())).item()),
+        "target_token_change_count": int((ids_a != ids_b).sum().item()),
+        "target_token_change_rate": float((ids_a != ids_b).float().mean().item()),
+        "prefix_coordinate_token_change_count": int(
+            payload_changed[:prefix_count, :3].sum().item()
+        ),
+        "prefix_coordinate_token_count": int(prefix_count * 3),
+    }
+
+
 def _paired_pose_response(
     model,
     batch_a: dict,
@@ -1011,8 +1079,16 @@ def main() -> None:
     parser.add_argument("--greedy-prefix-tokens", type=int, default=0)
     parser.add_argument("--cross-asset-condition-swap", action="store_true")
     parser.add_argument(
+        "--same-asset-pose-condition-swap",
+        action="store_true",
+        help=(
+            "Keep pose-A targets fixed and compare their likelihood under pose-A "
+            "versus pose-B conditions from the same asset."
+        ),
+    )
+    parser.add_argument(
         "--condition-swap-scope",
-        choices=("full", "joint0"),
+        choices=("full", "joint0", "first10"),
         default="full",
     )
     parser.add_argument("--output", type=Path, required=True)
@@ -1029,6 +1105,8 @@ def main() -> None:
         raise ValueError("--attention-routing requires --stage-trace")
     if args.greedy_prefix_tokens < 0:
         raise ValueError("--greedy-prefix-tokens must be non-negative")
+    if args.same_asset_pose_condition_swap and args.pose_seed_b is None:
+        raise ValueError("--same-asset-pose-condition-swap requires --pose-seed-b")
 
     import sys
 
@@ -1164,13 +1242,32 @@ def main() -> None:
                     paired_cond = _condition_with_seed(model, paired_batch, args.surface_seed + idx)
                 condition_b_cache.append((paired_batch["path"][0], paired_cond.detach().cpu()))
                 row["pose_seed_b"] = int(args.pose_seed_b)
-                row["paired_pose_response"] = _paired_pose_response(
-                    model,
-                    batch,
-                    paired_batch,
-                    cond_a=cond,
-                    cond_b=paired_cond,
-                )
+                if args.same_asset_pose_condition_swap:
+                    row["paired_pose_target_change"] = _paired_pose_target_change(
+                        model,
+                        batch,
+                        paired_batch,
+                    )
+                    row["same_asset_pose_condition_swap"] = (
+                        _target_likelihood_under_condition_swap(
+                            model,
+                            batch,
+                            correct_cond=cond,
+                            swapped_cond=paired_cond,
+                            swapped_path=(
+                                f"{paired_batch['path'][0]}::pose_seed={int(args.pose_seed_b)}"
+                            ),
+                            scope=args.condition_swap_scope,
+                        )
+                    )
+                else:
+                    row["paired_pose_response"] = _paired_pose_response(
+                        model,
+                        batch,
+                        paired_batch,
+                        cond_a=cond,
+                        cond_b=paired_cond,
+                    )
                 if args.stage_trace:
                     assert trace_a is not None and trace_b is not None
                     shared_trace_b = _condition_stage_trace(
@@ -1282,6 +1379,10 @@ def main() -> None:
             "attention_routing": bool(args.attention_routing),
             "greedy_prefix_tokens": int(args.greedy_prefix_tokens),
             "cross_asset_condition_swap": bool(args.cross_asset_condition_swap),
+            "same_asset_pose_condition_swap": bool(
+                args.same_asset_pose_condition_swap
+            ),
+            "condition_swap_scope": str(args.condition_swap_scope),
         },
         "motion_encoder_parameters": _parameter_report(model.conditioner.motion_encoder),
         "condition_separation": {

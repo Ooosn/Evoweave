@@ -223,6 +223,7 @@ def _target_likelihood_under_condition_swap(
     correct_cond: torch.Tensor,
     swapped_cond: torch.Tensor,
     swapped_path: str,
+    swapped_parents: torch.Tensor | None = None,
     scope: str,
 ) -> dict[str, object]:
     """Measure whether the correct asset condition helps predict the fixed GT target."""
@@ -324,6 +325,118 @@ def _target_likelihood_under_condition_swap(
             ),
         }
 
+    parent_counterfactual = None
+    if swapped_parents is not None:
+        parent_mask = role_masks["parent"][0]
+        parent_positions = parent_mask.nonzero(as_tuple=False).flatten()
+        original_parent_ids = labels[0, parent_positions]
+        original_parents = teacher_batch["target_parents"][0, : parent_positions.numel()].to(
+            correct_cond.device
+        )
+        swapped_parents = swapped_parents.reshape(-1).to(correct_cond.device)
+        compared_count = min(int(original_parents.numel()), int(swapped_parents.numel()))
+        original_parents = original_parents[:compared_count]
+        swapped_parents = swapped_parents[:compared_count]
+        different = original_parents != swapped_parents
+        different_count = int(different.sum().item())
+
+        parent_counterfactual = {
+            "compared_positions": compared_count,
+            "different_target_positions": different_count,
+            "different_target_rate": (
+                float(different.float().mean().item()) if compared_count else 0.0
+            ),
+        }
+        if different_count:
+            original_ids = original_parent_ids[:compared_count][different]
+            swapped_raw = torch.where(
+                swapped_parents < 0,
+                torch.zeros_like(swapped_parents),
+                swapped_parents + 1,
+            )
+            swapped_ids = (swapped_raw + tokenizer.offset)[different]
+            correct_logits = condition_logits["correct"][0, parent_positions[:compared_count]][
+                different
+            ]
+            swapped_logits = condition_logits["swapped"][0, parent_positions[:compared_count]][
+                different
+            ]
+            correct_argmax = correct_logits.argmax(dim=-1)
+            swapped_argmax = swapped_logits.argmax(dim=-1)
+            correct_probs = torch.softmax(correct_logits, dim=-1)
+            swapped_probs = torch.softmax(swapped_logits, dim=-1)
+
+            correct_original_nll = torch.nn.functional.cross_entropy(
+                correct_logits,
+                original_ids,
+                reduction="none",
+            )
+            swapped_original_nll = torch.nn.functional.cross_entropy(
+                swapped_logits,
+                original_ids,
+                reduction="none",
+            )
+            correct_swapped_nll = torch.nn.functional.cross_entropy(
+                correct_logits,
+                swapped_ids,
+                reduction="none",
+            )
+            swapped_swapped_nll = torch.nn.functional.cross_entropy(
+                swapped_logits,
+                swapped_ids,
+                reduction="none",
+            )
+
+            parent_counterfactual.update(
+                {
+                    "correct_vs_swapped_argmax_change_rate": float(
+                        (correct_argmax != swapped_argmax).float().mean().item()
+                    ),
+                    "correct_argmax_original_target_rate": float(
+                        (correct_argmax == original_ids).float().mean().item()
+                    ),
+                    "swapped_argmax_original_target_rate": float(
+                        (swapped_argmax == original_ids).float().mean().item()
+                    ),
+                    "correct_argmax_swapped_target_rate": float(
+                        (correct_argmax == swapped_ids).float().mean().item()
+                    ),
+                    "swapped_argmax_swapped_target_rate": float(
+                        (swapped_argmax == swapped_ids).float().mean().item()
+                    ),
+                    "original_target_nll": {
+                        "correct_condition": float(correct_original_nll.mean().item()),
+                        "swapped_condition": float(swapped_original_nll.mean().item()),
+                        "swapped_minus_correct": float(
+                            (swapped_original_nll - correct_original_nll).mean().item()
+                        ),
+                    },
+                    "swapped_target_nll": {
+                        "correct_condition": float(correct_swapped_nll.mean().item()),
+                        "swapped_condition": float(swapped_swapped_nll.mean().item()),
+                        "swapped_minus_correct": float(
+                            (swapped_swapped_nll - correct_swapped_nll).mean().item()
+                        ),
+                    },
+                    "original_target_probability": {
+                        "correct_condition": float(
+                            correct_probs.gather(1, original_ids[:, None]).mean().item()
+                        ),
+                        "swapped_condition": float(
+                            swapped_probs.gather(1, original_ids[:, None]).mean().item()
+                        ),
+                    },
+                    "swapped_target_probability": {
+                        "correct_condition": float(
+                            correct_probs.gather(1, swapped_ids[:, None]).mean().item()
+                        ),
+                        "swapped_condition": float(
+                            swapped_probs.gather(1, swapped_ids[:, None]).mean().item()
+                        ),
+                    },
+                }
+            )
+
     return {
         "path": batch["path"][0],
         "swapped_path": swapped_path,
@@ -331,6 +444,7 @@ def _target_likelihood_under_condition_swap(
         "original_joint_count": int(original_joint_count[0].item()),
         "evaluated_joint_count": int(teacher_batch["joint_count"][0].item()),
         "roles": role_reports,
+        "parent_counterfactual": parent_counterfactual,
     }
 
 
@@ -1182,6 +1296,7 @@ def main() -> None:
     continuous_range = _puppeteer_metric_range(tokenizer)
     rows = []
     condition_a_cache: list[tuple[str, torch.Tensor]] = []
+    target_parent_a_cache: list[torch.Tensor] = []
     condition_b_cache: list[tuple[str, torch.Tensor]] = []
     model.eval()
     with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device.type == "cuda"):
@@ -1206,6 +1321,11 @@ def main() -> None:
             else:
                 cond = _condition_with_seed(model, batch, args.surface_seed + idx)
             condition_a_cache.append((batch["path"][0], cond.detach().cpu()))
+            target_parent_a_cache.append(
+                batch["target_parents"][
+                    0, : int(batch["joint_count"][0].item())
+                ].detach().cpu()
+            )
             forced_ids, forced_stats = _forced_argmax_ids(model, batch, cond=cond)
             try:
                 forced_pred = _decode_generated_ids(tokenizer, forced_ids)
@@ -1357,6 +1477,7 @@ def main() -> None:
                     correct_cond=correct_cond_cpu.to(device),
                     swapped_cond=swapped_cond_cpu.to(device),
                     swapped_path=swapped_path,
+                    swapped_parents=target_parent_a_cache[swapped_index],
                     scope=args.condition_swap_scope,
                 )
                 cross_asset_condition_swap.append(swap_report)

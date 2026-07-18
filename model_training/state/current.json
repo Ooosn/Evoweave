@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-18T14:43:03+09:00",
+  "updated_at": "2026-07-18T17:56:47+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -104,6 +104,15 @@
     "train",
     "submit"
   ],
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 124452019,
+    "status": "auto_logged_out",
+    "detected_at": "2026-07-18T17:56:47+09:00",
+    "current_host": "pcl03",
+    "gpu_processes": 0,
+    "decision": "Do not request another GPU allocation before the next model representation and preflight contract are defined."
+  },
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
     "status": "completed_rejected",

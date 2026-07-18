@@ -231,7 +231,13 @@ echo "[puppeteer baseline] manifest_root=${MANIFEST_ROOT}"
 echo "[puppeteer baseline] train_manifest=${EVOWEAVE_TRAIN_MANIFEST}"
 echo "[puppeteer baseline] valid_manifest=${EVOWEAVE_VAL_MANIFEST}"
 echo "[puppeteer baseline] output=${EVOWEAVE_OUTPUT_DIR}"
-echo "[puppeteer baseline] checkpoint=${PUPPETEER_CHECKPOINT:-<random-init>}"
+if [[ -n "${EVOWEAVE_INIT_CHECKPOINT}" ]]; then
+  echo "[puppeteer baseline] initialization=complete-model:${EVOWEAVE_INIT_CHECKPOINT}"
+elif [[ -n "${PUPPETEER_CHECKPOINT}" ]]; then
+  echo "[puppeteer baseline] initialization=decoder-only:${PUPPETEER_CHECKPOINT}"
+else
+  echo "[puppeteer baseline] initialization=random"
+fi
 echo "[puppeteer baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SIZE * RIGWEAVE_GRAD_ACCUM))"
 echo "[puppeteer baseline] condition_projection=${RIGWEAVE_CONDITION_PROJECTION} cond_length=${RIGWEAVE_COND_LENGTH} decoder_norm=${RIGWEAVE_DECODER_NORM_STYLE}"
 echo "[puppeteer baseline] token_loss_reduction=${RIGWEAVE_TOKEN_LOSS_REDUCTION} termination_decision_loss_weight=${RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT}"

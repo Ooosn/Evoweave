@@ -199,6 +199,18 @@ rig family，不只是记住训练资产。
 不得重复此前的 joint-count-bin sampler probe。该 probe 只平衡长度分桶，
 不能平衡同一长度内 4,930 次对 1 次的 topology family skew。
 
+正式启动前对 15,541 个训练行完成了 exact-topology sampler 审计：
+
+- 完整 topology family 共 `2,890` 个；
+- 单例 family 共 `2,143` 个，占 family 的 `74.15%`，自然采样只获得
+  `13.79%` 的行概率；
+- 频率 `>=100` 的 family 只有 9 个，占 family 的 `0.31%`，却获得自然采样
+  `58.60%` 的行概率；
+- mixture alpha `0.75` 时，单例/`2..9`/`10..99`/`>=100` family 的期望
+  行概率分别为 `59.06%/20.11%/5.95%/14.88%`；
+- 在 300 step、effective batch 48 的 14,400 次暴露中，高频 family 仍有约
+  2,143 次暴露，因此该设置不是完全删除 common family。
+
 下一项只允许：
 
 1. 新增 natural/topology-family-uniform mixture sampler；
@@ -212,6 +224,11 @@ rig family，不只是记住训练资产。
 
 短程 checkpoint fine-tune 只能作为因果 probe，不能直接替代正式 baseline。
 如果短程 probe 显示方向成立，正式结论必须来自同预算、从干净初始化开始的训练。
+
+本次探针固定为 300 optimizer steps，每 100 step 保存一次；从
+`checkpoint_sample_80000.pt` 严格加载完整模型，四组峰值学习率都为 `2e-5`，
+OneCycle 重新开始，optimizer/scheduler 不从旧 checkpoint 恢复。除
+topology-family mixture 与 `sequence_mean` 外，模型和数据契约保持不变。
 
 ## 证据文件
 

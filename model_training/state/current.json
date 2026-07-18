@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-18T10:13:42+09:00",
+  "updated_at": "2026-07-18T10:31:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -95,6 +95,33 @@
   "blocked_operations": [
     "submit"
   ],
+  "active_probe": {
+    "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
+    "status": "preflight_completed",
+    "server": "HGC pcg01 foreground qlogin",
+    "qlogin_job_id": 124452019,
+    "resources": "2xH100, s_vmem=256G",
+    "initialization": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
+    "max_steps": 300,
+    "effective_batch": 48,
+    "sample_milestones": [
+      4800,
+      9600,
+      14400
+    ],
+    "topology_balance_alpha": 0.75,
+    "token_loss_reduction": "sequence_mean",
+    "termination_decision_loss_weight": 0.0,
+    "peak_learning_rates": {
+      "surface": 2e-05,
+      "motion": 2e-05,
+      "prefix": 2e-05,
+      "decoder": 2e-05
+    },
+    "preflight_output": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_preflight_20260718",
+    "preflight_contract_max_abs_logit_diff": 0.0,
+    "sampling_distribution": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/topology_sampling_distribution_20260718.json"
+  },
   "next_required_result": "Implement and audit a natural/topology-family-uniform mixture sampler, then run one 200-300-step sample80000 fine-tune with sequence-mean CE and no termination auxiliary. Evaluate heldout52 and valid-common60 by target topology frequency before any clean full-budget retraining.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",

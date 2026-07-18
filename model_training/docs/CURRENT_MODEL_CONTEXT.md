@@ -192,6 +192,44 @@ topology 频率另以完整、有顺序的 `target_parents` tuple 在 15,541 个
 代表样本 montage 位于 `visuals/matched_montage.png`；10 个 flat hitmax 的专门
 对照位于 `visuals_flat_hitmax/matched_montage.png`。
 
+### 正常分布补充评测
+
+heldout-52 中 36/52 行是刻意选择的 4--10 joint 困难样本，不能用它的总体
+F1 代表正常 train/valid 分布。2026-07-18 使用同一 flat UniRig checkpoint、
+seed `101` 和 1400-token 上限补充评测：
+
+| 集合 | 可解析 | hitmax | 成功行 F1 | hitmax 按 0 的全体 F1 | 成功行 J2J |
+|---|---:|---:|---:|---:|---:|
+| train manifest 固定随机 60 行 | 56/60 | 4 | 0.8472 | 0.7907 | 0.01552 |
+| valid-common60 | 54/60 | 6 | 0.7935 | 0.7141 | 0.01685 |
+
+valid-common60 分层：
+
+| valid 子集 | 可解析 | 成功行 F1 | hitmax 按 0 的全体 F1 |
+|---|---:|---:|---:|
+| 52-joint | 20/20 | 0.9490 | 0.9490 |
+| 20--75，排除 52 | 18/20 | 0.7609 | 0.6848 |
+| 76--101 | 16/20 | 0.6357 | 0.5086 |
+
+因此当前 flat UniRig 在正常验证分布上的 F1 仍处于 `0.70+`，并不比早期印象
+中的旧线更差；故障集中在长尾 topology、较大 joint count 和少关节困难样本。
+但随机训练分布仍有 4/60 hitmax，说明同一资产进入训练并不能保证随机新 pose
+下可靠结束。
+
+本地保留的最早 HGC Puppeteer 证据中，`F1=0.751/0.796` 来自
+`generation_compare` 对 `train_manifest` 前 4 行的结果，不是验证集。相同
+checkpoint 的 `generation_valid` 只评了 8 行，两个 pose seed 的 F1 分别为
+`0.117/0.159`。不得再把该 4 行训练对照称为旧线验证 F1。
+
+补充评测证据：
+
+```text
+/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718/
+train_random60_seed20260718.jsonl
+flat_train_random60_seed101.json
+flat_valid_common60_seed101.json
+```
+
 ## 7. 已做但未被接受的后续 probe
 
 以下实验都从正式 checkpoint 出发，并重新运行 heldout-52：

@@ -48,12 +48,14 @@ from rigweave.dynamic_rig import (  # noqa: E402
     DynamicRigConditioner,
     FixedQuerySurfaceTokenizer,
     JointCountMixtureSampler,
+    TopologyFamilyMixtureSampler,
     PuppeteerDynamicRigDataset,
     PuppeteerDynamicRigModel,
     PuppeteerJointTokenizer,
     import_puppeteer_decoder,
     load_puppeteer_decoder_state,
     load_puppeteer_target_aware_pos_embed,
+    load_parent_topology_signatures,
     puppeteer_dynamic_collate,
     parse_joint_count_bin_uppers,
 )
@@ -449,6 +451,21 @@ def main() -> None:
         default="10,20,40,60,80,101",
         help="Inclusive upper bounds for joint-count-balanced sampling bins.",
     )
+    parser.add_argument(
+        "--topology-balance-alpha",
+        type=float,
+        default=0.0,
+        help=(
+            "Mix natural row-uniform sampling with uniform-over-exact-target-parent-topology "
+            "sampling. Mutually exclusive with joint-count balancing."
+        ),
+    )
+    parser.add_argument(
+        "--topology-scan-workers",
+        type=int,
+        default=8,
+        help="Workers used to read target_parents while constructing topology families.",
+    )
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=50000)
     parser.add_argument("--sample-milestones", type=str, default="5000,10000,20000,30000,50000,80000")
@@ -740,6 +757,21 @@ def main() -> None:
             raise ValueError(
                 f"--joint-count-balance-alpha must be in [0, 1], got {args.joint_count_balance_alpha}"
             )
+        if not 0.0 <= float(args.topology_balance_alpha) <= 1.0:
+            raise ValueError(
+                f"--topology-balance-alpha must be in [0, 1], got {args.topology_balance_alpha}"
+            )
+        if int(args.topology_scan_workers) < 0:
+            raise ValueError(
+                f"--topology-scan-workers must be non-negative, got {args.topology_scan_workers}"
+            )
+        if (
+            float(args.joint_count_balance_alpha) > 0.0
+            and float(args.topology_balance_alpha) > 0.0
+        ):
+            raise ValueError(
+                "joint-count balancing and topology-family balancing are mutually exclusive"
+            )
         if float(args.joint_count_balance_alpha) > 0.0 and joint_count_bin_uppers[-1] < args.n_max_joints:
             raise ValueError(
                 "final joint-count bin must cover n_max_joints when balancing is enabled: "
@@ -749,7 +781,29 @@ def main() -> None:
         args.effective_batch = effective_batch
         args.train_rows = train_rows
         sample_milestones = parse_sample_milestones(args.sample_milestones)
-        if float(args.joint_count_balance_alpha) > 0.0:
+        joint_count_sampling: dict[str, object] = {
+            "mode": "disabled",
+            "mixture_alpha": 0.0,
+            "bin_upper_bounds": list(joint_count_bin_uppers),
+        }
+        topology_sampling: dict[str, object] = {
+            "mode": "disabled",
+            "mixture_alpha": 0.0,
+        }
+        if float(args.topology_balance_alpha) > 0.0:
+            topology_signatures = load_parent_topology_signatures(
+                train_dataset.paths,
+                num_workers=args.topology_scan_workers,
+            )
+            train_sampler = TopologyFamilyMixtureSampler(
+                topology_signatures,
+                mixture_alpha=args.topology_balance_alpha,
+                num_replicas=world_size,
+                rank=rank,
+                seed=args.seed,
+            )
+            topology_sampling = train_sampler.report()
+        elif float(args.joint_count_balance_alpha) > 0.0:
             train_sampler = JointCountMixtureSampler(
                 train_dataset.manifest_joint_counts,
                 bin_upper_bounds=joint_count_bin_uppers,
@@ -765,10 +819,9 @@ def main() -> None:
                 if world_size > 1
                 else None
             )
-            joint_count_sampling = {
+            topology_sampling = {
                 "mode": "natural_row_uniform",
                 "mixture_alpha": 0.0,
-                "bin_upper_bounds": list(joint_count_bin_uppers),
             }
 
         if is_main(rank):
@@ -801,6 +854,7 @@ def main() -> None:
                     "token_loss_reduction": args.token_loss_reduction,
                     "termination_decision_loss_weight": args.termination_decision_loss_weight,
                     "joint_count_sampling": joint_count_sampling,
+                    "topology_sampling": topology_sampling,
                     "world_size": world_size,
                     "micro_batch_per_gpu": args.batch_size,
                     "grad_accum_steps": args.grad_accum_steps,
@@ -827,6 +881,7 @@ def main() -> None:
             f"scheduler={args.scheduler}",
         )
         log(rank, f"joint-count sampling: {json.dumps(joint_count_sampling, sort_keys=True)}")
+        log(rank, f"topology sampling: {json.dumps(topology_sampling, sort_keys=True)}")
 
         val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
         train_loader = DataLoader(

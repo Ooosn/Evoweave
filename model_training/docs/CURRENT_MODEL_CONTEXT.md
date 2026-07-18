@@ -209,25 +209,49 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
 - 固定 GT 与 GT prefix 后，正确 condition 的 coordinate NLL 为 `2.6749`，
   跨资产错配 condition 为 `4.4735`；16/16 个 low-joint 样本均是正确 condition
   更优。因此当前正式模型没有把 condition 完全忽略，也没有发生输入/GT 配错。
-- heldout-52 的首次自由生成错误全部出现在 `joint 0` 的坐标 token，不是 parent
-  或 EOS。
-- low-joint rootless `joint 0` 的目标分布远宽于 common 组，尤其 z 轴；这是
-  当前候选解释，不是已经证明的根因。
+- 固定同一资产的 pose-A GT 与 GT prefix，只将 condition 换成 pose-B 后，
+  train-low/valid-low 前十 joint 的 coordinate NLL 分别恶化约 `0.39~0.49` 和
+  `0.48~0.60`，train-common 恶化约 `2.85~2.93`。模型读取了当前 pose，但在
+  common rig family 上学到的 pose-to-skeleton 映射明显更强。
+- 固定资产、pose 与 GT，只更换 surface/FPS seed，coordinate NLL 平均绝对变化
+  只有约 `0.02~0.04`。FPS 随机性不是系统性失败的主因。
+- GT-prefix 下 train-low/valid-low 的 joint 0 coordinate accuracy 分别为
+  `0.396/0.400`，后续 joint 多数更差。自由生成首次错误落在 joint 0 是序列
+  起点效应，不是 rootless joint 0 独有的表示错误。
+- 训练集 52-joint 行共有 `5,122` 行，其中同一个完整 parent topology 出现
+  `4,930` 次；28-joint 与 34-joint 的主 topology 分别出现 `1,337/786` 次。
+- valid-common60 上，目标 topology 训练频率 `>=100` 的样本 coordinate NLL、
+  count MAE、J2J、F1 分别为 `0.910/3.29/0.0108/0.672`；训练集中未见 topology
+  分别为 `2.502/31.00/0.0433/0.129`。
+- 控制 target joint count 后，`log(1 + topology frequency)` 与 coordinate NLL
+  和 F1 的 partial Spearman 仍为 `-0.829/+0.741`。因此这不是 joint-count
+  分桶能够解释或修复的问题。
+- 52-joint valid 样本中 19/20 自由生成 52 joints；所有 heldout-52 中生成
+  52、28、34 joints 的结果都落入对应的主训练 topology。当前模型学到的是
+  高频 rig-family 模板选择和 pose 调整，而不是长尾 topology 上普适的
+  condition-to-skeleton 映射。
+- 低 joint 边界的经验停止率只有约 `0.28%~0.74%`。长尾映射欠拟合后，自回归
+  rollout 会被强 continuation prior 放大并停在 52/100/101 等长度 hazard。
+
+完整因果证据、数值和文件路径见
+`docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md`。
 
 ## 9. 当前仍未解决的问题
 
-1. flat UniRig 的 10 个 hitmax 为什么集中出现在 9 个低关节样本和 1 个
-   73-joint common 样本，尚未完成逐 token 因果定位。
-2. Puppeteer low-joint 的 `joint 0` 坐标在正确 GT prefix 下已经较差，随后又被
-   长骨架长度先验放大；训练分布不足与 `(x,y,z,parent_index)` 首关节表示不适配
-   尚未完成决定性区分。
-3. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
+1. 尚未验证在保持架构、数据契约和初始化不变时，直接平衡完整 parent topology
+   family 的梯度质量，能否恢复长尾 condition-to-skeleton 映射且不破坏 52-joint
+   高频 family。
+2. topology-family 频率是已确认的强因果候选和质量预测变量，但仍可能代理某些
+   topology 内在难度。下一次受控采样实验负责区分“频率不足”与“表示能力不足”。
+3. flat UniRig 的 10 个 hitmax 已定位为 GT-prefix 下多数会 EOS、self-prefix
+   下 EOS 被抑制的 exposure mismatch；如何修复而不产生垃圾骨架仍未验证。
+4. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
    index 的确定连接优势。
-4. 当前没有任何后续 probe 可以替代正式 flat UniRig 或 Puppeteer checkpoint。
 
 ## 10. 继续工作的硬规则
 
-- 现在不得从零重训 Puppeteer；先使用现有 `10k/40k/80k/best/final`。
+- 当前只允许从 Puppeteer `sample80000` 做一次短程拓扑族采样因果探针；它不能
+  被称为 baseline，也不能替代同预算干净初始化训练。
 - 允许从官方静态 UniRig checkpoint 重训 flat UniRig 对照线；这不依赖旧动态
   Evoweave checkpoint，也不改变 Puppeteer。
 - 任何“变好”结论必须来自同一 manifest、同一 pose、同一归一化、同一指标实现
@@ -240,12 +264,18 @@ flat UniRig 与 Puppeteer sample80000 的分层结果：
 
 ## 11. 下一项唯一允许的执行工作
 
-同预算 flat UniRig 重训和四方 matched evaluation 已完成。下一步不得立即再开
-正式训练；先在固定 heldout-52 上对以下两类失败做配对逐 token 诊断：
+同预算 flat UniRig 重训、四方 matched evaluation 和逐 token 因果诊断已经完成。
+下一项只允许：
 
-1. flat UniRig 的 10 个无 EOS/hitmax 样本；
-2. Puppeteer 的 train-low/valid-low 首关节坐标与过长生成。
+1. 以完整 `target_parents` tuple 定义 topology family；
+2. 实现 natural row-uniform 与 topology-family-uniform 的 mixture sampler；
+3. 使用 `sequence_mean` CE，避免短 skeleton 因 token 少再次被降权；
+4. 第一轮保持 termination auxiliary weight 为 `0`，不混入 EOS 新变量；
+5. 从 Puppeteer `sample80000` 进行 200~300 step 短程全参数因果探针；
+6. 同时评测 heldout-52 与 valid-common60，并按目标 topology 训练频率分层；
+7. 只有长尾 coordinate NLL、count、J2J、F1 同时改善且 52-joint 高频 family
+   不明显退化，才允许安排同预算、干净初始化的正式训练。
 
-诊断必须区分 condition evidence、首关节坐标预测、拓扑/长度先验和自由生成累计
-误差。只有得到能同时解释“flat common 成功、flat 部分 hitmax、Puppeteer low
-系统性过长”的因果证据后，才允许设计下一次训练改动。数据契约保持不变。
+不得重复 joint-count-bin sampler、单独 sequence-mean、termination auxiliary 或
+root/joint-0 probe；它们已经回答过不同问题。数据、tokenizer、condition 与
+decoder 架构契约保持不变。

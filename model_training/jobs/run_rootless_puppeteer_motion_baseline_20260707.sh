@@ -79,6 +79,8 @@ export RIGWEAVE_TOKEN_LOSS_REDUCTION="${JOB_TOKEN_LOSS_REDUCTION:-token_mean}"
 export RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT="${JOB_TERMINATION_DECISION_LOSS_WEIGHT:-0.0}"
 export RIGWEAVE_JOINT_COUNT_BALANCE_ALPHA="${JOB_JOINT_COUNT_BALANCE_ALPHA:-0.0}"
 export RIGWEAVE_JOINT_COUNT_BIN_UPPERS="${JOB_JOINT_COUNT_BIN_UPPERS:-10,20,40,60,80,101}"
+export RIGWEAVE_TOPOLOGY_BALANCE_ALPHA="${JOB_TOPOLOGY_BALANCE_ALPHA:-0.0}"
+export RIGWEAVE_TOPOLOGY_SCAN_WORKERS="${JOB_TOPOLOGY_SCAN_WORKERS:-8}"
 # The default keeps the current checkpoint-compatible data subset. It is a
 # route configuration, not a data-processing rule.
 export RIGWEAVE_N_MAX_JOINTS="${JOB_N_MAX_JOINTS:-101}"
@@ -175,6 +177,8 @@ CMD=(
   --termination-decision-loss-weight "${RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT}"
   --joint-count-balance-alpha "${RIGWEAVE_JOINT_COUNT_BALANCE_ALPHA}"
   --joint-count-bin-uppers "${RIGWEAVE_JOINT_COUNT_BIN_UPPERS}"
+  --topology-balance-alpha "${RIGWEAVE_TOPOLOGY_BALANCE_ALPHA}"
+  --topology-scan-workers "${RIGWEAVE_TOPOLOGY_SCAN_WORKERS}"
   --n-max-joints "${RIGWEAVE_N_MAX_JOINTS}"
   --target-coord-scale "${RIGWEAVE_TARGET_COORD_SCALE}"
   --cond-length "${RIGWEAVE_COND_LENGTH}"
@@ -232,6 +236,7 @@ echo "[puppeteer baseline] effective_batch=$((RIGWEAVE_NPROC * RIGWEAVE_BATCH_SI
 echo "[puppeteer baseline] condition_projection=${RIGWEAVE_CONDITION_PROJECTION} cond_length=${RIGWEAVE_COND_LENGTH} decoder_norm=${RIGWEAVE_DECODER_NORM_STYLE}"
 echo "[puppeteer baseline] token_loss_reduction=${RIGWEAVE_TOKEN_LOSS_REDUCTION} termination_decision_loss_weight=${RIGWEAVE_TERMINATION_DECISION_LOSS_WEIGHT}"
 echo "[puppeteer baseline] joint_count_balance_alpha=${RIGWEAVE_JOINT_COUNT_BALANCE_ALPHA} joint_count_bin_uppers=${RIGWEAVE_JOINT_COUNT_BIN_UPPERS}"
+echo "[puppeteer baseline] topology_balance_alpha=${RIGWEAVE_TOPOLOGY_BALANCE_ALPHA} topology_scan_workers=${RIGWEAVE_TOPOLOGY_SCAN_WORKERS}"
 echo "[puppeteer baseline] profile=SkeletonOPT joint-token parent-index; tail_tokens=off; full_finetune=on"
 printf '[puppeteer baseline] command:'
 printf ' %q' "${CMD[@]}"

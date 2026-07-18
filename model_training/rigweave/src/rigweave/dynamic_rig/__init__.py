@@ -10,6 +10,10 @@ from .model import DynamicRigConditioner
 from .sampling import TrackableSurfaceReferences, TrackableSurfaceSamples, sample_trackable_surface
 from .surface_tokenizer import FixedQuerySurfaceTokenizer
 from .joint_count_sampler import JointCountMixtureSampler, parse_joint_count_bin_uppers
+from .topology_sampler import (
+    TopologyFamilyMixtureSampler,
+    load_parent_topology_signatures,
+)
 from .unirig_wrapper import DynamicRigUniRigAR
 from .puppeteer_dynamic import (
     PuppeteerDynamicRigDataset,
@@ -34,6 +38,8 @@ __all__ = [
     "sample_trackable_surface",
     "JointCountMixtureSampler",
     "parse_joint_count_bin_uppers",
+    "TopologyFamilyMixtureSampler",
+    "load_parent_topology_signatures",
     "PuppeteerDynamicRigDataset",
     "PuppeteerDynamicRigModel",
     "PuppeteerJointTokenizer",

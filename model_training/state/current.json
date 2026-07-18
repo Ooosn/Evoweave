@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-18T08:00:55+09:00",
+  "updated_at": "2026-07-18T10:13:42+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md"
+    "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md",
+    "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -71,24 +72,30 @@
     "Puppeteer sample80000 and final have identical generated token sequences on 50 of 52 rows, while best_val is not better",
     "correct cross-asset condition improves low-joint coordinate likelihood for 16 of 16 samples",
     "low-joint failure already exists under ground-truth prefix",
-    "the first free-generation mismatch on all heldout52 rows is joint0 coordinate"
+    "same-asset wrong-pose conditions worsen coordinate NLL much more than changing the surface FPS seed, so the decoder uses the current pose and FPS randomness is not the primary failure",
+    "joint0 is not uniquely underfit under ground-truth prefix; later low-joint positions are usually equally or more inaccurate",
+    "the first free-generation mismatch on all heldout52 rows is joint0 coordinate because it is the first autoregressive decision",
+    "the dominant exact 52-joint parent topology occurs 4930 times in training, while low-joint rows contain 142 topologies among 396 rows",
+    "on valid-common60, topology training frequency remains strongly associated with coordinate NLL and topology F1 after controlling target joint count",
+    "Puppeteer generalizes the frequent 52-joint family to unseen valid assets but fails rare and unseen topology families",
+    "low-joint mapping is already underfit under ground-truth prefix, then continuation and self-prefix rollout amplify it into overlong high-frequency templates"
   ],
   "unknowns": [
-    "why flat UniRig fails to emit EOS on the 10 fixed hitmax rows",
-    "whether Puppeteer low-joint failure is primarily caused by training distribution or the rootless first-joint representation",
+    "whether topology-family-balanced gradients recover rare and unseen topology mapping without materially degrading the frequent 52-joint family",
+    "whether residual long-tail failure after family balancing requires a different explicit-tree decoder representation",
     "which decoder representation can preserve flat UniRig topology quality while predicting parent index explicitly"
   ],
   "allowed_operations": [
     "report",
     "inspect",
     "matched_eval",
-    "visualize"
-  ],
-  "blocked_operations": [
-    "submit",
+    "visualize",
     "train"
   ],
-  "next_required_result": "Before any new training, run paired per-token diagnosis on the 10 flat UniRig hitmax rows and the Puppeteer low-joint rows under the fixed heldout52 contract.",
+  "blocked_operations": [
+    "submit"
+  ],
+  "next_required_result": "Implement and audit a natural/topology-family-uniform mixture sampler, then run one 200-300-step sample80000 fine-tune with sequence-mean CE and no termination auxiliary. Evaluate heldout52 and valid-common60 by target topology frequency before any clean full-budget retraining.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
     "status": "completed",
@@ -165,16 +172,15 @@
     "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
   },
   "last_operation": {
-    "name": "matched_heldout52_four_way_generation",
+    "name": "puppeteer_topology_long_tail_causal_diagnosis",
     "status": "completed",
-    "row_count_per_checkpoint": 52,
-    "checkpoints": [
-      "flat_unirig/checkpoint_sample_80000.pt",
-      "puppeteer/checkpoint_sample_80000.pt",
-      "puppeteer/checkpoint_best_val.pt",
-      "puppeteer/checkpoint_final.pt"
-    ],
-    "contract_match": true
+    "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
+    "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
+    "valid_common_manifest": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/valid_common60_seed20260718.jsonl",
+    "diagnosis": "The model uses the correct mesh and current pose, but natural row sampling plus token-mean CE trains frequent rig-family templates far more strongly than rare topology families. Rare-family mapping is already weak under a ground-truth prefix and autoregressive continuation then amplifies it.",
+    "diagnosis_document": "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md",
+    "topology_frequency_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/puppeteer_valid_common60_topology_frequency.json",
+    "qlogin_job_id": 124452019
   },
   "receipt_max_age_minutes": 240
 }

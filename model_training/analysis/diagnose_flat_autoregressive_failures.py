@@ -698,21 +698,28 @@ def _prefix_repair_rollout(
         reproduction_budget,
     )
     expected_reproduction = saved_ids[: len(reproduced)]
-    if reproduced != expected_reproduction:
-        mismatch = next(
-            (
-                position
-                for position, (left, right) in enumerate(
-                    zip(reproduced, expected_reproduction, strict=True)
-                )
-                if int(left) != int(right)
-            ),
-            -1,
-        )
-        raise ValueError(
-            "manual prefix continuation does not reproduce saved baseline "
-            f"within {reproduction_budget} tokens; first mismatch={mismatch}"
-        )
+    saved_reproduction_mismatch = next(
+        (
+            position
+            for position in range(
+                min(len(reproduced), len(expected_reproduction))
+            )
+            if int(reproduced[position])
+            != int(expected_reproduction[position])
+        ),
+        (
+            min(len(reproduced), len(expected_reproduction))
+            if len(reproduced) != len(expected_reproduction)
+            else -1
+        ),
+    )
+    repeated = _greedy_continue_from_prefix(
+        model,
+        tokenizer,
+        cond,
+        saved_ids[:2],
+        reproduction_budget,
+    )
 
     if first_mismatch_position < 2:
         raise ValueError(
@@ -807,7 +814,13 @@ def _prefix_repair_rollout(
         reports[name] = report
     return {
         "baseline_reproduction_tokens": int(reproduction_budget),
-        "baseline_reproduction_exact": True,
+        "saved_baseline_reproduction_exact": bool(
+            saved_reproduction_mismatch < 0
+        ),
+        "saved_baseline_reproduction_first_mismatch": int(
+            saved_reproduction_mismatch
+        ),
+        "same_process_reproduction_exact": bool(repeated == reproduced),
         "probe_max_new_tokens": int(max_new_tokens),
         "interventions": reports,
     }
@@ -1447,6 +1460,45 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                         ]
                     ),
                 }
+            probe_rows = [
+                row["prefix_repair_probe"]
+                for row in group_rows
+                if "prefix_repair_probe" in row
+            ]
+            output[name]["prefix_repair_contract"] = {
+                "row_count": len(probe_rows),
+                "saved_baseline_reproduction_exact_rate": _mean(
+                    [
+                        int(row["saved_baseline_reproduction_exact"])
+                        for row in probe_rows
+                    ]
+                ),
+                "same_process_reproduction_exact_rate": _mean(
+                    [
+                        int(row["same_process_reproduction_exact"])
+                        for row in probe_rows
+                    ]
+                ),
+                "condition_repeat_exact_rate": _mean(
+                    [
+                        int(
+                            group_row.get(
+                                "condition_repeat_exact",
+                                False,
+                            )
+                        )
+                        for group_row in group_rows
+                        if "prefix_repair_probe" in group_row
+                    ]
+                ),
+                "condition_repeat_max_abs_diff": _mean(
+                    [
+                        group_row.get("condition_repeat_max_abs_diff")
+                        for group_row in group_rows
+                        if "prefix_repair_probe" in group_row
+                    ]
+                ),
+            }
     return output
 
 
@@ -1639,6 +1691,23 @@ def main() -> None:
                 ),
                 "saved_prefix_trace": saved_prefix_trace,
             }
+            if args.prefix_repair_probe and hitmax:
+                _seed_all(args.seed + index, device)
+                repeated_refs = model.sample_references(batch)
+                repeated_cond = model.build_condition(
+                    batch,
+                    refs=repeated_refs,
+                )
+                condition_abs_diff = (
+                    repeated_cond.detach().float()
+                    - cond.detach().float()
+                ).abs()
+                row["condition_repeat_exact"] = bool(
+                    torch.equal(repeated_cond, cond)
+                )
+                row["condition_repeat_max_abs_diff"] = float(
+                    condition_abs_diff.max().item()
+                )
             rows.append(row)
             print(
                 json.dumps(

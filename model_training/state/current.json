@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-stack-close-20260720-001",
-  "updated_at": "2026-07-20T04:02:56+09:00",
+  "updated_at": "2026-07-20T04:07:38+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_ROUTE_20260720.md",
   "required_context": [
@@ -73,7 +73,8 @@
     "formal_resources": "2xA100-SXM4-80GB",
     "formal_effective_batch": 48,
     "route1_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_79e6da4",
-    "route2_preflight_source_commit": "6219a6a",
+    "route2_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_refresh_eb92139",
+    "route2_source_commit": "eb92139446a845e689d2613614662cf37a3777a6",
     "platform_submission_blocker": "shuki /api/train stores gpu_per_worker=2 but its AIStation payload is rejected as acceleratorCardNum=0 before a job id is created"
   },
   "last_operation": {

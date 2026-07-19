@@ -464,6 +464,12 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 lambda row: row["connector_without_skin_count"] > 0
             ),
             "with_max_children_gt_4_fraction": sample_rate(lambda row: row["max_children"] > 4),
+            "max_children_gt_fraction": {
+                str(threshold): sample_rate(
+                    lambda row, threshold=threshold: row["max_children"] > threshold
+                )
+                for threshold in (1, 2, 4, 5, 8, 16, 32, 64)
+            },
             "with_near_zero_edge_fraction": sample_rate(lambda row: row["near_zero_edge_count"] > 0),
             "with_skinned_joint_without_hard_assignment_fraction": sample_rate(
                 lambda row: row["skinned_no_hard_assignment_count"] > 0

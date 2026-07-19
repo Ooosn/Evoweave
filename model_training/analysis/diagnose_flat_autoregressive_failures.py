@@ -491,6 +491,8 @@ def _repetition_report(generated_ids: list[int]) -> dict[str, Any]:
             if tokens[position] != tokens[position - period]:
                 break
             matching += 1
+        if matching < period:
+            continue
         coverage = matching + period if matching else 0
         if coverage > best_coverage:
             best_period = period

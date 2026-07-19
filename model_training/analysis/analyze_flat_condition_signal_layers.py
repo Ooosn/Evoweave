@@ -158,7 +158,17 @@ def _trace_row(
 ) -> dict[str, Any]:
     mismatch = _first_mismatch(tokenizer, target_ids, generated_ids)
     mismatch_position = int(mismatch["position"])
-    if mismatch_position < 2:
+    prefix_kind = "self"
+    if mismatch_position < 0 and generated_ids == target_ids:
+        prefix_kind = "gt"
+        mismatch_position = 2
+        mismatch = {
+            "position": 2,
+            "target_id": int(target_ids[2]),
+            "generated_id": int(target_ids[2]),
+            "target_role": "gt_prefix_start_reference",
+        }
+    elif mismatch_position < 2:
         raise ValueError(f"invalid first mismatch: {mismatch}")
 
     condition = torch.cat(
@@ -320,6 +330,7 @@ def _trace_row(
     )
     del output, prompt, token_embeds, token_logits, final_token_hidden
     return {
+        "prefix_kind": prefix_kind,
         "first_mismatch": mismatch,
         "generated_token_count": len(generated_ids) - 2,
         "has_eos": has_eos,
@@ -332,7 +343,11 @@ def _trace_row(
     }
 
 
-def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _aggregate_traces(
+    rows: list[dict[str, Any]],
+    *,
+    trace_key: str,
+) -> dict[str, Any]:
     groups: dict[str, list[dict[str, Any]]] = {
         "all": rows,
         "hitmax": [row for row in rows if row["hitmax"]],
@@ -344,7 +359,7 @@ def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
             {
                 layer
                 for row in group_rows
-                for layer in row["trace"]["hidden_by_layer"]
+                for layer in row[trace_key]["hidden_by_layer"]
             },
             key=int,
         )
@@ -352,14 +367,14 @@ def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
             {
                 distance
                 for row in group_rows
-                for distance in row["trace"]["logits_by_distance"]
+                for distance in row[trace_key]["logits_by_distance"]
             }
         )
         output[group_name] = {
             "row_count": len(group_rows),
             "condition_pair": {
                 key: _mean(
-                    [row["trace"]["condition_pair"].get(key) for row in group_rows]
+                    [row[trace_key]["condition_pair"].get(key) for row in group_rows]
                 )
                 for key in (
                     "relative_l2",
@@ -373,7 +388,7 @@ def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     distance: {
                         metric: _mean(
                             [
-                                row["trace"]["hidden_by_layer"]
+                                row[trace_key]["hidden_by_layer"]
                                 .get(layer, {})
                                 .get(distance, {})
                                 .get(metric)
@@ -390,7 +405,7 @@ def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     for distance in distance_names
                     if any(
                         distance
-                        in row["trace"]["hidden_by_layer"].get(layer, {})
+                        in row[trace_key]["hidden_by_layer"].get(layer, {})
                         for row in group_rows
                     )
                 }
@@ -400,7 +415,7 @@ def _aggregate_traces(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 distance: {
                     metric: _mean(
                         [
-                            row["trace"]["logits_by_distance"]
+                            row[trace_key]["logits_by_distance"]
                             .get(distance, {})
                             .get(metric)
                             for row in group_rows
@@ -585,6 +600,15 @@ def main() -> None:
                 target_ids_cache[index],
                 device=device,
             )
+            gt_trace = _trace_row(
+                model,
+                tokenizer,
+                condition_cache[index],
+                condition_cache[(index + 1) % len(condition_cache)],
+                target_ids_cache[index],
+                target_ids_cache[index],
+                device=device,
+            )
             row = {
                 "index": int(index),
                 "path": generation_rows[index]["path"],
@@ -598,6 +622,7 @@ def main() -> None:
                     (index + 1) % len(condition_cache)
                 ),
                 "trace": trace,
+                "gt_trace": gt_trace,
             }
             rows.append(row)
             print(
@@ -627,7 +652,11 @@ def main() -> None:
             "success_indices": selected_success,
             "success_matching": "greedy nearest target joint count",
         },
-        "aggregate": _aggregate_traces(rows),
+        "aggregate": _aggregate_traces(rows, trace_key="trace"),
+        "gt_prefix_aggregate": _aggregate_traces(
+            rows,
+            trace_key="gt_trace",
+        ),
         "rows": rows,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-stack-close-20260720-001",
-  "updated_at": "2026-07-20T02:54:24+09:00",
+  "updated_at": "2026-07-20T04:02:56+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_ROUTE_20260720.md",
   "required_context": [
@@ -41,11 +41,16 @@
     "the isolated route modifies no flat UniRig baseline source file",
     "the current route has 663383552 trainable parameters and the optimizer owns exactly all 663383552 with no duplicate or missing parameter",
     "a 600-exposure 32-row diagnostic produced 32 of 32 legal EOS generations with zero hitmax and mean topology F1 0.590121",
-    "the remaining short-run failure mode is premature CLOSE and under-generation rather than coordinate looping or template collapse"
+    "the remaining short-run failure mode is premature CLOSE and under-generation rather than coordinate looping or template collapse",
+    "condition refresh adds 3166464 parameters through zero-residual cross-attention at decoder layers 8, 16, and 24 without changing initial logits",
+    "the matched 600-exposure condition-refresh diagnostic produced 32 of 32 legal EOS generations, zero hitmax, mean topology F1 0.568839, and mean J2J 0.057209",
+    "condition refresh increased median full-trainer step time from 2.87990 seconds to 2.90510 seconds, about 0.9 percent",
+    "the matched short run does not show a condition-refresh quality improvement over the no-refresh route"
   ],
   "unknowns": [
     "formal 80016-exposure stack-close validation performance and hitmax rate",
-    "whether a separate zero-residual condition-refresh route further improves robustness without degrading geometry"
+    "formal 80016-exposure condition-refresh validation performance and hitmax rate",
+    "whether condition refresh improves robustness after full training despite no improvement in the matched 600-exposure diagnostic"
   ],
   "allowed_operations": [
     "report",
@@ -56,31 +61,36 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "Submit the isolated stack-close sibling-randomization plus 5-percent axial/radial prefix-perturbation route as a 2xA100-80 full fine-tune from the official static UniRig checkpoint. Then implement condition refresh in a separate route and commit, preflight, and task.",
+  "next_required_result": "Submit the two isolated 2xA100-80 full fine-tunes from the official static UniRig checkpoint: stack-close sibling-randomization plus 5-percent axial/radial prefix perturbation, and the matched route with zero-residual condition refresh. The shuki training adapter currently persists gpu_per_worker=2 but sends acceleratorCardNum=0 to AIStation and must be fixed or bypassed through an authorized official-platform endpoint.",
   "active_operation": {
-    "name": "stack_close_sibling_perturb_20260720",
-    "status": "preflight_passed_awaiting_formal_submission",
+    "name": "stack_close_two_route_submission_20260720",
+    "status": "both_preflights_passed_awaiting_platform_submission",
     "server": "Westlake development environment bb73a9",
     "resources": "1xA800-SXM4-80GB",
-    "source_commit": "52bb4d9",
+    "source_commit": "6219a6a",
     "initialization": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
     "dynamic_checkpoint_loaded": false,
     "formal_resources": "2xA100-SXM4-80GB",
-    "formal_effective_batch": 48
+    "formal_effective_batch": 48,
+    "route1_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_79e6da4",
+    "route2_preflight_source_commit": "6219a6a",
+    "platform_submission_blocker": "shuki /api/train stores gpu_per_worker=2 but its AIStation payload is rejected as acceleratorCardNum=0 before a job id is created"
   },
   "last_operation": {
-    "name": "stack_close_full_contract_and_free_generation_preflight",
+    "name": "stack_close_condition_refresh_matched_preflight",
     "status": "completed_passed",
-    "roundtrip_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/roundtrip.json",
-    "optimizer_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/fixed_optimizer_one_step/logs/train.jsonl",
-    "generation_summary": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/overfit32_freegen/summary.json",
+    "contract_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/contract.json",
+    "optimizer_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/full_one_step/logs/train.jsonl",
+    "generation_summary": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/train32_step200_freegen/summary.json",
     "generation_rows": 32,
     "detokenize_ok": 32,
     "has_eos": 32,
     "hit_max_without_eos": 0,
-    "topology_f1_mean": 0.5901210750243167,
-    "topology_f1_median": 0.6164819792175809,
-    "j2j_mean": 0.052681558791758315
+    "topology_f1_mean": 0.5688386893170282,
+    "topology_f1_median": 0.5465747702589807,
+    "j2j_mean": 0.05720903940527933,
+    "matched_no_refresh_topology_f1_mean": 0.5901210750243167,
+    "matched_no_refresh_j2j_mean": 0.052681558791758315
   },
   "receipt_max_age_minutes": 240
 }

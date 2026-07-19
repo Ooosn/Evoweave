@@ -80,10 +80,11 @@ delta = axial * bone_axis + radial * plane_normal
 
 ## 5. Preflight 结果
 
-正式代码 commit：
+第一条路线的不可变正式训练源：
 
 ```text
-52bb4d9
+/ssdwork/liuhaohan/evorig/run_sources/stack_close_79e6da4
+commit 79e6da43fda8225831c7d1ff41669963f9d058c8
 ```
 
 固定配置 one-step 检查：
@@ -115,7 +116,70 @@ delta = axial * bone_axis + radial * plane_normal
 /ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/overfit32_freegen
 ```
 
-## 6. 正式训练
+## 6. Condition Refresh 独立路线
+
+Condition refresh 不是第一条路线的隐式开关，而是单独的模型 profile：
+
+```text
+model_training/rigweave/src/rigweave/stack_close_refresh/
+model_training/rigweave/tests/test_condition_refresh.py
+model_training/rigweave/scripts/audit_condition_refresh_contract.py
+model_training/jobs/run_stack_close_condition_refresh_20260720.sh
+```
+
+它在 OPT 的第 `8 / 16 / 24` 层后，只对 skeleton hidden states 追加一次到原始
+`1024` 个 motion-aware condition tokens 的 cross-attention：
+
+```text
+1024 hidden -> 256 bottleneck -> 8-head cross-attention -> 1024 hidden
+```
+
+每个 refresh adapter 的输出乘以独立的逐通道 `tanh` gate。gate 精确初始化为
+零，因此初始模型与不带 refresh 的第一条路线逐 logit 完全相同；训练打开 gate
+后，refresh projection 才开始接收非零梯度。condition prefix 本身不被改写。
+
+三层 adapter 共增加 `3,166,464` 个参数。one-step optimizer 审查结果：
+
+- AR 参数：`305,736,704`
+- motion 参数：`303,526,912`
+- surface 参数：`54,119,936`
+- refresh 参数：`3,166,464`
+- trainable 与 optimizer 参数总数均为 `666,550,016`
+- 未分配、重复或冻结后误加入 optimizer 的参数均为 `0`
+- 单卡 micro-batch `3` 峰值显存约 `59.56GB`
+
+同一批 32 个 train 样本、同为 200 optimizer steps / 600 次样本暴露的匹配短训：
+
+| 指标 | 无 refresh | 有 refresh |
+| --- | ---: | ---: |
+| final validation loss | 1.920504 | 1.920864 |
+| validation token accuracy | 0.393437 | 0.432542 |
+| topology F1 mean | 0.590121 | 0.568839 |
+| topology F1 median | 0.616482 | 0.546575 |
+| J2J mean | 0.052682 | 0.057209 |
+| 合法 EOS | 32 / 32 | 32 / 32 |
+| hitmax | 0 / 32 | 0 / 32 |
+| median step time | 2.87990s | 2.90510s |
+
+结论只到以下范围：
+
+- condition refresh 的训练、generation cache 和 grammar contract 均成立，没有模板坍塌；
+- 完整 trainer 的实测步耗时只增加约 `0.9%`；
+- 600 次样本暴露下没有性能提升证据，F1 和 J2J 反而略差；
+- 主要错误仍是过早 `CLOSE`；另有 1 行产生长分支过生成，但最终主动 EOS。
+
+因此第二条路线值得作为独立正式对照训练，但不能在正式验证结果出来前写成已经优于
+第一条路线。
+
+服务器证据：
+
+```text
+/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/contract.json
+/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/train32_step200
+/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/train32_step200_freegen
+```
+
+## 7. 正式训练
 
 第一条正式任务固定为：
 
@@ -131,3 +195,7 @@ delta = axial * bone_axis + radial * plane_normal
 - 不启用 condition refresh、oracle、explicit-tree、旧 recovery loss 或任何 fallback
 
 第二条 condition-refresh 路线必须在另一个独立 profile 和 commit 中实现，并同样从 static UniRig 初始化。它不能覆盖第一条路线，也不能修改 flat UniRig baseline。
+
+第二条正式任务沿用完全相同的数据、初始化、优化器、学习率、样本暴露数和
+`2 x A100 80GB` / effective batch `48` 配置，唯一模型差异是本节定义的三层
+zero-residual condition refresh。

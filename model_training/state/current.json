@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-19T17:42:07+09:00",
+  "updated_at": "2026-07-19T20:11:56+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -9,6 +9,7 @@
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
     "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
+    "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
     "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md",
     "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md"
   ],
@@ -95,11 +96,21 @@
     "seven of ten flat UniRig hitmax rows terminate in one coordinate token repeated 302-780 times; hitmax trigram unique ratio is 0.0466 versus 0.8408 for successful rows",
     "repairing only the first mismatched token ends three of ten hitmax rows and does not guarantee usable topology; forcing one two or four GT joints is non-monotonic and cannot be a model fix",
     "the flat tokenizer target length median is 207 tokens; only 1.53 percent of train rows exceed 512 and 0.088 percent exceed 1024, so hitmax trajectories enter weakly supervised positions without exceeding decoder capacity",
-    "one degenerate-area mesh makes CUDA face multinomial and FPS replay non-bitwise-deterministic, but both sampled conditions still produce 1400-token 460-joint loops and match on 1388 of 1400 generated positions; sampling is an amplifier rather than the primary cause"
+    "one degenerate-area mesh makes CUDA face multinomial and FPS replay non-bitwise-deterministic, but both sampled conditions still produce 1400-token 460-joint loops and match on 1388 of 1400 generated positions; sampling is an amplifier rather than the primary cause",
+    "a frozen linear readout from the 1024 condition-token mean predicts joint count with R2 0.404 and Spearman 0.722, while decoder class hidden drops to R2 0.299, so coarse structure exists in condition but is not strengthened by the decoder",
+    "for the same ten hitmax rows and mismatch-relative positions, condition-swap JS falls from 0.407 to 0.138 between distance 0-3 and 16-63 under self prefix, versus 0.411 to 0.206 under GT prefix, proving wrong prefix content additionally suppresses condition",
+    "nine of ten flat hitmax targets contain only 4-9 joints, but hitmax generation averages 371.7 joints, so target length is not the trigger",
+    "flat parent-coordinate tokenization changes parent identity on 56 of 856 valid rows in both a random-pose and deterministic-pose draw; the bad-row sets overlap on 54 rows and mismatch-count Spearman is 0.965",
+    "only 5 of the 56 random-pose valid parent-mismatch rows contain continuous exact-zero edges; the other 51 are caused by 256-bin coordinate collisions",
+    "on the exact heldout52 poses, none of ten hitmax rows has a parent round-trip mismatch while two of 42 successful rows do, so lossy parent coordinates are an independent representation defect rather than the direct cause of these ten hitmax cases",
+    "all 16776 checkpoint-matched HGC trees are exactly representable by a DFS stack-close stream; replacing branch-plus-parent-xyz with one CLOSE per node changes total target tokens from 3188167 to 3183580 and maximum target length from 1362 to 1003",
+    "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "which topology and length decision representation can make parent and EOS depend directly on condition without destroying frequent-family geometry",
-    "whether a different explicit-tree decoder representation can preserve the flat UniRig prior while generalizing rare topology and predicting parent index explicitly"
+    "whether stack-close training preserves flat UniRig geometry while eliminating hitmax",
+    "whether zero-residual condition cross-attention refresh prevents self-prefix condition collapse",
+    "the effective and stable mixture of coordinate-corrupted roll-in and graph-matched self-prefix supervision",
+    "which of the HGC 15920-plus-856 and Westlake 15903-plus-857 manifests is the next-run source of truth"
   ],
   "allowed_operations": [
     "report",
@@ -208,7 +219,55 @@
       "use EOS loss without a semantically defined recovery target"
     ]
   },
-  "next_required_result": "Define and audit a topology and stopping representation that conditions parent and EOS on both mesh evidence and an explicit partial-tree state, rejects duplicate or zero-length continuation, and gives off-manifold prefixes a graph-matched recovery target while preserving flat UniRig geometry. Do not start training before GT-prefix, self-prefix, condition-swap, gradient, validity, bounded-generation, and matched-visualization preflights are specified.",
+  "model_structure_preflight": {
+    "status": "completed_no_training",
+    "server": "HGC pcg01 foreground qlogin",
+    "qlogin_job_id": 124519658,
+    "resources": "1xH100 80GB",
+    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+    "hgc_manifests": {
+      "train": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+      "valid": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+      "train_rows": 15920,
+      "valid_rows": 856
+    },
+    "primary_document": "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
+    "output_root": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719",
+    "condition_probe": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_probe_full/condition_structure_probe.json",
+    "condition_signal": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_signal_gt_vs_self_full.json",
+    "tree_audit": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tree_expansion_audit_v5_stack.json",
+    "valid_tokenizer_random_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_valid_randomdraw.json",
+    "valid_tokenizer_fixed_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_valid_fixedseed101.json",
+    "train_tokenizer_random_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
+    "heldout52_tokenizer": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_heldout52_seed101.json",
+    "verified_stack_contract": {
+      "representable_rows": 16776,
+      "total_rows": 16776,
+      "flat_total_tokens": 3188167,
+      "stack_total_tokens": 3183580,
+      "flat_max_tokens": 1362,
+      "stack_max_tokens": 1003
+    },
+    "verified_valid_parent_loss": {
+      "rows": 856,
+      "parent_mismatch_rows_random_pose": 56,
+      "parent_mismatch_edges_random_pose": 259,
+      "parent_mismatch_rows_fixed_pose": 56,
+      "bad_row_set_jaccard": 0.9310344827586207,
+      "mismatch_count_spearman": 0.9653242284987466
+    },
+    "verified_train_parent_loss": {
+      "rows": 15920,
+      "parent_mismatch_rows_random_pose": 989,
+      "parent_mismatch_edges_random_pose": 4696,
+      "all_edges": 728028,
+      "parent_mismatch_edge_fraction": 0.006450301362035526,
+      "bad_rows_without_continuous_zero_edge": 792,
+      "identity_edge_f1_mean": 0.9952671452343643,
+      "identity_edge_f1_min": 0.21568627450980393
+    }
+  },
+  "next_required_result": "Implement a no-fallback stack-close tokenizer that reuses the flat branch token ID as CLOSE_NODE and round-trips exact parent identity; strictly load the flat sample80000 coordinate/decoder/conditioner prior; add a zero-residual condition cross-attention refresh path; then pass 32-row coordinate, parent, CLOSE, EOS, condition-swap, self-prefix, bounded-generation, topology-F1, J2J, and visualization preflights. Do not start multi-GPU training before the formal manifest is frozen and these checks pass.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
     "status": "completed",
@@ -285,14 +344,15 @@
     "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
   },
   "last_operation": {
-    "name": "flat_unirig_hitmax_causal_diagnosis",
+    "name": "model_structure_preflight_20260719",
     "status": "completed",
     "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
     "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-    "diagnosis": "Hitmax is a two-stage failure: weak rare-topology mapping creates an off-manifold self prefix, then prefix state overwhelms mesh condition and the flat grammar permits a constant or periodic coordinate loop with no learned EOS recovery.",
-    "diagnosis_document": "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
-    "primary_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_hitmax_causal_complete_seed101_20260719.json",
-    "sampling_replay_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_condition_determinism_first7_replay_seed101_20260719.json",
+    "diagnosis": "The conditioner contains coarse topology information and the flat model uses it on GT prefixes, but an early coordinate error moves generation off the teacher-forced manifold; wrong self-prefix content then increasingly suppresses condition and enters a non-terminating continuation attractor. Independently, flat parent-coordinate tokenization loses parent identity on 6.21 percent of train rows. A DFS stack-close representation exactly covers all 16776 audited trees without increasing total token count, but it has not yet been trained.",
+    "diagnosis_document": "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
+    "primary_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_signal_gt_vs_self_full.json",
+    "tree_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tree_expansion_audit_v5_stack.json",
+    "tokenizer_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
     "qlogin_job_id": 124519658
   },
   "receipt_max_age_minutes": 240

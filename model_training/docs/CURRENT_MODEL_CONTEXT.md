@@ -12,6 +12,10 @@ Puppeteer 之前必须先读本文档。历史根因的完整证据见
 flat UniRig 的完整 hitmax 因果证据见
 `FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md`。
 
+下一轮结构表示、condition 路径与训练边界的最新预检见
+`MODEL_STRUCTURE_PREFLIGHT_20260719.md`。该文档中的 stack-close 目前是已通过
+全量 tree contract 的候选表示，不是已经训练成功的新模型。
+
 ## 1. 任务与固定数据契约
 
 Evoweave 使用动态 mesh 序列生成当前 query pose 对应的完整骨架树：
@@ -309,6 +313,31 @@ reduction 不能修复映射，并会破坏常见 family。
   真实契约缺陷；但忽略 sibling order 只让 180 个有序 singleton 合并，约占
   训练行 `1.16%`，不能解释主要长尾失败。按 pose geometry 动态排序又不稳定，
   当前不得直接重写。
+- 冻结 checkpoint 的线性读出证明 1024 condition token 含有粗结构信息：
+  joint-count `R2=0.404`、Spearman `0.722`；decoder class hidden 的 `R2`
+  降到 `0.299`。condition 不是空信息，但现有 decoder 没有稳定提炼它。
+- 对 10 个 hitmax 做同位置 condition swap：self prefix 下 next-token JS 从
+  first-mismatch 后 `0-3` token 的 `0.407` 降到 `16-63` 的 `0.138`；
+  GT prefix 对应为 `0.411 -> 0.206`。错误 prefix 内容会额外压制 condition，
+  不是序列长度单独造成。
+- 10 个 hitmax 中 9 个 target 只有 4--9 joints，自由生成却平均达到
+  `371.7` joints；它们不是因为真实 target 太长而触发上限。
+- flat tokenizer 的 parent-xyz 表示在 valid 一次随机 pose 往返中有
+  `56/856` 条恢复出错误 parent，共 259 条错误边；确定性 pose 仍为 `56/856`，
+  两次错误集合 Jaccard `0.931`。51/56 条随机-pose 错误不含连续空间精确零边，
+  主要是 256-bin 量化碰撞。
+- 全量 train 随机-pose 往返中有 `989/15920` 条恢复出错误 parent，共
+  `4696/728028` 条错误边；`792/989` 条错误样本不含连续空间精确零边。最坏样本
+  identity edge F1 为 `0.216`，说明 parent-xyz 的信息损失虽只占全量边
+  `0.645%`，但会集中破坏个别复杂树。
+- heldout-52 的完全相同 pose 上，10 个 hitmax 有 `0/10` parent round-trip
+  错误，42 个成功样本反而有 2 条。parent-xyz 不可逆是独立表示缺陷，不是这
+  10 个 hitmax 的直接原因。
+- 当前 HGC `16776/16776` 棵 tree 全部满足 DFS stack contract。用每节点一个
+  `CLOSE_NODE` 替代 `BRANCH + parent_xyz` 后，全量 token 总数
+  `3188167 -> 3183580`，p95 `348 -> 319`，最大长度 `1362 -> 1003`；
+  因此 stack-close 是目前唯一通过全量数据预检且能直接继承 UniRig 坐标词表的
+  候选表示。
 
 完整因果证据、数值和文件路径见
 `docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md`。
@@ -322,9 +351,13 @@ reduction 不能修复映射，并会破坏常见 family。
    映射较弱导致早期 off-manifold self prefix；随后 prefix 逐渐压过 mesh
    condition，并进入 flat tokenizer 允许的常量或周期坐标环。单独纠正首个
    token、固定 FPS 或强制 EOS 都不能保证生成可用骨架。
-3. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
-   index 的确定连接优势。
-4. sibling canonical order 当前依赖名称；需要稳定、跨 pose、不依赖资产命名的
+3. stack-close 已通过全量 HGC tree 的静态 contract，但尚未实现或训练；还没有
+   证明它能在保留 flat UniRig 几何质量的同时消除 hitmax。
+4. condition cross-attention refresh、coordinate-corrupted roll-in 和
+   graph-matched self-prefix loss 都有对应证据动机，但效果仍是待验证假设。
+5. HGC checkpoint-matched manifest 为 `15920+856=16776`，工作区正式西湖
+   source-of-truth 为 `15903+857=16760`。下一次训练前必须同步并冻结唯一版本。
+6. sibling canonical order 当前依赖名称；需要稳定、跨 pose、不依赖资产命名的
    表示契约，但现有证据表明它不是当前主要瓶颈。
 
 ## 10. 继续工作的硬规则
@@ -344,17 +377,20 @@ reduction 不能修复映射，并会破坏常见 family。
 ## 11. 下一项唯一允许的执行工作
 
 同预算 flat UniRig 重训、matched evaluation、逐 token 条件干预、重复模式、
-前缀修复、训练长度分布和采样确定性审计已经完成。下一项只能是：
+前缀修复、训练长度分布、采样确定性和 tree/tokenizer 预检已经完成。下一项只能是：
 
-1. 在代码级定义新的 topology/length 决策表示或训练目标；
-2. 明确 condition 和 partial-tree state 如何直接影响 parent 与 EOS，而不是
-   只依赖已生成坐标；
-3. 保留 flat UniRig 已验证的静态骨架先验，不以“没有 hitmax”代替骨架质量；
-4. 给 duplicate joint、zero-length bone 和未覆盖结构定义显式有效性；错误
-   partial graph 的监督必须先与 GT graph 语义匹配，不能按 ordinal step
-   强绑；
-5. 先通过 GT-prefix、自前缀、跨 condition、梯度和自由生成可视化审计；
-6. 只有 heldout-52 长尾与 valid-common60 同时改善，才允许新的正式多卡训练。
+1. 实现独立、无 fallback 的 stack-close tokenizer：复用现有 branch token ID
+   作为 `CLOSE_NODE`，parent 由 DFS stack 唯一恢复；
+2. 从 flat sample80000 严格加载 xyz embedding/head、decoder 和 conditioner，
+   不随机初始化另一套 skeleton decoder；
+3. 给 decoder 增加 residual 初始严格为 0 的 condition cross-attention refresh，
+   并以旧 flat prefix 验证初始化 max logit diff 为 0；
+4. 先做 coordinate-corrupted roll-in；结构偏移后的 self-prefix 监督必须先与
+   GT graph 语义匹配，不能按 ordinal step 强绑；
+5. 在 32 条跨 topology 小集合上同时验收自由生成坐标、parent、CLOSE、EOS、
+   J2J、topology F1 和可视化；
+6. 只有上述预检通过，并且 heldout-52 与 valid-common60 的小规模对照同时改善，
+   才允许新的正式多卡训练。
 
 不得重复 joint-count-bin、exact-topology sampler、单独 sequence-mean、
 termination auxiliary、root/joint-0、FPS 或当前 pose geometry sibling-sort

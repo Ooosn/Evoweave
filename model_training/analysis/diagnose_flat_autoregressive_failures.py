@@ -486,6 +486,281 @@ def _sequence_next_logits(
 
 
 @torch.no_grad()
+def _greedy_continue_from_prefix(
+    model: torch.nn.Module,
+    tokenizer: Any,
+    cond: torch.Tensor,
+    prefix_ids: list[int],
+    max_new_tokens: int,
+) -> list[int]:
+    """Greedily continue a grammar-valid flat UniRig prefix."""
+
+    if len(prefix_ids) < 2:
+        raise ValueError("forced prefix must contain BOS and class tokens")
+    for position in range(2, len(prefix_ids)):
+        possible = set(
+            int(value)
+            for value in tokenizer.next_posible_token(
+                ids=np.asarray(prefix_ids[:position], dtype=np.int64)
+            )
+        )
+        if int(prefix_ids[position]) not in possible:
+            raise ValueError(
+                f"forced token {prefix_ids[position]} is not grammar-valid "
+                f"at position {position}"
+            )
+
+    cond = cond.to(dtype=model.transformer.dtype)
+    ids = [int(value) for value in prefix_ids]
+    input_ids = torch.tensor([ids], device=cond.device, dtype=torch.long)
+    input_attention = torch.ones_like(input_ids)
+    token_embeds = model.token_inputs_embeds(input_ids, input_attention)
+    prompt = torch.cat([cond, token_embeds], dim=1)
+    attention_mask = torch.ones(
+        (1, prompt.shape[1]),
+        device=cond.device,
+        dtype=torch.long,
+    )
+    need_hidden = bool(getattr(model, "uses_action_group_bias", False))
+    output = model.transformer(
+        inputs_embeds=prompt,
+        attention_mask=attention_mask,
+        use_cache=True,
+        output_hidden_states=need_hidden,
+    )
+    past = output.past_key_values
+    next_logits = output.logits[:, -1, :]
+    next_hidden = output.hidden_states[-1][:, -1] if need_hidden else None
+    next_logits = model.apply_action_group_bias_row(next_logits, next_hidden, cond)
+
+    while len(ids) - 2 < int(max_new_tokens):
+        possible = set(
+            int(value)
+            for value in tokenizer.next_posible_token(
+                ids=np.asarray(ids, dtype=np.int64)
+            )
+        )
+        possible_ids = torch.tensor(
+            sorted(possible),
+            device=next_logits.device,
+            dtype=torch.long,
+        )
+        selected_offset = int(
+            next_logits[0].index_select(0, possible_ids).argmax().item()
+        )
+        token = int(possible_ids[selected_offset].item())
+        ids.append(token)
+        if token == int(tokenizer.eos):
+            break
+
+        next_token_ids = torch.tensor(
+            [[token]],
+            device=cond.device,
+            dtype=torch.long,
+        )
+        if bool(getattr(model, "use_grammar_state_embedding", False)):
+            next_embed = model.next_token_embed_with_state(ids, cond.device)
+        else:
+            next_embed = model.token_inputs_embeds(
+                next_token_ids,
+                torch.ones_like(next_token_ids),
+            )
+        attention_mask = torch.ones(
+            (1, cond.shape[1] + len(ids)),
+            device=cond.device,
+            dtype=torch.long,
+        )
+        output = model.transformer(
+            inputs_embeds=next_embed,
+            attention_mask=attention_mask,
+            past_key_values=past,
+            use_cache=True,
+            output_hidden_states=need_hidden,
+        )
+        past = output.past_key_values
+        next_logits = output.logits[:, -1, :]
+        next_hidden = output.hidden_states[-1][:, -1] if need_hidden else None
+        next_logits = model.apply_action_group_bias_row(
+            next_logits,
+            next_hidden,
+            cond,
+        )
+    return ids
+
+
+def _target_prefix_through_joint_count(
+    tokenizer: Any,
+    target_ids: list[int],
+    joint_count: int,
+) -> list[int] | None:
+    from eval_dynamic_rig_generation import _count_prefix_structure
+
+    for end in range(2, len(target_ids) + 1):
+        prefix = target_ids[:end]
+        count, _ = _count_prefix_structure(tokenizer, prefix)
+        if int(count) >= int(joint_count):
+            if prefix[-1] == int(tokenizer.eos):
+                return prefix[:-1]
+            return prefix
+    return None
+
+
+def _compact_generation_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
+    official = metrics.get("official", {})
+    topology = metrics.get("topology", {})
+    return {
+        "detokenize_ok": bool(metrics.get("detokenize_ok", False)),
+        "pred_joint_count": metrics.get("pred_joint_count"),
+        "joint_count_error": metrics.get("joint_count_error"),
+        "joint_count_abs_error": metrics.get("joint_count_abs_error"),
+        "j2j": official.get("j2j"),
+        "j2b": official.get("j2b"),
+        "b2b": official.get("b2b"),
+        "topology_edge_f1": topology.get("edge_f1"),
+    }
+
+
+def _prefix_repair_rollout(
+    model: torch.nn.Module,
+    tokenizer: Any,
+    cond: torch.Tensor,
+    target_ids: list[int],
+    saved_ids: list[int],
+    first_mismatch_position: int,
+    max_new_tokens: int,
+    target: Any,
+    continuous_range: tuple[float, float],
+) -> dict[str, Any]:
+    from eval_dynamic_rig_generation import (
+        _count_prefix_structure,
+        _output_metrics,
+    )
+
+    reproduction_budget = min(32, int(max_new_tokens))
+    reproduced = _greedy_continue_from_prefix(
+        model,
+        tokenizer,
+        cond,
+        saved_ids[:2],
+        reproduction_budget,
+    )
+    expected_reproduction = saved_ids[: len(reproduced)]
+    if reproduced != expected_reproduction:
+        mismatch = next(
+            (
+                position
+                for position, (left, right) in enumerate(
+                    zip(reproduced, expected_reproduction, strict=True)
+                )
+                if int(left) != int(right)
+            ),
+            -1,
+        )
+        raise ValueError(
+            "manual prefix continuation does not reproduce saved baseline "
+            f"within {reproduction_budget} tokens; first mismatch={mismatch}"
+        )
+
+    if first_mismatch_position < 2:
+        raise ValueError(
+            f"invalid free-generation mismatch position {first_mismatch_position}"
+        )
+    target_joints_before_mismatch, _ = _count_prefix_structure(
+        tokenizer,
+        target_ids[:first_mismatch_position],
+    )
+    target_joint_through_mismatch = min(
+        int(target_joints_before_mismatch) + 1,
+        int(_count_prefix_structure(tokenizer, target_ids)[0]),
+    )
+    interventions: dict[str, list[int]] = {
+        "repair_first_mismatch_token": (
+            saved_ids[:first_mismatch_position]
+            + [int(target_ids[first_mismatch_position])]
+        ),
+    }
+    through_mismatch = _target_prefix_through_joint_count(
+        tokenizer,
+        target_ids,
+        target_joint_through_mismatch,
+    )
+    if through_mismatch is not None:
+        interventions["gt_through_first_mismatched_joint"] = through_mismatch
+    for joint_count in (1, 2, 4):
+        prefix = _target_prefix_through_joint_count(
+            tokenizer,
+            target_ids,
+            joint_count,
+        )
+        if prefix is not None:
+            interventions[f"gt_first_{joint_count}_joints"] = prefix
+
+    reports: dict[str, Any] = {}
+    generated_by_prefix: dict[tuple[int, ...], dict[str, Any]] = {}
+    for name, prefix in interventions.items():
+        prefix_key = tuple(int(value) for value in prefix)
+        if prefix_key in generated_by_prefix:
+            reports[name] = generated_by_prefix[prefix_key]
+            continue
+        generated = _greedy_continue_from_prefix(
+            model,
+            tokenizer,
+            cond,
+            prefix,
+            max_new_tokens,
+        )
+        has_eos = bool(generated and generated[-1] == int(tokenizer.eos))
+        generated_joint_count, generated_branch_count = _count_prefix_structure(
+            tokenizer,
+            generated,
+        )
+        metrics: dict[str, Any]
+        if has_eos:
+            try:
+                prediction = tokenizer.detokenize(
+                    np.asarray(generated, dtype=np.int64)
+                )
+                metrics = _compact_generation_metrics(
+                    _output_metrics(
+                        prediction,
+                        target,
+                        continuous_range,
+                    )
+                )
+            except Exception as exc:
+                metrics = {
+                    "detokenize_ok": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        else:
+            metrics = _compact_generation_metrics(
+                _output_metrics(None, target, continuous_range)
+            )
+        report = {
+            "forced_prefix_length": len(prefix),
+            "forced_generated_tokens": len(prefix) - 2,
+            "max_new_tokens": int(max_new_tokens),
+            "has_eos": has_eos,
+            "reached_probe_budget_without_eos": bool(
+                not has_eos and len(generated) - 2 >= int(max_new_tokens)
+            ),
+            "generated_new_tokens": len(generated) - 2,
+            "generated_joint_count": int(generated_joint_count),
+            "generated_branch_count": int(generated_branch_count),
+            "generated_ids": generated,
+            "metrics": metrics,
+        }
+        generated_by_prefix[prefix_key] = report
+        reports[name] = report
+    return {
+        "baseline_reproduction_tokens": int(reproduction_budget),
+        "baseline_reproduction_exact": True,
+        "probe_max_new_tokens": int(max_new_tokens),
+        "interventions": reports,
+    }
+
+
+@torch.no_grad()
 def _saved_prefix_trace(
     model: torch.nn.Module,
     tokenizer: Any,
@@ -680,6 +955,7 @@ def _compact_prefix_trace(trace: dict[str, Any]) -> dict[str, Any]:
 def _compare_prefix_traces(
     correct: dict[str, Any],
     intervention: dict[str, Any],
+    first_mismatch_position: int,
 ) -> dict[str, Any]:
     correct_events = {
         int(event["position"]): event for event in correct["decision_events"]
@@ -693,57 +969,85 @@ def _compare_prefix_traces(
         (correct_events[position], intervention_events[position])
         for position in sorted(correct_events)
     ]
-    selected_pairs = [
-        pair
-        for pair in pairs
-        if pair[0].get("saved_token_probability") is not None
-        and pair[1].get("saved_token_probability") is not None
-    ]
-    eos_pairs = [
-        pair
-        for pair in pairs
-        if "eos" in pair[0]["group_probabilities"]
-        and "eos" in pair[1]["group_probabilities"]
-    ]
     correct_target = correct["max_eos_probability_at_target_joint_count"]
     intervention_target = intervention["max_eos_probability_at_target_joint_count"]
-    return {
-        "decision_positions": len(pairs),
-        "masked_top1_agreement": _mean(
-            [
-                int(left["masked_pred_id"] == right["masked_pred_id"])
-                for left, right in pairs
-            ]
-        ),
-        "group_top1_agreement": _mean(
-            [
-                int(left["predicted_group"] == right["predicted_group"])
-                for left, right in pairs
-            ]
-        ),
-        "saved_token_nll_delta": _mean(
-            [
-                -np.log(max(float(right["saved_token_probability"]), 1.0e-30))
-                + np.log(max(float(left["saved_token_probability"]), 1.0e-30))
-                for left, right in selected_pairs
-            ]
-        ),
-        "mean_abs_eos_probability_delta": _mean(
-            [
-                abs(
+
+    def distance_bin(position: int) -> str:
+        distance = int(position) - int(first_mismatch_position)
+        if distance < 0:
+            return "before_first_mismatch"
+        if distance <= 3:
+            return "mismatch_to_plus_3"
+        if distance <= 15:
+            return "plus_4_to_15"
+        if distance <= 63:
+            return "plus_16_to_63"
+        return "plus_64_and_later"
+
+    def summarize_pairs(selected: list[tuple[dict[str, Any], dict[str, Any]]]) -> dict[str, Any]:
+        selected_with_token = [
+            pair
+            for pair in selected
+            if pair[0].get("saved_token_probability") is not None
+            and pair[1].get("saved_token_probability") is not None
+        ]
+        selected_with_eos = [
+            pair
+            for pair in selected
+            if "eos" in pair[0]["group_probabilities"]
+            and "eos" in pair[1]["group_probabilities"]
+        ]
+        return {
+            "decision_positions": len(selected),
+            "masked_top1_agreement": _mean(
+                [
+                    int(left["masked_pred_id"] == right["masked_pred_id"])
+                    for left, right in selected
+                ]
+            ),
+            "group_top1_agreement": _mean(
+                [
+                    int(left["predicted_group"] == right["predicted_group"])
+                    for left, right in selected
+                ]
+            ),
+            "saved_token_nll_delta": _mean(
+                [
+                    -np.log(max(float(right["saved_token_probability"]), 1.0e-30))
+                    + np.log(max(float(left["saved_token_probability"]), 1.0e-30))
+                    for left, right in selected_with_token
+                ]
+            ),
+            "mean_abs_eos_probability_delta": _mean(
+                [
+                    abs(
+                        float(right["group_probabilities"]["eos"])
+                        - float(left["group_probabilities"]["eos"])
+                    )
+                    for left, right in selected_with_eos
+                ]
+            ),
+            "mean_signed_eos_probability_delta": _mean(
+                [
                     float(right["group_probabilities"]["eos"])
                     - float(left["group_probabilities"]["eos"])
-                )
-                for left, right in eos_pairs
-            ]
-        ),
-        "mean_signed_eos_probability_delta": _mean(
-            [
-                float(right["group_probabilities"]["eos"])
-                - float(left["group_probabilities"]["eos"])
-                for left, right in eos_pairs
-            ]
-        ),
+                    for left, right in selected_with_eos
+                ]
+            ),
+        }
+
+    pairs_by_distance: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = (
+        defaultdict(list)
+    )
+    for pair in pairs:
+        pairs_by_distance[distance_bin(int(pair[0]["position"]))].append(pair)
+    overall = summarize_pairs(pairs)
+    return {
+        **overall,
+        "by_distance_from_first_mismatch": {
+            name: summarize_pairs(bin_pairs)
+            for name, bin_pairs in sorted(pairs_by_distance.items())
+        },
         "target_count_eos_probability_delta": (
             float(intervention_target) - float(correct_target)
             if intervention_target is not None and correct_target is not None
@@ -930,6 +1234,53 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 ]
             ),
         }
+        repair_names = sorted(
+            {
+                repair_name
+                for row in group_rows
+                for repair_name in row.get("prefix_repair_probe", {})
+                .get("interventions", {})
+            }
+        )
+        if repair_names:
+            output[name]["prefix_repair_probe"] = {}
+            for repair_name in repair_names:
+                repair_rows = [
+                    row["prefix_repair_probe"]["interventions"][repair_name]
+                    for row in group_rows
+                    if repair_name
+                    in row.get("prefix_repair_probe", {}).get("interventions", {})
+                ]
+                output[name]["prefix_repair_probe"][repair_name] = {
+                    "row_count": len(repair_rows),
+                    "eos_rate": _mean(
+                        [int(row["has_eos"]) for row in repair_rows]
+                    ),
+                    "detokenize_rate": _mean(
+                        [
+                            int(row["metrics"].get("detokenize_ok", False))
+                            for row in repair_rows
+                        ]
+                    ),
+                    "generated_joint_count": _mean(
+                        [row["generated_joint_count"] for row in repair_rows]
+                    ),
+                    "joint_count_abs_error": _mean(
+                        [
+                            row["metrics"].get("joint_count_abs_error")
+                            for row in repair_rows
+                        ]
+                    ),
+                    "j2j": _mean(
+                        [row["metrics"].get("j2j") for row in repair_rows]
+                    ),
+                    "topology_edge_f1": _mean(
+                        [
+                            row["metrics"].get("topology_edge_f1")
+                            for row in repair_rows
+                        ]
+                    ),
+                }
     return output
 
 
@@ -944,6 +1295,17 @@ def main() -> None:
     parser.add_argument("--unirig-checkpoint", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=101)
     parser.add_argument("--limit", type=int, default=52)
+    parser.add_argument(
+        "--prefix-repair-probe",
+        action="store_true",
+        help="Run bounded greedy continuations from repaired hitmax prefixes.",
+    )
+    parser.add_argument(
+        "--prefix-repair-margin",
+        type=int,
+        default=128,
+        help="Additional generated-token budget beyond the target sequence length.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
@@ -953,7 +1315,10 @@ def main() -> None:
     sys.path.insert(0, str(scripts_dir))
 
     from eval_dynamic_rig_ce import CHECKPOINT_DEFAULTS, _build_dynamic_model, apply_checkpoint_eval_defaults
-    from eval_dynamic_rig_generation import _count_prefix_structure
+    from eval_dynamic_rig_generation import (
+        _continuous_range,
+        _count_prefix_structure,
+    )
     from rigweave.dynamic_rig.data import DynamicRigManifestDataset, dynamic_rig_collate
     from train_dynamic_rig import build_tokenizer
 
@@ -1001,6 +1366,7 @@ def main() -> None:
     )
     model = _build_dynamic_model(namespace, tokenizer, device)
     model.eval()
+    continuous_range = _continuous_range(tokenizer)
 
     rows: list[dict[str, Any]] = []
     condition_cache: list[torch.Tensor] = []
@@ -1182,12 +1548,34 @@ def main() -> None:
                 "swapped_vs_correct": _compare_prefix_traces(
                     correct_trace,
                     swapped_trace,
+                    rows[index]["first_free_mismatch"]["position"],
                 ),
                 "zero_vs_correct": _compare_prefix_traces(
                     correct_trace,
                     zero_trace,
+                    rows[index]["first_free_mismatch"]["position"],
                 ),
             }
+            if args.prefix_repair_probe and rows[index]["hitmax"]:
+                target = tokenizer.detokenize(
+                    np.asarray(target_ids_cache[index], dtype=np.int64)
+                )
+                target_new_tokens = max(len(target_ids_cache[index]) - 2, 1)
+                probe_max_new_tokens = min(
+                    int(generation_rows[index]["max_new_tokens"]),
+                    int(target_new_tokens + args.prefix_repair_margin),
+                )
+                rows[index]["prefix_repair_probe"] = _prefix_repair_rollout(
+                    model,
+                    tokenizer,
+                    correct,
+                    target_ids_cache[index],
+                    generated_ids,
+                    rows[index]["first_free_mismatch"]["position"],
+                    probe_max_new_tokens,
+                    target,
+                    continuous_range,
+                )
             print(
                 json.dumps(
                     {
@@ -1200,6 +1588,9 @@ def main() -> None:
                         "self_prefix_condition": rows[index][
                             "self_prefix_condition"
                         ],
+                        "prefix_repair_probe": rows[index].get(
+                            "prefix_repair_probe"
+                        ),
                     },
                     ensure_ascii=False,
                 ),

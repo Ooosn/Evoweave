@@ -1,359 +1,86 @@
 {
   "schema_version": 1,
-  "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-19T20:11:56+09:00",
+  "state_id": "model-stack-close-20260720-001",
+  "updated_at": "2026-07-20T02:54:24+09:00",
   "module": "model_training",
-  "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+  "human_context": "model_training/docs/STACK_CLOSE_ROUTE_20260720.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
-    "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
-    "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md",
-    "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md"
+    "model_training/docs/STACK_CLOSE_ROUTE_20260720.md"
   ],
   "reference_runs": {
     "flat_unirig": {
-      "status": "hgc_clean_retrain_and_matched_eval_complete",
-      "path": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/rootless_flat_unirig_motion_fullft_20260707_hxr4gpu",
-      "hgc_output": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
-      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "status": "frozen_baseline",
       "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-      "optimizer_steps": 1667,
       "sample_exposures": 80016,
-      "trainable_parameters": 662268416
+      "trainable_parameters_at_that_commit": 662268416,
+      "valid_common60": {
+        "detokenize_ok": 54,
+        "hit_max_without_eos": 6,
+        "topology_f1_all_rows_zero_for_failure": 0.7141092136268684
+      }
     },
     "puppeteer": {
-      "status": "reference_checkpoint_not_accepted_as_usable_baseline",
-      "path": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715",
-      "checkpoints": [
-        "checkpoint_sample_10000.pt",
-        "checkpoint_sample_40000.pt",
-        "checkpoint_sample_80000.pt",
-        "checkpoint_best_val.pt",
-        "checkpoint_final.pt"
-      ],
-      "optimizer_steps": 1667,
-      "sample_exposures": 80016,
-      "trainable_parameters": 660557312
+      "status": "not_accepted_as_usable_baseline",
+      "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
+      "sample_exposures": 80016
     }
   },
   "verified_fixed_causes": [
-    "randomly initialized 24-layer SkeletonOPT used post-LN and barely learned",
-    "learned-query projection compressed 1024 ordered condition tokens to 257 anonymous slots and collapsed condition identity",
-    "long constant full-model 1e-4 learning rate collapsed direct-1024 conditioner separation"
-  ],
-  "locked_puppeteer_contract": [
-    "query_tokens=1024",
-    "cond_length=1024",
-    "condition_projection=identity",
-    "decoder_norm_style=pre",
-    "joint_slot_embedding=true",
-    "train_random_query=true",
-    "scheduler=onecycle",
-    "tail_tokens=false",
-    "synthetic_root=false"
-  ],
-  "rejected_followups": [
-    "control_ft200",
-    "balanced_ft200",
-    "mixture_alpha025_ft300",
-    "mixture_alpha050_ft300",
-    "sequence_mean_ft200",
-    "sequence_mean_termination025_ft200",
-    "combined_alpha050_sequence_ft200",
-    "combined_alpha075_sequence_ft200",
-    "balanced50_sequence_ft500_stopped_at_step50_without_checkpoint",
-    "topology_alpha075_sequence_mean_ft300"
+    "flat parent-coordinate tokenization loses parent identity when different joints quantize to the same coordinate",
+    "DFS stack-close encodes exact parent identity without adding a new vocabulary entry",
+    "random sibling serialization removes the lexical sibling order as a unique target",
+    "GPU prefix perturbation reuses the existing 1024 FPS surface anchors and does not add CPU raycasting to the dataloader"
   ],
   "verified_open_facts": [
-    "the four heldout52 results match path query frame selected frames query normalization and target joint count row by row",
-    "flat UniRig succeeds on 42 of 52 rows and hits max tokens without EOS on the other 10",
-    "flat UniRig common rows have mean J2J 0.006266 and mean topology F1 0.951028",
-    "Puppeteer sample80000 low-joint rows are syntactically valid but have mean joint-count errors of 54.25 on train-low and 65.25 on valid-low",
-    "Puppeteer sample80000 and final have identical generated token sequences on 50 of 52 rows, while best_val is not better",
-    "correct cross-asset condition improves low-joint coordinate likelihood for 16 of 16 samples",
-    "low-joint failure already exists under ground-truth prefix",
-    "same-asset wrong-pose conditions worsen coordinate NLL much more than changing the surface FPS seed, so the decoder uses the current pose and FPS randomness is not the primary failure",
-    "joint0 is not uniquely underfit under ground-truth prefix; later low-joint positions are usually equally or more inaccurate",
-    "the first free-generation mismatch on all heldout52 rows is joint0 coordinate because it is the first autoregressive decision",
-    "the dominant exact 52-joint parent topology occurs 4930 times in training, while low-joint rows contain 142 topologies among 396 rows",
-    "on valid-common60, topology training frequency remains strongly associated with coordinate NLL and topology F1 after controlling target joint count",
-    "Puppeteer generalizes the frequent 52-joint family to unseen valid assets but fails rare and unseen topology families",
-    "low-joint mapping is already underfit under ground-truth prefix, then continuation and self-prefix rollout amplify it into overlong high-frequency templates",
-    "heldout52 train-low and valid-low mean 4-10 joints, not low topology frequency; train-common is a random 22-92-joint training stratum",
-    "flat UniRig hitmax by exact target topology frequency is 0/12 for 100-plus, 2/20 for 10-99, 3/11 for 2-9, 3/3 for singleton, and 2/6 for unseen",
-    "the exact-topology alpha-0.75 sequence-mean 300-step probe slightly changed heldout52 F1 from 0.202308 to 0.208580 but degraded valid-common60 F1 from 0.475656 to 0.401310 and is rejected",
-    "baseline Puppeteer self-prefix rollout lowers coordinate accuracy from 0.5281 to 0.4075, parent accuracy from 0.9149 to 0.8149, and EOS accuracy from 0.4667 to 0.1556",
-    "sibling order currently contains a bone-name lexical tie-break defect, but unordered-tree auditing merges only 180 ordered singleton rows and does not explain the main long tail",
-    "all 32 heldout52 train-stratum paths are in the flat UniRig training manifest, which received 80016 exposures over 15920 rows, or about 5.03 nominal exposures per row",
-    "flat UniRig on a fixed random 60-row training sample succeeds on 56 rows with 4 hitmax, successful-row F1 0.8472, and all-row zero-for-hitmax F1 0.7907",
-    "flat UniRig on valid-common60 succeeds on 54 rows with 6 hitmax, successful-row F1 0.7935, and all-row zero-for-hitmax F1 0.7141",
-    "the remembered early-HGC F1 0.751-0.796 came from four train-manifest comparison rows, not validation; that checkpoint's eight-row generation_valid F1 was 0.117-0.159",
-    "under correct GT prefixes the flat UniRig decoder uses mesh condition: all-coordinate NLL is 1.663 for correct condition versus 3.800 for swapped condition, so the hitmax mechanism is not a global input-target mismatch",
-    "on the ten hitmax self-prefix trajectories correct-versus-swapped coordinate top-1 agreement rises from 0.275 within three tokens of the first mismatch to 1.000 at distance 256-511, showing that long self-prefix state overwhelms condition",
-    "seven of ten flat UniRig hitmax rows terminate in one coordinate token repeated 302-780 times; hitmax trigram unique ratio is 0.0466 versus 0.8408 for successful rows",
-    "repairing only the first mismatched token ends three of ten hitmax rows and does not guarantee usable topology; forcing one two or four GT joints is non-monotonic and cannot be a model fix",
-    "the flat tokenizer target length median is 207 tokens; only 1.53 percent of train rows exceed 512 and 0.088 percent exceed 1024, so hitmax trajectories enter weakly supervised positions without exceeding decoder capacity",
-    "one degenerate-area mesh makes CUDA face multinomial and FPS replay non-bitwise-deterministic, but both sampled conditions still produce 1400-token 460-joint loops and match on 1388 of 1400 generated positions; sampling is an amplifier rather than the primary cause",
-    "a frozen linear readout from the 1024 condition-token mean predicts joint count with R2 0.404 and Spearman 0.722, while decoder class hidden drops to R2 0.299, so coarse structure exists in condition but is not strengthened by the decoder",
-    "for the same ten hitmax rows and mismatch-relative positions, condition-swap JS falls from 0.407 to 0.138 between distance 0-3 and 16-63 under self prefix, versus 0.411 to 0.206 under GT prefix, proving wrong prefix content additionally suppresses condition",
-    "nine of ten flat hitmax targets contain only 4-9 joints, but hitmax generation averages 371.7 joints, so target length is not the trigger",
-    "flat parent-coordinate tokenization changes parent identity on 56 of 856 valid rows in both a random-pose and deterministic-pose draw; the bad-row sets overlap on 54 rows and mismatch-count Spearman is 0.965",
-    "only 5 of the 56 random-pose valid parent-mismatch rows contain continuous exact-zero edges; the other 51 are caused by 256-bin coordinate collisions",
-    "on the exact heldout52 poses, none of ten hitmax rows has a parent round-trip mismatch while two of 42 successful rows do, so lossy parent coordinates are an independent representation defect rather than the direct cause of these ten hitmax cases",
-    "all 16776 checkpoint-matched HGC trees are exactly representable by a DFS stack-close stream; replacing branch-plus-parent-xyz with one CLOSE per node changes total target tokens from 3188167 to 3183580 and maximum target length from 1362 to 1003",
-    "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
+    "the formal Westlake manifests contain 15903 train rows and 857 valid rows",
+    "stack-close round-trips all 16760 formal rows under canonical and two randomized sibling serializations with zero failures",
+    "train maximum stack-close target length is 1003 and valid maximum is 827",
+    "the isolated route modifies no flat UniRig baseline source file",
+    "the current route has 663383552 trainable parameters and the optimizer owns exactly all 663383552 with no duplicate or missing parameter",
+    "a 600-exposure 32-row diagnostic produced 32 of 32 legal EOS generations with zero hitmax and mean topology F1 0.590121",
+    "the remaining short-run failure mode is premature CLOSE and under-generation rather than coordinate looping or template collapse"
   ],
   "unknowns": [
-    "whether stack-close training preserves flat UniRig geometry while eliminating hitmax",
-    "whether zero-residual condition cross-attention refresh prevents self-prefix condition collapse",
-    "the effective and stable mixture of coordinate-corrupted roll-in and graph-matched self-prefix supervision",
-    "which of the HGC 15920-plus-856 and Westlake 15903-plus-857 manifests is the next-run source of truth"
+    "formal 80016-exposure stack-close validation performance and hitmax rate",
+    "whether a separate zero-residual condition-refresh route further improves robustness without degrading geometry"
   ],
   "allowed_operations": [
     "report",
     "inspect",
     "matched_eval",
-    "visualize"
-  ],
-  "blocked_operations": [
+    "visualize",
     "train",
     "submit"
   ],
-  "compute_allocation": {
-    "server": "HGC",
-    "qlogin_job_id": 124519658,
-    "status": "active_at_last_check",
-    "detected_at": "2026-07-19T17:42:07+09:00",
-    "current_host": "pcg01",
-    "resources": "1xH100 80GB",
-    "gpu_processes": 0,
-    "decision": "Retain the foreground qlogin for inspection; do not train or release it without the user's instruction."
-  },
-  "active_probe": {
-    "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
-    "status": "completed_rejected",
-    "server": "HGC pcg01 foreground qlogin",
-    "qlogin_job_id": 124452019,
-    "resources": "2xH100, s_vmem=256G",
-    "initialization": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
-    "max_steps": 300,
-    "effective_batch": 48,
-    "sample_milestones": [
-      4800,
-      9600,
-      14400
-    ],
-    "topology_balance_alpha": 0.75,
-    "token_loss_reduction": "sequence_mean",
-    "termination_decision_loss_weight": 0.0,
-    "peak_learning_rates": {
-      "surface": 2e-05,
-      "motion": 2e-05,
-      "prefix": 2e-05,
-      "decoder": 2e-05
-    },
-    "preflight_output": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_preflight_20260718",
-    "preflight_contract_max_abs_logit_diff": 0.0,
-    "sampling_distribution": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/topology_sampling_distribution_20260718.json",
-    "output": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_ft300_20260718",
-    "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_topology_alpha075_seqmean_ft300_20260718/checkpoint_sample_14400.pt",
-    "heldout52": {
-      "baseline_joint_count_mae": 43.51923076923077,
-      "probe_joint_count_mae": 39.88461538461539,
-      "baseline_j2j": 0.053189030852921024,
-      "probe_j2j": 0.053737,
-      "baseline_topology_f1": 0.20230810683187644,
-      "probe_topology_f1": 0.20858
-    },
-    "valid_common60": {
-      "baseline_j2j": 0.021722,
-      "probe_j2j": 0.024891,
-      "baseline_topology_f1": 0.475656,
-      "probe_topology_f1": 0.40131,
-      "j2j_rows_worse": 44,
-      "topology_f1_rows_worse": 43
-    },
-    "self_prefix_summary": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/topology_alpha075_seqmean_ft300/self_prefix_summary.json"
-  },
-  "flat_distribution_audit": {
-    "status": "completed",
-    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "seed": 101,
-    "output_root": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718",
-    "train_random60": {
-      "detokenize_ok": 56,
-      "hit_max_without_eos": 4,
-      "topology_f1_success_rows": 0.8471923819451271,
-      "topology_f1_all_rows_zero_for_failure": 0.7907128898154521,
-      "j2j_success_rows": 0.01551914336700325,
-      "joint_count_mae_success_rows": 5.875
-    },
-    "valid_common60": {
-      "detokenize_ok": 54,
-      "hit_max_without_eos": 6,
-      "topology_f1_success_rows": 0.7934546818076316,
-      "topology_f1_all_rows_zero_for_failure": 0.7141092136268684,
-      "j2j_success_rows": 0.0168471210938016,
-      "joint_count_mae_success_rows": 11.092592592592593
-    }
-  },
-  "flat_hitmax_causal_diagnosis": {
-    "status": "completed",
-    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-    "seed": 101,
-    "row_count": 52,
-    "hitmax_count": 10,
-    "primary_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_hitmax_causal_complete_seed101_20260719.json",
-    "sampling_replay_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_condition_determinism_first7_replay_seed101_20260719.json",
-    "diagnosis_document": "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
-    "mechanism": "Rare-topology mapping weakness creates an early off-manifold self prefix; prefix influence then overwhelms mesh condition and enters a grammar-valid constant or periodic coordinate loop where EOS has no recovery supervision.",
-    "rejected_shortcuts": [
-      "increase max_new_tokens",
-      "force EOS at generation limit",
-      "repair only the first mismatch",
-      "fix the FPS seed",
-      "use EOS loss without a semantically defined recovery target"
-    ]
-  },
-  "model_structure_preflight": {
-    "status": "completed_no_training",
-    "server": "HGC pcg01 foreground qlogin",
-    "qlogin_job_id": 124519658,
-    "resources": "1xH100 80GB",
-    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "hgc_manifests": {
-      "train": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-      "valid": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-      "train_rows": 15920,
-      "valid_rows": 856
-    },
-    "primary_document": "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
-    "output_root": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719",
-    "condition_probe": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_probe_full/condition_structure_probe.json",
-    "condition_signal": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_signal_gt_vs_self_full.json",
-    "tree_audit": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tree_expansion_audit_v5_stack.json",
-    "valid_tokenizer_random_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_valid_randomdraw.json",
-    "valid_tokenizer_fixed_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_valid_fixedseed101.json",
-    "train_tokenizer_random_pose": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
-    "heldout52_tokenizer": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_heldout52_seed101.json",
-    "verified_stack_contract": {
-      "representable_rows": 16776,
-      "total_rows": 16776,
-      "flat_total_tokens": 3188167,
-      "stack_total_tokens": 3183580,
-      "flat_max_tokens": 1362,
-      "stack_max_tokens": 1003
-    },
-    "verified_valid_parent_loss": {
-      "rows": 856,
-      "parent_mismatch_rows_random_pose": 56,
-      "parent_mismatch_edges_random_pose": 259,
-      "parent_mismatch_rows_fixed_pose": 56,
-      "bad_row_set_jaccard": 0.9310344827586207,
-      "mismatch_count_spearman": 0.9653242284987466
-    },
-    "verified_train_parent_loss": {
-      "rows": 15920,
-      "parent_mismatch_rows_random_pose": 989,
-      "parent_mismatch_edges_random_pose": 4696,
-      "all_edges": 728028,
-      "parent_mismatch_edge_fraction": 0.006450301362035526,
-      "bad_rows_without_continuous_zero_edge": 792,
-      "identity_edge_f1_mean": 0.9952671452343643,
-      "identity_edge_f1_min": 0.21568627450980393
-    }
-  },
-  "next_required_result": "Implement a no-fallback stack-close tokenizer that reuses the flat branch token ID as CLOSE_NODE and round-trips exact parent identity; strictly load the flat sample80000 coordinate/decoder/conditioner prior; add a zero-residual condition cross-attention refresh path; then pass 32-row coordinate, parent, CLOSE, EOS, condition-swap, self-prefix, bounded-generation, topology-F1, J2J, and visualization preflights. Do not start multi-GPU training before the formal manifest is frozen and these checks pass.",
+  "blocked_operations": [],
+  "next_required_result": "Submit the isolated stack-close sibling-randomization plus 5-percent axial/radial prefix-perturbation route as a 2xA100-80 full fine-tune from the official static UniRig checkpoint. Then implement condition refresh in a separate route and commit, preflight, and task.",
   "active_operation": {
-    "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
-    "status": "completed",
-    "started_at": "2026-07-17T18:06:41+09:00",
-    "resumed_at": "2026-07-17T20:20:36+09:00",
-    "training_completed_at": "2026-07-18T07:16:08+09:00",
-    "matched_eval_completed_at": "2026-07-18T07:49:54+09:00",
-    "server": "HGC pcg01 qlogin",
-    "resources": "2xH100, s_vmem=256G",
-    "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
-    "matched_eval_path": "/home/wangyy/evorig/outputs/matched_heldout52_20260718",
-    "last_verified": {
-      "step": 1600,
-      "sample_seen": 76800,
-      "validation_ce": 1.16513517,
-      "validation_eos_accuracy": 1.0
-    },
-    "last_safe_checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-      "step": 1667,
-      "sample_seen": 80016,
-      "includes_optimizer": true,
-      "includes_scheduler": true
-    },
-    "matched_eval": {
-      "manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-      "seed": 101,
-      "row_count": 52,
-      "contract_match": true,
-      "flat_unirig": {
-        "detokenize_ok": 42,
-        "hit_max_without_eos": 10,
-        "joint_count_mae_valid_rows": 6.095238095238095,
-        "j2j_valid_rows": 0.038961077050771564,
-        "topology_f1_valid_rows": 0.6394098510822451
-      },
-      "puppeteer_sample80000": {
-        "detokenize_ok": 52,
-        "hit_max_without_eos": 0,
-        "joint_count_mae": 43.51923076923077,
-        "j2j": 0.053189030852921024,
-        "topology_f1": 0.20230810683187644
-      },
-      "summary": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/matched_summary.json",
-      "montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals/matched_montage.png",
-      "hitmax_montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals_flat_hitmax/matched_montage.png"
-    },
-    "qlogin_job_id": 124452019,
-    "resume_contract": {
-      "checkpoint_step": 209,
-      "scheduler_step": 209,
-      "skipped_batches_in_epoch": 1672,
-      "restored_optimizer": true,
-      "restored_scheduler": true,
-      "next_verified_step": 210
-    },
-    "interrupted_job_id": 124448167,
-    "pre_interruption_last_verified": {
-      "step": 230,
-      "sample_seen": 11040,
-      "loss": 1.3333352357149124,
-      "seconds_per_step": 24.915,
-      "gpu_peak_gb": 68.487
-    },
-    "interruption_accounting": {
-      "exit_status": 137,
-      "failed": "100: assumedly after job",
-      "deleted_by": "NONE",
-      "maxvmem_gb": 212.353,
-      "svmem_limit_gb": 256.0,
-      "maxrss_gb": 9.2,
-      "memory_failcnt": 0
-    },
-    "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
+    "name": "stack_close_sibling_perturb_20260720",
+    "status": "preflight_passed_awaiting_formal_submission",
+    "server": "Westlake development environment bb73a9",
+    "resources": "1xA800-SXM4-80GB",
+    "source_commit": "52bb4d9",
+    "initialization": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "dynamic_checkpoint_loaded": false,
+    "formal_resources": "2xA100-SXM4-80GB",
+    "formal_effective_batch": 48
   },
   "last_operation": {
-    "name": "model_structure_preflight_20260719",
-    "status": "completed",
-    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-    "diagnosis": "The conditioner contains coarse topology information and the flat model uses it on GT prefixes, but an early coordinate error moves generation off the teacher-forced manifold; wrong self-prefix content then increasingly suppresses condition and enters a non-terminating continuation attractor. Independently, flat parent-coordinate tokenization loses parent identity on 6.21 percent of train rows. A DFS stack-close representation exactly covers all 16776 audited trees without increasing total token count, but it has not yet been trained.",
-    "diagnosis_document": "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
-    "primary_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_signal_gt_vs_self_full.json",
-    "tree_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tree_expansion_audit_v5_stack.json",
-    "tokenizer_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
-    "qlogin_job_id": 124519658
+    "name": "stack_close_full_contract_and_free_generation_preflight",
+    "status": "completed_passed",
+    "roundtrip_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/roundtrip.json",
+    "optimizer_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/fixed_optimizer_one_step/logs/train.jsonl",
+    "generation_summary": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_preflight_20260720/overfit32_freegen/summary.json",
+    "generation_rows": 32,
+    "detokenize_ok": 32,
+    "has_eos": 32,
+    "hit_max_without_eos": 0,
+    "topology_f1_mean": 0.5901210750243167,
+    "topology_f1_median": 0.6164819792175809,
+    "j2j_mean": 0.052681558791758315
   },
   "receipt_max_age_minutes": 240
 }

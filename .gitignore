@@ -36,6 +36,8 @@ server_ops/westlake/platform_handoff/last_*
 *.7z
 *.log
 *.pid
+core.*
+**/core.*
 
 # Generated media and report outputs
 *.png

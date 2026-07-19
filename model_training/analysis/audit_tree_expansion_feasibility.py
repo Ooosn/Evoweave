@@ -107,13 +107,24 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
 
     query_joints = joints[0]
     edge_lengths: list[float] = []
-    edge_records: list[tuple[float, int, int]] = []
+    edge_records: list[tuple[float, float, int, int]] = []
     for child_index, parent_index in enumerate(parents.tolist()):
         if parent_index >= 0:
-            length = float(np.linalg.norm(query_joints[child_index] - query_joints[parent_index]))
+            frame_lengths = np.linalg.norm(
+                joints[:, child_index] - joints[:, parent_index],
+                axis=-1,
+            )
+            length = float(frame_lengths[0])
             normalized_length = length / mesh_bbox_diag
             edge_lengths.append(normalized_length)
-            edge_records.append((normalized_length, child_index, parent_index))
+            edge_records.append(
+                (
+                    normalized_length,
+                    float(frame_lengths.max()) / mesh_bbox_diag,
+                    child_index,
+                    parent_index,
+                )
+            )
 
     weight_sums = skin_weights.sum(axis=0, dtype=np.float64)
     positive_weight_vertices = (skin_weights > 1.0e-4).sum(axis=0)
@@ -158,6 +169,9 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
     max_children_parent_index = int(np.argmax(child_counts))
     near_zero_edges = [record for record in edge_records if record[0] <= 1.0e-6]
     exact_zero_edges = [record for record in edge_records if record[0] <= 1.0e-12]
+    persistent_zero_edges = [
+        record for record in exact_zero_edges if record[1] <= 1.0e-6
+    ]
     high_degree_nodes = np.flatnonzero(child_counts > 8)
 
     return {
@@ -194,34 +208,71 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
         "near_zero_edge_count": len(near_zero_edges),
         "exact_zero_edge_count": len(exact_zero_edges),
         "exact_zero_edge_child_connector_count": int(
-            sum(bool(is_connector[child]) for _length, child, _parent in exact_zero_edges)
+            sum(
+                bool(is_connector[child])
+                for _length, _max_length, child, _parent in exact_zero_edges
+            )
         ),
         "exact_zero_edge_parent_connector_count": int(
-            sum(bool(is_connector[parent]) for _length, _child, parent in exact_zero_edges)
+            sum(
+                bool(is_connector[parent])
+                for _length, _max_length, _child, parent in exact_zero_edges
+            )
         ),
         "exact_zero_edge_both_skinned_count": int(
             sum(
                 bool(has_skin[child] and has_skin[parent])
-                for _length, child, parent in exact_zero_edges
+                for _length, _max_length, child, parent in exact_zero_edges
             )
         ),
         "exact_zero_edge_child_tail_or_end_count": int(
-            sum(bool(is_tail_or_end[child]) for _length, child, _parent in exact_zero_edges)
+            sum(
+                bool(is_tail_or_end[child])
+                for _length, _max_length, child, _parent in exact_zero_edges
+            )
+        ),
+        "persistent_zero_edge_count": len(persistent_zero_edges),
+        "persistent_zero_edge_child_connector_count": int(
+            sum(
+                bool(is_connector[child])
+                for _length, _max_length, child, _parent in persistent_zero_edges
+            )
+        ),
+        "persistent_zero_edge_parent_connector_count": int(
+            sum(
+                bool(is_connector[parent])
+                for _length, _max_length, _child, parent in persistent_zero_edges
+            )
+        ),
+        "persistent_zero_edge_both_skinned_count": int(
+            sum(
+                bool(has_skin[child] and has_skin[parent])
+                for _length, _max_length, child, parent in persistent_zero_edges
+            )
         ),
         "near_zero_edge_child_connector_count": int(
-            sum(bool(is_connector[child]) for _length, child, _parent in near_zero_edges)
+            sum(
+                bool(is_connector[child])
+                for _length, _max_length, child, _parent in near_zero_edges
+            )
         ),
         "near_zero_edge_parent_connector_count": int(
-            sum(bool(is_connector[parent]) for _length, _child, parent in near_zero_edges)
+            sum(
+                bool(is_connector[parent])
+                for _length, _max_length, _child, parent in near_zero_edges
+            )
         ),
         "near_zero_edge_both_skinned_count": int(
             sum(
                 bool(has_skin[child] and has_skin[parent])
-                for _length, child, parent in near_zero_edges
+                for _length, _max_length, child, parent in near_zero_edges
             )
         ),
         "near_zero_edge_child_tail_or_end_count": int(
-            sum(bool(is_tail_or_end[child]) for _length, child, _parent in near_zero_edges)
+            sum(
+                bool(is_tail_or_end[child])
+                for _length, _max_length, child, _parent in near_zero_edges
+            )
         ),
         "max_children_parent": {
             "index": max_children_parent_index,
@@ -322,6 +373,25 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ),
             "child_tail_or_end_count": int(
                 sum(row["exact_zero_edge_child_tail_or_end_count"] for row in rows)
+            ),
+            "persistent_across_frames_count": int(
+                sum(row["persistent_zero_edge_count"] for row in rows)
+            ),
+            "ever_separates_count": int(
+                sum(
+                    row["exact_zero_edge_count"]
+                    - row["persistent_zero_edge_count"]
+                    for row in rows
+                )
+            ),
+            "persistent_child_connector_count": int(
+                sum(row["persistent_zero_edge_child_connector_count"] for row in rows)
+            ),
+            "persistent_parent_connector_count": int(
+                sum(row["persistent_zero_edge_parent_connector_count"] for row in rows)
+            ),
+            "persistent_both_skinned_count": int(
+                sum(row["persistent_zero_edge_both_skinned_count"] for row in rows)
             ),
         },
         "near_zero_edges": {
@@ -448,6 +518,9 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                         "joint_count": row["joint_count"],
                         "near_zero_edge_count": row["near_zero_edge_count"],
                         "exact_zero_edge_count": row["exact_zero_edge_count"],
+                        "persistent_zero_edge_count": row[
+                            "persistent_zero_edge_count"
+                        ],
                         "child_connector_count": row[
                             "near_zero_edge_child_connector_count"
                         ],

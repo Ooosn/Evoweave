@@ -74,6 +74,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr-motion", type=float, default=1.0e-4)
     parser.add_argument("--lr-ar", type=float, default=1.0e-4)
     parser.add_argument("--lr-surface", type=float, default=1.0e-4)
+    parser.add_argument("--lr-refresh", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.04)
     parser.add_argument("--onecycle-pct-start", type=float, default=0.1)
     parser.add_argument("--onecycle-div-factor", type=float, default=5.0)
@@ -85,6 +86,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--perturb-max-joint-fraction", type=float, default=0.08)
     parser.add_argument("--perturb-warmup-samples", type=int, default=5_000)
     parser.add_argument("--perturb-ramp-samples", type=int, default=15_000)
+    parser.add_argument(
+        "--condition-refresh-layers",
+        default="",
+        help="Comma-separated zero-based OPT decoder layers. Empty disables refresh.",
+    )
+    parser.add_argument("--condition-refresh-dim", type=int, default=256)
+    parser.add_argument("--condition-refresh-heads", type=int, default=8)
     parser.add_argument("--limit-train", type=int, default=0)
     parser.add_argument("--limit-val", type=int, default=0)
     parser.add_argument("--seed", type=int, default=20260720)
@@ -97,6 +105,20 @@ def _manifest_rows(path: Path) -> int:
     if not path.is_file():
         raise FileNotFoundError(path)
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+
+
+def _parse_refresh_layers(value: str) -> tuple[int, ...]:
+    text = str(value).strip()
+    if not text:
+        return ()
+    layers = tuple(int(part.strip()) for part in text.split(",") if part.strip())
+    if not layers:
+        raise ValueError("condition refresh layer list is empty")
+    if tuple(sorted(set(layers))) != layers:
+        raise ValueError(
+            f"condition refresh layers must be sorted and unique, got {layers}"
+        )
+    return layers
 
 
 def _validate_contract(args: argparse.Namespace, world_size: int) -> None:
@@ -295,6 +317,14 @@ def main() -> None:
             StackCloseTokenizer,
             stack_close_collate,
         )
+        refresh_layers = _parse_refresh_layers(
+            args.condition_refresh_layers
+        )
+        route = (
+            "stack_close_condition_refresh_sibling_perturb"
+            if refresh_layers
+            else "stack_close_sibling_perturb"
+        )
 
         _log(rank, f"device={device} world_size={world_size}", run_log)
         legacy_tokenizer = build_tokenizer(args.tokenizer_config)
@@ -328,16 +358,36 @@ def main() -> None:
             warmup_samples=args.perturb_warmup_samples,
             ramp_samples=args.perturb_ramp_samples,
         )
-        model = StackCloseDynamicRigAR(
-            unirig,
-            conditioner,
-            stack_tokenizer,
-            perturbation=perturbation,
-            num_surface_samples=args.surface_samples,
-            vertex_samples=args.vertex_samples,
-            query_tokens=args.query_tokens,
-        )
+        if refresh_layers:
+            from rigweave.stack_close_refresh import (  # noqa: WPS433
+                ConditionRefreshStackCloseDynamicRigAR,
+            )
+
+            model = ConditionRefreshStackCloseDynamicRigAR(
+                unirig,
+                conditioner,
+                stack_tokenizer,
+                perturbation=perturbation,
+                num_surface_samples=args.surface_samples,
+                vertex_samples=args.vertex_samples,
+                query_tokens=args.query_tokens,
+                refresh_layer_indices=refresh_layers,
+                refresh_dim=args.condition_refresh_dim,
+                refresh_heads=args.condition_refresh_heads,
+            )
+        else:
+            model = StackCloseDynamicRigAR(
+                unirig,
+                conditioner,
+                stack_tokenizer,
+                perturbation=perturbation,
+                num_surface_samples=args.surface_samples,
+                vertex_samples=args.vertex_samples,
+                query_tokens=args.query_tokens,
+            )
         move_dynamic_model_to_device(model, device)
+        if refresh_layers:
+            model.condition_refresh_adapters.to(device)
 
         train_dataset = StackCloseManifestDataset(
             args.train_manifest,
@@ -436,6 +486,18 @@ def main() -> None:
                 "name": "ar",
             },
         ]
+        if refresh_layers:
+            parameter_groups.append(
+                {
+                    "params": [
+                        parameter
+                        for parameter in model.condition_refresh_adapters.parameters()
+                        if parameter.requires_grad
+                    ],
+                    "lr": args.lr_refresh,
+                    "name": "condition_refresh",
+                }
+            )
         optimizer_audit = _audit_optimizer_coverage(
             model,
             parameter_groups,
@@ -501,7 +563,7 @@ def main() -> None:
                 metrics_log,
                 {
                     "event": "run_config",
-                    "route": "stack_close_sibling_perturb",
+                    "route": route,
                     "world_size": world_size,
                     "effective_batch": effective_batch,
                     "train_rows": train_rows,
@@ -510,11 +572,17 @@ def main() -> None:
                     "initialization": str(args.unirig_checkpoint),
                     "dynamic_checkpoint_loaded": False,
                     "perturbation": vars(perturbation),
+                    "condition_refresh": {
+                        "enabled": bool(refresh_layers),
+                        "layers": list(refresh_layers),
+                        "dim": int(args.condition_refresh_dim),
+                        "heads": int(args.condition_refresh_heads),
+                    },
                 },
             )
         _log(
             rank,
-            f"route=stack_close_sibling_perturb train_rows={train_rows} "
+            f"route={route} train_rows={train_rows} "
             f"val_rows={len(val_dataset)} effective_batch={effective_batch} "
             f"trainable={count_trainable(model):,}",
             run_log,

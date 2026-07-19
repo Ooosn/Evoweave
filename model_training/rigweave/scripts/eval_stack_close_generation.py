@@ -119,15 +119,46 @@ def _build_model(
         warmup_samples=int(train_args.get("perturb_warmup_samples", 5_000)),
         ramp_samples=int(train_args.get("perturb_ramp_samples", 15_000)),
     )
-    model = StackCloseDynamicRigAR(
-        unirig,
-        conditioner,
-        stack_tokenizer,
-        perturbation=perturbation,
-        num_surface_samples=int(train_args.get("surface_samples", 65_536)),
-        vertex_samples=int(train_args.get("vertex_samples", 8_192)),
-        query_tokens=int(train_args.get("query_tokens", 1_024)),
+    refresh_layers = tuple(
+        int(part.strip())
+        for part in str(
+            train_args.get("condition_refresh_layers", "")
+        ).split(",")
+        if part.strip()
     )
+    model_kwargs = {
+        "perturbation": perturbation,
+        "num_surface_samples": int(
+            train_args.get("surface_samples", 65_536)
+        ),
+        "vertex_samples": int(train_args.get("vertex_samples", 8_192)),
+        "query_tokens": int(train_args.get("query_tokens", 1_024)),
+    }
+    if refresh_layers:
+        from rigweave.stack_close_refresh import (
+            ConditionRefreshStackCloseDynamicRigAR,
+        )
+
+        model = ConditionRefreshStackCloseDynamicRigAR(
+            unirig,
+            conditioner,
+            stack_tokenizer,
+            refresh_layer_indices=refresh_layers,
+            refresh_dim=int(
+                train_args.get("condition_refresh_dim", 256)
+            ),
+            refresh_heads=int(
+                train_args.get("condition_refresh_heads", 8)
+            ),
+            **model_kwargs,
+        )
+    else:
+        model = StackCloseDynamicRigAR(
+            unirig,
+            conditioner,
+            stack_tokenizer,
+            **model_kwargs,
+        )
     return legacy_tokenizer, stack_tokenizer, model
 
 
@@ -343,6 +374,8 @@ def main() -> None:
     )
     model.load_state_dict(payload["model"], strict=True)
     move_dynamic_model_to_device(model, device)
+    if hasattr(model, "condition_refresh_adapters"):
+        model.condition_refresh_adapters.to(device)
     model.eval()
 
     from rigweave.stack_close import (

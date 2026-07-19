@@ -128,6 +128,7 @@ CMD=(
   --lr-motion "${JOB_LR_MOTION:-0.0001}"
   --lr-ar "${JOB_LR_AR:-0.0001}"
   --lr-surface "${JOB_LR_SURFACE:-0.0001}"
+  --lr-refresh "${JOB_LR_REFRESH:-0.0001}"
   --weight-decay "${JOB_WEIGHT_DECAY:-0.04}"
   --onecycle-pct-start "${JOB_ONECYCLE_PCT_START:-0.1}"
   --onecycle-div-factor "${JOB_ONECYCLE_DIV_FACTOR:-5.0}"
@@ -139,6 +140,9 @@ CMD=(
   --perturb-max-joint-fraction "${JOB_PERTURB_MAX_JOINT_FRACTION:-0.08}"
   --perturb-warmup-samples "${JOB_PERTURB_WARMUP_SAMPLES:-5000}"
   --perturb-ramp-samples "${JOB_PERTURB_RAMP_SAMPLES:-15000}"
+  --condition-refresh-layers "${JOB_CONDITION_REFRESH_LAYERS:-}"
+  --condition-refresh-dim "${JOB_CONDITION_REFRESH_DIM:-256}"
+  --condition-refresh-heads "${JOB_CONDITION_REFRESH_HEADS:-8}"
   --limit-train "${JOB_LIMIT_TRAIN:-0}"
   --limit-val "${JOB_LIMIT_VAL:-0}"
   --seed "${JOB_SEED:-20260720}"
@@ -149,7 +153,11 @@ if [[ -n "${JOB_RESUME_CHECKPOINT:-}" ]]; then
 fi
 
 {
-  echo "route=stack_close_sibling_perturb"
+  if [[ -n "${JOB_CONDITION_REFRESH_LAYERS:-}" ]]; then
+    echo "route=stack_close_condition_refresh_sibling_perturb"
+  else
+    echo "route=stack_close_sibling_perturb"
+  fi
   echo "git_commit=${GIT_COMMIT}"
   echo "train_manifest=${TRAIN_MANIFEST}"
   echo "val_manifest=${VAL_MANIFEST}"
@@ -159,6 +167,9 @@ fi
   echo "effective_batch=$((NPROC * BATCH_SIZE * GRAD_ACCUM))"
   echo "perturb_axial_fraction_max=${JOB_PERTURB_AXIAL_FRACTION_MAX:-0.05}"
   echo "perturb_radial_fraction_max=${JOB_PERTURB_RADIAL_FRACTION_MAX:-0.05}"
+  echo "condition_refresh_layers=${JOB_CONDITION_REFRESH_LAYERS:-}"
+  echo "condition_refresh_dim=${JOB_CONDITION_REFRESH_DIM:-256}"
+  echo "condition_refresh_heads=${JOB_CONDITION_REFRESH_HEADS:-8}"
 } > "${OUTPUT_DIR}/resolved_contract.txt"
 
 printf '[stack_close] command:'

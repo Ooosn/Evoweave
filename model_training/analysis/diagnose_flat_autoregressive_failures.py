@@ -456,6 +456,57 @@ def _first_mismatch(
     }
 
 
+def _repetition_report(generated_ids: list[int]) -> dict[str, Any]:
+    tokens = [int(value) for value in generated_ids[2:]]
+    ngram_unique_ratio: dict[str, float | None] = {}
+    for width in (3, 6, 12, 24):
+        count = len(tokens) - width + 1
+        ngram_unique_ratio[str(width)] = (
+            float(
+                len(
+                    {
+                        tuple(tokens[start : start + width])
+                        for start in range(count)
+                    }
+                )
+                / count
+            )
+            if count > 0
+            else None
+        )
+
+    terminal_same_token_run = 0
+    if tokens:
+        terminal_token = tokens[-1]
+        for token in reversed(tokens):
+            if token != terminal_token:
+                break
+            terminal_same_token_run += 1
+
+    best_period = None
+    best_coverage = 0
+    for period in range(1, min(257, len(tokens))):
+        matching = 0
+        for position in range(len(tokens) - 1, period - 1, -1):
+            if tokens[position] != tokens[position - period]:
+                break
+            matching += 1
+        coverage = matching + period if matching else 0
+        if coverage > best_coverage:
+            best_period = period
+            best_coverage = coverage
+    return {
+        "generated_token_count": len(tokens),
+        "ngram_unique_ratio": ngram_unique_ratio,
+        "terminal_same_token_run": int(terminal_same_token_run),
+        "best_suffix_period": best_period,
+        "best_suffix_periodic_token_count": int(best_coverage),
+        "best_suffix_periodic_coverage": (
+            float(best_coverage / len(tokens)) if tokens else None
+        ),
+    }
+
+
 @torch.no_grad()
 def _sequence_next_logits(
     model: torch.nn.Module,
@@ -1009,7 +1060,11 @@ def _compare_prefix_traces(
             return "plus_4_to_15"
         if distance <= 63:
             return "plus_16_to_63"
-        return "plus_64_and_later"
+        if distance <= 255:
+            return "plus_64_to_255"
+        if distance <= 511:
+            return "plus_256_to_511"
+        return "plus_512_and_later"
 
     def summarize_pairs(selected: list[tuple[dict[str, Any], dict[str, Any]]]) -> dict[str, Any]:
         selected_with_token = [
@@ -1237,6 +1292,26 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "free_joint_count_error": _mean(
                 [
                     row["saved_prefix_trace"]["joint_count_error"]
+                    for row in group_rows
+                ]
+            ),
+            "generation_trigram_unique_ratio": _mean(
+                [
+                    row["generation_repetition"]["ngram_unique_ratio"]["3"]
+                    for row in group_rows
+                ]
+            ),
+            "generation_terminal_same_token_run": _mean(
+                [
+                    row["generation_repetition"]["terminal_same_token_run"]
+                    for row in group_rows
+                ]
+            ),
+            "generation_suffix_periodic_coverage": _mean(
+                [
+                    row["generation_repetition"][
+                        "best_suffix_periodic_coverage"
+                    ]
                     for row in group_rows
                 ]
             ),
@@ -1556,6 +1631,9 @@ def main() -> None:
                     tokenizer,
                     target_ids,
                     expected_generated,
+                ),
+                "generation_repetition": _repetition_report(
+                    expected_generated
                 ),
                 "saved_prefix_trace": saved_prefix_trace,
             }

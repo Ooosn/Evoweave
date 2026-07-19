@@ -509,6 +509,39 @@ def _repetition_report(generated_ids: list[int]) -> dict[str, Any]:
     }
 
 
+def _reference_repeat_report(
+    first: Any,
+    repeated: Any,
+) -> dict[str, Any]:
+    fields: dict[str, Any] = {}
+    all_exact = True
+    for name in (
+        "vertex_indices",
+        "face_indices",
+        "barycentric",
+        "query_indices",
+    ):
+        left = getattr(first, name)
+        right = getattr(repeated, name)
+        exact = bool(torch.equal(left, right))
+        all_exact = all_exact and exact
+        row: dict[str, Any] = {
+            "exact": exact,
+            "shape": list(left.shape),
+        }
+        if left.dtype.is_floating_point:
+            difference = (left.detach().float() - right.detach().float()).abs()
+            row["max_abs_diff"] = float(difference.max().item())
+            row["different_values"] = int((difference != 0).sum().item())
+        else:
+            row["different_values"] = int((left != right).sum().item())
+        fields[name] = row
+    return {
+        "all_exact": all_exact,
+        "fields": fields,
+    }
+
+
 @torch.no_grad()
 def _sequence_next_logits(
     model: torch.nn.Module,
@@ -1498,6 +1531,27 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                         if "prefix_repair_probe" in group_row
                     ]
                 ),
+                "reference_repeat_exact_rate": _mean(
+                    [
+                        int(
+                            group_row.get("reference_repeat", {}).get(
+                                "all_exact",
+                                False,
+                            )
+                        )
+                        for group_row in group_rows
+                        if "prefix_repair_probe" in group_row
+                    ]
+                ),
+                "batch_frame_vertices_repeat_max_abs_diff": _mean(
+                    [
+                        group_row.get(
+                            "batch_frame_vertices_repeat_max_abs_diff"
+                        )
+                        for group_row in group_rows
+                        if "prefix_repair_probe" in group_row
+                    ]
+                ),
             }
     return output
 
@@ -1641,6 +1695,15 @@ def main() -> None:
                 raise ValueError(f"row {index} target-token mismatch")
 
             _seed_all(args.seed + index, device)
+            determinism_probe = bool(
+                args.prefix_repair_probe
+                and generation_row["dynamic"].get("hit_max_without_eos")
+            )
+            frame_vertices_before = (
+                batch["frame_vertices"].detach().clone()
+                if determinism_probe
+                else None
+            )
             refs = model.sample_references(batch)
             cond = model.build_condition(batch, refs=refs)
             condition_cache.append(cond.detach().cpu())
@@ -1698,6 +1761,10 @@ def main() -> None:
                     batch,
                     refs=repeated_refs,
                 )
+                row["reference_repeat"] = _reference_repeat_report(
+                    refs,
+                    repeated_refs,
+                )
                 condition_abs_diff = (
                     repeated_cond.detach().float()
                     - cond.detach().float()
@@ -1707,6 +1774,14 @@ def main() -> None:
                 )
                 row["condition_repeat_max_abs_diff"] = float(
                     condition_abs_diff.max().item()
+                )
+                assert frame_vertices_before is not None
+                frame_vertices_abs_diff = (
+                    batch["frame_vertices"].detach().float()
+                    - frame_vertices_before.float()
+                ).abs()
+                row["batch_frame_vertices_repeat_max_abs_diff"] = float(
+                    frame_vertices_abs_diff.max().item()
                 )
             rows.append(row)
             print(

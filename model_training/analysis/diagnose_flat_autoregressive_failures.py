@@ -706,6 +706,54 @@ def _compact_generation_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _generation_result_report(
+    tokenizer: Any,
+    generated: list[int],
+    target: Any,
+    continuous_range: tuple[float, float],
+) -> dict[str, Any]:
+    from eval_dynamic_rig_generation import (
+        _count_prefix_structure,
+        _output_metrics,
+    )
+
+    has_eos = bool(generated and generated[-1] == int(tokenizer.eos))
+    generated_joint_count, generated_branch_count = _count_prefix_structure(
+        tokenizer,
+        generated,
+    )
+    if has_eos:
+        try:
+            prediction = tokenizer.detokenize(
+                np.asarray(generated, dtype=np.int64)
+            )
+            metrics = _compact_generation_metrics(
+                _output_metrics(
+                    prediction,
+                    target,
+                    continuous_range,
+                )
+            )
+        except Exception as exc:
+            metrics = {
+                "detokenize_ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+    else:
+        metrics = _compact_generation_metrics(
+            _output_metrics(None, target, continuous_range)
+        )
+    return {
+        "has_eos": has_eos,
+        "generated_new_tokens": len(generated) - 2,
+        "generated_joint_count": int(generated_joint_count),
+        "generated_branch_count": int(generated_branch_count),
+        "generation_repetition": _repetition_report(generated),
+        "metrics": metrics,
+        "generated_ids": generated,
+    }
+
+
 def _prefix_repair_rollout(
     model: torch.nn.Module,
     tokenizer: Any,
@@ -717,10 +765,7 @@ def _prefix_repair_rollout(
     target: Any,
     continuous_range: tuple[float, float],
 ) -> dict[str, Any]:
-    from eval_dynamic_rig_generation import (
-        _count_prefix_structure,
-        _output_metrics,
-    )
+    from eval_dynamic_rig_generation import _count_prefix_structure
 
     reproduction_budget = min(32, int(max_new_tokens))
     reproduced = _greedy_continue_from_prefix(
@@ -802,46 +847,21 @@ def _prefix_repair_rollout(
             prefix,
             max_new_tokens,
         )
-        has_eos = bool(generated and generated[-1] == int(tokenizer.eos))
-        generated_joint_count, generated_branch_count = _count_prefix_structure(
+        result = _generation_result_report(
             tokenizer,
             generated,
+            target,
+            continuous_range,
         )
-        metrics: dict[str, Any]
-        if has_eos:
-            try:
-                prediction = tokenizer.detokenize(
-                    np.asarray(generated, dtype=np.int64)
-                )
-                metrics = _compact_generation_metrics(
-                    _output_metrics(
-                        prediction,
-                        target,
-                        continuous_range,
-                    )
-                )
-            except Exception as exc:
-                metrics = {
-                    "detokenize_ok": False,
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-        else:
-            metrics = _compact_generation_metrics(
-                _output_metrics(None, target, continuous_range)
-            )
         report = {
             "forced_prefix_length": len(prefix),
             "forced_generated_tokens": len(prefix) - 2,
             "max_new_tokens": int(max_new_tokens),
-            "has_eos": has_eos,
+            **result,
             "reached_probe_budget_without_eos": bool(
-                not has_eos and len(generated) - 2 >= int(max_new_tokens)
+                not result["has_eos"]
+                and len(generated) - 2 >= int(max_new_tokens)
             ),
-            "generated_new_tokens": len(generated) - 2,
-            "generated_joint_count": int(generated_joint_count),
-            "generated_branch_count": int(generated_branch_count),
-            "generated_ids": generated,
-            "metrics": metrics,
         }
         generated_by_prefix[prefix_key] = report
         reports[name] = report
@@ -1642,6 +1662,7 @@ def main() -> None:
 
     rows: list[dict[str, Any]] = []
     condition_cache: list[torch.Tensor] = []
+    repeated_condition_cache: dict[int, torch.Tensor] = {}
     target_ids_cache: list[list[int]] = []
     with torch.no_grad(), torch.autocast(
         device_type="cuda",
@@ -1775,6 +1796,10 @@ def main() -> None:
                 row["condition_repeat_max_abs_diff"] = float(
                     condition_abs_diff.max().item()
                 )
+                if not row["condition_repeat_exact"]:
+                    repeated_condition_cache[index] = (
+                        repeated_cond.detach().cpu()
+                    )
                 assert frame_vertices_before is not None
                 frame_vertices_abs_diff = (
                     batch["frame_vertices"].detach().float()
@@ -1889,6 +1914,25 @@ def main() -> None:
                     target,
                     continuous_range,
                 )
+                if index in repeated_condition_cache:
+                    repeated_condition = repeated_condition_cache[index].to(
+                        device
+                    )
+                    repeated_generated = _greedy_continue_from_prefix(
+                        model,
+                        tokenizer,
+                        repeated_condition,
+                        generated_ids[:2],
+                        int(generation_rows[index]["max_new_tokens"]),
+                    )
+                    rows[index]["condition_repeat_rollout"] = (
+                        _generation_result_report(
+                            tokenizer,
+                            repeated_generated,
+                            target,
+                            continuous_range,
+                        )
+                    )
             print(
                 json.dumps(
                     {

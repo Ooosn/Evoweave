@@ -779,6 +779,7 @@ def _saved_prefix_trace(
         )
 
     next_logits = _sequence_next_logits(model, cond, saved_ids)
+    token_events: list[dict[str, Any]] = []
     events: list[dict[str, Any]] = []
     for position in range(2, len(saved_ids)):
         prefix_ids = saved_ids[:position]
@@ -793,6 +794,19 @@ def _saved_prefix_trace(
             )
         row_logits = next_logits[position - 1]
         masked = _masked_target_stats(row_logits, possible, selected)
+        token_events.append(
+            {
+                "position": position,
+                "saved_id": selected,
+                "saved_group": _group_name(_token_group(tokenizer, selected)),
+                "saved_token_rank": int(masked["target_rank"]),
+                "saved_token_probability": float(masked["target_probability"]),
+                "masked_pred_id": int(masked["pred_id"]),
+                "masked_pred_matches_saved": bool(
+                    int(masked["pred_id"]) == selected
+                ),
+            }
+        )
         groups = _possible_groups(tokenizer, possible)
         target = int(target_ids[position]) if position < len(target_ids) else None
         if len(groups) > 1 or int(tokenizer.eos) in possible:
@@ -866,6 +880,7 @@ def _saved_prefix_trace(
         "generated_joint_count": int(generated_joint_count),
         "generated_branch_count": int(generated_branch_count),
         "joint_count_error": int(generated_joint_count) - int(target_joint_count),
+        "token_events": token_events,
         "decision_events": events,
         "eos_decision_count": len(eos_events),
         "max_eos_group_probability": (
@@ -969,6 +984,18 @@ def _compare_prefix_traces(
         (correct_events[position], intervention_events[position])
         for position in sorted(correct_events)
     ]
+    correct_tokens = {
+        int(event["position"]): event for event in correct["token_events"]
+    }
+    intervention_tokens = {
+        int(event["position"]): event for event in intervention["token_events"]
+    }
+    if correct_tokens.keys() != intervention_tokens.keys():
+        raise ValueError("condition intervention changed self-prefix token positions")
+    token_pairs = [
+        (correct_tokens[position], intervention_tokens[position])
+        for position in sorted(correct_tokens)
+    ]
     correct_target = correct["max_eos_probability_at_target_joint_count"]
     intervention_target = intervention["max_eos_probability_at_target_joint_count"]
 
@@ -1036,17 +1063,63 @@ def _compare_prefix_traces(
             ),
         }
 
+    def summarize_token_pairs(
+        selected: list[tuple[dict[str, Any], dict[str, Any]]],
+    ) -> dict[str, Any]:
+        return {
+            "token_positions": len(selected),
+            "masked_top1_agreement": _mean(
+                [
+                    int(left["masked_pred_id"] == right["masked_pred_id"])
+                    for left, right in selected
+                ]
+            ),
+            "saved_token_nll_delta": _mean(
+                [
+                    -np.log(max(float(right["saved_token_probability"]), 1.0e-30))
+                    + np.log(max(float(left["saved_token_probability"]), 1.0e-30))
+                    for left, right in selected
+                ]
+            ),
+        }
+
     pairs_by_distance: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = (
         defaultdict(list)
     )
     for pair in pairs:
         pairs_by_distance[distance_bin(int(pair[0]["position"]))].append(pair)
+    token_pairs_by_distance: dict[
+        str,
+        list[tuple[dict[str, Any], dict[str, Any]]],
+    ] = defaultdict(list)
+    coordinate_pairs_by_distance: dict[
+        str,
+        list[tuple[dict[str, Any], dict[str, Any]]],
+    ] = defaultdict(list)
+    for pair in token_pairs:
+        name = distance_bin(int(pair[0]["position"]))
+        token_pairs_by_distance[name].append(pair)
+        if pair[0]["saved_group"] == "coordinate":
+            coordinate_pairs_by_distance[name].append(pair)
     overall = summarize_pairs(pairs)
+    coordinate_pairs = [
+        pair for pair in token_pairs if pair[0]["saved_group"] == "coordinate"
+    ]
     return {
         **overall,
+        "all_tokens": summarize_token_pairs(token_pairs),
+        "coordinate_tokens": summarize_token_pairs(coordinate_pairs),
         "by_distance_from_first_mismatch": {
             name: summarize_pairs(bin_pairs)
             for name, bin_pairs in sorted(pairs_by_distance.items())
+        },
+        "all_tokens_by_distance_from_first_mismatch": {
+            name: summarize_token_pairs(bin_pairs)
+            for name, bin_pairs in sorted(token_pairs_by_distance.items())
+        },
+        "coordinate_tokens_by_distance_from_first_mismatch": {
+            name: summarize_token_pairs(bin_pairs)
+            for name, bin_pairs in sorted(coordinate_pairs_by_distance.items())
         },
         "target_count_eos_probability_delta": (
             float(intervention_target) - float(correct_target)
@@ -1230,6 +1303,22 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     row["self_prefix_condition"]["zero_vs_correct"][
                         "group_top1_agreement"
                     ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_swapped_coordinate_top1_agreement": _mean(
+                [
+                    row["self_prefix_condition"]["swapped_vs_correct"][
+                        "coordinate_tokens"
+                    ]["masked_top1_agreement"]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_zero_coordinate_top1_agreement": _mean(
+                [
+                    row["self_prefix_condition"]["zero_vs_correct"][
+                        "coordinate_tokens"
+                    ]["masked_top1_agreement"]
                     for row in group_rows
                 ]
             ),
@@ -1588,8 +1677,21 @@ def main() -> None:
                         "self_prefix_condition": rows[index][
                             "self_prefix_condition"
                         ],
-                        "prefix_repair_probe": rows[index].get(
-                            "prefix_repair_probe"
+                        "prefix_repair_probe": (
+                            {
+                                name: {
+                                    "has_eos": result["has_eos"],
+                                    "generated_joint_count": result[
+                                        "generated_joint_count"
+                                    ],
+                                    "metrics": result["metrics"],
+                                }
+                                for name, result in rows[index]
+                                .get("prefix_repair_probe", {})
+                                .get("interventions", {})
+                                .items()
+                            }
+                            or None
                         ),
                     },
                     ensure_ascii=False,

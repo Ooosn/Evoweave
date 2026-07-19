@@ -193,6 +193,21 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
         "edge_lengths_bbox": edge_lengths,
         "near_zero_edge_count": len(near_zero_edges),
         "exact_zero_edge_count": len(exact_zero_edges),
+        "exact_zero_edge_child_connector_count": int(
+            sum(bool(is_connector[child]) for _length, child, _parent in exact_zero_edges)
+        ),
+        "exact_zero_edge_parent_connector_count": int(
+            sum(bool(is_connector[parent]) for _length, _child, parent in exact_zero_edges)
+        ),
+        "exact_zero_edge_both_skinned_count": int(
+            sum(
+                bool(has_skin[child] and has_skin[parent])
+                for _length, child, parent in exact_zero_edges
+            )
+        ),
+        "exact_zero_edge_child_tail_or_end_count": int(
+            sum(bool(is_tail_or_end[child]) for _length, child, _parent in exact_zero_edges)
+        ),
         "near_zero_edge_child_connector_count": int(
             sum(bool(is_connector[child]) for _length, child, _parent in near_zero_edges)
         ),
@@ -294,6 +309,21 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "edge_length_bbox": _quantiles(edge_lengths),
         "near_zero_edge_count": int(sum(row["near_zero_edge_count"] for row in rows)),
         "exact_zero_edge_count": int(sum(row["exact_zero_edge_count"] for row in rows)),
+        "exact_zero_edges": {
+            "count": int(sum(row["exact_zero_edge_count"] for row in rows)),
+            "child_connector_count": int(
+                sum(row["exact_zero_edge_child_connector_count"] for row in rows)
+            ),
+            "parent_connector_count": int(
+                sum(row["exact_zero_edge_parent_connector_count"] for row in rows)
+            ),
+            "both_skinned_count": int(
+                sum(row["exact_zero_edge_both_skinned_count"] for row in rows)
+            ),
+            "child_tail_or_end_count": int(
+                sum(row["exact_zero_edge_child_tail_or_end_count"] for row in rows)
+            ),
+        },
         "near_zero_edges": {
             "count": int(sum(row["near_zero_edge_count"] for row in rows)),
             "child_connector_count": int(
@@ -409,6 +439,32 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     for row in rows
                 ),
                 key=lambda value: (value["connector_count"], value["joint_count"]),
+                reverse=True,
+            )[:20],
+            "near_zero_edges": sorted(
+                (
+                    {
+                        "path": row["path"],
+                        "joint_count": row["joint_count"],
+                        "near_zero_edge_count": row["near_zero_edge_count"],
+                        "exact_zero_edge_count": row["exact_zero_edge_count"],
+                        "child_connector_count": row[
+                            "near_zero_edge_child_connector_count"
+                        ],
+                        "parent_connector_count": row[
+                            "near_zero_edge_parent_connector_count"
+                        ],
+                        "both_skinned_count": row[
+                            "near_zero_edge_both_skinned_count"
+                        ],
+                    }
+                    for row in rows
+                ),
+                key=lambda value: (
+                    value["exact_zero_edge_count"],
+                    value["near_zero_edge_count"],
+                    value["joint_count"],
+                ),
                 reverse=True,
             )[:20],
         },

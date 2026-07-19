@@ -107,10 +107,13 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
 
     query_joints = joints[0]
     edge_lengths: list[float] = []
+    edge_records: list[tuple[float, int, int]] = []
     for child_index, parent_index in enumerate(parents.tolist()):
         if parent_index >= 0:
             length = float(np.linalg.norm(query_joints[child_index] - query_joints[parent_index]))
-            edge_lengths.append(length / mesh_bbox_diag)
+            normalized_length = length / mesh_bbox_diag
+            edge_lengths.append(normalized_length)
+            edge_records.append((normalized_length, child_index, parent_index))
 
     weight_sums = skin_weights.sum(axis=0, dtype=np.float64)
     positive_weight_vertices = (skin_weights > 1.0e-4).sum(axis=0)
@@ -152,6 +155,10 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
     depth_hist = np.bincount(depths, minlength=int(depths.max()) + 1)
     degree_hist = np.bincount(child_counts, minlength=int(child_counts.max()) + 1)
     topology_signature = ",".join(str(int(value)) for value in parents.tolist())
+    max_children_parent_index = int(np.argmax(child_counts))
+    near_zero_edges = [record for record in edge_records if record[0] <= 1.0e-6]
+    exact_zero_edges = [record for record in edge_records if record[0] <= 1.0e-12]
+    high_degree_nodes = np.flatnonzero(child_counts > 8)
 
     return {
         "path": str(path),
@@ -184,7 +191,41 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
         "skinned_weighted_motion": weighted_motion[has_skin].astype(float).tolist(),
         "joint_motion": joint_motion.astype(float).tolist(),
         "edge_lengths_bbox": edge_lengths,
-        "near_zero_edge_count": int(sum(value <= 1.0e-6 for value in edge_lengths)),
+        "near_zero_edge_count": len(near_zero_edges),
+        "exact_zero_edge_count": len(exact_zero_edges),
+        "near_zero_edge_child_connector_count": int(
+            sum(bool(is_connector[child]) for _length, child, _parent in near_zero_edges)
+        ),
+        "near_zero_edge_parent_connector_count": int(
+            sum(bool(is_connector[parent]) for _length, _child, parent in near_zero_edges)
+        ),
+        "near_zero_edge_both_skinned_count": int(
+            sum(
+                bool(has_skin[child] and has_skin[parent])
+                for _length, child, parent in near_zero_edges
+            )
+        ),
+        "near_zero_edge_child_tail_or_end_count": int(
+            sum(bool(is_tail_or_end[child]) for _length, child, _parent in near_zero_edges)
+        ),
+        "max_children_parent": {
+            "index": max_children_parent_index,
+            "is_root": bool(parents[max_children_parent_index] < 0),
+            "has_skin": bool(has_skin[max_children_parent_index]),
+            "is_connector": bool(is_connector[max_children_parent_index]),
+            "is_tail_or_end": bool(is_tail_or_end[max_children_parent_index]),
+            "child_count": int(child_counts[max_children_parent_index]),
+            "skinned_child_count": int(
+                sum(bool(has_skin[child]) for child in children[max_children_parent_index])
+            ),
+            "connector_child_count": int(
+                sum(bool(is_connector[child]) for child in children[max_children_parent_index])
+            ),
+        },
+        "high_degree_gt8_node_count": int(high_degree_nodes.size),
+        "high_degree_gt8_root_count": int(np.sum(parents[high_degree_nodes] < 0)),
+        "high_degree_gt8_connector_count": int(is_connector[high_degree_nodes].sum()),
+        "high_degree_gt8_skinned_count": int(has_skin[high_degree_nodes].sum()),
         "topology_signature": topology_signature,
     }
 
@@ -252,6 +293,38 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "non_leaf_child_count_hist": _counter(non_leaf_child_counts),
         "edge_length_bbox": _quantiles(edge_lengths),
         "near_zero_edge_count": int(sum(row["near_zero_edge_count"] for row in rows)),
+        "exact_zero_edge_count": int(sum(row["exact_zero_edge_count"] for row in rows)),
+        "near_zero_edges": {
+            "count": int(sum(row["near_zero_edge_count"] for row in rows)),
+            "child_connector_count": int(
+                sum(row["near_zero_edge_child_connector_count"] for row in rows)
+            ),
+            "parent_connector_count": int(
+                sum(row["near_zero_edge_parent_connector_count"] for row in rows)
+            ),
+            "both_skinned_count": int(
+                sum(row["near_zero_edge_both_skinned_count"] for row in rows)
+            ),
+            "child_tail_or_end_count": int(
+                sum(row["near_zero_edge_child_tail_or_end_count"] for row in rows)
+            ),
+        },
+        "tail_or_end": {
+            "node_count": int(sum(row["tail_or_end_count"] for row in rows)),
+            "sample_fraction": sample_rate(lambda row: row["tail_or_end_count"] > 0),
+        },
+        "high_degree_gt8": {
+            "node_count": int(sum(row["high_degree_gt8_node_count"] for row in rows)),
+            "root_count": int(sum(row["high_degree_gt8_root_count"] for row in rows)),
+            "connector_count": int(
+                sum(row["high_degree_gt8_connector_count"] for row in rows)
+            ),
+            "skinned_count": int(sum(row["high_degree_gt8_skinned_count"] for row in rows)),
+            "sample_fraction": sample_rate(lambda row: row["high_degree_gt8_node_count"] > 0),
+            "max_parent_is_root_fraction": sample_rate(
+                lambda row: row["max_children_parent"]["is_root"]
+            ),
+        },
         "connector": {
             "node_count": int(connector_total),
             "node_fraction": float(connector_total / max(node_total, 1)),
@@ -307,6 +380,7 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                         "path": row["path"],
                         "joint_count": row["joint_count"],
                         "max_children": row["max_children"],
+                        "max_children_parent": row["max_children_parent"],
                     }
                     for row in rows
                 ),

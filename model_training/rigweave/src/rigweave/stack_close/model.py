@@ -86,6 +86,15 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             explicit_tree_oracle_prefix_weight=0.0,
         )
         self.perturbation = perturbation
+        for module in (
+            self.condition_fuser,
+            self.grammar_state_proj,
+            self.action_group_bias_head,
+            self.condition_action_group_bias_head,
+            self.structure_count_head,
+            self.structure_action_head,
+        ):
+            module.requires_grad_(False)
         self.register_buffer(
             "_sample_seen",
             torch.zeros((), dtype=torch.long),

@@ -138,6 +138,59 @@ def _write_jsonl(path: Path, row: dict[str, Any]) -> None:
         handle.write(json.dumps(row, default=str, sort_keys=True) + "\n")
 
 
+def _audit_optimizer_coverage(
+    model: torch.nn.Module,
+    parameter_groups: list[dict[str, Any]],
+) -> dict[str, Any]:
+    assigned: dict[int, str] = {}
+    duplicates: list[str] = []
+    for group in parameter_groups:
+        group_name = str(group["name"])
+        for parameter in group["params"]:
+            parameter_id = id(parameter)
+            if parameter_id in assigned:
+                duplicates.append(
+                    f"{assigned[parameter_id]}+{group_name}"
+                )
+            assigned[parameter_id] = group_name
+
+    missing = [
+        (name, int(parameter.numel()))
+        for name, parameter in model.named_parameters()
+        if parameter.requires_grad and id(parameter) not in assigned
+    ]
+    frozen_assigned = [
+        name
+        for name, parameter in model.named_parameters()
+        if not parameter.requires_grad and id(parameter) in assigned
+    ]
+    if duplicates or missing or frozen_assigned:
+        raise RuntimeError(
+            "optimizer coverage failure: "
+            f"duplicate_groups={duplicates[:20]} "
+            f"unassigned_trainable={missing[:20]} "
+            f"frozen_assigned={frozen_assigned[:20]}"
+        )
+
+    group_counts = {
+        str(group["name"]): int(
+            sum(parameter.numel() for parameter in group["params"])
+        )
+        for group in parameter_groups
+    }
+    optimized = int(sum(group_counts.values()))
+    trainable = count_trainable(model)
+    if optimized != trainable:
+        raise RuntimeError(
+            f"optimizer owns {optimized:,} parameters, "
+            f"but model has {trainable:,} trainable parameters"
+        )
+    return {
+        "optimized_parameters": optimized,
+        "group_parameters": group_counts,
+    }
+
+
 @torch.no_grad()
 def _evaluate(
     model: torch.nn.Module,
@@ -383,6 +436,10 @@ def main() -> None:
                 "name": "ar",
             },
         ]
+        optimizer_audit = _audit_optimizer_coverage(
+            model,
+            parameter_groups,
+        )
         optimizer = torch.optim.AdamW(
             parameter_groups,
             weight_decay=args.weight_decay,
@@ -449,6 +506,7 @@ def main() -> None:
                     "effective_batch": effective_batch,
                     "train_rows": train_rows,
                     "trainable_parameters": count_trainable(model),
+                    "optimizer_audit": optimizer_audit,
                     "initialization": str(args.unirig_checkpoint),
                     "dynamic_checkpoint_loaded": False,
                     "perturbation": vars(perturbation),

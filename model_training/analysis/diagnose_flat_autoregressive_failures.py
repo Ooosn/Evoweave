@@ -287,11 +287,13 @@ def _condition_likelihood(
     coordinate_positions = coordinate_mask.nonzero(as_tuple=False).flatten()
     joint0_mask = torch.zeros_like(valid)
     joint0_mask[coordinate_positions[:3]] = True
+    branch_mask = valid & (target_values == int(tokenizer.token_id_branch))
     eos_mask = valid & (target_values == int(tokenizer.eos))
     masks = {
         "all": valid,
         "all_coord": coordinate_mask,
         "joint0_coord": joint0_mask,
+        "branch": branch_mask,
         "eos": eos_mask,
     }
     report: dict[str, Any] = {}
@@ -319,6 +321,100 @@ def _condition_likelihood(
             ),
             "zero_minus_correct_nll": float(
                 condition_rows["zero"]["nll"] - condition_rows["correct"]["nll"]
+            ),
+        }
+    return report
+
+
+def _condition_group_likelihood(
+    tokenizer: Any,
+    labels: torch.LongTensor,
+    input_ids: torch.LongTensor,
+    logits_by_condition: dict[str, torch.Tensor],
+) -> dict[str, Any]:
+    """Compare structural action likelihoods under fixed GT prefixes."""
+
+    rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    valid_positions = (labels[0] != -100).nonzero(as_tuple=False).flatten().tolist()
+    for position in valid_positions:
+        target = int(labels[0, position].item())
+        prefix = input_ids[0, : position + 1].detach().cpu().numpy().astype(np.int64)
+        possible = set(int(value) for value in tokenizer.next_posible_token(ids=prefix))
+        grouped = _possible_groups(tokenizer, possible)
+        if len(grouped) <= 1:
+            continue
+        target_group = _token_group(tokenizer, target)
+        if target_group not in grouped:
+            raise ValueError(
+                f"target group {_group_name(target_group)} is not grammar-valid "
+                f"at GT position {position + 1}"
+            )
+        group_ids = sorted(grouped)
+        target_offset = group_ids.index(target_group)
+        condition_rows: dict[str, Any] = {}
+        for name, logits in logits_by_condition.items():
+            row_logits = logits[0, position]
+            scores = torch.stack(
+                [
+                    torch.logsumexp(
+                        row_logits[
+                            torch.tensor(
+                                grouped[group],
+                                device=row_logits.device,
+                                dtype=torch.long,
+                            )
+                        ].float(),
+                        dim=0,
+                    )
+                    for group in group_ids
+                ]
+            )
+            target_score = scores[target_offset]
+            condition_rows[name] = {
+                "nll": float((torch.logsumexp(scores, dim=0) - target_score).item()),
+                "top1_accuracy": float(int(int(scores.argmax().item()) == target_offset)),
+            }
+        row = {
+            "position": int(position + 1),
+            "target_group": _group_name(target_group),
+            **condition_rows,
+            "swapped_minus_correct_nll": float(
+                condition_rows["swapped"]["nll"] - condition_rows["correct"]["nll"]
+            ),
+            "zero_minus_correct_nll": float(
+                condition_rows["zero"]["nll"] - condition_rows["correct"]["nll"]
+            ),
+        }
+        rows["all_decisions"].append(row)
+        rows[_group_name(target_group)].append(row)
+
+    report: dict[str, Any] = {}
+    for role, role_rows in sorted(rows.items()):
+        report[role] = {
+            "positions": len(role_rows),
+            "correct": {
+                "nll": _mean([row["correct"]["nll"] for row in role_rows]),
+                "top1_accuracy": _mean(
+                    [row["correct"]["top1_accuracy"] for row in role_rows]
+                ),
+            },
+            "swapped": {
+                "nll": _mean([row["swapped"]["nll"] for row in role_rows]),
+                "top1_accuracy": _mean(
+                    [row["swapped"]["top1_accuracy"] for row in role_rows]
+                ),
+            },
+            "zero": {
+                "nll": _mean([row["zero"]["nll"] for row in role_rows]),
+                "top1_accuracy": _mean(
+                    [row["zero"]["top1_accuracy"] for row in role_rows]
+                ),
+            },
+            "swapped_minus_correct_nll": _mean(
+                [row["swapped_minus_correct_nll"] for row in role_rows]
+            ),
+            "zero_minus_correct_nll": _mean(
+                [row["zero_minus_correct_nll"] for row in role_rows]
             ),
         }
     return report
@@ -522,6 +618,140 @@ def _saved_prefix_trace(
     }
 
 
+def _compact_prefix_trace(trace: dict[str, Any]) -> dict[str, Any]:
+    selected_events = [
+        event
+        for event in trace["decision_events"]
+        if event.get("saved_token_probability") is not None
+    ]
+    eos_events = [
+        event
+        for event in trace["decision_events"]
+        if "eos" in event["group_probabilities"]
+    ]
+    at_target = [
+        event
+        for event in eos_events
+        if int(event["joint_count_before"])
+        == int(trace["generated_joint_count"] - trace["joint_count_error"])
+    ]
+    first_after_target = trace.get("first_event_after_target_joint_count")
+    return {
+        "max_eos_group_probability": trace["max_eos_group_probability"],
+        "max_eos_probability_at_target_joint_count": trace[
+            "max_eos_probability_at_target_joint_count"
+        ],
+        "mean_eos_group_probability": _mean(
+            [event["group_probabilities"]["eos"] for event in eos_events]
+        ),
+        "first_after_target_eos_probability": (
+            first_after_target["group_probabilities"]["eos"]
+            if first_after_target is not None
+            else None
+        ),
+        "mean_saved_token_nll": _mean(
+            [
+                -np.log(max(float(event["saved_token_probability"]), 1.0e-30))
+                for event in selected_events
+            ]
+        ),
+        "masked_top1_matches_saved_rate": _mean(
+            [int(event["masked_pred_matches_saved"]) for event in selected_events]
+        ),
+        "group_top1_matches_saved_rate": _mean(
+            [
+                int(event["predicted_group"] == event["saved_group"])
+                for event in selected_events
+            ]
+        ),
+        "target_count_events": [
+            {
+                "position": int(event["position"]),
+                "joint_count_before": int(event["joint_count_before"]),
+                "saved_group": event["saved_group"],
+                "predicted_group": event["predicted_group"],
+                "eos_probability": float(event["group_probabilities"]["eos"]),
+            }
+            for event in at_target
+        ],
+    }
+
+
+def _compare_prefix_traces(
+    correct: dict[str, Any],
+    intervention: dict[str, Any],
+) -> dict[str, Any]:
+    correct_events = {
+        int(event["position"]): event for event in correct["decision_events"]
+    }
+    intervention_events = {
+        int(event["position"]): event for event in intervention["decision_events"]
+    }
+    if correct_events.keys() != intervention_events.keys():
+        raise ValueError("condition intervention changed self-prefix decision positions")
+    pairs = [
+        (correct_events[position], intervention_events[position])
+        for position in sorted(correct_events)
+    ]
+    selected_pairs = [
+        pair
+        for pair in pairs
+        if pair[0].get("saved_token_probability") is not None
+        and pair[1].get("saved_token_probability") is not None
+    ]
+    eos_pairs = [
+        pair
+        for pair in pairs
+        if "eos" in pair[0]["group_probabilities"]
+        and "eos" in pair[1]["group_probabilities"]
+    ]
+    correct_target = correct["max_eos_probability_at_target_joint_count"]
+    intervention_target = intervention["max_eos_probability_at_target_joint_count"]
+    return {
+        "decision_positions": len(pairs),
+        "masked_top1_agreement": _mean(
+            [
+                int(left["masked_pred_id"] == right["masked_pred_id"])
+                for left, right in pairs
+            ]
+        ),
+        "group_top1_agreement": _mean(
+            [
+                int(left["predicted_group"] == right["predicted_group"])
+                for left, right in pairs
+            ]
+        ),
+        "saved_token_nll_delta": _mean(
+            [
+                -np.log(max(float(right["saved_token_probability"]), 1.0e-30))
+                + np.log(max(float(left["saved_token_probability"]), 1.0e-30))
+                for left, right in selected_pairs
+            ]
+        ),
+        "mean_abs_eos_probability_delta": _mean(
+            [
+                abs(
+                    float(right["group_probabilities"]["eos"])
+                    - float(left["group_probabilities"]["eos"])
+                )
+                for left, right in eos_pairs
+            ]
+        ),
+        "mean_signed_eos_probability_delta": _mean(
+            [
+                float(right["group_probabilities"]["eos"])
+                - float(left["group_probabilities"]["eos"])
+                for left, right in eos_pairs
+            ]
+        ),
+        "target_count_eos_probability_delta": (
+            float(intervention_target) - float(correct_target)
+            if intervention_target is not None and correct_target is not None
+            else None
+        ),
+    }
+
+
 def _mean(values: list[float | int | None]) -> float | None:
     finite = [float(value) for value in values if value is not None and np.isfinite(value)]
     return float(np.mean(finite)) if finite else None
@@ -576,6 +806,38 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                     for row in group_rows
                 ]
             ),
+            "gt_prefix_decision_swapped_minus_correct_nll": _mean(
+                [
+                    row["condition_group_likelihood"]["all_decisions"][
+                        "swapped_minus_correct_nll"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "gt_prefix_decision_zero_minus_correct_nll": _mean(
+                [
+                    row["condition_group_likelihood"]["all_decisions"][
+                        "zero_minus_correct_nll"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "gt_prefix_eos_swapped_minus_correct_nll": _mean(
+                [
+                    row["condition_group_likelihood"]["eos"][
+                        "swapped_minus_correct_nll"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "gt_prefix_eos_zero_minus_correct_nll": _mean(
+                [
+                    row["condition_group_likelihood"]["eos"][
+                        "zero_minus_correct_nll"
+                    ]
+                    for row in group_rows
+                ]
+            ),
             "first_free_mismatch_roles": dict(role_counts),
             "free_max_eos_group_probability": _mean(
                 [
@@ -608,6 +870,62 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
                             "selected_eos_at_target_joint_count"
                         ]
                     )
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_correct_eos_probability_at_target_count": _mean(
+                [
+                    row["self_prefix_condition"]["correct"][
+                        "max_eos_probability_at_target_joint_count"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_swapped_eos_probability_at_target_count": _mean(
+                [
+                    row["self_prefix_condition"]["swapped"][
+                        "max_eos_probability_at_target_joint_count"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_zero_eos_probability_at_target_count": _mean(
+                [
+                    row["self_prefix_condition"]["zero"][
+                        "max_eos_probability_at_target_joint_count"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_swapped_target_eos_probability_delta": _mean(
+                [
+                    row["self_prefix_condition"]["swapped_vs_correct"][
+                        "target_count_eos_probability_delta"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_zero_target_eos_probability_delta": _mean(
+                [
+                    row["self_prefix_condition"]["zero_vs_correct"][
+                        "target_count_eos_probability_delta"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_swapped_group_top1_agreement": _mean(
+                [
+                    row["self_prefix_condition"]["swapped_vs_correct"][
+                        "group_top1_agreement"
+                    ]
+                    for row in group_rows
+                ]
+            ),
+            "self_prefix_zero_group_top1_agreement": _mean(
+                [
+                    row["self_prefix_condition"]["zero_vs_correct"][
+                        "group_top1_agreement"
+                    ]
                     for row in group_rows
                 ]
             ),
@@ -686,6 +1004,7 @@ def main() -> None:
 
     rows: list[dict[str, Any]] = []
     condition_cache: list[torch.Tensor] = []
+    target_ids_cache: list[list[int]] = []
     with torch.no_grad(), torch.autocast(
         device_type="cuda",
         dtype=torch.bfloat16,
@@ -733,6 +1052,7 @@ def main() -> None:
                 .astype(int)
                 .tolist()
             )
+            target_ids_cache.append(target_ids)
             if target_ids != generation_row["target_ids"]:
                 raise ValueError(f"row {index} target-token mismatch")
 
@@ -813,25 +1133,73 @@ def main() -> None:
             zero = torch.zeros_like(correct)
             logits_by_condition: dict[str, torch.Tensor] = {}
             labels = None
+            input_ids = None
             for name, cond in (("correct", correct), ("swapped", swapped), ("zero", zero)):
-                logits, current_labels, _input_ids = _teacher_logits(model, batch, cond)
+                logits, current_labels, current_input_ids = _teacher_logits(model, batch, cond)
                 logits_by_condition[name] = logits
                 if labels is None:
                     labels = current_labels
+                    input_ids = current_input_ids
                 elif not torch.equal(labels, current_labels):
                     raise ValueError("condition intervention changed labels")
-            assert labels is not None
+                elif not torch.equal(input_ids, current_input_ids):
+                    raise ValueError("condition intervention changed input IDs")
+            assert labels is not None and input_ids is not None
             rows[index]["condition_likelihood"] = _condition_likelihood(
                 tokenizer,
                 labels,
                 logits_by_condition,
             )
+            rows[index]["condition_group_likelihood"] = _condition_group_likelihood(
+                tokenizer,
+                labels,
+                input_ids,
+                logits_by_condition,
+            )
+
+            generated_ids = generation_rows[index]["dynamic"]["generated_ids"]
+            correct_trace = rows[index]["saved_prefix_trace"]
+            swapped_trace = _saved_prefix_trace(
+                model,
+                tokenizer,
+                swapped,
+                target_ids_cache[index],
+                generated_ids,
+                rows[index]["target_joint_count"],
+            )
+            zero_trace = _saved_prefix_trace(
+                model,
+                tokenizer,
+                zero,
+                target_ids_cache[index],
+                generated_ids,
+                rows[index]["target_joint_count"],
+            )
+            rows[index]["self_prefix_condition"] = {
+                "correct": _compact_prefix_trace(correct_trace),
+                "swapped": _compact_prefix_trace(swapped_trace),
+                "zero": _compact_prefix_trace(zero_trace),
+                "swapped_vs_correct": _compare_prefix_traces(
+                    correct_trace,
+                    swapped_trace,
+                ),
+                "zero_vs_correct": _compare_prefix_traces(
+                    correct_trace,
+                    zero_trace,
+                ),
+            }
             print(
                 json.dumps(
                     {
                         "event": "condition_likelihood",
                         "index": index,
                         "joint0": rows[index]["condition_likelihood"]["joint0_coord"],
+                        "gt_prefix_decisions": rows[index][
+                            "condition_group_likelihood"
+                        ].get("all_decisions"),
+                        "self_prefix_condition": rows[index][
+                            "self_prefix_condition"
+                        ],
                     },
                     ensure_ascii=False,
                 ),

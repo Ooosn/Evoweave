@@ -54,6 +54,70 @@ def _tree_depths(parents: np.ndarray) -> np.ndarray:
     return depths
 
 
+def _stack_close_audit(parents: np.ndarray) -> dict[str, Any]:
+    """Check whether the stored node order is exactly representable by DFS CLOSE tokens."""
+
+    if parents.shape[0] <= 0 or int(parents[0]) >= 0:
+        return {
+            "representable": False,
+            "first_invalid_joint": 0,
+            "close_count": 0,
+            "max_consecutive_closes": 0,
+            "flat_token_count": 0,
+            "stack_token_count": 0,
+        }
+
+    stack = [0]
+    close_count = 0
+    max_consecutive_closes = 0
+    branch_jump_count = 0
+    for joint_index in range(1, int(parents.shape[0])):
+        parent_index = int(parents[joint_index])
+        if parent_index not in stack:
+            return {
+                "representable": False,
+                "first_invalid_joint": int(joint_index),
+                "close_count": int(close_count),
+                "max_consecutive_closes": int(max_consecutive_closes),
+                "flat_token_count": 0,
+                "stack_token_count": 0,
+            }
+        parent_offset = stack.index(parent_index)
+        closes = len(stack) - parent_offset - 1
+        close_count += closes
+        max_consecutive_closes = max(max_consecutive_closes, closes)
+        del stack[parent_offset + 1 :]
+        if parent_index != joint_index - 1:
+            branch_jump_count += 1
+        if stack[-1] != parent_index:
+            raise AssertionError("stack parent recovery failed")
+        stack.append(joint_index)
+
+    trailing_closes = len(stack)
+    close_count += trailing_closes
+    max_consecutive_closes = max(max_consecutive_closes, trailing_closes)
+    joint_count = int(parents.shape[0])
+    if close_count != joint_count:
+        raise AssertionError(
+            f"expected one CLOSE per node, got close_count={close_count} joints={joint_count}"
+        )
+
+    # BOS + class + coordinate triples + branch jumps + EOS.
+    flat_token_count = 3 + 3 * joint_count + 4 * branch_jump_count
+    # BOS + class + coordinate triples + one CLOSE per node + EOS.
+    stack_token_count = 3 + 4 * joint_count
+    return {
+        "representable": True,
+        "first_invalid_joint": None,
+        "close_count": int(close_count),
+        "max_consecutive_closes": int(max_consecutive_closes),
+        "branch_jump_count": int(branch_jump_count),
+        "flat_token_count": int(flat_token_count),
+        "stack_token_count": int(stack_token_count),
+        "stack_to_flat_token_ratio": float(stack_token_count / flat_token_count),
+    }
+
+
 def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
     path = Path(row["path"])
     with np.load(path, allow_pickle=True) as raw:
@@ -97,6 +161,7 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
             children[parent_index].append(child_index)
     child_counts = np.asarray([len(value) for value in children], dtype=np.int64)
     depths = _tree_depths(parents)
+    stack_close = _stack_close_audit(parents)
 
     query_vertices = vertices[0]
     mesh_lo = query_vertices.min(axis=0)
@@ -293,6 +358,7 @@ def _analyze_row(row: dict[str, Any]) -> dict[str, Any]:
         "high_degree_gt8_connector_count": int(is_connector[high_degree_nodes].sum()),
         "high_degree_gt8_skinned_count": int(has_skin[high_degree_nodes].sum()),
         "topology_signature": topology_signature,
+        "stack_close": stack_close,
     }
 
 
@@ -338,6 +404,10 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
     edge_total = sum(row["edge_count"] for row in rows)
     node_total = sum(row["joint_count"] for row in rows)
     sample_count = len(rows)
+    stack_rows = [row["stack_close"] for row in rows]
+    stack_representable = [
+        row for row in stack_rows if bool(row["representable"])
+    ]
 
     def sample_rate(predicate: Any) -> float:
         return float(sum(bool(predicate(row)) for row in rows) / max(sample_count, 1))
@@ -458,6 +528,38 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
             ),
         },
         "joint_motion_bbox": _quantiles(joint_motion),
+        "stack_close_representation": {
+            "representable_count": int(len(stack_representable)),
+            "representable_fraction": float(
+                len(stack_representable) / max(sample_count, 1)
+            ),
+            "max_consecutive_closes": _quantiles(
+                row["max_consecutive_closes"] for row in stack_representable
+            ),
+            "flat_token_count": _quantiles(
+                row["flat_token_count"] for row in stack_representable
+            ),
+            "stack_token_count": _quantiles(
+                row["stack_token_count"] for row in stack_representable
+            ),
+            "stack_to_flat_token_ratio": _quantiles(
+                row["stack_to_flat_token_ratio"] for row in stack_representable
+            ),
+            "flat_total_tokens": int(
+                sum(row["flat_token_count"] for row in stack_representable)
+            ),
+            "stack_total_tokens": int(
+                sum(row["stack_token_count"] for row in stack_representable)
+            ),
+            "invalid_examples": [
+                {
+                    "path": rows[index]["path"],
+                    "first_invalid_joint": value["first_invalid_joint"],
+                }
+                for index, value in enumerate(stack_rows)
+                if not bool(value["representable"])
+            ][:20],
+        },
         "samples": {
             "with_connector_fraction": sample_rate(lambda row: row["connector_count"] > 0),
             "with_unskinned_connector_fraction": sample_rate(

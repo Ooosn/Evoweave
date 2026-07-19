@@ -26,6 +26,7 @@ model_training/
   docs/
     CURRENT_MODEL_CONTEXT.md
     EVIDENCE_AWARE_MOTION_CONDITIONING.md
+    FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md
     PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md
     PUPPETEER_DECODER_BACKBONE_FEASIBILITY_20260706.md
   jobs/
@@ -89,3 +90,9 @@ identity-1024 condition transfer, joint-slot embedding, random query poses,
 and OneCycle scheduling. The trainer enforces this contract before model
 construction. Read `docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`
 for the controlled retraining evidence and remaining generation checks.
+
+The current flat UniRig hitmax mechanism is documented in
+`docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md`. Its conclusion is based
+on fixed-prefix condition interventions, repetition analysis, bounded prefix
+repairs, full training-length statistics, and surface-sampling replay. Do not
+treat max-token termination or forced EOS as a model-quality fix.

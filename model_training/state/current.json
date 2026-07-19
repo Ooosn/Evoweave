@@ -1,13 +1,14 @@
 {
   "schema_version": 1,
   "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-18T17:56:47+09:00",
+  "updated_at": "2026-07-19T17:42:07+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
     "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md",
     "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md"
   ],
@@ -88,7 +89,13 @@
     "all 32 heldout52 train-stratum paths are in the flat UniRig training manifest, which received 80016 exposures over 15920 rows, or about 5.03 nominal exposures per row",
     "flat UniRig on a fixed random 60-row training sample succeeds on 56 rows with 4 hitmax, successful-row F1 0.8472, and all-row zero-for-hitmax F1 0.7907",
     "flat UniRig on valid-common60 succeeds on 54 rows with 6 hitmax, successful-row F1 0.7935, and all-row zero-for-hitmax F1 0.7141",
-    "the remembered early-HGC F1 0.751-0.796 came from four train-manifest comparison rows, not validation; that checkpoint's eight-row generation_valid F1 was 0.117-0.159"
+    "the remembered early-HGC F1 0.751-0.796 came from four train-manifest comparison rows, not validation; that checkpoint's eight-row generation_valid F1 was 0.117-0.159",
+    "under correct GT prefixes the flat UniRig decoder uses mesh condition: all-coordinate NLL is 1.663 for correct condition versus 3.800 for swapped condition, so the hitmax mechanism is not a global input-target mismatch",
+    "on the ten hitmax self-prefix trajectories correct-versus-swapped coordinate top-1 agreement rises from 0.275 within three tokens of the first mismatch to 1.000 at distance 256-511, showing that long self-prefix state overwhelms condition",
+    "seven of ten flat UniRig hitmax rows terminate in one coordinate token repeated 302-780 times; hitmax trigram unique ratio is 0.0466 versus 0.8408 for successful rows",
+    "repairing only the first mismatched token ends three of ten hitmax rows and does not guarantee usable topology; forcing one two or four GT joints is non-monotonic and cannot be a model fix",
+    "the flat tokenizer target length median is 207 tokens; only 1.53 percent of train rows exceed 512 and 0.088 percent exceed 1024, so hitmax trajectories enter weakly supervised positions without exceeding decoder capacity",
+    "one degenerate-area mesh makes CUDA face multinomial and FPS replay non-bitwise-deterministic, but both sampled conditions still produce 1400-token 460-joint loops and match on 1388 of 1400 generated positions; sampling is an amplifier rather than the primary cause"
   ],
   "unknowns": [
     "which topology and length decision representation can make parent and EOS depend directly on condition without destroying frequent-family geometry",
@@ -106,12 +113,13 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "qlogin_job_id": 124452019,
-    "status": "auto_logged_out",
-    "detected_at": "2026-07-18T17:56:47+09:00",
-    "current_host": "pcl03",
+    "qlogin_job_id": 124519658,
+    "status": "active_at_last_check",
+    "detected_at": "2026-07-19T17:42:07+09:00",
+    "current_host": "pcg01",
+    "resources": "1xH100 80GB",
     "gpu_processes": 0,
-    "decision": "Do not request another GPU allocation before the next model representation and preflight contract are defined."
+    "decision": "Retain the foreground qlogin for inspection; do not train or release it without the user's instruction."
   },
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
@@ -181,7 +189,26 @@
       "joint_count_mae_success_rows": 11.092592592592593
     }
   },
-  "next_required_result": "Define and audit a new topology/length decision representation or objective that makes parent and EOS depend directly on condition while preserving flat UniRig geometry; do not start another training run before code-level contract, gradient, GT-prefix, self-prefix, and matched-generation preflights are specified.",
+  "flat_hitmax_causal_diagnosis": {
+    "status": "completed",
+    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+    "manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
+    "seed": 101,
+    "row_count": 52,
+    "hitmax_count": 10,
+    "primary_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_hitmax_causal_complete_seed101_20260719.json",
+    "sampling_replay_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_condition_determinism_first7_replay_seed101_20260719.json",
+    "diagnosis_document": "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
+    "mechanism": "Rare-topology mapping weakness creates an early off-manifold self prefix; prefix influence then overwhelms mesh condition and enters a grammar-valid constant or periodic coordinate loop where EOS has no recovery supervision.",
+    "rejected_shortcuts": [
+      "increase max_new_tokens",
+      "force EOS at generation limit",
+      "repair only the first mismatch",
+      "fix the FPS seed",
+      "use EOS loss without a semantically defined recovery target"
+    ]
+  },
+  "next_required_result": "Define and audit a topology and stopping representation that conditions parent and EOS on both mesh evidence and an explicit partial-tree state, rejects duplicate or zero-length continuation, and gives off-manifold prefixes a graph-matched recovery target while preserving flat UniRig geometry. Do not start training before GT-prefix, self-prefix, condition-swap, gradient, validity, bounded-generation, and matched-visualization preflights are specified.",
   "active_operation": {
     "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
     "status": "completed",
@@ -258,17 +285,15 @@
     "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
   },
   "last_operation": {
-    "name": "flat_unirig_train_and_valid_distribution_audit",
+    "name": "flat_unirig_hitmax_causal_diagnosis",
     "status": "completed",
     "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
     "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-    "valid_common_manifest": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/valid_common60_seed20260718.jsonl",
-    "train_random_manifest": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718/train_random60_seed20260718.jsonl",
-    "diagnosis": "The heldout52 F1 is depressed by deliberate enrichment with 36 low-joint hard rows and must not represent ordinary validation quality. Flat UniRig retains 0.7141 all-row F1 on valid-common60 and 0.7907 on random train60 when hitmax rows count as zero, but still hits max on 6/60 validation and 4/60 training-distribution rows.",
-    "diagnosis_document": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "valid_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718/flat_valid_common60_seed101.json",
-    "train_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718/flat_train_random60_seed101.json",
-    "qlogin_job_id": 124452019
+    "diagnosis": "Hitmax is a two-stage failure: weak rare-topology mapping creates an off-manifold self prefix, then prefix state overwhelms mesh condition and the flat grammar permits a constant or periodic coordinate loop with no learned EOS recovery.",
+    "diagnosis_document": "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
+    "primary_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_hitmax_causal_complete_seed101_20260719.json",
+    "sampling_replay_report": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/diagnostics/flat_condition_determinism_first7_replay_seed101_20260719.json",
+    "qlogin_job_id": 124519658
   },
   "receipt_max_age_minutes": 240
 }

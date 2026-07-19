@@ -1,6 +1,6 @@
 # 当前模型状态（唯一入口）
 
-更新时间：2026-07-16
+更新时间：2026-07-19
 
 状态 ID：`model-puppeteer-20260716-001`
 
@@ -8,6 +8,9 @@
 Puppeteer 之前必须先读本文档。历史根因的完整证据见
 `PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`；本文只记录已经确认的
 事实、当前可信产物、未解决问题和下一步允许执行的工作。
+
+flat UniRig 的完整 hitmax 因果证据见
+`FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md`。
 
 ## 1. 任务与固定数据契约
 
@@ -315,8 +318,10 @@ reduction 不能修复映射，并会破坏常见 family。
 1. topology-family 频率是已确认的质量预测变量和暴露问题，但 exact-topology
    重采样已证明它不是可独立修复问题的充分手段。仍需区分表示能力、条件到拓扑
    决策路径和 topology 内在难度。
-2. flat UniRig 的 10 个 hitmax 已定位为 GT-prefix 下多数会 EOS、self-prefix
-   下 EOS 被抑制的 exposure mismatch；如何修复而不产生垃圾骨架仍未验证。
+2. flat UniRig 的 10 个 hitmax 已定位为“两阶段故障”：低频/未见 topology
+   映射较弱导致早期 off-manifold self prefix；随后 prefix 逐渐压过 mesh
+   condition，并进入 flat tokenizer 允许的常量或周期坐标环。单独纠正首个
+   token、固定 FPS 或强制 EOS 都不能保证生成可用骨架。
 3. 尚未证明哪种 decoder/表示能同时保留 flat UniRig 的拓扑先验与显式 parent
    index 的确定连接优势。
 4. sibling canonical order 当前依赖名称；需要稳定、跨 pose、不依赖资产命名的
@@ -338,14 +343,18 @@ reduction 不能修复映射，并会破坏常见 family。
 
 ## 11. 下一项唯一允许的执行工作
 
-同预算 flat UniRig 重训、matched evaluation、逐 token 因果诊断、
-exact-topology probe 和 self-prefix rollout 审计已经完成。下一项只能是：
+同预算 flat UniRig 重训、matched evaluation、逐 token 条件干预、重复模式、
+前缀修复、训练长度分布和采样确定性审计已经完成。下一项只能是：
 
 1. 在代码级定义新的 topology/length 决策表示或训练目标；
-2. 明确 condition 如何直接影响 parent 与 EOS，而不是只依赖已生成坐标；
+2. 明确 condition 和 partial-tree state 如何直接影响 parent 与 EOS，而不是
+   只依赖已生成坐标；
 3. 保留 flat UniRig 已验证的静态骨架先验，不以“没有 hitmax”代替骨架质量；
-4. 先通过 GT-prefix、自前缀、跨 condition、梯度和自由生成可视化审计；
-5. 只有 heldout-52 长尾与 valid-common60 同时改善，才允许新的正式多卡训练。
+4. 给 duplicate joint、zero-length bone 和未覆盖结构定义显式有效性；错误
+   partial graph 的监督必须先与 GT graph 语义匹配，不能按 ordinal step
+   强绑；
+5. 先通过 GT-prefix、自前缀、跨 condition、梯度和自由生成可视化审计；
+6. 只有 heldout-52 长尾与 valid-common60 同时改善，才允许新的正式多卡训练。
 
 不得重复 joint-count-bin、exact-topology sampler、单独 sequence-mean、
 termination auxiliary、root/joint-0、FPS 或当前 pose geometry sibling-sort

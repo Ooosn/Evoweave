@@ -48,8 +48,8 @@ Owns:
 Read first:
 
 - `model_training/README.md`
-- `model_training/docs/BASELINE_RUN_PLAN.md`
-- `model_training/docs/HITMAX_CAUSAL_DIAGNOSIS.md`
+- `model_training/docs/CURRENT_MODEL_CONTEXT.md`
+- `model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md`
 - `model_training/docs/EVIDENCE_AWARE_MOTION_CONDITIONING.md`
 
 ### `model_training_oldline_baidu_20260624/`

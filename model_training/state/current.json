@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-stack-close-20260720-001",
-  "updated_at": "2026-07-20T04:07:38+09:00",
+  "updated_at": "2026-07-20T13:57:25+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_ROUTE_20260720.md",
   "required_context": [
@@ -45,7 +45,9 @@
     "condition refresh adds 3166464 parameters through zero-residual cross-attention at decoder layers 8, 16, and 24 without changing initial logits",
     "the matched 600-exposure condition-refresh diagnostic produced 32 of 32 legal EOS generations, zero hitmax, mean topology F1 0.568839, and mean J2J 0.057209",
     "condition refresh increased median full-trainer step time from 2.87990 seconds to 2.90510 seconds, about 0.9 percent",
-    "the matched short run does not show a condition-refresh quality improvement over the no-refresh route"
+    "the matched short run does not show a condition-refresh quality improvement over the no-refresh route",
+    "the shuki training adapter now preserves gpu_per_worker=2 through AIStation submission",
+    "both isolated 2xA100-80 formal routes have nonempty AIStation job ids"
   ],
   "unknowns": [
     "formal 80016-exposure stack-close validation performance and hitmax rate",
@@ -61,37 +63,38 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "Submit the two isolated 2xA100-80 full fine-tunes from the official static UniRig checkpoint: stack-close sibling-randomization plus 5-percent axial/radial prefix perturbation, and the matched route with zero-residual condition refresh. The shuki training adapter currently persists gpu_per_worker=2 but sends acceleratorCardNum=0 to AIStation and must be fixed or bypassed through an authorized official-platform endpoint.",
+  "next_required_result": "Monitor both submitted AIStation jobs until they start. Verify each resolved_contract.txt records the intended immutable commit, static UniRig initialization, two visible A100-80 GPUs, effective batch 48, and the correct condition-refresh setting before accepting training progress.",
   "active_operation": {
-    "name": "stack_close_two_route_submission_20260720",
-    "status": "both_preflights_passed_awaiting_platform_submission",
-    "server": "Westlake development environment bb73a9",
-    "resources": "1xA800-SXM4-80GB",
-    "source_commit": "6219a6a",
+    "name": "stack_close_two_route_formal_training_20260720",
+    "status": "both_formal_tasks_submitted",
     "initialization": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
     "dynamic_checkpoint_loaded": false,
     "formal_resources": "2xA100-SXM4-80GB",
     "formal_effective_batch": 48,
     "route1_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_79e6da4",
+    "route1_source_commit": "79e6da43fda8225831c7d1ff41669963f9d058c8",
     "route2_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_refresh_eb92139",
     "route2_source_commit": "eb92139446a845e689d2613614662cf37a3777a6",
-    "platform_submission_blocker": "shuki /api/train stores gpu_per_worker=2 but its AIStation payload is rejected as acceleratorCardNum=0 before a job id is created"
+    "route1_proxy_task_id": "dac034",
+    "route1_aistation_job_id": "192fe278-2147-43df-a21b-fc9a746de667",
+    "route2_proxy_task_id": "31dece",
+    "route2_aistation_job_id": "82f5a3ba-f23a-42c7-a2c1-78d55462f32b"
   },
   "last_operation": {
-    "name": "stack_close_condition_refresh_matched_preflight",
+    "name": "stack_close_two_route_formal_submission",
     "status": "completed_passed",
-    "contract_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/contract.json",
-    "optimizer_report": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/full_one_step/logs/train.jsonl",
-    "generation_summary": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_refresh_preflight_20260720/train32_step200_freegen/summary.json",
-    "generation_rows": 32,
-    "detokenize_ok": 32,
-    "has_eos": 32,
-    "hit_max_without_eos": 0,
-    "topology_f1_mean": 0.5688386893170282,
-    "topology_f1_median": 0.5465747702589807,
-    "j2j_mean": 0.05720903940527933,
-    "matched_no_refresh_topology_f1_mean": 0.5901210750243167,
-    "matched_no_refresh_j2j_mean": 0.052681558791758315
+    "group": "8A100_80",
+    "card_type": "NVIDIA-A100-SXM4-80GB",
+    "worker_count": 1,
+    "gpu_per_worker": 2,
+    "cpu_per_worker": 24,
+    "dist": false,
+    "route1_status": "submitted",
+    "route1_proxy_task_id": "dac034",
+    "route1_aistation_job_id": "192fe278-2147-43df-a21b-fc9a746de667",
+    "route2_status": "submitted",
+    "route2_proxy_task_id": "31dece",
+    "route2_aistation_job_id": "82f5a3ba-f23a-42c7-a2c1-78d55462f32b"
   },
   "receipt_max_age_minutes": 240
 }

@@ -205,7 +205,11 @@ fi
 
 route="stack_close"
 if [[ "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}" != "0" && "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}" != "0.0" ]]; then
-  route="${route}_action"
+  if [[ "${JOB_STACK_ACTION_CONDITION_DIM:-0}" == "0" ]]; then
+    route="${route}_action"
+  else
+    route="${route}_condition_action"
+  fi
 fi
 if [[ -n "${JOB_CONDITION_REFRESH_LAYERS:-}" ]]; then
   route="${route}_condition_refresh"

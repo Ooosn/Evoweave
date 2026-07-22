@@ -383,7 +383,11 @@ def main() -> None:
         )
         route_parts = ["stack_close"]
         if args.stack_action_loss_weight > 0.0:
-            route_parts.append("action")
+            route_parts.append(
+                "condition_action"
+                if args.stack_action_condition_dim > 0
+                else "action"
+            )
         if refresh_layers:
             route_parts.append("condition_refresh")
         route_parts.append(

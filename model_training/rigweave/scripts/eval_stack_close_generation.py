@@ -62,6 +62,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--ablate-motion-features", action="store_true")
     parser.add_argument("--ablate-time-embedding", action="store_true")
+    parser.add_argument(
+        "--oracle-stack-actions",
+        action="store_true",
+        help=(
+            "Diagnostic upper bound: force the GT CHILD/CLOSE sequence while "
+            "leaving all coordinate tokens autoregressive. Never used for training."
+        ),
+    )
     return parser
 
 
@@ -402,6 +410,67 @@ def _row_surface_seed(base_seed: int, manifest_index: int) -> int:
     ) % (2**63 - 1)
 
 
+class _OracleStackActionHead(torch.nn.Module):
+    condition_dim = 0
+
+    def __init__(self, actions: list[int]) -> None:
+        super().__init__()
+        if not actions or any(action not in {0, 1} for action in actions):
+            raise ValueError("oracle stack actions must be a nonempty binary sequence")
+        self.register_buffer(
+            "actions",
+            torch.tensor(actions, dtype=torch.long),
+            persistent=False,
+        )
+        self.cursor = 0
+
+    def forward(
+        self,
+        query: torch.Tensor,
+        condition: torch.Tensor,
+    ) -> torch.Tensor:
+        del condition
+        if query.shape[0] != 1 or query.shape[1] != 1:
+            raise ValueError("oracle stack action generation requires query shape (1,1,D)")
+        if self.cursor >= int(self.actions.numel()):
+            raise RuntimeError("generation requested more stack actions than the GT tree")
+        action = int(self.actions[self.cursor].item())
+        self.cursor += 1
+        logits = query.new_full((1, 1, 2), -20.0, dtype=torch.float32)
+        logits[0, 0, action] = 20.0
+        return logits
+
+
+def _oracle_stack_actions(
+    batch: dict[str, Any],
+    *,
+    close_token: int,
+) -> list[int]:
+    valid = batch["attention_mask"][0].bool()
+    target_ids = batch["target_ids"][0][valid]
+    labels = target_ids[1:]
+    actions: dict[int, int] = {
+        int(index): 1
+        for index in torch.nonzero(
+            labels == int(close_token),
+            as_tuple=False,
+        ).flatten().tolist()
+    }
+    joint_count = int(batch["joint_count"][0].item())
+    for coordinate_start in batch["coordinate_token_positions"][0, 1:joint_count, 0]:
+        position = int(coordinate_start.item()) - 1
+        if position in actions:
+            raise RuntimeError(f"conflicting oracle stack action at label position {position}")
+        actions[position] = 0
+    ordered = [actions[position] for position in sorted(actions)]
+    expected = max(1, 2 * joint_count - 1)
+    if len(ordered) != expected:
+        raise RuntimeError(
+            f"oracle stack action count={len(ordered)}, expected={expected} for joints={joint_count}"
+        )
+    return ordered
+
+
 def main() -> None:
     args = _parser().parse_args()
     if args.limit <= 0:
@@ -514,11 +583,24 @@ def main() -> None:
                         dtype=amp_dtype,
                         enabled=device.type == "cuda",
                     ):
-                        generated_ids = model.generate_batch_item(
-                            batch,
-                            row=0,
-                            max_new_tokens=args.max_new_tokens,
-                        )
+                        original_action_head = model.stack_action_head
+                        oracle_action_head = None
+                        if args.oracle_stack_actions:
+                            oracle_action_head = _OracleStackActionHead(
+                                _oracle_stack_actions(
+                                    batch,
+                                    close_token=tokenizer.token_id_close,
+                                )
+                            ).to(device)
+                            model.stack_action_head = oracle_action_head
+                        try:
+                            generated_ids = model.generate_batch_item(
+                                batch,
+                                row=0,
+                                max_new_tokens=args.max_new_tokens,
+                            )
+                        finally:
+                            model.stack_action_head = original_action_head
                 eos_hits = np.flatnonzero(generated_ids == int(tokenizer.eos))
                 pred = tokenizer.detokenize(generated_ids)
                 block = {
@@ -537,6 +619,17 @@ def main() -> None:
                     "hit_max_without_eos": bool(
                         generated_ids.shape[0] - 2 >= args.max_new_tokens
                         and not eos_hits.size
+                    ),
+                    "oracle_stack_actions": bool(args.oracle_stack_actions),
+                    "oracle_actions_consumed": (
+                        int(oracle_action_head.cursor)
+                        if oracle_action_head is not None
+                        else None
+                    ),
+                    "oracle_actions_total": (
+                        int(oracle_action_head.actions.numel())
+                        if oracle_action_head is not None
+                        else None
                     ),
                     "metrics": _output_metrics(pred, target, metric_range),
                 }
@@ -635,6 +728,7 @@ def main() -> None:
             "per_manifest_index": True,
         },
         "generation": _summarize(rows, "stack_close"),
+        "oracle_stack_actions": bool(args.oracle_stack_actions),
         "mean_topology_f1": _finite_mean(
             rows,
             ("stack_close", "metrics", "topology", "edge_f1"),

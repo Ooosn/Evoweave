@@ -15,7 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -47,6 +47,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--visual-limit", type=int, default=12)
     parser.add_argument("--seed", type=int, default=20260720)
     parser.add_argument("--device", default="cuda:0")
+    parser.add_argument(
+        "--indices-file",
+        type=Path,
+        help="Optional newline-delimited manifest indices. Preserves original dataset indices and poses.",
+    )
+    parser.add_argument("--ablate-motion-features", action="store_true")
+    parser.add_argument("--ablate-time-embedding", action="store_true")
     return parser
 
 
@@ -99,8 +106,8 @@ def _build_model(
         heads=int(train_args.get("motion_heads", 8)),
         register_tokens=int(train_args.get("register_tokens", 96)),
         max_frames=max(int(train_args.get("frames", 24)), 48),
-        use_motion_features=True,
-        use_time_embedding=True,
+        use_motion_features=bool(train_args.get("use_motion_features", True)),
+        use_time_embedding=bool(train_args.get("use_time_embedding", True)),
         gradient_checkpointing=True,
     )
     conditioner = DynamicRigConditioner(surface_tokenizer, motion_encoder)
@@ -352,6 +359,26 @@ def _finite_mean(rows: list[dict[str, Any]], path: tuple[str, ...]) -> float | N
     return None if not values else float(np.mean(values))
 
 
+def _load_manifest_indices(path: Path, dataset_size: int) -> list[int]:
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    indices = [
+        int(line.strip())
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    if not indices:
+        raise ValueError("--indices-file is empty")
+    if len(indices) != len(set(indices)):
+        raise ValueError("--indices-file contains duplicate indices")
+    invalid = [index for index in indices if index < 0 or index >= dataset_size]
+    if invalid:
+        raise ValueError(
+            f"manifest indices outside [0,{dataset_size}): {invalid[:20]}"
+        )
+    return indices
+
+
 def main() -> None:
     args = _parser().parse_args()
     if args.limit <= 0:
@@ -376,6 +403,15 @@ def main() -> None:
     move_dynamic_model_to_device(model, device)
     if hasattr(model, "condition_refresh_adapters"):
         model.condition_refresh_adapters.to(device)
+    motion_encoder = model.conditioner.motion_encoder
+    trained_condition_flags = {
+        "use_motion_features": bool(motion_encoder.use_motion_features),
+        "use_time_embedding": bool(motion_encoder.use_time_embedding),
+    }
+    if args.ablate_motion_features:
+        motion_encoder.use_motion_features = False
+    if args.ablate_time_embedding:
+        motion_encoder.use_time_embedding = False
     model.eval()
 
     from rigweave.stack_close import (
@@ -388,7 +424,7 @@ def main() -> None:
         legacy_tokenizer=legacy_tokenizer,
         stack_tokenizer=tokenizer,
         frame_count=int(train_args.get("frames", 24)),
-        limit=args.limit,
+        limit=0 if args.indices_file is not None else args.limit,
         random_query=False,
         random_sibling_order=False,
         seed=args.seed,
@@ -397,8 +433,13 @@ def main() -> None:
             train_args.get("motion_vertex_samples", 512)
         ),
     )
+    selected_indices = None
+    evaluation_dataset = dataset
+    if args.indices_file is not None:
+        selected_indices = _load_manifest_indices(args.indices_file, len(dataset))
+        evaluation_dataset = Subset(dataset, selected_indices)
     loader = DataLoader(
-        dataset,
+        evaluation_dataset,
         batch_size=1,
         shuffle=False,
         num_workers=0,
@@ -412,7 +453,12 @@ def main() -> None:
     rows: list[dict[str, Any]] = []
     metric_range = _continuous_range(tokenizer)
     with torch.inference_mode():
-        for index, batch in enumerate(loader):
+        for evaluation_position, batch in enumerate(loader):
+            index = (
+                selected_indices[evaluation_position]
+                if selected_indices is not None
+                else evaluation_position
+            )
             batch = move_batch(batch, device)
             valid = batch["attention_mask"][0].bool()
             target_ids = (
@@ -477,6 +523,7 @@ def main() -> None:
             )
             row = {
                 "index": index,
+                "evaluation_position": evaluation_position,
                 "path": batch["path"][0],
                 "selected_frames": selected_frames,
                 "query_frame": int(selected_frames[0]),
@@ -506,6 +553,7 @@ def main() -> None:
                 json.dumps(
                     {
                         "index": index,
+                        "evaluation_position": evaluation_position,
                         "target_joints": int(target.joints.shape[0]),
                         "pred_joints": metrics.get("pred_joint_count"),
                         "has_eos": block.get("has_eos"),
@@ -525,6 +573,14 @@ def main() -> None:
         "checkpoint_step": int(payload.get("step", -1)),
         "checkpoint_sample_seen": payload.get("sample_seen"),
         "manifest": str(manifest),
+        "manifest_indices": selected_indices,
+        "condition_flags": {
+            "trained": trained_condition_flags,
+            "evaluated": {
+                "use_motion_features": bool(motion_encoder.use_motion_features),
+                "use_time_embedding": bool(motion_encoder.use_time_embedding),
+            },
+        },
         "metric_contract": "shared_eval_dynamic_rig_generation",
         "generation": _summarize(rows, "stack_close"),
         "mean_topology_f1": _finite_mean(

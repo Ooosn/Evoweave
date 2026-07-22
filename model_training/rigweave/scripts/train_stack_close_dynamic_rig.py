@@ -59,6 +59,21 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--motion-heads", type=int, default=8)
     parser.add_argument("--motion-fps-ratio", type=float, default=0.7)
     parser.add_argument("--motion-vertex-samples", type=int, default=512)
+    parser.add_argument(
+        "--use-motion-features",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument(
+        "--use-time-embedding",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
+    parser.add_argument(
+        "--random-sibling-order",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
     parser.add_argument("--batch-size", type=int, default=3)
     parser.add_argument("--grad-accum-steps", type=int, default=8)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -344,8 +359,8 @@ def main() -> None:
             heads=args.motion_heads,
             register_tokens=args.register_tokens,
             max_frames=max(args.frames, 48),
-            use_motion_features=True,
-            use_time_embedding=True,
+            use_motion_features=args.use_motion_features,
+            use_time_embedding=args.use_time_embedding,
             gradient_checkpointing=True,
         )
         conditioner = DynamicRigConditioner(surface_tokenizer, motion_encoder)
@@ -396,7 +411,7 @@ def main() -> None:
             frame_count=args.frames,
             limit=args.limit_train,
             random_query=True,
-            random_sibling_order=True,
+            random_sibling_order=args.random_sibling_order,
             seed=args.seed,
             motion_fps_ratio=args.motion_fps_ratio,
             motion_vertex_samples=args.motion_vertex_samples,

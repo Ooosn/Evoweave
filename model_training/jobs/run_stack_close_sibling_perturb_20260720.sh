@@ -29,6 +29,17 @@ else
   GRAD_ACCUM=16
 fi
 EXPECTED_GPUS="${JOB_EXPECTED_GPUS:-${NPROC}}"
+USE_MOTION_FEATURES="${JOB_USE_MOTION_FEATURES:-1}"
+USE_TIME_EMBEDDING="${JOB_USE_TIME_EMBEDDING:-1}"
+RANDOM_SIBLING_ORDER="${JOB_RANDOM_SIBLING_ORDER:-1}"
+
+for flag_name in USE_MOTION_FEATURES USE_TIME_EMBEDDING RANDOM_SIBLING_ORDER; do
+  flag_value="${!flag_name}"
+  if [[ "${flag_value}" != "0" && "${flag_value}" != "1" ]]; then
+    echo "[stack_close] ERROR: ${flag_name} must be 0 or 1, got ${flag_value}" >&2
+    exit 2
+  fi
+done
 
 for required in \
   "${TRAIN_MANIFEST}" \
@@ -148,6 +159,21 @@ CMD=(
   --seed "${JOB_SEED:-20260720}"
   --amp-dtype "${JOB_AMP_DTYPE:-bf16}"
 )
+if [[ "${USE_MOTION_FEATURES}" == "1" ]]; then
+  CMD+=(--use-motion-features)
+else
+  CMD+=(--no-use-motion-features)
+fi
+if [[ "${USE_TIME_EMBEDDING}" == "1" ]]; then
+  CMD+=(--use-time-embedding)
+else
+  CMD+=(--no-use-time-embedding)
+fi
+if [[ "${RANDOM_SIBLING_ORDER}" == "1" ]]; then
+  CMD+=(--random-sibling-order)
+else
+  CMD+=(--no-random-sibling-order)
+fi
 if [[ -n "${JOB_RESUME_CHECKPOINT:-}" ]]; then
   CMD+=(--resume-checkpoint "${JOB_RESUME_CHECKPOINT}")
 fi
@@ -170,6 +196,9 @@ fi
   echo "condition_refresh_layers=${JOB_CONDITION_REFRESH_LAYERS:-}"
   echo "condition_refresh_dim=${JOB_CONDITION_REFRESH_DIM:-256}"
   echo "condition_refresh_heads=${JOB_CONDITION_REFRESH_HEADS:-8}"
+  echo "use_motion_features=${USE_MOTION_FEATURES}"
+  echo "use_time_embedding=${USE_TIME_EMBEDDING}"
+  echo "random_sibling_order=${RANDOM_SIBLING_ORDER}"
 } > "${OUTPUT_DIR}/resolved_contract.txt"
 
 printf '[stack_close] command:'

@@ -103,6 +103,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--perturb-warmup-samples", type=int, default=5_000)
     parser.add_argument("--perturb-ramp-samples", type=int, default=15_000)
     parser.add_argument("--stack-action-loss-weight", type=float, default=0.0)
+    parser.add_argument("--stack-action-condition-dim", type=int, default=0)
+    parser.add_argument("--stack-action-condition-heads", type=int, default=8)
     parser.add_argument(
         "--condition-refresh-layers",
         default="",
@@ -169,6 +171,25 @@ def _validate_contract(args: argparse.Namespace, world_size: int) -> None:
         raise FileNotFoundError(args.initialize_stack_checkpoint)
     if args.resume_checkpoint is not None and args.initialize_stack_checkpoint is not None:
         raise ValueError("resume and initialization checkpoints are mutually exclusive")
+    if args.stack_action_condition_dim < 0:
+        raise ValueError("stack_action_condition_dim must be non-negative")
+    if args.stack_action_condition_heads <= 0:
+        raise ValueError("stack_action_condition_heads must be positive")
+    if (
+        args.stack_action_condition_dim > 0
+        and args.stack_action_condition_dim % args.stack_action_condition_heads != 0
+    ):
+        raise ValueError(
+            "stack_action_condition_dim must be divisible by "
+            "stack_action_condition_heads"
+        )
+    if (
+        args.stack_action_condition_dim > 0
+        and args.stack_action_loss_weight <= 0.0
+    ):
+        raise ValueError(
+            "condition-aware stack action requires a positive action loss weight"
+        )
     if args.freeze_base_for_stack_action and (
         args.initialize_stack_checkpoint is None
         or args.stack_action_loss_weight <= 0.0
@@ -415,6 +436,8 @@ def main() -> None:
                 stack_tokenizer,
                 perturbation=perturbation,
                 stack_action_loss_weight=args.stack_action_loss_weight,
+                stack_action_condition_dim=args.stack_action_condition_dim,
+                stack_action_condition_heads=args.stack_action_condition_heads,
                 num_surface_samples=args.surface_samples,
                 vertex_samples=args.vertex_samples,
                 query_tokens=args.query_tokens,
@@ -429,6 +452,8 @@ def main() -> None:
                 stack_tokenizer,
                 perturbation=perturbation,
                 stack_action_loss_weight=args.stack_action_loss_weight,
+                stack_action_condition_dim=args.stack_action_condition_dim,
+                stack_action_condition_heads=args.stack_action_condition_heads,
                 num_surface_samples=args.surface_samples,
                 vertex_samples=args.vertex_samples,
                 query_tokens=args.query_tokens,
@@ -675,6 +700,8 @@ def main() -> None:
                         "enabled": model.stack_action_head is not None,
                         "loss_weight": float(args.stack_action_loss_weight),
                         "lr": float(args.lr_stack_action),
+                        "condition_dim": int(args.stack_action_condition_dim),
+                        "condition_heads": int(args.stack_action_condition_heads),
                     },
                 },
             )

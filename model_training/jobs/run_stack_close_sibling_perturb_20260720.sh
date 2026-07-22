@@ -168,6 +168,8 @@ CMD=(
   --perturb-warmup-samples "${JOB_PERTURB_WARMUP_SAMPLES:-5000}"
   --perturb-ramp-samples "${JOB_PERTURB_RAMP_SAMPLES:-15000}"
   --stack-action-loss-weight "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}"
+  --stack-action-condition-dim "${JOB_STACK_ACTION_CONDITION_DIM:-0}"
+  --stack-action-condition-heads "${JOB_STACK_ACTION_CONDITION_HEADS:-8}"
   --condition-refresh-layers "${JOB_CONDITION_REFRESH_LAYERS:-}"
   --condition-refresh-dim "${JOB_CONDITION_REFRESH_DIM:-256}"
   --condition-refresh-heads "${JOB_CONDITION_REFRESH_HEADS:-8}"
@@ -240,6 +242,8 @@ fi
   echo "use_time_embedding=${USE_TIME_EMBEDDING}"
   echo "random_sibling_order=${RANDOM_SIBLING_ORDER}"
   echo "stack_action_loss_weight=${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}"
+  echo "stack_action_condition_dim=${JOB_STACK_ACTION_CONDITION_DIM:-0}"
+  echo "stack_action_condition_heads=${JOB_STACK_ACTION_CONDITION_HEADS:-8}"
 } > "${OUTPUT_DIR}/resolved_contract.txt"
 
 printf '[stack_close] command:'

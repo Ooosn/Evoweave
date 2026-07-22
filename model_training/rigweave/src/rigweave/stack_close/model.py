@@ -6,12 +6,101 @@ from typing import Any
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 from torch.nn.functional import pad
 
 from rigweave.dynamic_rig.sampling import TrackableSurfaceReferences
 from rigweave.dynamic_rig.unirig_wrapper import DynamicRigUniRigAR
 
 from .tokenizer import StackCloseTokenizer
+
+
+class StackActionHead(nn.Module):
+    """Predict child versus CLOSE, optionally reading condition tokens directly."""
+
+    def __init__(
+        self,
+        hidden_size: int,
+        *,
+        condition_dim: int = 0,
+        heads: int = 8,
+    ) -> None:
+        super().__init__()
+        if condition_dim < 0:
+            raise ValueError("condition_dim must be non-negative")
+        if heads <= 0:
+            raise ValueError("heads must be positive")
+        if condition_dim > 0 and condition_dim % heads != 0:
+            raise ValueError("condition_dim must be divisible by heads")
+        self.hidden_size = int(hidden_size)
+        self.condition_dim = int(condition_dim)
+        self.heads = int(heads)
+        self.query_norm = nn.LayerNorm(self.hidden_size)
+        if self.condition_dim > 0:
+            self.condition_norm = nn.LayerNorm(self.hidden_size)
+            self.query_proj = nn.Linear(self.hidden_size, self.condition_dim)
+            self.key_proj = nn.Linear(self.hidden_size, self.condition_dim)
+            self.value_proj = nn.Linear(self.hidden_size, self.condition_dim)
+            classifier_size = self.hidden_size + self.condition_dim
+        else:
+            self.condition_norm = None
+            self.query_proj = None
+            self.key_proj = None
+            self.value_proj = None
+            classifier_size = self.hidden_size
+        self.classifier = nn.Sequential(
+            nn.LayerNorm(classifier_size),
+            nn.Linear(classifier_size, 2),
+        )
+
+    def _heads(self, values: torch.Tensor) -> torch.Tensor:
+        batch, tokens, _ = values.shape
+        head_dim = self.condition_dim // self.heads
+        return (
+            values.reshape(batch, tokens, self.heads, head_dim)
+            .transpose(1, 2)
+            .contiguous()
+        )
+
+    def forward(
+        self,
+        query: torch.Tensor,
+        condition: torch.Tensor,
+    ) -> torch.Tensor:
+        if query.ndim != 3 or condition.ndim != 3:
+            raise ValueError("query and condition must have shape (B,T,D)")
+        if query.shape[0] != condition.shape[0]:
+            raise ValueError("query and condition batch sizes differ")
+        if query.shape[-1] != self.hidden_size or condition.shape[-1] != self.hidden_size:
+            raise ValueError(
+                f"expected hidden size {self.hidden_size}, "
+                f"got query={query.shape[-1]} condition={condition.shape[-1]}"
+            )
+        query_f = self.query_norm(query.float()).to(dtype=query.dtype)
+        if self.condition_dim <= 0:
+            return self.classifier(query_f)
+
+        assert self.condition_norm is not None
+        assert self.query_proj is not None
+        assert self.key_proj is not None
+        assert self.value_proj is not None
+        condition_f = self.condition_norm(condition.float()).to(dtype=condition.dtype)
+        q = self._heads(self.query_proj(query_f))
+        k = self._heads(self.key_proj(condition_f))
+        v = self._heads(self.value_proj(condition_f))
+        context = F.scaled_dot_product_attention(
+            q,
+            k,
+            v,
+            dropout_p=0.0,
+            is_causal=False,
+        )
+        context = (
+            context.transpose(1, 2)
+            .contiguous()
+            .reshape(query.shape[0], query.shape[1], self.condition_dim)
+        )
+        return self.classifier(torch.cat([query_f, context], dim=-1))
 
 
 def _stack_action_targets(
@@ -76,6 +165,8 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
         *,
         perturbation: PrefixPerturbationConfig,
         stack_action_loss_weight: float = 0.0,
+        stack_action_condition_dim: int = 0,
+        stack_action_condition_heads: int = 8,
         num_surface_samples: int = 65_536,
         vertex_samples: int = 8_192,
         query_tokens: int = 1_024,
@@ -115,9 +206,10 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
         if self.stack_action_loss_weight < 0.0:
             raise ValueError("stack_action_loss_weight must be non-negative")
         self.stack_action_head = (
-            nn.Sequential(
-                nn.LayerNorm(unirig_ar.hidden_size),
-                nn.Linear(unirig_ar.hidden_size, 2),
+            StackActionHead(
+                unirig_ar.hidden_size,
+                condition_dim=stack_action_condition_dim,
+                heads=stack_action_condition_heads,
             )
             if self.stack_action_loss_weight > 0.0
             else None
@@ -463,8 +555,8 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             action_mask = action_targets != -100
             action_hidden = output.hidden_states[-1][
                 :, cond.shape[1] : -1
-            ][action_mask]
-            action_logits = self.stack_action_head(action_hidden)
+            ]
+            action_logits = self.stack_action_head(action_hidden, cond)[action_mask]
             stack_action_loss = nn.functional.cross_entropy(
                 action_logits.float(),
                 action_targets[action_mask],
@@ -551,8 +643,9 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             ):
                 assert output.hidden_states is not None
                 action_logits = self.stack_action_head(
-                    output.hidden_states[-1][0, -1]
-                )
+                    output.hidden_states[-1][:, -1:],
+                    cond,
+                )[0, 0]
                 if int(action_logits.argmax(dim=-1).item()) == 1:
                     next_token = int(self.tokenizer.token_id_close)
                 else:

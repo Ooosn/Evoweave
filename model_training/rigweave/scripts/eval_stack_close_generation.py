@@ -138,6 +138,12 @@ def _build_model(
         "stack_action_loss_weight": float(
             train_args.get("stack_action_loss_weight", 0.0)
         ),
+        "stack_action_condition_dim": int(
+            train_args.get("stack_action_condition_dim", 0)
+        ),
+        "stack_action_condition_heads": int(
+            train_args.get("stack_action_condition_heads", 8)
+        ),
         "num_surface_samples": int(
             train_args.get("surface_samples", 65_536)
         ),
@@ -589,6 +595,11 @@ def main() -> None:
         "stack_action": {
             "enabled": model.stack_action_head is not None,
             "loss_weight": float(model.stack_action_loss_weight),
+            "condition_dim": int(
+                getattr(model.stack_action_head, "condition_dim", 0)
+                if model.stack_action_head is not None
+                else 0
+            ),
         },
         "metric_contract": "shared_eval_dynamic_rig_generation",
         "generation": _summarize(rows, "stack_close"),

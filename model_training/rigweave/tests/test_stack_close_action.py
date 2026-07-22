@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+import numpy as np
 import torch
 
 from rigweave.stack_close.model import StackActionHead, _stack_action_targets
+from rigweave.stack_close.tokenizer import StackCloseTokenizer
 
 
 def test_stack_action_targets_align_with_next_token_positions() -> None:
@@ -26,6 +30,52 @@ def test_stack_action_targets_align_with_next_token_positions() -> None:
     assert result.tolist() == [
         [-100, -100, -100, -100, 0, -100, -100, 1, 1, -100]
     ]
+
+
+def test_stack_action_targets_match_serialized_tree_decisions() -> None:
+    legacy = SimpleNamespace(
+        num_discrete=256,
+        continuous_range=(-1.0, 1.0),
+        vocab_size=267,
+        token_id_branch=256,
+        bos=257,
+        eos=258,
+        pad=259,
+        token_id_cls_none=263,
+        cls_token_id={"articulationxl": 266},
+    )
+    tokenizer = StackCloseTokenizer(legacy)
+    serialization = tokenizer.serialize_tree(
+        np.asarray(
+            [
+                [0.0, 0.0, 0.0],
+                [0.25, 0.0, 0.0],
+                [0.0, 0.25, 0.0],
+                [0.0, 0.5, 0.0],
+            ],
+            dtype=np.float32,
+        ),
+        np.asarray([-1, 0, 0, 2], dtype=np.int64),
+        cls="articulationxl",
+        sibling_rng=None,
+    )
+    labels = torch.from_numpy(serialization.tokens[1:]).unsqueeze(0)
+    positions = torch.from_numpy(serialization.coordinate_token_positions).unsqueeze(0)
+    actions = _stack_action_targets(
+        labels,
+        positions,
+        torch.tensor([serialization.joints.shape[0]]),
+        close_token=tokenizer.token_id_close,
+    )[0]
+
+    expected = torch.full_like(actions, -100)
+    for coordinate_start in serialization.coordinate_token_positions[1:, 0]:
+        expected[int(coordinate_start) - 1] = 0
+    close_positions = np.flatnonzero(serialization.tokens == tokenizer.token_id_close)
+    for close_position in close_positions:
+        expected[int(close_position) - 1] = 1
+
+    torch.testing.assert_close(actions, expected)
 
 
 def test_condition_aware_stack_action_head_shape_and_gradients() -> None:

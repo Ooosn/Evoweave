@@ -62,10 +62,38 @@ def _infer_block(payload: dict[str, Any]) -> str:
     rows = payload.get("rows", [])
     if not rows:
         raise ValueError("evaluation result has no rows")
-    candidates = [name for name in ("dynamic", "dynamic_puppeteer") if name in rows[0]]
+    candidates = [
+        name
+        for name in ("dynamic", "dynamic_puppeteer", "stack_close")
+        if name in rows[0]
+    ]
     if len(candidates) != 1:
         raise ValueError(f"expected one generated-model block, found {candidates}")
     return candidates[0]
+
+
+def _load_payload(path: Path) -> dict[str, Any]:
+    if path.is_dir():
+        summary_path = path / "summary.json"
+        rows_path = path / "rows.jsonl"
+        if not summary_path.is_file() or not rows_path.is_file():
+            raise ValueError(
+                f"evaluation directory must contain summary.json and rows.jsonl: {path}"
+            )
+        return {
+            "summary": json.loads(summary_path.read_text(encoding="utf-8")),
+            "rows": [
+                json.loads(line)
+                for line in rows_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ],
+        }
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"evaluation result must be a JSON object: {path}")
+    return payload
 
 
 def _load_results(specs: list[tuple[str, Path]]) -> list[Result]:
@@ -75,7 +103,7 @@ def _load_results(specs: list[tuple[str, Path]]) -> list[Result]:
         if label in labels:
             raise ValueError(f"duplicate result label {label!r}")
         labels.add(label)
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = _load_payload(path)
         results.append(Result(label=label, path=path, payload=payload, block=_infer_block(payload)))
     if len(results) < 2:
         raise ValueError("matched comparison requires at least two results")
@@ -319,8 +347,16 @@ def _decode_prediction(result: Result, row: dict[str, Any], flat_tokenizer: Any 
             target_coord_scale=float(contract["target_coord_scale"]),
         )
     if flat_tokenizer is None:
-        raise ValueError("flat result visualization requires --tokenizer-config")
-    decoded = flat_tokenizer.detokenize(np.asarray(ids, dtype=np.int64))
+        raise ValueError("flat/stack visualization requires --tokenizer-config")
+    tokenizer = flat_tokenizer
+    if result.block == "stack_close":
+        rigweave_src = Path(__file__).resolve().parents[1] / "rigweave" / "src"
+        if str(rigweave_src) not in sys.path:
+            sys.path.insert(0, str(rigweave_src))
+        from rigweave.stack_close import StackCloseTokenizer
+
+        tokenizer = StackCloseTokenizer(flat_tokenizer)
+    decoded = tokenizer.detokenize(np.asarray(ids, dtype=np.int64))
     joints = np.asarray(decoded.joints, dtype=np.float32)
     parents = np.asarray([-1 if value is None else int(value) for value in decoded.parents], dtype=np.int64)
     return joints, parents
@@ -534,10 +570,18 @@ def main() -> None:
         _write_csv(summary, args.output_csv)
 
     if args.visual_dir is not None:
-        has_flat = any(result.block == "dynamic" for result in results)
-        if has_flat and args.tokenizer_config is None:
-            raise ValueError("--tokenizer-config is required to visualize a flat UniRig result")
-        flat_tokenizer = _load_flat_tokenizer(args.tokenizer_config) if has_flat else None
+        needs_legacy_tokenizer = any(
+            result.block in {"dynamic", "stack_close"} for result in results
+        )
+        if needs_legacy_tokenizer and args.tokenizer_config is None:
+            raise ValueError(
+                "--tokenizer-config is required to visualize a flat/stack result"
+            )
+        flat_tokenizer = (
+            _load_flat_tokenizer(args.tokenizer_config)
+            if needs_legacy_tokenizer
+            else None
+        )
         if args.visual_indices:
             indices = [int(value) for value in args.visual_indices.split(",") if value.strip()]
         else:

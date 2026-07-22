@@ -32,14 +32,25 @@ EXPECTED_GPUS="${JOB_EXPECTED_GPUS:-${NPROC}}"
 USE_MOTION_FEATURES="${JOB_USE_MOTION_FEATURES:-1}"
 USE_TIME_EMBEDDING="${JOB_USE_TIME_EMBEDDING:-1}"
 RANDOM_SIBLING_ORDER="${JOB_RANDOM_SIBLING_ORDER:-1}"
+INITIALIZE_STACK_CHECKPOINT="${JOB_INITIALIZE_STACK_CHECKPOINT:-}"
+FREEZE_BASE_FOR_STACK_ACTION="${JOB_FREEZE_BASE_FOR_STACK_ACTION:-0}"
 
-for flag_name in USE_MOTION_FEATURES USE_TIME_EMBEDDING RANDOM_SIBLING_ORDER; do
+for flag_name in \
+  USE_MOTION_FEATURES \
+  USE_TIME_EMBEDDING \
+  RANDOM_SIBLING_ORDER \
+  FREEZE_BASE_FOR_STACK_ACTION; do
   flag_value="${!flag_name}"
   if [[ "${flag_value}" != "0" && "${flag_value}" != "1" ]]; then
     echo "[stack_close] ERROR: ${flag_name} must be 0 or 1, got ${flag_value}" >&2
     exit 2
   fi
 done
+
+if [[ "${FREEZE_BASE_FOR_STACK_ACTION}" == "1" && -z "${INITIALIZE_STACK_CHECKPOINT}" ]]; then
+  echo "[stack_close] ERROR: freezing the base requires JOB_INITIALIZE_STACK_CHECKPOINT" >&2
+  exit 2
+fi
 
 for required in \
   "${TRAIN_MANIFEST}" \
@@ -53,6 +64,10 @@ for required in \
     exit 2
   fi
 done
+if [[ -n "${INITIALIZE_STACK_CHECKPOINT}" && ! -f "${INITIALIZE_STACK_CHECKPOINT}" ]]; then
+  echo "[stack_close] ERROR: missing initialization checkpoint ${INITIALIZE_STACK_CHECKPOINT}" >&2
+  exit 2
+fi
 
 train_rows="$(wc -l < "${TRAIN_MANIFEST}" | tr -d ' ')"
 val_rows="$(wc -l < "${VAL_MANIFEST}" | tr -d ' ')"
@@ -179,18 +194,41 @@ fi
 if [[ -n "${JOB_RESUME_CHECKPOINT:-}" ]]; then
   CMD+=(--resume-checkpoint "${JOB_RESUME_CHECKPOINT}")
 fi
+if [[ -n "${INITIALIZE_STACK_CHECKPOINT}" ]]; then
+  CMD+=(--initialize-stack-checkpoint "${INITIALIZE_STACK_CHECKPOINT}")
+fi
+if [[ "${FREEZE_BASE_FOR_STACK_ACTION}" == "1" ]]; then
+  CMD+=(--freeze-base-for-stack-action)
+fi
+
+route="stack_close"
+if [[ "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}" != "0" && "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}" != "0.0" ]]; then
+  route="${route}_action"
+fi
+if [[ -n "${JOB_CONDITION_REFRESH_LAYERS:-}" ]]; then
+  route="${route}_condition_refresh"
+fi
+if [[ "${RANDOM_SIBLING_ORDER}" == "1" ]]; then
+  route="${route}_random_sibling"
+else
+  route="${route}_canonical_sibling"
+fi
+if [[ "${JOB_PERTURB_ROW_PROBABILITY:-0.5}" != "0" && "${JOB_PERTURB_ROW_PROBABILITY:-0.5}" != "0.0" ]]; then
+  route="${route}_perturb"
+fi
 
 {
-  if [[ -n "${JOB_CONDITION_REFRESH_LAYERS:-}" ]]; then
-    echo "route=stack_close_condition_refresh_sibling_perturb"
-  else
-    echo "route=stack_close_sibling_perturb"
-  fi
+  echo "route=${route}"
   echo "git_commit=${GIT_COMMIT}"
   echo "train_manifest=${TRAIN_MANIFEST}"
   echo "val_manifest=${VAL_MANIFEST}"
-  echo "initialization=${UNIRIG_CKPT}"
-  echo "dynamic_checkpoint_loaded=false"
+  echo "initialization=${INITIALIZE_STACK_CHECKPOINT:-${UNIRIG_CKPT}}"
+  if [[ -n "${INITIALIZE_STACK_CHECKPOINT}" ]]; then
+    echo "dynamic_checkpoint_loaded=true"
+  else
+    echo "dynamic_checkpoint_loaded=false"
+  fi
+  echo "freeze_base_for_stack_action=${FREEZE_BASE_FOR_STACK_ACTION}"
   echo "visible_gpus=${visible_gpus}"
   echo "effective_batch=$((NPROC * BATCH_SIZE * GRAD_ACCUM))"
   echo "perturb_axial_fraction_max=${JOB_PERTURB_AXIAL_FRACTION_MAX:-0.05}"

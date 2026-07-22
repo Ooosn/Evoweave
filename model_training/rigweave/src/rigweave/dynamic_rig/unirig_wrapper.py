@@ -56,11 +56,7 @@ class StaticDynamicConditionFusionBlock(nn.Module):
 
 
 class StaticDynamicConditionFusion(nn.Module):
-    """Fuse dynamic evidence into static-condition token slots.
-
-    This is an optional ablation path.  The current clean route uses dynamic
-    condition tokens directly, then appends coarse branch-prior proposal tokens.
-    """
+    """Add a learned dynamic residual to UniRig's static condition tokens."""
 
     def __init__(
         self,
@@ -1153,8 +1149,10 @@ class DynamicRigUniRigAR(nn.Module):
             return cond, branch_prior
         return cond
 
-    @torch.no_grad()
     def build_static_condition(self, batch: dict[str, Any]) -> torch.Tensor:
+        # Keep this path differentiable.  The static UniRig baseline trains the
+        # shared mesh encoder, so detaching here would change both condition
+        # fusion and optimizer behavior in the residual ablation.
         return self.unirig_ar.encode_mesh_cond(
             vertices=batch["frame_vertices"][:, 0],
             normals=batch["vertex_normals"][:, 0],

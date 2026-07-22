@@ -35,6 +35,30 @@ Evoweave 80k dynamic checkpoint. Supplying `JOB_INIT_CHECKPOINT` changes the
 experiment into a continuation/probe variant and should not be labeled as this
 clean baseline.
 
+## Static-Condition Motion-Residual Candidate
+
+The isolated causal candidate is:
+
+```text
+run_rootless_flat_static_motion_residual_20260723.sh
+```
+
+It preserves the flat UniRig target representation and decoder. At
+initialization its fused condition and teacher-forcing logits are exactly equal
+to the official static UniRig path; a zero-initialized cross-attention update
+can then learn motion only as a residual. The static mesh encoder remains on a
+direct gradient path, and the mesh encoder, motion encoder, AR decoder, and
+condition fuser are all trainable.
+
+This launcher is intentionally not a general experiment wrapper. It rejects
+dynamic init/resume checkpoints, checks the exact final manifests and GPU
+count, requires a clean immutable Git commit, preserves effective batch 48,
+and runs `audit_static_motion_residual_contract.py` before torchrun. Stack,
+explicit-tree, action, branch-prior, oracle-prefix, condition-refresh, and all
+recovery losses are disabled. A formal run is allowed only after matched
+small-scale free-generation evaluation; passing the startup audit alone is not
+a quality claim.
+
 ## Joint-Token AR Variant
 
 The joint-token AR launcher is:

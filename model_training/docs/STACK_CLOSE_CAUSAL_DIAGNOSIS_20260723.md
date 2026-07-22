@@ -185,19 +185,40 @@ motion 确实含有效信息；问题是当前 dynamic condition 会丢失静态
 rootless contract 合法，但去掉 dummy/unskinned root 后，第一个真实 joint 的位置和局部
 几何更加多样；这是模型 grounding 难度，不是应当通过数据 gate 删除的错误样本。
 
-### 4.6 唯一保留的单变量候选
+### 4.6 已否决的全局 cross-attention residual
+
+第一版 residual 使用 1024 个 static token 对 1024 个 dynamic token 做全局
+cross-attention。5k 诊断后，归一化注意力熵为 `0.999902`，等效使用
+`1023.3/1024` 个 key；`99.9999%` 的 residual 能量是所有 token 共用的同一个向量。
+normal motion 与 zero motion 对最终 condition 的差异只剩 static RMS 的
+`0.000008`。这说明它没有学到 anchor 对应的 motion，而是退化成全局偏置。
+
+此外，该路线的 static 分支直接调用 `encode_mesh_cond` 读取 collate 后补零的
+`frame_vertices`，没有使用 `vertex_count`。同一个较小 mesh 的 static 输入会受同 batch
+最大 mesh 影响。因此该路线已在正式训练前否决，不能再提交。
+
+### 4.7 唯一保留的单变量候选
 
 候选路线保持 flat UniRig tokenizer/decoder 不变，使用：
 
 ```text
-condition = static_unirig_condition + learned_motion_residual
+condition[q] = trackable_frame0_token[q] + learned_motion_residual[q]
 ```
 
-motion residual 的最后一层严格零初始化，所以 step 0 的 fused condition 和 teacher logits
-必须逐元素等于官方静态 UniRig；训练后 residual 才能打开。静态 mesh encoder、motion
-encoder、AR decoder 和 fuser 全部训练。该路线不包含 stack、action head、oracle-prefix、
-branch prior、condition refresh 或 recovery loss，因而能够单独检验“保留静态结构先验，
-仅让 motion 学残差”是否修复早期坐标 grounding。
+每个 `q` 只读取同一个 FPS anchor 的 frame-0 token 和 motion token，不再进行
+`Q x Q` 全局融合。motion residual 的最后一层严格零初始化，所以 step 0 condition 与
+trackable frame-0 token 逐元素相等；训练后 residual 才能打开。surface encoder、motion
+encoder、AR decoder 和 fuser 全部训练。
+
+这里还有一个必须先验收的前提：trackable frame-0 采样使用顶点与三角面上的 65,536 个
+稠密点，而官方 UniRig 在给定点集内先取 `4 x 1024` 个候选点再 FPS。两者不是相同的
+采样分布。因此短训之前，必须固定同一批 query pose，直接用未训练的官方 UniRig 权重
+比较两种 condition 的 teacher CE 与自由生成。若 trackable frame-0 本身不能保留可用的
+静态骨架生成，该候选直接否决，不能靠后续训练掩盖。
+
+该路线不包含 stack、action head、oracle-prefix、branch prior、condition refresh 或
+recovery loss。通过未训练兼容性检查后，5k 诊断必须沿用正式 `1667` step OneCycle，
+只在 5,000 次样本曝光处停止，不能把完整调度压缩为 105 step。
 
 ## 5. 正式双卡提交门槛
 
@@ -211,6 +232,7 @@ branch prior、condition refresh 或 recovery loss，因而能够单独检验“
 6. 正式路线显式关闭随机 sibling、raw motion features、time embedding、旧
    condition refresh 和所有 fallback。
 
-当前状态：新的 static-condition + motion-residual 双卡任务尚未提交。提交前必须通过
-完整模型审计：初始 condition/logit max diff 为 0、优化器无漏参或重复参数、静态路径
-首步有梯度、residual 打开后 motion encoder 有梯度，并完成小规模自由生成对照。
+当前状态：正式双卡任务尚未提交。anchor-aligned 路线已通过完整 CUDA 合同审计：初始
+condition/logit max diff 为 0、优化器无漏参或重复参数、静态路径首步有梯度、residual
+打开后 motion encoder 有梯度。尚未通过未训练 condition 兼容性和 5k 自由生成门槛，
+因此不能提交正式任务。

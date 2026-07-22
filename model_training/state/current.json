@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "model-static-motion-residual-20260723-001",
-  "updated_at": "2026-07-23T06:19:08+09:00",
+  "state_id": "model-anchor-motion-residual-20260723-003",
+  "updated_at": "2026-07-23T09:02:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md",
   "required_context": [
@@ -44,6 +44,20 @@
       "j2j": 0.034024,
       "count_mae": 22.45
     },
+    "static_cross_attention_residual_5k": {
+      "status": "rejected_before_formal_training",
+      "checkpoint": "/home/wangyy/evorig/outputs/flat_static_motion_residual_hgc1h100_5k_20260723/checkpoint_sample_5000.pt",
+      "sample_exposures": 5040,
+      "matched18": {
+        "legal_generation": 14,
+        "true_hitmax": 4,
+        "topology_f1_all_rows_zero_for_failure": 0.545863,
+        "j2j": 0.028575,
+        "root_l2": 0.085493,
+        "joint1_l2": 0.084943
+      },
+      "reason": "the 1024x1024 fuser learned nearly uniform attention and a token-shared bias rather than anchor-specific motion"
+    },
     "puppeteer": {
       "status": "not_accepted_as_usable_baseline",
       "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
@@ -69,12 +83,19 @@
     "the current failure has two stages: early condition-to-coordinate error followed by self-prefix amplification",
     "rootless geometries with variable first real joints are harder but are not invalid data and must not be rejected",
     "local unit tests prove the zero-initialized motion residual is exact static identity and opens a trainable dynamic path after its first update",
-    "the full H100 model audit has exact initial condition and teacher-logit max diff 0.0, complete 670670337-parameter optimizer coverage, nonzero first-step AR/surface/fuser gradients, and nonzero second-step motion gradient"
+    "the full H100 model audit has exact initial condition and teacher-logit max diff 0.0, complete 670670337-parameter optimizer coverage, nonzero first-step AR/surface/fuser gradients, and nonzero second-step motion gradient",
+    "the rejected cross-attention residual has normalized attention entropy 0.999902 and an effective 1023.3 of 1024 keys",
+    "99.9999 percent of its residual energy is a token-shared vector; normal-versus-zero motion changes the fused condition by only 0.000008 of static RMS",
+    "bypassing that residual at inference leaves almost the same generation, while dynamic-only produces 18 of 18 hitmax on the matched diagnostic set",
+    "the old cross-attention residual static path sends zero-padded collated frame vertices to UniRig without using vertex_count, so its static condition depends on the largest mesh in the batch",
+    "official UniRig samples 4Q candidates from its supplied point set and applies FPS, while the trackable dynamic path samples 65536 vertex and triangle-surface points; their condition distributions are not identical by construction",
+    "the anchor-aligned replacement passed the full H100 CUDA audit with exact trackable-frame0 initial condition/logits, complete 665420289-parameter optimizer coverage, and the required two-step motion gradient"
   ],
   "unknowns": [
-    "whether preserving the static UniRig condition while learning motion as a residual reduces early root and first-child coordinate errors",
-    "whether any early coordinate improvement survives free autoregressive rollout and reduces the 77 flat hitmax rows without harming flat-good controls",
-    "the full-model CUDA audit and matched short free-generation result for the residual route"
+    "whether trackable frame0 tokens preserve usable official UniRig teacher forcing and free generation before any dynamic training",
+    "whether the anchor-aligned residual learns non-shared motion updates during a scheduler-matched 5000-exposure run",
+    "whether it improves early root and first-child predictions and free rollout without regressing matched controls",
+    "whether the anchor-aligned route earns the single formal 2xA100-80 training opportunity"
   ],
   "allowed_operations": [
     "report",
@@ -85,40 +106,44 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "Train the residual route for 5000 matched sample exposures on the retained HGC H100, then compare fixed hard and control rows by free generation. Submit the single formal 2xA100-80 task only if the short run shows no collapse or control regression.",
+  "next_required_result": "First compare untrained official-static and trackable-frame0 conditions on the same fixed rows using official UniRig weights. Only if trackable frame0 preserves usable generation may the anchor-aligned route run to 5000 sample exposures with the formal 1667-step OneCycle horizon. Submit the single formal 2xA100-80 task only if both gates pass.",
   "active_operation": {
-    "name": "flat_static_motion_residual_causal_preflight_20260723",
-    "status": "full_cuda_contract_passed_short_generation_pending",
-    "implementation_commit": "cb25596ac9c454dac2c8572c1329560461538102",
+    "name": "pretrained_condition_path_compatibility_20260723",
+    "status": "full_cuda_contract_passed_untrained_condition_comparison_pending",
+    "implementation_commit": "ab6ac59609dc90d79aab26639eec454ec36f6bcd",
     "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "source_checkpoint": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
     "dynamic_checkpoint_loaded": false,
-    "launcher": "model_training/jobs/run_rootless_flat_static_motion_residual_20260723.sh",
-    "dev_output_dir": "/home/wangyy/evorig/outputs/flat_static_motion_residual_hgc1h100_5k_20260723",
-    "formal_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_static_motion_residual_20260723",
+    "launcher": "model_training/jobs/run_rootless_flat_anchor_motion_residual_20260723.sh",
+    "dev_output_dir": "/home/wangyy/evorig/outputs/flat_anchor_motion_residual_hgc1h100_5k_20260723",
+    "formal_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_anchor_motion_residual_20260723",
     "dev_resources": "existing HGC qlogin job 124763552, 1xH100-80GB, preflight and 5000-exposure diagnostic only",
     "formal_resources": "2xA100-SXM4-80GB",
     "formal_effective_batch": 48,
-    "condition_fusion": "static_cross_attn_zero",
+    "condition_fusion": "anchor_motion_residual_zero",
     "use_motion_features": false,
     "use_time_embedding": false,
     "full_finetune": true,
     "formal_task_budget": 1,
-    "cuda_audit_artifact": "/home/wangyy/evorig/outputs/static_motion_residual_contract_h100_20260723/audit.json",
+    "cuda_audit_artifact": "/home/wangyy/evorig/outputs/anchor_motion_residual_contract_h100_20260723/audit.json",
     "cuda_audit_status": "passed",
+    "pretrained_condition_audit_script": "model_training/analysis/evaluate_pretrained_condition_paths.py",
+    "pretrained_condition_audit_output": "/home/wangyy/evorig/outputs/pretrained_condition_paths_selected18_20260723/result.json",
     "short_train_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "short_val_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "short_train_steps": 105,
     "short_train_sample_exposures": 5040,
+    "scheduler_horizon_steps": 1667,
+    "stop_after_samples": 5000,
     "short_train_effective_batch": 48,
     "acceptance_test": "matched free-generation root/first-child error, EOS/hitmax, count, F1, J2J, and GT/prediction/overlay on fixed hard and control rows; startup contract must remain exact and all trainable modules must receive the intended gradients"
   },
   "last_operation": {
-    "name": "stack_close_oracle_action_and_shared_root_diagnosis_20260723",
-    "status": "completed_rejected_action_route",
-    "artifact_root": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_causal_diagnosis_20260723",
-    "conclusion": "correct tree actions repair count legality but not coordinate placement; the next experiment must target the shared early condition-to-coordinate path"
+    "name": "static_cross_attention_residual_diagnosis_20260723",
+    "status": "completed_rejected_before_formal_training",
+    "artifact_root": "/home/wangyy/evorig/outputs/static_motion_residual_selected18_20260723",
+    "conclusion": "global cross-attention averaged away anchor-specific motion; replace it with an identity-preserving per-anchor residual before any formal training"
   },
   "receipt_max_age_minutes": 240
 }

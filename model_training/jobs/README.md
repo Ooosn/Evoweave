@@ -35,20 +35,45 @@ Evoweave 80k dynamic checkpoint. Supplying `JOB_INIT_CHECKPOINT` changes the
 experiment into a continuation/probe variant and should not be labeled as this
 clean baseline.
 
-## Static-Condition Motion-Residual Candidate
+## Rejected Static Cross-Attention Residual
 
-The isolated causal candidate is:
+The old diagnostic launcher is:
 
 ```text
 run_rootless_flat_static_motion_residual_20260723.sh
 ```
 
-It preserves the flat UniRig target representation and decoder. At
-initialization its fused condition and teacher-forcing logits are exactly equal
-to the official static UniRig path; a zero-initialized cross-attention update
-can then learn motion only as a residual. The static mesh encoder remains on a
-direct gradient path, and the mesh encoder, motion encoder, AR decoder, and
-condition fuser are all trainable.
+Do not submit this route for formal training. Its 5k diagnostic learned nearly
+uniform attention over all 1024 dynamic keys: normalized attention entropy was
+`0.999902`, the effective key count was `1023.3/1024`, and `99.9999%` of the
+residual energy was a token-shared vector. Normal versus zero motion changed
+the fused condition by only `0.000008` of the static-condition RMS. It therefore
+implemented a global bias rather than anchor-specific motion.
+
+The static side also calls UniRig on zero-padded collated mesh vertices without
+using `vertex_count`. That makes its input depend on the largest mesh in the
+batch. Results from this route are retained only as causal evidence.
+
+## Anchor-Aligned Motion-Residual Candidate
+
+The only active residual preflight is:
+
+```text
+run_rootless_flat_anchor_motion_residual_20260723.sh
+```
+
+For anchor `q`, this route combines only the frame-0 surface token at `q` with
+the motion encoder output at the same `q`; it has no `Q x Q` fusion attention.
+The final residual layer is zero initialized, so step 0 is exactly the
+trackable frame-0 condition. The surface tokenizer, motion encoder, AR decoder,
+and residual fuser remain trainable.
+
+Before any short training, the untrained official UniRig decoder must be
+evaluated on the same fixed rows with two conditions: official static UniRig
+sampling and trackable frame-0 sampling. The candidate is invalid if the
+trackable condition does not preserve usable static generation. If that check
+passes, the 5k diagnostic keeps the formal `1667`-step OneCycle horizon and
+uses `--stop-after-samples 5000`; it must not compress OneCycle into 105 steps.
 
 This launcher is intentionally not a general experiment wrapper. It rejects
 dynamic init/resume checkpoints, checks the exact final manifests and GPU
@@ -56,8 +81,8 @@ count, requires a clean immutable Git commit, preserves effective batch 48,
 and runs `audit_static_motion_residual_contract.py` before torchrun. Stack,
 explicit-tree, action, branch-prior, oracle-prefix, condition-refresh, and all
 recovery losses are disabled. A formal run is allowed only after matched
-small-scale free-generation evaluation; passing the startup audit alone is not
-a quality claim.
+small-scale free-generation and condition-use evaluation; passing the startup
+audit alone is not a quality claim.
 
 ## Joint-Token AR Variant
 

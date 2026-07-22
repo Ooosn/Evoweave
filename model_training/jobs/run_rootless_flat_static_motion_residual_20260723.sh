@@ -32,6 +32,8 @@ else
 fi
 EXPECTED_GPUS="${JOB_EXPECTED_GPUS:-${NPROC}}"
 EXPECTED_EFFECTIVE_BATCH="${JOB_EXPECTED_EFFECTIVE_BATCH:-48}"
+EXPECTED_TRAIN_ROWS="${JOB_EXPECTED_TRAIN_ROWS:-15903}"
+EXPECTED_VAL_ROWS="${JOB_EXPECTED_VAL_ROWS:-857}"
 EFFECTIVE_BATCH=$((NPROC * BATCH_SIZE * GRAD_ACCUM))
 
 if [[ -n "${JOB_INIT_CHECKPOINT:-}" || -n "${JOB_RESUME_CHECKPOINT:-}" ]]; then
@@ -62,12 +64,12 @@ done
 
 train_rows="$(wc -l < "${TRAIN_MANIFEST}" | tr -d ' ')"
 val_rows="$(wc -l < "${VAL_MANIFEST}" | tr -d ' ')"
-if [[ "${train_rows}" != "15903" ]]; then
-  echo "[static_motion_residual] ERROR: train rows=${train_rows}, expected 15903" >&2
+if [[ "${train_rows}" != "${EXPECTED_TRAIN_ROWS}" ]]; then
+  echo "[static_motion_residual] ERROR: train rows=${train_rows}, expected ${EXPECTED_TRAIN_ROWS}" >&2
   exit 3
 fi
-if [[ "${val_rows}" != "857" ]]; then
-  echo "[static_motion_residual] ERROR: valid rows=${val_rows}, expected 857" >&2
+if [[ "${val_rows}" != "${EXPECTED_VAL_ROWS}" ]]; then
+  echo "[static_motion_residual] ERROR: valid rows=${val_rows}, expected ${EXPECTED_VAL_ROWS}" >&2
   exit 3
 fi
 
@@ -187,6 +189,7 @@ export RIGWEAVE_TRAIN_SURFACE_TOKENIZER=1
 export RIGWEAVE_FREEZE_AR=0
 export RIGWEAVE_FREEZE_CONDITIONER=0
 export RIGWEAVE_MOTION_CHECKPOINTING=1
+export RIGWEAVE_NO_SAVE_OPTIMIZER="${JOB_NO_SAVE_OPTIMIZER:-0}"
 
 {
   echo "route=${CONDITION_FUSION}"

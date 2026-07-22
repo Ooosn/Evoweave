@@ -215,6 +215,10 @@ if [[ "${RIGWEAVE_RESET_CONDITION_FUSER:-0}" == "1" ]]; then
   CMD+=(--reset-condition-fuser)
 fi
 
+if [[ "${RIGWEAVE_NO_SAVE_OPTIMIZER:-0}" == "1" ]]; then
+  CMD+=(--no-save-optimizer)
+fi
+
 echo "[evoweave train] root=${EVOWEAVE_ROOT}"
 echo "[evoweave train] output=${EVOWEAVE_OUTPUT_DIR}"
 echo "[evoweave train] nproc=${NPROC} micro_batch=${BATCH_SIZE} grad_accum=${GRAD_ACCUM}"

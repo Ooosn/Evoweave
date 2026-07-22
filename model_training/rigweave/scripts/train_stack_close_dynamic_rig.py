@@ -114,6 +114,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--limit-val", type=int, default=0)
     parser.add_argument("--seed", type=int, default=20260720)
     parser.add_argument("--resume-checkpoint", type=Path)
+    parser.add_argument("--initialize-stack-checkpoint", type=Path)
+    parser.add_argument("--freeze-base-for-stack-action", action="store_true")
     parser.add_argument("--amp-dtype", choices=("bf16", "fp16"), default="bf16")
     return parser
 
@@ -160,6 +162,21 @@ def _validate_contract(args: argparse.Namespace, world_size: int) -> None:
         )
     if args.resume_checkpoint is not None and not args.resume_checkpoint.is_file():
         raise FileNotFoundError(args.resume_checkpoint)
+    if (
+        args.initialize_stack_checkpoint is not None
+        and not args.initialize_stack_checkpoint.is_file()
+    ):
+        raise FileNotFoundError(args.initialize_stack_checkpoint)
+    if args.resume_checkpoint is not None and args.initialize_stack_checkpoint is not None:
+        raise ValueError("resume and initialization checkpoints are mutually exclusive")
+    if args.freeze_base_for_stack_action and (
+        args.initialize_stack_checkpoint is None
+        or args.stack_action_loss_weight <= 0.0
+    ):
+        raise ValueError(
+            "freeze_base_for_stack_action requires an initialization checkpoint "
+            "and a positive stack action loss weight"
+        )
 
 
 def _log(rank: int, message: str, log_path: Path | None = None) -> None:
@@ -410,6 +427,50 @@ def main() -> None:
                 vertex_samples=args.vertex_samples,
                 query_tokens=args.query_tokens,
             )
+        dynamic_checkpoint_loaded = False
+        if args.initialize_stack_checkpoint is not None:
+            initialization_payload = torch.load(
+                args.initialize_stack_checkpoint,
+                map_location="cpu",
+                weights_only=False,
+            )
+            initialization_args = dict(initialization_payload.get("args", {}) or {})
+            for key in (
+                "frames",
+                "register_tokens",
+                "motion_depth",
+                "motion_heads",
+                "use_motion_features",
+                "use_time_embedding",
+            ):
+                requested = getattr(args, key)
+                loaded = initialization_args.get(key, requested)
+                if loaded != requested:
+                    raise ValueError(
+                        f"initialization contract mismatch for {key}: "
+                        f"checkpoint={loaded!r} requested={requested!r}"
+                    )
+            missing, unexpected = model.load_state_dict(
+                initialization_payload["model"],
+                strict=False,
+            )
+            allowed_missing = {
+                key
+                for key in model.state_dict()
+                if key.startswith("stack_action_head.")
+            }
+            missing_set = set(missing)
+            if (missing_set and missing_set != allowed_missing) or unexpected:
+                raise RuntimeError(
+                    "stack initialization mismatch "
+                    f"missing={sorted(missing_set)} unexpected={unexpected}"
+                )
+            dynamic_checkpoint_loaded = True
+            del initialization_payload
+        if args.freeze_base_for_stack_action:
+            model.requires_grad_(False)
+            assert model.stack_action_head is not None
+            model.stack_action_head.requires_grad_(True)
         move_dynamic_model_to_device(model, device)
         if model.stack_action_head is not None:
             model.stack_action_head.to(device)
@@ -484,47 +545,33 @@ def main() -> None:
             collate_fn=collate,
         )
 
-        parameter_groups = [
-            {
-                "params": [
-                    parameter
-                    for parameter in motion_encoder.parameters()
-                    if parameter.requires_grad
-                ],
-                "lr": args.lr_motion,
-                "name": "motion",
-            },
-            {
-                "params": [
-                    parameter
-                    for parameter in surface_tokenizer.parameters()
-                    if parameter.requires_grad
-                ],
-                "lr": args.lr_surface,
-                "name": "surface",
-            },
-            {
-                "params": [
-                    parameter
-                    for parameter in unirig.transformer.parameters()
-                    if parameter.requires_grad
-                ],
-                "lr": args.lr_ar,
-                "name": "ar",
-            },
-        ]
+        parameter_groups = []
+        for name, module, learning_rate in (
+            ("motion", motion_encoder, args.lr_motion),
+            ("surface", surface_tokenizer, args.lr_surface),
+            ("ar", unirig.transformer, args.lr_ar),
+        ):
+            parameters = [
+                parameter for parameter in module.parameters() if parameter.requires_grad
+            ]
+            if parameters:
+                parameter_groups.append(
+                    {"params": parameters, "lr": learning_rate, "name": name}
+                )
         if refresh_layers:
-            parameter_groups.append(
-                {
-                    "params": [
-                        parameter
-                        for parameter in model.condition_refresh_adapters.parameters()
-                        if parameter.requires_grad
-                    ],
-                    "lr": args.lr_refresh,
-                    "name": "condition_refresh",
-                }
-            )
+            refresh_parameters = [
+                parameter
+                for parameter in model.condition_refresh_adapters.parameters()
+                if parameter.requires_grad
+            ]
+            if refresh_parameters:
+                parameter_groups.append(
+                    {
+                        "params": refresh_parameters,
+                        "lr": args.lr_refresh,
+                        "name": "condition_refresh",
+                    }
+                )
         if model.stack_action_head is not None:
             parameter_groups.append(
                 {
@@ -604,8 +651,13 @@ def main() -> None:
                     "train_rows": train_rows,
                     "trainable_parameters": count_trainable(model),
                     "optimizer_audit": optimizer_audit,
-                    "initialization": str(args.unirig_checkpoint),
-                    "dynamic_checkpoint_loaded": False,
+                    "initialization": str(
+                        args.initialize_stack_checkpoint or args.unirig_checkpoint
+                    ),
+                    "dynamic_checkpoint_loaded": dynamic_checkpoint_loaded,
+                    "freeze_base_for_stack_action": bool(
+                        args.freeze_base_for_stack_action
+                    ),
                     "perturbation": vars(perturbation),
                     "condition_refresh": {
                         "enabled": bool(refresh_layers),

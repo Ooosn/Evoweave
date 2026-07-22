@@ -277,6 +277,8 @@ def _evaluate(
             "coordinate_acc",
             "close_acc",
             "eos_acc",
+            "stack_action_loss",
+            "stack_action_acc",
         ):
             sums[key] = sums.get(key, 0.0) + float(out[key].detach().cpu())
         count += 1
@@ -290,6 +292,8 @@ def _evaluate(
                 "coordinate_acc",
                 "close_acc",
                 "eos_acc",
+                "stack_action_loss",
+                "stack_action_acc",
             )),
             float(count),
         ],
@@ -308,6 +312,8 @@ def _evaluate(
         "val_coordinate_acc",
         "val_close_acc",
         "val_eos_acc",
+        "val_stack_action_loss",
+        "val_stack_action_acc",
     )
     return {
         name: float(packed[index].item() / total_count)

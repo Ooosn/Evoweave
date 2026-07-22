@@ -494,7 +494,9 @@ def _make_comparison_plot(
 
     figure = plt.figure(figsize=(4.2 * (len(results) + 1), 4.4), dpi=150)
     figure.suptitle(
-        f"idx={row_index} target={gt_joints.shape[0]} frame={query_frame} {Path(reference_row['path']).name}",
+        f"manifest_idx={reference_row['index']} eval_pos={row_index} "
+        f"target={gt_joints.shape[0]} frame={query_frame} "
+        f"{Path(reference_row['path']).name}",
         fontsize=9,
     )
     panels: list[tuple[str, np.ndarray, np.ndarray]] = [("GT", gt_joints, gt_parents)]

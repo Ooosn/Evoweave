@@ -36,6 +36,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--motion-fps-ratio", type=float, default=0.7)
     parser.add_argument("--motion-vertex-samples", type=int, default=512)
     parser.add_argument("--gate-init", type=float, default=0.25)
+    parser.add_argument(
+        "--condition-fusion",
+        choices=("static_cross_attn_zero", "anchor_motion_residual_zero"),
+        default="static_cross_attn_zero",
+    )
     parser.add_argument("--seed", type=int, default=20260723)
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
@@ -143,7 +148,7 @@ def main() -> None:
         num_surface_samples=args.surface_samples,
         vertex_samples=args.vertex_samples,
         query_tokens=args.query_tokens,
-        condition_fusion="static_cross_attn_zero",
+        condition_fusion=args.condition_fusion,
         condition_fusion_heads=8,
         condition_fusion_gate_init=args.gate_init,
         condition_fusion_depth=1,
@@ -174,17 +179,31 @@ def main() -> None:
 
     with torch.no_grad(), torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         refs = model.sample_references(batch)
-        dynamic_condition = model.conditioner(
-            batch["frame_vertices"],
-            batch["faces"],
-            refs,
-            vertex_normals=batch["vertex_normals"],
-            face_normals=batch["face_normals"],
-        )
-        static_condition = model.build_static_condition(batch).to(
-            device=dynamic_condition.device,
-            dtype=dynamic_condition.dtype,
-        )
+        if args.condition_fusion == "anchor_motion_residual_zero":
+            frame_tokens, query_points = model.conditioner.tokenize_frames(
+                batch["frame_vertices"],
+                batch["faces"],
+                refs,
+                vertex_normals=batch["vertex_normals"],
+                face_normals=batch["face_normals"],
+            )
+            dynamic_condition = model.conditioner.motion_encoder(
+                frame_tokens,
+                query_points=query_points,
+            )
+            static_condition = frame_tokens[:, 0]
+        else:
+            dynamic_condition = model.conditioner(
+                batch["frame_vertices"],
+                batch["faces"],
+                refs,
+                vertex_normals=batch["vertex_normals"],
+                face_normals=batch["face_normals"],
+            )
+            static_condition = model.build_static_condition(batch).to(
+                device=dynamic_condition.device,
+                dtype=dynamic_condition.dtype,
+            )
         fused_condition = model.condition_fuser(static_condition, dynamic_condition)
         if not torch.equal(fused_condition, static_condition):
             difference = float((fused_condition - static_condition).abs().max().item())
@@ -194,6 +213,10 @@ def main() -> None:
         logit_max_diff = float((static_logits - fused_logits).abs().max().item())
         if logit_max_diff != 0.0:
             raise RuntimeError(f"initial teacher logits changed: max_diff={logit_max_diff}")
+        wired_condition = model.build_condition(batch, refs=refs)
+        if not torch.equal(wired_condition, fused_condition):
+            difference = float((wired_condition - fused_condition).abs().max().item())
+            raise RuntimeError(f"build_condition wiring mismatch: max_diff={difference}")
 
     del static_logits, fused_logits, static_condition, dynamic_condition, fused_condition
     model.zero_grad(set_to_none=True)
@@ -209,7 +232,10 @@ def main() -> None:
         first_loss = losses["loss"]
     first_loss.backward()
 
-    final_update = model.condition_fuser.blocks[0].update[-1]
+    if args.condition_fusion == "anchor_motion_residual_zero":
+        final_update = model.condition_fuser.update[-1]
+    else:
+        final_update = model.condition_fuser.blocks[0].update[-1]
     first_gradients = {
         "condition_fusion_final_update": grad_l1(final_update),
         "surface": grad_l1(model.conditioner.surface_tokenizer),
@@ -241,7 +267,11 @@ def main() -> None:
 
     result = {
         "status": "passed",
-        "route": "flat_static_condition_motion_residual",
+        "route": (
+            "flat_anchor_motion_residual"
+            if args.condition_fusion == "anchor_motion_residual_zero"
+            else "flat_static_condition_motion_residual"
+        ),
         "manifest": str(args.manifest),
         "manifest_index": index,
         "initial_condition_max_diff": 0.0,
@@ -253,7 +283,7 @@ def main() -> None:
         "optimizer_parameter_counts": optimizer_counts,
         "use_motion_features": False,
         "use_time_embedding": False,
-        "condition_fusion": "static_cross_attn_zero",
+        "condition_fusion": args.condition_fusion,
         "condition_fusion_depth": 1,
         "branch_prior_proposals": 0,
     }

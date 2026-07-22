@@ -20,15 +20,15 @@ class DynamicRigConditioner(nn.Module):
         self.surface_tokenizer = surface_tokenizer
         self.motion_encoder = motion_encoder
 
-    def forward(
+    def tokenize_frames(
         self,
         frame_vertices: torch.Tensor,
         faces: torch.LongTensor,
         refs: TrackableSurfaceReferences,
         vertex_normals: torch.Tensor | None = None,
         face_normals: torch.Tensor | None = None,
-    ) -> torch.Tensor:
-        """Encode `(B,T,N,3)` dynamic vertices into `(B,Q,D)` condition tokens."""
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Tokenize every frame while preserving the shared anchor ordering."""
 
         if frame_vertices.dim() != 4 or frame_vertices.shape[-1] != 3:
             raise ValueError(f"frame_vertices must be (B,T,N,3), got {tuple(frame_vertices.shape)}")
@@ -54,6 +54,23 @@ class DynamicRigConditioner(nn.Module):
             frame_tokens.append(tokens_t)
             frame_query_points.append(samples.query_points)
 
-        z_seq = torch.stack(frame_tokens, dim=1)
-        query_points = torch.stack(frame_query_points, dim=1)
+        return torch.stack(frame_tokens, dim=1), torch.stack(frame_query_points, dim=1)
+
+    def forward(
+        self,
+        frame_vertices: torch.Tensor,
+        faces: torch.LongTensor,
+        refs: TrackableSurfaceReferences,
+        vertex_normals: torch.Tensor | None = None,
+        face_normals: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Encode `(B,T,N,3)` dynamic vertices into `(B,Q,D)` condition tokens."""
+
+        z_seq, query_points = self.tokenize_frames(
+            frame_vertices,
+            faces,
+            refs,
+            vertex_normals=vertex_normals,
+            face_normals=face_normals,
+        )
         return self.motion_encoder(z_seq, query_points=query_points)

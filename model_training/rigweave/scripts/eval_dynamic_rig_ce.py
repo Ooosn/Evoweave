@@ -354,7 +354,13 @@ def main() -> None:
     parser.add_argument("--target-root-policy", choices=["legacy"], default=None)
     parser.add_argument(
         "--condition-fusion",
-        choices=["dynamic", "static_blend", "static_cross_attn", "static_cross_attn_zero"],
+        choices=[
+            "dynamic",
+            "static_blend",
+            "static_cross_attn",
+            "static_cross_attn_zero",
+            "anchor_motion_residual_zero",
+        ],
         default=None,
     )
     parser.add_argument("--condition-fusion-heads", type=int, default=None)

@@ -94,6 +94,56 @@ class StaticDynamicConditionFusion(nn.Module):
         return out
 
 
+class AnchorWiseMotionResidualFusion(nn.Module):
+    """Add motion to frame-0 surface tokens without mixing anchor identities."""
+
+    def __init__(self, dim: int, gate_init: float = 0.25, zero_init_update: bool = True) -> None:
+        super().__init__()
+        gate_init = min(max(float(gate_init), 1.0e-4), 1.0 - 1.0e-4)
+        self.static_norm = nn.LayerNorm(dim)
+        self.dynamic_norm = nn.LayerNorm(dim)
+        self.update = nn.Sequential(
+            nn.Linear(dim * 2, dim),
+            nn.GELU(),
+            nn.Linear(dim, dim),
+        )
+        self.gate_logit = nn.Parameter(
+            torch.tensor(np.log(gate_init / (1.0 - gate_init)), dtype=torch.float32)
+        )
+        self.zero_init_update = bool(zero_init_update)
+        if self.zero_init_update:
+            nn.init.zeros_(self.update[-1].weight)
+            nn.init.zeros_(self.update[-1].bias)
+
+    def reset_parameters(self, *, gate_init: float = 0.25, zero_init_update: bool = True) -> None:
+        gate_init = min(max(float(gate_init), 1.0e-4), 1.0 - 1.0e-4)
+        with torch.no_grad():
+            self.gate_logit.fill_(float(np.log(gate_init / (1.0 - gate_init))))
+        self.static_norm.reset_parameters()
+        self.dynamic_norm.reset_parameters()
+        for module in self.update:
+            if hasattr(module, "reset_parameters"):
+                module.reset_parameters()
+        if zero_init_update:
+            nn.init.zeros_(self.update[-1].weight)
+            nn.init.zeros_(self.update[-1].bias)
+
+    def forward(self, static_cond: torch.Tensor, dynamic_cond: torch.Tensor) -> torch.Tensor:
+        if static_cond.shape != dynamic_cond.shape:
+            raise ValueError(
+                "anchor-aligned static and dynamic tokens must have the same shape, "
+                f"got {tuple(static_cond.shape)} vs {tuple(dynamic_cond.shape)}"
+            )
+        dtype = static_cond.dtype
+        features = torch.cat(
+            [self.static_norm(static_cond.float()), self.dynamic_norm(dynamic_cond.float())],
+            dim=-1,
+        )
+        update = self.update(features).to(dtype=dtype)
+        gate = torch.sigmoid(self.gate_logit).to(dtype=dtype)
+        return static_cond + gate * update
+
+
 class CoarseBranchPrior(nn.Module):
     """Predict coarse branch proposals from dynamic condition tokens.
 
@@ -1007,15 +1057,30 @@ class DynamicRigUniRigAR(nn.Module):
             )
             else None
         )
-        if self.condition_fusion not in {"dynamic", "static_blend", "static_cross_attn", "static_cross_attn_zero"}:
+        if self.condition_fusion not in {
+            "dynamic",
+            "static_blend",
+            "static_cross_attn",
+            "static_cross_attn_zero",
+            "anchor_motion_residual_zero",
+        }:
             raise ValueError(f"unknown condition_fusion={self.condition_fusion!r}")
-        self.condition_fuser = StaticDynamicConditionFusion(
-            unirig_ar.hidden_size,
-            heads=int(condition_fusion_heads),
-            gate_init=float(condition_fusion_gate_init),
-            zero_init_update=self.condition_fusion == "static_cross_attn_zero",
-            depth=int(condition_fusion_depth),
-        )
+        if self.condition_fusion == "anchor_motion_residual_zero":
+            if int(condition_fusion_depth) != 1:
+                raise ValueError("anchor_motion_residual_zero requires condition_fusion_depth=1")
+            self.condition_fuser = AnchorWiseMotionResidualFusion(
+                unirig_ar.hidden_size,
+                gate_init=float(condition_fusion_gate_init),
+                zero_init_update=True,
+            )
+        else:
+            self.condition_fuser = StaticDynamicConditionFusion(
+                unirig_ar.hidden_size,
+                heads=int(condition_fusion_heads),
+                gate_init=float(condition_fusion_gate_init),
+                zero_init_update=self.condition_fusion == "static_cross_attn_zero",
+                depth=int(condition_fusion_depth),
+            )
         if self.condition_fusion in {"dynamic", "static_blend"}:
             for param in self.condition_fuser.parameters():
                 param.requires_grad_(False)
@@ -1125,16 +1190,27 @@ class DynamicRigUniRigAR(nn.Module):
         faces = batch["faces"]
         if refs is None:
             refs = self.sample_references(batch)
-        dynamic_cond = self.conditioner(
-            frame_vertices,
-            faces,
-            refs,
-            vertex_normals=vertex_normals,
-            face_normals=face_normals,
-        )
+        if self.condition_fusion == "anchor_motion_residual_zero":
+            frame_tokens, query_points = self.conditioner.tokenize_frames(
+                frame_vertices,
+                faces,
+                refs,
+                vertex_normals=vertex_normals,
+                face_normals=face_normals,
+            )
+            dynamic_cond = self.conditioner.motion_encoder(frame_tokens, query_points=query_points)
+            cond = self.condition_fuser(frame_tokens[:, 0], dynamic_cond)
+        else:
+            dynamic_cond = self.conditioner(
+                frame_vertices,
+                faces,
+                refs,
+                vertex_normals=vertex_normals,
+                face_normals=face_normals,
+            )
         if self.condition_fusion == "dynamic":
             cond = dynamic_cond
-        else:
+        elif self.condition_fusion != "anchor_motion_residual_zero":
             static_cond = self.build_static_condition(batch).to(device=dynamic_cond.device, dtype=dynamic_cond.dtype)
             if self.condition_fusion == "static_blend":
                 weight = min(max(self.condition_static_blend_weight, 0.0), 1.0)

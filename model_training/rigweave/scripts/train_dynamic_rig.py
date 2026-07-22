@@ -671,6 +671,15 @@ def main() -> None:
     parser.add_argument("--onecycle-final-div-factor", type=float, default=10.0)
     parser.add_argument("--max-steps", type=int, default=50000)
     parser.add_argument(
+        "--stop-after-samples",
+        type=int,
+        default=0,
+        help=(
+            "Stop cleanly after this many optimizer sample exposures while keeping "
+            "the scheduler horizon set by --max-steps. Zero disables early stop."
+        ),
+    )
+    parser.add_argument(
         "--sample-milestones",
         type=str,
         default="5000,10000,20000,30000,50000,80000",
@@ -769,7 +778,13 @@ def main() -> None:
     parser.add_argument("--structure-action-loss-weight", type=float, default=0.0)
     parser.add_argument(
         "--condition-fusion",
-        choices=["dynamic", "static_blend", "static_cross_attn", "static_cross_attn_zero"],
+        choices=[
+            "dynamic",
+            "static_blend",
+            "static_cross_attn",
+            "static_cross_attn_zero",
+            "anchor_motion_residual_zero",
+        ],
         default="dynamic",
     )
     parser.add_argument("--condition-fusion-heads", type=int, default=8)
@@ -1060,13 +1075,17 @@ def main() -> None:
         if args.reset_condition_fuser:
             model.condition_fuser.reset_parameters(
                 gate_init=args.condition_fusion_gate_init,
-                zero_init_update=args.condition_fusion == "static_cross_attn_zero",
+                zero_init_update=args.condition_fusion in {
+                    "static_cross_attn_zero",
+                    "anchor_motion_residual_zero",
+                },
             )
             log(
                 rank,
                 "reset condition_fuser "
                 f"gate_init={args.condition_fusion_gate_init} "
-                f"zero_update={args.condition_fusion == 'static_cross_attn_zero'}",
+                "zero_update="
+                f"{args.condition_fusion in {'static_cross_attn_zero', 'anchor_motion_residual_zero'}}",
             )
         assert_module_on_device(model, device)
 
@@ -1423,7 +1442,8 @@ def main() -> None:
         first_batch_mem_logged = False
         if not args.train_surface_tokenizer:
             surface_tokenizer.eval()
-        while step < args.max_steps:
+        stop_after_samples_reached = False
+        while step < args.max_steps and not stop_after_samples_reached:
             if train_sampler is not None:
                 train_sampler.set_epoch(epoch)
             for batch_index, batch in enumerate(train_loader):
@@ -1614,6 +1634,20 @@ def main() -> None:
                     torch.cuda.empty_cache()
                 trim_host_allocator()
 
+                if args.stop_after_samples > 0 and int(step * effective_batch) >= args.stop_after_samples:
+                    stop_after_samples_reached = True
+                    if is_main(rank):
+                        write_json_log(
+                            metrics_log,
+                            {
+                                "step": step,
+                                **accounting_fields(step, effective_batch, train_rows),
+                                "event": "stop_after_samples_reached",
+                                "stop_after_samples": args.stop_after_samples,
+                            },
+                        )
+                    break
+
                 if args.val_every > 0 and step % args.val_every == 0:
                     metrics = evaluate(model, val_loader, device, args.val_steps, amp_dtype)
                     if not args.train_surface_tokenizer:
@@ -1688,7 +1722,7 @@ def main() -> None:
                                 },
                             )
 
-                if step >= args.max_steps:
+                if step >= args.max_steps or stop_after_samples_reached:
                     break
             epoch += 1
 

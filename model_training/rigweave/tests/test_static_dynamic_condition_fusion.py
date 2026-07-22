@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import torch
 
-from rigweave.dynamic_rig.unirig_wrapper import StaticDynamicConditionFusion
+from rigweave.dynamic_rig.unirig_wrapper import (
+    AnchorWiseMotionResidualFusion,
+    StaticDynamicConditionFusion,
+)
 
 
 def test_zero_update_is_exact_static_identity_and_trainable() -> None:
@@ -47,3 +50,25 @@ def test_fusion_rejects_misaligned_condition_shapes() -> None:
         assert "same shape" in str(exc)
     else:
         raise AssertionError("misaligned condition tokens must be rejected")
+
+
+def test_anchor_residual_is_exact_identity_and_does_not_mix_anchor_indices() -> None:
+    torch.manual_seed(23)
+    module = AnchorWiseMotionResidualFusion(dim=16, gate_init=0.25, zero_init_update=True)
+    static = torch.randn(1, 5, 16)
+    dynamic = torch.randn(1, 5, 16)
+
+    assert torch.equal(module(static, dynamic), static)
+
+    with torch.no_grad():
+        module.update[-1].weight.normal_(std=0.02)
+        module.update[-1].bias.zero_()
+    baseline = module(static, dynamic)
+    changed_dynamic = dynamic.clone()
+    changed_dynamic[:, 2] += torch.linspace(-1.0, 1.0, 16)
+    changed = module(static, changed_dynamic)
+
+    difference = (changed - baseline).abs().sum(dim=-1)
+    assert difference[0, 2] > 0
+    assert torch.equal(difference[0, :2], torch.zeros_like(difference[0, :2]))
+    assert torch.equal(difference[0, 3:], torch.zeros_like(difference[0, 3:]))

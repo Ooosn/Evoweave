@@ -17,6 +17,7 @@ TOKENIZER_CONFIG="${JOB_TOKENIZER_CONFIG:-${UNIRIG_ROOT}/configs/tokenizer/token
 OUTPUT_BASE="${EVOWEAVE_MODEL_OUTPUT_BASE:-/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs}"
 RUN_NAME="${JOB_RUN_NAME:-flat_static_motion_residual_20260723}"
 OUTPUT_DIR="${JOB_OUTPUT_DIR:-${OUTPUT_BASE}/${RUN_NAME}}"
+CONDITION_FUSION="${JOB_CONDITION_FUSION:-static_cross_attn_zero}"
 
 CONDA_SH="${JOB_CONDA_SH:-/opt/conda/etc/profile.d/conda.sh}"
 CONDA_ENV="${JOB_CONDA_ENV:-evoweave}"
@@ -35,6 +36,10 @@ EFFECTIVE_BATCH=$((NPROC * BATCH_SIZE * GRAD_ACCUM))
 
 if [[ -n "${JOB_INIT_CHECKPOINT:-}" || -n "${JOB_RESUME_CHECKPOINT:-}" ]]; then
   echo "[static_motion_residual] ERROR: dynamic init/resume checkpoints are forbidden" >&2
+  exit 2
+fi
+if [[ "${CONDITION_FUSION}" != "static_cross_attn_zero" && "${CONDITION_FUSION}" != "anchor_motion_residual_zero" ]]; then
+  echo "[static_motion_residual] ERROR: unsupported condition fusion ${CONDITION_FUSION}" >&2
   exit 2
 fi
 if [[ "${EFFECTIVE_BATCH}" != "${EXPECTED_EFFECTIVE_BATCH}" ]]; then
@@ -121,6 +126,7 @@ export RIGWEAVE_NPROC="${NPROC}"
 export RIGWEAVE_BATCH_SIZE="${BATCH_SIZE}"
 export RIGWEAVE_GRAD_ACCUM="${GRAD_ACCUM}"
 export RIGWEAVE_MAX_STEPS="${JOB_MAX_STEPS:-1667}"
+export RIGWEAVE_STOP_AFTER_SAMPLES="${JOB_STOP_AFTER_SAMPLES:-0}"
 export RIGWEAVE_SAMPLE_MILESTONES="${JOB_SAMPLE_MILESTONES:-5000,10000,20000,30000,50000,80000}"
 export RIGWEAVE_SAVE_EVERY="${JOB_SAVE_EVERY:-0}"
 export RIGWEAVE_LOG_EVERY="${JOB_LOG_EVERY:-10}"
@@ -162,7 +168,7 @@ export RIGWEAVE_USE_GRAMMAR_STATE_EMBEDDING=0
 export RIGWEAVE_USE_ACTION_GROUP_BIAS=0
 export RIGWEAVE_USE_CONDITION_ACTION_GROUP_BIAS=0
 
-export RIGWEAVE_CONDITION_FUSION=static_cross_attn_zero
+export RIGWEAVE_CONDITION_FUSION="${CONDITION_FUSION}"
 export RIGWEAVE_CONDITION_FUSION_HEADS=8
 export RIGWEAVE_CONDITION_FUSION_GATE_INIT=0.25
 export RIGWEAVE_CONDITION_FUSION_DEPTH=1
@@ -183,7 +189,7 @@ export RIGWEAVE_FREEZE_CONDITIONER=0
 export RIGWEAVE_MOTION_CHECKPOINTING=1
 
 {
-  echo "route=flat_static_condition_motion_residual"
+  echo "route=${CONDITION_FUSION}"
   echo "git_commit=${GIT_COMMIT}"
   echo "train_manifest=${TRAIN_MANIFEST}"
   echo "val_manifest=${VAL_MANIFEST}"
@@ -193,10 +199,14 @@ export RIGWEAVE_MOTION_CHECKPOINTING=1
   echo "dynamic_checkpoint_loaded=false"
   echo "visible_gpus=${visible_gpus}"
   echo "effective_batch=${EFFECTIVE_BATCH}"
-  echo "condition_fusion=static_cross_attn_zero"
+  echo "condition_fusion=${CONDITION_FUSION}"
   echo "condition_fusion_gate_init=0.25"
   echo "condition_fusion_depth=1"
-  echo "initial_fused_condition=exact_static_identity"
+  if [[ "${CONDITION_FUSION}" == "anchor_motion_residual_zero" ]]; then
+    echo "initial_fused_condition=exact_trackable_frame0_identity"
+  else
+    echo "initial_fused_condition=exact_static_unirig_identity"
+  fi
   echo "use_motion_features=false"
   echo "use_time_embedding=false"
   echo "train_random_query=true"
@@ -229,6 +239,7 @@ python rigweave/scripts/audit_static_motion_residual_contract.py \
   --motion-fps-ratio "${RIGWEAVE_MOTION_FPS_RATIO:-0.7}" \
   --motion-vertex-samples "${RIGWEAVE_MOTION_VERTEX_SAMPLES:-512}" \
   --gate-init "${RIGWEAVE_CONDITION_FUSION_GATE_INIT}" \
+  --condition-fusion "${CONDITION_FUSION}" \
   --output "${OUTPUT_DIR}/static_motion_residual_preflight.json"
 
 echo "[static_motion_residual] preflight passed commit=${GIT_COMMIT} effective_batch=${EFFECTIVE_BATCH}"

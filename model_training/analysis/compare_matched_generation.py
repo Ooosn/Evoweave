@@ -238,6 +238,8 @@ def _aggregate_rows(result: Result, rows: list[dict[str, Any]]) -> dict[str, Any
         "joint_count_exact_rate": float(exact_count / max(len(valid_blocks), 1)),
         "joint_count_error": _finite_stats(count_errors),
         "joint_count_abs_error": _finite_stats(abs_count_errors),
+        "root_l2": _finite_stats(values("root_l2")),
+        "joint1_l2": _finite_stats(values("joint1_l2")),
         "j2j": _finite_stats(values("official", "j2j")),
         "j2b": _finite_stats(values("official", "j2b")),
         "b2b": _finite_stats(values("official", "b2b")),
@@ -284,6 +286,8 @@ def _write_csv(summary: dict[str, Any], output: Path) -> None:
         "hit_max_without_eos",
         "joint_count_exact_rate",
         "joint_count_mae",
+        "root_l2_mean",
+        "joint1_l2_mean",
         "j2j_mean",
         "j2b_mean",
         "b2b_mean",
@@ -306,6 +310,8 @@ def _write_csv(summary: dict[str, Any], output: Path) -> None:
                         "hit_max_without_eos": metrics["hit_max_without_eos"],
                         "joint_count_exact_rate": metrics["joint_count_exact_rate"],
                         "joint_count_mae": metrics["joint_count_abs_error"]["mean"],
+                        "root_l2_mean": metrics["root_l2"]["mean"],
+                        "joint1_l2_mean": metrics["joint1_l2"]["mean"],
                         "j2j_mean": metrics["j2j"]["mean"],
                         "j2b_mean": metrics["j2b"]["mean"],
                         "b2b_mean": metrics["b2b"]["mean"],
@@ -552,8 +558,12 @@ def _make_montage(images: list[Path], output: Path) -> None:
 
 
 def _print_table(summary: dict[str, Any]) -> None:
+    def mean_text(stats: dict[str, Any], digits: int) -> str:
+        value = stats.get("mean")
+        return "NA" if value is None else f"{float(value):.{digits}f}"
+
     print(
-        "stratum\tlabel\tEOS/max/over50\tcount_MAE\tJ2J\tJ2B\tB2B\t"
+        "stratum\tlabel\tEOS/max/over50\tcount_MAE\troot_L2\tjoint1_L2\tJ2J\tJ2B\tB2B\t"
         "topology_F1_all"
     )
     for stratum, stratum_payload in summary["strata"].items():
@@ -568,11 +578,13 @@ def _print_table(summary: dict[str, Any]) -> None:
                             f"{metrics['hit_max_without_eos']}/"
                             f"{metrics['extreme_overgeneration_gt50']}"
                         ),
-                        f"{metrics['joint_count_abs_error']['mean']:.4f}",
-                        f"{metrics['j2j']['mean']:.6f}",
-                        f"{metrics['j2b']['mean']:.6f}",
-                        f"{metrics['b2b']['mean']:.6f}",
-                        f"{metrics['topology_f1_all_rows_zero_for_failure']['mean']:.6f}",
+                        mean_text(metrics["joint_count_abs_error"], 4),
+                        mean_text(metrics["root_l2"], 6),
+                        mean_text(metrics["joint1_l2"], 6),
+                        mean_text(metrics["j2j"], 6),
+                        mean_text(metrics["j2b"], 6),
+                        mean_text(metrics["b2b"], 6),
+                        mean_text(metrics["topology_f1_all_rows_zero_for_failure"], 6),
                     ]
                 )
             )

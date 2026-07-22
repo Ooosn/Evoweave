@@ -703,6 +703,11 @@ def _output_metrics(pred: Any | None, target: Any, continuous_range: tuple[float
     out["pred_bone_count"] = int(pred_bones.shape[0])
     out["joint_count_error"] = int(pred_joints.shape[0] - target_joints.shape[0])
     out["joint_count_abs_error"] = int(abs(pred_joints.shape[0] - target_joints.shape[0]))
+    if pred_joints.shape[0] >= 1 and target_joints.shape[0] >= 1:
+        out["root_l2"] = float(np.linalg.norm(pred_joints[0] - target_joints[0]))
+    if pred_joints.shape[0] >= 2 and target_joints.shape[0] >= 2:
+        # Rootless DFS serialization makes joint 1 the first generated child.
+        out["joint1_l2"] = float(np.linalg.norm(pred_joints[1] - target_joints[1]))
     out["joint_chamfer"] = _nn_chamfer(pred_joints, target_joints)
     out["bone_chamfer"] = _set_chamfer(
         _bone_features(pred_joints, pred_parents),
@@ -1282,6 +1287,8 @@ def _summarize(rows: list[dict[str, Any]], prefix: str) -> dict[str, Any]:
     vals: dict[str, list[float]] = {
         "joint_count_abs_error": [],
         "joint_count_error": [],
+        "root_l2": [],
+        "joint1_l2": [],
         "joint_chamfer_mean": [],
         "joint_chamfer_p95": [],
         "bone_chamfer_mean": [],
@@ -1309,7 +1316,7 @@ def _summarize(rows: list[dict[str, Any]], prefix: str) -> dict[str, Any]:
         has_eos += int(block_has_eos)
         hit_max += int(block.get("hit_max_without_eos", False))
         metrics = block.get("metrics", {})
-        for key in ("joint_count_abs_error", "joint_count_error"):
+        for key in ("joint_count_abs_error", "joint_count_error", "root_l2", "joint1_l2"):
             if key in metrics:
                 vals[key].append(float(metrics[key]))
         if "joint_chamfer" in metrics:

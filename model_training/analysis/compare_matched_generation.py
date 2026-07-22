@@ -212,12 +212,28 @@ def _aggregate_rows(result: Result, rows: list[dict[str, Any]]) -> dict[str, Any
     count_errors = values("joint_count_error")
     abs_count_errors = [abs(value) for value in count_errors]
     exact_count = sum(abs(value) < 0.5 for value in count_errors)
+    topology_f1_all_rows = []
+    extreme_overgeneration = 0
+    for row, block in zip(rows, blocks, strict=True):
+        topology_f1 = _metric(block, "topology", "edge_f1")
+        topology_f1_all_rows.append(
+            float(topology_f1)
+            if topology_f1 is not None and np.isfinite(float(topology_f1))
+            else 0.0
+        )
+        predicted_count = _metric(block, "pred_joint_count")
+        if (
+            predicted_count is not None
+            and float(predicted_count) - float(row["target_joint_count"]) > 50.0
+        ):
+            extreme_overgeneration += 1
     return {
         "count": len(rows),
         "detokenize_ok": sum(bool(block.get("detokenize_ok")) for block in blocks),
         "errors": sum(block.get("error") is not None for block in blocks),
         "has_eos": sum(bool(block.get("has_eos")) for block in blocks),
         "hit_max_without_eos": sum(bool(block.get("hit_max_without_eos")) for block in blocks),
+        "extreme_overgeneration_gt50": int(extreme_overgeneration),
         "joint_count_exact": int(exact_count),
         "joint_count_exact_rate": float(exact_count / max(len(valid_blocks), 1)),
         "joint_count_error": _finite_stats(count_errors),
@@ -226,6 +242,9 @@ def _aggregate_rows(result: Result, rows: list[dict[str, Any]]) -> dict[str, Any
         "j2b": _finite_stats(values("official", "j2b")),
         "b2b": _finite_stats(values("official", "b2b")),
         "topology_f1": _finite_stats(values("topology", "edge_f1")),
+        "topology_f1_all_rows_zero_for_failure": _finite_stats(
+            topology_f1_all_rows
+        ),
         "topology_precision": _finite_stats(values("topology", "edge_precision")),
         "topology_recall": _finite_stats(values("topology", "edge_recall")),
     }
@@ -531,7 +550,10 @@ def _make_montage(images: list[Path], output: Path) -> None:
 
 
 def _print_table(summary: dict[str, Any]) -> None:
-    print("stratum\tlabel\tEOS/max\tcount_MAE\tJ2J\tJ2B\tB2B\ttopology_F1")
+    print(
+        "stratum\tlabel\tEOS/max/over50\tcount_MAE\tJ2J\tJ2B\tB2B\t"
+        "topology_F1_all"
+    )
     for stratum, stratum_payload in summary["strata"].items():
         for label, metrics in stratum_payload["results"].items():
             print(
@@ -539,12 +561,16 @@ def _print_table(summary: dict[str, Any]) -> None:
                     [
                         stratum,
                         label,
-                        f"{metrics['has_eos']}/{metrics['hit_max_without_eos']}",
+                        (
+                            f"{metrics['has_eos']}/"
+                            f"{metrics['hit_max_without_eos']}/"
+                            f"{metrics['extreme_overgeneration_gt50']}"
+                        ),
                         f"{metrics['joint_count_abs_error']['mean']:.4f}",
                         f"{metrics['j2j']['mean']:.6f}",
                         f"{metrics['j2b']['mean']:.6f}",
                         f"{metrics['b2b']['mean']:.6f}",
-                        f"{metrics['topology_f1']['mean']:.6f}",
+                        f"{metrics['topology_f1_all_rows_zero_for_failure']['mean']:.6f}",
                     ]
                 )
             )

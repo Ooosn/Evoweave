@@ -140,6 +140,7 @@ CMD=(
   --lr-ar "${JOB_LR_AR:-0.0001}"
   --lr-surface "${JOB_LR_SURFACE:-0.0001}"
   --lr-refresh "${JOB_LR_REFRESH:-0.0001}"
+  --lr-stack-action "${JOB_LR_STACK_ACTION:-0.0001}"
   --weight-decay "${JOB_WEIGHT_DECAY:-0.04}"
   --onecycle-pct-start "${JOB_ONECYCLE_PCT_START:-0.1}"
   --onecycle-div-factor "${JOB_ONECYCLE_DIV_FACTOR:-5.0}"
@@ -151,6 +152,7 @@ CMD=(
   --perturb-max-joint-fraction "${JOB_PERTURB_MAX_JOINT_FRACTION:-0.08}"
   --perturb-warmup-samples "${JOB_PERTURB_WARMUP_SAMPLES:-5000}"
   --perturb-ramp-samples "${JOB_PERTURB_RAMP_SAMPLES:-15000}"
+  --stack-action-loss-weight "${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}"
   --condition-refresh-layers "${JOB_CONDITION_REFRESH_LAYERS:-}"
   --condition-refresh-dim "${JOB_CONDITION_REFRESH_DIM:-256}"
   --condition-refresh-heads "${JOB_CONDITION_REFRESH_HEADS:-8}"
@@ -199,6 +201,7 @@ fi
   echo "use_motion_features=${USE_MOTION_FEATURES}"
   echo "use_time_embedding=${USE_TIME_EMBEDDING}"
   echo "random_sibling_order=${RANDOM_SIBLING_ORDER}"
+  echo "stack_action_loss_weight=${JOB_STACK_ACTION_LOSS_WEIGHT:-0.0}"
 } > "${OUTPUT_DIR}/resolved_contract.txt"
 
 printf '[stack_close] command:'

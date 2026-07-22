@@ -135,6 +135,9 @@ def _build_model(
     )
     model_kwargs = {
         "perturbation": perturbation,
+        "stack_action_loss_weight": float(
+            train_args.get("stack_action_loss_weight", 0.0)
+        ),
         "num_surface_samples": int(
             train_args.get("surface_samples", 65_536)
         ),
@@ -401,6 +404,8 @@ def main() -> None:
     )
     model.load_state_dict(payload["model"], strict=True)
     move_dynamic_model_to_device(model, device)
+    if model.stack_action_head is not None:
+        model.stack_action_head.to(device)
     if hasattr(model, "condition_refresh_adapters"):
         model.condition_refresh_adapters.to(device)
     motion_encoder = model.conditioner.motion_encoder
@@ -580,6 +585,10 @@ def main() -> None:
                 "use_motion_features": bool(motion_encoder.use_motion_features),
                 "use_time_embedding": bool(motion_encoder.use_time_embedding),
             },
+        },
+        "stack_action": {
+            "enabled": model.stack_action_head is not None,
+            "loss_weight": float(model.stack_action_loss_weight),
         },
         "metric_contract": "shared_eval_dynamic_rig_generation",
         "generation": _summarize(rows, "stack_close"),

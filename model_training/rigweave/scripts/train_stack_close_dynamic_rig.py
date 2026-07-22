@@ -90,6 +90,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr-ar", type=float, default=1.0e-4)
     parser.add_argument("--lr-surface", type=float, default=1.0e-4)
     parser.add_argument("--lr-refresh", type=float, default=1.0e-4)
+    parser.add_argument("--lr-stack-action", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.04)
     parser.add_argument("--onecycle-pct-start", type=float, default=0.1)
     parser.add_argument("--onecycle-div-factor", type=float, default=5.0)
@@ -101,6 +102,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--perturb-max-joint-fraction", type=float, default=0.08)
     parser.add_argument("--perturb-warmup-samples", type=int, default=5_000)
     parser.add_argument("--perturb-ramp-samples", type=int, default=15_000)
+    parser.add_argument("--stack-action-loss-weight", type=float, default=0.0)
     parser.add_argument(
         "--condition-refresh-layers",
         default="",
@@ -335,11 +337,17 @@ def main() -> None:
         refresh_layers = _parse_refresh_layers(
             args.condition_refresh_layers
         )
-        route = (
-            "stack_close_condition_refresh_sibling_perturb"
-            if refresh_layers
-            else "stack_close_sibling_perturb"
+        route_parts = ["stack_close"]
+        if args.stack_action_loss_weight > 0.0:
+            route_parts.append("action")
+        if refresh_layers:
+            route_parts.append("condition_refresh")
+        route_parts.append(
+            "random_sibling" if args.random_sibling_order else "canonical_sibling"
         )
+        if args.perturb_row_probability > 0.0:
+            route_parts.append("perturb")
+        route = "_".join(route_parts)
 
         _log(rank, f"device={device} world_size={world_size}", run_log)
         legacy_tokenizer = build_tokenizer(args.tokenizer_config)
@@ -383,6 +391,7 @@ def main() -> None:
                 conditioner,
                 stack_tokenizer,
                 perturbation=perturbation,
+                stack_action_loss_weight=args.stack_action_loss_weight,
                 num_surface_samples=args.surface_samples,
                 vertex_samples=args.vertex_samples,
                 query_tokens=args.query_tokens,
@@ -396,11 +405,14 @@ def main() -> None:
                 conditioner,
                 stack_tokenizer,
                 perturbation=perturbation,
+                stack_action_loss_weight=args.stack_action_loss_weight,
                 num_surface_samples=args.surface_samples,
                 vertex_samples=args.vertex_samples,
                 query_tokens=args.query_tokens,
             )
         move_dynamic_model_to_device(model, device)
+        if model.stack_action_head is not None:
+            model.stack_action_head.to(device)
         if refresh_layers:
             model.condition_refresh_adapters.to(device)
 
@@ -513,6 +525,14 @@ def main() -> None:
                     "name": "condition_refresh",
                 }
             )
+        if model.stack_action_head is not None:
+            parameter_groups.append(
+                {
+                    "params": list(model.stack_action_head.parameters()),
+                    "lr": args.lr_stack_action,
+                    "name": "stack_action",
+                }
+            )
         optimizer_audit = _audit_optimizer_coverage(
             model,
             parameter_groups,
@@ -592,6 +612,11 @@ def main() -> None:
                         "layers": list(refresh_layers),
                         "dim": int(args.condition_refresh_dim),
                         "heads": int(args.condition_refresh_heads),
+                    },
+                    "stack_action": {
+                        "enabled": model.stack_action_head is not None,
+                        "loss_weight": float(args.stack_action_loss_weight),
+                        "lr": float(args.lr_stack_action),
                     },
                 },
             )

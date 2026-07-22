@@ -14,6 +14,30 @@ from rigweave.dynamic_rig.unirig_wrapper import DynamicRigUniRigAR
 from .tokenizer import StackCloseTokenizer
 
 
+def _stack_action_targets(
+    labels: torch.LongTensor,
+    coordinate_positions: torch.LongTensor,
+    joint_count: torch.LongTensor,
+    *,
+    close_token: int,
+) -> torch.LongTensor:
+    """Build child-versus-close labels aligned with next-token logits."""
+
+    targets = torch.full_like(labels, -100)
+    targets[labels == int(close_token)] = 1
+    for row, count_tensor in enumerate(joint_count):
+        count = int(count_tensor.item())
+        if count <= 1:
+            continue
+        predictor_positions = coordinate_positions[row, 1:count, 0] - 1
+        predictor_positions = predictor_positions[
+            (predictor_positions >= 0)
+            & (predictor_positions < targets.shape[1])
+        ]
+        targets[row, predictor_positions] = 0
+    return targets
+
+
 @dataclass(frozen=True)
 class PrefixPerturbationConfig:
     row_probability: float = 0.5
@@ -51,6 +75,7 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
         tokenizer: StackCloseTokenizer,
         *,
         perturbation: PrefixPerturbationConfig,
+        stack_action_loss_weight: float = 0.0,
         num_surface_samples: int = 65_536,
         vertex_samples: int = 8_192,
         query_tokens: int = 1_024,
@@ -86,6 +111,17 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             explicit_tree_oracle_prefix_weight=0.0,
         )
         self.perturbation = perturbation
+        self.stack_action_loss_weight = float(stack_action_loss_weight)
+        if self.stack_action_loss_weight < 0.0:
+            raise ValueError("stack_action_loss_weight must be non-negative")
+        self.stack_action_head = (
+            nn.Sequential(
+                nn.LayerNorm(unirig_ar.hidden_size),
+                nn.Linear(unirig_ar.hidden_size, 2),
+            )
+            if self.stack_action_loss_weight > 0.0
+            else None
+        )
         for module in (
             self.condition_fuser,
             self.grammar_state_proj,
@@ -363,10 +399,12 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             (cond.shape[1], 0, 0, 0),
             value=1.0,
         )
+        need_action_hidden = self.stack_action_head is not None
         output = self.transformer(
             inputs_embeds=inputs_embeds,
             attention_mask=full_attention,
             use_cache=False,
+            output_hidden_states=need_action_hidden,
         )
         logits = output.logits[:, cond.shape[1] :].reshape(
             batch_size,
@@ -410,8 +448,36 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
         else:
             dis_loss = ce_loss.detach() * 0.0
 
+        if self.stack_action_head is None:
+            stack_action_loss = ce_loss.detach() * 0.0
+            stack_action_acc = ce_loss.detach() * 0.0
+            stack_action_count = ce_loss.detach() * 0.0
+        else:
+            assert output.hidden_states is not None
+            action_targets = _stack_action_targets(
+                labels,
+                batch["coordinate_token_positions"],
+                batch["joint_count"],
+                close_token=self.tokenizer.token_id_close,
+            )
+            action_mask = action_targets != -100
+            action_hidden = output.hidden_states[-1][
+                :, cond.shape[1] : -1
+            ][action_mask]
+            action_logits = self.stack_action_head(action_hidden)
+            stack_action_loss = nn.functional.cross_entropy(
+                action_logits.float(),
+                action_targets[action_mask],
+            )
+            stack_action_acc = (
+                action_logits.argmax(dim=-1) == action_targets[action_mask]
+            ).float().mean()
+            stack_action_count = action_mask.sum().float()
+
+        total_loss = ce_loss + self.stack_action_loss_weight * stack_action_loss
+
         return {
-            "loss": ce_loss,
+            "loss": total_loss,
             "ce_loss": ce_loss,
             "dis_loss": dis_loss,
             "token_acc": accuracy(valid),
@@ -420,6 +486,9 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             "eos_acc": accuracy(eos_mask),
             "close_count": close_mask.sum().float(),
             "eos_count": eos_mask.sum().float(),
+            "stack_action_loss": stack_action_loss,
+            "stack_action_acc": stack_action_acc,
+            "stack_action_count": stack_action_count,
         }
 
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
@@ -461,10 +530,12 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             device=cond.device,
             dtype=torch.long,
         )
+        need_action_hidden = self.stack_action_head is not None
         output = self.transformer(
             inputs_embeds=initial_embeds,
             attention_mask=attention_mask,
             use_cache=True,
+            output_hidden_states=need_action_hidden,
         )
         for _ in range(max_new_tokens):
             logits = output.logits[0, -1].float()
@@ -474,7 +545,25 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
             if not possible:
                 break
             allowed = torch.tensor(possible, device=logits.device, dtype=torch.long)
-            next_token = int(allowed[logits[allowed].argmax()].item())
+            if (
+                self.stack_action_head is not None
+                and self.tokenizer.token_id_close in possible
+            ):
+                assert output.hidden_states is not None
+                action_logits = self.stack_action_head(
+                    output.hidden_states[-1][0, -1]
+                )
+                if int(action_logits.argmax(dim=-1).item()) == 1:
+                    next_token = int(self.tokenizer.token_id_close)
+                else:
+                    coordinate_ids = allowed[
+                        allowed < self.tokenizer.num_discrete
+                    ]
+                    next_token = int(
+                        coordinate_ids[logits[coordinate_ids].argmax()].item()
+                    )
+            else:
+                next_token = int(allowed[logits[allowed].argmax()].item())
             ids.append(next_token)
             if next_token == self.tokenizer.eos:
                 break
@@ -496,6 +585,7 @@ class StackCloseDynamicRigAR(DynamicRigUniRigAR):
                 attention_mask=attention_mask,
                 past_key_values=output.past_key_values,
                 use_cache=True,
+                output_hidden_states=need_action_hidden,
             )
         return np.asarray(ids, dtype=np.int64)
 

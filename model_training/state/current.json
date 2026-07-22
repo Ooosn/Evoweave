@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-static-motion-residual-20260723-001",
-  "updated_at": "2026-07-23T05:57:50+09:00",
+  "updated_at": "2026-07-23T06:19:08+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md",
   "required_context": [
@@ -68,7 +68,8 @@
     "zeroing motion worsens hard-six teacher-forcing CE from 1.67004 to 1.72049, so motion carries useful evidence",
     "the current failure has two stages: early condition-to-coordinate error followed by self-prefix amplification",
     "rootless geometries with variable first real joints are harder but are not invalid data and must not be rejected",
-    "local unit tests prove the zero-initialized motion residual is exact static identity and opens a trainable dynamic path after its first update"
+    "local unit tests prove the zero-initialized motion residual is exact static identity and opens a trainable dynamic path after its first update",
+    "the full H100 model audit has exact initial condition and teacher-logit max diff 0.0, complete 670670337-parameter optimizer coverage, nonzero first-step AR/surface/fuser gradients, and nonzero second-step motion gradient"
   ],
   "unknowns": [
     "whether preserving the static UniRig condition while learning motion as a residual reduces early root and first-child coordinate errors",
@@ -84,19 +85,19 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "Run the full CUDA contract audit, then a matched short free-generation comparison. Submit the single formal 2xA100-80 task only if initialization is exact, optimizer coverage is complete, and hard/control generation does not show collapse.",
+  "next_required_result": "Train the residual route for 5000 matched sample exposures on the retained HGC H100, then compare fixed hard and control rows by free generation. Submit the single formal 2xA100-80 task only if the short run shows no collapse or control regression.",
   "active_operation": {
     "name": "flat_static_motion_residual_causal_preflight_20260723",
-    "status": "local_contract_passed_gpu_preflight_pending",
+    "status": "full_cuda_contract_passed_short_generation_pending",
     "implementation_commit": "cb25596ac9c454dac2c8572c1329560461538102",
     "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "source_checkpoint": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
     "dynamic_checkpoint_loaded": false,
     "launcher": "model_training/jobs/run_rootless_flat_static_motion_residual_20260723.sh",
-    "dev_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_static_motion_residual_preflight_20260723",
+    "dev_output_dir": "/home/wangyy/evorig/outputs/flat_static_motion_residual_hgc1h100_5k_20260723",
     "formal_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_static_motion_residual_20260723",
-    "dev_resources": "1xA100-SXM4-80GB",
+    "dev_resources": "existing HGC qlogin job 124763552, 1xH100-80GB, preflight and 5000-exposure diagnostic only",
     "formal_resources": "2xA100-SXM4-80GB",
     "formal_effective_batch": 48,
     "condition_fusion": "static_cross_attn_zero",
@@ -104,7 +105,14 @@
     "use_time_embedding": false,
     "full_finetune": true,
     "formal_task_budget": 1,
-    "acceptance_test": "exact initial condition/logit identity; complete optimizer coverage; nonzero static, AR, fuser, and opened-motion gradients; matched free-generation root/first-child error, EOS/hitmax, count, F1, J2J, and GT/prediction/overlay controls"
+    "cuda_audit_artifact": "/home/wangyy/evorig/outputs/static_motion_residual_contract_h100_20260723/audit.json",
+    "cuda_audit_status": "passed",
+    "short_train_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+    "short_val_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+    "short_train_steps": 105,
+    "short_train_sample_exposures": 5040,
+    "short_train_effective_batch": 48,
+    "acceptance_test": "matched free-generation root/first-child error, EOS/hitmax, count, F1, J2J, and GT/prediction/overlay on fixed hard and control rows; startup contract must remain exact and all trainable modules must receive the intended gradients"
   },
   "last_operation": {
     "name": "stack_close_oracle_action_and_shared_root_diagnosis_20260723",

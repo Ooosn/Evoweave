@@ -1,26 +1,48 @@
 {
   "schema_version": 1,
-  "state_id": "model-stack-close-20260720-001",
-  "updated_at": "2026-07-20T13:57:25+09:00",
+  "state_id": "model-static-motion-residual-20260723-001",
+  "updated_at": "2026-07-23T05:57:50+09:00",
   "module": "model_training",
-  "human_context": "model_training/docs/STACK_CLOSE_ROUTE_20260720.md",
+  "human_context": "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/STACK_CLOSE_ROUTE_20260720.md"
+    "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md"
   ],
   "reference_runs": {
     "flat_unirig": {
-      "status": "frozen_baseline",
+      "status": "accepted_baseline",
       "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
       "sample_exposures": 80016,
-      "trainable_parameters_at_that_commit": 662268416,
-      "valid_common60": {
-        "detokenize_ok": 54,
-        "hit_max_without_eos": 6,
-        "topology_f1_all_rows_zero_for_failure": 0.7141092136268684
+      "valid857": {
+        "legal_generation": 780,
+        "true_hitmax": 77,
+        "topology_f1_all_rows_zero_for_failure": 0.7428389,
+        "j2j": 0.017206,
+        "count_mae": 6.9974
       }
+    },
+    "stack_close": {
+      "status": "rejected",
+      "sample_exposures": 80016,
+      "valid857": {
+        "legal_generation": 838,
+        "invalid": 19,
+        "extreme_overgeneration": 73,
+        "topology_f1_all_rows_zero_for_failure": 0.6913175,
+        "j2j": 0.034112,
+        "count_mae": 25.38
+      },
+      "reason": "reduced literal hitmax but converted failures into late EOS, repeated joints, extreme overgeneration, and worse coordinates"
+    },
+    "stack_close_condition_refresh": {
+      "status": "rejected",
+      "legal_generation": 839,
+      "bad_rows_under_invalid_or_gt_plus_50": 83,
+      "topology_f1_all_rows_zero_for_failure": 0.6924743,
+      "j2j": 0.034024,
+      "count_mae": 22.45
     },
     "puppeteer": {
       "status": "not_accepted_as_usable_baseline",
@@ -29,30 +51,29 @@
     }
   },
   "verified_fixed_causes": [
-    "flat parent-coordinate tokenization loses parent identity when different joints quantize to the same coordinate",
-    "DFS stack-close encodes exact parent identity without adding a new vocabulary entry",
-    "random sibling serialization removes the lexical sibling order as a unique target",
-    "GPU prefix perturbation reuses the existing 1024 FPS surface anchors and does not add CPU raycasting to the dataloader"
+    "flat parent-coordinate tokenization can lose parent identity after coordinate quantization",
+    "DFS stack-close recovers exact parent identity but does not solve early coordinate grounding",
+    "the formal rootless-v3 data contract contains no synthetic root or generated tail tokens",
+    "query pose mesh and target skeleton are aligned in the current loader",
+    "surface FPS randomness is a trigger for some rows but is not the systematic failure cause"
   ],
   "verified_open_facts": [
-    "the formal Westlake manifests contain 15903 train rows and 857 valid rows",
-    "stack-close round-trips all 16760 formal rows under canonical and two randomized sibling serializations with zero failures",
-    "train maximum stack-close target length is 1003 and valid maximum is 827",
-    "the isolated route modifies no flat UniRig baseline source file",
-    "the current route has 663383552 trainable parameters and the optimizer owns exactly all 663383552 with no duplicate or missing parameter",
-    "a 600-exposure 32-row diagnostic produced 32 of 32 legal EOS generations with zero hitmax and mean topology F1 0.590121",
-    "the remaining short-run failure mode is premature CLOSE and under-generation rather than coordinate looping or template collapse",
-    "condition refresh adds 3166464 parameters through zero-residual cross-attention at decoder layers 8, 16, and 24 without changing initial logits",
-    "the matched 600-exposure condition-refresh diagnostic produced 32 of 32 legal EOS generations, zero hitmax, mean topology F1 0.568839, and mean J2J 0.057209",
-    "condition refresh increased median full-trainer step time from 2.87990 seconds to 2.90510 seconds, about 0.9 percent",
-    "the matched short run does not show a condition-refresh quality improvement over the no-refresh route",
-    "the shuki training adapter now preserves gpu_per_worker=2 through AIStation submission",
-    "both isolated 2xA100-80 formal routes have nonempty AIStation job ids"
+    "the only formal manifests contain 15903 train rows and 857 valid rows",
+    "oracle GT CHILD/CLOSE actions produce exact count and legal EOS on 18 of 18 diagnostic rows but only 0.3471 mean F1 and 0.07779 J2J",
+    "the six flat-hitmax oracle-action rows have only 0.05442 mean F1, proving action-only repair is insufficient",
+    "some hard rows make tens to more than one hundred coordinate-bin error at the root or first child before any wrong skeleton prefix exists",
+    "flat legal and hitmax root-bin L2 medians are 2.236 and 11.180 on the full valid857 set",
+    "flat and stack root predictions have x/y/z correlations 0.9794, 0.9775, and 0.9351, so the initial coordinate failure is shared",
+    "official static UniRig gives legal EOS on the selected 18 rows but the hard six still have only 0.23689 mean F1",
+    "zeroing motion worsens hard-six teacher-forcing CE from 1.67004 to 1.72049, so motion carries useful evidence",
+    "the current failure has two stages: early condition-to-coordinate error followed by self-prefix amplification",
+    "rootless geometries with variable first real joints are harder but are not invalid data and must not be rejected",
+    "local unit tests prove the zero-initialized motion residual is exact static identity and opens a trainable dynamic path after its first update"
   ],
   "unknowns": [
-    "formal 80016-exposure stack-close validation performance and hitmax rate",
-    "formal 80016-exposure condition-refresh validation performance and hitmax rate",
-    "whether condition refresh improves robustness after full training despite no improvement in the matched 600-exposure diagnostic"
+    "whether preserving the static UniRig condition while learning motion as a residual reduces early root and first-child coordinate errors",
+    "whether any early coordinate improvement survives free autoregressive rollout and reduces the 77 flat hitmax rows without harming flat-good controls",
+    "the full-model CUDA audit and matched short free-generation result for the residual route"
   ],
   "allowed_operations": [
     "report",
@@ -63,38 +84,33 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "Monitor both submitted AIStation jobs until they start. Verify each resolved_contract.txt records the intended immutable commit, static UniRig initialization, two visible A100-80 GPUs, effective batch 48, and the correct condition-refresh setting before accepting training progress.",
+  "next_required_result": "Run the full CUDA contract audit, then a matched short free-generation comparison. Submit the single formal 2xA100-80 task only if initialization is exact, optimizer coverage is complete, and hard/control generation does not show collapse.",
   "active_operation": {
-    "name": "stack_close_two_route_formal_training_20260720",
-    "status": "both_formal_tasks_submitted",
-    "initialization": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "name": "flat_static_motion_residual_causal_preflight_20260723",
+    "status": "local_contract_passed_gpu_preflight_pending",
+    "implementation_commit": "cb25596ac9c454dac2c8572c1329560461538102",
+    "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+    "val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+    "source_checkpoint": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
     "dynamic_checkpoint_loaded": false,
+    "launcher": "model_training/jobs/run_rootless_flat_static_motion_residual_20260723.sh",
+    "dev_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_static_motion_residual_preflight_20260723",
+    "formal_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_static_motion_residual_20260723",
+    "dev_resources": "1xA100-SXM4-80GB",
     "formal_resources": "2xA100-SXM4-80GB",
     "formal_effective_batch": 48,
-    "route1_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_79e6da4",
-    "route1_source_commit": "79e6da43fda8225831c7d1ff41669963f9d058c8",
-    "route2_immutable_source": "/ssdwork/liuhaohan/evorig/run_sources/stack_close_refresh_eb92139",
-    "route2_source_commit": "eb92139446a845e689d2613614662cf37a3777a6",
-    "route1_proxy_task_id": "dac034",
-    "route1_aistation_job_id": "192fe278-2147-43df-a21b-fc9a746de667",
-    "route2_proxy_task_id": "31dece",
-    "route2_aistation_job_id": "82f5a3ba-f23a-42c7-a2c1-78d55462f32b"
+    "condition_fusion": "static_cross_attn_zero",
+    "use_motion_features": false,
+    "use_time_embedding": false,
+    "full_finetune": true,
+    "formal_task_budget": 1,
+    "acceptance_test": "exact initial condition/logit identity; complete optimizer coverage; nonzero static, AR, fuser, and opened-motion gradients; matched free-generation root/first-child error, EOS/hitmax, count, F1, J2J, and GT/prediction/overlay controls"
   },
   "last_operation": {
-    "name": "stack_close_two_route_formal_submission",
-    "status": "completed_passed",
-    "group": "8A100_80",
-    "card_type": "NVIDIA-A100-SXM4-80GB",
-    "worker_count": 1,
-    "gpu_per_worker": 2,
-    "cpu_per_worker": 24,
-    "dist": false,
-    "route1_status": "submitted",
-    "route1_proxy_task_id": "dac034",
-    "route1_aistation_job_id": "192fe278-2147-43df-a21b-fc9a746de667",
-    "route2_status": "submitted",
-    "route2_proxy_task_id": "31dece",
-    "route2_aistation_job_id": "82f5a3ba-f23a-42c7-a2c1-78d55462f32b"
+    "name": "stack_close_oracle_action_and_shared_root_diagnosis_20260723",
+    "status": "completed_rejected_action_route",
+    "artifact_root": "/ssdwork/liuhaohan/evoweave/outputs/stack_close_causal_diagnosis_20260723",
+    "conclusion": "correct tree actions repair count legality but not coordinate placement; the next experiment must target the shared early condition-to-coordinate path"
   },
   "receipt_max_age_minutes": 240
 }

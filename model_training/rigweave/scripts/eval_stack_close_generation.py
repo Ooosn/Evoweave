@@ -46,6 +46,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-new-tokens", type=int, default=1_100)
     parser.add_argument("--visual-limit", type=int, default=12)
     parser.add_argument("--seed", type=int, default=20260720)
+    parser.add_argument(
+        "--surface-seed",
+        type=int,
+        help=(
+            "Base seed for order-invariant per-row surface/FPS sampling. "
+            "Defaults to --seed."
+        ),
+    )
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument(
         "--indices-file",
@@ -388,6 +396,12 @@ def _load_manifest_indices(path: Path, dataset_size: int) -> list[int]:
     return indices
 
 
+def _row_surface_seed(base_seed: int, manifest_index: int) -> int:
+    return (
+        int(base_seed) * 1_000_003 + int(manifest_index) * 97_409
+    ) % (2**63 - 1)
+
+
 def main() -> None:
     args = _parser().parse_args()
     if args.limit <= 0:
@@ -463,6 +477,14 @@ def main() -> None:
     rows_path.write_text("", encoding="utf-8")
     rows: list[dict[str, Any]] = []
     metric_range = _continuous_range(tokenizer)
+    surface_seed_base = int(
+        args.seed if args.surface_seed is None else args.surface_seed
+    )
+    fork_devices = (
+        [device.index if device.index is not None else torch.cuda.current_device()]
+        if device.type == "cuda"
+        else []
+    )
     with torch.inference_mode():
         for evaluation_position, batch in enumerate(loader):
             index = (
@@ -482,16 +504,21 @@ def main() -> None:
             target = tokenizer.detokenize(target_ids)
             block: dict[str, Any] = {"detokenize_ok": False}
             try:
-                with torch.autocast(
-                    device_type="cuda",
-                    dtype=amp_dtype,
-                    enabled=device.type == "cuda",
-                ):
-                    generated_ids = model.generate_batch_item(
-                        batch,
-                        row=0,
-                        max_new_tokens=args.max_new_tokens,
-                    )
+                row_surface_seed = _row_surface_seed(surface_seed_base, index)
+                with torch.random.fork_rng(devices=fork_devices):
+                    torch.manual_seed(row_surface_seed)
+                    if device.type == "cuda":
+                        torch.cuda.manual_seed_all(row_surface_seed)
+                    with torch.autocast(
+                        device_type="cuda",
+                        dtype=amp_dtype,
+                        enabled=device.type == "cuda",
+                    ):
+                        generated_ids = model.generate_batch_item(
+                            batch,
+                            row=0,
+                            max_new_tokens=args.max_new_tokens,
+                        )
                 eos_hits = np.flatnonzero(generated_ids == int(tokenizer.eos))
                 pred = tokenizer.detokenize(generated_ids)
                 block = {
@@ -538,6 +565,7 @@ def main() -> None:
                 "path": batch["path"][0],
                 "selected_frames": selected_frames,
                 "query_frame": int(selected_frames[0]),
+                "surface_seed": _row_surface_seed(surface_seed_base, index),
                 "query_center": (
                     batch["query_center"][0]
                     .detach()
@@ -602,6 +630,10 @@ def main() -> None:
             ),
         },
         "metric_contract": "shared_eval_dynamic_rig_generation",
+        "surface_sampling": {
+            "base_seed": surface_seed_base,
+            "per_manifest_index": True,
+        },
         "generation": _summarize(rows, "stack_close"),
         "mean_topology_f1": _finite_mean(
             rows,

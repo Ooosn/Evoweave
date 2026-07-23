@@ -126,7 +126,9 @@ def _motion_evidence_metrics(query_points: torch.Tensor) -> dict[str, float | No
         "moving_fraction_0p02": float((anchor_rms > 0.02).float().mean().item()),
         "moving_fraction_0p05": float((anchor_rms > 0.05).float().mean().item()),
         "anchor_motion_participation": float(anchor_participation.item() / anchor_rms.numel()),
-        "frame_motion_cv": float((frame_rms.std() / frame_rms.mean().clamp_min(1.0e-12)).item()),
+        "frame_motion_cv": float(
+            (frame_rms.std(unbiased=False) / frame_rms.mean().clamp_min(1.0e-12)).item()
+        ),
         "articulated_rms": float(articulated_rms.item()),
         "articulated_p90": float(torch.quantile(rigid_residual_norm, 0.9).item()),
         "articulated_to_motion_rms": float(

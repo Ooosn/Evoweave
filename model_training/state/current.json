@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "model-anchor-motion-residual-20260723-003",
-  "updated_at": "2026-07-23T09:02:00+09:00",
+  "state_id": "model-query-rigid-motion-20260723-004",
+  "updated_at": "2026-07-23T13:24:21+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md",
   "required_context": [
@@ -23,79 +23,49 @@
         "count_mae": 6.9974
       }
     },
-    "stack_close": {
-      "status": "rejected",
-      "sample_exposures": 80016,
-      "valid857": {
-        "legal_generation": 838,
-        "invalid": 19,
-        "extreme_overgeneration": 73,
-        "topology_f1_all_rows_zero_for_failure": 0.6913175,
-        "j2j": 0.034112,
-        "count_mae": 25.38
-      },
-      "reason": "reduced literal hitmax but converted failures into late EOS, repeated joints, extreme overgeneration, and worse coordinates"
-    },
-    "stack_close_condition_refresh": {
-      "status": "rejected",
-      "legal_generation": 839,
-      "bad_rows_under_invalid_or_gt_plus_50": 83,
-      "topology_f1_all_rows_zero_for_failure": 0.6924743,
-      "j2j": 0.034024,
-      "count_mae": 22.45
-    },
-    "static_cross_attention_residual_5k": {
-      "status": "rejected_before_formal_training",
-      "checkpoint": "/home/wangyy/evorig/outputs/flat_static_motion_residual_hgc1h100_5k_20260723/checkpoint_sample_5000.pt",
-      "sample_exposures": 5040,
-      "matched18": {
-        "legal_generation": 14,
-        "true_hitmax": 4,
-        "topology_f1_all_rows_zero_for_failure": 0.545863,
-        "j2j": 0.028575,
-        "root_l2": 0.085493,
-        "joint1_l2": 0.084943
-      },
-      "reason": "the 1024x1024 fuser learned nearly uniform attention and a token-shared bias rather than anchor-specific motion"
-    },
     "puppeteer": {
       "status": "not_accepted_as_usable_baseline",
       "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
       "sample_exposures": 80016
+    },
+    "stack_close": {
+      "status": "rejected",
+      "reason": "reduced literal hitmax but converted failures into late EOS, repeated joints, extreme overgeneration, and worse coordinates"
+    },
+    "static_cross_attention_residual": {
+      "status": "rejected_before_formal_training",
+      "reason": "learned nearly uniform attention and a token-shared bias instead of anchor-specific motion"
+    },
+    "anchor_motion_residual": {
+      "status": "rejected_before_formal_training",
+      "reason": "the 5000-exposure probe worsened coordinate quality and did not learn a useful motion-dependent residual"
     }
   },
   "verified_fixed_causes": [
-    "flat parent-coordinate tokenization can lose parent identity after coordinate quantization",
-    "DFS stack-close recovers exact parent identity but does not solve early coordinate grounding",
     "the formal rootless-v3 data contract contains no synthetic root or generated tail tokens",
-    "query pose mesh and target skeleton are aligned in the current loader",
-    "surface FPS randomness is a trigger for some rows but is not the systematic failure cause"
+    "query mesh and target skeleton use the same selected pose and query-bbox coordinate system",
+    "flat parent-coordinate tokens can lose parent identity after coordinate quantization",
+    "stack-close restores exact parent identity but does not fix early coordinate grounding",
+    "oracle action and parent rollout fixes EOS/count but leaves hard-row geometry unusable",
+    "surface FPS randomness triggers some failures but is not the systematic cause"
   ],
   "verified_open_facts": [
-    "the only formal manifests contain 15903 train rows and 857 valid rows",
-    "oracle GT CHILD/CLOSE actions produce exact count and legal EOS on 18 of 18 diagnostic rows but only 0.3471 mean F1 and 0.07779 J2J",
-    "the six flat-hitmax oracle-action rows have only 0.05442 mean F1, proving action-only repair is insufficient",
-    "some hard rows make tens to more than one hundred coordinate-bin error at the root or first child before any wrong skeleton prefix exists",
-    "flat legal and hitmax root-bin L2 medians are 2.236 and 11.180 on the full valid857 set",
-    "flat and stack root predictions have x/y/z correlations 0.9794, 0.9775, and 0.9351, so the initial coordinate failure is shared",
-    "official static UniRig gives legal EOS on the selected 18 rows but the hard six still have only 0.23689 mean F1",
-    "zeroing motion worsens hard-six teacher-forcing CE from 1.67004 to 1.72049, so motion carries useful evidence",
-    "the current failure has two stages: early condition-to-coordinate error followed by self-prefix amplification",
-    "rootless geometries with variable first real joints are harder but are not invalid data and must not be rejected",
-    "local unit tests prove the zero-initialized motion residual is exact static identity and opens a trainable dynamic path after its first update",
-    "the full H100 model audit has exact initial condition and teacher-logit max diff 0.0, complete 670670337-parameter optimizer coverage, nonzero first-step AR/surface/fuser gradients, and nonzero second-step motion gradient",
-    "the rejected cross-attention residual has normalized attention entropy 0.999902 and an effective 1023.3 of 1024 keys",
-    "99.9999 percent of its residual energy is a token-shared vector; normal-versus-zero motion changes the fused condition by only 0.000008 of static RMS",
-    "bypassing that residual at inference leaves almost the same generation, while dynamic-only produces 18 of 18 hitmax on the matched diagnostic set",
-    "the old cross-attention residual static path sends zero-padded collated frame vertices to UniRig without using vertex_count, so its static condition depends on the largest mesh in the batch",
-    "official UniRig samples 4Q candidates from its supplied point set and applies FPS, while the trackable dynamic path samples 65536 vertex and triangle-surface points; their condition distributions are not identical by construction",
-    "the anchor-aligned replacement passed the full H100 CUDA audit with exact trackable-frame0 initial condition/logits, complete 665420289-parameter optimizer coverage, and the required two-step motion gradient"
+    "the current failure starts with condition-to-root or condition-to-first-child coordinate error and then amplifies through self-prefix rollout",
+    "motion is not ignored: zeroing motion worsens hard-row teacher-forcing CE, but the learned response is not reliably calibrated",
+    "zero-motion evidence changes the dynamic condition about 7.3 times more than the normal-versus-zero motion signal, so the random motion encoder rewrites static geometry strongly",
+    "the Fourier surface tokenizer already contributes most of the nonlinear response to small motion",
+    "hard diagnostic rows contain more whole-object root trajectory and less internal articulation than matched controls",
+    "the production loader currently performs evidence FPS on raw vertex displacement, so global SE(3) motion can dominate frame selection",
+    "fixed condition scaling and input-only reliability gates failed to improve matched free generation",
+    "post-loader rigid alignment on selected18 looked beneficial, but the full matched154 intervention was neutral: normal versus rigid legal 107 versus 106, all-row F1 0.413997 versus 0.413442, rescue 7 versus regress 8",
+    "on the historical-failure half of matched154, rigid alignment rescued 5 and regressed 6; it is not an inference-time repair",
+    "query-relative rigid alignment remains a training hypothesis because it removes an identified nuisance variable before both motion FPS and encoding"
   ],
   "unknowns": [
-    "whether trackable frame0 tokens preserve usable official UniRig teacher forcing and free generation before any dynamic training",
-    "whether the anchor-aligned residual learns non-shared motion updates during a scheduler-matched 5000-exposure run",
-    "whether it improves early root and first-child predictions and free rollout without regressing matched controls",
-    "whether the anchor-aligned route earns the single formal 2xA100-80 training opportunity"
+    "whether retraining on query-relative evidence prevents the model from learning global-root-motion shortcuts",
+    "whether query-rigid training improves early root and first-child grounding without degrading internally articulated controls",
+    "whether the preprocessing cost is small enough to keep the GPU fed",
+    "whether this candidate earns the single formal two-A100 opportunity"
   ],
   "allowed_operations": [
     "report",
@@ -106,44 +76,37 @@
     "submit"
   ],
   "blocked_operations": [],
-  "next_required_result": "First compare untrained official-static and trackable-frame0 conditions on the same fixed rows using official UniRig weights. Only if trackable frame0 preserves usable generation may the anchor-aligned route run to 5000 sample exposures with the formal 1667-step OneCycle horizon. Submit the single formal 2xA100-80 task only if both gates pass.",
+  "next_required_result": "On the preserved HGC H100, benchmark the production query-rigid loader and run matched 5000-exposure control and query-rigid probes with identical code, data, effective batch 48, and 1667-step OneCycle horizon. Compare fixed hard rows and matched controls in free generation. Do not submit the formal two-A100 task unless query-rigid improves failure legality/F1 and does not materially regress controls.",
   "active_operation": {
-    "name": "pretrained_condition_path_compatibility_20260723",
-    "status": "full_cuda_contract_passed_untrained_condition_comparison_pending",
-    "implementation_commit": "ab6ac59609dc90d79aab26639eec454ec36f6bcd",
-    "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-    "val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-    "source_checkpoint": "/ssdwork/liuhaohan/evorig/Evoweave/model_training/third_party_references/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-    "dynamic_checkpoint_loaded": false,
-    "launcher": "model_training/jobs/run_rootless_flat_anchor_motion_residual_20260723.sh",
-    "dev_output_dir": "/home/wangyy/evorig/outputs/flat_anchor_motion_residual_hgc1h100_5k_20260723",
-    "formal_output_dir": "/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/flat_anchor_motion_residual_20260723",
-    "dev_resources": "existing HGC qlogin job 124763552, 1xH100-80GB, preflight and 5000-exposure diagnostic only",
-    "formal_resources": "2xA100-SXM4-80GB",
-    "formal_effective_batch": 48,
-    "condition_fusion": "anchor_motion_residual_zero",
+    "name": "query_relative_rigid_motion_preprocessing_20260723",
+    "status": "implementation_complete_hgc_preflight_pending",
+    "implementation_commit": "2ab8e4e55542dcf8820fcc2dc8600c83ce2853d8",
+    "launcher": "model_training/jobs/run_rootless_flat_query_rigid_20260723.sh",
+    "motion_alignment_policy": "query_rigid",
+    "condition_fusion": "dynamic",
+    "full_finetune": true,
     "use_motion_features": false,
     "use_time_embedding": false,
-    "full_finetune": true,
-    "formal_task_budget": 1,
-    "cuda_audit_artifact": "/home/wangyy/evorig/outputs/anchor_motion_residual_contract_h100_20260723/audit.json",
-    "cuda_audit_status": "passed",
-    "pretrained_condition_audit_script": "model_training/analysis/evaluate_pretrained_condition_paths.py",
-    "pretrained_condition_audit_output": "/home/wangyy/evorig/outputs/pretrained_condition_paths_selected18_20260723/result.json",
+    "dev_resources": "preserved HGC qlogin job 124763552, one H100-80GB",
+    "short_control_output": "/home/wangyy/evorig/outputs/flat_motion_alignment_none_hgc1h100_5k_20260723",
+    "short_candidate_output": "/home/wangyy/evorig/outputs/flat_motion_alignment_query_rigid_hgc1h100_5k_20260723",
     "short_train_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "short_val_manifest": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "short_train_steps": 105,
     "short_train_sample_exposures": 5040,
     "scheduler_horizon_steps": 1667,
-    "stop_after_samples": 5000,
-    "short_train_effective_batch": 48,
-    "acceptance_test": "matched free-generation root/first-child error, EOS/hitmax, count, F1, J2J, and GT/prediction/overlay on fixed hard and control rows; startup contract must remain exact and all trainable modules must receive the intended gradients"
+    "effective_batch": 48,
+    "formal_task_budget_remaining": 1,
+    "formal_resources": "two A100-80GB in an allowed Westlake resource group",
+    "formal_train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+    "formal_val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+    "acceptance_test": "matched free-generation legality/hitmax, all-row topology F1, J2J, count error, root and first-child error on fixed historical failures and source/count-matched legal controls; dataloader throughput and training/evaluation preprocessing contracts must match"
   },
   "last_operation": {
-    "name": "static_cross_attention_residual_diagnosis_20260723",
-    "status": "completed_rejected_before_formal_training",
-    "artifact_root": "/home/wangyy/evorig/outputs/static_motion_residual_selected18_20260723",
-    "conclusion": "global cross-attention averaged away anchor-specific motion; replace it with an identity-preserving per-anchor residual before any formal training"
+    "name": "matched154_rigid_inference_intervention_20260723",
+    "status": "completed_rejected_as_inference_fix",
+    "artifact_root": "/home/wangyy/evorig/outputs/flat_motion_gate_valid857_20260723/rigid_alignment_matched_v1",
+    "conclusion": "global rigid contamination is real, but changing only inference evidence was neutral and cannot justify formal training"
   },
   "receipt_max_age_minutes": 240
 }

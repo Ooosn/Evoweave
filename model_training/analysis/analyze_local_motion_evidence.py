@@ -115,6 +115,34 @@ def _read_manifest(path: Path, limit: int, seed: int) -> list[dict[str, Any]]:
     return rows
 
 
+def _verify_asset_disjoint(train_manifest: Path, valid_manifest: Path) -> dict[str, int]:
+    def asset_ids(path: Path) -> set[str]:
+        values: set[str] = set()
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            asset_id = row.get("asset_id")
+            if not isinstance(asset_id, str) or not asset_id:
+                raise ValueError(f"manifest row lacks asset_id: {row}")
+            if asset_id in values:
+                raise ValueError(f"manifest repeats asset_id={asset_id!r}: {path}")
+            values.add(asset_id)
+        return values
+
+    train_assets = asset_ids(train_manifest)
+    valid_assets = asset_ids(valid_manifest)
+    overlap = train_assets & valid_assets
+    if overlap:
+        examples = sorted(overlap)[:10]
+        raise ValueError(f"train/valid asset overlap detected: {examples}")
+    return {
+        "train_assets": len(train_assets),
+        "valid_assets": len(valid_assets),
+        "overlap": 0,
+    }
+
+
 def _path_seed(path: Path, seed: int, repeat: int) -> int:
     digest = hashlib.blake2b(digest_size=8)
     digest.update(str(path).encode("utf-8"))
@@ -415,13 +443,18 @@ def _score_metrics(labels: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
         indices = np.linspace(0, labels.shape[0] - 1, sample_count, dtype=np.int64)
     else:
         indices = np.arange(labels.shape[0], dtype=np.int64)
-    correlation = spearmanr(labels[indices], scores[indices]).statistic
+    sampled_labels = labels[indices]
+    sampled_scores = scores[indices]
+    if float(sampled_labels.std()) <= 1.0e-12 or float(sampled_scores.std()) <= 1.0e-12:
+        correlation = None
+    else:
+        correlation = _finite_or_none(float(spearmanr(sampled_labels, sampled_scores).statistic))
     top_count = max(1, int(round(0.10 * scores.shape[0])))
     top_indices = np.argpartition(scores, -top_count)[-top_count:]
     return {
         "soft_mae": float(np.mean(np.abs(scores - labels))),
         "soft_mse": float(np.mean(np.square(scores - labels))),
-        "spearman": _finite_or_none(float(correlation)),
+        "spearman": correlation,
         "label_mean": float(labels.mean()),
         "score_mean": float(scores.mean()),
         "score_std": float(scores.std()),
@@ -462,6 +495,46 @@ def _metrics_by_example_motion(
             "example_motion_max": float(amounts.max()),
             "metrics": _score_metrics(labels[mask], scores[mask]),
         }
+    return out
+
+
+def _metrics_by_absolute_example_motion(
+    labels: np.ndarray,
+    scores: np.ndarray,
+    groups: np.ndarray,
+    example_motion_amounts: np.ndarray,
+) -> dict[str, Any]:
+    if groups.shape[0] != example_motion_amounts.shape[0]:
+        raise ValueError("one example motion amount is required for every edge group")
+    ranges = (
+        ("lt_1e-3", 0.0, 1.0e-3),
+        ("1e-3_to_1e-2", 1.0e-3, 1.0e-2),
+        ("1e-2_to_5e-2", 1.0e-2, 5.0e-2),
+        ("ge_5e-2", 5.0e-2, float("inf")),
+    )
+    out: dict[str, Any] = {
+        "definition": "per-example q90 edge-motion RMS with fixed absolute ranges",
+        "strata": {},
+    }
+    for name, lower, upper in ranges:
+        example_ids = np.flatnonzero(
+            (example_motion_amounts >= lower) & (example_motion_amounts < upper)
+        )
+        mask = np.zeros(labels.shape[0], dtype=bool)
+        for example_id in example_ids.tolist():
+            start, end = groups[int(example_id)]
+            mask[int(start) : int(end)] = True
+        item: dict[str, Any] = {
+            "examples": int(example_ids.shape[0]),
+            "edges": int(mask.sum()),
+            "lower_inclusive": lower,
+            "upper_exclusive": None if not np.isfinite(upper) else upper,
+        }
+        if example_ids.shape[0] > 0:
+            amounts = example_motion_amounts[example_ids]
+            item["example_motion_mean"] = float(amounts.mean())
+            item["metrics"] = _score_metrics(labels[mask], scores[mask])
+        out["strata"][name] = item
     return out
 
 
@@ -634,6 +707,7 @@ def main() -> int:
     if args.device.startswith("cuda") and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is unavailable")
     device = torch.device(args.device)
+    manifest_split_audit = _verify_asset_disjoint(args.train_manifest, args.valid_manifest)
     train_rows = _read_manifest(args.train_manifest, args.train_limit, args.seed)
     valid_rows = _read_manifest(args.valid_manifest, args.valid_limit, args.seed + 1)
 
@@ -712,6 +786,7 @@ def main() -> int:
         },
         "args": {key: str(value) if isinstance(value, Path) else value for key, value in vars(args).items()},
         "feature_names": list(FEATURE_NAMES),
+        "manifest_split_audit": manifest_split_audit,
         "train": _split_summary(train),
         "valid": _split_summary(valid),
         "training_history": history,
@@ -726,8 +801,30 @@ def main() -> int:
                 valid.groups,
                 valid.example_motion_amounts,
             ),
+            "mlp_correct_by_absolute_example_motion": _metrics_by_absolute_example_motion(
+                valid.labels,
+                correct_scores,
+                valid.groups,
+                valid.example_motion_amounts,
+            ),
+            "mlp_corrupted_by_absolute_example_motion": _metrics_by_absolute_example_motion(
+                valid.labels,
+                corrupted_scores,
+                valid.groups,
+                valid.example_motion_amounts,
+            ),
+            "rms_by_absolute_example_motion": _metrics_by_absolute_example_motion(
+                valid.labels,
+                rms_scores,
+                valid.groups,
+                valid.example_motion_amounts,
+            ),
             "mlp_correct_per_asset": _per_asset_metrics(valid.labels, correct_scores, valid.groups),
             "mlp_corrupted_per_asset": _per_asset_metrics(valid.labels, corrupted_scores, valid.groups),
+            "untrained_feature_scores": {
+                name: _score_metrics(valid.labels, valid.features[:, index])
+                for index, name in enumerate(FEATURE_NAMES)
+            },
         },
         "runtime_and_memory": {
             "total_elapsed_seconds_before_render": float(time.perf_counter() - total_started),

@@ -445,7 +445,7 @@ def _score_metrics(labels: np.ndarray, scores: np.ndarray) -> dict[str, Any]:
         indices = np.arange(labels.shape[0], dtype=np.int64)
     sampled_labels = labels[indices]
     sampled_scores = scores[indices]
-    if float(sampled_labels.std()) <= 1.0e-12 or float(sampled_scores.std()) <= 1.0e-12:
+    if float(sampled_labels.std()) <= 1.0e-8 or float(np.ptp(sampled_scores)) <= 1.0e-7:
         correlation = None
     else:
         correlation = _finite_or_none(float(spearmanr(sampled_labels, sampled_scores).statistic))
@@ -573,6 +573,94 @@ def _per_asset_metrics(labels: np.ndarray, scores: np.ndarray, groups: np.ndarra
     }
 
 
+def _per_asset_rows(
+    labels: np.ndarray,
+    scores: np.ndarray,
+    rms_scores: np.ndarray,
+    arrays: SplitArrays,
+    manifest_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    metadata = {str(row["path"]): row for row in manifest_rows}
+    rows: list[dict[str, Any]] = []
+    for group_index, (start, end) in enumerate(arrays.groups.tolist()):
+        path = str(arrays.paths[group_index])
+        local_labels = labels[start:end]
+        local_scores = scores[start:end]
+        local_rms = rms_scores[start:end]
+        hard = local_labels >= 0.25
+        row: dict[str, Any] = {
+            "path": path,
+            "asset_id": metadata.get(path, {}).get("asset_id"),
+            "dataset_source": metadata.get(path, {}).get("dataset_source"),
+            "query_frame": int(arrays.query_frames[group_index]),
+            "example_motion_q90_rms": float(arrays.example_motion_amounts[group_index]),
+            "edges": int(local_labels.shape[0]),
+            "label_mean": float(local_labels.mean()),
+            "boundary_0.25_positives": int(hard.sum()),
+            "boundary_0.25_negatives": int((~hard).sum()),
+            "mlp_auroc_0.25": None,
+            "mlp_auprc_0.25": None,
+            "rms_auroc_0.25": None,
+            "rms_auprc_0.25": None,
+            "mlp_spearman": None,
+        }
+        if bool(hard.any()) and bool((~hard).any()):
+            row["mlp_auroc_0.25"] = float(roc_auc_score(hard, local_scores))
+            row["mlp_auprc_0.25"] = float(average_precision_score(hard, local_scores))
+            row["rms_auroc_0.25"] = float(roc_auc_score(hard, local_rms))
+            row["rms_auprc_0.25"] = float(average_precision_score(hard, local_rms))
+        if float(local_labels.std()) > 1.0e-8 and float(np.ptp(local_scores)) > 1.0e-7:
+            row["mlp_spearman"] = _finite_or_none(
+                float(spearmanr(local_labels, local_scores).statistic)
+            )
+        rows.append(row)
+    return rows
+
+
+def _select_visual_cases(
+    per_asset_rows: list[dict[str, Any]],
+    *,
+    count: int,
+) -> list[dict[str, Any]]:
+    if count <= 0:
+        return []
+    selected: list[dict[str, Any]] = []
+    used: set[str] = set()
+
+    def add(row: dict[str, Any], tag: str) -> None:
+        path = str(row["path"])
+        if path in used or len(selected) >= count:
+            return
+        selected.append({"path": path, "visual_tag": tag, "metrics": row})
+        used.add(path)
+
+    eligible = [
+        row
+        for row in per_asset_rows
+        if row["mlp_auroc_0.25"] is not None
+        and int(row["boundary_0.25_positives"]) >= 10
+        and float(row["example_motion_q90_rms"]) >= 1.0e-3
+    ]
+    eligible.sort(key=lambda row: float(row["mlp_auroc_0.25"]))
+    for row in eligible[: min(3, count)]:
+        add(row, "worst_observable")
+
+    low_motion = sorted(
+        per_asset_rows,
+        key=lambda row: float(row["example_motion_q90_rms"]),
+    )
+    for row in low_motion:
+        if int(row["boundary_0.25_positives"]) >= 10:
+            add(row, "low_motion_unknown")
+        if sum(item["visual_tag"] == "low_motion_unknown" for item in selected) >= 2:
+            break
+
+    if eligible:
+        add(eligible[len(eligible) // 2], "median_observable")
+        add(eligible[-1], "best_observable")
+    return selected[:count]
+
+
 def _render_distribution_plot(
     labels: np.ndarray,
     observability: np.ndarray,
@@ -620,7 +708,9 @@ def _render_examples(
         return
     indices = np.linspace(0, len(rows) - 1, min(count, len(rows)), dtype=np.int64)
     for visual_index, row_index in enumerate(indices.tolist()):
-        path = Path(rows[int(row_index)]["path"])
+        row = rows[int(row_index)]
+        path = Path(row["path"])
+        visual_tag = str(row.get("visual_tag", "representative"))
         evidence, selected, _ = _extract_one(
             path,
             manifest_index=int(row_index),
@@ -659,9 +749,12 @@ def _render_examples(
             axis.set_zlim(float(query[:, 2].min()), float(query[:, 2].max()))
             axis.set_title(title)
             axis.set_axis_off()
-        fig.suptitle(f"{path.name} query_frame={int(selected[0])}")
+        fig.suptitle(f"{visual_tag}: {path.name} query_frame={int(selected[0])}")
         fig.tight_layout()
-        fig.savefig(output_dir / f"example_{visual_index:02d}_{path.stem}.png", dpi=180)
+        fig.savefig(
+            output_dir / f"{visual_index:02d}_{visual_tag}_{path.stem}.png",
+            dpi=180,
+        )
         plt.close(fig)
 
 
@@ -773,6 +866,14 @@ def main() -> int:
         batch_size=args.batch_size,
     )
     rms_scores = valid.observability
+    per_asset_rows = _per_asset_rows(
+        valid.labels,
+        correct_scores,
+        rms_scores,
+        valid,
+        valid_rows,
+    )
+    visual_cases = _select_visual_cases(per_asset_rows, count=args.visual_count)
 
     summary = {
         "status": "evidence_analysis_complete",
@@ -838,6 +939,14 @@ def main() -> int:
         json.dumps(summary, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    (args.output_dir / "per_asset_metrics.jsonl").write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in per_asset_rows),
+        encoding="utf-8",
+    )
+    (args.output_dir / "visual_cases.json").write_text(
+        json.dumps(visual_cases, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     torch.save(
         {
             "model": model.state_dict(),
@@ -856,7 +965,7 @@ def main() -> int:
         args.output_dir / "evidence_distributions.png",
     )
     _render_examples(
-        valid_rows,
+        visual_cases,
         model=model,
         mean=mean,
         std=std,

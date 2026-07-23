@@ -169,7 +169,7 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         hidden_size: int,
         heads: int,
         *,
-        gate_init: float = 1.0e-2,
+        residual_scale: float = 0.1,
         static_prefix_steps: int = 4,
     ) -> None:
         super().__init__()
@@ -179,7 +179,7 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         self.attention = MotionEvidenceCrossAttention(
             hidden_size,
             heads,
-            gate_init=gate_init,
+            residual_scale=residual_scale,
             detach_static_keys=True,
         )
 
@@ -314,7 +314,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         vertex_samples: int = 8192,
         query_tokens: int = 1024,
         evidence_heads: int = 8,
-        evidence_gate_init: float = 1.0e-2,
+        evidence_residual_scale: float = 0.1,
         evidence_static_prefix_steps: int = 4,
         evidence_intermediate_size: int | None = None,
         active_threshold: float = 1.0e-3,
@@ -347,7 +347,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         self.evidence_adapter = MotionEvidenceDecoderAdapter(
             hidden_size,
             evidence_heads,
-            gate_init=evidence_gate_init,
+            residual_scale=evidence_residual_scale,
             static_prefix_steps=evidence_static_prefix_steps,
         )
 

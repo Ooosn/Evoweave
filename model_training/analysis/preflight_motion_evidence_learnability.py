@@ -59,6 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--static-prefix-steps", type=int, default=4)
     parser.add_argument("--boundary-loss-weight", type=float, default=1.0)
     parser.add_argument("--attention-alignment-loss-weight", type=float, default=1.0)
+    parser.add_argument("--evidence-residual-scale", type=float, default=0.1)
     args = parser.parse_args()
     for name in CHECKPOINT_DEFAULTS:
         if not hasattr(args, name):
@@ -355,6 +356,7 @@ def main() -> None:
         vertex_samples=args.vertex_samples,
         query_tokens=args.query_tokens,
         evidence_heads=8,
+        evidence_residual_scale=args.evidence_residual_scale,
         evidence_static_prefix_steps=args.static_prefix_steps,
         boundary_loss_weight=args.boundary_loss_weight,
         attention_alignment_loss_weight=args.attention_alignment_loss_weight,
@@ -442,7 +444,7 @@ def main() -> None:
                     alignment["attention_alignment_valid_fraction"].detach()
                 ),
                 "grad_norm": float(grad_norm),
-                "gate": float(torch.tanh(model.evidence_adapter.attention.gate.detach())),
+                "evidence_residual_scale": model.evidence_adapter.attention.residual_scale,
             }
             train_log.append(record)
             print(json.dumps(record), flush=True)
@@ -470,6 +472,7 @@ def main() -> None:
         "weight_decay": args.weight_decay,
         "boundary_loss_weight": args.boundary_loss_weight,
         "attention_alignment_loss_weight": args.attention_alignment_loss_weight,
+        "evidence_residual_scale": args.evidence_residual_scale,
         "static_prefix_steps": args.static_prefix_steps,
         "before": before,
         "after": after,
@@ -503,6 +506,7 @@ def main() -> None:
                 "static_prefix_steps": args.static_prefix_steps,
                 "boundary_loss_weight": args.boundary_loss_weight,
                 "attention_alignment_loss_weight": args.attention_alignment_loss_weight,
+                "evidence_residual_scale": args.evidence_residual_scale,
             },
         },
         args.output_dir / "adapter_probe.pt",

@@ -94,7 +94,8 @@ def test_attention_uses_motion_values_and_preserves_zero_confidence() -> None:
     assert not torch.allclose(output[1], prefix[1])
 
     output[1].square().mean().backward()
-    assert attention.gate.grad is not None and torch.isfinite(attention.gate.grad)
+    attention_grad = attention.cross_attention.in_proj_weight.grad
+    assert attention_grad is not None and torch.isfinite(attention_grad).all()
     assert motion.grad is not None and float(motion.grad.abs().sum()) > 0.0
     assert static.grad is None
 

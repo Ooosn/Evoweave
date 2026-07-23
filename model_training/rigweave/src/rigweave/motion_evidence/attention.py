@@ -14,13 +14,16 @@ class MotionEvidenceCrossAttention(nn.Module):
         hidden_size: int,
         heads: int,
         *,
-        gate_init: float = 1.0e-2,
+        residual_scale: float = 0.1,
         detach_static_keys: bool = True,
     ) -> None:
         super().__init__()
         if hidden_size <= 0 or heads <= 0 or hidden_size % heads != 0:
             raise ValueError("hidden_size must be positive and divisible by heads")
+        if not 0.0 <= residual_scale < 1.0:
+            raise ValueError("residual_scale must be in [0, 1)")
         self.hidden_size = int(hidden_size)
+        self.residual_scale = float(residual_scale)
         self.detach_static_keys = bool(detach_static_keys)
         self.query_norm = nn.LayerNorm(hidden_size)
         self.key_norm = nn.LayerNorm(hidden_size)
@@ -32,7 +35,6 @@ class MotionEvidenceCrossAttention(nn.Module):
             bias=False,
         )
         self.output_norm = nn.LayerNorm(hidden_size, elementwise_affine=False)
-        self.gate = nn.Parameter(torch.tensor(float(gate_init), dtype=torch.float32))
 
     def _attend(
         self,
@@ -114,5 +116,5 @@ class MotionEvidenceCrossAttention(nn.Module):
             motion_values,
             need_weights=False,
         )
-        scale = torch.tanh(self.gate) * confidence[:, None, None]
+        scale = self.residual_scale * confidence[:, None, None]
         return prefix_states + (scale * update).to(dtype=prefix_states.dtype)

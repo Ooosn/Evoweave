@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
 import torch
 from torch import nn
 
 from rigweave.dynamic_rig.sampling import TrackableSurfaceReferences
 from rigweave.motion_evidence import (
+    MotionEvidenceDecoderAdapter,
     MotionEvidenceMemory,
     StaticQueryMotionEvidenceConditioner,
     TopologyMotionEvidenceUniRigAR,
@@ -255,3 +257,28 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
     assert evidence_grad > 0.0
     assert value_grad > 0.0
     assert backbone_grad > 0.0
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
+def test_adapter_logits_are_prefix_length_stable_under_bfloat16_autocast() -> None:
+    torch.manual_seed(41)
+    device = torch.device("cuda")
+    hidden_size = 256
+    transformer = _CausalTransformer(hidden_size, 8192).to(device)
+    adapter = MotionEvidenceDecoderAdapter(hidden_size, heads=8).to(device)
+    memory = MotionEvidenceMemory(
+        static_tokens=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
+        motion_values=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
+        confidence=torch.tensor([0.8], device=device),
+        raw_evidence=None,  # type: ignore[arg-type]
+    )
+    prefix = torch.randn(1, 33, hidden_size, device=device, dtype=torch.bfloat16)
+    with torch.autocast("cuda", dtype=torch.bfloat16):
+        full_logits, full_hidden = adapter.logits_from_hidden(transformer, prefix, memory)
+        step_logits, step_hidden = adapter.logits_from_hidden(
+            transformer,
+            prefix[:, -1:],
+            memory,
+        )
+    torch.testing.assert_close(full_hidden[:, -1], step_hidden[:, 0], atol=1.0e-5, rtol=1.0e-5)
+    torch.testing.assert_close(full_logits[:, -1], step_logits[:, 0], atol=1.0e-4, rtol=1.0e-5)

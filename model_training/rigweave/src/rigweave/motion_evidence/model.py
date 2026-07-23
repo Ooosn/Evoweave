@@ -187,7 +187,14 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         if output_embedding is None:
             raise TypeError("causal transformer does not expose output embeddings")
         refined = self.refine_hidden(prefix_hidden, memory)
-        return output_embedding(refined), refined
+        weight = getattr(output_embedding, "weight", None)
+        projection_dtype = weight.dtype if isinstance(weight, torch.Tensor) else refined.dtype
+        # Teacher forcing projects many prefix positions while generation projects
+        # one. Keep this projection out of autocast so both shapes use the same
+        # parameter precision instead of shape-dependent bf16 GEMM rounding.
+        with torch.autocast(device_type=refined.device.type, enabled=False):
+            logits = output_embedding(refined.to(dtype=projection_dtype))
+        return logits, refined
 
     def teacher_forcing(
         self,

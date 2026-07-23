@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import torch
 
 from rigweave.dynamic_rig.sampling import TrackableSurfaceReferences
@@ -126,3 +127,21 @@ def test_extractor_encoder_attention_path_has_finite_nonzero_gradients() -> None
     )
     assert encoder_grad > 0.0
     assert attention_grad > 0.0
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
+def test_attention_supports_bfloat16_module_on_cuda() -> None:
+    torch.manual_seed(13)
+    device = torch.device("cuda")
+    attention = MotionEvidenceCrossAttention(hidden_size=32, heads=4).to(
+        device=device,
+        dtype=torch.bfloat16,
+    )
+    prefix = torch.randn(2, 3, 32, device=device, dtype=torch.bfloat16)
+    static = torch.randn(2, 5, 32, device=device, dtype=torch.bfloat16)
+    motion = torch.randn(2, 5, 32, device=device, dtype=torch.bfloat16)
+    confidence = torch.tensor([0.0, 0.8], device=device)
+    output = attention(prefix, static, motion, confidence)
+    assert output.dtype == torch.bfloat16
+    assert torch.equal(output[0], prefix[0])
+    assert torch.isfinite(output).all()

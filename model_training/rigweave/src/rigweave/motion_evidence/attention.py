@@ -58,9 +58,10 @@ class MotionEvidenceCrossAttention(nn.Module):
             )
 
         keys = static_keys.detach() if self.detach_static_keys else static_keys
-        query = self.query_norm(prefix_states.float())
-        keys = self.key_norm(keys.float())
-        values = self.value_norm(motion_values.float())
+        compute_dtype = self.query_norm.weight.dtype
+        query = self.query_norm(prefix_states.to(dtype=compute_dtype))
+        keys = self.key_norm(keys.to(dtype=compute_dtype))
+        values = self.value_norm(motion_values.to(dtype=compute_dtype))
         update, _ = self.cross_attention(query, keys, values, need_weights=False)
         update = self.output_norm(update)
         scale = torch.tanh(self.gate) * confidence[:, None, None]

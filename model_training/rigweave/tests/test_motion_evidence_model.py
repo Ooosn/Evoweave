@@ -287,8 +287,23 @@ def test_attention_weights_are_normalized_per_step_and_head() -> None:
     torch.testing.assert_close(weights.sum(dim=-1), torch.ones((1, 4, 9)))
 
 
-def test_attention_alignment_loss_trains_prefix_to_region_addressing() -> None:
+def test_spatially_constant_motion_cannot_create_a_global_decoder_bias() -> None:
     torch.manual_seed(37)
+    attention = MotionEvidenceDecoderAdapter(16, heads=4).attention
+    prefix = torch.randn(2, 7, 16)
+    static_keys = torch.randn(2, 5, 16)
+    constant_motion = torch.ones(2, 5, 16)
+    refined = attention(
+        prefix,
+        static_keys,
+        constant_motion,
+        torch.ones(2),
+    )
+    assert torch.equal(refined, prefix)
+
+
+def test_attention_alignment_loss_trains_prefix_to_region_addressing() -> None:
+    torch.manual_seed(38)
     device = torch.device("cpu")
     batch = _batch(device)
     model = TopologyMotionEvidenceUniRigAR(
@@ -318,7 +333,7 @@ def test_attention_alignment_loss_trains_prefix_to_region_addressing() -> None:
 
 
 def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
-    torch.manual_seed(38)
+    torch.manual_seed(39)
     device = torch.device("cpu")
     batch = _batch(device)
     model = TopologyMotionEvidenceUniRigAR(

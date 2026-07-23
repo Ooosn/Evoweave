@@ -29,8 +29,9 @@ class MotionEvidenceCrossAttention(nn.Module):
             hidden_size,
             heads,
             batch_first=True,
+            bias=False,
         )
-        self.output_norm = nn.LayerNorm(hidden_size)
+        self.output_norm = nn.LayerNorm(hidden_size, elementwise_affine=False)
         self.gate = nn.Parameter(torch.tensor(float(gate_init), dtype=torch.float32))
 
     def _attend(
@@ -64,6 +65,10 @@ class MotionEvidenceCrossAttention(nn.Module):
             query = self.query_norm(prefix_states.to(dtype=compute_dtype))
             keys = self.key_norm(keys.to(dtype=compute_dtype))
             values = self.value_norm(motion_values.to(dtype=compute_dtype))
+            # A token-independent value mean is not articulation evidence. If it
+            # reaches the residual path, the adapter can learn one global logit
+            # correction while ignoring which mesh region each joint queried.
+            values = values - values.mean(dim=1, keepdim=True)
             update, weights = self.cross_attention(
                 query,
                 keys,

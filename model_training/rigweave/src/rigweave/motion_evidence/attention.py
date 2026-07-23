@@ -59,10 +59,15 @@ class MotionEvidenceCrossAttention(nn.Module):
 
         keys = static_keys.detach() if self.detach_static_keys else static_keys
         compute_dtype = self.query_norm.weight.dtype
-        query = self.query_norm(prefix_states.to(dtype=compute_dtype))
-        keys = self.key_norm(keys.to(dtype=compute_dtype))
-        values = self.value_norm(motion_values.to(dtype=compute_dtype))
-        update, _ = self.cross_attention(query, keys, values, need_weights=False)
-        update = self.output_norm(update)
+        # Teacher forcing uses all prefix positions while cached generation uses
+        # one query. Autocast MHA selects different bf16 kernels for those two
+        # shapes and can move final vocabulary logits by 0.1. Keep this small
+        # evidence read in parameter dtype so both routes implement one contract.
+        with torch.autocast(device_type=prefix_states.device.type, enabled=False):
+            query = self.query_norm(prefix_states.to(dtype=compute_dtype))
+            keys = self.key_norm(keys.to(dtype=compute_dtype))
+            values = self.value_norm(motion_values.to(dtype=compute_dtype))
+            update, _ = self.cross_attention(query, keys, values, need_weights=False)
+            update = self.output_norm(update)
         scale = torch.tanh(self.gate) * confidence[:, None, None]
         return prefix_states + (scale * update).to(dtype=prefix_states.dtype)

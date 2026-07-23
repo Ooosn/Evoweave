@@ -155,3 +155,18 @@ def test_attention_supports_bfloat16_module_on_cuda() -> None:
     assert values.dtype == torch.bfloat16
     assert torch.equal(values[0], torch.zeros_like(values[0]))
     assert torch.isfinite(values).all()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
+def test_float32_attention_is_prefix_length_stable_under_bfloat16_autocast() -> None:
+    torch.manual_seed(17)
+    device = torch.device("cuda")
+    attention = MotionEvidenceCrossAttention(hidden_size=64, heads=4).to(device)
+    prefix = torch.randn(1, 17, 64, device=device, dtype=torch.bfloat16)
+    static = torch.randn(1, 32, 64, device=device, dtype=torch.bfloat16)
+    motion = torch.randn(1, 32, 64, device=device, dtype=torch.bfloat16)
+    confidence = torch.tensor([0.8], device=device)
+    with torch.autocast("cuda", dtype=torch.bfloat16):
+        full = attention(prefix, static, motion, confidence)
+        step = attention(prefix[:, -1:], static, motion, confidence)
+    torch.testing.assert_close(full[:, -1], step[:, 0], atol=1.0e-5, rtol=1.0e-5)

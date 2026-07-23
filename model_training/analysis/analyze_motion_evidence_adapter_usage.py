@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=20260724)
     parser.add_argument("--amp-dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--residual-scales", type=float, nargs="*", default=())
+    parser.add_argument("--reference-seed-offset", type=int, default=200000)
     args = parser.parse_args()
     for name in CHECKPOINT_DEFAULTS:
         if not hasattr(args, name):
@@ -265,7 +266,7 @@ def main() -> None:
         usage = one_usage(
             model,
             batch,
-            seed=args.seed + row_index,
+            seed=args.seed + args.reference_seed_offset + row_index,
             amp_dtype=amp_dtype,
             residual_scales=tuple(args.residual_scales),
         )
@@ -298,6 +299,8 @@ def main() -> None:
         "rows": len(rows),
         "checkpoint": str(args.checkpoint),
         "probe_checkpoint": str(args.probe_checkpoint),
+        "dataset_seed": args.seed,
+        "reference_seed_offset": args.reference_seed_offset,
         "metrics": {
             name: summarize([float(row[name]) for row in rows])
             for name in metric_names

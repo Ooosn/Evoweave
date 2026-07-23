@@ -12,8 +12,10 @@ sys.path.insert(0, str(ANALYSIS_ROOT))
 
 from analyze_flat_motion_reliability import (  # noqa: E402
     _best_rigid_residual,
+    _evidence_subset_batch,
     _effective_rank,
     _motion_evidence_metrics,
+    _subset_consistency_metrics,
 )
 
 
@@ -43,3 +45,22 @@ def test_motion_metrics_separate_rigid_and_articulated_change() -> None:
 def test_effective_rank_handles_zero_and_orthogonal_modes() -> None:
     assert _effective_rank(torch.zeros(3)) == 0.0
     assert _effective_rank(torch.ones(3)) == pytest.approx(3.0)
+
+
+def test_evidence_subsets_are_disjoint_and_preserve_frame_zero() -> None:
+    sequence = torch.arange(6, dtype=torch.float32).view(1, 6, 1, 1)
+    batch = {"frame_vertices": sequence}
+    odd = _evidence_subset_batch(batch, keep_even_evidence=False)["frame_vertices"]
+    even = _evidence_subset_batch(batch, keep_even_evidence=True)["frame_vertices"]
+    assert odd[:, 0].item() == even[:, 0].item() == sequence[:, 0].item()
+    assert odd.flatten().tolist() == [0.0, 1.0, 0.0, 3.0, 0.0, 5.0]
+    assert even.flatten().tolist() == [0.0, 0.0, 2.0, 0.0, 4.0, 0.0]
+
+
+def test_subset_consistency_is_exact_for_matching_evidence() -> None:
+    zero = torch.zeros(1, 2, 3)
+    normal = torch.ones(1, 2, 3)
+    metrics = _subset_consistency_metrics(normal, normal, normal, zero)
+    assert metrics["evidence_subset_delta_cosine"] == pytest.approx(1.0)
+    assert metrics["evidence_subset_disagreement_to_full"] == pytest.approx(0.0)
+    assert metrics["evidence_subset_mean_to_full"] == pytest.approx(0.0)

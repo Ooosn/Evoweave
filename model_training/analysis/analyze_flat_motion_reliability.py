@@ -152,6 +152,55 @@ def _condition_locality_metrics(
     }
 
 
+def _subset_consistency_metrics(
+    subset_a: torch.Tensor,
+    subset_b: torch.Tensor,
+    normal: torch.Tensor,
+    zero: torch.Tensor,
+) -> dict[str, float | None]:
+    delta_a = (subset_a - zero).float()
+    delta_b = (subset_b - zero).float()
+    full_delta = (normal - zero).float()
+    delta_a_norm = torch.linalg.vector_norm(delta_a[0], dim=-1)
+    delta_b_norm = torch.linalg.vector_norm(delta_b[0], dim=-1)
+    full_rms = _rms(full_delta)
+    return {
+        "evidence_subset_delta_cosine": float(
+            F.cosine_similarity(delta_a.reshape(1, -1), delta_b.reshape(1, -1)).item()
+        ),
+        "evidence_subset_disagreement_to_full": float(
+            (_rms(subset_a - subset_b) / full_rms.clamp_min(1.0e-12)).item()
+        ),
+        "evidence_subset_mean_to_full": float(
+            (_rms(0.5 * (subset_a + subset_b) - normal) / full_rms.clamp_min(1.0e-12)).item()
+        ),
+        "evidence_subset_anchor_magnitude_correlation": _safe_corr(
+            delta_a_norm, delta_b_norm
+        ),
+    }
+
+
+def _evidence_subset_batch(
+    batch: dict[str, Any],
+    *,
+    keep_even_evidence: bool,
+) -> dict[str, Any]:
+    subset = dict(batch)
+    frame_count = int(batch["frame_vertices"].shape[1])
+    evidence_indices = torch.arange(1, frame_count, device=batch["frame_vertices"].device)
+    keep = evidence_indices.remainder(2).eq(0 if keep_even_evidence else 1)
+    drop_indices = evidence_indices[~keep]
+    for key in ("frame_vertices", "vertex_normals", "face_normals"):
+        value = batch.get(key)
+        if value is None:
+            continue
+        controlled = value.clone()
+        if drop_indices.numel() > 0:
+            controlled[:, drop_indices] = controlled[:, :1].clone()
+        subset[key] = controlled
+    return subset
+
+
 def _generation_metrics(row: dict[str, Any]) -> dict[str, Any]:
     dynamic = row["dynamic"]
     metrics = dynamic.get("metrics") or {}
@@ -339,6 +388,16 @@ def main() -> None:
             )
             normal = model.build_condition(batch, control="normal", refs=refs)
             zero = model.build_condition(batch, control="zero", refs=refs)
+            subset_a = model.build_condition(
+                _evidence_subset_batch(batch, keep_even_evidence=False),
+                control="normal",
+                refs=refs,
+            )
+            subset_b = model.build_condition(
+                _evidence_subset_batch(batch, keep_even_evidence=True),
+                control="normal",
+                refs=refs,
+            )
             path = str(batch["path"][0])
             selected_frames = batch["selected_frames"][0].detach().cpu().tolist()
             for result_row in (alpha075_rows[index], alpha1_rows[index]):
@@ -349,6 +408,7 @@ def main() -> None:
             evidence = {
                 **_motion_evidence_metrics(query_points),
                 **_condition_locality_metrics(normal, zero, query_points),
+                **_subset_consistency_metrics(subset_a, subset_b, normal, zero),
                 **{
                     f"normal_vs_zero_{key}": value
                     for key, value in _pair_summary(normal, zero).items()

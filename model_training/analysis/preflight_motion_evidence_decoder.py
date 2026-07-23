@@ -129,9 +129,10 @@ def _generation_consistency(
     batch: dict[str, Any],
     memory: Any,
     teacher_logits: torch.Tensor,
+    teacher_baseline_logits: torch.Tensor,
     prefix_lengths: list[int],
-) -> dict[str, float]:
-    results: dict[str, float] = {}
+) -> dict[str, dict[str, float]]:
+    results: dict[str, dict[str, float]] = {}
     valid_length = int(batch["attention_mask"][0].sum().item())
     for requested in prefix_lengths:
         prefix_length = min(int(requested), valid_length)
@@ -157,8 +158,19 @@ def _generation_consistency(
             transformer_output,
             memory,
         )
-        delta = generation_logits.float() - teacher_logits[:, prefix_length - 1].float()
-        results[str(prefix_length)] = float(delta.abs().max())
+        teacher_qe = teacher_logits[:, prefix_length - 1].float()
+        teacher_static = teacher_baseline_logits[:, prefix_length - 1].float()
+        generation_static = transformer_output.logits[:, -1].float()
+        qe_delta = generation_logits.float() - teacher_qe
+        static_delta = generation_static - teacher_static
+        adapter_delta = (generation_logits.float() - generation_static) - (
+            teacher_qe - teacher_static
+        )
+        results[str(prefix_length)] = {
+            "qe_max_abs_diff": float(qe_delta.abs().max()),
+            "static_max_abs_diff": float(static_delta.abs().max()),
+            "adapter_increment_max_abs_diff": float(adapter_delta.abs().max()),
+        }
     return results
 
 
@@ -253,6 +265,7 @@ def main() -> None:
                 batch,
                 memory,
                 normal.logits,
+                normal.baseline_logits,
                 prefix_lengths,
             )
 
@@ -316,10 +329,20 @@ def main() -> None:
             and row["gradient"]["transformer_abs_sum"] > 0.0
             for row in rows
         ),
-        "max_teacher_generation_logit_diff": max(
-            value
+        "max_teacher_generation_qe_logit_diff": max(
+            metrics["qe_max_abs_diff"]
             for row in rows
-            for value in row["teacher_generation_max_abs_diff"].values()
+            for metrics in row["teacher_generation_max_abs_diff"].values()
+        ),
+        "max_teacher_generation_static_logit_diff": max(
+            metrics["static_max_abs_diff"]
+            for row in rows
+            for metrics in row["teacher_generation_max_abs_diff"].values()
+        ),
+        "max_teacher_generation_adapter_increment_diff": max(
+            metrics["adapter_increment_max_abs_diff"]
+            for row in rows
+            for metrics in row["teacher_generation_max_abs_diff"].values()
         ),
         "elapsed_seconds": elapsed,
         "peak_cuda_allocated_mib": torch.cuda.max_memory_allocated() / (1024**2),

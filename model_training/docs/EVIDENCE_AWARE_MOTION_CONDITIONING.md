@@ -92,3 +92,55 @@ evidence encoder，不改变推理输入和 GT skeleton contract。
 
 在这些条件满足前，不允许把 centered-motion、anchor residual 或任何历史 checkpoint 当作
 该方法的替代品。
+
+## 7. Held-out evidence result (2026-07-24)
+
+The evidence-only gate passed on the Westlake rootless-v3 manifests without
+loading a skeleton checkpoint. The diagnostic used 4,096 train assets and all
+857 validation assets, with 1,024 uniformly sampled real mesh edges per asset.
+The complete manifests contain 15,903 unique train asset ids and 857 unique
+validation asset ids with zero overlap.
+
+At soft-boundary threshold 0.25:
+
+```text
+correct correspondence global AUROC        0.7499
+correct correspondence per-asset median    0.8162
+within-asset corrupted per-asset median    0.5024
+repeated-query zero-motion AUROC            0.5000
+raw edge-motion RMS AUROC                   0.7478
+11-feature diagnostic MLP AUROC             0.7499
+```
+
+Absolute motion stratification confirmed the uncertainty contract. For the 89
+validation assets whose per-example q90 edge-motion RMS was below `1e-3`, AUROC
+fell to 0.5488. The other motion ranges remained between 0.7142 and 0.7486.
+Low motion is therefore unknown evidence and must attenuate the evidence path;
+it must not be trained as a negative structural label.
+
+The diagnostic MLP improved AUROC over raw RMS by only 0.0021. It is not part
+of the proposed model. The validated primitive is the topology-constrained
+relative deformation itself. The next model should encode simple local
+statistics and learn how the skeleton decoder uses them, rather than presenting
+the diagnostic classifier as a contribution.
+
+The evidence memory also needs an explicit addressing contract. Motion-only
+values do not contain enough static information to identify a location by
+themselves. Decoder evidence attention will therefore use aligned static query
+tokens as keys and motion-only evidence as values:
+
+```text
+query = current skeleton-prefix state
+key   = aligned query-pose static token Q_i
+value = topology-local relative-motion evidence E_i
+```
+
+This allows spatial lookup without adding static geometry into the evidence
+value. It remains different from the rejected static-plus-motion residual.
+
+Canonical output:
+
+```text
+/ssdwork/liuhaohan/evorig/outputs/
+local_motion_evidence_preflight_20260724_train4096_valid857
+```

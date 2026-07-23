@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-local-motion-evidence-20260724-001",
-  "updated_at": "2026-07-24T03:27:00+09:00",
+  "updated_at": "2026-07-24T04:25:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -33,9 +33,9 @@
     "early condition-to-joint errors can be amplified when the autoregressive self-prefix later dominates the condition"
   ],
   "unknowns": [
-    "whether local relative-distance trajectories predict same-segment and skin-boundary relations on held-out assets",
-    "how to represent confidence so low motion remains unknown rather than becoming a false negative",
-    "whether a separate motion-evidence memory improves child and branch generation without degrading root grounding or normal controls"
+    "whether topology-local motion evidence improves child and branch generation without degrading root grounding or normal controls",
+    "whether vertex-to-query aggregation preserves the held-out edge signal at the model's 1024 FPS anchors",
+    "whether key=static-query and value=motion-only decoder attention receives nonzero gradients and remains stable during free generation"
   ],
   "allowed_operations": [
     "report",
@@ -50,27 +50,27 @@
     "train",
     "submit"
   ],
-  "next_required_result": "Using only the Westlake rootless-v3 train/valid manifests, validate local relative-motion evidence against soft skin same-segment/boundary labels on asset-disjoint held-out rows. Compare correct anchor correspondence with repeated-query zero motion and anchor-correspondence corruption, report motion-stratified metrics, runtime, and visualizations. Do not load a skeleton checkpoint for this first stage and do not train or submit the formal model.",
+  "next_required_result": "Implement an isolated topology-local motion-evidence encoder and decoder evidence-attention path on the flat UniRig route. Verify exact zero-motion behavior, query/target/reference alignment, finite nonzero gradients, correct-versus-corrupted motion intervention, bounded memory/runtime, teacher-forcing consistency, and small free-generation visualizations before enabling any formal training submission.",
   "active_operation": {
-    "name": "local_relative_motion_evidence_preflight_20260724",
-    "status": "ready_not_started_after_context_reset",
+    "name": "local_motion_evidence_decoder_preflight_20260724",
+    "status": "implementation_ready_development_environment_disconnected",
     "server": "Westlake development environment only",
     "weights_changed": false,
-    "skeleton_checkpoint_required": false,
+    "skeleton_checkpoint_required": true,
     "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "valid_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "train_rows": 15903,
     "valid_rows": 857,
-    "motion_relation": "norm(x_i_t - x_j_t) / (norm(x_i_query - x_j_query) + eps) - 1",
-    "skin_relation": "sum_k min(w_i_k, w_j_k)",
+    "motion_relation": "topology-edge relative length RMS aggregated to vertices and then to the existing 1024 query references",
+    "attention_contract": "decoder query=skeleton prefix, key=aligned static query token, value=motion-only evidence",
     "formal_task_budget_remaining": 1,
     "formal_resources": "two A100-80GB in an allowed Westlake resource group",
-    "acceptance_test": "held-out evidence quality under correct, zero-motion, and corrupted-correspondence controls; low-motion uncertainty behavior; extraction runtime and memory; representative evidence/skin-boundary visualizations"
+    "acceptance_test": "exact zero evidence; aligned 1024-token values; nonzero gradients; correct motion affects later joints more than corrupted motion; normal root behavior; bounded runtime/memory; teacher-forcing and free-generation visual checks"
   },
   "last_operation": {
-    "name": "wrong_context_cleanup_20260724",
+    "name": "local_relative_motion_evidence_preflight_20260724",
     "status": "completed",
-    "conclusion": "the canonical context now contains only the Westlake local-motion-evidence task; all mistakenly imported cross-server copies and temporary local artifacts were removed"
+    "conclusion": "On 4096 train and all 857 asset-disjoint valid assets, correct local edge motion reached global AUROC 0.7499 and per-asset median 0.8162; within-asset corruption fell to median 0.5024 and zero motion to 0.5. Motion below q90 RMS 1e-3 was near-unknown. Raw RMS matched the diagnostic MLP, so the MLP is not retained as the method."
   },
   "receipt_max_age_minutes": 120
 }

@@ -57,20 +57,23 @@ def _best_rigid_residual(rest: torch.Tensor, posed: torch.Tensor) -> torch.Tenso
 
     if rest.shape != posed.shape or rest.ndim != 2 or rest.shape[-1] != 3:
         raise ValueError(f"expected matching (N,3) points, got {rest.shape} and {posed.shape}")
-    rest_f = rest.float()
-    posed_f = posed.float()
-    rest_center = rest_f.mean(dim=0, keepdim=True)
-    posed_center = posed_f.mean(dim=0, keepdim=True)
-    x = rest_f - rest_center
-    y = posed_f - posed_center
-    u, _, vh = torch.linalg.svd(x.transpose(0, 1) @ y, full_matrices=False)
-    rotation = u @ vh
-    if torch.linalg.det(rotation) < 0:
-        u = u.clone()
-        u[:, -1] *= -1
+    # This diagnostic runs inside the model's BF16 autocast context, while
+    # CUDA's small-matrix SVD does not implement BF16. Keep Kabsch in FP32.
+    with torch.autocast(device_type=rest.device.type, enabled=False):
+        rest_f = rest.float()
+        posed_f = posed.float()
+        rest_center = rest_f.mean(dim=0, keepdim=True)
+        posed_center = posed_f.mean(dim=0, keepdim=True)
+        x = rest_f - rest_center
+        y = posed_f - posed_center
+        u, _, vh = torch.linalg.svd(x.transpose(0, 1) @ y, full_matrices=False)
         rotation = u @ vh
-    fitted = x @ rotation + posed_center
-    return posed_f - fitted
+        if torch.linalg.det(rotation) < 0:
+            u = u.clone()
+            u[:, -1] *= -1
+            rotation = u @ vh
+        fitted = x @ rotation + posed_center
+        return posed_f - fitted
 
 
 def _effective_rank(singular_values: torch.Tensor) -> float:
@@ -103,7 +106,8 @@ def _motion_evidence_metrics(query_points: torch.Tensor) -> dict[str, float | No
     )
     rigid_residual_norm = torch.linalg.vector_norm(rigid_residuals, dim=-1)
     flattened = displacement.reshape(displacement.shape[0], -1)
-    singular_values = torch.linalg.svdvals(flattened)
+    with torch.autocast(device_type=flattened.device.type, enabled=False):
+        singular_values = torch.linalg.svdvals(flattened.float())
     total_motion_rms = _rms(displacement)
     articulated_rms = _rms(rigid_residuals)
     anchor_energy = anchor_rms.square()

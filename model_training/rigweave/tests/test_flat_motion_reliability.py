@@ -28,6 +28,19 @@ def test_best_rigid_residual_removes_rotation_and_translation() -> None:
     assert float(_best_rigid_residual(rest, posed).abs().max()) == pytest.approx(0.0, abs=1e-5)
 
 
+def test_motion_metrics_force_fp32_inside_bfloat16_autocast() -> None:
+    rest = torch.tensor(
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    )
+    posed = rest + torch.tensor([0.2, -0.1, 0.3])
+    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+        residual = _best_rigid_residual(rest, posed)
+        metrics = _motion_evidence_metrics(torch.stack([rest, posed]).unsqueeze(0))
+    assert residual.dtype == torch.float32
+    assert float(residual.abs().max()) == pytest.approx(0.0, abs=1e-5)
+    assert metrics["motion_rms"] > 0
+
+
 def test_motion_metrics_separate_rigid_and_articulated_change() -> None:
     rest = torch.tensor(
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]

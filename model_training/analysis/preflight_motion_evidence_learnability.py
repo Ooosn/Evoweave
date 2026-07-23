@@ -60,6 +60,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--boundary-loss-weight", type=float, default=1.0)
     parser.add_argument("--attention-alignment-loss-weight", type=float, default=1.0)
     parser.add_argument("--evidence-residual-scale", type=float, default=0.1)
+    parser.add_argument(
+        "--counterfactual-correspondence-loss-weight",
+        type=float,
+        default=0.0,
+    )
+    parser.add_argument("--counterfactual-gain-loss-weight", type=float, default=0.0)
+    parser.add_argument("--terminal-noharm-loss-weight", type=float, default=0.0)
+    parser.add_argument("--init-probe-checkpoint", type=Path)
     args = parser.parse_args()
     for name in CHECKPOINT_DEFAULTS:
         if not hasattr(args, name):
@@ -364,11 +372,30 @@ def main() -> None:
         evidence_static_prefix_steps=args.static_prefix_steps,
         boundary_loss_weight=args.boundary_loss_weight,
         attention_alignment_loss_weight=args.attention_alignment_loss_weight,
+        counterfactual_correspondence_loss_weight=(
+            args.counterfactual_correspondence_loss_weight
+        ),
+        counterfactual_gain_loss_weight=args.counterfactual_gain_loss_weight,
+        terminal_noharm_loss_weight=args.terminal_noharm_loss_weight,
     )
     model.conditioner.value_encoder.to(device)
     model.evidence_adapter.to(device)
     del baseline
     gc.collect()
+    if args.init_probe_checkpoint is not None:
+        payload = torch.load(
+            args.init_probe_checkpoint,
+            map_location="cpu",
+            weights_only=False,
+        )
+        model.conditioner.value_encoder.load_state_dict(
+            payload["value_encoder"],
+            strict=True,
+        )
+        model.evidence_adapter.load_state_dict(
+            payload["evidence_adapter"],
+            strict=True,
+        )
 
     for parameter in model.parameters():
         parameter.requires_grad_(False)
@@ -380,6 +407,11 @@ def main() -> None:
         trainable,
         lr=args.learning_rate,
         weight_decay=args.weight_decay,
+    )
+    counterfactual_weight = (
+        args.counterfactual_correspondence_loss_weight
+        + args.counterfactual_gain_loss_weight
+        + args.terminal_noharm_loss_weight
     )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -422,12 +454,33 @@ def main() -> None:
                 memory,
                 teacher.token_hidden,
             )
+            if counterfactual_weight > 0.0:
+                counterfactual_generator = torch.Generator(device=device).manual_seed(
+                    args.seed + 500000 + step
+                )
+                counterfactual = model.counterfactual_condition_losses(
+                    batch,
+                    refs,
+                    memory,
+                    teacher,
+                    generator=counterfactual_generator,
+                )
             loss = (
                 regions["later"][0]
                 + args.boundary_loss_weight * boundary["boundary_loss"]
                 + args.attention_alignment_loss_weight
                 * alignment["attention_alignment_loss"]
             )
+            if counterfactual_weight > 0.0:
+                loss = (
+                    loss
+                    + args.counterfactual_correspondence_loss_weight
+                    * counterfactual["counterfactual_correspondence_loss"]
+                    + args.counterfactual_gain_loss_weight
+                    * counterfactual["counterfactual_gain_loss"]
+                    + args.terminal_noharm_loss_weight
+                    * counterfactual["terminal_noharm_loss"]
+                )
         loss.backward()
         grad_norm = torch.nn.utils.clip_grad_norm_(trainable, args.max_grad_norm)
         optimizer.step()
@@ -450,6 +503,13 @@ def main() -> None:
                 "grad_norm": float(grad_norm),
                 "evidence_residual_scale": model.evidence_adapter.attention.residual_scale,
             }
+            if counterfactual_weight > 0.0:
+                record.update(
+                    {
+                        key: float(value.detach())
+                        for key, value in counterfactual.items()
+                    }
+                )
             train_log.append(record)
             print(json.dumps(record), flush=True)
 
@@ -477,6 +537,16 @@ def main() -> None:
         "boundary_loss_weight": args.boundary_loss_weight,
         "attention_alignment_loss_weight": args.attention_alignment_loss_weight,
         "evidence_residual_scale": args.evidence_residual_scale,
+        "counterfactual_correspondence_loss_weight": (
+            args.counterfactual_correspondence_loss_weight
+        ),
+        "counterfactual_gain_loss_weight": args.counterfactual_gain_loss_weight,
+        "terminal_noharm_loss_weight": args.terminal_noharm_loss_weight,
+        "init_probe_checkpoint": (
+            None
+            if args.init_probe_checkpoint is None
+            else str(args.init_probe_checkpoint)
+        ),
         "static_prefix_steps": args.static_prefix_steps,
         "before": before,
         "after": after,
@@ -511,6 +581,11 @@ def main() -> None:
                 "boundary_loss_weight": args.boundary_loss_weight,
                 "attention_alignment_loss_weight": args.attention_alignment_loss_weight,
                 "evidence_residual_scale": args.evidence_residual_scale,
+                "counterfactual_correspondence_loss_weight": (
+                    args.counterfactual_correspondence_loss_weight
+                ),
+                "counterfactual_gain_loss_weight": args.counterfactual_gain_loss_weight,
+                "terminal_noharm_loss_weight": args.terminal_noharm_loss_weight,
             },
         },
         args.output_dir / "adapter_probe.pt",

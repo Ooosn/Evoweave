@@ -332,6 +332,9 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         eos_loss_weight: float = 1.0,
         boundary_loss_weight: float = 1.0,
         attention_alignment_loss_weight: float = 1.0,
+        counterfactual_correspondence_loss_weight: float = 0.0,
+        counterfactual_gain_loss_weight: float = 0.0,
+        terminal_noharm_loss_weight: float = 0.0,
     ) -> None:
         super().__init__()
         self.unirig_ar = unirig_ar
@@ -346,6 +349,18 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         if attention_alignment_loss_weight < 0.0:
             raise ValueError("attention_alignment_loss_weight must be non-negative")
         self.attention_alignment_loss_weight = float(attention_alignment_loss_weight)
+        counterfactual_weights = (
+            counterfactual_correspondence_loss_weight,
+            counterfactual_gain_loss_weight,
+            terminal_noharm_loss_weight,
+        )
+        if any(weight < 0.0 for weight in counterfactual_weights):
+            raise ValueError("counterfactual loss weights must be non-negative")
+        self.counterfactual_correspondence_loss_weight = float(
+            counterfactual_correspondence_loss_weight
+        )
+        self.counterfactual_gain_loss_weight = float(counterfactual_gain_loss_weight)
+        self.terminal_noharm_loss_weight = float(terminal_noharm_loss_weight)
         hidden_size = int(unirig_ar.hidden_size)
         self.conditioner = StaticQueryMotionEvidenceConditioner(
             surface_tokenizer,
@@ -616,6 +631,124 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             / weight_sum.clamp_min(1.0),
         }
 
+    def counterfactual_condition_losses(
+        self,
+        batch: dict[str, Any],
+        refs: TrackableSurfaceReferences,
+        memory: MotionEvidenceMemory,
+        teacher: MotionEvidenceTeacherForcingOutput,
+        *,
+        generator: torch.Generator | None = None,
+        margin: float = 1.0e-3,
+        temperature: float = 1.0e-2,
+        eps: float = 1.0e-8,
+    ) -> dict[str, torch.Tensor]:
+        """Make correct local correspondence useful and terminal states abstain."""
+
+        if margin < 0.0 or temperature <= 0.0:
+            raise ValueError(
+                "counterfactual margin must be non-negative and temperature positive"
+            )
+        skin_weights = batch.get("target_skin_weights")
+        token_joint_indices = batch.get("token_joint_indices")
+        if skin_weights is None or token_joint_indices is None:
+            raise KeyError(
+                "counterfactual evidence training requires skin weights and token-joint indices"
+            )
+
+        query_skin = query_aligned_skin_weights(
+            skin_weights,
+            batch["faces"],
+            refs,
+        )
+        joint_count = query_skin.shape[-1]
+        joint_indices = token_joint_indices.to(device=query_skin.device, dtype=torch.long)
+        valid_joint = (joint_indices >= 0) & (joint_indices < joint_count)
+        safe_joint_indices = joint_indices.clamp(min=0, max=joint_count - 1)
+        targets = torch.gather(
+            query_skin.transpose(1, 2),
+            1,
+            safe_joint_indices[..., None].expand(-1, -1, query_skin.shape[1]),
+        )
+        target_mass = targets.sum(dim=-1)
+        targets = targets / target_mass[..., None].clamp_min(eps)
+        step_observability = (
+            targets * memory.anchor_confidence.float()[:, None, :]
+        ).sum(dim=-1)
+
+        positions = torch.arange(
+            teacher.token_hidden.shape[1],
+            device=teacher.token_hidden.device,
+        )
+        corrupted_memory = memory.controlled(
+            "corrupt_correspondence",
+            generator=generator,
+        )
+        corrupt_logits, _ = self.evidence_adapter.logits_from_hidden(
+            self.transformer,
+            teacher.token_hidden,
+            corrupted_memory,
+            positions,
+        )
+        zero_logits = self.evidence_adapter.project_hidden(
+            self.transformer,
+            teacher.token_hidden,
+        ).detach()
+
+        labels = batch["input_ids"][:, 1:]
+        prediction_valid = batch["attention_mask"][:, 1:] != 0
+        prediction_positions = positions[:-1][None]
+        later = prediction_positions >= self.evidence_adapter.static_prefix_steps
+
+        def token_nll(logits: torch.Tensor) -> torch.Tensor:
+            return nn.functional.cross_entropy(
+                logits[:, :-1].float().transpose(1, 2),
+                labels,
+                reduction="none",
+            )
+
+        normal_nll = token_nll(teacher.logits)
+        corrupt_nll = token_nll(corrupt_logits)
+        zero_nll = token_nll(zero_logits)
+        supervised = (
+            prediction_valid
+            & later
+            & valid_joint[:, :-1]
+            & (target_mass[:, :-1] > eps)
+        )
+        weights = supervised.float() * step_observability[:, :-1]
+        weight_sum = weights.sum().clamp_min(1.0)
+        correspondence = nn.functional.softplus(
+            (normal_nll - corrupt_nll + margin) / temperature
+        ) * temperature
+        gain = nn.functional.softplus(
+            (normal_nll - zero_nll + margin) / temperature
+        ) * temperature
+        correspondence_loss = (correspondence * weights).sum() / weight_sum
+        gain_loss = (gain * weights).sum() / weight_sum
+
+        terminal = prediction_valid & later & (labels == int(self.tokenizer.eos))
+        if terminal.any():
+            terminal_noharm_loss = nn.functional.relu(
+                normal_nll[terminal] - zero_nll[terminal]
+            ).mean()
+        else:
+            terminal_noharm_loss = normal_nll.new_zeros(())
+        return {
+            "counterfactual_correspondence_loss": correspondence_loss,
+            "counterfactual_gain_loss": gain_loss,
+            "terminal_noharm_loss": terminal_noharm_loss,
+            "counterfactual_observable_step_fraction": supervised.float().mean(),
+            "counterfactual_corrupt_minus_normal_nll": (
+                (corrupt_nll - normal_nll) * weights
+            ).sum()
+            / weight_sum,
+            "counterfactual_zero_minus_normal_nll": (
+                (zero_nll - normal_nll) * weights
+            ).sum()
+            / weight_sum,
+        }
+
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
         refs = self.sample_references(batch)
         memory = self.build_memory(batch, refs=refs)
@@ -636,10 +769,33 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             teacher.token_hidden,
         )
         out.update(alignment)
+        counterfactual_weight = (
+            self.counterfactual_correspondence_loss_weight
+            + self.counterfactual_gain_loss_weight
+            + self.terminal_noharm_loss_weight
+        )
+        if counterfactual_weight > 0.0:
+            counterfactual = self.counterfactual_condition_losses(
+                batch,
+                refs,
+                memory,
+                teacher,
+            )
+            out.update(counterfactual)
         out["loss"] = (
             out["ce_loss"]
             + self.boundary_loss_weight * boundary["boundary_loss"]
             + self.attention_alignment_loss_weight
             * alignment["attention_alignment_loss"]
         )
+        if counterfactual_weight > 0.0:
+            out["loss"] = (
+                out["loss"]
+                + self.counterfactual_correspondence_loss_weight
+                * counterfactual["counterfactual_correspondence_loss"]
+                + self.counterfactual_gain_loss_weight
+                * counterfactual["counterfactual_gain_loss"]
+                + self.terminal_noharm_loss_weight
+                * counterfactual["terminal_noharm_loss"]
+            )
         return out

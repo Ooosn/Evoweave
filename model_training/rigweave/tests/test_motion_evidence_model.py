@@ -440,6 +440,46 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
     assert float(output["attention_alignment_valid_fraction"]) > 0.0
 
 
+def test_counterfactual_losses_are_finite_and_train_evidence_path() -> None:
+    torch.manual_seed(39)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+    )
+    refs = _references(device)
+    memory = model.build_memory(batch, refs=refs)
+    teacher = model.teacher_forcing(batch, memory=memory)
+    losses = model.counterfactual_condition_losses(
+        batch,
+        refs,
+        memory,
+        teacher,
+        generator=torch.Generator(device=device).manual_seed(40),
+    )
+
+    objective = (
+        losses["counterfactual_correspondence_loss"]
+        + losses["counterfactual_gain_loss"]
+        + losses["terminal_noharm_loss"]
+    )
+    objective.backward()
+    adapter_grad = sum(
+        float(parameter.grad.abs().sum())
+        for parameter in model.evidence_adapter.parameters()
+        if parameter.grad is not None
+    )
+    assert torch.isfinite(objective)
+    assert float(losses["counterfactual_observable_step_fraction"]) > 0.0
+    assert adapter_grad > 0.0
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
 def test_adapter_logits_are_prefix_length_stable_under_bfloat16_autocast() -> None:
     torch.manual_seed(41)

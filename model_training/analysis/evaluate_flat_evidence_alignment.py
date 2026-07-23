@@ -41,6 +41,18 @@ from train_dynamic_rig import build_tokenizer  # noqa: E402
 ALIGNMENT_MODES = ("normal", "center", "rigid")
 
 
+def _parse_modes(value: str) -> tuple[str, ...]:
+    modes = tuple(item.strip() for item in value.split(",") if item.strip())
+    if not modes:
+        raise ValueError("at least one alignment mode is required")
+    unknown = [mode for mode in modes if mode not in ALIGNMENT_MODES]
+    if unknown:
+        raise ValueError(f"unknown alignment modes: {unknown}")
+    if len(set(modes)) != len(modes):
+        raise ValueError(f"alignment modes must be unique, got {modes}")
+    return modes
+
+
 def _proper_rotation(moving: torch.Tensor, reference: torch.Tensor) -> torch.Tensor:
     """Return the row-vector rotation that best maps moving onto reference."""
 
@@ -171,7 +183,7 @@ def _first_divergence(left: list[int], right: list[int]) -> int | None:
 def _compare_modes(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
     normal_rows = results["normal"]["rows"]
     comparison: dict[str, Any] = {}
-    for mode in ALIGNMENT_MODES[1:]:
+    for mode in (name for name in results if name != "normal"):
         exact = 0
         divergences: list[int] = []
         for index, (normal, current) in enumerate(
@@ -179,6 +191,10 @@ def _compare_modes(results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         ):
             if normal["path"] != current["path"]:
                 raise ValueError(f"row {index} path mismatch")
+            if normal.get("selected_frames") != current.get("selected_frames"):
+                raise ValueError(f"row {index} selected-frame mismatch")
+            if normal.get("target_ids") != current.get("target_ids"):
+                raise ValueError(f"row {index} target-token mismatch")
             normal_ids = [int(value) for value in normal["dynamic"].get("generated_ids") or []]
             current_ids = [int(value) for value in current["dynamic"].get("generated_ids") or []]
             divergence = _first_divergence(normal_ids, current_ids)
@@ -202,6 +218,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-config", type=Path, required=True)
     parser.add_argument("--unirig-checkpoint", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--modes", default="normal,center,rigid")
+    parser.add_argument(
+        "--reference-normal",
+        type=Path,
+        help="Existing matched normal-mode result; allows running only an aligned mode.",
+    )
     parser.add_argument("--limit", type=int, default=18)
     parser.add_argument("--max-new-tokens", type=int, default=600)
     parser.add_argument("--seed", type=int, default=20260722)
@@ -211,6 +233,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    modes = _parse_modes(args.modes)
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required")
     for path in (
@@ -222,6 +245,12 @@ def main() -> None:
     ):
         if not path.is_file():
             raise FileNotFoundError(path)
+    if args.reference_normal is not None and not args.reference_normal.is_file():
+        raise FileNotFoundError(args.reference_normal)
+    if args.reference_normal is not None and "normal" in modes:
+        raise ValueError("do not rerun normal mode when --reference-normal is provided")
+    if args.reference_normal is None and "normal" not in modes:
+        raise ValueError("normal mode or --reference-normal is required for matched comparison")
     if args.output_dir.exists():
         raise FileExistsError(args.output_dir)
 
@@ -269,7 +298,21 @@ def main() -> None:
     args.output_dir.mkdir(parents=True)
 
     results: dict[str, dict[str, Any]] = {}
-    for mode in ALIGNMENT_MODES:
+    if args.reference_normal is not None:
+        reference = json.loads(args.reference_normal.read_text(encoding="utf-8"))
+        reference_rows = reference.get("rows")
+        if not isinstance(reference_rows, list) or len(reference_rows) != len(dataset):
+            raise ValueError(
+                f"reference normal rows do not match dataset: "
+                f"{None if not isinstance(reference_rows, list) else len(reference_rows)} "
+                f"vs {len(dataset)}"
+            )
+        for index, (row, path) in enumerate(zip(reference_rows, dataset.paths, strict=True)):
+            if str(row.get("path")) != str(path):
+                raise ValueError(f"reference normal row {index} path mismatch")
+        results["normal"] = reference
+
+    for mode in modes:
         rows = [{"index": index, "path": str(path)} for index, path in enumerate(dataset.paths)]
         original = _install_alignment(model, mode)
         try:
@@ -320,7 +363,10 @@ def main() -> None:
             "manifest": str(args.manifest),
             "checkpoint": str(args.checkpoint),
             "checkpoint_sample_exposures": train_args.get("sample_exposures"),
-            "modes": list(ALIGNMENT_MODES),
+            "evaluated_modes": list(modes),
+            "reference_normal": (
+                str(args.reference_normal) if args.reference_normal is not None else None
+            ),
             "limit": len(dataset),
             "seed": args.seed,
             "max_new_tokens": args.max_new_tokens,

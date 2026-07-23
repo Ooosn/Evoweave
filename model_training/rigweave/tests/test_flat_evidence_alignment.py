@@ -10,7 +10,7 @@ import torch
 ANALYSIS_ROOT = Path(__file__).resolve().parents[2] / "analysis"
 sys.path.insert(0, str(ANALYSIS_ROOT))
 
-from evaluate_flat_evidence_alignment import _align_evidence_batch  # noqa: E402
+from evaluate_flat_evidence_alignment import _align_evidence_batch, _parse_modes  # noqa: E402
 
 
 def _fixture_batch() -> tuple[dict[str, torch.Tensor], torch.Tensor]:
@@ -61,3 +61,11 @@ def test_normal_mode_is_identity_and_unknown_mode_fails() -> None:
     assert _align_evidence_batch(batch, "normal") is batch
     with pytest.raises(ValueError, match="unknown alignment mode"):
         _align_evidence_batch(batch, "scale")
+
+
+def test_parse_modes_requires_known_unique_modes() -> None:
+    assert _parse_modes("normal,rigid") == ("normal", "rigid")
+    with pytest.raises(ValueError, match="unknown alignment modes"):
+        _parse_modes("rigid,scale")
+    with pytest.raises(ValueError, match="must be unique"):
+        _parse_modes("rigid,rigid")

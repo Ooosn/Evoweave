@@ -115,7 +115,7 @@ def shifted_region_losses(
     *,
     static_prefix_steps: int,
 ) -> dict[str, tuple[torch.Tensor, int]]:
-    shifted_logits = logits[:, :-1]
+    shifted_logits = logits[:, :-1].float()
     labels = input_ids[:, 1:].clone()
     valid = attention_mask[:, 1:] != 0
     labels[~valid] = -100

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "model-local-motion-evidence-20260724-001",
-  "updated_at": "2026-07-24T03:17:59+09:00",
+  "updated_at": "2026-07-24T03:27:00+09:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -69,8 +69,8 @@
   },
   "last_operation": {
     "name": "wrong_context_cleanup_20260724",
-    "status": "context_files_cleaned_remote_artifacts_pending_access",
-    "conclusion": "the canonical context now contains only the Westlake local-motion-evidence task; mistakenly imported cross-server copies still require deletion when the reverse SSH endpoint accepts a banner again"
+    "status": "completed",
+    "conclusion": "the canonical context now contains only the Westlake local-motion-evidence task; all mistakenly imported cross-server copies and temporary local artifacts were removed"
   },
   "receipt_max_age_minutes": 120
 }

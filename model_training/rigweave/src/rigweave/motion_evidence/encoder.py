@@ -15,6 +15,7 @@ class MotionEvidenceValues:
     """Motion-only values aligned with existing FPS query references."""
 
     query_features: torch.Tensor
+    anchor_confidence: torch.Tensor
     confidence: torch.Tensor
     example_motion_q90_rms: torch.Tensor
     source_edge_counts: torch.LongTensor
@@ -223,8 +224,14 @@ class TopologyLocalMotionEvidence(nn.Module):
         example_motion = torch.stack(motion_amounts, dim=0)
         confidence = example_motion / (example_motion + self.confidence_scale)
         query_features = _materialize_query_features(padded_features, faces, refs)
+        anchor_motion = query_features[..., 4]
+        observable_motion = (anchor_motion - self.active_threshold).clamp_min(0.0)
+        anchor_confidence = observable_motion / (
+            observable_motion + self.confidence_scale
+        )
         return MotionEvidenceValues(
             query_features=query_features,
+            anchor_confidence=anchor_confidence,
             confidence=confidence,
             example_motion_q90_rms=example_motion,
             source_edge_counts=torch.tensor(
@@ -263,14 +270,14 @@ class TopologyMotionValueEncoder(nn.Module):
     def forward(
         self,
         query_features: torch.Tensor,
-        confidence: torch.Tensor,
+        anchor_confidence: torch.Tensor,
     ) -> torch.Tensor:
-        return self.forward_with_boundary(query_features, confidence).values
+        return self.forward_with_boundary(query_features, anchor_confidence).values
 
     def forward_with_boundary(
         self,
         query_features: torch.Tensor,
-        confidence: torch.Tensor,
+        anchor_confidence: torch.Tensor,
     ) -> TopologyMotionEncoding:
         if query_features.ndim != 3:
             raise ValueError(
@@ -281,9 +288,10 @@ class TopologyMotionValueEncoder(nn.Module):
                 f"expected {TopologyLocalMotionEvidence.vertex_feature_dim} query features, "
                 f"got {query_features.shape[-1]}"
             )
-        if confidence.shape != (query_features.shape[0],):
+        if anchor_confidence.shape != query_features.shape[:2]:
             raise ValueError(
-                f"confidence must have shape {(query_features.shape[0],)}, got {tuple(confidence.shape)}"
+                "anchor_confidence must identify every query anchor, "
+                f"got {tuple(anchor_confidence.shape)} for {tuple(query_features.shape[:2])}"
             )
         temporal = query_features[..., :3]
         active = query_features[..., 3:4]
@@ -295,14 +303,14 @@ class TopologyMotionValueEncoder(nn.Module):
                 active,
                 torch.log1p(temporal_max / self.feature_scale),
                 active_max,
-                confidence[:, None, None].expand(-1, query_features.shape[1], 1),
+                anchor_confidence[..., None],
             ),
             dim=-1,
         )
         compute_dtype = self.trunk[0].weight.dtype
         hidden = self.trunk(normalized.to(dtype=compute_dtype))
         values = self.value_projection(hidden)
-        values = values * confidence.to(dtype=values.dtype)[:, None, None]
+        values = values * anchor_confidence.to(dtype=values.dtype)[..., None]
         return TopologyMotionEncoding(
             values=values,
             boundary_logits=self.boundary_head(hidden),

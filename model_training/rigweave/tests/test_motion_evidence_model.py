@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -179,6 +180,33 @@ def test_zero_evidence_teacher_forcing_is_exact_decoder_noop() -> None:
     assert torch.equal(teacher.logits, teacher.baseline_logits)
 
 
+def test_locally_unobservable_evidence_is_noop_despite_global_motion() -> None:
+    torch.manual_seed(24)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+    )
+    memory = model.build_memory(batch, refs=_references(device))
+    no_local_evidence = replace(
+        memory,
+        motion_values=torch.zeros_like(memory.motion_values),
+        anchor_confidence=torch.zeros_like(memory.anchor_confidence),
+        confidence=torch.ones_like(memory.confidence),
+    )
+    teacher = model.teacher_forcing(batch, memory=no_local_evidence)
+    boundary = model.boundary_auxiliary_loss(batch, _references(device), no_local_evidence)
+
+    assert torch.equal(teacher.logits, teacher.baseline_logits)
+    assert float(boundary["boundary_loss"].detach()) == 0.0
+
+
 def test_zero_residual_scale_matches_precision_stable_projection() -> None:
     torch.manual_seed(43)
     device = torch.device("cpu")
@@ -234,6 +262,10 @@ def test_corrupt_control_preserves_values_but_breaks_alignment() -> None:
     assert not torch.equal(memory.motion_values, corrupted.motion_values)
     assert torch.equal(memory.static_tokens, corrupted.static_tokens)
     assert torch.equal(memory.confidence, corrupted.confidence)
+    torch.testing.assert_close(
+        memory.anchor_confidence.sort(dim=1).values,
+        corrupted.anchor_confidence.sort(dim=1).values,
+    )
 
 
 def test_teacher_forcing_and_generation_step_use_the_same_prefix_position() -> None:
@@ -329,7 +361,6 @@ def test_spatially_constant_motion_cannot_create_a_global_decoder_bias() -> None
         prefix,
         static_keys,
         constant_motion,
-        torch.ones(2),
     )
     assert torch.equal(refined, prefix)
 
@@ -420,6 +451,7 @@ def test_adapter_logits_are_prefix_length_stable_under_bfloat16_autocast() -> No
         static_tokens=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
         motion_values=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
         boundary_logits=torch.randn(1, 64, 2, device=device),
+        anchor_confidence=torch.ones(1, 64, device=device),
         confidence=torch.tensor([0.8], device=device),
         raw_evidence=None,  # type: ignore[arg-type]
     )

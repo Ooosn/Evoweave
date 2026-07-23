@@ -41,10 +41,14 @@ def test_zero_motion_is_exactly_zero_after_value_encoding() -> None:
     extractor = TopologyLocalMotionEvidence()
     evidence = extractor(frames, faces, _references(device))
     assert torch.count_nonzero(evidence.query_features) == 0
+    assert torch.equal(
+        evidence.anchor_confidence,
+        torch.zeros_like(evidence.anchor_confidence),
+    )
     assert torch.equal(evidence.confidence, torch.zeros_like(evidence.confidence))
 
     encoder = TopologyMotionValueEncoder(hidden_size=16)
-    values = encoder(evidence.query_features, evidence.confidence)
+    values = encoder(evidence.query_features, evidence.anchor_confidence)
     assert torch.equal(values, torch.zeros_like(values))
 
 
@@ -63,6 +67,10 @@ def test_global_rigid_transform_does_not_create_motion_evidence() -> None:
     frames = torch.stack((query, moved), dim=0)[None]
     evidence = TopologyLocalMotionEvidence()(frames, faces, _references(device))
     torch.testing.assert_close(evidence.query_features, torch.zeros_like(evidence.query_features), atol=2e-6, rtol=0)
+    assert torch.equal(
+        evidence.anchor_confidence,
+        torch.zeros_like(evidence.anchor_confidence),
+    )
 
 
 def test_vertex_and_face_references_preserve_evidence_alignment() -> None:
@@ -80,16 +88,18 @@ def test_vertex_and_face_references_preserve_evidence_alignment() -> None:
     )
     torch.testing.assert_close(evidence.query_features[:, 4], expected_face)
     assert float(evidence.confidence[0]) > 0.0
+    assert float(evidence.anchor_confidence.max()) > 0.0
 
 
-def test_attention_uses_motion_values_and_preserves_zero_confidence() -> None:
+def test_attention_uses_motion_values_and_preserves_zero_values() -> None:
     torch.manual_seed(7)
     attention = MotionEvidenceCrossAttention(hidden_size=16, heads=4)
     prefix = torch.randn(2, 3, 16, requires_grad=True)
     static = torch.randn(2, 5, 16, requires_grad=True)
     motion = torch.randn(2, 5, 16, requires_grad=True)
-    confidence = torch.tensor([0.0, 0.8])
-    output = attention(prefix, static, motion, confidence)
+    with torch.no_grad():
+        motion[0].zero_()
+    output = attention(prefix, static, motion)
     torch.testing.assert_close(output[0], prefix[0])
     assert not torch.allclose(output[1], prefix[1])
 
@@ -98,6 +108,19 @@ def test_attention_uses_motion_values_and_preserves_zero_confidence() -> None:
     assert attention_grad is not None and torch.isfinite(attention_grad).all()
     assert motion.grad is not None and float(motion.grad.abs().sum()) > 0.0
     assert static.grad is None
+
+
+def test_attention_update_preserves_motion_value_magnitude() -> None:
+    torch.manual_seed(9)
+    attention = MotionEvidenceCrossAttention(hidden_size=16, heads=4)
+    prefix = torch.randn(1, 3, 16)
+    static = torch.randn(1, 5, 16)
+    motion = torch.randn(1, 5, 16)
+
+    full_delta = attention(prefix, static, motion) - prefix
+    small_delta = attention(prefix, static, motion * 0.1) - prefix
+
+    torch.testing.assert_close(small_delta, full_delta * 0.1, atol=1.0e-7, rtol=1.0e-5)
 
 
 def test_extractor_encoder_attention_path_has_finite_nonzero_gradients() -> None:
@@ -110,10 +133,10 @@ def test_extractor_encoder_attention_path_has_finite_nonzero_gradients() -> None
     evidence = TopologyLocalMotionEvidence()(frames, faces, _references(device))
     encoder = TopologyMotionValueEncoder(hidden_size=16)
     attention = MotionEvidenceCrossAttention(hidden_size=16, heads=4)
-    values = encoder(evidence.query_features, evidence.confidence)
+    values = encoder(evidence.query_features, evidence.anchor_confidence)
     prefix = torch.randn(1, 4, 16)
     static = torch.randn(1, 5, 16)
-    output = attention(prefix, static, values, evidence.confidence)
+    output = attention(prefix, static, values)
     output.square().mean().backward()
 
     encoder_grad = sum(
@@ -141,8 +164,8 @@ def test_attention_supports_bfloat16_module_on_cuda() -> None:
     prefix = torch.randn(2, 3, 32, device=device, dtype=torch.bfloat16)
     static = torch.randn(2, 5, 32, device=device, dtype=torch.bfloat16)
     motion = torch.randn(2, 5, 32, device=device, dtype=torch.bfloat16)
-    confidence = torch.tensor([0.0, 0.8], device=device)
-    output = attention(prefix, static, motion, confidence)
+    motion[0].zero_()
+    output = attention(prefix, static, motion)
     assert output.dtype == torch.bfloat16
     assert torch.equal(output[0], prefix[0])
     assert torch.isfinite(output).all()
@@ -152,7 +175,11 @@ def test_attention_supports_bfloat16_module_on_cuda() -> None:
         dtype=torch.bfloat16,
     )
     features = torch.rand(2, 5, 8, device=device, dtype=torch.float32)
-    values = encoder(features, confidence)
+    anchor_confidence = torch.tensor(
+        [[0.0] * 5, [0.8] * 5],
+        device=device,
+    )
+    values = encoder(features, anchor_confidence)
     assert values.dtype == torch.bfloat16
     assert torch.equal(values[0], torch.zeros_like(values[0]))
     assert torch.isfinite(values).all()
@@ -166,8 +193,7 @@ def test_float32_attention_is_prefix_length_stable_under_bfloat16_autocast() -> 
     prefix = torch.randn(1, 17, 64, device=device, dtype=torch.bfloat16)
     static = torch.randn(1, 32, 64, device=device, dtype=torch.bfloat16)
     motion = torch.randn(1, 32, 64, device=device, dtype=torch.bfloat16)
-    confidence = torch.tensor([0.8], device=device)
     with torch.autocast("cuda", dtype=torch.bfloat16):
-        full = attention(prefix, static, motion, confidence)
-        step = attention(prefix[:, -1:], static, motion, confidence)
+        full = attention(prefix, static, motion)
+        step = attention(prefix[:, -1:], static, motion)
     torch.testing.assert_close(full[:, -1], step[:, 0], atol=1.0e-5, rtol=1.0e-5)

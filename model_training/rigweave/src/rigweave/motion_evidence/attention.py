@@ -27,14 +27,12 @@ class MotionEvidenceCrossAttention(nn.Module):
         self.detach_static_keys = bool(detach_static_keys)
         self.query_norm = nn.LayerNorm(hidden_size)
         self.key_norm = nn.LayerNorm(hidden_size)
-        self.value_norm = nn.LayerNorm(hidden_size)
         self.cross_attention = nn.MultiheadAttention(
             hidden_size,
             heads,
             batch_first=True,
             bias=False,
         )
-        self.output_norm = nn.LayerNorm(hidden_size, elementwise_affine=False)
 
     def _attend(
         self,
@@ -66,7 +64,7 @@ class MotionEvidenceCrossAttention(nn.Module):
         with torch.autocast(device_type=prefix_states.device.type, enabled=False):
             query = self.query_norm(prefix_states.to(dtype=compute_dtype))
             keys = self.key_norm(keys.to(dtype=compute_dtype))
-            values = self.value_norm(motion_values.to(dtype=compute_dtype))
+            values = motion_values.to(dtype=compute_dtype)
             # A token-independent value mean is not articulation evidence. If it
             # reaches the residual path, the adapter can learn one global logit
             # correction while ignoring which mesh region each joint queried.
@@ -78,7 +76,6 @@ class MotionEvidenceCrossAttention(nn.Module):
                 need_weights=need_weights,
                 average_attn_weights=False,
             )
-            update = self.output_norm(update)
         return update, weights
 
     def attention_weights(
@@ -104,17 +101,11 @@ class MotionEvidenceCrossAttention(nn.Module):
         prefix_states: torch.Tensor,
         static_keys: torch.Tensor,
         motion_values: torch.Tensor,
-        confidence: torch.Tensor,
     ) -> torch.Tensor:
-        if confidence.shape != (prefix_states.shape[0],):
-            raise ValueError(
-                f"confidence must have shape {(prefix_states.shape[0],)}, got {tuple(confidence.shape)}"
-            )
         update, _ = self._attend(
             prefix_states,
             static_keys,
             motion_values,
             need_weights=False,
         )
-        scale = self.residual_scale * confidence[:, None, None]
-        return prefix_states + (scale * update).to(dtype=prefix_states.dtype)
+        return prefix_states + (self.residual_scale * update).to(dtype=prefix_states.dtype)

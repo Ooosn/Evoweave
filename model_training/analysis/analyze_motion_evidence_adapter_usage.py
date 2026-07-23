@@ -169,7 +169,8 @@ def one_usage(
     with torch.autocast(device_type="cuda", enabled=False):
         query = attention.query_norm(teacher.token_hidden.to(dtype=compute_dtype))
         keys = attention.key_norm(memory.static_tokens.to(dtype=compute_dtype))
-        values = attention.value_norm(memory.motion_values.to(dtype=compute_dtype))
+        values = memory.motion_values.to(dtype=compute_dtype)
+        values = values - values.mean(dim=1, keepdim=True)
         _, weights = attention.cross_attention(
             query,
             keys,

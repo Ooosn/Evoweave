@@ -34,6 +34,7 @@ class MotionEvidenceMemory:
     static_tokens: torch.Tensor
     motion_values: torch.Tensor
     boundary_logits: torch.Tensor
+    anchor_confidence: torch.Tensor
     confidence: torch.Tensor
     raw_evidence: MotionEvidenceValues
 
@@ -50,6 +51,7 @@ class MotionEvidenceMemory:
                 static_tokens=self.static_tokens,
                 motion_values=torch.zeros_like(self.motion_values),
                 boundary_logits=torch.zeros_like(self.boundary_logits),
+                anchor_confidence=torch.zeros_like(self.anchor_confidence),
                 confidence=torch.zeros_like(self.confidence),
                 raw_evidence=self.raw_evidence,
             )
@@ -58,6 +60,7 @@ class MotionEvidenceMemory:
 
         rows = []
         boundary_rows = []
+        confidence_rows = []
         for batch_index in range(self.motion_values.shape[0]):
             permutation_device = (
                 self.motion_values.device if generator is None else generator.device
@@ -69,10 +72,12 @@ class MotionEvidenceMemory:
             ).to(self.motion_values.device)
             rows.append(self.motion_values[batch_index, permutation])
             boundary_rows.append(self.boundary_logits[batch_index, permutation])
+            confidence_rows.append(self.anchor_confidence[batch_index, permutation])
         return MotionEvidenceMemory(
             static_tokens=self.static_tokens,
             motion_values=torch.stack(rows, dim=0),
             boundary_logits=torch.stack(boundary_rows, dim=0),
+            anchor_confidence=torch.stack(confidence_rows, dim=0),
             confidence=self.confidence,
             raw_evidence=self.raw_evidence,
         )
@@ -144,7 +149,7 @@ class StaticQueryMotionEvidenceConditioner(nn.Module):
         )
         encoded = self.value_encoder.forward_with_boundary(
             raw.query_features,
-            raw.confidence,
+            raw.anchor_confidence,
         )
         motion_values = encoded.values
         if static_tokens.shape != motion_values.shape:
@@ -156,6 +161,7 @@ class StaticQueryMotionEvidenceConditioner(nn.Module):
             static_tokens=static_tokens,
             motion_values=motion_values,
             boundary_logits=encoded.boundary_logits,
+            anchor_confidence=raw.anchor_confidence,
             confidence=raw.confidence,
             raw_evidence=raw,
         )
@@ -198,7 +204,6 @@ class MotionEvidenceDecoderAdapter(nn.Module):
             prefix_hidden,
             memory.static_tokens,
             memory.motion_values,
-            memory.confidence,
         )
         use_evidence = prefix_positions >= self.static_prefix_steps
         return torch.where(use_evidence[None, :, None], refined, prefix_hidden)
@@ -270,7 +275,7 @@ class MotionEvidenceDecoderAdapter(nn.Module):
                 (baseline_logits[:, :static_steps], logits[:, static_steps:]),
                 dim=1,
             )
-        zero_rows = memory.confidence == 0
+        zero_rows = memory.anchor_confidence.amax(dim=1) == 0
         if zero_rows.any():
             logits = torch.where(zero_rows[:, None, None], baseline_logits, logits)
         return MotionEvidenceTeacherForcingOutput(
@@ -300,7 +305,7 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         baseline_logits = transformer_output.logits[:, -1:]
         if prefix_position < self.static_prefix_steps:
             return baseline_logits[:, -1]
-        zero_rows = memory.confidence == 0
+        zero_rows = memory.anchor_confidence.amax(dim=1) == 0
         if zero_rows.any():
             logits = torch.where(zero_rows[:, None, None], baseline_logits, logits)
         return logits[:, -1]
@@ -486,7 +491,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         ).mean(dim=-1)
         weights = (
             targets.valid_mask.float()
-            * memory.confidence.float()[:, None]
+            * memory.anchor_confidence.float()
         )
         loss = (per_value * weights).sum() / weights.sum().clamp_min(1.0)
         predictions = torch.sigmoid(memory.boundary_logits.float())
@@ -585,7 +590,10 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             & later_position
             & (target_mass > eps)
         )
-        loss_weights = supervised.float() * memory.confidence.float()[:, None]
+        target_observability = (
+            targets * memory.anchor_confidence.float()[:, None, :]
+        ).sum(dim=-1)
+        loss_weights = supervised.float() * target_observability
         weight_sum = loss_weights.sum()
         loss = (per_step_kl * loss_weights).sum() / weight_sum.clamp_min(1.0)
 

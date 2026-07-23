@@ -21,6 +21,7 @@ from .encoder import (
     TopologyLocalMotionEvidence,
     TopologyMotionValueEncoder,
 )
+from .supervision import query_aligned_skin_boundary_targets
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class MotionEvidenceMemory:
 
     static_tokens: torch.Tensor
     motion_values: torch.Tensor
+    boundary_logits: torch.Tensor
     confidence: torch.Tensor
     raw_evidence: MotionEvidenceValues
 
@@ -44,6 +46,7 @@ class MotionEvidenceMemory:
             return MotionEvidenceMemory(
                 static_tokens=self.static_tokens,
                 motion_values=torch.zeros_like(self.motion_values),
+                boundary_logits=torch.zeros_like(self.boundary_logits),
                 confidence=torch.zeros_like(self.confidence),
                 raw_evidence=self.raw_evidence,
             )
@@ -51,6 +54,7 @@ class MotionEvidenceMemory:
             raise ValueError(f"unknown motion evidence control {control!r}")
 
         rows = []
+        boundary_rows = []
         for batch_index in range(self.motion_values.shape[0]):
             permutation_device = (
                 self.motion_values.device if generator is None else generator.device
@@ -61,9 +65,11 @@ class MotionEvidenceMemory:
                 generator=generator,
             ).to(self.motion_values.device)
             rows.append(self.motion_values[batch_index, permutation])
+            boundary_rows.append(self.boundary_logits[batch_index, permutation])
         return MotionEvidenceMemory(
             static_tokens=self.static_tokens,
             motion_values=torch.stack(rows, dim=0),
+            boundary_logits=torch.stack(boundary_rows, dim=0),
             confidence=self.confidence,
             raw_evidence=self.raw_evidence,
         )
@@ -133,7 +139,11 @@ class StaticQueryMotionEvidenceConditioner(nn.Module):
             vertex_counts=vertex_counts,
             face_counts=face_counts,
         )
-        motion_values = self.value_encoder(raw.query_features, raw.confidence)
+        encoded = self.value_encoder.forward_with_boundary(
+            raw.query_features,
+            raw.confidence,
+        )
+        motion_values = encoded.values
         if static_tokens.shape != motion_values.shape:
             raise RuntimeError(
                 "static query tokens and motion values are not aligned: "
@@ -142,6 +152,7 @@ class StaticQueryMotionEvidenceConditioner(nn.Module):
         return MotionEvidenceMemory(
             static_tokens=static_tokens,
             motion_values=motion_values,
+            boundary_logits=encoded.boundary_logits,
             confidence=raw.confidence,
             raw_evidence=raw,
         )
@@ -306,6 +317,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         active_threshold: float = 1.0e-3,
         confidence_scale: float = 1.0e-2,
         eos_loss_weight: float = 1.0,
+        boundary_loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.unirig_ar = unirig_ar
@@ -314,6 +326,9 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         self.vertex_samples = int(vertex_samples)
         self.query_tokens = int(query_tokens)
         self.eos_loss_weight = float(eos_loss_weight)
+        if boundary_loss_weight < 0.0:
+            raise ValueError("boundary_loss_weight must be non-negative")
+        self.boundary_loss_weight = float(boundary_loss_weight)
         hidden_size = int(unirig_ar.hidden_size)
         self.conditioner = StaticQueryMotionEvidenceConditioner(
             surface_tokenizer,
@@ -431,8 +446,51 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             "token_acc": token_acc,
         }
 
+    def boundary_auxiliary_loss(
+        self,
+        batch: dict[str, Any],
+        refs: TrackableSurfaceReferences,
+        memory: MotionEvidenceMemory,
+    ) -> dict[str, torch.Tensor]:
+        skin_weights = batch.get("target_skin_weights")
+        if skin_weights is None:
+            raise KeyError("motion-evidence training requires target_skin_weights")
+        targets = query_aligned_skin_boundary_targets(
+            skin_weights,
+            batch["faces"],
+            refs,
+            vertex_counts=batch.get("vertex_count"),
+            face_counts=batch.get("face_count"),
+        )
+        if targets.values.shape != memory.boundary_logits.shape:
+            raise RuntimeError(
+                "boundary logits and targets are not query aligned: "
+                f"{tuple(memory.boundary_logits.shape)} != {tuple(targets.values.shape)}"
+            )
+        per_value = nn.functional.binary_cross_entropy_with_logits(
+            memory.boundary_logits.float(),
+            targets.values.float(),
+            reduction="none",
+        ).mean(dim=-1)
+        weights = (
+            targets.valid_mask.float()
+            * memory.confidence.float()[:, None]
+        )
+        loss = (per_value * weights).sum() / weights.sum().clamp_min(1.0)
+        predictions = torch.sigmoid(memory.boundary_logits.float())
+        mae = (
+            (predictions - targets.values.float()).abs().mean(dim=-1) * weights
+        ).sum() / weights.sum().clamp_min(1.0)
+        return {
+            "boundary_loss": loss,
+            "boundary_mae": mae,
+            "boundary_valid_fraction": targets.valid_mask.float().mean(),
+        }
+
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        teacher = self.teacher_forcing(batch)
+        refs = self.sample_references(batch)
+        memory = self.build_memory(batch, refs=refs)
+        teacher = self.teacher_forcing(batch, memory=memory)
         out = self._token_losses(
             teacher.logits,
             batch["input_ids"],
@@ -440,4 +498,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         )
         hidden_delta = teacher.refined_hidden.float() - teacher.token_hidden.float()
         out["evidence_hidden_delta_rms"] = torch.sqrt(hidden_delta.square().mean())
+        boundary = self.boundary_auxiliary_loss(batch, refs, memory)
+        out.update(boundary)
+        out["loss"] = out["ce_loss"] + self.boundary_loss_weight * boundary["boundary_loss"]
         return out

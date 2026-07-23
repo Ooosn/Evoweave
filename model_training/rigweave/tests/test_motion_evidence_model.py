@@ -111,6 +111,17 @@ def _batch(device: torch.device) -> dict[str, torch.Tensor]:
         "face_normals": torch.zeros((1, 2, 2, 3), device=device),
         "vertex_count": torch.tensor([4], device=device),
         "face_count": torch.tensor([2], device=device),
+        "target_skin_weights": torch.tensor(
+            [
+                [
+                    [1.0, 0.0],
+                    [1.0, 0.0],
+                    [0.0, 1.0],
+                    [0.0, 1.0],
+                ]
+            ],
+            device=device,
+        ),
         "input_ids": torch.tensor([[18, 17, 2, 3, 4, 19]], device=device),
         "attention_mask": torch.ones((1, 6), device=device),
     }
@@ -274,6 +285,11 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
         for parameter in model.conditioner.value_encoder.parameters()
         if parameter.grad is not None
     )
+    boundary_grad = sum(
+        float(parameter.grad.abs().sum())
+        for parameter in model.conditioner.value_encoder.boundary_head.parameters()
+        if parameter.grad is not None
+    )
     backbone_grad = sum(
         float(parameter.grad.abs().sum())
         for parameter in model.transformer.parameters()
@@ -281,7 +297,9 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
     )
     assert evidence_grad > 0.0
     assert value_grad > 0.0
+    assert boundary_grad > 0.0
     assert backbone_grad > 0.0
+    assert torch.isfinite(output["boundary_loss"])
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")
@@ -294,6 +312,7 @@ def test_adapter_logits_are_prefix_length_stable_under_bfloat16_autocast() -> No
     memory = MotionEvidenceMemory(
         static_tokens=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
         motion_values=torch.randn(1, 64, hidden_size, device=device, dtype=torch.bfloat16),
+        boundary_logits=torch.randn(1, 64, 2, device=device),
         confidence=torch.tensor([0.8], device=device),
         raw_evidence=None,  # type: ignore[arg-type]
     )

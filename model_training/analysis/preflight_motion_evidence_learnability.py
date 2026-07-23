@@ -31,11 +31,11 @@ from eval_dynamic_rig_ce import (  # noqa: E402
 )
 from train_dynamic_rig import build_tokenizer, move_batch  # noqa: E402
 
-from rigweave.dynamic_rig.data import (  # noqa: E402
-    DynamicRigManifestDataset,
-    dynamic_rig_collate,
+from rigweave.motion_evidence import (  # noqa: E402
+    MotionEvidenceManifestDataset,
+    TopologyMotionEvidenceUniRigAR,
+    motion_evidence_collate,
 )
-from rigweave.motion_evidence import TopologyMotionEvidenceUniRigAR  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--amp-dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--log-every", type=int, default=25)
     parser.add_argument("--static-prefix-steps", type=int, default=4)
+    parser.add_argument("--boundary-loss-weight", type=float, default=1.0)
     args = parser.parse_args()
     for name in CHECKPOINT_DEFAULTS:
         if not hasattr(args, name):
@@ -71,8 +72,8 @@ def build_dataset(
     *,
     limit: int,
     seed: int,
-) -> DynamicRigManifestDataset:
-    return DynamicRigManifestDataset(
+) -> MotionEvidenceManifestDataset:
+    return MotionEvidenceManifestDataset(
         manifest,
         tokenizer,
         frame_count=args.frames,
@@ -91,7 +92,7 @@ def build_dataset(
 
 
 def make_loader(
-    dataset: DynamicRigManifestDataset,
+    dataset: MotionEvidenceManifestDataset,
     tokenizer: Any,
     *,
     shuffle: bool,
@@ -104,7 +105,7 @@ def make_loader(
         shuffle=shuffle,
         num_workers=0,
         generator=generator,
-        collate_fn=partial(dynamic_rig_collate, pad_token=tokenizer.pad),
+        collate_fn=partial(motion_evidence_collate, pad_token=tokenizer.pad),
     )
 
 
@@ -168,6 +169,8 @@ def evaluate_controls(
     rows: list[dict[str, Any]] = []
     query_tokens_all_1024 = True
     root_logit_max_abs_diff = 0.0
+    boundary_loss_total = 0.0
+    boundary_mae_total = 0.0
 
     for row_index, raw_batch in enumerate(loader):
         batch = move_batch(raw_batch, device)
@@ -178,6 +181,7 @@ def evaluate_controls(
         with torch.autocast("cuda", dtype=amp_dtype):
             memory = model.build_memory(batch, refs=refs)
             normal = model.teacher_forcing(batch, memory=memory)
+            boundary = model.boundary_auxiliary_loss(batch, refs, memory)
             corrupt_memory = memory.controlled(
                 "corrupt_correspondence",
                 generator=generator,
@@ -239,6 +243,8 @@ def evaluate_controls(
                 ),
             )
         query_tokens_all_1024 = query_tokens_all_1024 and memory.static_tokens.shape[1] == 1024
+        boundary_loss_total += float(boundary["boundary_loss"])
+        boundary_mae_total += float(boundary["boundary_mae"])
         rows.append(
             {
                 "index": row_index,
@@ -284,6 +290,8 @@ def evaluate_controls(
         ),
         "root_logit_max_abs_diff": root_logit_max_abs_diff,
         "query_tokens_all_1024": query_tokens_all_1024,
+        "boundary_loss": boundary_loss_total / max(len(rows), 1),
+        "boundary_mae": boundary_mae_total / max(len(rows), 1),
         "details": rows,
     }
 
@@ -328,6 +336,7 @@ def main() -> None:
         query_tokens=args.query_tokens,
         evidence_heads=8,
         evidence_static_prefix_steps=args.static_prefix_steps,
+        boundary_loss_weight=args.boundary_loss_weight,
     )
     model.conditioner.value_encoder.to(device)
     model.evidence_adapter.to(device)
@@ -370,21 +379,30 @@ def main() -> None:
         torch.cuda.manual_seed_all(args.seed + step)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast("cuda", dtype=amp_dtype):
-            teacher = model.teacher_forcing(batch)
+            refs = model.sample_references(batch)
+            memory = model.build_memory(batch, refs=refs)
+            teacher = model.teacher_forcing(batch, memory=memory)
             regions = shifted_region_losses(
                 teacher.logits,
                 batch["input_ids"],
                 batch["attention_mask"],
                 static_prefix_steps=model.evidence_adapter.static_prefix_steps,
             )
-            loss = regions["later"][0]
+            boundary = model.boundary_auxiliary_loss(batch, refs, memory)
+            loss = (
+                regions["later"][0]
+                + args.boundary_loss_weight * boundary["boundary_loss"]
+            )
         loss.backward()
         grad_norm = torch.nn.utils.clip_grad_norm_(trainable, args.max_grad_norm)
         optimizer.step()
         if step == 1 or step % args.log_every == 0 or step == args.steps:
             record = {
                 "step": step,
-                "later_ce": float(loss.detach()),
+                "total_loss": float(loss.detach()),
+                "later_ce": float(regions["later"][0].detach()),
+                "boundary_loss": float(boundary["boundary_loss"].detach()),
+                "boundary_mae": float(boundary["boundary_mae"].detach()),
                 "grad_norm": float(grad_norm),
                 "gate": float(torch.tanh(model.evidence_adapter.attention.gate.detach())),
             }
@@ -412,6 +430,7 @@ def main() -> None:
         "steps": args.steps,
         "learning_rate": args.learning_rate,
         "weight_decay": args.weight_decay,
+        "boundary_loss_weight": args.boundary_loss_weight,
         "static_prefix_steps": args.static_prefix_steps,
         "before": before,
         "after": after,

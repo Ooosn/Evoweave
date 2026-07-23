@@ -20,6 +20,14 @@ class MotionEvidenceValues:
     source_edge_counts: torch.LongTensor
 
 
+@dataclass(frozen=True)
+class TopologyMotionEncoding:
+    """Learned evidence values plus the training-only boundary prediction."""
+
+    values: torch.Tensor
+    boundary_logits: torch.Tensor
+
+
 def _unique_edges(faces: torch.LongTensor, vertex_count: int) -> torch.LongTensor:
     if faces.ndim != 2 or faces.shape[1] != 3:
         raise ValueError(f"faces must have shape (F,3), got {tuple(faces.shape)}")
@@ -242,17 +250,28 @@ class TopologyMotionValueEncoder(nn.Module):
             raise ValueError("feature_scale must be positive")
         width = int(intermediate_size or hidden_size)
         self.feature_scale = float(feature_scale)
-        self.network = nn.Sequential(
+        self.trunk = nn.Sequential(
             nn.Linear(TopologyLocalMotionEvidence.vertex_feature_dim + 1, width),
             nn.GELU(),
+            nn.LayerNorm(width),
             nn.Linear(width, hidden_size),
+            nn.GELU(),
         )
+        self.value_projection = nn.Linear(hidden_size, hidden_size)
+        self.boundary_head = nn.Linear(hidden_size, 2)
 
     def forward(
         self,
         query_features: torch.Tensor,
         confidence: torch.Tensor,
     ) -> torch.Tensor:
+        return self.forward_with_boundary(query_features, confidence).values
+
+    def forward_with_boundary(
+        self,
+        query_features: torch.Tensor,
+        confidence: torch.Tensor,
+    ) -> TopologyMotionEncoding:
         if query_features.ndim != 3:
             raise ValueError(
                 f"query_features must have shape (B,Q,C), got {tuple(query_features.shape)}"
@@ -280,6 +299,11 @@ class TopologyMotionValueEncoder(nn.Module):
             ),
             dim=-1,
         )
-        compute_dtype = self.network[0].weight.dtype
-        values = self.network(normalized.to(dtype=compute_dtype))
-        return values * confidence.to(dtype=values.dtype)[:, None, None]
+        compute_dtype = self.trunk[0].weight.dtype
+        hidden = self.trunk(normalized.to(dtype=compute_dtype))
+        values = self.value_projection(hidden)
+        values = values * confidence.to(dtype=values.dtype)[:, None, None]
+        return TopologyMotionEncoding(
+            values=values,
+            boundary_logits=self.boundary_head(hidden),
+        )

@@ -49,3 +49,17 @@ def test_condition_stats_detect_token_shared_residual() -> None:
 
     assert result["residual_rms_ratio"] == 0.5
     assert result["residual_shared_energy_fraction"] == 1.0
+    assert result["motion_effect_fused_shared_energy_fraction"] == 0.0
+
+
+def test_condition_stats_detect_anchor_specific_motion_effect() -> None:
+    static = torch.ones((1, 4, 2))
+    zero_fused = static.clone()
+    fused = static.clone()
+    fused[:, 0, 0] += 1.0
+    fused[:, 1, 0] -= 1.0
+    dynamic = static * 2.0
+
+    result = _condition_stats(static, dynamic, static, fused, zero_fused)
+
+    assert result["motion_effect_fused_shared_energy_fraction"] == 0.0

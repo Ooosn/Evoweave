@@ -84,6 +84,9 @@ def _condition_stats(
     token_cosine = F.cosine_similarity(static.float(), fused.float(), dim=-1)
     residual_energy = residual.float().square().sum(dim=-1).mean().clamp_min(1.0e-20)
     shared_energy = residual.float().mean(dim=1).square().sum(dim=-1).mean()
+    motion_effect = fused - zero_fused
+    motion_effect_energy = motion_effect.float().square().sum(dim=-1).mean().clamp_min(1.0e-20)
+    motion_effect_shared_energy = motion_effect.float().mean(dim=1).square().sum(dim=-1).mean()
     return {
         "static_rms": _rms(static),
         "dynamic_rms": _rms(dynamic),
@@ -99,6 +102,9 @@ def _condition_stats(
         "static_fused_token_cosine_median": _quantile(token_cosine, 0.5),
         "static_fused_token_cosine_p10": _quantile(token_cosine, 0.1),
         "residual_shared_energy_fraction": float((shared_energy / residual_energy).item()),
+        "motion_effect_fused_shared_energy_fraction": float(
+            (motion_effect_shared_energy / motion_effect_energy).item()
+        ),
     }
 
 
@@ -258,8 +264,12 @@ def main() -> None:
     for name in CHECKPOINT_DEFAULTS:
         setattr(model_args, name, None)
     train_args = apply_checkpoint_eval_defaults(model_args)
-    if model_args.condition_fusion not in {"static_cross_attn", "static_cross_attn_zero"}:
-        raise ValueError(f"checkpoint is not a cross-attention fusion run: {model_args.condition_fusion}")
+    if model_args.condition_fusion not in {
+        "static_cross_attn",
+        "static_cross_attn_zero",
+        "anchor_motion_residual_zero",
+    }:
+        raise ValueError(f"checkpoint is not a supported condition-fusion run: {model_args.condition_fusion}")
 
     from rigweave.dynamic_rig.data import DynamicRigManifestDataset, dynamic_rig_collate
 
@@ -291,21 +301,43 @@ def main() -> None:
         batch = move_batch(batch, device)
         with torch.no_grad(), torch.autocast(device_type="cuda", dtype=amp_dtype):
             references = model.sample_references(batch)
-            dynamic = model.conditioner(
-                batch["frame_vertices"],
-                batch["faces"],
-                references,
-                vertex_normals=batch["vertex_normals"],
-                face_normals=batch["face_normals"],
-            )
-            zero_dynamic = model.conditioner(
-                model._control_sequence(batch["frame_vertices"], "zero"),
-                batch["faces"],
-                references,
-                vertex_normals=model._control_sequence(batch["vertex_normals"], "zero"),
-                face_normals=model._control_sequence(batch["face_normals"], "zero"),
-            )
-            static = model.build_static_condition(batch).to(device=dynamic.device, dtype=dynamic.dtype)
+            if model_args.condition_fusion == "anchor_motion_residual_zero":
+                frame_tokens, query_points = model.conditioner.tokenize_frames(
+                    batch["frame_vertices"],
+                    batch["faces"],
+                    references,
+                    vertex_normals=batch["vertex_normals"],
+                    face_normals=batch["face_normals"],
+                )
+                zero_frame_tokens, zero_query_points = model.conditioner.tokenize_frames(
+                    model._control_sequence(batch["frame_vertices"], "zero"),
+                    batch["faces"],
+                    references,
+                    vertex_normals=model._control_sequence(batch["vertex_normals"], "zero"),
+                    face_normals=model._control_sequence(batch["face_normals"], "zero"),
+                )
+                dynamic = model.conditioner.motion_encoder(frame_tokens, query_points=query_points)
+                zero_dynamic = model.conditioner.motion_encoder(
+                    zero_frame_tokens,
+                    query_points=zero_query_points,
+                )
+                static = frame_tokens[:, 0]
+            else:
+                dynamic = model.conditioner(
+                    batch["frame_vertices"],
+                    batch["faces"],
+                    references,
+                    vertex_normals=batch["vertex_normals"],
+                    face_normals=batch["face_normals"],
+                )
+                zero_dynamic = model.conditioner(
+                    model._control_sequence(batch["frame_vertices"], "zero"),
+                    batch["faces"],
+                    references,
+                    vertex_normals=model._control_sequence(batch["vertex_normals"], "zero"),
+                    face_normals=model._control_sequence(batch["face_normals"], "zero"),
+                )
+                static = model.build_static_condition(batch).to(device=dynamic.device, dtype=dynamic.dtype)
             fused = model.condition_fuser(static, dynamic)
             zero_fused = model.condition_fuser(static, zero_dynamic)
             logits, labels = _teacher_logits(
@@ -323,7 +355,8 @@ def main() -> None:
             "gate": gate,
         }
         row.update(_condition_stats(static, dynamic, zero_dynamic, fused, zero_fused))
-        row.update(_attention_stats(model, static, dynamic))
+        if model_args.condition_fusion in {"static_cross_attn", "static_cross_attn_zero"}:
+            row.update(_attention_stats(model, static, dynamic))
         coordinate_stats = _coordinate_prediction_stats(logits, labels, tokenizer.num_discrete)
         for condition_label, values in coordinate_stats.items():
             for key, value in values.items():
@@ -359,6 +392,7 @@ def main() -> None:
         "motion_effect_dynamic_rms_ratio",
         "motion_effect_fused_rms_ratio",
         "residual_shared_energy_fraction",
+        "motion_effect_fused_shared_energy_fraction",
         "attention_entropy_normalized_mean",
         "attention_effective_key_count_mean",
         "static_root_bin_l2",

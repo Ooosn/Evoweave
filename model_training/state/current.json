@@ -1,115 +1,76 @@
 {
   "schema_version": 1,
-  "state_id": "model-centered-motion-condition-20260723-005",
-  "updated_at": "2026-07-23T14:16:00+09:00",
+  "state_id": "model-local-motion-evidence-20260724-001",
+  "updated_at": "2026-07-24T03:17:59+09:00",
   "module": "model_training",
-  "human_context": "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md",
+  "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/README.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/STACK_CLOSE_CAUSAL_DIAGNOSIS_20260723.md"
+    "model_training/docs/EVIDENCE_AWARE_MOTION_CONDITIONING.md"
   ],
   "reference_runs": {
-    "flat_unirig": {
-      "status": "accepted_baseline",
-      "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-      "sample_exposures": 80016,
-      "valid857": {
-        "legal_generation": 780,
-        "true_hitmax": 77,
-        "topology_f1_all_rows_zero_for_failure": 0.7428389,
-        "j2j": 0.017206,
-        "count_mae": 6.9974
-      }
-    },
-    "puppeteer": {
-      "status": "not_accepted_as_usable_baseline",
-      "checkpoint": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/checkpoint_sample_80000.pt",
-      "sample_exposures": 80016
-    },
-    "stack_close": {
-      "status": "rejected",
-      "reason": "reduced literal hitmax but converted failures into late EOS, repeated joints, extreme overgeneration, and worse coordinates"
-    },
-    "static_cross_attention_residual": {
-      "status": "rejected_before_formal_training",
-      "reason": "learned nearly uniform attention and a token-shared bias instead of anchor-specific motion"
-    },
-    "anchor_motion_residual": {
-      "status": "rejected_before_formal_training",
-      "reason": "the 5000-exposure probe stayed equivalent to the untrained trackable-static path: all-row F1 0.595 versus 0.605 and J2J 0.03646 versus 0.03634; normal, zero-motion, and static-bypass generations were nearly identical because the zero-initialized output layer starved the motion encoder and the fuser could use a static-only shortcut"
-    },
-    "query_rigid_motion": {
-      "status": "rejected_before_formal_training",
-      "reason": "matched154 inference was neutral (legal 107 versus 106, all-row F1 0.413997 versus 0.413442, rescue 7 versus regress 8), and residual rigid-motion ratios did not distinguish historical failures from matched controls"
+    "flat_unirig_westlake": {
+      "status": "only_current_baseline",
+      "checkpoint": "/ssdwork/liuhaohan/evorig/evoweave_repo/outputs/dynamic_rig_runs/rootless_flat_unirig_motion_fullft_20260707_hxr4gpu/checkpoint_sample_80000.pt",
+      "role": "Westlake-only development comparison; do not replace with another server's checkpoint"
     }
   },
   "verified_fixed_causes": [
-    "the formal rootless-v3 data contract contains no synthetic root or generated tail tokens",
-    "query mesh and target skeleton use the same selected pose and query-bbox coordinate system",
-    "flat parent-coordinate tokens can lose parent identity after coordinate quantization",
-    "stack-close restores exact parent identity but does not fix early coordinate grounding",
-    "oracle action and parent rollout fixes EOS/count but leaves hard-row geometry unusable",
-    "surface FPS randomness triggers some failures but is not the systematic cause"
+    "the final rootless-v3 target contains no synthetic root and no generated tail token",
+    "the query mesh and target skeleton use the same random query pose and query-bbox coordinate system",
+    "global RT is removed from the current training input and is not the active data hypothesis",
+    "the current loader returns 1024 ordered query-aligned surface anchors"
   ],
   "verified_open_facts": [
-    "the current failure starts with condition-to-root or condition-to-first-child coordinate error and then amplifies through self-prefix rollout",
-    "motion is not ignored: zeroing motion worsens hard-row teacher-forcing CE, but the learned response is not reliably calibrated",
-    "zero-motion evidence changes the dynamic condition about 7.3 times more than the normal-versus-zero motion signal, so the random motion encoder rewrites static geometry strongly",
-    "the Fourier surface tokenizer already contributes most of the nonlinear response to small motion",
-    "hard diagnostic rows contain more whole-object root trajectory and less internal articulation than matched controls",
-    "the production loader currently performs evidence FPS on raw vertex displacement, so global SE(3) motion can dominate frame selection",
-    "fixed condition scaling and input-only reliability gates failed to improve matched free generation",
-    "post-loader rigid alignment on selected18 looked beneficial, but the full matched154 intervention was neutral: normal versus rigid legal 107 versus 106, all-row F1 0.413997 versus 0.413442, rescue 7 versus regress 8",
-    "on the historical-failure half of matched154, rigid alignment rescued 5 and regressed 6; it is not an inference-time repair",
-    "query-rigid preprocessing removes a real nuisance variable but is not failure-specific and does not earn the single formal training opportunity",
-    "the anchor-residual 5k checkpoint retained a 0.25007 gate but its final update weight std was only 0.00049; motion affected the fused condition by only 0.000288 of static RMS",
-    "the anchor-residual fuser was not motion-identifiable because it consumed both static and dynamic tokens; about 79.5 percent of its small residual energy was token-shared",
-    "on hard6, normal motion improved first-child and later-coordinate NLL slightly but worsened root coordinate bins (12.07 versus 6.07 under zero motion), so motion must not be treated as a uniformly beneficial global condition"
+    "the flat UniRig baseline can generate useful skeletons but still has hitmax and topology-template failures",
+    "motion affects prediction and is not completely ignored, but its contribution is not a stable articulation mechanism",
+    "the current motion condition mixes static appearance, action magnitude, local relative motion, and learned feature drift",
+    "the final skeleton loss does not explicitly require the motion encoder to recover same-segment relations or skin boundaries",
+    "low observed motion is unknown evidence rather than a negative structural label",
+    "early condition-to-joint errors can be amplified when the autoregressive self-prefix later dominates the condition"
   ],
   "unknowns": [
-    "whether replacing the motion encoder's zero-motion rewrite with query-pose static tokens while retaining only normal-minus-zero motion response improves hard free generation",
-    "whether the useful motion response should enter only after root grounding rather than through one global condition for every autoregressive step",
-    "whether any identity-preserving condition route can improve failures without degrading matched legal controls"
+    "whether local relative-distance trajectories predict same-segment and skin-boundary relations on held-out assets",
+    "how to represent confidence so low motion remains unknown rather than becoming a false negative",
+    "whether a separate motion-evidence memory improves child and branch generation without degrading root grounding or normal controls"
   ],
   "allowed_operations": [
     "report",
     "inspect",
-    "matched_eval",
+    "evidence_analysis",
+    "implement",
+    "unit_test",
+    "dev_preflight",
     "visualize"
   ],
   "blocked_operations": [
     "train",
     "submit"
   ],
-  "next_required_result": "Run the no-weight-change centered-motion intervention from commit 0e015cca8d90a83391bbc431d48381a02b3ea357 on the fixed selected18 set: compare the accepted flat 80k dynamic condition, query-pose static condition, and query_static + alpha * (dynamic_normal - dynamic_query_repeated). Only expand the best alpha to matched154 if it improves hard legality/root/F1 without degrading controls. Do not train or submit the formal two-A100 task from the current state.",
+  "next_required_result": "Using only the Westlake rootless-v3 train/valid manifests, validate local relative-motion evidence against soft skin same-segment/boundary labels on asset-disjoint held-out rows. Compare correct anchor correspondence with repeated-query zero motion and anchor-correspondence corruption, report motion-stratified metrics, runtime, and visualizations. Do not load a skeleton checkpoint for this first stage and do not train or submit the formal model.",
   "active_operation": {
-    "name": "centered_motion_condition_intervention_20260723",
-    "status": "analysis_implementation_complete_gpu_eval_blocked_on_access",
-    "implementation_commit": "0e015cca8d90a83391bbc431d48381a02b3ea357",
-    "analysis_script": "model_training/analysis/evaluate_centered_motion_condition.py",
-    "formula": "query_static + alpha * (dynamic_normal - dynamic_query_repeated)",
+    "name": "local_relative_motion_evidence_preflight_20260724",
+    "status": "ready_not_started_after_context_reset",
+    "server": "Westlake development environment only",
     "weights_changed": false,
-    "baseline_checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "diagnostic_manifest": "/home/wangyy/evorig/outputs/static_motion_residual_selected18_20260723/selected18_manifest.jsonl",
-    "alphas": [
-      0.25,
-      0.5,
-      1.0
-    ],
-    "dev_resources": "Westlake reverse proxy port 20002 closes before the SSH banner and EasyConnect is not authenticated; HGC qlogin 124763552 is occupied by unrelated R009 work and must not be interrupted",
+    "skeleton_checkpoint_required": false,
+    "train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+    "valid_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+    "train_rows": 15903,
+    "valid_rows": 857,
+    "motion_relation": "norm(x_i_t - x_j_t) / (norm(x_i_query - x_j_query) + eps) - 1",
+    "skin_relation": "sum_k min(w_i_k, w_j_k)",
     "formal_task_budget_remaining": 1,
     "formal_resources": "two A100-80GB in an allowed Westlake resource group",
-    "formal_train_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-    "formal_val_manifest": "/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-    "acceptance_test": "fixed-row free-generation legality/hitmax, all-row topology F1, J2J, count error, root and first-child error, exact query/pose/FPS contract, and visual overlays; improvement on failures must not materially regress controls"
+    "acceptance_test": "held-out evidence quality under correct, zero-motion, and corrupted-correspondence controls; low-motion uncertainty behavior; extraction runtime and memory; representative evidence/skin-boundary visualizations"
   },
   "last_operation": {
-    "name": "anchor_motion_residual_parameter_and_condition_audit_20260723",
-    "status": "completed_rejected_before_formal_training",
-    "artifact_root": "/home/wangyy/evorig/outputs/anchor_motion_residual_selected18_20260723",
-    "conclusion": "the 5k route was effectively the untrained static UniRig path rather than a learned motion residual; extending it or combining it with query-rigid would not be an evidence-based use of GPU time"
+    "name": "wrong_context_cleanup_20260724",
+    "status": "context_files_cleaned_remote_artifacts_pending_access",
+    "conclusion": "the canonical context now contains only the Westlake local-motion-evidence task; mistakenly imported cross-server copies still require deletion when the reverse SSH endpoint accepts a banner again"
   },
-  "receipt_max_age_minutes": 240
+  "receipt_max_age_minutes": 120
 }

@@ -1,126 +1,94 @@
-# Evidence-Aware Motion-Conditioned Skeleton Generation
+# Local Motion Evidence for Skeleton Generation
 
-This is a future-direction note, not the immediate baseline plan.
+状态：当前设计，尚未进入正式训练。
 
-## Problem
+## 1. 假设
 
-The current task is not a standard "condition fully specifies target" problem.
-The condition and target have different semantics:
-
-```text
-motion condition: partial, action-dependent, noisy, insufficient
-GT skeleton: complete, canonical, action-invariant, sufficient
-```
-
-Directly training:
+现有模型已经读取 motion，但没有稳定地把它变成骨段关系。当前假设是：
 
 ```text
-mesh + motion -> full skeleton
+局部表面相对运动
+-> 同骨段关系、蒙皮边界和关节证据
+-> 更可靠的 skeleton condition
 ```
 
-can work because the GT is always complete. But it is not conceptually clean:
-the model is not forced to distinguish structural motion evidence from action
-style, missing observations, or noisy deformation artifacts.
+该假设必须先独立于自回归模型得到验证。不能用一次完整训练来代替特征有效性检查。
 
-## Key Principle
+## 2. 输入与表示
 
-Motion should be treated as evidence, not as the skeleton itself.
+每个样本沿用训练 loader 的 query pose、帧选择和 1024 个对应 surface anchors。静态路径
+继续产生 query tokens `Q`。
 
-More precisely:
-
-- low motion should mean unknown or weak evidence, not a negative structural
-  label;
-- abnormal motion should mean low-confidence evidence, not an instruction to
-  create abnormal topology;
-- complete skeleton structure should be supported by mesh and learned rig prior;
-- reliable motion should refine or disambiguate local structure.
-
-## Desired Factorization
-
-A more principled model would separate:
+运动路径只处理局部关系变化。对局部邻接点 `i,j`：
 
 ```text
-mesh / shape prior        -> complete skeleton prior
-motion observation        -> partial structural evidence
-action / pose / noise     -> nuisance variables to explain away
+r(i,j,t) = ||x_i(t)-x_j(t)|| / (||x_i(q)-x_j(q)|| + eps) - 1
 ```
 
-The model should not simply concatenate mesh and motion tokens and let a decoder
-discover this separation implicitly. The research opportunity is to make the
-separation explicit enough to improve robustness and explainability.
+邻接关系必须来自 query surface 的有效局部结构，并保持 mesh component 边界；不得用会把
+空间上接近但表面不连通区域随意连接起来的隐式 fallback。
 
-## Possible Architecture Direction
+跨帧描述可以保留完整短序列，也可以使用经过验证的 robust statistics；选择必须由
+held-out evidence 实验决定，不能凭直觉在正式训练时临时更改。
 
-One clean direction is:
+## 3. 训练监督
+
+对每个局部点对，使用 rootless NPZ 中已有的 skin weights：
 
 ```text
-mesh encoder       -> complete skeleton prior tokens
-motion encoder     -> evidence tokens + confidence tokens
-fusion/decoder     -> confidence-weighted skeleton generation
+same_segment(i,j) = sum_k min(w_i[k], w_j[k])
+boundary(i,j) = 1 - same_segment(i,j)
 ```
 
-The motion branch should answer questions such as:
+这是 soft、joint-order-independent 的监督。低 motion 样本不能被当作 boundary=0 的负例；
+其辅助损失需要按可观测运动证据降权或标记为 unknown。
 
-- where do local rigid groups change relative motion;
-- where are likely rotation centers;
-- which regions have reliable articulated motion;
-- which regions are static, under-observed, or unstable.
+skin weights 只在训练阶段生成辅助 label，推理阶段不存在该输入。
 
-The decoder should always attend to mesh/shape prior, while motion evidence can
-modulate or refine predictions according to confidence.
+## 4. 第一阶段验收
 
-## Relation To Rigging
+第一阶段只验证 evidence，不加载 skeleton checkpoint。必须报告：
 
-The forward process is:
+- asset-disjoint valid AUROC、AUPRC 和校准结果；
+- 按 motion amount 分层的结果；
+- 正确 correspondence；
+- 重复 query pose 的零 motion；
+- 保留运动幅度但打乱 anchor correspondence 的错误 motion；
+- feature extraction 的每样本耗时和内存；
+- 代表性 mesh 上的 evidence/skin-boundary 可视化。
+
+验收逻辑不是要求零 motion 一定获得最低分类分数，而是要求模型能够区分“可观察证据”和
+“未知”，且正确 correspondence 在有充分运动的样本上明显优于错误 correspondence。
+
+## 5. 生成模型接入
+
+第一阶段成立后，才增加独立 evidence encoder：
 
 ```text
-skeleton + skinning + action + mesh -> observed motion
+Q: query-pose static memory
+E: local-motion evidence memory
+
+h_k -> cross-attention(Q)
+h_k -> cross-attention(E)
 ```
 
-The inverse problem is:
+`E`不能在进入 decoder 前与 `Q`相加，也不能由同时读取 `Q`和 motion 的 MLP 生成。这样
+才能排除旧 anchor residual 的静态捷径。
 
-```text
-mesh + observed motion -> skeleton
-```
+主 skeleton token/loss 保持 baseline 语义。新增 skin-relation auxiliary loss 只约束
+evidence encoder，不改变推理输入和 GT skeleton contract。
 
-Since action and skinning are nuisance variables in the inverse problem, a model
-that treats observed motion as a complete condition is under-specified. A better
-model should learn which parts of observed motion are explainable by a plausible
-skeleton and which parts should be ignored or down-weighted.
+## 6. 正式训练门槛
 
-## Why This Is Not Just Dropout
+提交双 A100 前必须同时满足：
 
-Random motion dropout is only a weak approximation. The real issue is not that
-we need more corrupted inputs. The real issue is that motion condition is
-naturally insufficient and action-dependent.
+1. evidence 在 held-out assets 上有稳定增量；
+2. 零 motion 与错误 correspondence 控制符合定义；
+3. evidence encoder 和 decoder evidence-attention 均有有限非零梯度；
+4. query/target pose、FPS、坐标归一化完全一致；
+5. 正确 motion 对 child/later-joint 的影响优于错误 motion，且不破坏 root；
+6. 小规模自由生成在失败样本上改善，同时不明显伤害匹配正常样本；
+7. GT、Prediction、Overlay 可视化通过人工检查。
 
-A strong method should improve the semantics of conditioning:
-
-- represent motion reliability;
-- separate evidence from action nuisance;
-- preserve complete skeleton prediction even when motion evidence is partial;
-- use motion when it is informative instead of learning to ignore it globally.
-
-## How This Could Become A Second Innovation
-
-The first innovation can remain:
-
-```text
-VGGT-style motion-aware skeleton generation
-```
-
-The second innovation can be framed as:
-
-```text
-complete canonical skeleton generation from insufficient and unreliable motion evidence
-```
-
-or:
-
-```text
-evidence-aware motion-conditioned skeleton generation
-```
-
-This direction should be evaluated only after a clean baseline is established.
-The baseline must first tell us whether the current architecture genuinely uses
-motion or mostly relies on static mesh prior and decoder shortcuts.
+在这些条件满足前，不允许把 centered-motion、anchor residual 或任何历史 checkpoint 当作
+该方法的替代品。

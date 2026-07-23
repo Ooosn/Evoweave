@@ -1,397 +1,156 @@
-# 当前模型状态（唯一入口）
+# 当前模型任务（唯一入口）
 
-更新时间：2026-07-19
+更新时间：2026-07-24
 
-状态 ID：`model-puppeteer-20260716-001`
+状态 ID：`model-local-motion-evidence-20260724-001`
 
-本文档是模型模块的唯一当前状态入口。任何 agent 在训练、评测或解释
-Puppeteer 之前必须先读本文档。历史根因的完整证据见
-`PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`；本文只记录已经确认的
-事实、当前可信产物、未解决问题和下一步允许执行的工作。
+本文是模型模块唯一的当前状态入口。旧的 Puppeteer、stack-close、
+condition-refresh、anchor residual、centered-motion、query-rigid 和 HGC
+重训记录均不是当前任务，不能据此启动实验。
 
-flat UniRig 的完整 hitmax 因果证据见
-`FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md`。
+## 1. 当前目标
 
-下一轮结构表示、condition 路径与训练边界的最新预检见
-`MODEL_STRUCTURE_PREFLIGHT_20260719.md`。该文档中的 stack-close 目前是已通过
-全量 tree contract 的候选表示，不是已经训练成功的新模型。
-
-## 1. 任务与固定数据契约
-
-Evoweave 使用动态 mesh 序列生成当前 query pose 对应的完整骨架树：
+当前目标不是继续修补 EOS，也不是继续设计全局 motion residual。目标是检验并实现：
 
 ```text
-rootless-v3 dynamic NPZ
--> 1024 个有顺序的 mesh/motion condition tokens
--> autoregressive skeleton decoder
--> 当前 pose 的 rootless skeleton
+query pose 的静态 mesh token
++
+只描述局部表面相对运动的 articulation evidence
+-> 当前 pose 的完整 rootless skeleton
 ```
 
-固定契约：
+核心问题是：现有 motion encoder 输出的 1024 个 query-aligned condition token
+混合了静态外形、动作幅度、局部相对运动和网络产生的特征偏移。最终骨架损失没有要求
+motion encoder 明确学习“哪些表面区域由同一骨段控制”，所以模型会优先使用静态外形和
+高频骨架模板，只不稳定地使用 motion。
 
-- 数据只使用最终 rootless-v3 manifest；训练不得自行扫描 NPZ 目录。
-- target 没有 synthetic root，也没有 tail token。
-- `joint 0` 是 rootless 后唯一真实树根，不是假定的物体原点。
-- 训练随机选择 query pose，mesh query 与该 pose 的 skeleton target 必须一致。
-- 当前有两条 baseline：flat UniRig 和 joint-token Puppeteer。
-- Puppeteer baseline token 为 `(x, y, z, parent_index)`；不混入 oracle-prefix、
-  parent-delta 或其他增强实验。
+当前数据在训练输入中已经去掉全局 RT；全局平移或旋转不是本轮数据问题，也不能作为
+本轮方法的主要动机。
 
-## 2. Flat UniRig baseline
+## 2. 唯一数据来源
 
-Flat UniRig rootless-v3 在 Westlake 有一份历史训练结果，但其动态 checkpoint 当前不在
-HGC，不能再把取得该 checkpoint 当作继续工作的前提。2026-07-17 已明确允许在 HGC
-从官方静态 UniRig skeleton checkpoint 重新训练一份干净的同预算对照线。
-
-Westlake 参考运行目录：
+只使用西湖 rootless-v3 最终 manifest：
 
 ```text
-/ssdwork/liuhaohan/evoweave/outputs/dynamic_rig_runs/
-rootless_flat_unirig_motion_fullft_20260707_hxr4gpu
+train:
+/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl
+
+valid:
+/ssdwork/liuhaohan/evorig/evoweave_rebuild_rootless_v3_20260706/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl
 ```
 
-HGC 重训固定使用当前 rootless-v3 train/valid manifest、随机 query pose、完整
-surface/motion/AR 全量训练、OneCycle、effective batch 48 和 80016 次样本暴露。
-不得加载旧 Evoweave 动态 checkpoint。
-
-该重训已于 2026-07-18 完成：
-
-- 输出目录：
-  `/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717`
-- `2 x H100`，`1667` optimizer steps，累计 `80,016` 次样本输入；
-- `662,268,416` 个参数全部训练；
-- `checkpoint_sample_80000.pt` 包含 model、optimizer 和 scheduler；
-- step 1600 的验证集 CE 为 `1.165135`，EOS accuracy 为 `1.0`；
-- 训练 CE 不能作为生成质量验收，正式结论只使用第 6 节的 matched generation。
-
-## 3. 已失败的旧 Puppeteer 实现
-
-历史四卡任务 `evoweave_jointtoken_hxr4gpu_20260709_878622c` 同时包含两个独立
-实现问题：
-
-1. 随机初始化的 24 层 SkeletonOPT 错误使用 post-LN。受控实验中，1000 step
-   后 token accuracy 只有 `0.051`、parent accuracy 为 `0.000`；改为 pre-LN
-   后分别达到 `0.416` 和 `1.000`。post-LN 是“训练后仍近似随机模型”的直接
-   原因。
-2. learned-query projector 把 1024 个有空间身份的 condition token 压缩为
-   257 个匿名槽位。即使 decoder 改成 pre-LN，不同 pose/asset 的 condition
-   仍会坍塌为近似相同的 pooled prompt。
-
-受控 2x2 实验的 conditioner 相对差异：
-
-| condition 路线 | surface | 同资产不同 pose | 不同资产 | 结论 |
-|---|---|---:|---:|---|
-| cross-attention-257 | 可训练 | 0.0244 | 0.0509 | 严重坍塌 |
-| cross-attention-257 | 冻结 | 0.0281 | 0.0855 | 仍然坍塌 |
-| identity-1024 | 可训练 | 1.2587 | 1.4418 | 保留差异 |
-| identity-1024 | 冻结 | 0.5709 | 0.8459 | 保留差异 |
-
-另一个独立风险是长期固定全量 `1e-4`：旧 direct-1024 实验到 step 5000 后，
-同 pose/跨资产差异分别降到 `0.00124/0.00476`。OneCycle 峰值到 `1e-4`
-不会产生同样坍塌，因此正式 baseline 必须使用 OneCycle，不能恢复固定学习率。
-
-## 4. 已修复并锁定的 Puppeteer contract
-
-正式 Puppeteer baseline 必须同时满足：
-
-- `query_tokens=1024`
-- `cond_length=1024`
-- `condition_projection=identity`
-- `decoder_norm_style=pre`，resolved `do_layer_norm_before=true`
-- joint-slot embedding 开启
-- random query pose 开启
-- OneCycle scheduler
-- 全部 condition 和 decoder 参数收到梯度
-- `--require-query-preserving-baseline-contract` 开启；不满足时启动前直接失败
-
-真实 rootless-v3 preflight 已确认：
-
-- condition shape 为 `[1, 1024, 1024]`；
-- 随机 query 为 frame 8，不是固定 frame 0；
-- mesh query 与 target query 最大误差为 `0`；
-- 当前 target 与 frame-0 target 的 RMS 差异为 `0.12856`，排除固定 reset-pose GT；
-- 旋转 query 后 condition relative L2 为 `0.58355`，初始化路径没有条件坍塌；
-- teacher forcing 与逐 token generation 在相同 prefix 上的 max logit diff 为 `0`；
-- surface、motion、joint-slot embedding、decoder blocks 和 decoder token path
-  均有有限非零梯度；没有未分配的可训练参数。
-
-## 5. 当前可信 Puppeteer 正式运行
-
-HGC 输出目录：
+固定数量：
 
 ```text
-/home/wangyy/evorig/outputs/
-puppeteer_identity1024_preln_hgc2h100_full_20260715
+train = 15903
+valid = 857
 ```
 
-训练事实：
+必须读取 manifest 中的 `path`，不得重新扫描 NPZ 目录。训练 target 没有 synthetic root，
+没有 tail token；`joint 0` 是 rootless 后唯一真实树根。query mesh 和 target skeleton 必须
+来自同一个随机 query pose，并使用同一个 query-bbox 坐标系。
 
-- `2 x H100`；
-- Puppeteer decoder 随机初始化，Evoweave/UniRig conditioner 初始化；
-- 随后 `660,557,312` 个参数全部训练，没有冻结；
-- micro batch `3/GPU`，gradient accumulation `8`，effective batch `48`；
-- OneCycle，四组峰值学习率均为 `1e-4`；
-- `1667` optimizer steps，累计 `80,016` 次样本输入；
-- 训练行数 `15,541`；按 Puppeteer 上限过滤了 `379` 个大于 101 joints 的样本；
-- checkpoint：`sample_10000`、`sample_40000`、`sample_80000`、`best_val`、`final`。
+## 3. 当前对照模型
 
-该运行是当前 Puppeteer source of truth。旧坍塌任务、短 overfit 和后续 probe
-都不能替代它，也不能混成当前 baseline 结论。
-
-## 6. 同协议 heldout-52 正式评测
-
-2026-07-18 已完成 flat UniRig 与三个 Puppeteer checkpoint 的四方自由生成对照。
-四份结果逐行硬校验了相同的 `path`、query frame、24 个 selected frames、
-query center/scale 和 GT joint count；因此这里不存在 pose、归一化或样本错配。
-
-结果目录：
+当前唯一对照是西湖训练的 flat UniRig baseline：
 
 ```text
-/home/wangyy/evorig/outputs/matched_heldout52_20260718
+/ssdwork/liuhaohan/evorig/evoweave_repo/outputs/dynamic_rig_runs/
+rootless_flat_unirig_motion_fullft_20260707_hxr4gpu/
+checkpoint_sample_80000.pt
 ```
 
-全量 52 行结果：
+该 checkpoint 只用于开发阶段的同服务器对照和接入预检。不得用 HGC checkpoint 替换，
+也不得从历史 Puppeteer、stack-close 或 residual checkpoint 初始化当前方法。
 
-| 路线 | 可解析 | hitmax | joint-count MAE | J2J | J2B | B2B | topology F1 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| flat UniRig sample80000 | 42/52 | 10 | 6.0952 | 0.038961 | 0.027517 | 0.022120 | 0.639410 |
-| Puppeteer sample80000 | 52/52 | 0 | 43.5192 | 0.053189 | 0.044258 | 0.038557 | 0.202308 |
-| Puppeteer best_val | 52/52 | 0 | 44.0000 | 0.054615 | 0.046626 | 0.040644 | 0.197214 |
-| Puppeteer final | 52/52 | 0 | 43.6154 | 0.052854 | 0.043918 | 0.038224 | 0.199103 |
+正式新模型若获得训练许可，应与该 baseline 对齐数据、官方 UniRig 静态初始化、batch、
+学习率计划和样本曝光，并全参数训练；唯一结构变量应是经过预检的 motion-evidence 路径。
 
-flat UniRig 的几何和拓扑统计只在 42 个成功解析的样本上计算；另外 10 个样本
-没有 EOS，达到 1400-token 上限后被 tokenizer 拒绝，整套输出不可用。不能用
-42 个成功样本的均值掩盖这 10 个失败。
+## 4. 当前模型设计
 
-flat UniRig 与 Puppeteer sample80000 的分层结果：
-
-| 子集 | 路线 | 可解析 | joint-count MAE | J2J | topology F1 |
-|---|---|---:|---:|---:|---:|
-| train-low (16) | flat UniRig | 11/16 | 5.6364 | 0.056670 | 0.486790 |
-| train-low (16) | Puppeteer | 16/16 | 54.2500 | 0.080370 | 0.019744 |
-| train-common (16) | flat UniRig | 15/16 | 2.8667 | 0.006266 | 0.951028 |
-| train-common (16) | Puppeteer | 16/16 | 5.6250 | 0.013647 | 0.599009 |
-| valid-low (20) | flat UniRig | 16/20 | 9.4375 | 0.057437 | 0.452194 |
-| valid-low (20) | Puppeteer | 20/20 | 65.2500 | 0.063077 | 0.030999 |
-
-这里的 `low` 只表示 joint count 少，不表示 topology 频率低：
-
-- `train-low` 是训练 split 中 16 行 4--10 joint 样本；
-- `train-common` 是训练 split 中随机抽取的 16 行 22--92 joint 样本；
-- `valid-low` 是验证 split 中 20 行 4--10 joint 样本。
-
-topology 频率另以完整、有顺序的 `target_parents` tuple 在 15,541 个训练行中的
-出现次数定义，分为 `0`、`1`、`2..9`、`10..99`、`>=100`。不得混用这两个
-分组维度。
-
-结论：
-
-- flat UniRig 在 common 组已经能生成高质量、可用的骨架，但仍有 10/52 个
-  hitmax，尚不能作为无条件可用的最终模型。
-- Puppeteer 三个 checkpoint 都能按语法结束，但低关节样本通常生成
-  `52/89/96/101` 等大量多余关节；语法成功不等于骨架可用。
-- Puppeteer sample80000 与 final 有 50/52 行 generated token 完全相同；
-  best_val 只与它们相同 6/52，且总体没有更好。后续以 sample80000 作为同预算
-  对照，final 仅视为近等价副本。
-- 旧文档中的 `45.12/43.75` 等 joint-count MAE 不对应当前保存的正式结果，
-  已被本节 matched evaluation 取代，不得继续引用。
-
-代表样本 montage 位于 `visuals/matched_montage.png`；10 个 flat hitmax 的专门
-对照位于 `visuals_flat_hitmax/matched_montage.png`。
-
-### 正常分布补充评测
-
-heldout-52 中 36/52 行是刻意选择的 4--10 joint 困难样本，不能用它的总体
-F1 代表正常 train/valid 分布。2026-07-18 使用同一 flat UniRig checkpoint、
-seed `101` 和 1400-token 上限补充评测：
-
-| 集合 | 可解析 | hitmax | 成功行 F1 | hitmax 按 0 的全体 F1 | 成功行 J2J |
-|---|---:|---:|---:|---:|---:|
-| train manifest 固定随机 60 行 | 56/60 | 4 | 0.8472 | 0.7907 | 0.01552 |
-| valid-common60 | 54/60 | 6 | 0.7935 | 0.7141 | 0.01685 |
-
-valid-common60 分层：
-
-| valid 子集 | 可解析 | 成功行 F1 | hitmax 按 0 的全体 F1 |
-|---|---:|---:|---:|
-| 52-joint | 20/20 | 0.9490 | 0.9490 |
-| 20--75，排除 52 | 18/20 | 0.7609 | 0.6848 |
-| 76--101 | 16/20 | 0.6357 | 0.5086 |
-
-因此当前 flat UniRig 在正常验证分布上的 F1 仍处于 `0.70+`，并不比早期印象
-中的旧线更差；故障集中在长尾 topology、较大 joint count 和少关节困难样本。
-但随机训练分布仍有 4/60 hitmax，说明同一资产进入训练并不能保证随机新 pose
-下可靠结束。
-
-本地保留的最早 HGC Puppeteer 证据中，`F1=0.751/0.796` 来自
-`generation_compare` 对 `train_manifest` 前 4 行的结果，不是验证集。相同
-checkpoint 的 `generation_valid` 只评了 8 行，两个 pose seed 的 F1 分别为
-`0.117/0.159`。不得再把该 4 行训练对照称为旧线验证 F1。
-
-补充评测证据：
+静态路径保持现有 query pose 的 1024 个 mesh token：
 
 ```text
-/home/wangyy/evorig/outputs/matched_heldout52_20260718/flat_distribution_audit_20260718/
-train_random60_seed20260718.jsonl
-flat_train_random60_seed101.json
-flat_valid_common60_seed101.json
+Q_i = 第 i 个 query-pose surface token
 ```
 
-## 7. 已做但未被接受的后续 probe
+运动路径不读取 `Q_i`，也不读取绝对位置作为可学习内容。对 query surface 上的局部邻接点
+`i, j`，构造跨帧相对距离变化：
 
-以下实验都从正式 checkpoint 出发，并重新运行 heldout-52：
+```text
+r(i,j,t) = ||x_i(t) - x_j(t)|| / (||x_i(q) - x_j(q)|| + eps) - 1
+```
 
-- control fine-tune 200 steps；
-- joint-count balanced fine-tune 200 steps；
-- mixture alpha `0.25/0.50`，各 300 steps；
-- sequence-mean token loss 200 steps；
-- sequence-mean + termination loss 200 steps；
-- mixture alpha `0.50/0.75` + sequence-mean，各 200 steps；
-- termination weight `0.10/0.25` 的短程探针。
+这些局部关系经过时间汇总或轻量编码后形成：
 
-这些实验能够改善 parent、EOS 或预测 joint count，但没有同步改善低关节几何。
-例如 alpha `0.75` + sequence-mean 将 valid-low 的长度中位数改善到 6，J2J
-却从 `0.0673` 恶化到约 `0.0709`。因此它们均不是新的可信 baseline。
+```text
+E_i = 第 i 个表面区域的局部 articulation evidence
+```
 
-2026-07-16 启动的 50% low-joint + 50% common 全参数实验已在 step 50 停止，
-没有保存 checkpoint，也没有改变当前 source of truth。
+`E_i`必须满足：
 
-2026-07-18 又完成了一次严格的 exact-topology probe：
+- 重复 query pose 的零 motion 输入产生零证据；
+- 不包含足以单独复制 query mesh 的绝对静态信息；
+- 同一骨段内部关系通常稳定；
+- 跨骨段或蒙皮边界的关系随有效动作变化；
+- 低 motion 表示证据不足，不表示不存在关节。
 
-- natural/topology-family-uniform mixture alpha `0.75`；
-- `sequence_mean` CE，termination auxiliary 为 `0`；
-- 从正式 sample80000 完整加载，300 optimizer steps、14,400 次样本暴露；
-- heldout-52 count MAE `43.5192 -> 39.8846`，F1 `0.202308 -> 0.208580`，
-  但 J2J `0.053189 -> 0.053737`；
-- valid-common60 J2J `0.021722 -> 0.024891`，F1
-  `0.475656 -> 0.401310`，分别有 44/60 和 43/60 行恶化。
+训练数据中的 skin weight 只用于辅助监督。局部点对的 soft same-segment label 定义为：
 
-该探针同样被否定。topology frequency 是强预测变量，但只重采样和改 loss
-reduction 不能修复映射，并会破坏常见 family。
+```text
+s(i,j) = sum_k min(w_i[k], w_j[k])
+boundary(i,j) = 1 - s(i,j)
+```
 
-## 8. 已确认的诊断事实
+推理阶段不读取 skin weight。
 
-- GT-prefix teacher forcing 下，common 组 coordinate accuracy 约 `0.6046`，
-  train-low/valid-low 只有约 `0.2656/0.2919`。失败在正确 prefix 下已经存在，
-  不能只归因于自由生成累计误差。
-- 固定 GT 与 GT prefix 后，正确 condition 的 coordinate NLL 为 `2.6749`，
-  跨资产错配 condition 为 `4.4735`；16/16 个 low-joint 样本均是正确 condition
-  更优。因此当前正式模型没有把 condition 完全忽略，也没有发生输入/GT 配错。
-- 固定同一资产的 pose-A GT 与 GT prefix，只将 condition 换成 pose-B 后，
-  train-low/valid-low 前十 joint 的 coordinate NLL 分别恶化约 `0.39~0.49` 和
-  `0.48~0.60`，train-common 恶化约 `2.85~2.93`。模型读取了当前 pose，但在
-  common rig family 上学到的 pose-to-skeleton 映射明显更强。
-- 固定资产、pose 与 GT，只更换 surface/FPS seed，coordinate NLL 平均绝对变化
-  只有约 `0.02~0.04`。FPS 随机性不是系统性失败的主因。
-- GT-prefix 下 train-low/valid-low 的 joint 0 coordinate accuracy 分别为
-  `0.396/0.400`，后续 joint 多数更差。自由生成首次错误落在 joint 0 是序列
-  起点效应，不是 rootless joint 0 独有的表示错误。
-- 训练集 52-joint 行共有 `5,122` 行，其中同一个完整 parent topology 出现
-  `4,930` 次；28-joint 与 34-joint 的主 topology 分别出现 `1,337/786` 次。
-- valid-common60 上，目标 topology 训练频率 `>=100` 的样本 coordinate NLL、
-  count MAE、J2J、F1 分别为 `0.910/3.29/0.0108/0.672`；训练集中未见 topology
-  分别为 `2.502/31.00/0.0433/0.129`。
-- 控制 target joint count 后，`log(1 + topology frequency)` 与 coordinate NLL
-  和 F1 的 partial Spearman 仍为 `-0.829/+0.741`。因此这不是 joint-count
-  分桶能够解释或修复的问题。
-- 52-joint valid 样本中 19/20 自由生成 52 joints；所有 heldout-52 中生成
-  52、28、34 joints 的结果都落入对应的主训练 topology。当前模型学到的是
-  高频 rig-family 模板选择和 pose 调整，而不是长尾 topology 上普适的
-  condition-to-skeleton 映射。
-- 低 joint 边界的经验停止率只有约 `0.28%~0.74%`。长尾映射欠拟合后，自回归
-  rollout 会被强 continuation prior 放大并停在 52/100/101 等长度 hazard。
-- self-prefix rollout 审计比较了同一目标位置的 GT prefix 与模型自产 prefix。
-  baseline 的 coordinate accuracy 为 `0.5281 -> 0.4075`，parent 为
-  `0.9149 -> 0.8149`，EOS 为 `0.4667 -> 0.1556`；对应目标 NLL 分别增加
-  `1.7582/0.8388/0.9654`。因此正确 prefix 下的欠拟合与 rollout 放大同时存在。
-- exact-topology step-300 模型的 coordinate accuracy 为
-  `0.5190 -> 0.3837`，parent 为 `0.9107 -> 0.7741`，没有缓解 rollout。
-- flat UniRig 的 10 个 hitmax 按目标 topology 训练频率分层为：
-  `>=100` 为 `0/12`、`10..99` 为 `2/20`、`2..9` 为 `3/11`、`1` 为
-  `3/3`、`0` 为 `2/6`。频率相关，但 heldout-52 不足以证明它是唯一原因。
-- exporter 当前 sibling order 实际由 bone-name lexical tie-break 决定，这是
-  真实契约缺陷；但忽略 sibling order 只让 180 个有序 singleton 合并，约占
-  训练行 `1.16%`，不能解释主要长尾失败。按 pose geometry 动态排序又不稳定，
-  当前不得直接重写。
-- 冻结 checkpoint 的线性读出证明 1024 condition token 含有粗结构信息：
-  joint-count `R2=0.404`、Spearman `0.722`；decoder class hidden 的 `R2`
-  降到 `0.299`。condition 不是空信息，但现有 decoder 没有稳定提炼它。
-- 对 10 个 hitmax 做同位置 condition swap：self prefix 下 next-token JS 从
-  first-mismatch 后 `0-3` token 的 `0.407` 降到 `16-63` 的 `0.138`；
-  GT prefix 对应为 `0.411 -> 0.206`。错误 prefix 内容会额外压制 condition，
-  不是序列长度单独造成。
-- 10 个 hitmax 中 9 个 target 只有 4--9 joints，自由生成却平均达到
-  `371.7` joints；它们不是因为真实 target 太长而触发上限。
-- flat tokenizer 的 parent-xyz 表示在 valid 一次随机 pose 往返中有
-  `56/856` 条恢复出错误 parent，共 259 条错误边；确定性 pose 仍为 `56/856`，
-  两次错误集合 Jaccard `0.931`。51/56 条随机-pose 错误不含连续空间精确零边，
-  主要是 256-bin 量化碰撞。
-- 全量 train 随机-pose 往返中有 `989/15920` 条恢复出错误 parent，共
-  `4696/728028` 条错误边；`792/989` 条错误样本不含连续空间精确零边。最坏样本
-  identity edge F1 为 `0.216`，说明 parent-xyz 的信息损失虽只占全量边
-  `0.645%`，但会集中破坏个别复杂树。
-- heldout-52 的完全相同 pose 上，10 个 hitmax 有 `0/10` parent round-trip
-  错误，42 个成功样本反而有 2 条。parent-xyz 不可逆是独立表示缺陷，不是这
-  10 个 hitmax 的直接原因。
-- 当前 HGC `16776/16776` 棵 tree 全部满足 DFS stack contract。用每节点一个
-  `CLOSE_NODE` 替代 `BRANCH + parent_xyz` 后，全量 token 总数
-  `3188167 -> 3183580`，p95 `348 -> 319`，最大长度 `1362 -> 1003`；
-  因此 stack-close 是目前唯一通过全量数据预检且能直接继承 UniRig 坐标词表的
-  候选表示。
+静态 token 和 motion evidence 必须作为两套独立 memory 被 decoder 查询，不能预先相加成
+anchor residual：
 
-完整因果证据、数值和文件路径见
-`docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md`。
+```text
+当前 skeleton prefix h_k
+  -> cross-attention(query static tokens Q)
+  -> cross-attention(local motion evidence E)
+```
 
-## 9. 当前仍未解决的问题
+第一个真实 joint 主要由 query mesh 定位；后续 child/branch 再使用局部 motion evidence
+消除结构和关节位置歧义。
 
-1. topology-family 频率是已确认的质量预测变量和暴露问题，但 exact-topology
-   重采样已证明它不是可独立修复问题的充分手段。仍需区分表示能力、条件到拓扑
-   决策路径和 topology 内在难度。
-2. flat UniRig 的 10 个 hitmax 已定位为“两阶段故障”：低频/未见 topology
-   映射较弱导致早期 off-manifold self prefix；随后 prefix 逐渐压过 mesh
-   condition，并进入 flat tokenizer 允许的常量或周期坐标环。单独纠正首个
-   token、固定 FPS 或强制 EOS 都不能保证生成可用骨架。
-3. stack-close 已通过全量 HGC tree 的静态 contract，但尚未实现或训练；还没有
-   证明它能在保留 flat UniRig 几何质量的同时消除 hitmax。
-4. condition cross-attention refresh、coordinate-corrupted roll-in 和
-   graph-matched self-prefix loss 都有对应证据动机，但效果仍是待验证假设。
-5. HGC checkpoint-matched manifest 为 `15920+856=16776`，工作区正式西湖
-   source-of-truth 为 `15903+857=16760`。下一次训练前必须同步并冻结唯一版本。
-6. sibling canonical order 当前依赖名称；需要稳定、跨 pose、不依赖资产命名的
-   表示契约，但现有证据表明它不是当前主要瓶颈。
+详细设计与验收定义见：
+`model_training/docs/EVIDENCE_AWARE_MOTION_CONDITIONING.md`。
 
-## 10. 继续工作的硬规则
+## 5. 当前执行顺序
 
-- exact-topology 短程因果探针已经完成并被否定，不得继续重复 sampler alpha、
-  sequence-mean 或 termination 权重搜索。
-- 允许从官方静态 UniRig checkpoint 重训 flat UniRig 对照线；这不依赖旧动态
-  Evoweave checkpoint，也不改变 Puppeteer。
-- 任何“变好”结论必须来自同一 manifest、同一 pose、同一归一化、同一指标实现
-  的 UniRig/Puppeteer 对照，并附自由生成可视化。
-- teacher-forcing accuracy、单独 CD 数值或 joint count 改善都不能作为验收。
-- 新改动必须先通过 query/target 对齐、prefix logits、梯度和小规模自由生成检查；
-  未通过时不得启动正式多卡任务。
-- 最终验收必须同时检查当前 pose 对齐、joint count、EOS/hitmax、parent tree、
-  J2J/J2B/B2B 和 GT/Prediction/Overlay。
+当前只允许按以下顺序工作：
 
-## 11. 下一项唯一允许的执行工作
+1. 在西湖正式 NPZ 上构造局部相对运动特征和 skin-relation label。
+2. 以 asset-disjoint train/valid 划分验证 motion-only evidence 是否有未见样本增量。
+3. 对比正确 correspondence、重复 query pose 和打乱 anchor correspondence；不能把时间顺序
+   打乱当作负例，因为目标证据可以是时间顺序不变的。
+4. 只有 evidence 本身成立，才实现独立 motion-evidence branch。
+5. 接入后检查 query/target 对齐、参数梯度、零 motion 行为、正确/错误 motion 干预和小规模
+   自由生成可视化。
+6. 全部通过后，才允许提交唯一一次双 A100 正式训练任务。
 
-同预算 flat UniRig 重训、matched evaluation、逐 token 条件干预、重复模式、
-前缀修复、训练长度分布、采样确定性和 tree/tokenizer 预检已经完成。下一项只能是：
+第一阶段不需要加载任何 baseline checkpoint。checkpoint 只在第四、第五步接入生成模型时
+使用。
 
-1. 实现独立、无 fallback 的 stack-close tokenizer：复用现有 branch token ID
-   作为 `CLOSE_NODE`，parent 由 DFS stack 唯一恢复；
-2. 从 flat sample80000 严格加载 xyz embedding/head、decoder 和 conditioner，
-   不随机初始化另一套 skeleton decoder；
-3. 给 decoder 增加 residual 初始严格为 0 的 condition cross-attention refresh，
-   并以旧 flat prefix 验证初始化 max logit diff 为 0；
-4. 先做 coordinate-corrupted roll-in；结构偏移后的 self-prefix 监督必须先与
-   GT graph 语义匹配，不能按 ordinal step 强绑；
-5. 在 32 条跨 topology 小集合上同时验收自由生成坐标、parent、CLOSE、EOS、
-   J2J、topology F1 和可视化；
-6. 只有上述预检通过，并且 heldout-52 与 valid-common60 的小规模对照同时改善，
-   才允许新的正式多卡训练。
+## 6. 明确排除的上下文
 
-不得重复 joint-count-bin、exact-topology sampler、单独 sequence-mean、
-termination auxiliary、root/joint-0、FPS 或当前 pose geometry sibling-sort
-probe；它们已经回答过不同问题。
+以下内容不得作为当前下一步：
+
+- HGC flat-UniRig 或 Puppeteer checkpoint；
+- centered-motion 公式或其 selected18 评测；
+- anchor/static residual 微调；
+- query-rigid 推理修复；
+- stack-close、sibling perturb 或 condition-refresh 继续训练；
+- 强制 EOS、长度裁剪、oracle-prefix 或显式 parent-index 修补；
+- 把全局 RT 当作当前数据错误。
+
+这些历史路线只能解释为什么当前任务转向局部 articulation evidence。
+
+## 7. 资源边界
+
+当前西湖开发环境有一张 A100 80GB。正式双 A100 训练机会剩余一次，但在 motion evidence
+预检和接入预检完成前，`train` 与 `submit` 均被状态锁阻止。不得使用
+`huangxiangru` 资源组提交新任务。

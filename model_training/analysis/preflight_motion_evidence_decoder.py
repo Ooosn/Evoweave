@@ -157,6 +157,7 @@ def _generation_consistency(
             model.transformer,
             transformer_output,
             memory,
+            prefix_position=prefix_length - 1,
         )
         teacher_qe = teacher_logits[:, prefix_length - 1].float()
         teacher_static = teacher_baseline_logits[:, prefix_length - 1].float()
@@ -257,7 +258,10 @@ def main() -> None:
             corrupt_ce = shifted_ce(corrupted.logits, batch["input_ids"], batch["attention_mask"])
             zero_logit_diff = float((zero.logits.float() - zero.baseline_logits.float()).abs().max())
             normal_hidden_delta = normal.refined_hidden.float() - normal.token_hidden.float()
-            first_positions = min(5, normal_hidden_delta.shape[1])
+            first_positions = min(
+                model.evidence_adapter.static_prefix_steps,
+                normal_hidden_delta.shape[1],
+            )
             root_delta = torch.sqrt(normal_hidden_delta[:, :first_positions].square().mean())
             later_delta = torch.sqrt(normal_hidden_delta[:, first_positions:].square().mean())
             consistency = _generation_consistency(

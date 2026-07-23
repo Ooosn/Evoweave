@@ -204,7 +204,7 @@ def test_teacher_forcing_and_generation_step_use_the_same_prefix_position() -> N
     )
     memory = model.build_memory(batch, refs=_references(device))
     teacher = model.teacher_forcing(batch, memory=memory)
-    prefix_length = 4
+    prefix_length = 5
     prefix_ids = batch["input_ids"][:, :prefix_length]
     token_embeds = model.transformer.get_input_embeddings()(prefix_ids)
     prompt = torch.cat((memory.static_tokens, token_embeds), dim=1)
@@ -219,8 +219,32 @@ def test_teacher_forcing_and_generation_step_use_the_same_prefix_position() -> N
         model.transformer,
         transformer_output,
         memory,
+        prefix_position=prefix_length - 1,
     )
     torch.testing.assert_close(generation_logits, teacher.logits[:, prefix_length - 1])
+
+
+def test_motion_evidence_leaves_class_and_root_predictions_unchanged() -> None:
+    torch.manual_seed(35)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+    )
+    teacher = model.teacher_forcing(batch, refs=_references(device))
+    torch.testing.assert_close(
+        teacher.refined_hidden[:, :4],
+        teacher.token_hidden[:, :4],
+        atol=0.0,
+        rtol=0.0,
+    )
+    assert not torch.equal(teacher.refined_hidden[:, 4:], teacher.token_hidden[:, 4:])
 
 
 def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
@@ -273,12 +297,20 @@ def test_adapter_logits_are_prefix_length_stable_under_bfloat16_autocast() -> No
         raw_evidence=None,  # type: ignore[arg-type]
     )
     prefix = torch.randn(1, 33, hidden_size, device=device, dtype=torch.bfloat16)
+    full_positions = torch.arange(prefix.shape[1], device=device)
+    step_positions = full_positions[-1:]
     with torch.autocast("cuda", dtype=torch.bfloat16):
-        full_logits, full_hidden = adapter.logits_from_hidden(transformer, prefix, memory)
+        full_logits, full_hidden = adapter.logits_from_hidden(
+            transformer,
+            prefix,
+            memory,
+            full_positions,
+        )
         step_logits, step_hidden = adapter.logits_from_hidden(
             transformer,
             prefix[:, -1:],
             memory,
+            step_positions,
         )
     torch.testing.assert_close(full_hidden[:, -1], step_hidden[:, 0], atol=1.0e-5, rtol=1.0e-5)
     torch.testing.assert_close(full_logits[:, -1], step_logits[:, 0], atol=1.0e-4, rtol=1.0e-5)

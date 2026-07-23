@@ -156,8 +156,12 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         heads: int,
         *,
         gate_init: float = 1.0e-2,
+        static_prefix_steps: int = 4,
     ) -> None:
         super().__init__()
+        if static_prefix_steps < 0:
+            raise ValueError("static_prefix_steps must be non-negative")
+        self.static_prefix_steps = int(static_prefix_steps)
         self.attention = MotionEvidenceCrossAttention(
             hidden_size,
             heads,
@@ -169,24 +173,33 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         self,
         prefix_hidden: torch.Tensor,
         memory: MotionEvidenceMemory,
+        prefix_positions: torch.LongTensor,
     ) -> torch.Tensor:
-        return self.attention(
+        if prefix_positions.shape != (prefix_hidden.shape[1],):
+            raise ValueError(
+                "prefix_positions must identify every decoder position, "
+                f"got {tuple(prefix_positions.shape)} for length {prefix_hidden.shape[1]}"
+            )
+        refined = self.attention(
             prefix_hidden,
             memory.static_tokens,
             memory.motion_values,
             memory.confidence,
         )
+        use_evidence = prefix_positions >= self.static_prefix_steps
+        return torch.where(use_evidence[None, :, None], refined, prefix_hidden)
 
     def logits_from_hidden(
         self,
         transformer: nn.Module,
         prefix_hidden: torch.Tensor,
         memory: MotionEvidenceMemory,
+        prefix_positions: torch.LongTensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         output_embedding = transformer.get_output_embeddings()
         if output_embedding is None:
             raise TypeError("causal transformer does not expose output embeddings")
-        refined = self.refine_hidden(prefix_hidden, memory)
+        refined = self.refine_hidden(prefix_hidden, memory, prefix_positions)
         weight = getattr(output_embedding, "weight", None)
         projection_dtype = weight.dtype if isinstance(weight, torch.Tensor) else refined.dtype
         # Teacher forcing projects many prefix positions while generation projects
@@ -224,7 +237,13 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         if output.hidden_states is None:
             raise RuntimeError("causal transformer did not return hidden states")
         token_hidden = output.hidden_states[-1][:, static_tokens.shape[1] :]
-        logits, refined = self.logits_from_hidden(transformer, token_hidden, memory)
+        prefix_positions = torch.arange(token_hidden.shape[1], device=token_hidden.device)
+        logits, refined = self.logits_from_hidden(
+            transformer,
+            token_hidden,
+            memory,
+            prefix_positions,
+        )
         baseline_logits = output.logits[:, static_tokens.shape[1] :]
         zero_rows = memory.confidence == 0
         if zero_rows.any():
@@ -241,13 +260,18 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         transformer: nn.Module,
         transformer_output: Any,
         memory: MotionEvidenceMemory,
+        *,
+        prefix_position: int,
     ) -> torch.Tensor:
         """Project the newest causal hidden state through the same E path."""
 
+        if prefix_position < 0:
+            raise ValueError("prefix_position must be non-negative")
         if transformer_output.hidden_states is None:
             raise RuntimeError("generation requires output_hidden_states=True")
         hidden = transformer_output.hidden_states[-1][:, -1:]
-        logits, _ = self.logits_from_hidden(transformer, hidden, memory)
+        positions = torch.tensor([prefix_position], device=hidden.device)
+        logits, _ = self.logits_from_hidden(transformer, hidden, memory, positions)
         baseline_logits = transformer_output.logits[:, -1:]
         zero_rows = memory.confidence == 0
         if zero_rows.any():
@@ -269,6 +293,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         query_tokens: int = 1024,
         evidence_heads: int = 8,
         evidence_gate_init: float = 1.0e-2,
+        evidence_static_prefix_steps: int = 4,
         evidence_intermediate_size: int | None = None,
         active_threshold: float = 1.0e-3,
         confidence_scale: float = 1.0e-2,
@@ -293,6 +318,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             hidden_size,
             evidence_heads,
             gate_init=evidence_gate_init,
+            static_prefix_steps=evidence_static_prefix_steps,
         )
 
     @property

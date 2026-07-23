@@ -210,18 +210,23 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         memory: MotionEvidenceMemory,
         prefix_positions: torch.LongTensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        refined = self.refine_hidden(prefix_hidden, memory, prefix_positions)
+        return self.project_hidden(transformer, refined), refined
+
+    @staticmethod
+    def project_hidden(transformer: nn.Module, hidden: torch.Tensor) -> torch.Tensor:
+        """Project hidden states through the precision-stable vocabulary head."""
+
         output_embedding = transformer.get_output_embeddings()
         if output_embedding is None:
             raise TypeError("causal transformer does not expose output embeddings")
-        refined = self.refine_hidden(prefix_hidden, memory, prefix_positions)
         weight = getattr(output_embedding, "weight", None)
-        projection_dtype = weight.dtype if isinstance(weight, torch.Tensor) else refined.dtype
+        projection_dtype = weight.dtype if isinstance(weight, torch.Tensor) else hidden.dtype
         # Teacher forcing projects many prefix positions while generation projects
         # one. Keep this projection out of autocast so both shapes use the same
         # parameter precision instead of shape-dependent bf16 GEMM rounding.
-        with torch.autocast(device_type=refined.device.type, enabled=False):
-            logits = output_embedding(refined.to(dtype=projection_dtype))
-        return logits, refined
+        with torch.autocast(device_type=hidden.device.type, enabled=False):
+            return output_embedding(hidden.to(dtype=projection_dtype))
 
     def teacher_forcing(
         self,

@@ -179,6 +179,38 @@ def test_zero_evidence_teacher_forcing_is_exact_decoder_noop() -> None:
     assert torch.equal(teacher.logits, teacher.baseline_logits)
 
 
+def test_zero_residual_scale_matches_precision_stable_projection() -> None:
+    torch.manual_seed(43)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+        evidence_residual_scale=0.0,
+    )
+    memory = model.build_memory(batch, refs=_references(device))
+    teacher = model.teacher_forcing(batch, memory=memory)
+    projected = model.evidence_adapter.project_hidden(model.transformer, teacher.token_hidden)
+
+    torch.testing.assert_close(
+        teacher.refined_hidden,
+        teacher.token_hidden,
+        atol=0.0,
+        rtol=0.0,
+    )
+    torch.testing.assert_close(
+        teacher.logits[:, model.evidence_adapter.static_prefix_steps :],
+        projected[:, model.evidence_adapter.static_prefix_steps :],
+        atol=0.0,
+        rtol=0.0,
+    )
+
+
 def test_corrupt_control_preserves_values_but_breaks_alignment() -> None:
     torch.manual_seed(29)
     device = torch.device("cpu")

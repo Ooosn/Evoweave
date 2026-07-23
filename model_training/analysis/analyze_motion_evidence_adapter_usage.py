@@ -108,6 +108,10 @@ def one_usage(
         )
 
         residual_scale_sweep: dict[str, dict[str, float]] = {}
+        zero_logits = model.evidence_adapter.project_hidden(
+            model.transformer,
+            teacher.token_hidden,
+        )
         saved_scale = model.evidence_adapter.attention.residual_scale
         for scale in residual_scales:
             if not 0.0 <= scale < 1.0:
@@ -148,7 +152,7 @@ def one_usage(
                 static_prefix_steps=static_steps,
             )["later"][0]
             zero_later = shifted_region_losses(
-                teacher.baseline_logits,
+                zero_logits,
                 batch["input_ids"],
                 batch["attention_mask"],
                 static_prefix_steps=static_steps,

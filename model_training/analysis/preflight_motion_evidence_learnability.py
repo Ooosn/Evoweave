@@ -201,6 +201,10 @@ def evaluate_controls(
                 normal.token_hidden.shape[1],
                 device=normal.token_hidden.device,
             )
+            zero_logits = model.evidence_adapter.project_hidden(
+                model.transformer,
+                normal.token_hidden,
+            )
             corrupt_logits, _ = model.evidence_adapter.logits_from_hidden(
                 model.transformer,
                 normal.token_hidden,
@@ -218,7 +222,7 @@ def evaluate_controls(
                 )
             logits_by_control = {
                 "normal": normal.logits,
-                "zero": normal.baseline_logits,
+                "zero": zero_logits,
                 "corrupt": corrupt_logits,
             }
             row_losses = {

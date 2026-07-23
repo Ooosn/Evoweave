@@ -24,6 +24,37 @@ class QuerySkinBoundaryTargets:
     valid_edge_counts: torch.LongTensor
 
 
+def query_aligned_skin_weights(
+    skin_weights: torch.Tensor,
+    faces: torch.LongTensor,
+    refs: TrackableSurfaceReferences,
+    *,
+    min_skin_sum: float = 1.0e-6,
+) -> torch.Tensor:
+    """Interpolate normalized vertex skin influences to the query anchors."""
+
+    if skin_weights.ndim != 3:
+        raise ValueError(
+            f"skin_weights must have shape (B,N,J), got {tuple(skin_weights.shape)}"
+        )
+    if min_skin_sum <= 0.0:
+        raise ValueError("min_skin_sum must be positive")
+    weights = skin_weights.float().clamp_min(0.0)
+    vertex_sum = weights.sum(dim=-1, keepdim=True)
+    normalized = torch.where(
+        vertex_sum > min_skin_sum,
+        weights / vertex_sum.clamp_min(min_skin_sum),
+        torch.zeros_like(weights),
+    )
+    query = _materialize_query_features(normalized, faces, refs)
+    query_sum = query.sum(dim=-1, keepdim=True)
+    return torch.where(
+        query_sum > min_skin_sum,
+        query / query_sum.clamp_min(min_skin_sum),
+        torch.zeros_like(query),
+    )
+
+
 def query_aligned_skin_boundary_targets(
     skin_weights: torch.Tensor,
     faces: torch.LongTensor,

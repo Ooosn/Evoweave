@@ -122,8 +122,12 @@ def _batch(device: torch.device) -> dict[str, torch.Tensor]:
             ],
             device=device,
         ),
-        "input_ids": torch.tensor([[18, 17, 2, 3, 4, 19]], device=device),
-        "attention_mask": torch.ones((1, 6), device=device),
+        "input_ids": torch.tensor([[18, 17, 2, 3, 4, 5, 6, 7, 19]], device=device),
+        "attention_mask": torch.ones((1, 9), device=device),
+        "token_joint_indices": torch.tensor(
+            [[-1, 0, 0, 0, 1, 1, 1, -1, -1]],
+            device=device,
+        ),
     }
 
 
@@ -259,8 +263,62 @@ def test_motion_evidence_leaves_class_and_root_predictions_unchanged() -> None:
     assert not torch.equal(teacher.refined_hidden[:, 4:], teacher.token_hidden[:, 4:])
 
 
-def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
+def test_attention_weights_are_normalized_per_step_and_head() -> None:
+    torch.manual_seed(36)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+    )
+    memory = model.build_memory(batch, refs=_references(device))
+    teacher = model.teacher_forcing(batch, memory=memory)
+    weights = model.evidence_adapter.attention.attention_weights(
+        teacher.token_hidden,
+        memory.static_tokens,
+        memory.motion_values,
+    )
+    assert weights.shape == (1, 4, 9, 5)
+    torch.testing.assert_close(weights.sum(dim=-1), torch.ones((1, 4, 9)))
+
+
+def test_attention_alignment_loss_trains_prefix_to_region_addressing() -> None:
     torch.manual_seed(37)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = TopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=5,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+    )
+    refs = _references(device)
+    memory = model.build_memory(batch, refs=refs)
+    teacher = model.teacher_forcing(batch, memory=memory)
+    alignment = model.attention_alignment_loss(
+        batch,
+        refs,
+        memory,
+        teacher.token_hidden,
+    )
+    assert torch.isfinite(alignment["attention_alignment_loss"])
+    assert float(alignment["attention_alignment_loss"].detach()) > 0.0
+    alignment["attention_alignment_loss"].backward()
+    addressing_grad = model.evidence_adapter.attention.cross_attention.in_proj_weight.grad
+    assert addressing_grad is not None
+    assert float(addressing_grad.abs().sum()) > 0.0
+
+
+def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
+    torch.manual_seed(38)
     device = torch.device("cpu")
     batch = _batch(device)
     model = TopologyMotionEvidenceUniRigAR(
@@ -300,6 +358,8 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
     assert boundary_grad > 0.0
     assert backbone_grad > 0.0
     assert torch.isfinite(output["boundary_loss"])
+    assert torch.isfinite(output["attention_alignment_loss"])
+    assert float(output["attention_alignment_valid_fraction"]) > 0.0
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")

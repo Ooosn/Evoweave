@@ -33,13 +33,14 @@ class MotionEvidenceCrossAttention(nn.Module):
         self.output_norm = nn.LayerNorm(hidden_size)
         self.gate = nn.Parameter(torch.tensor(float(gate_init), dtype=torch.float32))
 
-    def forward(
+    def _attend(
         self,
         prefix_states: torch.Tensor,
         static_keys: torch.Tensor,
         motion_values: torch.Tensor,
-        confidence: torch.Tensor,
-    ) -> torch.Tensor:
+        *,
+        need_weights: bool,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         tensors = (prefix_states, static_keys, motion_values)
         if any(value.ndim != 3 for value in tensors):
             raise ValueError("prefix_states, static_keys, and motion_values must be rank-3")
@@ -52,10 +53,6 @@ class MotionEvidenceCrossAttention(nn.Module):
             raise ValueError("prefix and evidence batch sizes differ")
         if any(value.shape[-1] != self.hidden_size for value in tensors):
             raise ValueError(f"all hidden widths must equal {self.hidden_size}")
-        if confidence.shape != (prefix_states.shape[0],):
-            raise ValueError(
-                f"confidence must have shape {(prefix_states.shape[0],)}, got {tuple(confidence.shape)}"
-            )
 
         keys = static_keys.detach() if self.detach_static_keys else static_keys
         compute_dtype = self.query_norm.weight.dtype
@@ -67,7 +64,50 @@ class MotionEvidenceCrossAttention(nn.Module):
             query = self.query_norm(prefix_states.to(dtype=compute_dtype))
             keys = self.key_norm(keys.to(dtype=compute_dtype))
             values = self.value_norm(motion_values.to(dtype=compute_dtype))
-            update, _ = self.cross_attention(query, keys, values, need_weights=False)
+            update, weights = self.cross_attention(
+                query,
+                keys,
+                values,
+                need_weights=need_weights,
+                average_attn_weights=False,
+            )
             update = self.output_norm(update)
+        return update, weights
+
+    def attention_weights(
+        self,
+        prefix_states: torch.Tensor,
+        static_keys: torch.Tensor,
+        motion_values: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return per-head prefix-to-anchor probabilities used by the adapter."""
+
+        _, weights = self._attend(
+            prefix_states,
+            static_keys,
+            motion_values,
+            need_weights=True,
+        )
+        if weights is None:
+            raise RuntimeError("cross-attention did not return attention weights")
+        return weights
+
+    def forward(
+        self,
+        prefix_states: torch.Tensor,
+        static_keys: torch.Tensor,
+        motion_values: torch.Tensor,
+        confidence: torch.Tensor,
+    ) -> torch.Tensor:
+        if confidence.shape != (prefix_states.shape[0],):
+            raise ValueError(
+                f"confidence must have shape {(prefix_states.shape[0],)}, got {tuple(confidence.shape)}"
+            )
+        update, _ = self._attend(
+            prefix_states,
+            static_keys,
+            motion_values,
+            need_weights=False,
+        )
         scale = torch.tanh(self.gate) * confidence[:, None, None]
         return prefix_states + (scale * update).to(dtype=prefix_states.dtype)

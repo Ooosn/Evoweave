@@ -21,7 +21,10 @@ from .encoder import (
     TopologyLocalMotionEvidence,
     TopologyMotionValueEncoder,
 )
-from .supervision import query_aligned_skin_boundary_targets
+from .supervision import (
+    query_aligned_skin_boundary_targets,
+    query_aligned_skin_weights,
+)
 
 
 @dataclass(frozen=True)
@@ -318,6 +321,7 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         confidence_scale: float = 1.0e-2,
         eos_loss_weight: float = 1.0,
         boundary_loss_weight: float = 1.0,
+        attention_alignment_loss_weight: float = 1.0,
     ) -> None:
         super().__init__()
         self.unirig_ar = unirig_ar
@@ -329,6 +333,9 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         if boundary_loss_weight < 0.0:
             raise ValueError("boundary_loss_weight must be non-negative")
         self.boundary_loss_weight = float(boundary_loss_weight)
+        if attention_alignment_loss_weight < 0.0:
+            raise ValueError("attention_alignment_loss_weight must be non-negative")
+        self.attention_alignment_loss_weight = float(attention_alignment_loss_weight)
         hidden_size = int(unirig_ar.hidden_size)
         self.conditioner = StaticQueryMotionEvidenceConditioner(
             surface_tokenizer,
@@ -487,6 +494,115 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             "boundary_valid_fraction": targets.valid_mask.float().mean(),
         }
 
+    def attention_alignment_loss(
+        self,
+        batch: dict[str, Any],
+        refs: TrackableSurfaceReferences,
+        memory: MotionEvidenceMemory,
+        token_hidden: torch.Tensor,
+        *,
+        eps: float = 1.0e-8,
+    ) -> dict[str, torch.Tensor]:
+        """Supervise each joint-producing prefix step to read its skinned region."""
+
+        skin_weights = batch.get("target_skin_weights")
+        if skin_weights is None:
+            raise KeyError("motion-evidence training requires target_skin_weights")
+        token_joint_indices = batch.get("token_joint_indices")
+        if token_joint_indices is None:
+            raise KeyError("motion-evidence training requires token_joint_indices")
+        if token_joint_indices.shape != token_hidden.shape[:2]:
+            raise ValueError(
+                "token_joint_indices must identify every causal hidden position, "
+                f"got {tuple(token_joint_indices.shape)} for {tuple(token_hidden.shape[:2])}"
+            )
+        attention_mask = batch["attention_mask"]
+        if attention_mask.shape != token_joint_indices.shape:
+            raise ValueError(
+                "attention_mask and token_joint_indices must have identical shape, "
+                f"got {tuple(attention_mask.shape)} and {tuple(token_joint_indices.shape)}"
+            )
+
+        query_skin = query_aligned_skin_weights(
+            skin_weights,
+            batch["faces"],
+            refs,
+        )
+        if query_skin.shape[:2] != memory.static_tokens.shape[:2]:
+            raise RuntimeError(
+                "query skin targets and static keys are not anchor aligned: "
+                f"{tuple(query_skin.shape[:2])} != {tuple(memory.static_tokens.shape[:2])}"
+            )
+        joint_count = query_skin.shape[-1]
+        if joint_count <= 0:
+            raise ValueError("target_skin_weights must contain at least one joint column")
+
+        joint_indices = token_joint_indices.to(device=query_skin.device, dtype=torch.long)
+        valid_joint = (joint_indices >= 0) & (joint_indices < joint_count)
+        safe_joint_indices = joint_indices.clamp(min=0, max=joint_count - 1)
+        skin_by_joint = query_skin.transpose(1, 2)
+        targets = torch.gather(
+            skin_by_joint,
+            1,
+            safe_joint_indices[..., None].expand(-1, -1, query_skin.shape[1]),
+        )
+        target_mass = targets.sum(dim=-1)
+        targets = targets / target_mass[..., None].clamp_min(eps)
+
+        attention = self.evidence_adapter.attention.attention_weights(
+            token_hidden,
+            memory.static_tokens,
+            memory.motion_values,
+        )
+        expected_shape = (
+            token_hidden.shape[0],
+            token_hidden.shape[1],
+            query_skin.shape[1],
+        )
+        if attention.shape[0] != expected_shape[0] or attention.shape[2:] != expected_shape[1:]:
+            raise RuntimeError(
+                "attention weights are not prefix-to-query aligned: "
+                f"got {tuple(attention.shape)}, expected (*,{expected_shape[1]},{expected_shape[2]})"
+            )
+        mean_attention = attention.float().mean(dim=1).clamp_min(eps)
+        per_step_kl = (
+            targets
+            * (targets.clamp_min(eps).log() - mean_attention.log())
+        ).sum(dim=-1)
+
+        prediction_valid = torch.zeros_like(valid_joint)
+        prediction_valid[:, :-1] = attention_mask[:, 1:] != 0
+        positions = torch.arange(token_hidden.shape[1], device=token_hidden.device)[None]
+        later_position = positions >= self.evidence_adapter.static_prefix_steps
+        supervised = (
+            valid_joint
+            & prediction_valid
+            & later_position
+            & (target_mass > eps)
+        )
+        loss_weights = supervised.float() * memory.confidence.float()[:, None]
+        weight_sum = loss_weights.sum()
+        loss = (per_step_kl * loss_weights).sum() / weight_sum.clamp_min(1.0)
+
+        attention_entropy = -(mean_attention * mean_attention.log()).sum(dim=-1)
+        if mean_attention.shape[-1] > 1:
+            attention_entropy = attention_entropy / torch.log(
+                mean_attention.new_tensor(float(mean_attention.shape[-1]))
+            )
+        target_peak = targets.max(dim=-1).values
+        later_valid_count = (prediction_valid & later_position).sum().clamp_min(1)
+        return {
+            "attention_alignment_loss": loss,
+            "attention_alignment_valid_fraction": supervised.float().sum()
+            / later_valid_count,
+            "attention_alignment_entropy": (
+                attention_entropy * loss_weights
+            ).sum()
+            / weight_sum.clamp_min(1.0),
+            "attention_alignment_target_peak": (target_peak * loss_weights).sum()
+            / weight_sum.clamp_min(1.0),
+        }
+
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
         refs = self.sample_references(batch)
         memory = self.build_memory(batch, refs=refs)
@@ -500,5 +616,17 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
         out["evidence_hidden_delta_rms"] = torch.sqrt(hidden_delta.square().mean())
         boundary = self.boundary_auxiliary_loss(batch, refs, memory)
         out.update(boundary)
-        out["loss"] = out["ce_loss"] + self.boundary_loss_weight * boundary["boundary_loss"]
+        alignment = self.attention_alignment_loss(
+            batch,
+            refs,
+            memory,
+            teacher.token_hidden,
+        )
+        out.update(alignment)
+        out["loss"] = (
+            out["ce_loss"]
+            + self.boundary_loss_weight * boundary["boundary_loss"]
+            + self.attention_alignment_loss_weight
+            * alignment["attention_alignment_loss"]
+        )
         return out

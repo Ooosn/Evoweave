@@ -15,7 +15,11 @@ from .model import (
     StaticQueryMotionEvidenceConditioner,
     TopologyMotionEvidenceUniRigAR,
 )
-from .supervision import QuerySkinBoundaryTargets, query_aligned_skin_boundary_targets
+from .supervision import (
+    QuerySkinBoundaryTargets,
+    query_aligned_skin_boundary_targets,
+    query_aligned_skin_weights,
+)
 
 __all__ = [
     "MotionEvidenceCrossAttention",
@@ -31,5 +35,6 @@ __all__ = [
     "TopologyMotionEvidenceUniRigAR",
     "TopologyMotionValueEncoder",
     "query_aligned_skin_boundary_targets",
+    "query_aligned_skin_weights",
     "motion_evidence_collate",
 ]

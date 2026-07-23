@@ -3,7 +3,10 @@ from __future__ import annotations
 import torch
 
 from rigweave.dynamic_rig.sampling import TrackableSurfaceReferences
-from rigweave.motion_evidence import query_aligned_skin_boundary_targets
+from rigweave.motion_evidence import (
+    query_aligned_skin_boundary_targets,
+    query_aligned_skin_weights,
+)
 
 
 def _vertex_references() -> TrackableSurfaceReferences:
@@ -59,3 +62,22 @@ def test_unskinned_vertices_are_not_auxiliary_targets() -> None:
     assert targets.valid_edge_counts.tolist() == [1]
     assert targets.valid_mask.tolist() == [[True, True, False, False]]
     assert torch.count_nonzero(targets.values) == 0
+
+
+def test_query_skin_weights_preserve_joint_influence_identity() -> None:
+    faces = torch.tensor([[[0, 1, 2], [0, 2, 3]]])
+    skin = torch.tensor(
+        [
+            [
+                [1.0, 0.0],
+                [0.75, 0.25],
+                [0.0, 1.0],
+                [0.0, 0.0],
+            ]
+        ]
+    )
+    query = query_aligned_skin_weights(skin, faces, _vertex_references())
+    torch.testing.assert_close(query[0, 0], torch.tensor([1.0, 0.0]))
+    torch.testing.assert_close(query[0, 1], torch.tensor([0.75, 0.25]))
+    torch.testing.assert_close(query[0, 2], torch.tensor([0.0, 1.0]))
+    torch.testing.assert_close(query[0, 3], torch.tensor([0.0, 0.0]))

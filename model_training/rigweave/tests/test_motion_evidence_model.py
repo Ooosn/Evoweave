@@ -244,6 +244,7 @@ def test_motion_evidence_leaves_class_and_root_predictions_unchanged() -> None:
         atol=0.0,
         rtol=0.0,
     )
+    assert torch.equal(teacher.logits[:, :4], teacher.baseline_logits[:, :4])
     assert not torch.equal(teacher.refined_hidden[:, 4:], teacher.token_hidden[:, 4:])
 
 

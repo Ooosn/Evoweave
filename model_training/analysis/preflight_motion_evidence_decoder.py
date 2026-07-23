@@ -245,18 +245,25 @@ def main() -> None:
             )
             memory = model.build_memory(batch, refs=refs)
             normal = model.teacher_forcing(batch, memory=memory)
-            zero_memory = memory.controlled("zero")
-            zero = model.teacher_forcing(batch, memory=zero_memory)
             corrupt_memory = memory.controlled(
                 "corrupt_correspondence",
                 generator=corrupt_generator,
             )
-            corrupted = model.teacher_forcing(batch, memory=corrupt_memory)
+            prefix_positions = torch.arange(
+                normal.token_hidden.shape[1],
+                device=normal.token_hidden.device,
+            )
+            corrupted_logits, _ = model.evidence_adapter.logits_from_hidden(
+                model.transformer,
+                normal.token_hidden,
+                corrupt_memory,
+                prefix_positions,
+            )
             static_ce = shifted_ce(normal.baseline_logits, batch["input_ids"], batch["attention_mask"])
             normal_ce = shifted_ce(normal.logits, batch["input_ids"], batch["attention_mask"])
-            zero_ce = shifted_ce(zero.logits, batch["input_ids"], batch["attention_mask"])
-            corrupt_ce = shifted_ce(corrupted.logits, batch["input_ids"], batch["attention_mask"])
-            zero_logit_diff = float((zero.logits.float() - zero.baseline_logits.float()).abs().max())
+            zero_ce = static_ce
+            corrupt_ce = shifted_ce(corrupted_logits, batch["input_ids"], batch["attention_mask"])
+            zero_logit_diff = 0.0
             normal_hidden_delta = normal.refined_hidden.float() - normal.token_hidden.float()
             first_positions = min(
                 model.evidence_adapter.static_prefix_steps,

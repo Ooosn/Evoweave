@@ -245,6 +245,12 @@ class MotionEvidenceDecoderAdapter(nn.Module):
             prefix_positions,
         )
         baseline_logits = output.logits[:, static_tokens.shape[1] :]
+        static_steps = min(self.static_prefix_steps, logits.shape[1])
+        if static_steps:
+            logits = torch.cat(
+                (baseline_logits[:, :static_steps], logits[:, static_steps:]),
+                dim=1,
+            )
         zero_rows = memory.confidence == 0
         if zero_rows.any():
             logits = torch.where(zero_rows[:, None, None], baseline_logits, logits)
@@ -273,6 +279,8 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         positions = torch.tensor([prefix_position], device=hidden.device)
         logits, _ = self.logits_from_hidden(transformer, hidden, memory, positions)
         baseline_logits = transformer_output.logits[:, -1:]
+        if prefix_position < self.static_prefix_steps:
+            return baseline_logits[:, -1]
         zero_rows = memory.confidence == 0
         if zero_rows.any():
             logits = torch.where(zero_rows[:, None, None], baseline_logits, logits)

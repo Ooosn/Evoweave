@@ -30,6 +30,7 @@ from preflight_motion_evidence_learnability import (  # noqa: E402
     build_dataset,
     make_loader,
     set_probe_modes,
+    shifted_region_losses,
 )
 from train_dynamic_rig import build_tokenizer, move_batch  # noqa: E402
 
@@ -48,6 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=64)
     parser.add_argument("--seed", type=int, default=20260724)
     parser.add_argument("--amp-dtype", choices=("bf16", "fp16"), default="bf16")
+    parser.add_argument("--gate-scales", type=float, nargs="*", default=())
     args = parser.parse_args()
     for name in CHECKPOINT_DEFAULTS:
         if not hasattr(args, name):
@@ -74,7 +76,8 @@ def one_usage(
     *,
     seed: int,
     amp_dtype: torch.dtype,
-) -> dict[str, float]:
+    gate_scales: tuple[float, ...],
+) -> dict[str, Any]:
     device = batch["frame_vertices"].device
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -102,6 +105,60 @@ def one_usage(
             corrupted,
             positions,
         )
+
+        gate_sweep: dict[str, dict[str, float]] = {}
+        saved_gate = model.evidence_adapter.attention.gate.detach().clone()
+        for scale in gate_scales:
+            if not 0.0 <= scale < 1.0:
+                raise ValueError("gate scales must be in [0, 1)")
+            raw_gate = torch.atanh(saved_gate.new_tensor(scale))
+            model.evidence_adapter.attention.gate.copy_(raw_gate)
+            normal_logits, _ = model.evidence_adapter.logits_from_hidden(
+                model.transformer,
+                teacher.token_hidden,
+                memory,
+                positions,
+            )
+            corrupt_logits, _ = model.evidence_adapter.logits_from_hidden(
+                model.transformer,
+                teacher.token_hidden,
+                corrupted,
+                positions,
+            )
+            static_steps = model.evidence_adapter.static_prefix_steps
+            if static_steps:
+                normal_logits = torch.cat(
+                    (teacher.baseline_logits[:, :static_steps], normal_logits[:, static_steps:]),
+                    dim=1,
+                )
+                corrupt_logits = torch.cat(
+                    (teacher.baseline_logits[:, :static_steps], corrupt_logits[:, static_steps:]),
+                    dim=1,
+                )
+            normal_later = shifted_region_losses(
+                normal_logits,
+                batch["input_ids"],
+                batch["attention_mask"],
+                static_prefix_steps=static_steps,
+            )["later"][0]
+            corrupt_later = shifted_region_losses(
+                corrupt_logits,
+                batch["input_ids"],
+                batch["attention_mask"],
+                static_prefix_steps=static_steps,
+            )["later"][0]
+            zero_later = shifted_region_losses(
+                teacher.baseline_logits,
+                batch["input_ids"],
+                batch["attention_mask"],
+                static_prefix_steps=static_steps,
+            )["later"][0]
+            gate_sweep[f"{scale:.6g}"] = {
+                "normal_later_ce": float(normal_later),
+                "corrupt_later_ce": float(corrupt_later),
+                "zero_later_ce": float(zero_later),
+            }
+        model.evidence_adapter.attention.gate.copy_(saved_gate)
 
     attention = model.evidence_adapter.attention
     compute_dtype = attention.query_norm.weight.dtype
@@ -160,6 +217,7 @@ def one_usage(
         "token_shared_update_energy_ratio": float(shared_energy_ratio),
         "correct_corrupt_update_delta_ratio": float(correspondence_delta_ratio),
         "root_hidden_max_abs_delta": float(root_delta),
+        "gate_sweep": gate_sweep,
     }
 
 
@@ -207,6 +265,7 @@ def main() -> None:
             batch,
             seed=args.seed + row_index,
             amp_dtype=amp_dtype,
+            gate_scales=tuple(args.gate_scales),
         )
         usage["index"] = row_index
         usage["path"] = raw_batch["path"][0]
@@ -216,8 +275,23 @@ def main() -> None:
     metric_names = [
         key
         for key in rows[0]
-        if key not in {"index", "path"}
+        if key not in {"index", "path", "gate_sweep"}
     ]
+    gate_sweep_summary = {}
+    for scale in args.gate_scales:
+        key = f"{scale:.6g}"
+        normal = [row["gate_sweep"][key]["normal_later_ce"] for row in rows]
+        corrupt = [row["gate_sweep"][key]["corrupt_later_ce"] for row in rows]
+        zero = [row["gate_sweep"][key]["zero_later_ce"] for row in rows]
+        corrupt_gaps = [corrupt_value - normal_value for normal_value, corrupt_value in zip(normal, corrupt)]
+        zero_gaps = [zero_value - normal_value for normal_value, zero_value in zip(normal, zero)]
+        gate_sweep_summary[key] = {
+            "normal_later_ce_mean": float(np.mean(normal)),
+            "corrupt_minus_normal_mean": float(np.mean(corrupt_gaps)),
+            "zero_minus_normal_mean": float(np.mean(zero_gaps)),
+            "normal_win_rate_vs_corrupt": float(np.mean(np.asarray(corrupt_gaps) > 0.0)),
+            "normal_win_rate_vs_zero": float(np.mean(np.asarray(zero_gaps) > 0.0)),
+        }
     summary = {
         "rows": len(rows),
         "checkpoint": str(args.checkpoint),
@@ -227,6 +301,7 @@ def main() -> None:
             for name in metric_names
         },
         "root_exact": all(row["root_hidden_max_abs_delta"] == 0.0 for row in rows),
+        "gate_sweep": gate_sweep_summary,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(

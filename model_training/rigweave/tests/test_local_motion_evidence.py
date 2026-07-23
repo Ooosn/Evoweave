@@ -85,6 +85,29 @@ def test_zero_motion_produces_zero_features() -> None:
     np.testing.assert_allclose(evidence.observability, 0.0)
 
 
+def test_explicit_edge_subset_is_applied_before_trajectory_extraction() -> None:
+    query, faces = _square_mesh()
+    frames = np.repeat(query[None], 3, axis=0)
+    weights = np.asarray(
+        [
+            [1.0, 0.0],
+            [1.0, 0.0],
+            [0.0, 1.0],
+            [0.0, 1.0],
+        ],
+        dtype=np.float32,
+    )
+    selected_edges = np.asarray([[0, 1], [1, 2]], dtype=np.int64)
+    evidence = extract_local_motion_evidence(
+        frames,
+        faces,
+        weights,
+        edges=selected_edges,
+    )
+    assert evidence.edges.tolist() == selected_edges.tolist()
+    assert evidence.features.shape == (2, len(FEATURE_NAMES))
+
+
 def test_cross_segment_pair_can_be_more_observable_than_rigid_edges() -> None:
     query = np.asarray(
         [

@@ -177,6 +177,7 @@ def extract_local_motion_evidence(
     faces: np.ndarray,
     skin_weights: np.ndarray,
     *,
+    edges: np.ndarray | None = None,
     query_index: int = 0,
     min_length_ratio: float = 1.0e-7,
     active_threshold: float = 1.0e-3,
@@ -184,10 +185,14 @@ def extract_local_motion_evidence(
     """Extract model-independent local articulation evidence for one asset pose."""
 
     frames = np.asarray(frame_vertices, dtype=np.float32)
-    edges = unique_mesh_edges(faces, vertex_count=int(frames.shape[1]))
+    edge_array = (
+        unique_mesh_edges(faces, vertex_count=int(frames.shape[1]))
+        if edges is None
+        else np.asarray(edges, dtype=np.int64)
+    )
     relative, valid_edges, query_lengths, dropped = relative_edge_length_trajectories(
         frames,
-        edges,
+        edge_array,
         query_index=query_index,
         min_length_ratio=min_length_ratio,
     )

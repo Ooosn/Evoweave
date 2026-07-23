@@ -34,6 +34,7 @@ from rigweave.dynamic_rig.motion_evidence import (  # noqa: E402
     FEATURE_NAMES,
     LocalMotionEvidence,
     extract_local_motion_evidence,
+    unique_mesh_edges,
 )
 
 
@@ -95,6 +96,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cache-features", action="store_true")
     parser.add_argument("--reuse-cache", action="store_true")
     parser.add_argument("--visual-count", type=int, default=6)
+    parser.add_argument("--visual-max-edges", type=int, default=20000)
     return parser.parse_args()
 
 
@@ -121,13 +123,12 @@ def _path_seed(path: Path, seed: int, repeat: int) -> int:
     return int.from_bytes(digest.digest(), "little") % (2**32)
 
 
-def _select_edges(
-    evidence: LocalMotionEvidence,
+def _select_edge_indices(
+    edge_count: int,
     *,
     max_edges: int,
     seed: int,
 ) -> np.ndarray:
-    edge_count = int(evidence.edges.shape[0])
     if max_edges <= 0 or edge_count <= max_edges:
         return np.arange(edge_count, dtype=np.int64)
     rng = np.random.default_rng(int(seed))
@@ -142,7 +143,7 @@ def _extract_one(
     frame_count: int,
     seed: int,
     max_edges: int,
-) -> tuple[LocalMotionEvidence, np.ndarray, np.ndarray]:
+) -> tuple[LocalMotionEvidence, np.ndarray, int]:
     with np.load(path, allow_pickle=True) as raw:
         required = (
             "frame_vertices_rootspace",
@@ -172,13 +173,20 @@ def _extract_one(
         motion_alignment_policy="none",
         input_space_policy="mesh_query_bbox",
     )
-    evidence = extract_local_motion_evidence(selected_frames, faces, skin, query_index=0)
-    selected_edges = _select_edges(
-        evidence,
+    source_edges = unique_mesh_edges(faces, vertex_count=int(selected_frames.shape[1]))
+    selected_edge_indices = _select_edge_indices(
+        int(source_edges.shape[0]),
         max_edges=max_edges,
         seed=_path_seed(path, seed, repeat),
     )
-    return evidence, selected_edges, selected
+    evidence = extract_local_motion_evidence(
+        selected_frames,
+        faces,
+        skin,
+        edges=source_edges[selected_edge_indices],
+        query_index=0,
+    )
+    return evidence, selected, int(source_edges.shape[0])
 
 
 def _save_split_cache(path: Path, arrays: SplitArrays) -> None:
@@ -243,7 +251,7 @@ def extract_split(
     for manifest_index, row in enumerate(rows):
         path = Path(row["path"])
         for repeat in range(int(query_repeats)):
-            evidence, selected_edges, selected_frames = _extract_one(
+            evidence, selected_frames, source_edge_count = _extract_one(
                 path,
                 manifest_index=manifest_index,
                 repeat=repeat,
@@ -251,10 +259,10 @@ def extract_split(
                 seed=seed,
                 max_edges=max_edges,
             )
-            feature_values = evidence.features[selected_edges]
-            label_values = evidence.boundary[selected_edges]
-            observation_values = evidence.observability[selected_edges]
-            count = int(selected_edges.shape[0])
+            feature_values = evidence.features
+            label_values = evidence.boundary
+            observation_values = evidence.observability
+            count = int(evidence.edges.shape[0])
             features.append(feature_values)
             labels.append(label_values)
             observability.append(observation_values)
@@ -263,7 +271,7 @@ def extract_split(
             paths.append(str(path))
             query_frames.append(int(selected_frames[0]))
             selected_frame_rows.append(np.asarray(selected_frames, dtype=np.int64))
-            source_edge_counts.append(int(evidence.edges.shape[0]))
+            source_edge_counts.append(source_edge_count)
             sampled_edge_counts.append(count)
             dropped_edges.append(int(evidence.dropped_degenerate_edges))
             example_motion_amounts.append(float(np.quantile(evidence.observability, 0.90)))
@@ -532,6 +540,7 @@ def _render_examples(
     frame_count: int,
     seed: int,
     count: int,
+    max_edges: int,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     if count <= 0:
@@ -539,13 +548,13 @@ def _render_examples(
     indices = np.linspace(0, len(rows) - 1, min(count, len(rows)), dtype=np.int64)
     for visual_index, row_index in enumerate(indices.tolist()):
         path = Path(rows[int(row_index)]["path"])
-        evidence, _, selected = _extract_one(
+        evidence, selected, _ = _extract_one(
             path,
             manifest_index=int(row_index),
             repeat=0,
             frame_count=frame_count,
             seed=seed,
-            max_edges=0,
+            max_edges=max_edges,
         )
         with np.load(path, allow_pickle=True) as raw:
             query = np.asarray(raw["frame_vertices_rootspace"], dtype=np.float32)[int(selected[0])]
@@ -759,6 +768,7 @@ def main() -> int:
         frame_count=args.frame_count,
         seed=args.seed + 1,
         count=args.visual_count,
+        max_edges=args.visual_max_edges,
     )
     print(json.dumps(summary, indent=2, sort_keys=True), flush=True)
     return 0

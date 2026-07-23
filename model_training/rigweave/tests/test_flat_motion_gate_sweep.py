@@ -14,6 +14,7 @@ from evaluate_flat_motion_gate_sweep import (  # noqa: E402
     _alpha_name,
     _blend_conditions,
     _parse_alphas,
+    parse_args,
 )
 
 
@@ -35,3 +36,25 @@ def test_blend_preserves_exact_endpoints() -> None:
         _blend_conditions(normal, zero, 0.25),
         torch.tensor([[4.0, 6.0]]),
     )
+
+
+def test_exact_reference_check_is_opt_in(monkeypatch: pytest.MonkeyPatch) -> None:
+    required = [
+        "gate-sweep",
+        "--manifest",
+        "manifest.jsonl",
+        "--checkpoint",
+        "checkpoint.pt",
+        "--tokenizer-config",
+        "tokenizer.yaml",
+        "--model-config",
+        "model.yaml",
+        "--unirig-checkpoint",
+        "unirig.ckpt",
+        "--output-dir",
+        "output",
+    ]
+    monkeypatch.setattr(sys, "argv", required)
+    assert parse_args().require_alpha_one_exact is False
+    monkeypatch.setattr(sys, "argv", required + ["--require-alpha-one-exact"])
+    assert parse_args().require_alpha_one_exact is True

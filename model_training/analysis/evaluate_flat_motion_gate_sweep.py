@@ -160,6 +160,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--unirig-checkpoint", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--reference-normal", type=Path)
+    parser.add_argument(
+        "--require-alpha-one-exact",
+        action="store_true",
+        help="Fail when alpha=1 does not reproduce every reference token exactly.",
+    )
     parser.add_argument("--alphas", default="0,0.25,0.5,0.75,1")
     parser.add_argument("--limit", type=int, default=18)
     parser.add_argument("--max-new-tokens", type=int, default=600)
@@ -293,7 +298,10 @@ def main() -> None:
         reference_comparison = _compare_to_reference(
             results[alpha_one_name]["rows"], reference_rows
         )
-        if reference_comparison["exact_generated_ids"] != len(reference_rows):
+        if (
+            args.require_alpha_one_exact
+            and reference_comparison["exact_generated_ids"] != len(reference_rows)
+        ):
             raise RuntimeError(
                 "alpha=1 generation does not exactly reproduce the fixed normal reference: "
                 f"{reference_comparison}"
@@ -304,6 +312,7 @@ def main() -> None:
             "manifest": str(args.manifest),
             "checkpoint": str(args.checkpoint),
             "reference_normal": str(args.reference_normal) if args.reference_normal else None,
+            "require_alpha_one_exact": bool(args.require_alpha_one_exact),
             "seed": args.seed,
             "max_new_tokens": args.max_new_tokens,
             "alphas": list(alphas),

@@ -106,6 +106,7 @@ CMD=(
   --save-every "${RIGWEAVE_SAVE_EVERY:-0}"
   --motion-fps-ratio "${RIGWEAVE_MOTION_FPS_RATIO:-0.7}"
   --motion-vertex-samples "${RIGWEAVE_MOTION_VERTEX_SAMPLES:-512}"
+  --motion-alignment-policy "${RIGWEAVE_MOTION_ALIGNMENT_POLICY:-none}"
   --target-start-policy "${RIGWEAVE_TARGET_START_POLICY:-joint0}"
   --target-root-policy "${RIGWEAVE_TARGET_ROOT_POLICY:-legacy}"
   --branch-prior-proposals "${RIGWEAVE_BRANCH_PRIOR_PROPOSALS:-32}"

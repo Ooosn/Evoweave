@@ -30,6 +30,7 @@ CHECKPOINT_DEFAULTS: dict[str, Any] = {
     "use_time_embedding": False,
     "motion_fps_ratio": 0.7,
     "motion_vertex_samples": 512,
+    "motion_alignment_policy": "none",
     "target_active_skin_only": False,
     "target_start_policy": "joint0",
     "target_root_policy": "legacy",
@@ -348,6 +349,11 @@ def main() -> None:
     parser.add_argument("--use-time-embedding", action="store_true", default=None)
     parser.add_argument("--motion-fps-ratio", type=float, default=None)
     parser.add_argument("--motion-vertex-samples", type=int, default=None)
+    parser.add_argument(
+        "--motion-alignment-policy",
+        choices=["none", "query_rigid"],
+        default=None,
+    )
     parser.add_argument("--target-active-skin-only", action="store_true", default=None)
     parser.add_argument("--active-skin-threshold", type=float, default=None)
     parser.add_argument("--target-start-policy", choices=["joint0"], default=None)
@@ -421,6 +427,7 @@ def main() -> None:
         seed=args.seed,
         motion_fps_ratio=args.motion_fps_ratio,
         motion_vertex_samples=args.motion_vertex_samples,
+        motion_alignment_policy=args.motion_alignment_policy,
         target_active_skin_only=args.target_active_skin_only,
         active_skin_threshold=args.active_skin_threshold,
         target_start_policy=args.target_start_policy,
@@ -451,6 +458,7 @@ def main() -> None:
             "use_time_embedding": args.use_time_embedding,
             "motion_fps_ratio": args.motion_fps_ratio,
             "motion_vertex_samples": args.motion_vertex_samples,
+            "motion_alignment_policy": args.motion_alignment_policy,
             "target_active_skin_only": args.target_active_skin_only,
             "target_root_policy": args.target_root_policy,
             "active_skin_threshold": args.active_skin_threshold,

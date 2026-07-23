@@ -219,6 +219,7 @@ def main() -> None:
         seed=args.seed,
         motion_fps_ratio=model_args.motion_fps_ratio,
         motion_vertex_samples=model_args.motion_vertex_samples,
+        motion_alignment_policy=model_args.motion_alignment_policy,
         target_active_skin_only=model_args.target_active_skin_only,
         active_skin_threshold=model_args.active_skin_threshold,
         target_start_policy=model_args.target_start_policy,

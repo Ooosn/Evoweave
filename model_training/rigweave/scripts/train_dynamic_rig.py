@@ -721,6 +721,12 @@ def main() -> None:
     parser.add_argument("--freeze-surface-tokenizer", dest="train_surface_tokenizer", action="store_false")
     parser.add_argument("--motion-fps-ratio", type=float, default=0.7)
     parser.add_argument("--motion-vertex-samples", type=int, default=512)
+    parser.add_argument(
+        "--motion-alignment-policy",
+        choices=["none", "query_rigid"],
+        default="none",
+        help="Optionally remove best-fit global SE(3) motion before evidence FPS and encoding.",
+    )
     parser.add_argument("--train-random-query", dest="train_random_query", action="store_true", default=True)
     parser.add_argument("--no-train-random-query", dest="train_random_query", action="store_false")
     parser.add_argument("--target-active-skin-only", action="store_true")
@@ -1098,6 +1104,7 @@ def main() -> None:
             seed=args.seed,
             motion_fps_ratio=args.motion_fps_ratio,
             motion_vertex_samples=args.motion_vertex_samples,
+            motion_alignment_policy=args.motion_alignment_policy,
             target_active_skin_only=args.target_active_skin_only,
             active_skin_threshold=args.active_skin_threshold,
             target_start_policy=args.target_start_policy,
@@ -1112,6 +1119,7 @@ def main() -> None:
             seed=args.seed + 17,
             motion_fps_ratio=args.motion_fps_ratio,
             motion_vertex_samples=args.motion_vertex_samples,
+            motion_alignment_policy=args.motion_alignment_policy,
             target_active_skin_only=args.target_active_skin_only,
             active_skin_threshold=args.active_skin_threshold,
             target_start_policy=args.target_start_policy,
@@ -1320,6 +1328,7 @@ def main() -> None:
             "sampling_contract="
             f"frames={args.frames} motion_fps_ratio={args.motion_fps_ratio} "
             f"motion_vertex_samples={args.motion_vertex_samples} "
+            f"motion_alignment_policy={args.motion_alignment_policy} "
             f"train_random_query={args.train_random_query} "
             f"target_active_skin_only={args.target_active_skin_only} "
             f"target_start_policy={args.target_start_policy} "

@@ -123,6 +123,50 @@ def _farthest_frames(features: np.ndarray, candidates: np.ndarray, count: int) -
     return [int(candidates[i]) for i in chosen_local]
 
 
+def _align_frames_to_query_rigid(
+    frame_vertices: np.ndarray,
+    *,
+    query_index: int,
+    fit_vertex_indices: np.ndarray,
+) -> np.ndarray:
+    """Remove one best-fit global SE(3) transform from every evidence frame."""
+
+    frames = np.asarray(frame_vertices, dtype=np.float32)
+    fit_ids = np.asarray(fit_vertex_indices, dtype=np.int64).reshape(-1)
+    if frames.ndim != 3 or frames.shape[-1] != 3:
+        raise ValueError(f"frame_vertices must be (T,N,3), got {frames.shape}")
+    if not 0 <= int(query_index) < int(frames.shape[0]):
+        raise ValueError(f"query_index={query_index} outside frame count {frames.shape[0]}")
+    if fit_ids.size < 3:
+        raise ValueError("query-rigid alignment requires at least three fit vertices")
+    if int(fit_ids.min()) < 0 or int(fit_ids.max()) >= int(frames.shape[1]):
+        raise ValueError("fit_vertex_indices contain an out-of-range vertex")
+
+    query_fit = frames[int(query_index), fit_ids].astype(np.float64, copy=False)
+    query_center = query_fit.mean(axis=0, keepdims=True)
+    query_centered = query_fit - query_center
+    aligned = np.empty_like(frames)
+    for frame_index in range(frames.shape[0]):
+        if frame_index == int(query_index):
+            aligned[frame_index] = frames[frame_index]
+            continue
+        moving_fit = frames[frame_index, fit_ids].astype(np.float64, copy=False)
+        moving_center = moving_fit.mean(axis=0, keepdims=True)
+        moving_centered = moving_fit - moving_center
+        u, _, vh = np.linalg.svd(moving_centered.T @ query_centered, full_matrices=False)
+        rotation = u @ vh
+        if np.linalg.det(rotation) < 0:
+            u[:, -1] *= -1.0
+            rotation = u @ vh
+        moving_center_f32 = moving_center.astype(np.float32)
+        query_center_f32 = query_center.astype(np.float32)
+        rotation_f32 = rotation.astype(np.float32)
+        aligned[frame_index] = (
+            (frames[frame_index] - moving_center_f32) @ rotation_f32 + query_center_f32
+        )
+    return aligned
+
+
 def _select_query_sequence(
     frame_vertices: np.ndarray,
     posed_joints: np.ndarray,
@@ -135,6 +179,7 @@ def _select_query_sequence(
     seed: int,
     motion_fps_ratio: float,
     motion_vertex_samples: int,
+    motion_alignment_policy: str = "none",
     input_space_policy: str = "mesh_query_bbox",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray]:
     """Select `[query, evidence...]` frames from one clean asset sequence.
@@ -168,6 +213,14 @@ def _select_query_sequence(
     vertex_count = aligned_frames.shape[1]
     sample_count = min(int(motion_vertex_samples), vertex_count)
     sample_ids = rng.choice(vertex_count, size=sample_count, replace=False)
+    if motion_alignment_policy == "query_rigid":
+        aligned_frames = _align_frames_to_query_rigid(
+            aligned_frames,
+            query_index=query_idx,
+            fit_vertex_indices=np.arange(vertex_count, dtype=np.int64),
+        )
+    elif motion_alignment_policy != "none":
+        raise ValueError(f"unknown motion_alignment_policy={motion_alignment_policy!r}")
     delta = aligned_frames[:, sample_ids] - aligned_frames[query_idx : query_idx + 1, sample_ids]
     features = delta.reshape(total_frames, -1)
 
@@ -299,6 +352,7 @@ class DynamicRigManifestDataset(Dataset):
         seed: int = 20260529,
         motion_fps_ratio: float = 0.7,
         motion_vertex_samples: int = 512,
+        motion_alignment_policy: str = "none",
         target_active_skin_only: bool = False,
         active_skin_threshold: float = 1.0e-4,
         target_start_policy: str = "joint0",
@@ -313,6 +367,9 @@ class DynamicRigManifestDataset(Dataset):
         self.seed = int(seed)
         self.motion_fps_ratio = float(motion_fps_ratio)
         self.motion_vertex_samples = int(motion_vertex_samples)
+        if motion_alignment_policy not in {"none", "query_rigid"}:
+            raise ValueError(f"unknown motion_alignment_policy={motion_alignment_policy!r}")
+        self.motion_alignment_policy = str(motion_alignment_policy)
         if target_active_skin_only:
             raise ValueError("strict rootless dataset does not support target_active_skin_only pruning")
         if float(active_skin_threshold) != 1.0e-4:
@@ -394,6 +451,7 @@ class DynamicRigManifestDataset(Dataset):
             seed=self.seed,
             motion_fps_ratio=self.motion_fps_ratio,
             motion_vertex_samples=self.motion_vertex_samples,
+            motion_alignment_policy=self.motion_alignment_policy,
             input_space_policy="mesh_query_bbox",
         )
 

@@ -501,6 +501,7 @@ def main() -> None:
         seed=args.seed,
         motion_fps_ratio=namespace.motion_fps_ratio,
         motion_vertex_samples=namespace.motion_vertex_samples,
+        motion_alignment_policy=namespace.motion_alignment_policy,
         target_active_skin_only=namespace.target_active_skin_only,
         active_skin_threshold=namespace.active_skin_threshold,
         target_start_policy=namespace.target_start_policy,

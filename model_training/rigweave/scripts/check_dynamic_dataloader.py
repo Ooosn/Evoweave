@@ -135,6 +135,7 @@ def main() -> int:
 
     target_root_policy = os.environ.get("RIGWEAVE_TARGET_ROOT_POLICY", "legacy")
     target_start_policy = os.environ.get("RIGWEAVE_TARGET_START_POLICY", "joint0")
+    motion_alignment_policy = os.environ.get("RIGWEAVE_MOTION_ALIGNMENT_POLICY", "none")
     dataset = DynamicRigManifestDataset(
         args.manifest,
         tokenizer,
@@ -143,6 +144,7 @@ def main() -> int:
         seed=args.seed,
         motion_fps_ratio=env_float("RIGWEAVE_MOTION_FPS_RATIO", 0.7),
         motion_vertex_samples=env_int("RIGWEAVE_MOTION_VERTEX_SAMPLES", 512),
+        motion_alignment_policy=motion_alignment_policy,
         target_active_skin_only=env_bool("RIGWEAVE_TARGET_ACTIVE_SKIN_ONLY", False),
         active_skin_threshold=env_float("RIGWEAVE_ACTIVE_SKIN_THRESHOLD", 1.0e-4),
         target_start_policy=target_start_policy,
@@ -152,7 +154,8 @@ def main() -> int:
     print(
         "[dataloader-check] "
         f"manifest={args.manifest} rows={len(dataset)} sampled={indices} "
-        f"target_root_policy={target_root_policy} target_start_policy={target_start_policy}"
+        f"target_root_policy={target_root_policy} target_start_policy={target_start_policy} "
+        f"motion_alignment_policy={motion_alignment_policy}"
     )
 
     samples = []

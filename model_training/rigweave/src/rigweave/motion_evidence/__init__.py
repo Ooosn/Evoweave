@@ -6,10 +6,22 @@ from .encoder import (
     TopologyLocalMotionEvidence,
     TopologyMotionValueEncoder,
 )
+from .model import (
+    MotionEvidenceDecoderAdapter,
+    MotionEvidenceMemory,
+    MotionEvidenceTeacherForcingOutput,
+    StaticQueryMotionEvidenceConditioner,
+    TopologyMotionEvidenceUniRigAR,
+)
 
 __all__ = [
     "MotionEvidenceCrossAttention",
+    "MotionEvidenceDecoderAdapter",
+    "MotionEvidenceMemory",
+    "MotionEvidenceTeacherForcingOutput",
     "MotionEvidenceValues",
+    "StaticQueryMotionEvidenceConditioner",
     "TopologyLocalMotionEvidence",
+    "TopologyMotionEvidenceUniRigAR",
     "TopologyMotionValueEncoder",
 ]

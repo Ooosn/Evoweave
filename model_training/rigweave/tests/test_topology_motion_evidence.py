@@ -145,3 +145,13 @@ def test_attention_supports_bfloat16_module_on_cuda() -> None:
     assert output.dtype == torch.bfloat16
     assert torch.equal(output[0], prefix[0])
     assert torch.isfinite(output).all()
+
+    encoder = TopologyMotionValueEncoder(hidden_size=32).to(
+        device=device,
+        dtype=torch.bfloat16,
+    )
+    features = torch.rand(2, 5, 8, device=device, dtype=torch.float32)
+    values = encoder(features, confidence)
+    assert values.dtype == torch.bfloat16
+    assert torch.equal(values[0], torch.zeros_like(values[0]))
+    assert torch.isfinite(values).all()

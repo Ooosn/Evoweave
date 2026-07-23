@@ -280,5 +280,6 @@ class TopologyMotionValueEncoder(nn.Module):
             ),
             dim=-1,
         )
-        values = self.network(normalized.to(dtype=torch.float32))
-        return values * confidence[:, None, None]
+        compute_dtype = self.network[0].weight.dtype
+        values = self.network(normalized.to(dtype=compute_dtype))
+        return values * confidence.to(dtype=values.dtype)[:, None, None]

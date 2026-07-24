@@ -421,16 +421,17 @@ def evaluate(
             float((zero_logits.float() - teacher.baseline_logits.float()).abs().max()),
         )
         if row_index < consistency_rows:
-            consistency.append(
-                _generation_consistency(
-                    model,
-                    batch,
-                    memory,
-                    teacher.logits,
-                    teacher.baseline_logits,
-                    prefix_lengths,
+            with torch.autocast("cuda", dtype=amp_dtype):
+                consistency.append(
+                    _generation_consistency(
+                        model,
+                        batch,
+                        memory,
+                        teacher.logits,
+                        teacher.baseline_logits,
+                        prefix_lengths,
+                    )
                 )
-            )
         alignment_loss += float(alignment["attention_alignment_loss"])
         alignment_branch_fraction += float(
             alignment["attention_alignment_branch_valid_fraction"]

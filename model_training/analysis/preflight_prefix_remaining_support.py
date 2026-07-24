@@ -93,6 +93,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--max-grad-norm", type=float, default=1.0)
     parser.add_argument("--support-threshold", type=float, default=0.05)
+    parser.add_argument("--head-checkpoint", type=Path)
+    parser.add_argument("--eval-only", action="store_true")
     parser.add_argument("--seed", type=int, default=20260724)
     parser.add_argument("--amp-dtype", choices=("bf16", "fp16"), default="bf16")
     parser.add_argument("--log-every", type=int, default=50)
@@ -179,6 +181,24 @@ def binary_metrics(labels: np.ndarray, scores: np.ndarray) -> dict[str, float]:
     }
 
 
+def auc_distribution_metrics(
+    values: list[float],
+    prefix: str,
+) -> dict[str, float | int]:
+    array = np.asarray(values, dtype=np.float64)
+    if array.size == 0:
+        return {
+            f"{prefix}_count": 0,
+            f"{prefix}_median": float("nan"),
+            f"{prefix}_q10": float("nan"),
+        }
+    return {
+        f"{prefix}_count": int(array.size),
+        f"{prefix}_median": float(np.median(array)),
+        f"{prefix}_q10": float(np.quantile(array, 0.10)),
+    }
+
+
 @torch.no_grad()
 def frozen_features(
     model: TopologyMotionEvidenceUniRigAR,
@@ -187,7 +207,7 @@ def frozen_features(
     *,
     seed: int,
     amp_dtype: torch.dtype,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[str]]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, list[str]]:
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     refs = model.sample_references(batch)
@@ -200,10 +220,12 @@ def frozen_features(
             refs,
         ).float()
     positions, targets, roles = decision_targets(batch, tokenizer, query_skin)
+    full_support = query_skin[0].sum(dim=-1).clamp(0.0, 1.0)
     return (
         teacher.token_hidden[:, positions].detach(),
         memory.static_tokens.detach(),
         targets.detach(),
+        full_support.detach(),
         roles,
     )
 
@@ -222,17 +244,27 @@ def evaluate(
 ) -> dict[str, Any]:
     head.eval()
     set_probe_modes(model, training=False)
-    controls = ("correct", "anchor_shuffle", "prefix_reverse", "constant_keys")
+    controls = (
+        "correct",
+        "anchor_shuffle",
+        "prefix_shuffle",
+        "prefix_reverse",
+        "constant_keys",
+    )
     labels_by_control: dict[str, list[np.ndarray]] = {name: [] for name in controls}
     scores_by_control: dict[str, list[np.ndarray]] = {name: [] for name in controls}
     per_decision_auc: dict[str, list[float]] = {name: [] for name in controls}
+    active_per_decision_auc: dict[str, list[float]] = {
+        name: [] for name in controls
+    }
+    transition_drop_auc: dict[str, list[float]] = {name: [] for name in controls}
     eos_probabilities: dict[str, list[float]] = {name: [] for name in controls}
     losses: list[float] = []
     rows: list[dict[str, Any]] = []
 
     for row_index, raw_batch in enumerate(loader):
         batch = move_batch(raw_batch, device)
-        prefix, static, targets, roles = frozen_features(
+        prefix, static, targets, full_support, roles = frozen_features(
             model,
             batch,
             tokenizer,
@@ -241,15 +273,20 @@ def evaluate(
         )
         generator = torch.Generator(device=device).manual_seed(seed + 100000 + row_index)
         permutation = torch.randperm(static.shape[1], device=device, generator=generator)
+        prefix_permutation = torch.randperm(
+            prefix.shape[1], device=device, generator=generator
+        )
         inputs = {
             "correct": (prefix, static),
             "anchor_shuffle": (prefix, static[:, permutation]),
+            "prefix_shuffle": (prefix[:, prefix_permutation], static),
             "prefix_reverse": (prefix.flip(dims=(1,)), static),
             "constant_keys": (prefix, torch.zeros_like(static)),
         }
         logits = {name: head(*values)[0] for name, values in inputs.items()}
         losses.append(float(role_balanced_support_loss(logits["correct"], targets, roles)))
         hard = (targets >= support_threshold).cpu().numpy().astype(np.int8)
+        active = (full_support >= support_threshold).cpu().numpy().astype(bool)
         role_array = np.asarray(roles)
         non_eos = role_array != "eos"
         eos = role_array == "eos"
@@ -273,6 +310,36 @@ def evaluate(
                             )
                         )
                     )
+                active_labels = decision_labels[active]
+                if np.unique(active_labels).size >= 2:
+                    active_per_decision_auc[name].append(
+                        float(
+                            roc_auc_score(
+                                active_labels,
+                                probabilities[decision_index, active],
+                            )
+                        )
+                    )
+            for decision_index in range(1, len(roles)):
+                newly_explained = (
+                    (hard[decision_index - 1] == 1)
+                    & (hard[decision_index] == 0)
+                )
+                still_remaining = hard[decision_index] == 1
+                comparison = newly_explained | still_remaining
+                if bool(newly_explained.any()) and bool(still_remaining.any()):
+                    probability_drop = (
+                        probabilities[decision_index - 1]
+                        - probabilities[decision_index]
+                    )
+                    transition_drop_auc[name].append(
+                        float(
+                            roc_auc_score(
+                                newly_explained[comparison].astype(np.int8),
+                                probability_drop[comparison],
+                            )
+                        )
+                    )
             if bool(eos.any()):
                 eos_probabilities[name].extend(
                     probabilities[eos].reshape(-1).tolist()
@@ -290,13 +357,25 @@ def evaluate(
         labels = np.concatenate(labels_by_control[name])
         scores = np.concatenate(scores_by_control[name])
         metrics = binary_metrics(labels, scores)
-        decision_auc = np.asarray(per_decision_auc[name], dtype=np.float64)
         eos_values = np.asarray(eos_probabilities[name], dtype=np.float64)
         metrics.update(
+            auc_distribution_metrics(
+                per_decision_auc[name], "per_decision_auroc"
+            )
+        )
+        metrics.update(
+            auc_distribution_metrics(
+                active_per_decision_auc[name],
+                "active_support_per_decision_auroc",
+            )
+        )
+        metrics.update(
+            auc_distribution_metrics(
+                transition_drop_auc[name], "transition_drop_auroc"
+            )
+        )
+        metrics.update(
             {
-                "per_decision_auroc_count": int(decision_auc.size),
-                "per_decision_auroc_median": float(np.median(decision_auc)),
-                "per_decision_auroc_q10": float(np.quantile(decision_auc, 0.10)),
                 "eos_probability_mean": float(eos_values.mean()),
                 "eos_probability_q90": float(np.quantile(eos_values, 0.90)),
                 "eos_probability_max": float(eos_values.max()),
@@ -308,8 +387,12 @@ def evaluate(
 
 def main() -> None:
     args = parse_args()
-    if args.train_limit <= 0 or args.valid_limit <= 0 or args.steps <= 0:
-        raise ValueError("limits and steps must be positive")
+    if args.train_limit <= 0 or args.valid_limit <= 0:
+        raise ValueError("dataset limits must be positive")
+    if not args.eval_only and args.steps <= 0:
+        raise ValueError("steps must be positive when training")
+    if args.eval_only and args.head_checkpoint is None:
+        raise ValueError("--eval-only requires --head-checkpoint")
     if not 0.0 < args.support_threshold < 1.0:
         raise ValueError("support-threshold must be in (0,1)")
     apply_checkpoint_eval_defaults(args)
@@ -359,14 +442,57 @@ def main() -> None:
         int(model.unirig_ar.hidden_size),
         projection_size=args.projection_size,
     ).to(device)
+    if args.head_checkpoint is not None:
+        checkpoint = torch.load(args.head_checkpoint, map_location=device)
+        head.load_state_dict(checkpoint["head"], strict=True)
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    torch.cuda.reset_peak_memory_stats()
+    started = time.perf_counter()
+    if args.eval_only:
+        after = evaluate(
+            head,
+            model,
+            valid_loader,
+            tokenizer,
+            device,
+            amp_dtype,
+            seed=args.seed + 200000,
+            support_threshold=args.support_threshold,
+        )
+        result = {
+            "probe": {
+                "mode": "eval_only",
+                "valid_limit": args.valid_limit,
+                "projection_size": args.projection_size,
+                "support_threshold": args.support_threshold,
+                "head_checkpoint": str(args.head_checkpoint),
+                "elapsed_seconds": time.perf_counter() - started,
+                "peak_gpu_memory_bytes": int(torch.cuda.max_memory_allocated()),
+                "backbone_trainable_parameters": 0,
+                "head_trainable_parameters": sum(
+                    parameter.numel() for parameter in head.parameters()
+                ),
+            },
+            "after": after,
+        }
+        (args.output_dir / "result.json").write_text(
+            json.dumps(result, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            json.dumps(
+                {"probe": result["probe"], "controls": after["controls"]},
+                indent=2,
+            )
+        )
+        return
+
     optimizer = torch.optim.AdamW(
         head.parameters(),
         lr=args.learning_rate,
         weight_decay=args.weight_decay,
     )
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    torch.cuda.reset_peak_memory_stats()
-    started = time.perf_counter()
     before = evaluate(
         head,
         model,
@@ -388,7 +514,7 @@ def main() -> None:
             iterator = iter(train_loader)
             raw_batch = next(iterator)
         batch = move_batch(raw_batch, device)
-        prefix, static, targets, roles = frozen_features(
+        prefix, static, targets, _, roles = frozen_features(
             model,
             batch,
             tokenizer,

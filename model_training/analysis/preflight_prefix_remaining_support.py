@@ -181,22 +181,33 @@ def binary_metrics(labels: np.ndarray, scores: np.ndarray) -> dict[str, float]:
     }
 
 
+def summarize_auc_distribution(values: list[float]) -> dict[str, float | int]:
+    array = np.asarray(values, dtype=np.float64)
+    if array.size == 0:
+        return {"count": 0, "median": float("nan"), "q10": float("nan")}
+    return {
+        "count": int(array.size),
+        "median": float(np.median(array)),
+        "q10": float(np.quantile(array, 0.10)),
+    }
+
+
 def auc_distribution_metrics(
     values: list[float],
     prefix: str,
 ) -> dict[str, float | int]:
-    array = np.asarray(values, dtype=np.float64)
-    if array.size == 0:
-        return {
-            f"{prefix}_count": 0,
-            f"{prefix}_median": float("nan"),
-            f"{prefix}_q10": float("nan"),
-        }
-    return {
-        f"{prefix}_count": int(array.size),
-        f"{prefix}_median": float(np.median(array)),
-        f"{prefix}_q10": float(np.quantile(array, 0.10)),
-    }
+    summary = summarize_auc_distribution(values)
+    return {f"{prefix}_{key}": value for key, value in summary.items()}
+
+
+def anchor_count_bin(count: int) -> str:
+    if count <= 4:
+        return "1_4"
+    if count <= 16:
+        return "5_16"
+    if count <= 64:
+        return "17_64"
+    return "65_plus"
 
 
 @torch.no_grad()
@@ -258,6 +269,15 @@ def evaluate(
         name: [] for name in controls
     }
     transition_drop_auc: dict[str, list[float]] = {name: [] for name in controls}
+    transition_drop_by_role: dict[str, dict[str, list[float]]] = {
+        name: {role: [] for role in ("continue", "branch")} for name in controls
+    }
+    transition_drop_by_size: dict[str, dict[str, list[float]]] = {
+        name: {
+            size: [] for size in ("1_4", "5_16", "17_64", "65_plus")
+        }
+        for name in controls
+    }
     eos_probabilities: dict[str, list[float]] = {name: [] for name in controls}
     losses: list[float] = []
     rows: list[dict[str, Any]] = []
@@ -332,14 +352,18 @@ def evaluate(
                         probabilities[decision_index - 1]
                         - probabilities[decision_index]
                     )
-                    transition_drop_auc[name].append(
-                        float(
-                            roc_auc_score(
-                                newly_explained[comparison].astype(np.int8),
-                                probability_drop[comparison],
-                            )
+                    drop_auc = float(
+                        roc_auc_score(
+                            newly_explained[comparison].astype(np.int8),
+                            probability_drop[comparison],
                         )
                     )
+                    transition_drop_auc[name].append(drop_auc)
+                    previous_role = roles[decision_index - 1]
+                    if previous_role in transition_drop_by_role[name]:
+                        transition_drop_by_role[name][previous_role].append(drop_auc)
+                    size = anchor_count_bin(int(newly_explained.sum()))
+                    transition_drop_by_size[name][size].append(drop_auc)
             if bool(eos.any()):
                 eos_probabilities[name].extend(
                     probabilities[eos].reshape(-1).tolist()
@@ -374,6 +398,14 @@ def evaluate(
                 transition_drop_auc[name], "transition_drop_auroc"
             )
         )
+        metrics["transition_drop_auroc_by_role"] = {
+            role: summarize_auc_distribution(values)
+            for role, values in transition_drop_by_role[name].items()
+        }
+        metrics["transition_drop_auroc_by_newly_explained_anchors"] = {
+            size: summarize_auc_distribution(values)
+            for size, values in transition_drop_by_size[name].items()
+        }
         metrics.update(
             {
                 "eos_probability_mean": float(eos_values.mean()),

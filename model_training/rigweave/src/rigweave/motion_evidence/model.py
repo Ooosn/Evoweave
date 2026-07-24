@@ -814,7 +814,21 @@ class CoverageAwareTopologyMotionEvidenceUniRigAR(TopologyMotionEvidenceUniRigAR
         ).sum(dim=-1)
         loss_weights = supervised.float() * target_observability
         weight_sum = loss_weights.sum()
-        loss = (per_step_kl * loss_weights).sum() / weight_sum.clamp_min(1.0)
+        branch = supervised & targets.branch_decision_mask
+        regular = supervised & ~targets.branch_decision_mask
+        group_losses = []
+        for mask in (regular, branch):
+            group_weight = (mask.float() * target_observability).sum()
+            if bool(mask.any()) and float(group_weight.detach()) > 0.0:
+                group_losses.append(
+                    (per_step_kl * mask.float() * target_observability).sum()
+                    / group_weight
+                )
+        loss = (
+            torch.stack(group_losses).mean()
+            if group_losses
+            else per_step_kl.new_zeros(())
+        )
 
         attention_entropy = -(mean_attention * mean_attention.log()).sum(dim=-1)
         if mean_attention.shape[-1] > 1:
@@ -833,6 +847,8 @@ class CoverageAwareTopologyMotionEvidenceUniRigAR(TopologyMotionEvidenceUniRigAR
             / weight_sum.clamp_min(1.0),
             "attention_alignment_target_peak": (target_peak * loss_weights).sum()
             / weight_sum.clamp_min(1.0),
+            "attention_alignment_branch_valid_fraction": branch.float().sum()
+            / later_valid_count,
         }
 
     def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:

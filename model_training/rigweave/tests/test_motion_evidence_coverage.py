@@ -99,6 +99,7 @@ def test_prefix_support_distribution_loss_is_finite_and_trains_logits() -> None:
     )
     output["prefix_support_loss"].backward()
     assert torch.isfinite(output["prefix_support_loss"])
+    assert float(output["prefix_support_branch_valid_fraction"]) > 0.0
     assert logits.grad is not None
     assert float(logits.grad.abs().sum()) > 0.0
 

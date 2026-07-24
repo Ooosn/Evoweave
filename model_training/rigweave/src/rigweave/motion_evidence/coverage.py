@@ -15,6 +15,7 @@ class PrefixSupportTargets:
     anchor_distribution: torch.Tensor
     null_probability: torch.Tensor
     valid_mask: torch.BoolTensor
+    branch_decision_mask: torch.BoolTensor
     raw_support: torch.Tensor
 
     @property
@@ -150,6 +151,7 @@ def prefix_support_targets(
         anchor_distribution=anchor_distribution,
         null_probability=null_probability,
         valid_mask=valid_state,
+        branch_decision_mask=branch_mask,
         raw_support=support,
     )
 
@@ -182,13 +184,16 @@ def prefix_support_distribution_loss(
         & predicts_token
         & (positions >= int(static_prefix_steps))
     )
-    terminal = valid & (targets.null_probability > 0.5)
-    supported = valid & ~terminal
+    null_state = valid & (targets.null_probability > 0.5)
+    branch = valid & targets.branch_decision_mask & ~null_state
+    supported = valid & ~targets.branch_decision_mask & ~null_state
     group_losses = []
     if bool(supported.any()):
         group_losses.append(per_position[supported].mean())
-    if bool(terminal.any()):
-        group_losses.append(per_position[terminal].mean())
+    if bool(branch.any()):
+        group_losses.append(per_position[branch].mean())
+    if bool(null_state.any()):
+        group_losses.append(per_position[null_state].mean())
     if not group_losses:
         raise ValueError("no valid prefix support targets")
     loss = torch.stack(group_losses).mean()
@@ -197,13 +202,14 @@ def prefix_support_distribution_loss(
         "prefix_support_loss": loss,
         "prefix_support_valid_fraction": valid.float().mean(),
         "prefix_support_null_probability_supported": (
-            probabilities[..., -1][supported].mean()
-            if bool(supported.any())
+            probabilities[..., -1][supported | branch].mean()
+            if bool((supported | branch).any())
             else loss.new_zeros(())
         ),
         "prefix_support_null_probability_terminal": (
-            probabilities[..., -1][terminal].mean()
-            if bool(terminal.any())
+            probabilities[..., -1][null_state].mean()
+            if bool(null_state.any())
             else loss.new_zeros(())
         ),
+        "prefix_support_branch_valid_fraction": branch.float().mean(),
     }

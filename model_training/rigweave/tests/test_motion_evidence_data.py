@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import torch
 
-from rigweave.motion_evidence.data import _pad_skin_weights, _token_joint_indices
+from rigweave.motion_evidence.data import (
+    _pad_skin_weights,
+    _token_coverage_state,
+    _token_joint_indices,
+)
 
 
 def test_pad_skin_weights_preserves_each_vertex_joint_block() -> None:
@@ -46,3 +50,36 @@ def test_token_joint_indices_cover_chain_and_branch_coordinates() -> None:
         -1,
         -1,
     ]
+
+
+def test_token_coverage_state_tracks_completed_joints_and_branch_decision() -> None:
+    branch = 256
+    eos = 258
+    tokens = torch.tensor(
+        [257, 266, 10, 11, 12, 20, 21, 22, branch, 10, 11, 12, 30, 31, 32, eos]
+    )
+    completed, branch_decision = _token_coverage_state(
+        tokens,
+        torch.tensor([-1, 0, 0]),
+        branch_token=branch,
+        eos_token=eos,
+    )
+    assert completed.tolist() == [
+        -1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        3,
+        -1,
+    ]
+    assert branch_decision.nonzero(as_tuple=False).flatten().tolist() == [7]

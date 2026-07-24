@@ -9,6 +9,7 @@ from torch import nn
 
 from rigweave.dynamic_rig.sampling import TrackableSurfaceReferences
 from rigweave.motion_evidence import (
+    CoverageAwareTopologyMotionEvidenceUniRigAR,
     MotionEvidenceDecoderAdapter,
     MotionEvidenceMemory,
     StaticQueryMotionEvidenceConditioner,
@@ -129,6 +130,14 @@ def _batch(device: torch.device) -> dict[str, torch.Tensor]:
             [[-1, 0, 0, 0, 1, 1, 1, -1, -1]],
             device=device,
         ),
+        "token_completed_joint_counts": torch.tensor(
+            [[-1, 0, 0, 0, 1, 1, 1, 2, -1]],
+            device=device,
+        ),
+        "token_branch_decision_mask": torch.zeros(
+            (1, 9), device=device, dtype=torch.bool
+        ),
+        "joint_count": torch.tensor([2], device=device),
     }
 
 
@@ -438,6 +447,39 @@ def test_training_route_has_nonzero_evidence_and_backbone_gradients() -> None:
     assert torch.isfinite(output["boundary_loss"])
     assert torch.isfinite(output["attention_alignment_loss"])
     assert float(output["attention_alignment_valid_fraction"]) > 0.0
+
+
+def test_coverage_aware_route_trains_support_null_and_evidence_paths() -> None:
+    torch.manual_seed(40)
+    device = torch.device("cpu")
+    batch = _batch(device)
+    model = CoverageAwareTopologyMotionEvidenceUniRigAR(
+        _UniRig(16, _Tokenizer.vocab_size),
+        _SurfaceTokenizer(16),
+        _Tokenizer(),
+        num_surface_samples=8,
+        vertex_samples=4,
+        query_tokens=5,
+        evidence_heads=4,
+        support_projection_size=8,
+    )
+    output = model(batch)
+    output["loss"].backward()
+    support_grad = sum(
+        float(parameter.grad.abs().sum())
+        for parameter in model.evidence_adapter.attention.support_head.parameters()
+        if parameter.grad is not None
+    )
+    evidence_grad = sum(
+        float(parameter.grad.abs().sum())
+        for parameter in model.evidence_adapter.attention.value_projection.parameters()
+        if parameter.grad is not None
+    )
+    assert torch.isfinite(output["loss"])
+    assert torch.isfinite(output["prefix_support_loss"])
+    assert float(output["prefix_support_valid_fraction"]) > 0.0
+    assert support_grad > 0.0
+    assert evidence_grad > 0.0
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is unavailable")

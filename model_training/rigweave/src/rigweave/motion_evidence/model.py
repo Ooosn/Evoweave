@@ -15,7 +15,15 @@ from rigweave.dynamic_rig.sampling import (
     sample_trackable_surface,
 )
 
-from .attention import MotionEvidenceCrossAttention
+from .attention import (
+    CoverageAwareMotionEvidenceCrossAttention,
+    MotionEvidenceCrossAttention,
+)
+from .coverage import (
+    PrefixSupportTargets,
+    prefix_support_distribution_loss,
+    prefix_support_targets,
+)
 from .encoder import (
     MotionEvidenceValues,
     TopologyLocalMotionEvidence,
@@ -309,6 +317,38 @@ class MotionEvidenceDecoderAdapter(nn.Module):
         if zero_rows.any():
             logits = torch.where(zero_rows[:, None, None], baseline_logits, logits)
         return logits[:, -1]
+
+
+class CoverageAwareMotionEvidenceDecoderAdapter(MotionEvidenceDecoderAdapter):
+    """Keep the baseline adapter contract while adding soft support and null."""
+
+    def __init__(
+        self,
+        hidden_size: int,
+        heads: int,
+        *,
+        residual_scale: float = 0.1,
+        static_prefix_steps: int = 4,
+        coverage_bias_strength: float = 0.5,
+        support_projection_size: int = 128,
+    ) -> None:
+        super().__init__(
+            hidden_size,
+            heads,
+            residual_scale=residual_scale,
+            static_prefix_steps=static_prefix_steps,
+        )
+        source_attention = self.attention
+        coverage_attention = CoverageAwareMotionEvidenceCrossAttention(
+            hidden_size,
+            heads,
+            residual_scale=residual_scale,
+            coverage_bias_strength=coverage_bias_strength,
+            support_projection_size=support_projection_size,
+            detach_static_keys=True,
+        )
+        coverage_attention.load_attention_state(source_attention)
+        self.attention = coverage_attention
 
 
 class TopologyMotionEvidenceUniRigAR(nn.Module):
@@ -641,5 +681,194 @@ class TopologyMotionEvidenceUniRigAR(nn.Module):
             + self.boundary_loss_weight * boundary["boundary_loss"]
             + self.attention_alignment_loss_weight
             * alignment["attention_alignment_loss"]
+        )
+        return out
+
+
+class CoverageAwareTopologyMotionEvidenceUniRigAR(TopologyMotionEvidenceUniRigAR):
+    """Isolated route that refreshes motion reads from the current prefix."""
+
+    def __init__(
+        self,
+        *args: Any,
+        prefix_support_loss_weight: float = 1.0,
+        coverage_bias_strength: float = 0.5,
+        support_projection_size: int = 128,
+        **kwargs: Any,
+    ) -> None:
+        if prefix_support_loss_weight < 0.0:
+            raise ValueError("prefix_support_loss_weight must be non-negative")
+        super().__init__(*args, **kwargs)
+        old_adapter = self.evidence_adapter
+        old_attention = old_adapter.attention
+        heads = int(old_attention.cross_attention.num_heads)
+        self.evidence_adapter = CoverageAwareMotionEvidenceDecoderAdapter(
+            int(self.unirig_ar.hidden_size),
+            heads,
+            residual_scale=old_attention.residual_scale,
+            static_prefix_steps=old_adapter.static_prefix_steps,
+            coverage_bias_strength=coverage_bias_strength,
+            support_projection_size=support_projection_size,
+        )
+        self.evidence_adapter.attention.load_attention_state(old_attention)
+        self.prefix_support_loss_weight = float(prefix_support_loss_weight)
+
+    def _prefix_support_targets(
+        self,
+        batch: dict[str, Any],
+        refs: TrackableSurfaceReferences,
+    ) -> PrefixSupportTargets:
+        required = (
+            "target_skin_weights",
+            "token_joint_indices",
+            "token_completed_joint_counts",
+            "token_branch_decision_mask",
+            "joint_count",
+        )
+        missing = [name for name in required if name not in batch]
+        if missing:
+            raise KeyError(f"coverage-aware training lacks fields: {missing}")
+        query_skin = query_aligned_skin_weights(
+            batch["target_skin_weights"],
+            batch["faces"],
+            refs,
+        )
+        return prefix_support_targets(
+            query_skin,
+            batch["token_joint_indices"],
+            batch["token_completed_joint_counts"],
+            batch["token_branch_decision_mask"],
+            batch["joint_count"],
+        )
+
+    def prefix_support_auxiliary_loss(
+        self,
+        batch: dict[str, Any],
+        refs: TrackableSurfaceReferences,
+        memory: MotionEvidenceMemory,
+        token_hidden: torch.Tensor,
+        *,
+        targets: PrefixSupportTargets | None = None,
+    ) -> dict[str, torch.Tensor]:
+        if targets is None:
+            targets = self._prefix_support_targets(batch, refs)
+        logits = self.evidence_adapter.attention.support_logits(
+            token_hidden,
+            memory.static_tokens,
+        )
+        return prefix_support_distribution_loss(
+            logits,
+            targets,
+            batch["attention_mask"],
+            static_prefix_steps=self.evidence_adapter.static_prefix_steps,
+        )
+
+    def coverage_attention_alignment_loss(
+        self,
+        batch: dict[str, Any],
+        memory: MotionEvidenceMemory,
+        token_hidden: torch.Tensor,
+        targets: PrefixSupportTargets,
+        *,
+        eps: float = 1.0e-8,
+    ) -> dict[str, torch.Tensor]:
+        """Align evidence reads with the same branch-aware support contract."""
+
+        attention = self.evidence_adapter.attention.attention_weights(
+            token_hidden,
+            memory.static_tokens,
+            memory.motion_values,
+        )
+        expected_shape = (
+            token_hidden.shape[0],
+            token_hidden.shape[1],
+            memory.static_tokens.shape[1],
+        )
+        if attention.shape[0] != expected_shape[0] or attention.shape[2:] != expected_shape[1:]:
+            raise RuntimeError(
+                "attention weights are not prefix-to-query aligned: "
+                f"got {tuple(attention.shape)}, expected (*,{expected_shape[1]},{expected_shape[2]})"
+            )
+        if targets.anchor_distribution.shape != expected_shape:
+            raise RuntimeError(
+                "prefix support targets are not prefix-to-query aligned: "
+                f"got {tuple(targets.anchor_distribution.shape)}, expected {expected_shape}"
+            )
+
+        mean_attention = attention.float().mean(dim=1).clamp_min(eps)
+        target_distribution = targets.anchor_distribution.float()
+        per_step_kl = (
+            target_distribution
+            * (target_distribution.clamp_min(eps).log() - mean_attention.log())
+        ).sum(dim=-1)
+
+        attention_mask = batch["attention_mask"]
+        predicts_token = torch.zeros_like(targets.valid_mask)
+        predicts_token[:, :-1] = attention_mask[:, 1:] != 0
+        positions = torch.arange(token_hidden.shape[1], device=token_hidden.device)[None]
+        later_position = positions >= self.evidence_adapter.static_prefix_steps
+        has_support = targets.raw_support.sum(dim=-1) > eps
+        supervised = targets.valid_mask & predicts_token & later_position & has_support
+        target_observability = (
+            target_distribution * memory.anchor_confidence.float()[:, None, :]
+        ).sum(dim=-1)
+        loss_weights = supervised.float() * target_observability
+        weight_sum = loss_weights.sum()
+        loss = (per_step_kl * loss_weights).sum() / weight_sum.clamp_min(1.0)
+
+        attention_entropy = -(mean_attention * mean_attention.log()).sum(dim=-1)
+        if mean_attention.shape[-1] > 1:
+            attention_entropy = attention_entropy / torch.log(
+                mean_attention.new_tensor(float(mean_attention.shape[-1]))
+            )
+        target_peak = target_distribution.max(dim=-1).values
+        later_valid_count = (predicts_token & later_position).sum().clamp_min(1)
+        return {
+            "attention_alignment_loss": loss,
+            "attention_alignment_valid_fraction": supervised.float().sum()
+            / later_valid_count,
+            "attention_alignment_entropy": (
+                attention_entropy * loss_weights
+            ).sum()
+            / weight_sum.clamp_min(1.0),
+            "attention_alignment_target_peak": (target_peak * loss_weights).sum()
+            / weight_sum.clamp_min(1.0),
+        }
+
+    def forward(self, batch: dict[str, Any]) -> dict[str, torch.Tensor]:
+        refs = self.sample_references(batch)
+        memory = self.build_memory(batch, refs=refs)
+        teacher = self.teacher_forcing(batch, memory=memory)
+        out = self._token_losses(
+            teacher.logits,
+            batch["input_ids"],
+            batch["attention_mask"],
+        )
+        hidden_delta = teacher.refined_hidden.float() - teacher.token_hidden.float()
+        out["evidence_hidden_delta_rms"] = torch.sqrt(hidden_delta.square().mean())
+        boundary = self.boundary_auxiliary_loss(batch, refs, memory)
+        out.update(boundary)
+        targets = self._prefix_support_targets(batch, refs)
+        alignment = self.coverage_attention_alignment_loss(
+            batch,
+            memory,
+            teacher.token_hidden,
+            targets,
+        )
+        out.update(alignment)
+        support = self.prefix_support_auxiliary_loss(
+            batch,
+            refs,
+            memory,
+            teacher.token_hidden,
+            targets=targets,
+        )
+        out.update(support)
+        out["loss"] = (
+            out["ce_loss"]
+            + self.boundary_loss_weight * boundary["boundary_loss"]
+            + self.attention_alignment_loss_weight
+            * alignment["attention_alignment_loss"]
+            + self.prefix_support_loss_weight * support["prefix_support_loss"]
         )
         return out

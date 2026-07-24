@@ -278,9 +278,21 @@ def evaluate(
         }
         for name in controls
     }
+    transition_drop_by_role_size: dict[
+        str, dict[str, dict[str, list[float]]]
+    ] = {
+        name: {
+            role: {
+                size: [] for size in ("1_4", "5_16", "17_64", "65_plus")
+            }
+            for role in ("continue", "branch")
+        }
+        for name in controls
+    }
     eos_probabilities: dict[str, list[float]] = {name: [] for name in controls}
     losses: list[float] = []
     rows: list[dict[str, Any]] = []
+    transition_details: list[dict[str, Any]] = []
 
     for row_index, raw_batch in enumerate(loader):
         batch = move_batch(raw_batch, device)
@@ -364,9 +376,35 @@ def evaluate(
                         transition_drop_by_role[name][previous_role].append(drop_auc)
                     size = anchor_count_bin(int(newly_explained.sum()))
                     transition_drop_by_size[name][size].append(drop_auc)
+                    if previous_role in transition_drop_by_role_size[name]:
+                        transition_drop_by_role_size[name][previous_role][size].append(
+                            drop_auc
+                        )
+                    if name == "correct":
+                        transition_details.append(
+                            {
+                                "asset_index": row_index,
+                                "path": raw_batch["path"][0],
+                                "decision_index": decision_index,
+                                "role": previous_role,
+                                "newly_explained_anchor_count": int(
+                                    newly_explained.sum()
+                                ),
+                                "still_remaining_anchor_count": int(
+                                    still_remaining.sum()
+                                ),
+                                "drop_auroc": drop_auc,
+                            }
+                        )
             if bool(eos.any()):
                 eos_probabilities[name].extend(
                     probabilities[eos].reshape(-1).tolist()
+                )
+                row_payload[f"{name}_eos_mean_probability"] = float(
+                    probabilities[eos].mean()
+                )
+                row_payload[f"{name}_eos_max_probability"] = float(
+                    probabilities[eos].max()
                 )
             row_payload[f"{name}_mean_probability"] = float(probabilities.mean())
         rows.append(row_payload)
@@ -376,6 +414,7 @@ def evaluate(
         "role_balanced_loss": float(np.mean(losses)),
         "controls": {},
         "details": rows,
+        "transition_details": transition_details,
     }
     for name in controls:
         labels = np.concatenate(labels_by_control[name])
@@ -405,6 +444,13 @@ def evaluate(
         metrics["transition_drop_auroc_by_newly_explained_anchors"] = {
             size: summarize_auc_distribution(values)
             for size, values in transition_drop_by_size[name].items()
+        }
+        metrics["transition_drop_auroc_by_role_and_newly_explained_anchors"] = {
+            role: {
+                size: summarize_auc_distribution(values)
+                for size, values in role_values.items()
+            }
+            for role, role_values in transition_drop_by_role_size[name].items()
         }
         metrics.update(
             {

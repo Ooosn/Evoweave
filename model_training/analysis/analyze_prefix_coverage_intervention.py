@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+from dataclasses import replace
 from pathlib import Path
 import sys
 from typing import Any
@@ -118,6 +119,33 @@ def oracle_coverage_logits(
     return model.evidence_adapter.project_hidden(model.transformer, refined)[:, 0]
 
 
+def value_mask_logits(
+    model: TopologyMotionEvidenceUniRigAR,
+    hidden: torch.Tensor,
+    memory: MotionEvidenceMemory,
+    *,
+    position: int,
+    value_mask: torch.Tensor,
+) -> torch.Tensor:
+    """Keep the learned attention addresses while attenuating covered values."""
+
+    if value_mask.shape != (memory.motion_values.shape[1],):
+        raise ValueError("value_mask must identify every evidence anchor")
+    masked = replace(
+        memory,
+        motion_values=memory.motion_values * value_mask[None, :, None].to(
+            dtype=memory.motion_values.dtype
+        ),
+    )
+    logits, _ = model.evidence_adapter.logits_from_hidden(
+        model.transformer,
+        hidden,
+        masked,
+        torch.tensor([position], device=hidden.device),
+    )
+    return logits[:, 0]
+
+
 def summarize(values: list[float]) -> dict[str, float]:
     array = np.asarray(values, dtype=np.float64)
     return {
@@ -136,6 +164,10 @@ def summarize_role(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "current_corrupt_nll",
         "coverage_normal_nll",
         "coverage_corrupt_nll",
+        "hard_value_normal_nll",
+        "hard_value_corrupt_nll",
+        "soft_value_normal_nll",
+        "soft_value_corrupt_nll",
     )
     result: dict[str, Any] = {
         name: summarize([float(row[name]) for row in rows]) for name in metrics
@@ -144,25 +176,25 @@ def summarize_role(rows: list[dict[str, Any]]) -> dict[str, Any]:
     def gap(left: str, right: str) -> list[float]:
         return [float(row[left]) - float(row[right]) for row in rows]
 
-    current_zero_gap = gap("zero_nll", "current_normal_nll")
-    current_corrupt_gap = gap("current_corrupt_nll", "current_normal_nll")
-    coverage_zero_gap = gap("zero_nll", "coverage_normal_nll")
-    coverage_corrupt_gap = gap("coverage_corrupt_nll", "coverage_normal_nll")
-    coverage_vs_current = gap("current_normal_nll", "coverage_normal_nll")
-    result["gaps"] = {
-        "current_zero_minus_normal": summarize(current_zero_gap),
-        "current_corrupt_minus_normal": summarize(current_corrupt_gap),
-        "coverage_zero_minus_normal": summarize(coverage_zero_gap),
-        "coverage_corrupt_minus_normal": summarize(coverage_corrupt_gap),
-        "current_minus_coverage_normal": summarize(coverage_vs_current),
-        "coverage_win_rate_vs_zero": float(np.mean(np.asarray(coverage_zero_gap) > 0)),
-        "coverage_win_rate_vs_corrupt": float(
-            np.mean(np.asarray(coverage_corrupt_gap) > 0)
-        ),
-        "coverage_win_rate_vs_current": float(
-            np.mean(np.asarray(coverage_vs_current) > 0)
-        ),
+    result["gaps"] = {}
+    variants = {
+        "current": ("current_normal_nll", "current_corrupt_nll"),
+        "keymask_null": ("coverage_normal_nll", "coverage_corrupt_nll"),
+        "hard_value": ("hard_value_normal_nll", "hard_value_corrupt_nll"),
+        "soft_value": ("soft_value_normal_nll", "soft_value_corrupt_nll"),
     }
+    for name, (normal_name, corrupt_name) in variants.items():
+        zero_gap = gap("zero_nll", normal_name)
+        corrupt_gap = gap(corrupt_name, normal_name)
+        current_gap = gap("current_normal_nll", normal_name)
+        result["gaps"][name] = {
+            "zero_minus_normal": summarize(zero_gap),
+            "corrupt_minus_normal": summarize(corrupt_gap),
+            "current_minus_variant": summarize(current_gap),
+            "win_rate_vs_zero": float(np.mean(np.asarray(zero_gap) > 0)),
+            "win_rate_vs_corrupt": float(np.mean(np.asarray(corrupt_gap) > 0)),
+            "win_rate_vs_current": float(np.mean(np.asarray(current_gap) > 0)),
+        }
     return result
 
 
@@ -209,7 +241,11 @@ def main() -> None:
     set_probe_modes(model, training=False)
 
     rows: list[dict[str, Any]] = []
-    eos_logit_max_abs_diff = 0.0
+    eos_logit_max_abs_diff = {
+        "keymask_null": 0.0,
+        "hard_value": 0.0,
+        "soft_value": 0.0,
+    }
     for row_index, raw_batch in enumerate(loader):
         batch = move_batch(raw_batch, device)
         reference_seed = args.seed + args.reference_seed_offset + row_index
@@ -275,16 +311,47 @@ def main() -> None:
                 corrupted,
                 active_anchors=active,
             )
+            hard_mask = active.float()
+            soft_mask = remaining_support.clamp(0.0, 1.0)
+            hard_value_normal_logits = value_mask_logits(
+                model,
+                teacher.token_hidden[:, position : position + 1],
+                memory,
+                position=position,
+                value_mask=hard_mask,
+            )
+            hard_value_corrupt_logits = value_mask_logits(
+                model,
+                teacher.token_hidden[:, position : position + 1],
+                corrupted,
+                position=position,
+                value_mask=hard_mask,
+            )
+            soft_value_normal_logits = value_mask_logits(
+                model,
+                teacher.token_hidden[:, position : position + 1],
+                memory,
+                position=position,
+                value_mask=soft_mask,
+            )
+            soft_value_corrupt_logits = value_mask_logits(
+                model,
+                teacher.token_hidden[:, position : position + 1],
+                corrupted,
+                position=position,
+                value_mask=soft_mask,
+            )
             if decision.role == "eos":
-                eos_logit_max_abs_diff = max(
-                    eos_logit_max_abs_diff,
-                    float(
-                        (
-                            normal_coverage_logits
-                            - zero_logits[:, position]
-                        ).abs().max()
-                    ),
-                )
+                candidates = {
+                    "keymask_null": normal_coverage_logits,
+                    "hard_value": hard_value_normal_logits,
+                    "soft_value": soft_value_normal_logits,
+                }
+                for name, candidate in candidates.items():
+                    eos_logit_max_abs_diff[name] = max(
+                        eos_logit_max_abs_diff[name],
+                        float((candidate - zero_logits[:, position]).abs().max()),
+                    )
             rows.append(
                 {
                     "asset_index": row_index,
@@ -308,6 +375,18 @@ def main() -> None:
                     "coverage_corrupt_nll": token_nll(
                         corrupt_coverage_logits, label
                     ),
+                    "hard_value_normal_nll": token_nll(
+                        hard_value_normal_logits, label
+                    ),
+                    "hard_value_corrupt_nll": token_nll(
+                        hard_value_corrupt_logits, label
+                    ),
+                    "soft_value_normal_nll": token_nll(
+                        soft_value_normal_logits, label
+                    ),
+                    "soft_value_corrupt_nll": token_nll(
+                        soft_value_corrupt_logits, label
+                    ),
                 }
             )
         print(
@@ -326,7 +405,7 @@ def main() -> None:
         "dataset_seed": args.seed,
         "reference_seed_offset": args.reference_seed_offset,
         "residual_scale": args.residual_scale,
-        "eos_coverage_logit_max_abs_diff_vs_zero": eos_logit_max_abs_diff,
+        "eos_variant_logit_max_abs_diff_vs_zero": eos_logit_max_abs_diff,
         "roles": {
             role: summarize_role([row for row in rows if row["role"] == role])
             for role in ("branch", "eos")

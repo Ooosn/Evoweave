@@ -49,8 +49,24 @@ from rigweave.motion_evidence import (  # noqa: E402
 )
 
 
-CONTROLS = ("normal", "legacy", "zero", "corrupt")
-REGIONS = ("all", "later", "continue", "branch", "eos")
+CONTROLS = (
+    "normal",
+    "prior_only",
+    "null_only",
+    "legacy",
+    "zero",
+    "corrupt",
+)
+REGIONS = (
+    "all",
+    "later",
+    "continue",
+    "branch",
+    "eos",
+    "sequential_child_coord",
+    "branch_parent_coord",
+    "branch_child_coord",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -248,6 +264,42 @@ def _logits_from_adapter(
     return logits
 
 
+def _coverage_ablation_logits(
+    model: CoverageAwareTopologyMotionEvidenceUniRigAR,
+    teacher: Any,
+    memory: Any,
+    *,
+    coverage_bias_strength: float,
+    disable_null: bool,
+) -> torch.Tensor:
+    attention = model.evidence_adapter.attention
+    original_strength = attention.coverage_bias_strength
+    null_weight = attention.support_head.null_projection.weight
+    null_bias = attention.support_head.null_projection.bias
+    saved_weight = null_weight.detach().clone() if disable_null else None
+    saved_bias = null_bias.detach().clone() if disable_null else None
+    try:
+        attention.coverage_bias_strength = float(coverage_bias_strength)
+        if disable_null:
+            with torch.no_grad():
+                null_weight.zero_()
+                null_bias.fill_(-50.0)
+        return _logits_from_adapter(
+            model.transformer,
+            model.evidence_adapter,
+            teacher,
+            memory,
+        )
+    finally:
+        attention.coverage_bias_strength = original_strength
+        if disable_null:
+            if saved_weight is None or saved_bias is None:
+                raise RuntimeError("null ablation did not preserve its parameters")
+            with torch.no_grad():
+                null_weight.copy_(saved_weight)
+                null_bias.copy_(saved_bias)
+
+
 def _region_losses(
     logits: torch.Tensor,
     batch: dict[str, Any],
@@ -271,6 +323,9 @@ def _region_losses(
         "continue": torch.zeros_like(valid),
         "branch": torch.zeros_like(valid),
         "eos": torch.zeros_like(valid),
+        "sequential_child_coord": torch.zeros_like(valid),
+        "branch_parent_coord": torch.zeros_like(valid),
+        "branch_child_coord": torch.zeros_like(valid),
     }
     batch_size = int(logits.shape[0])
     for batch_index in range(batch_size):
@@ -284,6 +339,29 @@ def _region_losses(
         )
         for decision in decisions:
             masks[decision.role][batch_index, decision.prediction_position] = True
+        cursor = 2
+        parents = [
+            int(value)
+            for value in batch["target_parents"][batch_index, :joint_count].tolist()
+        ]
+        for joint_index, parent in enumerate(parents):
+            is_branch = joint_index > 0 and parent != joint_index - 1
+            if is_branch:
+                cursor += 1
+                masks["branch_parent_coord"][
+                    batch_index, cursor - 1 : cursor + 2
+                ] = True
+                cursor += 3
+                masks["branch_child_coord"][
+                    batch_index, cursor - 1 : cursor + 2
+                ] = True
+                cursor += 3
+            else:
+                if joint_index > 0:
+                    masks["sequential_child_coord"][
+                        batch_index, cursor - 1 : cursor + 2
+                    ] = True
+                cursor += 3
 
     def reduce(mask: torch.Tensor) -> tuple[torch.Tensor, int]:
         count = int(mask.sum().item())
@@ -388,6 +466,7 @@ def evaluate(
     details: list[dict[str, Any]] = []
     root_logit_max_abs_diff = 0.0
     zero_logit_max_abs_diff = 0.0
+    legacy_custom_logit_max_abs_diff = 0.0
     consistency: list[dict[str, dict[str, float]]] = []
     alignment_loss = 0.0
     alignment_branch_fraction = 0.0
@@ -421,6 +500,27 @@ def evaluate(
                 teacher,
                 memory,
             )
+            prior_only_logits = _coverage_ablation_logits(
+                model,
+                teacher,
+                memory,
+                coverage_bias_strength=model.evidence_adapter.attention.coverage_bias_strength,
+                disable_null=True,
+            )
+            null_only_logits = _coverage_ablation_logits(
+                model,
+                teacher,
+                memory,
+                coverage_bias_strength=0.0,
+                disable_null=False,
+            )
+            ungated_custom_logits = _coverage_ablation_logits(
+                model,
+                teacher,
+                memory,
+                coverage_bias_strength=0.0,
+                disable_null=True,
+            )
             zero_logits = _logits_from_adapter(
                 model.transformer,
                 model.evidence_adapter,
@@ -435,6 +535,8 @@ def evaluate(
             )
             logits_by_control = {
                 "normal": teacher.logits,
+                "prior_only": prior_only_logits,
+                "null_only": null_only_logits,
                 "legacy": legacy_logits,
                 "zero": zero_logits,
                 "corrupt": corrupt_logits,
@@ -458,14 +560,13 @@ def evaluate(
                 weighted_loss[control][region] += float(loss) * count
                 if control == "normal":
                     counts[region] += count
-        support_rows.append(
-            _support_statistics(
-                support_logits,
-                targets,
-                batch["attention_mask"],
-                static_prefix_steps=model.evidence_adapter.static_prefix_steps,
-            )
+        support_row = _support_statistics(
+            support_logits,
+            targets,
+            batch["attention_mask"],
+            static_prefix_steps=model.evidence_adapter.static_prefix_steps,
         )
+        support_rows.append(support_row)
         root_steps = min(model.evidence_adapter.static_prefix_steps, teacher.logits.shape[1])
         if root_steps:
             root_logit_max_abs_diff = max(
@@ -480,6 +581,10 @@ def evaluate(
         zero_logit_max_abs_diff = max(
             zero_logit_max_abs_diff,
             float((zero_logits.float() - teacher.baseline_logits.float()).abs().max()),
+        )
+        legacy_custom_logit_max_abs_diff = max(
+            legacy_custom_logit_max_abs_diff,
+            float((legacy_logits.float() - ungated_custom_logits.float()).abs().max()),
         )
         if row_index < consistency_rows:
             with torch.autocast("cuda", dtype=amp_dtype):
@@ -506,6 +611,7 @@ def evaluate(
                 "joint_count": int(raw_batch["joint_count"][0]),
                 "confidence": float(memory.confidence[0]),
                 "motion_q90_rms": float(memory.raw_evidence.example_motion_q90_rms[0]),
+                "support": support_row,
                 "loss": row_loss,
                 "branch_corrupt_minus_normal": (
                     row_loss["corrupt"]["branch"] - row_loss["normal"]["branch"]
@@ -544,13 +650,19 @@ def evaluate(
             "later_vs_corrupt": mean_loss["corrupt"]["later"] - mean_loss["normal"]["later"],
             "later_vs_zero": mean_loss["zero"]["later"] - mean_loss["normal"]["later"],
             "later_vs_legacy": mean_loss["legacy"]["later"] - mean_loss["normal"]["later"],
+            "later_vs_prior_only": mean_loss["prior_only"]["later"] - mean_loss["normal"]["later"],
+            "later_vs_null_only": mean_loss["null_only"]["later"] - mean_loss["normal"]["later"],
             "branch_vs_corrupt": mean_loss["corrupt"]["branch"] - mean_loss["normal"]["branch"],
             "branch_vs_zero": mean_loss["zero"]["branch"] - mean_loss["normal"]["branch"],
             "branch_vs_legacy": mean_loss["legacy"]["branch"] - mean_loss["normal"]["branch"],
+            "branch_vs_prior_only": mean_loss["prior_only"]["branch"] - mean_loss["normal"]["branch"],
+            "branch_vs_null_only": mean_loss["null_only"]["branch"] - mean_loss["normal"]["branch"],
             "continue_vs_corrupt": mean_loss["corrupt"]["continue"] - mean_loss["normal"]["continue"],
             "continue_vs_legacy": mean_loss["legacy"]["continue"] - mean_loss["normal"]["continue"],
             "eos_harm_vs_zero": mean_loss["normal"]["eos"] - mean_loss["zero"]["eos"],
             "eos_improvement_vs_legacy": mean_loss["legacy"]["eos"] - mean_loss["normal"]["eos"],
+            "eos_improvement_vs_prior_only": mean_loss["prior_only"]["eos"] - mean_loss["normal"]["eos"],
+            "eos_improvement_vs_null_only": mean_loss["null_only"]["eos"] - mean_loss["normal"]["eos"],
         },
         "branch_normal_win_rate_vs_corrupt": (
             sum(row["branch_corrupt_minus_normal"] > 0.0 for row in branch_rows)
@@ -562,6 +674,7 @@ def evaluate(
         },
         "root_logit_max_abs_diff": root_logit_max_abs_diff,
         "zero_logit_max_abs_diff": zero_logit_max_abs_diff,
+        "legacy_custom_logit_max_abs_diff": legacy_custom_logit_max_abs_diff,
         "query_tokens_all_1024": query_tokens_all_1024,
         "attention_alignment_loss": alignment_loss / max(len(details), 1),
         "attention_alignment_branch_valid_fraction": (
@@ -685,6 +798,7 @@ def main() -> None:
                 "eos_not_harmed": evaluation["normal_advantage"]["eos_harm_vs_zero"] <= 0.02,
                 "eos_improves_legacy": evaluation["normal_advantage"]["eos_improvement_vs_legacy"] > 0.0,
                 "zero_motion_exact_noop": evaluation["zero_logit_max_abs_diff"] == 0.0,
+                "custom_attention_matches_legacy": evaluation["legacy_custom_logit_max_abs_diff"] <= 2.0e-6,
                 "root_exact": evaluation["root_logit_max_abs_diff"] == 0.0,
                 "query_tokens_all_1024": evaluation["query_tokens_all_1024"],
                 "teacher_generation_consistent": evaluation["teacher_generation_max_abs_diff"] <= 0.02,
@@ -848,6 +962,7 @@ def main() -> None:
             "eos_not_harmed": after["normal_advantage"]["eos_harm_vs_zero"] <= 0.02,
             "eos_improves_legacy": after["normal_advantage"]["eos_improvement_vs_legacy"] > 0.0,
             "zero_motion_exact_noop": after["zero_logit_max_abs_diff"] == 0.0,
+            "custom_attention_matches_legacy": after["legacy_custom_logit_max_abs_diff"] <= 2.0e-6,
             "root_exact": after["root_logit_max_abs_diff"] == 0.0,
             "query_tokens_all_1024": after["query_tokens_all_1024"],
             "teacher_generation_consistent": after["teacher_generation_max_abs_diff"] <= 0.02,

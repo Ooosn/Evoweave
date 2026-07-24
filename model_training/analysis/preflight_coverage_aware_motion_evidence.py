@@ -53,6 +53,8 @@ CONTROLS = (
     "normal",
     "prior_only",
     "null_only",
+    "routed_prior",
+    "routed_corrupt",
     "legacy",
     "zero",
     "corrupt",
@@ -300,6 +302,67 @@ def _coverage_ablation_logits(
                 null_bias.copy_(saved_bias)
 
 
+def _topology_decision_mask(
+    batch: dict[str, Any],
+    tokenizer: Any,
+    token_length: int,
+) -> torch.BoolTensor:
+    mask = torch.zeros(
+        (batch["input_ids"].shape[0], token_length),
+        device=batch["input_ids"].device,
+        dtype=torch.bool,
+    )
+    for batch_index in range(mask.shape[0]):
+        joint_count = int(batch["joint_count"][batch_index])
+        valid_tokens = int(batch["attention_mask"][batch_index].sum())
+        decisions = parse_prefix_decisions(
+            batch["input_ids"][batch_index, :valid_tokens],
+            batch["target_parents"][batch_index, :joint_count],
+            branch_token=int(tokenizer.token_id_branch),
+            eos_token=int(tokenizer.eos),
+        )
+        for decision in decisions:
+            mask[batch_index, decision.prediction_position] = True
+    return mask
+
+
+def _route_action_group_probabilities(
+    baseline_logits: torch.Tensor,
+    evidence_logits: torch.Tensor,
+    decision_mask: torch.BoolTensor,
+    tokenizer: Any,
+) -> torch.Tensor:
+    """Use evidence only between action groups, preserving within-group logits."""
+
+    if baseline_logits.shape != evidence_logits.shape:
+        raise ValueError("baseline and evidence logits must have identical shape")
+    if decision_mask.shape != baseline_logits.shape[:2]:
+        raise ValueError("decision mask must identify every causal hidden position")
+    vocab_size = baseline_logits.shape[-1]
+    token_groups = torch.full(
+        (vocab_size,),
+        3,
+        device=baseline_logits.device,
+        dtype=torch.long,
+    )
+    token_groups[: int(tokenizer.num_discrete)] = 0
+    token_groups[int(tokenizer.token_id_branch)] = 1
+    token_groups[int(tokenizer.eos)] = 2
+    baseline_f = baseline_logits.float()
+    evidence_f = evidence_logits.float()
+    group_delta = baseline_f.new_zeros((*baseline_logits.shape[:-1], 4))
+    for group in range(4):
+        selected = token_groups == group
+        if bool(selected.any()):
+            group_delta[..., group] = (
+                torch.logsumexp(evidence_f[..., selected], dim=-1)
+                - torch.logsumexp(baseline_f[..., selected], dim=-1)
+            )
+    token_delta = group_delta[..., token_groups]
+    routed = baseline_f + decision_mask[..., None].float() * token_delta
+    return routed.to(dtype=baseline_logits.dtype)
+
+
 def _region_losses(
     logits: torch.Tensor,
     batch: dict[str, Any],
@@ -521,6 +584,17 @@ def evaluate(
                 coverage_bias_strength=0.0,
                 disable_null=True,
             )
+            corrupt_memory = memory.controlled(
+                "corrupt_correspondence",
+                generator=generator,
+            )
+            corrupt_prior_only_logits = _coverage_ablation_logits(
+                model,
+                teacher,
+                corrupt_memory,
+                coverage_bias_strength=model.evidence_adapter.attention.coverage_bias_strength,
+                disable_null=True,
+            )
             zero_logits = _logits_from_adapter(
                 model.transformer,
                 model.evidence_adapter,
@@ -531,12 +605,31 @@ def evaluate(
                 model.transformer,
                 model.evidence_adapter,
                 teacher,
-                memory.controlled("corrupt_correspondence", generator=generator),
+                corrupt_memory,
+            )
+            decision_mask = _topology_decision_mask(
+                batch,
+                tokenizer,
+                teacher.baseline_logits.shape[1],
+            )
+            routed_prior_logits = _route_action_group_probabilities(
+                teacher.baseline_logits,
+                prior_only_logits,
+                decision_mask,
+                tokenizer,
+            )
+            routed_corrupt_logits = _route_action_group_probabilities(
+                teacher.baseline_logits,
+                corrupt_prior_only_logits,
+                decision_mask,
+                tokenizer,
             )
             logits_by_control = {
                 "normal": teacher.logits,
                 "prior_only": prior_only_logits,
                 "null_only": null_only_logits,
+                "routed_prior": routed_prior_logits,
+                "routed_corrupt": routed_corrupt_logits,
                 "legacy": legacy_logits,
                 "zero": zero_logits,
                 "corrupt": corrupt_logits,
@@ -663,6 +756,17 @@ def evaluate(
             "eos_improvement_vs_legacy": mean_loss["legacy"]["eos"] - mean_loss["normal"]["eos"],
             "eos_improvement_vs_prior_only": mean_loss["prior_only"]["eos"] - mean_loss["normal"]["eos"],
             "eos_improvement_vs_null_only": mean_loss["null_only"]["eos"] - mean_loss["normal"]["eos"],
+        },
+        "routed_prior_advantage": {
+            region: {
+                "vs_zero": mean_loss["zero"][region]
+                - mean_loss["routed_prior"][region],
+                "vs_legacy": mean_loss["legacy"][region]
+                - mean_loss["routed_prior"][region],
+                "vs_corrupt_routed": mean_loss["routed_corrupt"][region]
+                - mean_loss["routed_prior"][region],
+            }
+            for region in REGIONS
         },
         "branch_normal_win_rate_vs_corrupt": (
             sum(row["branch_corrupt_minus_normal"] > 0.0 for row in branch_rows)
@@ -802,6 +906,9 @@ def main() -> None:
                 "root_exact": evaluation["root_logit_max_abs_diff"] == 0.0,
                 "query_tokens_all_1024": evaluation["query_tokens_all_1024"],
                 "teacher_generation_consistent": evaluation["teacher_generation_max_abs_diff"] <= 0.02,
+                "routed_later_beats_zero": evaluation["routed_prior_advantage"]["later"]["vs_zero"] > 0.0,
+                "routed_branch_beats_corrupt": evaluation["routed_prior_advantage"]["branch"]["vs_corrupt_routed"] > 0.0,
+                "routed_eos_beats_zero": evaluation["routed_prior_advantage"]["eos"]["vs_zero"] > 0.0,
             },
             "elapsed_seconds": time.perf_counter() - started,
             "peak_cuda_allocated_mib": torch.cuda.max_memory_allocated() / (1024**2),
@@ -817,6 +924,7 @@ def main() -> None:
                     "acceptance": result["acceptance"],
                     "support": evaluation["support"],
                     "normal_advantage": evaluation["normal_advantage"],
+                    "routed_prior_advantage": evaluation["routed_prior_advantage"],
                     "decision_counts": evaluation["decision_counts"],
                     "elapsed_seconds": result["elapsed_seconds"],
                 },
@@ -966,6 +1074,9 @@ def main() -> None:
             "root_exact": after["root_logit_max_abs_diff"] == 0.0,
             "query_tokens_all_1024": after["query_tokens_all_1024"],
             "teacher_generation_consistent": after["teacher_generation_max_abs_diff"] <= 0.02,
+            "routed_later_beats_zero": after["routed_prior_advantage"]["later"]["vs_zero"] > 0.0,
+            "routed_branch_beats_corrupt": after["routed_prior_advantage"]["branch"]["vs_corrupt_routed"] > 0.0,
+            "routed_eos_beats_zero": after["routed_prior_advantage"]["eos"]["vs_zero"] > 0.0,
             "support_gradients_finite_nonzero": all(
                 bool(value["finite"]) and float(value["abs_sum"]) > 0.0
                 for value in last_gradient.values()
@@ -995,6 +1106,7 @@ def main() -> None:
                 "after_support": after["support"],
                 "before_advantage": before["normal_advantage"],
                 "after_advantage": after["normal_advantage"],
+                "after_routed_prior_advantage": after["routed_prior_advantage"],
                 "elapsed_seconds": elapsed,
                 "peak_cuda_allocated_mib": result["peak_cuda_allocated_mib"],
             },

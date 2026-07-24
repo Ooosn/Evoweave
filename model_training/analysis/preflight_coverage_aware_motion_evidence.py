@@ -43,12 +43,13 @@ from train_dynamic_rig import build_tokenizer, move_batch  # noqa: E402
 
 from rigweave.motion_evidence import (  # noqa: E402
     CoverageAwareTopologyMotionEvidenceUniRigAR,
+    MotionEvidenceDecoderAdapter,
     PrefixSupportTargets,
     prefix_support_distribution_loss,
 )
 
 
-CONTROLS = ("normal", "zero", "corrupt")
+CONTROLS = ("normal", "legacy", "zero", "corrupt")
 REGIONS = ("all", "later", "continue", "branch", "eos")
 
 
@@ -62,6 +63,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--unirig-checkpoint", type=Path, required=True)
     parser.add_argument("--evidence-probe", type=Path, required=True)
     parser.add_argument("--support-head-checkpoint", type=Path, required=True)
+    parser.add_argument("--trained-support-head", type=Path)
+    parser.add_argument("--eval-only", action="store_true")
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--train-limit", type=int, default=512)
     parser.add_argument("--valid-limit", type=int, default=64)
@@ -175,8 +178,47 @@ def _load_probe_initialization(
     }
 
 
-def _logits_from_memory(
+def _build_legacy_adapter(
     model: CoverageAwareTopologyMotionEvidenceUniRigAR,
+    evidence_path: Path,
+    device: torch.device,
+) -> MotionEvidenceDecoderAdapter:
+    checkpoint = torch.load(evidence_path, map_location="cpu", weights_only=False)
+    adapter = MotionEvidenceDecoderAdapter(
+        int(model.unirig_ar.hidden_size),
+        int(model.evidence_adapter.attention.heads),
+        residual_scale=model.evidence_adapter.attention.residual_scale,
+        static_prefix_steps=model.evidence_adapter.static_prefix_steps,
+    )
+    adapter.load_state_dict(checkpoint["evidence_adapter"], strict=True)
+    adapter.to(device)
+    adapter.eval()
+    for parameter in adapter.parameters():
+        parameter.requires_grad_(False)
+    return adapter
+
+
+def _load_trained_support_head(
+    head: nn.Module,
+    checkpoint_path: Path,
+) -> dict[str, Any]:
+    checkpoint = torch.load(
+        checkpoint_path,
+        map_location="cpu",
+        weights_only=False,
+    )
+    if "support_head" not in checkpoint:
+        raise KeyError("trained support checkpoint lacks support_head")
+    head.load_state_dict(checkpoint["support_head"], strict=True)
+    return {
+        "path": str(checkpoint_path),
+        "configuration": checkpoint.get("configuration"),
+    }
+
+
+def _logits_from_adapter(
+    transformer: nn.Module,
+    adapter: MotionEvidenceDecoderAdapter,
     teacher: Any,
     memory: Any,
 ) -> torch.Tensor:
@@ -184,13 +226,13 @@ def _logits_from_memory(
         teacher.token_hidden.shape[1],
         device=teacher.token_hidden.device,
     )
-    logits, _ = model.evidence_adapter.logits_from_hidden(
-        model.transformer,
+    logits, _ = adapter.logits_from_hidden(
+        transformer,
         teacher.token_hidden,
         memory,
         positions,
     )
-    static_steps = min(model.evidence_adapter.static_prefix_steps, logits.shape[1])
+    static_steps = min(adapter.static_prefix_steps, logits.shape[1])
     if static_steps:
         logits = torch.cat(
             (teacher.baseline_logits[:, :static_steps], logits[:, static_steps:]),
@@ -278,7 +320,13 @@ def _support_statistics(
     branch = valid & targets.branch_decision_mask & ~null_state
     regular = valid & ~targets.branch_decision_mask & ~null_state
     anchor_probability = probabilities[..., :-1]
-    assigned = (anchor_probability * targets.anchor_distribution.float()).sum(dim=-1)
+    target_cross_entropy = -(
+        targets.distribution.float()
+        * nn.functional.log_softmax(logits.float(), dim=-1)
+    ).sum(dim=-1)
+    support_set_mass = (
+        anchor_probability * (targets.raw_support > 1.0e-8).float()
+    ).sum(dim=-1)
 
     def masked_mean(values: torch.Tensor, mask: torch.Tensor) -> float:
         return float(values[mask].mean()) if bool(mask.any()) else math.nan
@@ -288,8 +336,11 @@ def _support_statistics(
         "null_probability_regular": masked_mean(probabilities[..., -1], regular),
         "null_probability_branch": masked_mean(probabilities[..., -1], branch),
         "null_probability_null_state": masked_mean(probabilities[..., -1], null_state),
-        "assigned_probability_regular": masked_mean(assigned, regular),
-        "assigned_probability_branch": masked_mean(assigned, branch),
+        "cross_entropy_regular": masked_mean(target_cross_entropy, regular),
+        "cross_entropy_branch": masked_mean(target_cross_entropy, branch),
+        "cross_entropy_null_state": masked_mean(target_cross_entropy, null_state),
+        "support_set_mass_regular": masked_mean(support_set_mass, regular),
+        "support_set_mass_branch": masked_mean(support_set_mass, branch),
         "regular_positions": float(regular.sum()),
         "branch_positions": float(branch.sum()),
         "null_positions": float(null_state.sum()),
@@ -318,6 +369,7 @@ def _gradient_summary(module: nn.Module) -> dict[str, float | bool]:
 @torch.no_grad()
 def evaluate(
     model: CoverageAwareTopologyMotionEvidenceUniRigAR,
+    legacy_adapter: MotionEvidenceDecoderAdapter,
     loader: Any,
     tokenizer: Any,
     device: torch.device,
@@ -363,18 +415,27 @@ def evaluate(
                 targets,
             )
             boundary = model.boundary_auxiliary_loss(batch, refs, memory)
-            zero_logits = _logits_from_memory(
-                model,
+            legacy_logits = _logits_from_adapter(
+                model.transformer,
+                legacy_adapter,
+                teacher,
+                memory,
+            )
+            zero_logits = _logits_from_adapter(
+                model.transformer,
+                model.evidence_adapter,
                 teacher,
                 memory.controlled("zero"),
             )
-            corrupt_logits = _logits_from_memory(
-                model,
+            corrupt_logits = _logits_from_adapter(
+                model.transformer,
+                model.evidence_adapter,
                 teacher,
                 memory.controlled("corrupt_correspondence", generator=generator),
             )
             logits_by_control = {
                 "normal": teacher.logits,
+                "legacy": legacy_logits,
                 "zero": zero_logits,
                 "corrupt": corrupt_logits,
             }
@@ -482,10 +543,14 @@ def evaluate(
         "normal_advantage": {
             "later_vs_corrupt": mean_loss["corrupt"]["later"] - mean_loss["normal"]["later"],
             "later_vs_zero": mean_loss["zero"]["later"] - mean_loss["normal"]["later"],
+            "later_vs_legacy": mean_loss["legacy"]["later"] - mean_loss["normal"]["later"],
             "branch_vs_corrupt": mean_loss["corrupt"]["branch"] - mean_loss["normal"]["branch"],
             "branch_vs_zero": mean_loss["zero"]["branch"] - mean_loss["normal"]["branch"],
+            "branch_vs_legacy": mean_loss["legacy"]["branch"] - mean_loss["normal"]["branch"],
             "continue_vs_corrupt": mean_loss["corrupt"]["continue"] - mean_loss["normal"]["continue"],
+            "continue_vs_legacy": mean_loss["legacy"]["continue"] - mean_loss["normal"]["continue"],
             "eos_harm_vs_zero": mean_loss["normal"]["eos"] - mean_loss["zero"]["eos"],
+            "eos_improvement_vs_legacy": mean_loss["legacy"]["eos"] - mean_loss["normal"]["eos"],
         },
         "branch_normal_win_rate_vs_corrupt": (
             sum(row["branch_corrupt_minus_normal"] > 0.0 for row in branch_rows)
@@ -511,8 +576,12 @@ def evaluate(
 
 def main() -> None:
     args = parse_args()
-    if args.train_limit <= 0 or args.valid_limit <= 0 or args.steps <= 0:
-        raise ValueError("train-limit, valid-limit, and steps must be positive")
+    if args.train_limit <= 0 or args.valid_limit <= 0:
+        raise ValueError("train-limit and valid-limit must be positive")
+    if not args.eval_only and args.steps <= 0:
+        raise ValueError("steps must be positive when fitting the support head")
+    if args.eval_only and args.trained_support_head is None:
+        raise ValueError("eval-only requires --trained-support-head")
     if args.static_prefix_steps != 4:
         raise ValueError("flat UniRig requires four static prefix positions")
     apply_checkpoint_eval_defaults(args)
@@ -525,13 +594,6 @@ def main() -> None:
     torch.cuda.manual_seed_all(args.seed)
 
     tokenizer = build_tokenizer(args.tokenizer_config)
-    train_dataset = build_dataset(
-        args,
-        args.train_manifest,
-        tokenizer,
-        limit=args.train_limit,
-        seed=args.seed,
-    )
     valid_dataset = build_dataset(
         args,
         args.valid_manifest,
@@ -539,8 +601,23 @@ def main() -> None:
         limit=args.valid_limit,
         seed=args.seed,
     )
-    train_loader = make_loader(train_dataset, tokenizer, shuffle=True, seed=args.seed)
     valid_loader = make_loader(valid_dataset, tokenizer, shuffle=False, seed=args.seed)
+    train_dataset = None
+    train_loader = None
+    if not args.eval_only:
+        train_dataset = build_dataset(
+            args,
+            args.train_manifest,
+            tokenizer,
+            limit=args.train_limit,
+            seed=args.seed,
+        )
+        train_loader = make_loader(
+            train_dataset,
+            tokenizer,
+            shuffle=True,
+            seed=args.seed,
+        )
 
     baseline = _build_dynamic_model(args, tokenizer, device)
     model = CoverageAwareTopologyMotionEvidenceUniRigAR(
@@ -563,12 +640,79 @@ def main() -> None:
     )
     model.conditioner.value_encoder.to(device)
     model.evidence_adapter.to(device)
+    legacy_adapter = _build_legacy_adapter(model, args.evidence_probe, device)
     del baseline
     gc.collect()
 
     for parameter in model.parameters():
         parameter.requires_grad_(False)
     support_head = model.evidence_adapter.attention.support_head
+    trained_initialization = None
+    if args.trained_support_head is not None:
+        trained_initialization = _load_trained_support_head(
+            support_head,
+            args.trained_support_head,
+        )
+        support_head.to(device)
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    torch.cuda.reset_peak_memory_stats()
+    started = time.perf_counter()
+    if args.eval_only:
+        evaluation = evaluate(
+            model,
+            legacy_adapter,
+            valid_loader,
+            tokenizer,
+            device,
+            amp_dtype,
+            seed=args.seed + 200000,
+            consistency_rows=args.consistency_rows,
+            prefix_lengths=prefix_lengths,
+        )
+        result = {
+            "scope": "held-out evaluation; no weights updated",
+            "checkpoint": str(args.checkpoint),
+            "valid_manifest": str(args.valid_manifest),
+            "valid_assets": len(valid_dataset),
+            "initialization": initialization,
+            "trained_support_head": trained_initialization,
+            "evaluation": evaluation,
+            "acceptance": {
+                "branch_correct_beats_corrupt": evaluation["normal_advantage"]["branch_vs_corrupt"] > 0.0,
+                "branch_correct_beats_zero": evaluation["normal_advantage"]["branch_vs_zero"] > 0.0,
+                "branch_improves_legacy": evaluation["normal_advantage"]["branch_vs_legacy"] > 0.0,
+                "eos_not_harmed": evaluation["normal_advantage"]["eos_harm_vs_zero"] <= 0.02,
+                "eos_improves_legacy": evaluation["normal_advantage"]["eos_improvement_vs_legacy"] > 0.0,
+                "zero_motion_exact_noop": evaluation["zero_logit_max_abs_diff"] == 0.0,
+                "root_exact": evaluation["root_logit_max_abs_diff"] == 0.0,
+                "query_tokens_all_1024": evaluation["query_tokens_all_1024"],
+                "teacher_generation_consistent": evaluation["teacher_generation_max_abs_diff"] <= 0.02,
+            },
+            "elapsed_seconds": time.perf_counter() - started,
+            "peak_cuda_allocated_mib": torch.cuda.max_memory_allocated() / (1024**2),
+            "peak_cuda_reserved_mib": torch.cuda.max_memory_reserved() / (1024**2),
+        }
+        (args.output_dir / "result.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        print(
+            json.dumps(
+                {
+                    "acceptance": result["acceptance"],
+                    "support": evaluation["support"],
+                    "normal_advantage": evaluation["normal_advantage"],
+                    "decision_counts": evaluation["decision_counts"],
+                    "elapsed_seconds": result["elapsed_seconds"],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            flush=True,
+        )
+        return
+
     for parameter in support_head.parameters():
         parameter.requires_grad_(True)
     trainable = [parameter for parameter in support_head.parameters() if parameter.requires_grad]
@@ -578,11 +722,9 @@ def main() -> None:
         weight_decay=args.weight_decay,
     )
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    torch.cuda.reset_peak_memory_stats()
-    started = time.perf_counter()
     before = evaluate(
         model,
+        legacy_adapter,
         valid_loader,
         tokenizer,
         device,
@@ -592,6 +734,8 @@ def main() -> None:
         prefix_lengths=prefix_lengths,
     )
 
+    if train_loader is None or train_dataset is None:
+        raise RuntimeError("support-head fitting lacks its training dataset")
     iterator = iter(train_loader)
     train_log: list[dict[str, float | int]] = []
     last_gradient: dict[str, dict[str, float | bool]] = {}
@@ -663,6 +807,7 @@ def main() -> None:
 
     after = evaluate(
         model,
+        legacy_adapter,
         valid_loader,
         tokenizer,
         device,
@@ -680,6 +825,7 @@ def main() -> None:
         "train_assets": len(train_dataset),
         "valid_assets": len(valid_dataset),
         "initialization": initialization,
+        "trained_support_head": trained_initialization,
         "configuration": {
             "steps": args.steps,
             "learning_rate": args.learning_rate,
@@ -698,7 +844,9 @@ def main() -> None:
             "supported_motion_not_abstained": after["support"]["null_probability_regular"] < 0.2,
             "branch_correct_beats_corrupt": after["normal_advantage"]["branch_vs_corrupt"] > 0.0,
             "branch_correct_beats_zero": after["normal_advantage"]["branch_vs_zero"] > 0.0,
+            "branch_improves_legacy": after["normal_advantage"]["branch_vs_legacy"] > 0.0,
             "eos_not_harmed": after["normal_advantage"]["eos_harm_vs_zero"] <= 0.02,
+            "eos_improves_legacy": after["normal_advantage"]["eos_improvement_vs_legacy"] > 0.0,
             "zero_motion_exact_noop": after["zero_logit_max_abs_diff"] == 0.0,
             "root_exact": after["root_logit_max_abs_diff"] == 0.0,
             "query_tokens_all_1024": after["query_tokens_all_1024"],

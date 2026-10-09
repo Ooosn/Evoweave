@@ -226,9 +226,19 @@
         "name": "token",
         "fusion": "token",
         "heads": 0
+      },
+      {
+        "name": "hybrid_h8",
+        "fusion": "hybrid",
+        "heads": 8
       }
     ],
     "hybrid_follows_selected_bias": true,
+    "head_selection": {
+      "candidate": "bias_h8",
+      "evidence": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/initial_screen_summary.json",
+      "reason": "Among bias candidates, eight heads had the lowest paired CE, all 16 generations terminated and detokenized, and the highest all-row topology F1. Two/four heads each failed to terminate on two tests and had lower F1. Accept the measured 12.2% step-time increase versus two heads for this short-run suitability choice. This does not establish statistical superiority or the best full-budget head count."
+    },
     "selection": "Compare paired validation CE at T=2,8,24, generation validity/topology on a fixed small validation set, static control, time, and peak memory. Short runs screen suitability, not global optimality. Prefer the cheaper candidate when quality is within 1% relative CE and generation evidence does not show material degradation. Preserve the pair-bias route unless node fusion gives clear benefit; evaluate hybrid with the best bias head count."
   },
   "full_training": {

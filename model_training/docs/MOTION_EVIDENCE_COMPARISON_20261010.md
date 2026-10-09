@@ -79,6 +79,35 @@ a significance test. Prefer the cheaper suitable configuration in a tie;
 retain pair bias unless pooled token fusion shows a clear benefit. Small
 screening selects a practical candidate, not a globally optimal architecture.
 
+### Initial Screen And Hybrid Head Choice
+
+All five initial candidates completed 120 steps, matched all 128 expected
+arguments, and passed paired evaluation-input and logged training-input checks.
+Source, exit codes and full results are in the external job directory under
+`results/initial_screen_summary.json` and `results/fixed_screen_execution.json`.
+
+| Candidate | Mean CE over T=2,8,24 | Valid generations | All-row topology F1 | Median logged step (s) | Peak allocated GiB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| control | 1.520796 | 16/16 | 0.762480 | 18.914 | 68.417 |
+| bias_h2 | 1.531624 | 14/16 | 0.720449 | 20.480 | 69.489 |
+| bias_h4 | 1.535127 | 14/16 | 0.660961 | 20.868 | 70.355 |
+| bias_h8 | 1.516853 | 16/16 | 0.772189 | 22.986 | 71.625 |
+| token | 1.525148 | 16/16 | 0.745807 | 20.290 | 68.453 |
+
+Use eight biased heads for the planned hybrid screen. Its CE is lowest among
+bias candidates; all generations terminate, unlike two/four heads, and its
+all-row F1 is higher. Accept 12.2% longer logged steps than two heads. The 1% CE
+tie rule does not override the observed generation degradation of fewer heads.
+Times are medians of 12 logged steps after excluding startup, not whole-run
+throughput; memory is the rank-0 allocated-memory peak, not nvidia-smi usage.
+
+This is a suitability decision, not proof of architectural superiority. The
+whole-asset bootstrap 95% interval for bias_h8 minus control CE is
+[-0.01473, 0.00677], spanning zero. Generation covers only eight assets at two
+frame counts, and no repeated initialization was performed. Token-only does
+not show a clear quality benefit. Compare hybrid_h8 before choosing the final
+fusion; no formal run is authorized by this head-choice result alone.
+
 ## Execution And Acceptance
 
 Use the existing allocation 129547842 on pcg01i, physical H100 devices 5 and 7.

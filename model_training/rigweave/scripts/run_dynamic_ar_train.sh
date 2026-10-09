@@ -79,12 +79,16 @@ CMD=(
   --unirig-checkpoint "${EVOWEAVE_UNIRIG_CKPT}"
   --output-dir "${EVOWEAVE_OUTPUT_DIR}"
   --frames "${RIGWEAVE_FRAMES:-24}"
+  --frames-min "${RIGWEAVE_FRAMES_MIN:-0}"
+  --minimum-random-frames "${RIGWEAVE_MINIMUM_RANDOM_FRAMES:-0}"
   --surface-samples "${RIGWEAVE_SURFACE_SAMPLES:-65536}"
   --vertex-samples "${RIGWEAVE_VERTEX_SAMPLES:-8192}"
   --query-tokens "${RIGWEAVE_QUERY_TOKENS:-1024}"
   --register-tokens "${RIGWEAVE_REGISTER_TOKENS:-96}"
   --motion-depth "${RIGWEAVE_MOTION_DEPTH:-12}"
   --motion-heads "${RIGWEAVE_MOTION_HEADS:-8}"
+  --motion-evidence-fusion "${RIGWEAVE_MOTION_EVIDENCE_FUSION:-off}"
+  --motion-evidence-heads "${RIGWEAVE_MOTION_EVIDENCE_HEADS:-0}"
   --batch-size "${BATCH_SIZE}"
   --grad-accum-steps "${GRAD_ACCUM}"
   --num-workers "${RIGWEAVE_NUM_WORKERS:-0}"
@@ -97,12 +101,14 @@ CMD=(
   --onecycle-div-factor "${RIGWEAVE_ONECYCLE_DIV_FACTOR:-5.0}"
   --onecycle-final-div-factor "${RIGWEAVE_ONECYCLE_FINAL_DIV_FACTOR:-10.0}"
   --max-steps "${MAX_STEPS}"
+  --stop-after-steps "${RIGWEAVE_STOP_AFTER_STEPS:-0}"
   --sample-milestones "${SAMPLE_MILESTONES}"
   --log-every "${RIGWEAVE_LOG_EVERY:-10}"
   --val-every "${RIGWEAVE_VAL_EVERY:-200}"
   --val-steps "${RIGWEAVE_VAL_STEPS:-16}"
   --save-every "${RIGWEAVE_SAVE_EVERY:-0}"
   --motion-fps-ratio "${RIGWEAVE_MOTION_FPS_RATIO:-0.7}"
+  --seed "${RIGWEAVE_SEED:-20260529}"
   --motion-vertex-samples "${RIGWEAVE_MOTION_VERTEX_SAMPLES:-512}"
   --target-start-policy "${RIGWEAVE_TARGET_START_POLICY:-joint0}"
   --target-root-policy "${RIGWEAVE_TARGET_ROOT_POLICY:-legacy}"
@@ -165,6 +171,16 @@ CMD=(
   --condition-static-blend-weight "${RIGWEAVE_CONDITION_STATIC_BLEND_WEIGHT:-0.0}"
   --amp-dtype "${RIGWEAVE_AMP_DTYPE:-bf16}"
 )
+
+if [[ -n "${RIGWEAVE_INITIALIZATION_SEED:-}" ]]; then
+  CMD+=(--initialization-seed "${RIGWEAVE_INITIALIZATION_SEED}")
+fi
+if [[ -n "${RIGWEAVE_EXPECTED_ARGS:-}" ]]; then
+  CMD+=(--expected-args "${RIGWEAVE_EXPECTED_ARGS}")
+fi
+if [[ "${RIGWEAVE_NO_SAVE_OPTIMIZER:-0}" == "1" ]]; then
+  CMD+=(--no-save-optimizer)
+fi
 
 if [[ -n "${EVOWEAVE_INIT_CHECKPOINT:-}" ]]; then
   CMD+=(--init-checkpoint "${EVOWEAVE_INIT_CHECKPOINT}")

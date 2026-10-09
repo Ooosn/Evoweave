@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from .frame_batch_sampler import FrameSampleRequest
+
 def _resolve_manifest_path(value: str | Path) -> Path:
     path = Path(value).expanduser()
     if not path.exists():
@@ -136,6 +138,8 @@ def _select_query_sequence(
     motion_fps_ratio: float,
     motion_vertex_samples: int,
     input_space_policy: str = "mesh_query_bbox",
+    minimum_random_frames: int = 0,
+    sampling_seed: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray]:
     """Select `[query, evidence...]` frames from one clean asset sequence.
 
@@ -151,7 +155,10 @@ def _select_query_sequence(
     if total_frames < frame_count:
         raise ValueError(f"asset sequence has {total_frames} frames, but requested frame_count={frame_count}")
 
-    rng = _rng(path, index, random_query=random_query, seed=seed)
+    if not 0.0 <= motion_fps_ratio <= 1.0 or minimum_random_frames < 0:
+        raise ValueError("motion_fps_ratio must be in [0,1] and minimum_random_frames nonnegative")
+    rng = (np.random.default_rng(sampling_seed) if sampling_seed is not None
+           else _rng(path, index, random_query=random_query, seed=seed))
     query_idx = int(rng.integers(0, total_frames))
 
     if input_space_policy != "mesh_query_bbox":
@@ -172,7 +179,7 @@ def _select_query_sequence(
     features = delta.reshape(total_frames, -1)
 
     random_count = int(round((1.0 - motion_fps_ratio) * evidence_count))
-    random_count = int(np.clip(random_count, 0, evidence_count))
+    random_count = int(np.clip(max(random_count, minimum_random_frames), 0, evidence_count))
     fps_count = evidence_count - random_count
     fps_ids = _farthest_frames(features, candidates, fps_count)
     remaining = np.asarray([i for i in candidates.tolist() if int(i) not in set(fps_ids)], dtype=np.int64)
@@ -304,6 +311,7 @@ class DynamicRigManifestDataset(Dataset):
         target_start_policy: str = "joint0",
         target_root_policy: str = "legacy",
         input_space_policy: str = "mesh_query_bbox",
+        minimum_random_frames: int = 0,
     ) -> None:
         self.paths = _load_manifest(Path(manifest), limit=limit)
         self.tokenizer = tokenizer
@@ -313,6 +321,9 @@ class DynamicRigManifestDataset(Dataset):
         self.seed = int(seed)
         self.motion_fps_ratio = float(motion_fps_ratio)
         self.motion_vertex_samples = int(motion_vertex_samples)
+        self.minimum_random_frames = int(minimum_random_frames)
+        if not 0.0 <= self.motion_fps_ratio <= 1.0 or self.minimum_random_frames < 0:
+            raise ValueError("invalid FPS ratio or minimum random-frame quota")
         if target_active_skin_only:
             raise ValueError("strict rootless dataset does not support target_active_skin_only pruning")
         if float(active_skin_threshold) != 1.0e-4:
@@ -330,7 +341,14 @@ class DynamicRigManifestDataset(Dataset):
     def __len__(self) -> int:
         return len(self.paths)
 
-    def __getitem__(self, index: int) -> DynamicRigSample:
+    def __getitem__(self, index: int | FrameSampleRequest) -> DynamicRigSample:
+        frame_count, sampling_seed = self.frame_count, None
+        if isinstance(index, FrameSampleRequest):
+            if not 2 <= index.frames <= self.frame_count:
+                raise ValueError("requested frame count is outside the dataset's configured bounds")
+            frame_count = index.frames
+            sampling_seed = index.sampling_seed if self.random_query else None
+            index = index.item_index
         path = self.paths[int(index)]
         raw = np.load(path, allow_pickle=True)
         required = [
@@ -387,7 +405,7 @@ class DynamicRigManifestDataset(Dataset):
             raw_frame_vertices,
             posed_joints,
             posed_tails,
-            frame_count=self.frame_count,
+            frame_count=frame_count,
             path=path,
             index=int(index),
             random_query=self.random_query,
@@ -395,6 +413,8 @@ class DynamicRigManifestDataset(Dataset):
             motion_fps_ratio=self.motion_fps_ratio,
             motion_vertex_samples=self.motion_vertex_samples,
             input_space_policy="mesh_query_bbox",
+            minimum_random_frames=self.minimum_random_frames,
+            sampling_seed=sampling_seed,
         )
 
         # Normalize by the query mesh bbox. Root removal has already been done

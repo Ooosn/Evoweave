@@ -1,11 +1,31 @@
 # 当前模型状态（唯一入口）
 
-更新时间：2026-07-19
+更新时间：2026-10-10
 
-状态 ID：`model-puppeteer-20260716-001`
+状态 ID：`motion-evidence-base-compare-20261010`
 
-本文档是模型模块的唯一当前状态入口。任何 agent 在训练、评测或解释
-Puppeteer 之前必须先读本文档。历史根因的完整证据见
+## 当前执行范围
+
+用户已授权：完成运动证据融合、小规模预检、选择头数量与融合方式，然后
+启动完整双 H100 训练，确认初期稳定后汇报。详细配置与验收标准见
+`MOTION_EVIDENCE_COMPARISON_20261010.md` 和
+`../experiments/motion_evidence_base_compare_20261010.json`。
+`../state/current.json` 的 active_operation 是唯一可执行阶段；每次实验前后
+必须记录状态、提交并推送，通过 guard 后才能继续。
+
+本次明确使用旧 HGC 15,920/856 清单做历史基线对照，不切换主项目最新数据集。
+保留 flat UniRig、完整 posed GT、全部 u/c/d 证据、原始全局/时间层和训练预算。
+新变量为 T=2..24、至少一个随机非 query 帧、以及运动证据的 bias/token/hybrid
+融合。旧 checkpoint 只用于参考评测和预检；新训练从官方权重与新 motion encoder
+初始化，不续训旧 checkpoint 或筛选用短训练 checkpoint。
+
+当前尚未获得 GPU 预检、短训练对照或新完整训练的结果，不得把实现完成当成
+质量提升。旧初始化 RNG 未保存，无法逐位复现；新候选固定同一初始化种子。
+
+## 以下为保留的七月历史状态
+
+以下提案和阻塞条件不再是本分支当前授权；其已测事实仍作为历史证据保留。
+本文档是模型模块的当前状态入口。历史根因的完整证据见
 `PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md`；本文只记录已经确认的
 事实、当前可信产物、未解决问题和下一步允许执行的工作。
 

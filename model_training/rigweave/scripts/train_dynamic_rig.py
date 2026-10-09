@@ -8,6 +8,8 @@ import gc
 import importlib.util
 import json
 import os
+import re
+import random
 import resource
 import sys
 import time
@@ -18,8 +20,9 @@ from typing import Any
 import torch
 import torch.distributed as dist
 import yaml
+import numpy as np
 from torch.nn.parallel import DistributedDataParallel
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 from torch.utils.data.distributed import DistributedSampler
 
 
@@ -160,7 +163,12 @@ def validate_init_checkpoint_keys(missing: list[str], unexpected: list[str]) -> 
         "branch_prior.",
         "explicit_tree_decoder.",
     )
-    bad_missing = [key for key in missing if not key.startswith(allowed_missing_prefixes)]
+    def new_motion_parameter(key: str) -> bool:
+        return re.fullmatch(
+            r"conditioner\.motion_encoder\.blocks\.\d+\.motion_injection\.(bias_weights|token_weight)", key,
+        ) is not None
+
+    bad_missing = [key for key in missing if not key.startswith(allowed_missing_prefixes) and not new_motion_parameter(key)]
     if bad_missing or unexpected:
         preview_missing = ", ".join(bad_missing[:40])
         preview_unexpected = ", ".join(unexpected[:40])
@@ -312,6 +320,8 @@ def resume_contract_differences(
         "no_save_optimizer",
         "num_workers",
         "log_process_memory",
+        "stop_after_steps",
+        "expected_args",
     }
     current_args = vars(args)
     differences: list[str] = []
@@ -321,6 +331,10 @@ def resume_contract_differences(
         current_value = json_safe(current_args[key])
         if current_value != saved_value:
             differences.append(f"args.{key}: checkpoint={saved_value!r} current={current_value!r}")
+    for key, default in (("frames_min", 0), ("minimum_random_frames", 0),
+                         ("motion_evidence_fusion", "off"), ("motion_evidence_heads", 0)):
+        if key not in saved_args and current_args.get(key, default) != default:
+            differences.append(f"args.{key}: checkpoint default={default!r} current={current_args[key]!r}")
 
     saved_effective_batch = checkpoint.get("effective_batch")
     if int(saved_effective_batch or 0) != int(effective_batch):
@@ -652,12 +666,18 @@ def main() -> None:
     parser.add_argument("--limit-train", type=int, default=0)
     parser.add_argument("--limit-val", type=int, default=64)
     parser.add_argument("--frames", type=int, default=24)
+    parser.add_argument("--frames-min", type=int, default=0,
+                        help="Sample a common T per training batch from [frames-min, frames]; 0 retains fixed-T sampling.")
+    parser.add_argument("--minimum-random-frames", type=int, default=0,
+                        help="Minimum number of non-query evidence frames drawn randomly, overriding the FPS quota.")
     parser.add_argument("--surface-samples", type=int, default=65536)
     parser.add_argument("--vertex-samples", type=int, default=8192)
     parser.add_argument("--query-tokens", type=int, default=1024)
     parser.add_argument("--register-tokens", type=int, default=96)
     parser.add_argument("--motion-depth", type=int, default=12)
     parser.add_argument("--motion-heads", type=int, default=8)
+    parser.add_argument("--motion-evidence-fusion", choices=["off", "bias", "token", "hybrid"], default="off")
+    parser.add_argument("--motion-evidence-heads", type=int, default=0)
     parser.add_argument("--use-motion-features", action="store_true")
     parser.add_argument("--use-time-embedding", action="store_true")
     parser.add_argument("--motion-checkpointing", action="store_true")
@@ -670,6 +690,8 @@ def main() -> None:
     parser.add_argument("--onecycle-div-factor", type=float, default=5.0)
     parser.add_argument("--onecycle-final-div-factor", type=float, default=10.0)
     parser.add_argument("--max-steps", type=int, default=50000)
+    parser.add_argument("--stop-after-steps", type=int, default=0,
+                        help="Stop a screening run early without shortening the max-steps learning-rate schedule.")
     parser.add_argument(
         "--sample-milestones",
         type=str,
@@ -719,6 +741,10 @@ def main() -> None:
     parser.add_argument("--target-start-policy", choices=["joint0"], default="joint0")
     parser.add_argument("--target-root-policy", choices=["legacy"], default="legacy")
     parser.add_argument("--seed", type=int, default=20260529)
+    parser.add_argument("--initialization-seed", type=int, default=None,
+                        help="Explicit seed for paired runs; historical runs did not seed model initialization.")
+    parser.add_argument("--expected-args", type=Path, default=None,
+                        help="Fail before CUDA setup if resolved arguments differ from the recorded experiment contract.")
     parser.add_argument("--latent-align-weight", type=float, default=0.0)
     parser.add_argument("--motion-contrast-weight", type=float, default=0.0)
     parser.add_argument("--motion-contrast-margin", type=float, default=0.05)
@@ -836,10 +862,26 @@ def main() -> None:
     parser.add_argument("--use-condition-action-group-bias", action="store_true")
     parser.add_argument("--amp-dtype", choices=["bf16", "fp16"], default="bf16")
     args = parser.parse_args()
+    if args.frames_min and not 2 <= args.frames_min <= args.frames:
+        parser.error("--frames-min must be 0 or satisfy 2 <= frames-min <= frames")
+    if args.stop_after_steps < 0:
+        parser.error("--stop-after-steps must be nonnegative")
+    run_stop = min(args.max_steps, args.stop_after_steps) if args.stop_after_steps else args.max_steps
     if args.init_checkpoint is not None and args.resume_checkpoint is not None:
         parser.error("--init-checkpoint and --resume-checkpoint are mutually exclusive")
+    if args.expected_args is not None:
+        expected_args = json.loads(args.expected_args.read_text(encoding="utf-8"))
+        actual_args = {key: json_safe(value) for key, value in vars(args).items()}
+        mismatches = {key: {"expected": value, "actual": actual_args.get(key)}
+                      for key, value in expected_args.items() if key not in actual_args or actual_args[key] != value}
+        if mismatches:
+            parser.error("experiment argument mismatch: " + json.dumps(mismatches, sort_keys=True))
 
     device, rank, local_rank, world_size = setup_distributed()
+    if args.initialization_seed is not None:
+        random.seed(args.initialization_seed + rank)
+        np.random.seed((args.initialization_seed + rank) % (2**32))
+        torch.manual_seed(args.initialization_seed + rank)
     amp_dtype = torch.bfloat16 if args.amp_dtype == "bf16" else torch.float16
     metrics_log: Path | None = None
     if is_main(rank):
@@ -855,10 +897,12 @@ def main() -> None:
 
         from rigweave.dynamic_rig import AnchorWiseAlternatingMotionEncoder, FixedQuerySurfaceTokenizer
         from rigweave.dynamic_rig.data import DynamicRigManifestDataset, dynamic_rig_collate
+        from rigweave.dynamic_rig.frame_batch_sampler import VariableFrameBatchSampler
         from rigweave.dynamic_rig.model import DynamicRigConditioner
         from rigweave.dynamic_rig.unirig_wrapper import DynamicRigUniRigAR
 
         log(rank, f"device={device} world_size={world_size}")
+        log(rank, f"initialization_seed={args.initialization_seed}")
         log(rank, "build tokenizer and official UniRig")
         setup_t0 = time.time()
         stage_t0 = time.time()
@@ -881,6 +925,8 @@ def main() -> None:
             use_motion_features=args.use_motion_features,
             use_time_embedding=args.use_time_embedding,
             gradient_checkpointing=args.motion_checkpointing,
+            motion_evidence_fusion=args.motion_evidence_fusion,
+            motion_evidence_heads=args.motion_evidence_heads,
         )
         conditioner = DynamicRigConditioner(surface_tokenizer, motion_encoder)
         model = DynamicRigUniRigAR(
@@ -1083,6 +1129,7 @@ def main() -> None:
             active_skin_threshold=args.active_skin_threshold,
             target_start_policy=args.target_start_policy,
             target_root_policy=args.target_root_policy,
+            minimum_random_frames=args.minimum_random_frames,
         )
         val_dataset = DynamicRigManifestDataset(
             args.val_manifest,
@@ -1097,6 +1144,7 @@ def main() -> None:
             active_skin_threshold=args.active_skin_threshold,
             target_start_policy=args.target_start_policy,
             target_root_policy=args.target_root_policy,
+            minimum_random_frames=args.minimum_random_frames,
         )
         log(rank, f"datasets built in {time.time() - stage_t0:.2f}s")
         log_process_memory(rank, "after_datasets", args.log_process_memory)
@@ -1104,15 +1152,19 @@ def main() -> None:
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True) if world_size > 1 else None
         val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
         collate = partial(dynamic_rig_collate, pad_token=tokenizer.pad)
-        train_loader = DataLoader(
-            train_dataset,
-            batch_size=args.batch_size,
-            shuffle=train_sampler is None,
-            sampler=train_sampler,
-            num_workers=args.num_workers,
-            pin_memory=True,
-            collate_fn=collate,
-        )
+        frame_batch_sampler = None
+        train_loader_options = dict(num_workers=args.num_workers, pin_memory=True, collate_fn=collate)
+        if args.frames_min:
+            frame_batch_sampler = VariableFrameBatchSampler(
+                train_sampler if train_sampler is not None else RandomSampler(train_dataset), args.batch_size,
+                min_frames=args.frames_min, max_frames=args.frames, seed=args.seed,
+            )
+            train_loader = DataLoader(train_dataset, batch_sampler=frame_batch_sampler, **train_loader_options)
+        else:
+            train_loader = DataLoader(
+                train_dataset, batch_size=args.batch_size, shuffle=train_sampler is None,
+                sampler=train_sampler, **train_loader_options,
+            )
         val_loader = DataLoader(
             val_dataset,
             batch_size=1,
@@ -1127,6 +1179,8 @@ def main() -> None:
         stage_t0 = time.time()
 
         motion_params = [p for p in motion_encoder.parameters() if p.requires_grad]
+        motion_adapter_params = [p for name, p in motion_encoder.named_parameters()
+                                 if ".motion_injection." in name and p.requires_grad]
         ar_params = [p for p in unirig.transformer.parameters() if p.requires_grad]
         surface_params = [p for p in surface_tokenizer.parameters() if p.requires_grad]
         aux_params = [
@@ -1300,6 +1354,7 @@ def main() -> None:
             rank,
             "sampling_contract="
             f"frames={args.frames} motion_fps_ratio={args.motion_fps_ratio} "
+            f"frames_min={args.frames_min} minimum_random_frames={args.minimum_random_frames} "
             f"motion_vertex_samples={args.motion_vertex_samples} "
             f"train_random_query={args.train_random_query} "
             f"target_active_skin_only={args.target_active_skin_only} "
@@ -1315,6 +1370,8 @@ def main() -> None:
             f"query_tokens={args.query_tokens} register_tokens={args.register_tokens} "
             f"motion_depth={args.motion_depth} motion_heads={args.motion_heads} "
             f"motion_checkpointing={args.motion_checkpointing} "
+            f"motion_evidence_fusion={args.motion_evidence_fusion} "
+            f"motion_evidence_heads={args.motion_evidence_heads} "
             f"surface_tokenizer={'trainable' if args.train_surface_tokenizer else 'frozen'} "
             f"conditioner={'frozen' if args.freeze_conditioner else 'trainable'} "
             f"ar_decoder={'frozen' if args.freeze_ar else 'trainable'} "
@@ -1413,6 +1470,7 @@ def main() -> None:
         accum_dis_sum = 0.0
         accum_aux_sums: dict[str, float] = {}
         accum_path = ""
+        accum_frames: list[int] = []
         optimizer.zero_grad(set_to_none=True)
         model.train()
         base_generated_prefix_weight = float(getattr(train_model, "generated_prefix_recovery_weight", 0.0))
@@ -1423,9 +1481,11 @@ def main() -> None:
         first_batch_mem_logged = False
         if not args.train_surface_tokenizer:
             surface_tokenizer.eval()
-        while step < args.max_steps:
+        while step < run_stop:
             if train_sampler is not None:
                 train_sampler.set_epoch(epoch)
+            if frame_batch_sampler is not None:
+                frame_batch_sampler.set_epoch(epoch)
             for batch_index, batch in enumerate(train_loader):
                 if resume_batches_to_skip > 0 and batch_index < resume_batches_to_skip:
                     continue
@@ -1471,13 +1531,22 @@ def main() -> None:
                     if isinstance(value, torch.Tensor) and value.ndim == 0:
                         accum_aux_sums[key] = accum_aux_sums.get(key, 0.0) + float(value.detach().cpu())
                 accum_path = batch["path"][0]
+                accum_frames.append(int(batch["frame_vertices"].shape[1]))
 
                 accum_count += 1
                 if accum_count < max(1, args.grad_accum_steps):
                     continue
 
                 step += 1
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0, error_if_nonfinite=True)
+                log_step = is_main(rank) and (step == 1 or step % args.log_every == 0)
+                adapter_grad_norm = None
+                if log_step and motion_adapter_params:
+                    active = [parameter.grad.detach().float().norm() for parameter in motion_adapter_params
+                              if parameter.grad is not None]
+                    if not active:
+                        raise RuntimeError("motion evidence parameters received no gradient")
+                    adapter_grad_norm = float(torch.stack(active).norm())
                 optimizer.step()
                 if scheduler is not None:
                     scheduler.step()
@@ -1485,7 +1554,7 @@ def main() -> None:
                 micro_count = max(1, accum_count)
                 accum_count = 0
 
-                if is_main(rank) and (step == 1 or step % args.log_every == 0):
+                if log_step:
                     accounting = accounting_fields(step, effective_batch, train_rows)
                     if device.type == "cuda":
                         mem_alloc = torch.cuda.memory_allocated(device) / (1024**3)
@@ -1509,6 +1578,12 @@ def main() -> None:
                         "path": accum_path,
                         "grad_accum": args.grad_accum_steps,
                         "micro_batch_per_gpu": args.batch_size,
+                        "frames_in_step": list(accum_frames),
+                        "gradient_norm_before_clip": float(grad_norm),
+                        "motion_adapter_gradient_norm_after_clip": adapter_grad_norm,
+                        "motion_adapter_parameter_norm": (
+                            float(torch.stack([parameter.detach().float().norm() for parameter in motion_adapter_params]).norm())
+                            if motion_adapter_params else None),
                         **accounting,
                         "generated_prefix_recovery_active": bool(
                             getattr(train_model, "generated_prefix_recovery_weight", 0.0) > 0.0
@@ -1688,7 +1763,8 @@ def main() -> None:
                                 },
                             )
 
-                if step >= args.max_steps:
+                accum_frames.clear()
+                if step >= run_stop:
                     break
             epoch += 1
 

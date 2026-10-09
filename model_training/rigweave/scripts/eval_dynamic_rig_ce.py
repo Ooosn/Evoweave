@@ -26,6 +26,9 @@ CHECKPOINT_DEFAULTS: dict[str, Any] = {
     "register_tokens": 96,
     "motion_depth": 12,
     "motion_heads": 8,
+    "motion_evidence_fusion": "off",
+    "motion_evidence_heads": 0,
+    "minimum_random_frames": 0,
     "use_motion_features": False,
     "use_time_embedding": False,
     "motion_fps_ratio": 0.7,
@@ -149,6 +152,10 @@ def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch
     if motion_encoder_cls is TemporalMotionEncoder:
         motion_kwargs["use_motion_features"] = getattr(args, "use_motion_features", False)
         motion_kwargs["use_time_embedding"] = getattr(args, "use_time_embedding", False)
+        motion_kwargs["motion_evidence_fusion"] = getattr(args, "motion_evidence_fusion", "off")
+        motion_kwargs["motion_evidence_heads"] = getattr(args, "motion_evidence_heads", 0)
+    elif getattr(args, "motion_evidence_fusion", "off") != "off":
+        raise ValueError("motion evidence is supported only by the anchor-wise alternating encoder")
     motion_encoder = motion_encoder_cls(**motion_kwargs)
     conditioner = DynamicRigConditioner(surface_tokenizer, motion_encoder)
     model = DynamicRigUniRigAR(
@@ -191,6 +198,9 @@ def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch
         explicit_tree_xyz_loss_weight=args.explicit_tree_xyz_loss_weight,
     )
     missing, unexpected = model.load_state_dict(state, strict=False)
+    evidence_key_errors = [key for key in [*missing, *unexpected] if ".motion_injection." in key]
+    if evidence_key_errors:
+        raise RuntimeError(f"motion evidence checkpoint/config mismatch: {evidence_key_errors}")
     _move_dynamic_model_to_device(model, device)
     del ckpt, state
     gc.collect()
@@ -344,6 +354,9 @@ def main() -> None:
     parser.add_argument("--register-tokens", type=int, default=None)
     parser.add_argument("--motion-depth", type=int, default=None)
     parser.add_argument("--motion-heads", type=int, default=None)
+    parser.add_argument("--motion-evidence-fusion", choices=["off", "bias", "token", "hybrid"], default=None)
+    parser.add_argument("--motion-evidence-heads", type=int, default=None)
+    parser.add_argument("--minimum-random-frames", type=int, default=None)
     parser.add_argument("--use-motion-features", action="store_true", default=None)
     parser.add_argument("--use-time-embedding", action="store_true", default=None)
     parser.add_argument("--motion-fps-ratio", type=float, default=None)
@@ -415,6 +428,7 @@ def main() -> None:
         seed=args.seed,
         motion_fps_ratio=args.motion_fps_ratio,
         motion_vertex_samples=args.motion_vertex_samples,
+        minimum_random_frames=args.minimum_random_frames,
         target_active_skin_only=args.target_active_skin_only,
         active_skin_threshold=args.active_skin_threshold,
         target_start_policy=args.target_start_policy,

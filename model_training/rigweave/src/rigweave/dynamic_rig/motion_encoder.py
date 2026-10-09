@@ -4,6 +4,8 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
+from .motion_evidence import MotionEvidence, MotionEvidenceInjection
+
 
 class AnchorWiseAlternatingBlock(nn.Module):
     """One pose-inner / anchor-temporal block over `(B, T, S, D)` tokens."""
@@ -14,6 +16,8 @@ class AnchorWiseAlternatingBlock(nn.Module):
         heads: int,
         mlp_ratio: float = 4.0,
         dropout: float = 0.0,
+        motion_evidence_fusion: str = "off",
+        motion_evidence_heads: int = 0,
     ) -> None:
         super().__init__()
         ff_dim = int(dim * mlp_ratio)
@@ -35,17 +39,25 @@ class AnchorWiseAlternatingBlock(nn.Module):
             batch_first=True,
             norm_first=True,
         )
+        self.motion_injection = MotionEvidenceInjection(
+            dim, heads, fusion=motion_evidence_fusion, biased_heads=motion_evidence_heads,
+        )
 
-    def forward(self, tokens: torch.Tensor) -> torch.Tensor:
+    def forward(self, tokens: torch.Tensor, motion_evidence: MotionEvidence | None = None) -> torch.Tensor:
         if tokens.dim() != 4:
             raise ValueError(f"tokens must be (B,T,S,D), got {tuple(tokens.shape)}")
         batch_size, frame_count, slot_count, dim = tokens.shape
 
         # Pose-inner attention: each posed mesh updates its anchors using the
         # current-pose geometric context.
-        z = tokens.reshape(batch_size * frame_count, slot_count, dim)
-        z = self.pose_inner(z)
-        z = z.reshape(batch_size, frame_count, slot_count, dim)
+        if self.motion_injection.fusion == "off":
+            z = tokens.reshape(batch_size * frame_count, slot_count, dim)
+            z = self.pose_inner(z)
+            z = z.reshape(batch_size, frame_count, slot_count, dim)
+        else:
+            if motion_evidence is None:
+                raise ValueError("enabled motion fusion requires motion evidence")
+            z = self.motion_injection(self.pose_inner, tokens, motion_evidence)
 
         # Anchor-wise temporal attention: slot q attends only to slot q across
         # poses. This uses our fixed vertex/surface correspondence.
@@ -82,6 +94,8 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         use_motion_features: bool = False,
         use_time_embedding: bool = False,
         gradient_checkpointing: bool = False,
+        motion_evidence_fusion: str = "off",
+        motion_evidence_heads: int = 0,
     ) -> None:
         super().__init__()
         self.dim = int(dim)
@@ -90,6 +104,8 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         self.use_motion_features = bool(use_motion_features)
         self.use_time_embedding = bool(use_time_embedding)
         self.gradient_checkpointing = bool(gradient_checkpointing)
+        self.motion_evidence_fusion = str(motion_evidence_fusion)
+        self.motion_evidence_heads = int(motion_evidence_heads)
 
         self.role_token = nn.Parameter(torch.randn(1, 2, 1, dim) * 0.02)
         if self.register_tokens > 0:
@@ -115,6 +131,8 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
                     heads=heads,
                     mlp_ratio=mlp_ratio,
                     dropout=dropout,
+                    motion_evidence_fusion=self.motion_evidence_fusion,
+                    motion_evidence_heads=self.motion_evidence_heads,
                 )
                 for _ in range(depth)
             ]
@@ -139,6 +157,7 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         *,
         query_points: torch.Tensor | None = None,
         return_all: bool = False,
+        motion_evidence: MotionEvidence | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Encode `(B,T,Q,D)` frame tokens into `(B,Q,D)` canonical tokens."""
 
@@ -149,6 +168,8 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
             raise ValueError(f"expected dim={self.dim}, got {dim}")
         if frame_count > self.max_frames:
             raise ValueError(f"frame_count {frame_count} exceeds max_frames {self.max_frames}")
+        if (self.motion_evidence_fusion != "off") != (motion_evidence is not None):
+            raise ValueError("motion evidence presence must match the encoder fusion configuration")
 
         z = frame_tokens
         if self.use_motion_features:
@@ -177,9 +198,9 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
 
         for block in self.blocks:
             if self.gradient_checkpointing and self.training and torch.is_grad_enabled():
-                z = checkpoint(block, z, use_reentrant=False)
+                z = checkpoint(block, z, motion_evidence, use_reentrant=False)
             else:
-                z = block(z)
+                z = block(z, motion_evidence)
         z = self.norm(z)
 
         canonical_tokens = z[:, 0, 1 + self.register_tokens :]

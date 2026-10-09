@@ -845,12 +845,17 @@ def _dynamic_generate(
     branch_prior_guidance: str = "none",
     branch_prior_guidance_kwargs: dict[str, float] | None = None,
     branch_parent_snap: bool = False,
+    precomputed_cond: torch.Tensor | None = None,
 ) -> np.ndarray:
     from src.model.unirig_ar import VocabSwitchingLogitsProcessor
 
     branch_prior = None
     if branch_prior_guidance != "none":
+        if precomputed_cond is not None:
+            raise ValueError("precomputed condition cannot replace branch-prior outputs")
         cond, branch_prior = model.build_condition(batch, return_branch_prior=True)
+    elif precomputed_cond is not None:
+        cond = precomputed_cond
     else:
         cond = model.build_condition(batch)
     cond = cond.to(dtype=model.transformer.dtype)
@@ -1663,6 +1668,9 @@ def main() -> None:
     parser.add_argument("--register-tokens", type=int, default=None)
     parser.add_argument("--motion-depth", type=int, default=None)
     parser.add_argument("--motion-heads", type=int, default=None)
+    parser.add_argument("--motion-evidence-fusion", choices=["off", "bias", "token", "hybrid"], default=None)
+    parser.add_argument("--motion-evidence-heads", type=int, default=None)
+    parser.add_argument("--minimum-random-frames", type=int, default=None)
     parser.add_argument("--use-motion-features", action="store_true", default=None)
     parser.add_argument("--use-time-embedding", action="store_true", default=None)
     parser.add_argument("--motion-fps-ratio", type=float, default=None)
@@ -1832,6 +1840,7 @@ def main() -> None:
         seed=args.seed,
         motion_fps_ratio=args.motion_fps_ratio,
         motion_vertex_samples=args.motion_vertex_samples,
+        minimum_random_frames=args.minimum_random_frames,
         target_active_skin_only=args.target_active_skin_only,
         active_skin_threshold=args.active_skin_threshold,
         target_start_policy=args.target_start_policy,

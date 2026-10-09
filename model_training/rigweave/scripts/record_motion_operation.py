@@ -71,13 +71,16 @@ def main():
             "full": config["full_training"]["stability_acceptance"],
         }
         operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage == "reference" else "preflight"
+        allowed = ["inspect", "report", operation]
+        if args.stage == "preflight":
+            allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
         state.update(
             state_id="motion-evidence-base-compare-20261010",
             human_context="model_training/docs/CURRENT_MODEL_CONTEXT.md",
             required_context=["PROJECT_MAP.md", "DATASET_SOURCE_OF_TRUTH.md", "model_training/docs/CURRENT_MODEL_CONTEXT.md",
                               "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md"],
-            allowed_operations=["inspect", "report", operation],
-            blocked_operations=[value for value in ["submit", "train", "preflight", "matched_eval"] if value != operation],
+            allowed_operations=allowed,
+            blocked_operations=[value for value in ["submit", "train", "preflight", "matched_eval"] if value not in allowed],
             active_operation={"experiment": config["experiment"], "stage": args.stage, "candidate": args.candidate,
                               "candidate_config": candidate, "status": "prepared", "prepared_at": now,
                               "authorization": config["approval"], "source_code_commit": source,

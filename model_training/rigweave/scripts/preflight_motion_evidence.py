@@ -13,7 +13,7 @@ import torch
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from eval_dynamic_rig_ce import CHECKPOINT_DEFAULTS, _build_dynamic_model
-from motion_experiment_runtime import load_config, source_metadata, verify_manifests, write_json
+from motion_experiment_runtime import guard, load_config, source_metadata, verify_manifests, write_json
 from train_dynamic_rig import build_tokenizer, move_batch
 from rigweave.dynamic_rig.data import DynamicRigManifestDataset, dynamic_rig_collate
 from rigweave.dynamic_rig.motion_evidence import MotionEvidenceInjection
@@ -96,6 +96,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     config = load_config(args.config)
+    guard(config, "train")
     torch.set_num_threads(1)
     torch.manual_seed(config["changes"]["initialization_seed"])
     device = torch.device("cuda:0")

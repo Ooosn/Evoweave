@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T17:08:35.124724+00:00",
+  "updated_at": "2026-10-09T17:31:39.545136+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,12 +110,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Zero-init parity and actual cached-generation/teacher-forcing same-prefix checks pass; B3 T24 and T2 finite optimizer steps with all adapter gradients and memory recorded.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "preflight",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-09T17:08:35.124724+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
     "source_code_commit": "38f36f3356af12b8d83a53261047abe4e28bf9a6",
@@ -326,7 +326,10 @@
       "new_allocation": false
     },
     "acceptance": "Zero-init parity and actual cached-generation/teacher-forcing same-prefix checks pass; B3 T24 and T2 finite optimizer steps with all adapter gradients and memory recorded.",
-    "note": "User-approved recorded CPU and single-H100 contract preflight; no pilot or formal training is allowed in this stage. Ten core CPU tests passed on HGC; independent core review found no blocking issue."
+    "note": "User-approved recorded CPU and single-H100 contract preflight; no pilot or formal training is allowed in this stage. Ten core CPU tests passed on HGC; independent core review found no blocking issue.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/preflight_checks.json",
+    "result_note": "24/24 zero-init cases and eight cached-generation prefix checks passed. B3 T24 and T2 optimizer steps had all24 finite nonzero adapter gradients. Peak allocated62.19GiB reserved64.49GiB. Worker supervision plus primary report inspection accepted.",
+    "updated_at": "2026-10-09T17:31:39.545136+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

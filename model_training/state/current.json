@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T19:33:03.464312+00:00",
+  "updated_at": "2026-10-09T20:30:36.278428+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,11 +110,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,7 +263,7 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "screen",
@@ -273,7 +273,7 @@
       "fusion": "bias",
       "heads": 4
     },
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-09T19:33:03.464312+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
     "source_code_commit": "f3b0c817abe8b192f9770206602953bfbb409f89",
@@ -336,7 +336,10 @@
       "new_allocation": false
     },
     "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
-    "note": "Primary explicitly authorized this fixed 120-step screening sequence after the accepted real DDP smoke. Stop on the first execution failure; no retry, fallback, hybrid, or full run."
+    "note": "Primary explicitly authorized this fixed 120-step screening sequence after the accepted real DDP smoke. Stop on the first execution failure; no retry, fallback, hybrid, or full run.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h4_evaluation.json",
+    "result_note": "Execution passed: 120 steps, exact args, finite logged losses/gradients, complete 104-row evaluation with 16 generation rows; adapter and resource evidence recorded. No model-quality acceptance or configuration selection.",
+    "updated_at": "2026-10-09T20:30:36.278428+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T23:44:29.133020+00:00",
+  "updated_at": "2026-10-09T23:58:14.076628+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -104,17 +104,17 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "Best practical head count and fusion mode await paired short-run measurements.",
+    "A practical head/fusion configuration was selected from short runs; full-budget quality remains unverified.",
     "Short screening is not proof of the final full-training quality or global optimum.",
     "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,20 +263,20 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Both GPUs active on the intended allocation, finite losses/gradients, variable-frame schedule and nonzero adapter updates verified, no OOM/traceback, and first 5000-sample checkpoint saved with matched run metadata.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "screen",
-    "candidate": "hybrid_h8",
+    "stage": "full",
+    "candidate": "bias_h8",
     "candidate_config": {
-      "name": "hybrid_h8",
-      "fusion": "hybrid",
+      "name": "bias_h8",
+      "fusion": "bias",
       "heads": 8
     },
-    "status": "completed",
-    "prepared_at": "2026-10-09T22:45:29.900454+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-09T23:58:14.076628+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
-    "source_code_commit": "ffc17be83d57be81a35f6339d96d99a32493b22b",
+    "source_code_commit": "80cd952918c83755a63b0c3ff5b6bbf64c6a5e5d",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -285,9 +285,9 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "screen",
+      "full",
       "--candidate",
-      "hybrid_h8"
+      "bias_h8"
     ],
     "manifests": [
       {
@@ -321,9 +321,9 @@
       "training_static_augmentation": false
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
-    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/screen/hybrid_h8",
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8.json",
+    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/full_bias_h8_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/full_bias_h8.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -335,11 +335,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
-    "note": "Primary explicitly authorized only hybrid_h8 after accepting the five-arm results and recording eight-head suitability. Same fresh initialization and 120 steps of the full1667 schedule. Stop on first execution failure; no retry, fallback, final fusion selection, or full run.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8_evaluation.json",
-    "result_note": "Execution passed: 120 steps, exact expected args, finite logged loss/gradients, nonzero adapters, paired inputs/schedule, complete 104-row evaluation and 16 generation rows. No final fusion selection or full-training launch.",
-    "updated_at": "2026-10-09T23:44:29.133020+00:00"
+    "acceptance": "Both GPUs active on the intended allocation, finite losses/gradients, variable-frame schedule and nonzero adapter updates verified, no OOM/traceback, and first 5000-sample checkpoint saved with matched run metadata.",
+    "note": "Primary explicitly selected bias_h8 and authorized exactly one fresh full1667 run. Preserve original milestones and optimizer/scheduler saves; no resume/init checkpoint. Return after checkpoint5000 post-save event step105/sample5040 and continued logged step>=110 with CPU-only metadata and live rank proof. Do not stop training, record stable_running, or sync source while active."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -945,6 +942,83 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_token_evaluation.json",
       "result_note": "Execution passed: 120 steps, exact args, finite logged losses/gradients, complete 104-row evaluation with 16 generation rows; adapter and resource evidence recorded. No model-quality acceptance or configuration selection.",
       "updated_at": "2026-10-09T22:33:30.046347+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "screen",
+      "candidate": "hybrid_h8",
+      "candidate_config": {
+        "name": "hybrid_h8",
+        "fusion": "hybrid",
+        "heads": 8
+      },
+      "status": "completed",
+      "prepared_at": "2026-10-09T22:45:29.900454+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
+      "source_code_commit": "ffc17be83d57be81a35f6339d96d99a32493b22b",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "screen",
+        "--candidate",
+        "hybrid_h8"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "frames_min": 2,
+        "frames_max": 24,
+        "motion_fps_ratio": 0.75,
+        "minimum_random_frames": 1,
+        "initialization_seed": 20260529,
+        "retain_u": true,
+        "translation_scale": 0.1,
+        "relative_scale": 0.1,
+        "invalid_group_policy": "rank-deficient local motion is explicitly unknown; geometry tokens and complete GT are never masked or pruned",
+        "training_static_augmentation": false
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/screen/hybrid_h8",
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
+      "note": "Primary explicitly authorized only hybrid_h8 after accepting the five-arm results and recording eight-head suitability. Same fresh initialization and 120 steps of the full1667 schedule. Stop on first execution failure; no retry, fallback, final fusion selection, or full run.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_hybrid_h8_evaluation.json",
+      "result_note": "Execution passed: 120 steps, exact expected args, finite logged loss/gradients, nonzero adapters, paired inputs/schedule, complete 104-row evaluation and 16 generation rows. No final fusion selection or full-training launch.",
+      "updated_at": "2026-10-09T23:44:29.133020+00:00"
     }
   ]
 }

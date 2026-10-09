@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T17:40:09.050756+00:00",
+  "updated_at": "2026-10-09T17:41:32.476580+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,11 +110,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,16 +263,20 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "reference",
-    "candidate": null,
-    "candidate_config": null,
-    "status": "accepted",
-    "prepared_at": "2026-10-09T17:32:30.284742+00:00",
+    "stage": "screen",
+    "candidate": "control",
+    "candidate_config": {
+      "name": "control",
+      "fusion": "off",
+      "heads": 0
+    },
+    "status": "prepared",
+    "prepared_at": "2026-10-09T17:41:32.476580+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
-    "source_code_commit": "75b71b20bf10164d306a764c657095c95c43ee9e",
+    "source_code_commit": "05609cf120764ce05c7ea909496e3e8c905b2ad7",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -281,7 +285,9 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "reference"
+      "screen",
+      "--candidate",
+      "control"
     ],
     "manifests": [
       {
@@ -320,16 +326,14 @@
       "allocation": 129547842,
       "host": "pcg01i",
       "physical_gpus": [
-        5
+        5,
+        7
       ],
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Re-evaluate the accepted sample80000 baseline on the exact paired query/frame/surface/GT protocol; complete metrics for every planned row.",
-    "note": "Preflight accepted. Re-evaluate historical sample80000 on identical candidate validation frames and complete continuous GT before retraining.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/reference_evaluation.json",
-    "result_note": "Paired historical reference complete:104rows; mean normal-T CE1.166888; generation16/16 naturally terminated/detokenized, T2 all-rowF1.894715 T24 .906178 against continuousGT. These are long-trained reference scores, not the fair fresh120step control.",
-    "updated_at": "2026-10-09T17:40:09.050756+00:00"
+    "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
+    "note": "First fresh120step control. Same variable T2..24 and random quota as fusion candidates, same initialization seed and complete1667step OneCycle schedule; primary verifies DDP startup before authorizing remaining fixed screens."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -486,6 +490,73 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/preflight_checks.json",
       "result_note": "24/24 zero-init cases and eight cached-generation prefix checks passed. B3 T24 and T2 optimizer steps had all24 finite nonzero adapter gradients. Peak allocated62.19GiB reserved64.49GiB. Worker supervision plus primary report inspection accepted.",
       "updated_at": "2026-10-09T17:31:39.545136+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "reference",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "accepted",
+      "prepared_at": "2026-10-09T17:32:30.284742+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
+      "source_code_commit": "75b71b20bf10164d306a764c657095c95c43ee9e",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "reference"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "frames_min": 2,
+        "frames_max": 24,
+        "motion_fps_ratio": 0.75,
+        "minimum_random_frames": 1,
+        "initialization_seed": 20260529,
+        "retain_u": true,
+        "translation_scale": 0.1,
+        "relative_scale": 0.1,
+        "invalid_group_policy": "rank-deficient local motion is explicitly unknown; geometry tokens and complete GT are never masked or pruned",
+        "training_static_augmentation": false
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Re-evaluate the accepted sample80000 baseline on the exact paired query/frame/surface/GT protocol; complete metrics for every planned row.",
+      "note": "Preflight accepted. Re-evaluate historical sample80000 on identical candidate validation frames and complete continuous GT before retraining.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/reference_evaluation.json",
+      "result_note": "Paired historical reference complete:104rows; mean normal-T CE1.166888; generation16/16 naturally terminated/detokenized, T2 all-rowF1.894715 T24 .906178 against continuousGT. These are long-trained reference scores, not the fair fresh120step control.",
+      "updated_at": "2026-10-09T17:40:09.050756+00:00"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T17:32:30.284742+00:00",
+  "updated_at": "2026-10-09T17:40:09.050756+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Re-evaluate the accepted sample80000 baseline on the exact paired query/frame/surface/GT protocol; complete metrics for every planned row.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "reference",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-09T17:32:30.284742+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
     "source_code_commit": "75b71b20bf10164d306a764c657095c95c43ee9e",
@@ -326,7 +326,10 @@
       "new_allocation": false
     },
     "acceptance": "Re-evaluate the accepted sample80000 baseline on the exact paired query/frame/surface/GT protocol; complete metrics for every planned row.",
-    "note": "Preflight accepted. Re-evaluate historical sample80000 on identical candidate validation frames and complete continuous GT before retraining."
+    "note": "Preflight accepted. Re-evaluate historical sample80000 on identical candidate validation frames and complete continuous GT before retraining.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/reference_evaluation.json",
+    "result_note": "Paired historical reference complete:104rows; mean normal-T CE1.166888; generation16/16 naturally terminated/detokenized, T2 all-rowF1.894715 T24 .906178 against continuousGT. These are long-trained reference scores, not the fair fresh120step control.",
+    "updated_at": "2026-10-09T17:40:09.050756+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

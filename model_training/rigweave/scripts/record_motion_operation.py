@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import subprocess
 
 from motion_experiment_runtime import load_config, write_json
+from run_motion_experiment import build_plan
 
 
 def main():
@@ -59,6 +60,7 @@ def main():
             if args.stage == "full" and selected != candidate:
                 raise ValueError("full training requires the selected candidate")
         source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+        plan = build_plan(config, args.stage, args.candidate)
         remote_config = str(PurePosixPath(config["runtime"]["repo"]) / args.config.relative_to(root).as_posix())
         command = [config["runtime"]["python"], "-B", config["runtime"]["repo"] + "/model_training/rigweave/scripts/run_motion_experiment.py",
                    "--config", remote_config, "--stage", args.stage]
@@ -90,6 +92,8 @@ def main():
                               "reference_checkpoint": config["baseline"]["checkpoint"],
                               "resume_checkpoint": None, "changes": config["changes"],
                               "output_root": config["runtime"]["output_root"],
+                              "output_path": plan["output"], "evaluation_artifact": plan["evaluation_path"],
+                              "runtime_result": plan["result"],
                               "job_root": config["runtime"]["job_root"], "resources": {
                                   "allocation": config["runtime"]["allocation"], "host": config["runtime"]["host"],
                                   "physical_gpus": config["runtime"]["physical_gpus"] if operation == "train" else config["runtime"]["physical_gpus"][:1],

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T19:33:00.809287+00:00",
+  "updated_at": "2026-10-09T19:33:03.464312+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,11 +110,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,20 +263,20 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "screen",
-    "candidate": "bias_h2",
+    "candidate": "bias_h4",
     "candidate_config": {
-      "name": "bias_h2",
+      "name": "bias_h4",
       "fusion": "bias",
-      "heads": 2
+      "heads": 4
     },
-    "status": "completed",
-    "prepared_at": "2026-10-09T18:36:58.210666+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-09T19:33:03.464312+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
-    "source_code_commit": "e1be24a184742a3b83fdb2c06b81bb0fb39e2e56",
+    "source_code_commit": "f3b0c817abe8b192f9770206602953bfbb409f89",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -287,7 +287,7 @@
       "--stage",
       "screen",
       "--candidate",
-      "bias_h2"
+      "bias_h4"
     ],
     "manifests": [
       {
@@ -321,9 +321,9 @@
       "training_static_augmentation": false
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
-    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/screen/bias_h2",
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2.json",
+    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/screen/bias_h4",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h4_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h4.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -336,10 +336,7 @@
       "new_allocation": false
     },
     "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
-    "note": "Primary explicitly authorized this fixed 120-step screening sequence after the accepted real DDP smoke. Stop on the first execution failure; no retry, fallback, hybrid, or full run.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2_evaluation.json",
-    "result_note": "Execution passed: 120 steps, exact args, finite logged losses/gradients, complete 104-row evaluation with 16 generation rows; adapter and resource evidence recorded. No model-quality acceptance or configuration selection.",
-    "updated_at": "2026-10-09T19:33:00.809287+00:00"
+    "note": "Primary explicitly authorized this fixed 120-step screening sequence after the accepted real DDP smoke. Stop on the first execution failure; no retry, fallback, hybrid, or full run."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -637,6 +634,83 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_control_evaluation.json",
       "result_note": "Execution passed: 120 steps, exact args, finite logged losses/gradients, complete 104-row evaluation with 16 generation rows; adapter and resource evidence recorded. No model-quality acceptance or configuration selection.",
       "updated_at": "2026-10-09T18:36:55.613089+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "screen",
+      "candidate": "bias_h2",
+      "candidate_config": {
+        "name": "bias_h2",
+        "fusion": "bias",
+        "heads": 2
+      },
+      "status": "completed",
+      "prepared_at": "2026-10-09T18:36:58.210666+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
+      "source_code_commit": "e1be24a184742a3b83fdb2c06b81bb0fb39e2e56",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "screen",
+        "--candidate",
+        "bias_h2"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "frames_min": 2,
+        "frames_max": 24,
+        "motion_fps_ratio": 0.75,
+        "minimum_random_frames": 1,
+        "initialization_seed": 20260529,
+        "retain_u": true,
+        "translation_scale": 0.1,
+        "relative_scale": 0.1,
+        "invalid_group_policy": "rank-deficient local motion is explicitly unknown; geometry tokens and complete GT are never masked or pruned",
+        "training_static_augmentation": false
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/screen/bias_h2",
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
+      "note": "Primary explicitly authorized this fixed 120-step screening sequence after the accepted real DDP smoke. Stop on the first execution failure; no retry, fallback, hybrid, or full run.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/screen_bias_h2_evaluation.json",
+      "result_note": "Execution passed: 120 steps, exact args, finite logged losses/gradients, complete 104-row evaluation with 16 generation rows; adapter and resource evidence recorded. No model-quality acceptance or configuration selection.",
+      "updated_at": "2026-10-09T19:33:00.809287+00:00"
     }
   ]
 }

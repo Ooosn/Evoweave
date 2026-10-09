@@ -1,17 +1,14 @@
 {
   "schema_version": 1,
-  "state_id": "model-puppeteer-20260716-001",
-  "updated_at": "2026-07-19T20:11:56+09:00",
+  "state_id": "motion-evidence-base-compare-20261010",
+  "updated_at": "2026-10-09T17:08:35.124724+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/FLAT_UNIRIG_HITMAX_CAUSAL_DIAGNOSIS_20260719.md",
-    "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
-    "model_training/docs/PUPPETEER_CONDITION_COLLAPSE_DIAGNOSIS_20260715.md",
-    "model_training/docs/PUPPETEER_TOPOLOGY_LONG_TAIL_DIAGNOSIS_20260718.md"
+    "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -107,30 +104,29 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "whether stack-close training preserves flat UniRig geometry while eliminating hitmax",
-    "whether zero-residual condition cross-attention refresh prevents self-prefix condition collapse",
-    "the effective and stable mixture of coordinate-corrupted roll-in and graph-matched self-prefix supervision",
-    "which of the HGC 15920-plus-856 and Westlake 15903-plus-857 manifests is the next-run source of truth"
+    "Best practical head count and fusion mode await paired short-run measurements.",
+    "Short screening is not proof of the final full-training quality or global optimum.",
+    "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."
   ],
   "allowed_operations": [
-    "report",
     "inspect",
-    "matched_eval",
-    "visualize"
+    "report",
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
-    "submit"
+    "submit",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "qlogin_job_id": 124519658,
+    "qlogin_job_id": 129547842,
     "status": "active_at_last_check",
-    "detected_at": "2026-07-19T17:42:07+09:00",
+    "detected_at": "2026-10-10T01:59:20+09:00",
     "current_host": "pcg01",
-    "resources": "1xH100 80GB",
+    "resources": "2xH100 80GB, physical devices 5 and 7, mem_req=64G, unlimited virtual memory",
     "gpu_processes": 0,
-    "decision": "Retain the foreground qlogin for inspection; do not train or release it without the user's instruction."
+    "decision": "User authorized this motion comparison and full training on this existing allocation. Refresh live state before launching; preserve the qlogin keepalive and unrelated jobs."
   },
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
@@ -267,81 +263,70 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Implement a no-fallback stack-close tokenizer that reuses the flat branch token ID as CLOSE_NODE and round-trips exact parent identity; strictly load the flat sample80000 coordinate/decoder/conditioner prior; add a zero-residual condition cross-attention refresh path; then pass 32-row coordinate, parent, CLOSE, EOS, condition-swap, self-prefix, bounded-generation, topology-F1, J2J, and visualization preflights. Do not start multi-GPU training before the formal manifest is frozen and these checks pass.",
+  "next_required_result": "Zero-init parity and actual cached-generation/teacher-forcing same-prefix checks pass; B3 T24 and T2 finite optimizer steps with all adapter gradients and memory recorded.",
   "active_operation": {
-    "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
-    "status": "completed",
-    "started_at": "2026-07-17T18:06:41+09:00",
-    "resumed_at": "2026-07-17T20:20:36+09:00",
-    "training_completed_at": "2026-07-18T07:16:08+09:00",
-    "matched_eval_completed_at": "2026-07-18T07:49:54+09:00",
-    "server": "HGC pcg01 qlogin",
-    "resources": "2xH100, s_vmem=256G",
-    "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
-    "matched_eval_path": "/home/wangyy/evorig/outputs/matched_heldout52_20260718",
-    "last_verified": {
-      "step": 1600,
-      "sample_seen": 76800,
-      "validation_ce": 1.16513517,
-      "validation_eos_accuracy": 1.0
-    },
-    "last_safe_checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-      "step": 1667,
-      "sample_seen": 80016,
-      "includes_optimizer": true,
-      "includes_scheduler": true
-    },
-    "matched_eval": {
-      "manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-      "seed": 101,
-      "row_count": 52,
-      "contract_match": true,
-      "flat_unirig": {
-        "detokenize_ok": 42,
-        "hit_max_without_eos": 10,
-        "joint_count_mae_valid_rows": 6.095238095238095,
-        "j2j_valid_rows": 0.038961077050771564,
-        "topology_f1_valid_rows": 0.6394098510822451
+    "experiment": "motion_evidence_base_compare_20261010",
+    "stage": "preflight",
+    "candidate": null,
+    "candidate_config": null,
+    "status": "prepared",
+    "prepared_at": "2026-10-09T17:08:35.124724+00:00",
+    "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
+    "source_code_commit": "38f36f3356af12b8d83a53261047abe4e28bf9a6",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "--stage",
+      "preflight"
+    ],
+    "manifests": [
+      {
+        "argument": "train_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "exists": true,
+        "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+        "rows": 15920
       },
-      "puppeteer_sample80000": {
-        "detokenize_ok": 52,
-        "hit_max_without_eos": 0,
-        "joint_count_mae": 43.51923076923077,
-        "j2j": 0.053189030852921024,
-        "topology_f1": 0.20230810683187644
-      },
-      "summary": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/matched_summary.json",
-      "montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals/matched_montage.png",
-      "hitmax_montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals_flat_hitmax/matched_montage.png"
+      {
+        "argument": "val_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "exists": true,
+        "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+        "rows": 856
+      }
+    ],
+    "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "reference_checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+    "resume_checkpoint": null,
+    "changes": {
+      "frames_min": 2,
+      "frames_max": 24,
+      "motion_fps_ratio": 0.75,
+      "minimum_random_frames": 1,
+      "initialization_seed": 20260529,
+      "retain_u": true,
+      "translation_scale": 0.1,
+      "relative_scale": 0.1,
+      "invalid_group_policy": "rank-deficient local motion is explicitly unknown; geometry tokens and complete GT are never masked or pruned",
+      "training_static_augmentation": false
     },
-    "qlogin_job_id": 124452019,
-    "resume_contract": {
-      "checkpoint_step": 209,
-      "scheduler_step": 209,
-      "skipped_batches_in_epoch": 1672,
-      "restored_optimizer": true,
-      "restored_scheduler": true,
-      "next_verified_step": 210
+    "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+    "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5
+      ],
+      "virtual_memory": "unlimited",
+      "new_allocation": false
     },
-    "interrupted_job_id": 124448167,
-    "pre_interruption_last_verified": {
-      "step": 230,
-      "sample_seen": 11040,
-      "loss": 1.3333352357149124,
-      "seconds_per_step": 24.915,
-      "gpu_peak_gb": 68.487
-    },
-    "interruption_accounting": {
-      "exit_status": 137,
-      "failed": "100: assumedly after job",
-      "deleted_by": "NONE",
-      "maxvmem_gb": 212.353,
-      "svmem_limit_gb": 256.0,
-      "maxrss_gb": 9.2,
-      "memory_failcnt": 0
-    },
-    "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
+    "acceptance": "Zero-init parity and actual cached-generation/teacher-forcing same-prefix checks pass; B3 T24 and T2 finite optimizer steps with all adapter gradients and memory recorded.",
+    "note": "User-approved recorded CPU and single-H100 contract preflight; no pilot or formal training is allowed in this stage. Ten core CPU tests passed on HGC; independent core review found no blocking issue."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -355,5 +340,82 @@
     "tokenizer_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
     "qlogin_job_id": 124519658
   },
-  "receipt_max_age_minutes": 240
+  "receipt_max_age_minutes": 240,
+  "operation_history": [
+    {
+      "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
+      "status": "completed",
+      "started_at": "2026-07-17T18:06:41+09:00",
+      "resumed_at": "2026-07-17T20:20:36+09:00",
+      "training_completed_at": "2026-07-18T07:16:08+09:00",
+      "matched_eval_completed_at": "2026-07-18T07:49:54+09:00",
+      "server": "HGC pcg01 qlogin",
+      "resources": "2xH100, s_vmem=256G",
+      "output_path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717",
+      "matched_eval_path": "/home/wangyy/evorig/outputs/matched_heldout52_20260718",
+      "last_verified": {
+        "step": 1600,
+        "sample_seen": 76800,
+        "validation_ce": 1.16513517,
+        "validation_eos_accuracy": 1.0
+      },
+      "last_safe_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
+        "step": 1667,
+        "sample_seen": 80016,
+        "includes_optimizer": true,
+        "includes_scheduler": true
+      },
+      "matched_eval": {
+        "manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
+        "seed": 101,
+        "row_count": 52,
+        "contract_match": true,
+        "flat_unirig": {
+          "detokenize_ok": 42,
+          "hit_max_without_eos": 10,
+          "joint_count_mae_valid_rows": 6.095238095238095,
+          "j2j_valid_rows": 0.038961077050771564,
+          "topology_f1_valid_rows": 0.6394098510822451
+        },
+        "puppeteer_sample80000": {
+          "detokenize_ok": 52,
+          "hit_max_without_eos": 0,
+          "joint_count_mae": 43.51923076923077,
+          "j2j": 0.053189030852921024,
+          "topology_f1": 0.20230810683187644
+        },
+        "summary": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/matched_summary.json",
+        "montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals/matched_montage.png",
+        "hitmax_montage": "/home/wangyy/evorig/outputs/matched_heldout52_20260718/visuals_flat_hitmax/matched_montage.png"
+      },
+      "qlogin_job_id": 124452019,
+      "resume_contract": {
+        "checkpoint_step": 209,
+        "scheduler_step": 209,
+        "skipped_batches_in_epoch": 1672,
+        "restored_optimizer": true,
+        "restored_scheduler": true,
+        "next_verified_step": 210
+      },
+      "interrupted_job_id": 124448167,
+      "pre_interruption_last_verified": {
+        "step": 230,
+        "sample_seen": 11040,
+        "loss": 1.3333352357149124,
+        "seconds_per_step": 24.915,
+        "gpu_peak_gb": 68.487
+      },
+      "interruption_accounting": {
+        "exit_status": 137,
+        "failed": "100: assumedly after job",
+        "deleted_by": "NONE",
+        "maxvmem_gb": 212.353,
+        "svmem_limit_gb": 256.0,
+        "maxrss_gb": 9.2,
+        "memory_failcnt": 0
+      },
+      "reason": "The Codex-managed SSH PTY was last polled at 18:30:24 JST, then left unsupervised until the next poll at 19:50:49 JST. SGE ended the interactive qlogin at 19:50:36 with SIGKILL. Trainer logs contain no exception, and qacct shows no user deletion or memory-limit failure. The evidence does not establish a fixed five-hour PTY limit; the verified operational failure was ending the monitoring turn and leaving the foreground SSH/qlogin session unmaintained for about 80 minutes. HGC tmux is not a supported persistence mechanism."
+    }
+  ]
 }

@@ -96,7 +96,8 @@ def main():
                                   "virtual_memory": "unlimited", "new_allocation": False},
                               "acceptance": acceptance[args.stage], "note": args.note},
             next_required_result=acceptance[args.stage],
-            unknowns=["Best practical head count and fusion mode await paired short-run measurements.",
+            unknowns=[("A practical head/fusion configuration was selected from short runs; full-budget quality remains unverified."
+                       if args.stage == "full" else "Best practical head count and fusion mode await paired short-run measurements."),
                       "Short screening is not proof of the final full-training quality or global optimum.",
                       "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."],
         )

@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import subprocess
 
 from motion_experiment_runtime import load_config, write_json
@@ -59,7 +59,7 @@ def main():
             if args.stage == "full" and selected != candidate:
                 raise ValueError("full training requires the selected candidate")
         source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-        remote_config = str(Path(config["runtime"]["repo"]) / args.config.relative_to(root).as_posix())
+        remote_config = str(PurePosixPath(config["runtime"]["repo"]) / args.config.relative_to(root).as_posix())
         command = [config["runtime"]["python"], "-B", config["runtime"]["repo"] + "/model_training/rigweave/scripts/run_motion_experiment.py",
                    "--config", remote_config, "--stage", args.stage]
         if candidate:

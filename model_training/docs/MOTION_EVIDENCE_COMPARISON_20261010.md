@@ -108,6 +108,33 @@ frame counts, and no repeated initialization was performed. Token-only does
 not show a clear quality benefit. Compare hybrid_h8 before choosing the final
 fusion; no formal run is authorized by this head-choice result alone.
 
+### Final Fusion Selection
+
+The hybrid_h8 screen also completed 120 steps and all paired-input and
+argument checks. Mean CE was 1.511214 (T2 1.514128, T8 1.510173, T24 1.509341),
+static CE 1.409289, generation success 16/16, and all-row topology F1 0.761046.
+Median logged step was 23.665 seconds and peak allocated memory 71.627 GiB.
+All 12 bias tensors and 12 token tensors were finite and updated from zero.
+The bias-only and token-only candidates likewise updated every adapter layer.
+
+Select **bias_h8** for the fresh full run. Hybrid's 0.37% lower CE relative to
+bias_h8 lies within the predeclared 1% practical tie, while generation F1 is
+lower by 0.01114 and measured step time is 3.0% higher. Both have 16/16 valid
+generations. Under the recorded preference for pair bias unless token fusion
+has clear benefit, retain bias-only and do not add the pooled-token path.
+The no-evidence control is a diagnostic comparator, not evidence that motion
+fusion must improve at full budget. Its short-run CE is practically tied with
+the selected configuration; full-budget superiority remains unverified.
+
+Evidence: `results/complete_screen_summary.json` and
+`results/hybrid_layer_updates.json` under the external job root. The
+asset-bootstrap CE interval for hybrid minus control is [-0.01690, -0.00227],
+but this is conditional on one short training seed and the selected 32 assets;
+it does not override the practical tie rule or prove final generation quality.
+The full run uses the original 1667 steps and full optimizer/scheduler saves,
+official UniRig initialization, and a fresh motion encoder with seed 20260529.
+Neither a screening checkpoint nor the historical final checkpoint is resumed.
+
 ## Execution And Acceptance
 
 Use the existing allocation 129547842 on pcg01i, physical H100 devices 5 and 7.

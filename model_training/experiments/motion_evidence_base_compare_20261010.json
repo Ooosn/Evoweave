@@ -249,7 +249,13 @@
     "fresh_initialization": true,
     "optimizer_lr_schedule_from_baseline": true,
     "requires_passed_preflight": true,
-    "selected_candidate": null,
+    "selected_candidate": {
+      "name": "bias_h8",
+      "fusion": "bias",
+      "heads": 8
+    },
+    "selection_evidence": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/complete_screen_summary.json",
+    "selection_reason": "Select pairwise bias with eight heads after all six fresh 120-step screens. Hybrid lowers mean CE by only 0.37% relative to bias_h8, within the predeclared 1% practical tie, with lower all-row topology F1 (0.761046 versus 0.772189) and 3.0% slower logged steps. Both terminate/detokenize 16/16 generations. Token-only shows no clear quality benefit; fewer bias heads have observed nontermination. Keep the simpler pair-bias route for full-budget testing. Small-set screening does not establish final superiority over control or the historical reference.",
     "stability_acceptance": "Both GPUs active on the intended allocation, finite losses/gradients, variable-frame schedule and nonzero adapter updates verified, no OOM/traceback, and first 5000-sample checkpoint saved with matched run metadata."
   }
 }

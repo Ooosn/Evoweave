@@ -143,7 +143,7 @@ arm similarly improved training and worsened validation. Static F1 fell from
 Actual versus unknown changed CE by-0.245pct but topology F1 by-0.02582.
 Ablating new-branch E after training changes CE by only-0.0054pct, with an
 asset bootstrap interval spanning zero. This is consistent with an unwanted
-geometry-only feature shift and overfitting, not evidence of a useful new
+explicit-E-independent feature shift and overfitting, not evidence of a useful new
 motion correction. It does not disprove motion-based structure completion.
 On the strict hidden-demonstrated weak2 stratum (8 assets,52 joints), actual
 and unknown have identical coverage/edge recall, not an extra motion benefit.
@@ -152,11 +152,14 @@ and unknown have identical coverage/edge recall, not an extra motion benefit.
 
 Change only the residual parameterization to F(x,E)-F(x,U), where U supplies
 allunknown [1,0,0] on every pair. Share every projection between both terms.
-This removes the learned geometry-only offset: for E=U the correction is
+This removes the learned explicit-E-independent offset: for E=U the correction is
 exactly zero even after training. The old backbone still processes geometry
 and motion and predicts the complete skeleton. In partially observed inputs,
 new motion corrections can still propagate through the original global and
 temporal attention; inactive joints are not removed or assigned negative labels.
+Here x already contains the base's implicit motion features. F(x,U) is not a
+pure static encoder; only the NEW module's explicit pair-state evidence is
+replaced in the reference term.
 
 This guarantees a neutral NEW correction for allunknown states, not that the
 base's static predictions are perfect. Numerical evidence from truly static
@@ -179,3 +182,11 @@ generic motion-presence switch. The original pair bias always receives true E.
 Reuse previous frozen-base generations only after exact condition parity, and
 label them as reused. This second look at the same16 validation assets is
 exploratory, not an independent confirmation or authorization for full training.
+
+Anchored preflight from98e52c0 passed all exits at02:14 JST. Six base-cache,
+six zero-init and six post-training unknown CE/condition comparisons are exact;
+all zero and trained-unknown64-token prefixes match. Two finite updates change
+84 parameter keys;12 shared output biases cancel and remain unchanged. Old
+parameters and full hashes of source checkpoint/cache/report remain unchanged.
+Peak allocated memory4.724GiB. This verifies the trained neutrality contract,
+not generation improvement. The anchored short screen is separately gated.

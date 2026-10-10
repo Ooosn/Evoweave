@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T17:04:19.216510+00:00",
+  "updated_at": "2026-10-10T17:18:43.796197+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Reuse hash-verified original cache for min/max-count2 train/2valid assets, complete GT, all3views. F(x,E)-F(x,U) reference-subtracted adapter must match cached base exactly at zero init and after2finiteupdates under allunknown new-branch evidence, including64token greedy prefixes. Old parameters unchanged,90pctmemory cap, no retry or fulltraining; primary reviews before anchored screen.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "relation_anchor_preflight",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T17:04:19.216510+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
     "source_code_commit": "056d796bd30cebae5f06e0ff3f88b03219265b60",
@@ -351,7 +351,10 @@
       "new_allocation": false
     },
     "acceptance": "Reuse hash-verified original cache for min/max-count2 train/2valid assets, complete GT, all3views. F(x,E)-F(x,U) reference-subtracted adapter must match cached base exactly at zero init and after2finiteupdates under allunknown new-branch evidence, including64token greedy prefixes. Old parameters unchanged,90pctmemory cap, no retry or fulltraining; primary reviews before anchored screen.",
-    "note": "Plain screenqualityrejectedandrecorded8d1b616; primaryapprovedONLYanchoredpreflight now. NewF(x,E)-F(x,U) sharedreference subtraction preservesoldcondition forallunknown evenafterlearning; allactualu/c/dunchanged. CPUmodule30/30 inclBF16exactidentity/gradientcancellation,encoderintegration4/4,anchorprobe3/3,analysis4/4 andexistingprobe8/8 pass. Reuse originalhashverified4.30GBcacheandbasecheckpoint, selectedmin/max2train/2valid fullGT3views, zero-initprefixparity,2finiteupdates, post-updateallunknowncondition/64prefixexactparity, singleH1005 90pctcap. Onlynewadapter trainable,no sourcecache/checkpointmutation,nosavedcheckpoint/preflight. Needprimaryacceptance beforeanchor_screen; noautomaticretry/fulltraining. Sourcecodebasedonaspecificobservedprior-driftfailure,nothyperparameterorGTchange; originalLR/seed/budgetkept."
+    "note": "Plain screenqualityrejectedandrecorded8d1b616; primaryapprovedONLYanchoredpreflight now. NewF(x,E)-F(x,U) sharedreference subtraction preservesoldcondition forallunknown evenafterlearning; allactualu/c/dunchanged. CPUmodule30/30 inclBF16exactidentity/gradientcancellation,encoderintegration4/4,anchorprobe3/3,analysis4/4 andexistingprobe8/8 pass. Reuse originalhashverified4.30GBcacheandbasecheckpoint, selectedmin/max2train/2valid fullGT3views, zero-initprefixparity,2finiteupdates, post-updateallunknowncondition/64prefixexactparity, singleH1005 90pctcap. Onlynewadapter trainable,no sourcecache/checkpointmutation,nosavedcheckpoint/preflight. Needprimaryacceptance beforeanchor_screen; noautomaticretry/fulltraining. Sourcecodebasedonaspecificobservedprior-driftfailure,nothyperparameterorGTchange; originalLR/seed/budgetkept.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight_evaluation.json",
+    "result_note": "Primary accepts execution and trained-unknown neutrality, NOTquality. One source98e52c0 run,all3exits0,255.77seconds. Sixbasecache/6zeroinit/6trainedunknownCEconditioncomparisons all0; zeroandtrainedunknown64tokenprefixes allmatch.2finiteupdates8samples46frames1438tokens; outgrad.00154481atstep1; step2in.00044192,mix.00016927,out.00300257.84adapterkeysupdate,12sharedoutbiasunchangedasexpected. Oldparamsunchanged,peak4.724GiB,nocheckpoints/newcache. WorkerfullSHA sourcecache/sourcecheckpoint/priorreport unchanged atcompletion,5smallartifactsdownloadedhashverified.02:14:33JST GPU5/7idle,allocationsretained. Permittoprepareanchoredsame-input120steponearm screen withunknownidentitychecks andpermutednewE CEcontrol, nofulltraining ornewhyperparametersearch. F(x,U) removesanexplicit-E-independentfeatureupdate; xstillcontainspreexistingimplicitmotion,notapurestaticencoder.",
+    "updated_at": "2026-10-10T17:18:43.796197+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

@@ -52,8 +52,10 @@ is rejected: T6/B12 exhausted the 93% memory allowance, and T9/B8 plus T8/B9
 exceeded the 90% approval ceiling. T24/B3, T18/B4, T12/B6 and T10/B7 measured
 68.44, 69.01, 70.15 and 69.15 GiB allocated peaks respectively. This is a
 single-GPU padding-stress measurement, not a dataset-wide memory guarantee.
-The next candidate is F=72/cap=6, requiring all T2..24 confirmation and a
-separate two-rank save/resume/accounting smoke. No next full run is authorized.
+F=72/cap=6 passed all23 T2..24 single-GPU stress cases at23:38:52, with a
+maximum70.153 GiB allocated peak. The stress subset's longest target has403
+input tokens, so this is not dataset-wide safety. A separate two-rank
+save/resume/accounting smoke is still required. No next full run is authorized.
 Both earlier bias-scale attempts remain rejected because full-forward replay
 differs by more than 2e-5 CE. The two-asset boundary/RNG audit now isolates the
 variation to recomputed motion evidence: surface features/query points and

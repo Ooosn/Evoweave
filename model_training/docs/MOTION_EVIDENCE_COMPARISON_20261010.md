@@ -252,3 +252,12 @@ not a modification to the trained model or evidence mathematics.
 Repeated BF16 backward bias gradients still differ by about 0.42-0.46% in
 relative L2; the complete gradient study must record this numerical floor.
 Evidence: external results/bias_replay_audit_evaluation.json.
+
+All-T F72/cap6 confirmation completed at 23:38:52 JST on source8e00ab6.
+All 23 exact schedules passed finite-update and 90% memory acceptance.
+The worst allocated peak is 70.153 GiB at T12/B6; T24/B3 is 68.442 GiB,
+T2/B6 is 26.517 GiB. All three exits are zero; GPUs idle at23:39.
+The stress subset's longest complete target has403 input tokens. This is
+not a guarantee for every training asset, long-target mixture, or DDP bucket
+allocation. The next execution gate is a separate two-rank save/resume smoke.
+Evidence: external results/frame_confirm_evaluation.json.

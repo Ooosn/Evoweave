@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:31:22.017856+00:00",
+  "updated_at": "2026-10-10T14:40:11.589075+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,12 +110,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "frame_confirm",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T14:31:22.017856+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "d99a676c99a14eec3585f590bfa854a4d4503e77",
@@ -419,7 +419,10 @@
       "new_allocation": false
     },
     "acceptance": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
-    "note": "Exact F72/cap6 for all23 frame counts2..24. Same32-row stress selection, atmost2retained complete samples, Adam/gradients resident, singleH1005,93pctlimit/90pctapproval. Stop firstOOM; no checkpoint writes or fulltraining. Previous launch attempt was denied beforeGPU because local atomic state replacement hit a transient Windows file lock; preserve its bootstrap logs. Only run after this prepared state is committed and pushed. Auditclosed andGPUsidle23:31; qlogin129547842retained."
+    "note": "Exact F72/cap6 for all23 frame counts2..24. Same32-row stress selection, atmost2retained complete samples, Adam/gradients resident, singleH1005,93pctlimit/90pctapproval. Stop firstOOM; no checkpoint writes or fulltraining. Previous launch attempt was denied beforeGPU because local atomic state replacement hit a transient Windows file lock; preserve its bootstrap logs. Only run after this prepared state is committed and pushed. Auditclosed andGPUsidle23:31; qlogin129547842retained.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm_evaluation.json",
+    "result_note": "F72/cap6 exact23 T2..24 stress cases all approved, completeGT, finite gradients/updates with Adam states/gradients resident. Peak70.152662GiB atT12B6; T24B3 68.442213,T2B6 26.517232. All3exits0 at23:38:52 and GPU5/7idle23:39. Scope limited to32-row selection(max403tokens) with2repeated stressassets and singleGPU, not globaldataset orDDPguarantee. Source8e00ab6; no checkpointwrites. Proceed separately to32assetcachedbiasdiagnostic and2ranksmoke, notfulltraining.",
+    "updated_at": "2026-10-10T14:40:11.589075+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

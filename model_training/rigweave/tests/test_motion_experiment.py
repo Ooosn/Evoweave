@@ -74,6 +74,17 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertEqual(audit["devices"], [5])
         self.assertIsNone(audit["expected"])
 
+    def test_frame_smoke_uses_selected_candidate_and_two_devices(self):
+        plan = build_plan(self.config, "frame_budget_smoke", "bias_h8")
+        self.assertEqual(plan["devices"], [5, 7])
+        self.assertIsNone(plan["expected"])
+        self.assertTrue(plan["output"].endswith("/frame_budget_smoke/bias_h8"))
+        self.assertIn("run_frame_budget_smoke.py", " ".join(plan["command"]))
+        with self.assertRaises(ValueError):
+            build_plan(self.config, "frame_budget_smoke", None)
+        with self.assertRaises(ValueError):
+            build_plan(self.config, "frame_budget_smoke", "bias_h2")
+
     @unittest.skipUnless(os.name == "posix", "requires the actual Linux Bash launcher")
     def test_actual_launcher_args_match_recorded_recipe_without_running_trainer(self):
         # Execute only the actual argparse construction, never trainer setup or CUDA.

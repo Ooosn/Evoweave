@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:40:12.840992+00:00",
+  "updated_at": "2026-10-10T14:52:10.925396+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "bias_diagnostic_cached",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T14:40:12.840992+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "15bcc032b572b751adb933983f04fe1ecca12a6d",
@@ -341,7 +341,10 @@
       "new_allocation": false
     },
     "acceptance": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
-    "note": "Primary accepted2assetcached-boundary audit andallTframeconfirmation. Execute32fixedassets T8/2/24,408CEcomparisons,32pairedrepeatgradients,64naturalgreedygenerations; scales0/1/3/10 withstatic/misaligned controls. Cacheactualfeatures+E, everycachemustmatchfullCEwithin2e-5, measurebackwardnumericalfloor/channelcancellation/RMSreference, exactcoefficientrestoration. SingleH1005,originalsample80000immutable,nooptimizer orcheckpointwrites,nohigherLRtraining. CPU9bias tests passed, priorfullsweepfailurespreserved."
+    "note": "Primary accepted2assetcached-boundary audit andallTframeconfirmation. Execute32fixedassets T8/2/24,408CEcomparisons,32pairedrepeatgradients,64naturalgreedygenerations; scales0/1/3/10 withstatic/misaligned controls. Cacheactualfeatures+E, everycachemustmatchfullCEwithin2e-5, measurebackwardnumericalfloor/channelcancellation/RMSreference, exactcoefficientrestoration. SingleH1005,originalsample80000immutable,nooptimizer orcheckpointwrites,nohigherLRtraining. CPU9bias tests passed, priorfullsweepfailurespreserved.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_cached_evaluation.json",
+    "result_note": "Completed23:47:14 source95424a4 all3exits0;408CE,32grad+32repeats,64greedygens(allnatural success),104cachecontracts/32CEreplays exactly0delta, coefficientsrestored. GradientR.19088 vsindependentRMS.19685;paircos-.00146,notunusuallyopposed;backwardrepeatmeanvariation.397pct. Scales0/1/3/10 F1 .889827/.899344/.892946/.898829 on8assetsx2T, no robust magnification benefit; clusteredCEintervalsallcross0. StaticCE+5.21pct on8T8assets. Keepcurrentscale/LR; nohigherLRtrainingcausality orfullheldoutqualityclaim. GPUsidle23:47; originalcheckpointunchanged bydiagnostic.",
+    "updated_at": "2026-10-10T14:52:10.925396+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

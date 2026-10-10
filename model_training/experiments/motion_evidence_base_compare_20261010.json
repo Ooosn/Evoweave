@@ -276,6 +276,14 @@
     "acceptance_fraction": 0.90,
     "cases": [[24, 3], [23, 3], [22, 3], [21, 3], [20, 3], [19, 3], [18, 4], [17, 4], [16, 4], [15, 4], [14, 5], [13, 5], [12, 6], [11, 6], [10, 6], [9, 6], [8, 6], [7, 6], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6]]
   },
+  "frame_budget_smoke": {
+    "frame_budget": 72,
+    "frame_batch_cap": 6,
+    "max_steps": 4,
+    "first_stop_after_steps": 1,
+    "target_stop_step": 3,
+    "sample_overshoot": 1
+  },
   "full_training": {
     "max_steps": 1667,
     "world_size": 2,

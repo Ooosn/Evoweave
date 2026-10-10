@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -49,7 +49,7 @@ def main():
         if old:
             state.setdefault("operation_history", []).append(old)
         candidate = None
-        if args.stage in {"screen", "full"}:
+        if args.stage in {"screen", "full", "frame_budget_smoke"}:
             candidates = list(config["screening"]["candidates"])
             selected = config["full_training"]["selected_candidate"]
             if selected:
@@ -57,7 +57,7 @@ def main():
             candidate = next((value for value in candidates if value["name"] == args.candidate), None)
             if candidate is None:
                 raise ValueError("candidate must be explicitly recorded in the config")
-            if args.stage == "full" and selected != candidate:
+            if args.stage in {"full", "frame_budget_smoke"} and selected != candidate:
                 raise ValueError("full training requires the selected candidate")
         source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
         plan = build_plan(config, args.stage, args.candidate)
@@ -77,13 +77,14 @@ def main():
             "frame_confirm": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
             "bias_replay_audit": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
             "bias_diagnostic_cached": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
+            "frame_budget_smoke": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
         }
-        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full", "frame_budget_smoke"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage in {"preflight", "frame_profile", "frame_confirm"}:
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
         stage_config = config[{"frame_profile": "frame_budget_profile", "frame_confirm": "frame_budget_confirm",
-                               "bias_replay_audit": "bias_replay_audit"}.get(args.stage, "bias_diagnostic"
+                               "bias_replay_audit": "bias_replay_audit", "frame_budget_smoke": "frame_budget_smoke"}.get(args.stage, "bias_diagnostic"
                                if args.stage.startswith("bias_diagnostic") else "changes")]
         state.update(
             state_id="motion-evidence-base-compare-20261010",
@@ -98,7 +99,7 @@ def main():
                               "config": remote_config, "command": command,
                               "manifests": config["baseline"]["manifests"],
                               "initialization": config["baseline"]["args"]["unirig_checkpoint"],
-                              "reference_checkpoint": stage_config.get("checkpoint", config["baseline"]["checkpoint"]),
+                              "reference_checkpoint": None if args.stage == "frame_budget_smoke" else stage_config.get("checkpoint", config["baseline"]["checkpoint"]),
                               "resume_checkpoint": None,
                               "changes": stage_config,
                               "output_root": config["runtime"]["output_root"],

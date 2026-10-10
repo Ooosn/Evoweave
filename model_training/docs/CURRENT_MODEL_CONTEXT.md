@@ -63,6 +63,17 @@ RNG states are unchanged. Captured-boundary replays match full-forward CE and
 condition exactly; BF16 backward gradients retain about0.42-0.46% relative
 variation. A cached-evidence sweep can now measure interventions, recording
 the gradient numerical floor. Evidence: results/bias_replay_audit_evaluation.json.
+
+The cached sweep completed23:47:14:408 CE comparisons,32+32 repeated sample
+gradients,64 natural generations;104 input-cache checks and32 CE repeats are
+exact, all64 generations terminate/detokenize, coefficients restored exactly.
+Gradient resultant ratio0.19088 is close to the independent-direction
+reference0.19685; mean cosine-0.00146 does not indicate unusually opposed
+directions. Scales0/1/3/10 give small-set topology F1
+0.88983/0.89934/0.89295/0.89883, with no robust CE or generation gain from
+magnification. Static-frame CE rises about5.21% on the matched8-asset subset.
+Keep current scale/LR; no higher-LR training was tested. See the comparison
+document and results/bias_diagnostic_cached_evaluation.json for limits.
 用户随后明确授权系数/梯度诊断，以及固定帧数预算的动态 batch 实现与显存标定；
 允许短序列时增加真实样本数，必须记录样本、帧数并修正损失归一化及恢复位置。
 初次 bias_diagnostic 在 T2 完成后因 T8 重放精度检查未通过而拒收，产物保留；

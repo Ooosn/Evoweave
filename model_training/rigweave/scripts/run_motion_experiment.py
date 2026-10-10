@@ -22,9 +22,10 @@ def build_plan(config, stage, candidate_name):
     key = stage + ("_" + candidate_name if candidate_name else "")
     candidate = None
     training = stage in {"screen", "full"}
-    if training:
+    smoke = stage == "frame_budget_smoke"
+    if training or smoke:
         options = config["screening"]["candidates"]
-        if stage == "full":
+        if stage in {"full", "frame_budget_smoke"}:
             selected = config["full_training"]["selected_candidate"]
             options = [selected] if selected else []
         candidate = next((value for value in options if value["name"] == candidate_name), None)
@@ -55,6 +56,9 @@ def build_plan(config, stage, candidate_name):
         command += [str(scripts / "profile_frame_budget.py"), "--config", str(config_path),
                     "--output", str(evaluation_path), "--plan-key",
                     "frame_budget_confirm" if stage == "frame_confirm" else "frame_budget_profile"]
+    elif smoke:
+        command += [str(scripts / "run_frame_budget_smoke.py"), "--config", str(config_path),
+                    "--output", str(evaluation_path)]
     else:
         expected = {key: value for key, value in config["baseline"]["args"].items() if key not in DERIVED_ARGS}
         expected.update(frame_budget=0, frame_batch_cap=0, max_samples=0)
@@ -70,11 +74,11 @@ def build_plan(config, stage, candidate_name):
             expected["sample_milestones"] = "80000"
         command = ["bash", str(scripts / "run_dynamic_ar_train.sh")]
     return {"stage": stage, "candidate": candidate_name, "key": key, "command": command,
-            "output": str(output) if training else None, "expected": expected,
+            "output": str(output) if training or smoke else None, "expected": expected,
             "expected_path": str(expected_path), "evaluation_path": str(evaluation_path),
             "log": str(job / "logs" / (key + ".log")),
             "result": str(job / "results" / (key + ".json")),
-            "devices": runtime["physical_gpus"] if training else runtime["physical_gpus"][:1]}
+            "devices": runtime["physical_gpus"] if training or smoke else runtime["physical_gpus"][:1]}
 
 
 def training_environment(config, plan):
@@ -124,7 +128,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -164,11 +168,17 @@ def main():
         require_report(job / "results/full_bias_h8_completion.json", "passed")
     if args.stage == "bias_diagnostic_cached":
         require_report(job / "results/bias_replay_audit_evaluation.json", "complete")
+    if args.stage == "frame_budget_smoke":
+        confirmation = require_report(job / "results/frame_confirm_evaluation.json", "complete")
+        approved_cap = confirmation["summary"].get("full_t2_t24_global_cap")
+        if (confirmation["plan"]["frame_budget"] != config["frame_budget_smoke"]["frame_budget"]
+                or approved_cap != config["frame_budget_smoke"]["frame_batch_cap"]):
+            raise RuntimeError("frame-budget smoke exceeds the all-frame calibrated schedule")
     query = ["nvidia-smi", "-i", ",".join(map(str, plan["devices"])),
              "--query-compute-apps=pid", "--format=csv,noheader"]
     if subprocess.check_output(query, text=True).strip():
         raise RuntimeError("an allocated GPU already has a compute process; inspect before retrying")
-    operation = "train" if plan["expected"] else "preflight" if args.stage in {"preflight", "frame_profile", "frame_confirm"} else "matched_eval"
+    operation = "train" if plan["expected"] or args.stage == "frame_budget_smoke" else "preflight" if args.stage in {"preflight", "frame_profile", "frame_confirm"} else "matched_eval"
     guard(config, operation)
     environment = training_environment(config, plan)
     if plan["expected"]:

@@ -261,3 +261,54 @@ The stress subset's longest complete target has403 input tokens. This is
 not a guarantee for every training asset, long-target mixture, or DDP bucket
 allocation. The next execution gate is a separate two-rank save/resume smoke.
 Evidence: external results/frame_confirm_evaluation.json.
+
+### Completed Cached Bias Diagnostic
+
+Source95424a4 completed at23:47:14 JST with controller/child/outer exits0.
+All408 CE comparisons,32 sample gradients plus32 repeated gradients, and64
+natural greedy generations completed. All104 normal/static cache contracts
+and32 CE replays matched exactly (zero CE difference), with exact coefficient
+restoration. No optimizer or checkpoint writes. GPUs idle at23:47.
+
+For the32 T8 assets, R=||sum g_i||/sum||g_i|| is0.190880; the independent-
+direction RMS reference sqrt(sum||g_i||^2)/sum||g_i|| is0.196847. Their ratio
+is0.969687. Mean pair cosine is-0.001461, with49.80% negative pairs. Gradients
+are dispersed, not unusually mutually opposed relative to this geometric
+reference. This is not a hypothesis test or a reconstruction of training.
+The mean gradient norm is2.98712e-4; median individual norm is1.40927e-3.
+Repeated BF16 backward differs by0.420% median per-sample relative L2,
+0.564% maximum, and0.397% for the mean gradient, below the measured signal.
+Channel R / independent-reference values are u:0.32037/0.30971,
+c:0.19881/0.22137, d:0.19194/0.19733. No channel shows a large opposing trend.
+The common-scale derivative at1 is-2.486e-6 CE per unit scale;19/32 assets
+locally favor increasing it, but this does not establish a useful LR change.
+
+| Bias scale | Mean paired CE delta vs1, T2/8/24 | Topology F1, T2/24 | Natural success |
+| --- | ---: | ---: | ---: |
+| 0 | -0.0000970 | 0.889827 | 16/16 |
+| 1 | 0 | 0.899344 | 16/16 |
+| 3 | +0.0000299 | 0.892946 | 16/16 |
+| 10 | -0.0001167 | 0.898829 | 16/16 |
+
+CE uses32 unique assets; generation uses8 unique assets at two frame counts,
+not16 independent assets. Bootstrap after averaging frame counts within
+each asset gives CE-delta95% intervals [-0.0003025,0.0001268] for0,
+[-0.0002003,0.0002759] for3, [-0.0003324,0.0000902] for10. All cross zero.
+Scale10 F1-delta interval is[-0.004520,0.002975]. Scale0 is approximately
+[-0.020421,0.000007]. These small fixed-subset intervals exclude neither
+null effects nor all practical alternatives; they do not cover seed variation.
+
+On the matched first8 T8 assets, true-motion scale1 CE is1.021711;
+repeating the query frame raises it to1.074929 (+0.053218, about5.21%;
+paired95% interval[0.032047,0.073342]). Permuting the pair-evidence anchor
+alignment raises CE by0.001071 (interval[0.000355,0.001855]). Real multi-frame
+features have a much larger observed contribution than this extra bias.
+Largest coefficient magnitude is0.015117; maximum measured within-row
+anchor-bias span is0.016970, consistent with a small correction.
+
+Decision: preserve current learned scale and LR. There is no demonstrated
+benefit from simply magnifying the coefficients, and no evidence here for
+an abnormally severe gradient conflict. A higher-LR training intervention is
+not tested; full held-out generation superiority remains unverified.
+Evidence: external results/bias_diagnostic_cached_evaluation.json and derived
+results/bias_diagnostic_cached_analysis.json (asset-clustered bootstrap).

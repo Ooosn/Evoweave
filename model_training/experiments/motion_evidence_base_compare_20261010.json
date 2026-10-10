@@ -244,7 +244,8 @@
   "bias_diagnostic": {
     "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "validation_rows": 32,
-    "frames": [2, 8, 24],
+    "frames": [8, 2, 24],
+    "forward_mode": "grad_enabled_transformer_fastpath_disabled",
     "scales": [0.0, 1.0, 3.0, 10.0],
     "gradient_frames": 8,
     "control_rows": 8,

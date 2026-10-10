@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T13:51:16.279680+00:00",
+  "updated_at": "2026-10-10T14:02:33.598608+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "bias_diagnostic",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "rejected",
     "prepared_at": "2026-10-10T13:51:16.279680+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "2ae23e2253da14ae4b5b14d1bd0a0dfae0bbb120",
@@ -340,7 +340,10 @@
       "new_allocation": false
     },
     "acceptance": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
-    "note": "User explicitly authorized this bounded follow-up. Fixed final sample80000 checkpoint; no optimizer updates or checkpoint writes. Complete recorded 32-asset scale/static/misaligned-evidence protocol and sample-gradient analysis. Primary approved direct protocol execution after CPU helper and stage-plan tests; original model/cache/data pipeline already passed GPU preflight. Frame-budget implementation remains separate and no next full training starts."
+    "note": "User explicitly authorized this bounded follow-up. Fixed final sample80000 checkpoint; no optimizer updates or checkpoint writes. Complete recorded 32-asset scale/static/misaligned-evidence protocol and sample-gradient analysis. Primary approved direct protocol execution after CPU helper and stage-plan tests; original model/cache/data pipeline already passed GPU preflight. Frame-budget implementation remains separate and no next full training starts.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
+    "result_note": "First diagnostic stopped after completing T2 when the T8 same-input replay check exceeded 2e-5 CE. Gradient-enabled baseline and no-grad replay/other variants can use different Transformer fast paths, so no T8 result is accepted and no tolerance is relaxed. Preserve partial artifacts; align execution mode and revalidate replay in a separately recorded attempt. Original checkpoint and all training weights remain unchanged.",
+    "updated_at": "2026-10-10T14:02:33.598608+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

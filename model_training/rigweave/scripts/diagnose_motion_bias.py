@@ -127,6 +127,7 @@ def main():
         raise RuntimeError("bias diagnosis requires exactly one recorded GPU")
     torch.cuda.set_device(0)
     torch.cuda.set_per_process_memory_fraction(0.93)
+    torch.backends.mha.set_fastpath_enabled(False)
     device = torch.device("cuda:0")
     checkpoint = Path(plan["checkpoint"])
     payload = torch.load(checkpoint, map_location="cpu", mmap=True, weights_only=False)
@@ -161,7 +162,7 @@ def main():
     report = {"source": source, "manifests": manifests, "checkpoint": str(checkpoint),
               "checkpoint_step": checkpoint_step, "plan": plan, "rows": [], "gradients": [],
               "parameter_names": [name for name, _ in named], "coefficients": flat_coefficients,
-              "scope": "No optimizer or checkpoint writes. Identical query, selected frames, surface references and complete GT within each paired asset/frame comparison. Nonquery permutation is not used as a negative control.",
+              "scope": "No optimizer or checkpoint writes. Identical query, selected frames, surface references and complete GT within each paired asset/frame comparison. All CE forwards use the same gradient-enabled path with Transformer fastpath disabled; nonquery permutation is not used as a negative control.",
               "limits": "Small fixed validation subset, one training seed. Scaling a learned checkpoint is not equivalent to retraining at a higher LR; gradients describe the final checkpoint, not historical minibatches."}
     collate = partial(dynamic_rig_collate, pad_token=tokenizer.pad)
     seed = model_args.seed + 17
@@ -187,7 +188,9 @@ def main():
                             parameter.copy_(value * scale)
                     batch = _control_batch(original, "zero" if control == "zero" else "normal", seed + index)
                     needs_gradient = control == "normal" and scale == 1 and frames == plan["gradient_frames"]
-                    with torch.set_grad_enabled(needs_gradient), torch.autocast("cuda", dtype=torch.bfloat16):
+                    # A no-grad Transformer can select a different fused forward path.
+                    # Keep paired CE and gradient measurements on one execution path.
+                    with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
                         condition = model.build_condition(batch, refs=refs)
                         losses = model._ar_losses(condition, batch)
                     ce = float(losses["ce_loss"].detach())
@@ -206,13 +209,18 @@ def main():
                         report["gradients"].append({"index": index, "path": row["path"], "frames": frames, "vector": vector})
                         row["evidence"] = evidence_summary(capture["evidence"], coefficients)
                         if index < 2:
-                            with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                            with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
                                 repeated = model.build_condition(batch, refs=refs)
-                                repeated_ce = float(model._ar_losses(repeated, batch)["ce_loss"])
+                                repeated_loss = model._ar_losses(repeated, batch)["ce_loss"]
+                                repeated_ce = float(repeated_loss.detach())
                             row["replay_ce_abs_difference"] = abs(repeated_ce - ce)
+                            row["replay_condition_relative_l2"] = float((repeated.detach().float() - condition.detach().float()).norm()
+                                                                       / condition.detach().float().norm().clamp_min(1e-20))
                             if row["replay_ce_abs_difference"] > 2e-5:
-                                raise RuntimeError("fixed-input replay noise exceeds diagnostic resolution")
-                            del repeated
+                                report["replay_failure"] = {**row, "repeated_ce": repeated_ce}
+                                write_json(args.output, report)
+                                raise RuntimeError(f"fixed-input replay noise exceeds diagnostic resolution: {ce} vs {repeated_ce}")
+                            del repeated, repeated_loss
                         del gradients
                     if control == "normal" and frames in plan["generation_frames"] and index < plan["generation_rows"]:
                         row["generation"] = generation_result(model, tokenizer, batch, condition.detach(), plan["max_new_tokens"])

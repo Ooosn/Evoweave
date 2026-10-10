@@ -49,6 +49,9 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertEqual(plan["devices"], [5])
         self.assertIn("diagnose_motion_bias.py", " ".join(plan["command"]))
         self.assertEqual(self.config["bias_diagnostic"]["scales"], [0, 1, 3, 10])
+        retry = build_plan(self.config, "bias_diagnostic_paired", None)
+        self.assertNotEqual(retry["result"], plan["result"])
+        self.assertNotEqual(retry["evaluation_path"], plan["evaluation_path"])
 
     @unittest.skipUnless(os.name == "posix", "requires the actual Linux Bash launcher")
     def test_actual_launcher_args_match_recorded_recipe_without_running_trainer(self):

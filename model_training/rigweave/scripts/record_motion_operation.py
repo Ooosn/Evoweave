@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -72,8 +72,9 @@ def main():
             "screen": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
             "full": config["full_training"]["stability_acceptance"],
             "bias_diagnostic": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
+            "bias_diagnostic_paired": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
         }
-        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage == "preflight":
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
@@ -90,9 +91,9 @@ def main():
                               "config": remote_config, "command": command,
                               "manifests": config["baseline"]["manifests"],
                               "initialization": config["baseline"]["args"]["unirig_checkpoint"],
-                              "reference_checkpoint": (config["bias_diagnostic"]["checkpoint"] if args.stage == "bias_diagnostic" else config["baseline"]["checkpoint"]),
+                              "reference_checkpoint": (config["bias_diagnostic"]["checkpoint"] if args.stage.startswith("bias_diagnostic") else config["baseline"]["checkpoint"]),
                               "resume_checkpoint": None,
-                              "changes": (config["bias_diagnostic"] if args.stage == "bias_diagnostic" else config["changes"]),
+                              "changes": (config["bias_diagnostic"] if args.stage.startswith("bias_diagnostic") else config["changes"]),
                               "output_root": config["runtime"]["output_root"],
                               "output_path": plan["output"], "evaluation_artifact": plan["evaluation_path"],
                               "runtime_result": plan["result"],
@@ -103,7 +104,7 @@ def main():
                               "acceptance": acceptance[args.stage], "note": args.note},
             next_required_result=acceptance[args.stage],
             unknowns=[("Final-checkpoint scale/gradient diagnostics do not establish the effect of retraining with a larger bias LR."
-                       if args.stage == "bias_diagnostic" else "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified."),
+                       if args.stage.startswith("bias_diagnostic") else "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified."),
                       "Short screening is not proof of the final full-training quality or global optimum.",
                       "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."],
         )

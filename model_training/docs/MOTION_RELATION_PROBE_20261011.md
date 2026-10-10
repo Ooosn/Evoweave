@@ -71,6 +71,9 @@ M_j(t)*inv(M_j(query)) and displacement of the joint head in the parent's
 reference space, in query normalization units. This cancels parent-driven
 motion. Roots and invalid/nonrigid transforms (singular values >1pct from1)
 are unknown and excluded, with coverage recorded.
+Local-transform activity is a proxy, not proof that the available mesh surface
+reveals that joint: skin support, visibility and ambiguous deformation can
+still limit what the model can observe. All retained joints stay in the target.
 
 Quiet strict: <=1degree and <=0.005 query units; loose sensitivity: <=3degrees
 and <=0.01. Active: >=5degrees or >=0.02. These are transparent diagnostic
@@ -97,12 +100,29 @@ result before preparing relation_screen. No silent retries or full training.
 Accepting execution means the comparison ran as recorded, not that the method
 won. Improvements must be judged against both the frozen base and capacity
 control, with paired asset-level uncertainty and low/no-motion generation.
+The offline analysis resamples whole assets (all three views together),4000
+times. Intervals are exploratory and not multiplicity-corrected; fewer than
+three contributing assets in a stratum cannot support an interval. Failed
+generations count as zero coverage/edge recall and zero whole-tree F1.
 This narrow frozen-base experiment cannot establish the best end-to-end
 architecture, long-run behavior, or generalization from32 training assets.
 
 ## Current Result
 
 CPU checks passed:19 residual tests,3 encoder-integration tests,8 probe/metric
-tests,6 unchanged motion-evidence tests. Controller tests:4 passed,1 skipped
-on Windows because it requires the actual Linux launcher. GPU preflight is
-ready to be separately recorded; no relation GPU probe has run yet.
+tests,6 unchanged motion-evidence tests,3 paired-analysis tests. Controller
+tests:4 passed,1 skipped on Windows because it requires the Linux launcher.
+
+GPU preflight from53209ff completed Oct11 01:04 JST, all three exits0. Selected
+training targets have4/102 joints; validation targets7/147. All12 full/cache
+CE and condition comparisons are exactly equal. Both arms'12 zero-init
+condition/CE comparisons are exact and all64-token greedy prefixes match.
+Each arm completes2 steps (8 samples,46 input frames,1438 target tokens), with
+nonzero output-projection gradients at step1 and internal-projection gradients
+at step2. All96 adapter parameter keys update; only1,807,872 parameters train.
+The loaded base hidden width is1024. Base parameter versions/gradients and
+source checkpoint size/mtime are unchanged. Peak allocated memory4.710GiB.
+No checkpoint or persistent input cache was saved by this preflight.
+
+This accepts execution correctness only. The paired120-step small-set screen
+still needs its own committed operation; no new full training is authorized.

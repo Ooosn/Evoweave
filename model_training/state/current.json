@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T15:53:08.225074+00:00",
+  "updated_at": "2026-10-10T16:09:19.937554+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Frozen final80k base, 2 train/2 valid assets including selected target-count extremes, normal8/weak2/static8 inputs, all complete GT. Exact zero-init condition/prefix and <=2e-5 captured CE parity; both paired adapter arms finite for 2 steps, only adapter updates, <=90pct single-H100 allocation. No full run; review before relation_screen.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "relation_preflight",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T15:53:08.225074+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
     "source_code_commit": "ecb478aacc4ec9e3f7c1363687bbf34fd9ece1a5",
@@ -348,7 +348,10 @@
       "new_allocation": false
     },
     "acceptance": "Frozen final80k base, 2 train/2 valid assets including selected target-count extremes, normal8/weak2/static8 inputs, all complete GT. Exact zero-init condition/prefix and <=2e-5 captured CE parity; both paired adapter arms finite for 2 steps, only adapter updates, <=90pct single-H100 allocation. No full run; review before relation_screen.",
-    "note": "Primary approved only bounded r64 value-residual preflight: strict frozen final80k base, 2 train and 2 valid selected min/max target-count assets, normal8/weak2/static8 complete targets, common actual surface references and cached E, exact zero condition/64-token greedy-prefix parity and CE<=2e-5. Both identically initialized actual-E and new-branch-allunknown arms receive2 Adam steps, B1 accumulation4, single H1005 90pct memory cap. Check finite gradients, internal activation after second step, old parameters and source checkpoint unchanged. CPU19module+3integration+8probe+6evidence tests pass; controller4pass1Linuxskip. Preserve allocation129547842 and unrelated A100. No relation_screen until primary accepts result; no retry/full training."
+    "note": "Primary approved only bounded r64 value-residual preflight: strict frozen final80k base, 2 train and 2 valid selected min/max target-count assets, normal8/weak2/static8 complete targets, common actual surface references and cached E, exact zero condition/64-token greedy-prefix parity and CE<=2e-5. Both identically initialized actual-E and new-branch-allunknown arms receive2 Adam steps, B1 accumulation4, single H1005 90pct memory cap. Check finite gradients, internal activation after second step, old parameters and source checkpoint unchanged. CPU19module+3integration+8probe+6evidence tests pass; controller4pass1Linuxskip. Preserve allocation129547842 and unrelated A100. No relation_screen until primary accepts result; no retry/full training.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_preflight_evaluation.json",
+    "result_note": "Primary accepted execution-only preflight from source53209ff, completed01:04JST Oct11 all3exits0. Train4/102 joints andvalid7/147,12 normal8/weak2/static8 cachedfull CE+condition comparisons exact0; 12zero-init arm/viewcondition+CE differences0 andall64tokenprefixes identical. Botharms2finiteAdamsteps,8sample/46frame/1438targettoken exposures,96adapterkeysupdated,1,807,872newtrainableparameters (basehiddenD1024). out_proj grad activefirststep; in_proj/mix_proj activeafterstep2 forboth. Oldparamversions/grads unchanged andsourcecheckpointsize/mtimeunchanged; nosavedmodel/cache. Peak4.710429GiB under90pctlimit; output12cache/12zero reports downloadedhashverified. Workerverified01:05JST GPU5/7idle,allocation129547842+A100129334707retained. Noqualityclaim. Primary authorizes preparingpaired32train/16valid120step-per-arm screen asrecorded, notfulltraining.",
+    "updated_at": "2026-10-10T16:09:19.937554+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

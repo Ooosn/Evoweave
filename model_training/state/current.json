@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T17:18:43.796197+00:00",
+  "updated_at": "2026-10-10T17:19:30.636145+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,16 +264,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Same frozenbase, initialseed,32train/16valid cachedassets,3views and120steps/480exposures asplain probe; only change is allunknown reference subtraction. Complete48natural generations and48each unknown/permuted-E CEcontrols; trainedunknown condition must match base exactly. OriginalGT/E andacceptedcheckpoint immutable. This is exploratory same-validation follow-up, not independent confirmation or fulltraining approval.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "relation_anchor_preflight",
+    "stage": "relation_anchor_screen",
     "candidate": null,
     "candidate_config": null,
-    "status": "accepted",
-    "prepared_at": "2026-10-10T17:04:19.216510+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-10T17:19:30.636145+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
-    "source_code_commit": "056d796bd30cebae5f06e0ff3f88b03219265b60",
+    "source_code_commit": "4bbdad1225a76552b1519799a7803b5f34be63f1",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -282,7 +282,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "relation_anchor_preflight"
+      "relation_anchor_screen"
     ],
     "manifests": [
       {
@@ -337,9 +337,9 @@
       "scope": "Targeted follow-up to observedplain-residual prior drift on same32train16validation assets. This is exploratory reuse of validation, not independent model-selection confirmation. No fulltraining."
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
-    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_anchor_probe_20261011/relation_anchor_preflight",
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight.json",
+    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_anchor_probe_20261011/relation_anchor_screen",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_screen_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_screen.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -350,11 +350,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Reuse hash-verified original cache for min/max-count2 train/2valid assets, complete GT, all3views. F(x,E)-F(x,U) reference-subtracted adapter must match cached base exactly at zero init and after2finiteupdates under allunknown new-branch evidence, including64token greedy prefixes. Old parameters unchanged,90pctmemory cap, no retry or fulltraining; primary reviews before anchored screen.",
-    "note": "Plain screenqualityrejectedandrecorded8d1b616; primaryapprovedONLYanchoredpreflight now. NewF(x,E)-F(x,U) sharedreference subtraction preservesoldcondition forallunknown evenafterlearning; allactualu/c/dunchanged. CPUmodule30/30 inclBF16exactidentity/gradientcancellation,encoderintegration4/4,anchorprobe3/3,analysis4/4 andexistingprobe8/8 pass. Reuse originalhashverified4.30GBcacheandbasecheckpoint, selectedmin/max2train/2valid fullGT3views, zero-initprefixparity,2finiteupdates, post-updateallunknowncondition/64prefixexactparity, singleH1005 90pctcap. Onlynewadapter trainable,no sourcecache/checkpointmutation,nosavedcheckpoint/preflight. Needprimaryacceptance beforeanchor_screen; noautomaticretry/fulltraining. Sourcecodebasedonaspecificobservedprior-driftfailure,nothyperparameterorGTchange; originalLR/seed/budgetkept.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight_evaluation.json",
-    "result_note": "Primary accepts execution and trained-unknown neutrality, NOTquality. One source98e52c0 run,all3exits0,255.77seconds. Sixbasecache/6zeroinit/6trainedunknownCEconditioncomparisons all0; zeroandtrainedunknown64tokenprefixes allmatch.2finiteupdates8samples46frames1438tokens; outgrad.00154481atstep1; step2in.00044192,mix.00016927,out.00300257.84adapterkeysupdate,12sharedoutbiasunchangedasexpected. Oldparamsunchanged,peak4.724GiB,nocheckpoints/newcache. WorkerfullSHA sourcecache/sourcecheckpoint/priorreport unchanged atcompletion,5smallartifactsdownloadedhashverified.02:14:33JST GPU5/7idle,allocationsretained. Permittoprepareanchoredsame-input120steponearm screen withunknownidentitychecks andpermutednewE CEcontrol, nofulltraining ornewhyperparametersearch. F(x,U) removesanexplicit-E-independentfeatureupdate; xstillcontainspreexistingimplicitmotion,notapurestaticencoder.",
-    "updated_at": "2026-10-10T17:18:43.796197+00:00"
+    "acceptance": "Same frozenbase, initialseed,32train/16valid cachedassets,3views and120steps/480exposures asplain probe; only change is allunknown reference subtraction. Complete48natural generations and48each unknown/permuted-E CEcontrols; trainedunknown condition must match base exactly. OriginalGT/E andacceptedcheckpoint immutable. This is exploratory same-validation follow-up, not independent confirmation or fulltraining approval.",
+    "note": "PrimaryacceptedanchoredGPUpreflight98e52c0:6cache+6zero+6trainedunknownCEconditionall0,zero/trainedunknown64prefixallmatch,2finiteupdates84keyschanged12outputbiascancel,oldbase/sourcecache/reporthashunchanged,peak4.724GiB. ExplicitGO forONEfreshanchored120step arm,32train/16val samehashverified144inputs/GT andsameinitialseed/LR1e-4WD.04clip1B1acc4;480exposures2880framesexpected. ReuseverifiedoriginalbasegenerationONLYafter48exactcacheconditionreplays;48newactualnaturalgenmax1400,48trainedunknownCEconditionmustequalbase,48permutedE CEcontrols(newbranchonly,oldbiastrueE). No newdata/pivotlabels/channelpruning orLrgrid. Thissame-validationfollowup isexploratorynotindependentconfirmation. SingleH1005 withinexisting129547842 allocation,90pctcap,oldweightsimmutable,saveonlyanchoredadapter/Adam remotely. No retry orformalfulltraining; workerfreshchecks/FF/guardsbeforelaunch. F(x,U) isE-independent baselineupdate withoriginalimplicitmotionstillpresent,notpuregeometry-onlymodel."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1943,6 +1940,97 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_analysis.json",
       "result_note": "Execution completed correctly but candidate QUALITY REJECTED. Single source d2f88f1 run,all3exits0,1757sec,144cachecontracts exactly0,192generationscomplete,baseunchanged. Eacharm120steps480samples2880frames81045tokens,peak4.724GiB; cache4.30GB and2adapter21.8MB retainedremote; smallreceiptsdownloadedhashverified. Base/actual/unknown/actualEablated CE1.217828/1.243144/1.246196/1.243077,F1all.590208/.522948/.548763/.544602,hitmax9/12/9/10of48. Actualtraincase-normalizedlast20CE-7.37pct butvalidCE+2.08pct; unknowntrain-7.63pct alsovalworse. ActualvsunknownCE-.245pct butF1-.02582; ablatingactualEchangesCEonly-.0054pct withCIcrossing0. StaticF1base.611542->actual.487161,quietstrictcoverage.6658->.4518; hidden-demonstratedweak2 stratum8assets52joints hasnoactual-vsunknowncoverage/recallgain. This frozen32assetprobe shows prior drift/overfit, NOT absence of useful motionmechanisms. Keepacceptedbase unchanged anddoNOTenableplainresidualorlaunchfulltraining. Worker01:43:47JST verifiesGPUsidle,bothallocationsretained. Nextcandidate mustpreserve unknown-evidence baseline explicitly, separatelyrecorded.",
       "updated_at": "2026-10-10T16:51:22.465137+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "relation_anchor_preflight",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "accepted",
+      "prepared_at": "2026-10-10T17:04:19.216510+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
+      "source_code_commit": "056d796bd30cebae5f06e0ff3f88b03219265b60",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "relation_anchor_preflight"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "source_evaluation": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_evaluation.json",
+        "source_evaluation_sha256": "073b7824d04b9e07e9bfc587b8b1dcf512b30d187978e6aa9bf62144e6584222",
+        "source_cache": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011/relation_screen/cached_inputs.pt",
+        "source_cache_sha256": "aea71682062b399e2cb967d8250bad71499ea43e0a3135f8d1afe89f80550a20",
+        "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_anchor_probe_20261011",
+        "reference_subtraction": true,
+        "seed": 20261011,
+        "permutation_seed": 99173,
+        "bottleneck_dim": 64,
+        "train_assets": 32,
+        "valid_assets": 16,
+        "steps": 120,
+        "accumulation": 4,
+        "lr": 0.0001,
+        "weight_decay": 0.04,
+        "clip_grad_norm": 1.0,
+        "preflight_steps": 2,
+        "preflight_prefix_tokens": 64,
+        "max_new_tokens": 1400,
+        "views": [
+          "normal8",
+          "weak2",
+          "static8"
+        ],
+        "arms": [
+          "actual"
+        ],
+        "only_change": "Fresh same-seed adapter now uses F(x,E)-F(x,U), U=[1,0,0] for everypair, sharedweights andalloriginalu/c/d. Geometry-only learnedoffset cancels; allunknown yields exactidentity evenaftertraining. No row/channel thresholding, no evidence or target deletion, no extra loss or changedLR.",
+        "controls": "Reuse verified frozenbase generation; rerunfullCE/conditionbasecache parity. Aftertraining,newadapter-allunknown CE/condition mustmatchbase exactly. PermuteactualErows/columnsonlyinnewadapterusingfixedassetseed for48CEcontrols; preserveoldbiasE. Generate48actual complete skeletons. No separately trained unknownarm because it is identically baseline byconstruction.",
+        "scope": "Targeted follow-up to observedplain-residual prior drift on same32train16validation assets. This is exploratory reuse of validation, not independent model-selection confirmation. No fulltraining."
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_anchor_probe_20261011/relation_anchor_preflight",
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Reuse hash-verified original cache for min/max-count2 train/2valid assets, complete GT, all3views. F(x,E)-F(x,U) reference-subtracted adapter must match cached base exactly at zero init and after2finiteupdates under allunknown new-branch evidence, including64token greedy prefixes. Old parameters unchanged,90pctmemory cap, no retry or fulltraining; primary reviews before anchored screen.",
+      "note": "Plain screenqualityrejectedandrecorded8d1b616; primaryapprovedONLYanchoredpreflight now. NewF(x,E)-F(x,U) sharedreference subtraction preservesoldcondition forallunknown evenafterlearning; allactualu/c/dunchanged. CPUmodule30/30 inclBF16exactidentity/gradientcancellation,encoderintegration4/4,anchorprobe3/3,analysis4/4 andexistingprobe8/8 pass. Reuse originalhashverified4.30GBcacheandbasecheckpoint, selectedmin/max2train/2valid fullGT3views, zero-initprefixparity,2finiteupdates, post-updateallunknowncondition/64prefixexactparity, singleH1005 90pctcap. Onlynewadapter trainable,no sourcecache/checkpointmutation,nosavedcheckpoint/preflight. Needprimaryacceptance beforeanchor_screen; noautomaticretry/fulltraining. Sourcecodebasedonaspecificobservedprior-driftfailure,nothyperparameterorGTchange; originalLR/seed/budgetkept.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_preflight_evaluation.json",
+      "result_note": "Primary accepts execution and trained-unknown neutrality, NOTquality. One source98e52c0 run,all3exits0,255.77seconds. Sixbasecache/6zeroinit/6trainedunknownCEconditioncomparisons all0; zeroandtrainedunknown64tokenprefixes allmatch.2finiteupdates8samples46frames1438tokens; outgrad.00154481atstep1; step2in.00044192,mix.00016927,out.00300257.84adapterkeysupdate,12sharedoutbiasunchangedasexpected. Oldparamsunchanged,peak4.724GiB,nocheckpoints/newcache. WorkerfullSHA sourcecache/sourcecheckpoint/priorreport unchanged atcompletion,5smallartifactsdownloadedhashverified.02:14:33JST GPU5/7idle,allocationsretained. Permittoprepareanchoredsame-input120steponearm screen withunknownidentitychecks andpermutednewE CEcontrol, nofulltraining ornewhyperparametersearch. F(x,U) removesanexplicit-E-independentfeatureupdate; xstillcontainspreexistingimplicitmotion,notapurestaticencoder.",
+      "updated_at": "2026-10-10T17:18:43.796197+00:00"
     }
   ]
 }

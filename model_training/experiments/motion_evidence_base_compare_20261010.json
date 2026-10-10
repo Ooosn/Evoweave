@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment": "motion_evidence_base_compare_20261010",
-  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
   "baseline": {
     "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
     "args": {
@@ -283,6 +283,29 @@
     "first_stop_after_steps": 1,
     "target_stop_step": 3,
     "sample_overshoot": 1
+  },
+  "relation_probe": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011",
+    "seed": 20261011,
+    "bottleneck_dim": 64,
+    "train_assets": 32,
+    "valid_assets": 16,
+    "steps": 120,
+    "accumulation": 4,
+    "lr": 0.0001,
+    "weight_decay": 0.04,
+    "clip_grad_norm": 1.0,
+    "preflight_assets_per_split": 2,
+    "preflight_steps": 2,
+    "preflight_prefix_tokens": 64,
+    "max_new_tokens": 1400,
+    "views": ["normal8", "weak2", "static8"],
+    "arms": ["actual", "unknown"],
+    "selection": "Seeded round-robin dataset-source and target-joint-count bands <=16,17-40,41-64,>64. Full manifest indices/asset IDs recorded. Preflight uses min/max target-count selected assets. No observability or result-based selection.",
+    "loss": "Complete-target CE, each accumulation window weighted by valid target tokens. Freeze all old parameters, train only new relation residuals; keep decoder eval and motion dropout zero.",
+    "evidence_control": "Only NEW adapter receives allunknown [1,0,0] in the unknown arm; old pair bias and dynamic anchor features still receive true input. This is a capacity-matched explicit-E control, not a geometry-only model.",
+    "offline_strata": "Relative-to-parent transforms, near-rigid tolerance1pct. Quiet strict <=1deg and <=0.005 query units; loose <=3deg and <=0.01; active >=5deg or >=0.02. Hidden-demonstrated requires quiet in supplied frames, active in noninput frames, and another active input joint. These diagnostic thresholds are not learned anatomical truth; raw trajectories are never conditioning inputs."
   },
   "full_training": {
     "max_steps": 1667,

@@ -5,6 +5,7 @@ from torch import nn
 from torch.utils.checkpoint import checkpoint
 
 from .motion_evidence import MotionEvidence, MotionEvidenceInjection
+from .motion_relation_residual import MotionRelationResidual
 
 
 class AnchorWiseAlternatingBlock(nn.Module):
@@ -42,8 +43,10 @@ class AnchorWiseAlternatingBlock(nn.Module):
         self.motion_injection = MotionEvidenceInjection(
             dim, heads, fusion=motion_evidence_fusion, biased_heads=motion_evidence_heads,
         )
+        self.relation_residual: MotionRelationResidual | None = None
 
-    def forward(self, tokens: torch.Tensor, motion_evidence: MotionEvidence | None = None) -> torch.Tensor:
+    def forward(self, tokens: torch.Tensor, motion_evidence: MotionEvidence | None = None,
+                relation_states: torch.Tensor | None = None) -> torch.Tensor:
         if tokens.dim() != 4:
             raise ValueError(f"tokens must be (B,T,S,D), got {tuple(tokens.shape)}")
         batch_size, frame_count, slot_count, dim = tokens.shape
@@ -58,6 +61,15 @@ class AnchorWiseAlternatingBlock(nn.Module):
             if motion_evidence is None:
                 raise ValueError("enabled motion fusion requires motion evidence")
             z = self.motion_injection(self.pose_inner, tokens, motion_evidence)
+
+        if self.relation_residual is not None:
+            if relation_states is None:
+                raise ValueError("enabled relation residual requires pair states")
+            prefix_count = slot_count - relation_states.shape[1]
+            if prefix_count < 1:
+                raise ValueError("relation residual must preserve the role/register prefix")
+            z = torch.cat((z[:, :, :prefix_count],
+                           self.relation_residual(z[:, :, prefix_count:], relation_states)), dim=2)
 
         # Anchor-wise temporal attention: slot q attends only to slot q across
         # poses. This uses our fixed vertex/surface correspondence.
@@ -139,6 +151,18 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         )
         self.norm = nn.LayerNorm(dim)
 
+    def enable_relation_residual(self, bottleneck_dim: int = 64) -> None:
+        """Attach an explicit adapter after strict loading of the base checkpoint."""
+        if not self.blocks:
+            raise ValueError("relation residual requires at least one motion block")
+        if self.motion_evidence_fusion == "off":
+            raise ValueError("relation residual requires computed motion evidence")
+        if any(block.relation_residual is not None for block in self.blocks):
+            raise RuntimeError("relation residual is already enabled")
+        for block in self.blocks:
+            block.relation_residual = MotionRelationResidual(self.dim, bottleneck_dim).to(
+                device=self.role_token.device, dtype=self.role_token.dtype)
+
     @staticmethod
     def _motion_features(query_points: torch.Tensor) -> torch.Tensor:
         if query_points.dim() != 4 or query_points.shape[-1] != 3:
@@ -158,6 +182,7 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         query_points: torch.Tensor | None = None,
         return_all: bool = False,
         motion_evidence: MotionEvidence | None = None,
+        relation_states: torch.Tensor | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Encode `(B,T,Q,D)` frame tokens into `(B,Q,D)` canonical tokens."""
 
@@ -170,6 +195,15 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
             raise ValueError(f"frame_count {frame_count} exceeds max_frames {self.max_frames}")
         if (self.motion_evidence_fusion != "off") != (motion_evidence is not None):
             raise ValueError("motion evidence presence must match the encoder fusion configuration")
+        relation_enabled = bool(self.blocks) and self.blocks[0].relation_residual is not None
+        if relation_enabled:
+            if relation_states is None:
+                relation_states = motion_evidence.states
+            query_count = frame_tokens.shape[2]
+            if relation_states.shape != (batch_size, query_count, query_count, 3):
+                raise ValueError("relation states must align with all input anchors")
+        elif relation_states is not None:
+            raise ValueError("relation states supplied without an enabled residual")
 
         z = frame_tokens
         if self.use_motion_features:
@@ -198,9 +232,9 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
 
         for block in self.blocks:
             if self.gradient_checkpointing and self.training and torch.is_grad_enabled():
-                z = checkpoint(block, z, motion_evidence, use_reentrant=False)
+                z = checkpoint(block, z, motion_evidence, relation_states, use_reentrant=False)
             else:
-                z = block(z, motion_evidence)
+                z = block(z, motion_evidence, relation_states)
         z = self.norm(z)
 
         canonical_tokens = z[:, 0, 1 + self.register_tokens :]

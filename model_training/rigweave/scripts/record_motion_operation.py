@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -78,13 +78,16 @@ def main():
             "bias_replay_audit": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
             "bias_diagnostic_cached": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
             "frame_budget_smoke": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
+            "relation_preflight": "Frozen final80k base, 2 train/2 valid assets including selected target-count extremes, normal8/weak2/static8 inputs, all complete GT. Exact zero-init condition/prefix and <=2e-5 captured CE parity; both paired adapter arms finite for 2 steps, only adapter updates, <=90pct single-H100 allocation. No full run; review before relation_screen.",
+            "relation_screen": "Both identically initialized r64 adapter arms complete 120 token-weighted steps on the same 32 assets/3 views/480 exposures. Evaluate 16 disjoint validation asset IDs, complete natural generations and offline local-motion strata; compare frozen base, actual versus unknown-only adapter, and actual adapter evidence ablation. Full u/c/d and GT retained; original model/checkpoint immutable. Completion does not establish quality gain or authorize full training.",
         }
-        operation = "train" if args.stage in {"screen", "full", "frame_budget_smoke"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full", "frame_budget_smoke", "relation_preflight", "relation_screen"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage in {"preflight", "frame_profile", "frame_confirm"}:
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
         stage_config = config[{"frame_profile": "frame_budget_profile", "frame_confirm": "frame_budget_confirm",
-                               "bias_replay_audit": "bias_replay_audit", "frame_budget_smoke": "frame_budget_smoke"}.get(args.stage, "bias_diagnostic"
+                               "bias_replay_audit": "bias_replay_audit", "frame_budget_smoke": "frame_budget_smoke",
+                               "relation_preflight": "relation_probe", "relation_screen": "relation_probe"}.get(args.stage, "bias_diagnostic"
                                if args.stage.startswith("bias_diagnostic") else "changes")]
         state.update(
             state_id="motion-evidence-base-compare-20261010",
@@ -107,7 +110,7 @@ def main():
                               "runtime_result": plan["result"],
                               "job_root": config["runtime"]["job_root"], "resources": {
                                   "allocation": config["runtime"]["allocation"], "host": config["runtime"]["host"],
-                                  "physical_gpus": config["runtime"]["physical_gpus"] if operation == "train" else config["runtime"]["physical_gpus"][:1],
+                                  "physical_gpus": plan["devices"],
                                   "virtual_memory": "unlimited", "new_allocation": False},
                               "acceptance": acceptance[args.stage], "note": args.note},
             next_required_result=acceptance[args.stage],
@@ -116,6 +119,8 @@ def main():
                       "Short screening is not proof of the final full-training quality or global optimum.",
                       "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."],
         )
+        if args.stage.startswith("relation_"):
+            state["required_context"].append("model_training/docs/MOTION_RELATION_PROBE_20261011.md")
     state["updated_at"] = now
     write_json(path, state)
     print(json.dumps({"state": str(path), "stage": state["active_operation"]["stage"],

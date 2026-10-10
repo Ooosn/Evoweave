@@ -227,3 +227,12 @@ allocated peaks no greater than 90% and finite gradients/updates. The first
 OOM ends the ascending candidate sweep. Unsafe or unmeasured cases are never
 approved by a complete=true profiling report. Two-rank execution and resume
 still require a separate recorded smoke test before formal training.
+
+First calibration completed at 23:21 JST with controller/child exit zero.
+F72/cap12 is rejected: T6/B12 OOM at the 93% allocation cap; T9/B8 and T8/B9
+are above the 90% allocated-memory ceiling. Measured T24/B3, T18/B4, T14/B5,
+T12/B6 and T10/B7 peaks are 68.442, 69.012, 68.010, 70.153 and 69.150 GiB.
+No all-T cap is approved by this sparse sweep. F72/cap6 will be independently
+confirmed for every integer T2..24 before a two-rank save/resume smoke.
+Evidence: external results/frame_profile_evaluation.json; GPU5/7 idle at
+23:22 JST, allocation129547842 preserved. No checkpoint was written.

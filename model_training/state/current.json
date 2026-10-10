@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:15:56.439294+00:00",
+  "updated_at": "2026-10-10T14:23:06.168354+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,12 +110,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "frame_profile",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-10T14:15:56.439294+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "ec010ad2550833818ff3876b6c29687e102a7ea7",
@@ -371,7 +371,10 @@
       "new_allocation": false
     },
     "acceptance": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
-    "note": "User chose fixed frame budget with increased actual sample exposure. Primary reviewed sampler/accounting/profile code and CPU tests (12 sampler, 6 accounting, 13 profile); authorize only this bounded single-GPU calibration on a disposable model copy. Frame budget72 and cap12 are candidate ceilings, not approved training values. Include resident Adam states and accumulated gradients, complete targets, 93pct allocation cap/90pct approval ceiling; stop firstOOM. No checkpoint writes or next full training. Bias replay diagnosis remains unresolved and separately tracked."
+    "note": "User chose fixed frame budget with increased actual sample exposure. Primary reviewed sampler/accounting/profile code and CPU tests (12 sampler, 6 accounting, 13 profile); authorize only this bounded single-GPU calibration on a disposable model copy. Frame budget72 and cap12 are candidate ceilings, not approved training values. Include resident Adam states and accumulated gradients, complete targets, 93pct allocation cap/90pct approval ceiling; stop firstOOM. No checkpoint writes or next full training. Bias replay diagnosis remains unresolved and separately tracked.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
+    "result_note": "Single-H100 calibration completed at 23:21 JST, controller/child exit0. F72 cap12 is REJECTED: T6 B12 OOM under93pct limit; T9 B8 andT8 B9 exceed90pct approval. T24 B3 peak68.442GiB,T18 B4 69.012,T12 B6 70.153,T10 B7 69.150. Exact measured stress cases only; no fullT cap approved. GPU5/7 idle23:22, allocation129547842 preserved. Next bounded confirmation will test F72 cap6 over everyT2..24, then separate2-rank save/resume smoke. No next fulltraining.",
+    "updated_at": "2026-10-10T14:23:06.168354+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

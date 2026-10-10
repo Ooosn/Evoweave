@@ -46,6 +46,16 @@ hybrid 的 CE 仅低约 0.37%，在预设 1% 实用相当阈值内，F1 为 0.76
 results/full_bias_h8_final_checkpoint_inspection.json。22:20 JST 只读检查确认
 分配 129547842 保留、GPU 5/7 空闲。运行源码始终保持 fb27ce9；本地状态记录
 completed，不由完成状态自动授权新的训练或 GPU 评估。
+
+Frame-budget calibration completed at 23:21 JST. The proposed F=72/cap=12
+is rejected: T6/B12 exhausted the 93% memory allowance, and T9/B8 plus T8/B9
+exceeded the 90% approval ceiling. T24/B3, T18/B4, T12/B6 and T10/B7 measured
+68.44, 69.01, 70.15 and 69.15 GiB allocated peaks respectively. This is a
+single-GPU padding-stress measurement, not a dataset-wide memory guarantee.
+The next candidate is F=72/cap=6, requiring all T2..24 confirmation and a
+separate two-rank save/resume/accounting smoke. No next full run is authorized.
+Both bias-scale attempts remain rejected because full-forward replay differs
+by more than 2e-5 CE. A bounded boundary/RNG audit must precede another sweep.
 用户随后明确授权系数/梯度诊断，以及固定帧数预算的动态 batch 实现与显存标定；
 允许短序列时增加真实样本数，必须记录样本、帧数并修正损失归一化及恢复位置。
 初次 bias_diagnostic 在 T2 完成后因 T8 重放精度检查未通过而拒收，产物保留；

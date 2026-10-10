@@ -153,3 +153,26 @@ Initial full-run acceptance requires both GPUs on the intended job, finite
 loss and gradients, varied T, nonzero adapter updates, no OOM/traceback, and
 the first 5000-nominal-exposure checkpoint with optimizer and metadata.
 These establish execution stability, not final model quality.
+
+### Full Run Initial Acceptance
+
+The fresh bias_h8 full run started from committed source/state `fb27ce9` on
+the two intended H100 devices. All 128 expected arguments matched, including
+1667 total steps, no early stop, no init/resume override and optimizer saving.
+`checkpoint_sample_5000.pt` was saved at step 105, nominal exposure 5040, and
+training continued through logged step 120 (loss 1.479439, pre-clip gradient
+norm 1.018278). Logged frame counts covered all integers from 2 through 24.
+
+CPU-only mmap inspection verified the 7,995,136,886-byte checkpoint, three
+optimizer groups with 888 populated parameter states, scheduler total 1667
+and last epoch 105, and all twelve bias tensors of shape [8,3]. Every one of
+the 288 coefficients was finite and nonzero, including all u/c/d columns.
+No full-model or optimizer-tensor finite scan was performed. Both live ranks
+used physical GPUs 5 and 7, each at 100% utilization at 09:58:22 JST.
+
+The primary accepted initial stability, not completed training or final
+quality. Evidence is `results/full_bias_h8_stability.json` and
+`results/full_bias_h8_checkpoint_inspection.json` under the external job root.
+Training remains running in the existing allocation; no qlogin was released.
+The runtime checkout stays at its launch commit while local state records
+`stable_running`. Do not update active runtime source or start another run.

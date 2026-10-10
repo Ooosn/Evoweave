@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-09T23:58:14.076628+00:00",
+  "updated_at": "2026-10-10T01:02:00.621138+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,11 +110,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,7 +263,7 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Both GPUs active on the intended allocation, finite losses/gradients, variable-frame schedule and nonzero adapter updates verified, no OOM/traceback, and first 5000-sample checkpoint saved with matched run metadata.",
+  "next_required_result": "Continue the recorded full run; inspect generated skeleton quality at matched checkpoints.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "full",
@@ -273,7 +273,7 @@
       "fusion": "bias",
       "heads": 8
     },
-    "status": "prepared",
+    "status": "stable_running",
     "prepared_at": "2026-10-09T23:58:14.076628+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
     "source_code_commit": "80cd952918c83755a63b0c3ff5b6bbf64c6a5e5d",
@@ -336,7 +336,10 @@
       "new_allocation": false
     },
     "acceptance": "Both GPUs active on the intended allocation, finite losses/gradients, variable-frame schedule and nonzero adapter updates verified, no OOM/traceback, and first 5000-sample checkpoint saved with matched run metadata.",
-    "note": "Primary explicitly selected bias_h8 and authorized exactly one fresh full1667 run. Preserve original milestones and optimizer/scheduler saves; no resume/init checkpoint. Return after checkpoint5000 post-save event step105/sample5040 and continued logged step>=110 with CPU-only metadata and live rank proof. Do not stop training, record stable_running, or sync source while active."
+    "note": "Primary explicitly selected bias_h8 and authorized exactly one fresh full1667 run. Preserve original milestones and optimizer/scheduler saves; no resume/init checkpoint. Return after checkpoint5000 post-save event step105/sample5040 and continued logged step>=110 with CPU-only metadata and live rank proof. Do not stop training, record stable_running, or sync source while active.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/full_bias_h8_stability.json",
+    "result_note": "Primary accepted exact 128 args, fresh1667-step run, first optimizer/scheduler checkpoint at step105 nominal5040, continued finite logs through120, all12 bias[8,3] layers including u/c/d updated, and both intended H100 ranks alive. Initial execution stability only; full-budget quality remains unverified. Runtime checkout remains immutable at fb27ce9 while training continues.",
+    "updated_at": "2026-10-10T01:02:00.621138+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

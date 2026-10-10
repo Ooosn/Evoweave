@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:23:06.168354+00:00",
+  "updated_at": "2026-10-10T14:25:01.837849+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "matched_eval"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight",
-    "matched_eval"
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,16 +263,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "frame_profile",
+    "stage": "bias_replay_audit",
     "candidate": null,
     "candidate_config": null,
-    "status": "completed",
-    "prepared_at": "2026-10-10T14:15:56.439294+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-10T14:25:01.837849+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
-    "source_code_commit": "ec010ad2550833818ff3876b6c29687e102a7ea7",
+    "source_code_commit": "7899b38a0d836a1ec1ab8d0d85eb9163c5fb228e",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -281,7 +281,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "frame_profile"
+      "bias_replay_audit"
     ],
     "manifests": [
       {
@@ -304,62 +304,13 @@
     "resume_checkpoint": null,
     "changes": {
       "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-      "validation_rows": 32,
-      "frame_budget": 72,
-      "max_batch_cap": 12,
-      "memory_fraction": 0.93,
-      "acceptance_fraction": 0.9,
-      "cases": [
-        [
-          24,
-          3
-        ],
-        [
-          18,
-          4
-        ],
-        [
-          14,
-          5
-        ],
-        [
-          12,
-          6
-        ],
-        [
-          10,
-          7
-        ],
-        [
-          9,
-          8
-        ],
-        [
-          8,
-          9
-        ],
-        [
-          7,
-          10
-        ],
-        [
-          6,
-          12
-        ],
-        [
-          4,
-          12
-        ],
-        [
-          2,
-          12
-        ]
-      ]
+      "frames": 8,
+      "validation_rows": 2
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
     "output_path": null,
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile.json",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_replay_audit_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_replay_audit.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -370,11 +321,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
-    "note": "User chose fixed frame budget with increased actual sample exposure. Primary reviewed sampler/accounting/profile code and CPU tests (12 sampler, 6 accounting, 13 profile); authorize only this bounded single-GPU calibration on a disposable model copy. Frame budget72 and cap12 are candidate ceilings, not approved training values. Include resident Adam states and accumulated gradients, complete targets, 93pct allocation cap/90pct approval ceiling; stop firstOOM. No checkpoint writes or next full training. Bias replay diagnosis remains unresolved and separately tracked.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
-    "result_note": "Single-H100 calibration completed at 23:21 JST, controller/child exit0. F72 cap12 is REJECTED: T6 B12 OOM under93pct limit; T9 B8 andT8 B9 exceed90pct approval. T24 B3 peak68.442GiB,T18 B4 69.012,T12 B6 70.153,T10 B7 69.150. Exact measured stress cases only; no fullT cap approved. GPU5/7 idle23:22, allocation129547842 preserved. Next bounded confirmation will test F72 cap6 over everyT2..24, then separate2-rank save/resume smoke. No next fulltraining.",
-    "updated_at": "2026-10-10T14:23:06.168354+00:00"
+    "acceptance": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
+    "note": "Bounded diagnosis on first2 fixed T8 assets before third full bias sweep. Measure full-repeat and RNG-restored upstream features/evidence/condition/CE, then unchanged cached-boundary forwards plus gradients. Acceptance unchanged2e-5 CE, exact dynamic/no-prior contract, unchanged parameter versions. No generation or optimizer. CPU4replay tests passed. Previous frame_profile closed; GPUs idle and retained allocation verified23:22."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1297,6 +1245,118 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
       "result_note": "Execution-mode alignment alone did not resolve full-condition replay drift: first T8 asset CE0.9354378581 versus0.9335309267, condition relative L2 0.00077943. Preserve failure evidence and original checkpoint. Do not infer bias benefit from unmatched recomputation or relax thresholds. Next isolate cached pre-motion features/evidence and RNG before retrying the paired diagnostic; independent frame-budget calibration can proceed after this operation is closed.",
       "updated_at": "2026-10-10T14:15:00.542040+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "frame_profile",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "completed",
+      "prepared_at": "2026-10-10T14:15:56.439294+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+      "source_code_commit": "ec010ad2550833818ff3876b6c29687e102a7ea7",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "frame_profile"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "validation_rows": 32,
+        "frame_budget": 72,
+        "max_batch_cap": 12,
+        "memory_fraction": 0.93,
+        "acceptance_fraction": 0.9,
+        "cases": [
+          [
+            24,
+            3
+          ],
+          [
+            18,
+            4
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            10,
+            7
+          ],
+          [
+            9,
+            8
+          ],
+          [
+            8,
+            9
+          ],
+          [
+            7,
+            10
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            4,
+            12
+          ],
+          [
+            2,
+            12
+          ]
+        ]
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": null,
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
+      "note": "User chose fixed frame budget with increased actual sample exposure. Primary reviewed sampler/accounting/profile code and CPU tests (12 sampler, 6 accounting, 13 profile); authorize only this bounded single-GPU calibration on a disposable model copy. Frame budget72 and cap12 are candidate ceilings, not approved training values. Include resident Adam states and accumulated gradients, complete targets, 93pct allocation cap/90pct approval ceiling; stop firstOOM. No checkpoint writes or next full training. Bias replay diagnosis remains unresolved and separately tracked.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
+      "result_note": "Single-H100 calibration completed at 23:21 JST, controller/child exit0. F72 cap12 is REJECTED: T6 B12 OOM under93pct limit; T9 B8 andT8 B9 exceed90pct approval. T24 B3 peak68.442GiB,T18 B4 69.012,T12 B6 70.153,T10 B7 69.150. Exact measured stress cases only; no fullT cap approved. GPU5/7 idle23:22, allocation129547842 preserved. Next bounded confirmation will test F72 cap6 over everyT2..24, then separate2-rank save/resume smoke. No next fulltraining.",
+      "updated_at": "2026-10-10T14:23:06.168354+00:00"
     }
   ]
 }

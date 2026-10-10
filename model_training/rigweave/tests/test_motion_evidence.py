@@ -33,8 +33,28 @@ class MotionObservationsTest(unittest.TestCase):
         self.assertEqual(actual.states.dtype, torch.float32)
         self.assertFalse(actual.states.requires_grad)
         self.assertTrue(bool(actual.valid_groups.all()))
-        torch.testing.assert_close(actual.states[..., 0], torch.ones(1, 4, 4), atol=5e-5, rtol=0)
-        self.assertLess(float(actual.states[..., 1:].abs().max()), 5e-5)
+        torch.testing.assert_close(actual.states[..., 0], torch.ones(1, 4, 4), atol=0, rtol=0)
+        self.assertEqual(float(actual.states[..., 1:].abs().max()), 0)
+        expected_features = actual.anchor_features.new_tensor([0, 0, 1, 0, 0]).expand_as(actual.anchor_features)
+        torch.testing.assert_close(actual.anchor_features, expected_features, atol=0, rtol=0)
+
+    def test_exact_static_policy_does_not_threshold_real_motion(self):
+        query, indices = clouds()
+        moved = query.clone()
+        moved[:, 0] += 1e-5
+        clips = torch.stack((query[None].repeat(3, 1, 1), torch.stack((query, moved, query))))
+        result = grouped_motion_evidence(clips, indices.repeat(2, 1))
+        torch.testing.assert_close(result.states[0, ..., 0], torch.ones(4, 4), atol=0, rtol=0)
+        self.assertEqual(float(result.states[0, ..., 1:].abs().max()), 0)
+        self.assertGreater(float(result.states[1, ..., 1:].sum()), 0)
+
+    def test_asymmetric_static_cloud_is_exactly_unknown(self):
+        generator = torch.Generator().manual_seed(91)
+        query = torch.randn(64, 3, generator=generator)
+        result = grouped_motion_evidence(query[None, None].repeat(1, 8, 1, 1), torch.tensor([[0, 16, 32, 48]]))
+        self.assertTrue(bool(result.valid_groups.any()))
+        torch.testing.assert_close(result.states[..., 0], torch.ones(1, 4, 4), atol=0, rtol=0)
+        self.assertEqual(float(result.states[..., 1:].abs().max()), 0)
 
     def test_common_rigid_motion_is_not_relative_change(self):
         query, indices = clouds()

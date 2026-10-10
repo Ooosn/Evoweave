@@ -35,6 +35,11 @@ class AnchoredProbeTest(unittest.TestCase):
         prior, current = config["relation_probe"], config["relation_anchor_probe"]
         for key in ("seed", "steps", "accumulation", "lr", "weight_decay", "bottleneck_dim", "views"):
             self.assertEqual(prior[key], current[key])
+        audit = build_plan(config, "relation_static_identity", None)
+        self.assertEqual(audit["devices"], [5])
+        self.assertIsNone(audit["expected"])
+        self.assertIsNone(audit["output"])
+        self.assertTrue(audit["command"][2].endswith("audit_static_relation_identity.py"))
 
 
 if __name__ == "__main__":

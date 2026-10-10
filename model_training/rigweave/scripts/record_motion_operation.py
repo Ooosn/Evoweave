@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen", "relation_static_identity"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -82,15 +82,17 @@ def main():
             "relation_screen": "Both identically initialized r64 adapter arms complete 120 token-weighted steps on the same 32 assets/3 views/480 exposures. Evaluate 16 disjoint validation asset IDs, complete natural generations and offline local-motion strata; compare frozen base, actual versus unknown-only adapter, and actual adapter evidence ablation. Full u/c/d and GT retained; original model/checkpoint immutable. Completion does not establish quality gain or authorize full training.",
             "relation_anchor_preflight": "Reuse hash-verified original cache for min/max-count2 train/2valid assets, complete GT, all3views. F(x,E)-F(x,U) reference-subtracted adapter must match cached base exactly at zero init and after2finiteupdates under allunknown new-branch evidence, including64token greedy prefixes. Old parameters unchanged,90pctmemory cap, no retry or fulltraining; primary reviews before anchored screen.",
             "relation_anchor_screen": "Same frozenbase, initialseed,32train/16valid cachedassets,3views and120steps/480exposures asplain probe; only change is allunknown reference subtraction. Complete48natural generations and48each unknown/permuted-E CEcontrols; trainedunknown condition must match base exactly. OriginalGT/E andacceptedcheckpoint immutable. This is exploratory same-validation follow-up, not independent confirmation or fulltraining approval.",
+            "relation_static_identity": "Read-only16static validation inputs: rebuild original query/GT/normalization and stored surface references; updated evidence must be exactlyU and allsurfacefeatures unchanged. Correctedtrained-anchor conditions must match correctedbase exactly; check2greedy64prefixes. Reuseoldgeneration only ifbasecondition exact, otherwise generateatmost16newbaselineoutputs. Prove32nonstaticcachedcases cannotmatch exact-repeat branch. Nooptimizer/checkpoint/cachewrites orfulltraining.",
         }
-        operation = "train" if args.stage in {"screen", "full", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "relation_static_identity"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage in {"preflight", "frame_profile", "frame_confirm"}:
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
         stage_config = config[{"frame_profile": "frame_budget_profile", "frame_confirm": "frame_budget_confirm",
                                "bias_replay_audit": "bias_replay_audit", "frame_budget_smoke": "frame_budget_smoke",
                                "relation_preflight": "relation_probe", "relation_screen": "relation_probe",
-                               "relation_anchor_preflight": "relation_anchor_probe", "relation_anchor_screen": "relation_anchor_probe"}.get(args.stage, "bias_diagnostic"
+                               "relation_anchor_preflight": "relation_anchor_probe", "relation_anchor_screen": "relation_anchor_probe",
+                               "relation_static_identity": "relation_static_identity"}.get(args.stage, "bias_diagnostic"
                                if args.stage.startswith("bias_diagnostic") else "changes")]
         state.update(
             state_id="motion-evidence-base-compare-20261010",

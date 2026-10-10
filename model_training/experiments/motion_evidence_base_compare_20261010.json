@@ -334,6 +334,13 @@
     "controls": "Reuse verified frozenbase generation; rerunfullCE/conditionbasecache parity. Aftertraining,newadapter-allunknown CE/condition mustmatchbase exactly. PermuteactualErows/columnsonlyinnewadapterusingfixedassetseed for48CEcontrols; preserveoldbiasE. Generate48actual complete skeletons. No separately trained unknownarm because it is identically baseline byconstruction.",
     "scope": "Targeted follow-up to observedplain-residual prior drift on same32train16validation assets. This is exploratory reuse of validation, not independent model-selection confirmation. No fulltraining."
   },
+  "relation_static_identity": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "anchor_report": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_screen_evaluation.json",
+    "anchor_report_sha256": "0a52158554fbee9f783440ba05ff64785a5ab57b0ad06a713b21bc8c9dfda79e",
+    "change": "Only bitwise-identical complete point-cloud clips set observed activity exactlyzero before allthree evidence states arecomputed. No threshold for small true motion; no GT/channel pruning. Fix scatter/SVD roundoff creating false motion in an exactly repeated query.",
+    "scope": "Read-only16static cases, frozenbase andexistingtrainedanchoredadapter, originalsurface references/fullGT. Up to16baselinegenerations onlyifcorrectedbaseconditiondiffers; otherwise reuseverifiedidenticalcondition outputs. Two64prefixchecks. No additionaltraining orcheckpointwrites."
+  },
   "full_training": {
     "max_steps": 1667,
     "world_size": 2,

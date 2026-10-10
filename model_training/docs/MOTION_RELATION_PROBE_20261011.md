@@ -190,3 +190,37 @@ all zero and trained-unknown64-token prefixes match. Two finite updates change
 parameters and full hashes of source checkpoint/cache/report remain unchanged.
 Peak allocated memory4.724GiB. This verifies the trained neutrality contract,
 not generation improvement. The anchored short screen is separately gated.
+
+The anchored screen completed from eff2138 at02:33 JST, all exits0. All48
+base-cache and48 trained-unknown conditions/CEs match exactly. It trained120
+steps on the same480 exposures/2880 frames/81045 tokens, with4.724GiB peak.
+All48 actual generations and96 CE-only controls completed; no base weights
+changed. Macro CE rose1.24pct, all-view F1 changed0.590208 to0.586095.
+Normal8 F1 rose0.603241 to0.620522 and weak2 rose0.555841 to0.590283, but
+static8 fell0.611542 to0.547480. Permuted-E CE changes-0.0294pct with an
+interval spanning zero, so aligned pair-relation use is not established.
+Weak2 hidden-joint coverage rose41/52 to49/52, but all8 newly covered joints
+come from a single asset; this is not general completion evidence.
+
+## Exact-Static Numerical Contract
+
+Despite the verified E=U identity, measured static inputs were only NEAR U:
+their mean c channel was3.7e-7 to6.1e-7. These scatter/SVD rounding residues
+can perturb BF16 updates and change autoregressive trajectories. Static CE
+barely changes, yet two additional static generations hit the limit. Thus
+the mathematical null-evidence invariant was not sufficient for real inputs.
+
+The evidence extractor now sets observed activity exactly zero only when the
+entire supplied point-cloud clip is bitwise identical to its query frame.
+This is not a confidence threshold and does not discard small real movement.
+All u/c/d channels, geometry validity, full GT and normalization are retained.
+An asymmetric static CPU regression failed before the fix (15/16 pairs differ,
+max1.19e-7) and passes afterward. All8 evidence tests pass, including a1e-5
+real translation that must still produce positive evidence.
+
+The separately recorded read-only relation_static_identity audit rebuilds
+all16 static inputs from the same data and saved references. Require exact U,
+unchanged surface features/GT, and trained-anchor condition identity to the
+corrected base. Old generations are reused only after exact condition parity;
+otherwise at most16 baseline generations are permitted. There are no further
+optimizer updates or checkpoint writes in this audit.

@@ -53,6 +53,9 @@ def build_plan(config, stage, candidate_name):
     elif stage == "bias_replay_audit":
         command += [str(scripts / "audit_bias_replay.py"), "--config", str(config_path),
                     "--output", str(evaluation_path)]
+    elif stage == "relation_static_identity":
+        command += [str(scripts / "audit_static_relation_identity.py"), "--config", str(config_path),
+                    "--output", str(evaluation_path)]
     elif stage in {"frame_profile", "frame_confirm"}:
         command += [str(scripts / "profile_frame_budget.py"), "--config", str(config_path),
                     "--output", str(evaluation_path), "--plan-key",
@@ -134,7 +137,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen", "relation_static_identity"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -178,6 +181,8 @@ def main():
             raise RuntimeError("relation probe preflight does not match the recorded plan")
     if args.stage == "relation_anchor_preflight":
         require_report(job / "results/relation_screen_evaluation.json", "complete")
+    if args.stage == "relation_static_identity":
+        require_report(job / "results/relation_anchor_screen_evaluation.json", "complete")
     if args.stage == "relation_anchor_screen":
         checked = require_report(job / "results/relation_anchor_preflight_evaluation.json", "complete")
         if checked["plan"] != config["relation_anchor_probe"] or checked["changed_base_parameters"]:

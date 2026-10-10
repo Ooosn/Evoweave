@@ -85,6 +85,10 @@ def grouped_motion_evidence(
                                 rotation[..., 1, 0] - rotation[..., 0, 1]), dim=-1)
             angle = torch.atan2(torch.linalg.vector_norm(skew, dim=-1) * 0.5, cosine)
             o = torch.stack((displacement, angle), dim=-1)[1:].square().mean(0).sqrt()
+            # Identical observations carry no motion evidence. Scatter/SVD
+            # roundoff must not turn a static clip into a weak positive signal.
+            if torch.equal(cloud, cloud[:1].expand_as(cloud)):
+                o.zero_()
             descriptor = torch.cat((translation, rotation.reshape(frames, groups, 9) / math.sqrt(3)), -1).double()
             flat = descriptor[1:].permute(1, 0, 2).reshape(groups, -1) / math.sqrt(frames - 1)
             norm = flat.square().sum(-1)

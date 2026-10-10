@@ -236,3 +236,19 @@ No all-T cap is approved by this sparse sweep. F72/cap6 will be independently
 confirmed for every integer T2..24 before a two-rank save/resume smoke.
 Evidence: external results/frame_profile_evaluation.json; GPU5/7 idle at
 23:22 JST, allocation129547842 preserved. No checkpoint was written.
+
+### Bias Replay Localization
+
+The two-asset T8 boundary audit completed at 23:29 JST with all exits zero.
+Surface features, query points, validity masks and CPU/CUDA RNG states are
+identical across full repeats; recomputed evidence states differ by up to
+4.72e-6. Full-repeat CE differences are 0.001418 and 0.001515; restoring RNG
+does not remove them. Every module is in eval mode and parameter versions
+are unchanged. The exact CUDA primitive is not isolated by this experiment.
+Replaying the captured motion-boundary tensors yields bitwise-identical
+condition and exactly equal CE to the original full forward, on both assets
+and both replays. This validates a cached-evidence intervention protocol,
+not a modification to the trained model or evidence mathematics.
+Repeated BF16 backward bias gradients still differ by about 0.42-0.46% in
+relative L2; the complete gradient study must record this numerical floor.
+Evidence: external results/bias_replay_audit_evaluation.json.

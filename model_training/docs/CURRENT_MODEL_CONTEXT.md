@@ -54,8 +54,13 @@ exceeded the 90% approval ceiling. T24/B3, T18/B4, T12/B6 and T10/B7 measured
 single-GPU padding-stress measurement, not a dataset-wide memory guarantee.
 The next candidate is F=72/cap=6, requiring all T2..24 confirmation and a
 separate two-rank save/resume/accounting smoke. No next full run is authorized.
-Both bias-scale attempts remain rejected because full-forward replay differs
-by more than 2e-5 CE. A bounded boundary/RNG audit must precede another sweep.
+Both earlier bias-scale attempts remain rejected because full-forward replay
+differs by more than 2e-5 CE. The two-asset boundary/RNG audit now isolates the
+variation to recomputed motion evidence: surface features/query points and
+RNG states are unchanged. Captured-boundary replays match full-forward CE and
+condition exactly; BF16 backward gradients retain about0.42-0.46% relative
+variation. A cached-evidence sweep can now measure interventions, recording
+the gradient numerical floor. Evidence: results/bias_replay_audit_evaluation.json.
 用户随后明确授权系数/梯度诊断，以及固定帧数预算的动态 batch 实现与显存标定；
 允许短序列时增加真实样本数，必须记录样本、帧数并修正损失归一化及恢复位置。
 初次 bias_diagnostic 在 T2 完成后因 T8 重放精度检查未通过而拒收，产物保留；

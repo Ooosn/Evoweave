@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:25:01.837849+00:00",
+  "updated_at": "2026-10-10T14:30:45.035830+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "bias_replay_audit",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T14:25:01.837849+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "7899b38a0d836a1ec1ab8d0d85eb9163c5fb228e",
@@ -322,7 +322,10 @@
       "new_allocation": false
     },
     "acceptance": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
-    "note": "Bounded diagnosis on first2 fixed T8 assets before third full bias sweep. Measure full-repeat and RNG-restored upstream features/evidence/condition/CE, then unchanged cached-boundary forwards plus gradients. Acceptance unchanged2e-5 CE, exact dynamic/no-prior contract, unchanged parameter versions. No generation or optimizer. CPU4replay tests passed. Previous frame_profile closed; GPUs idle and retained allocation verified23:22."
+    "note": "Bounded diagnosis on first2 fixed T8 assets before third full bias sweep. Measure full-repeat and RNG-restored upstream features/evidence/condition/CE, then unchanged cached-boundary forwards plus gradients. Acceptance unchanged2e-5 CE, exact dynamic/no-prior contract, unchanged parameter versions. No generation or optimizer. CPU4replay tests passed. Previous frame_profile closed; GPUs idle and retained allocation verified23:22.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_replay_audit_evaluation.json",
+    "result_note": "Two T8 assets passed cached boundary contract exactly: zero CE and condition difference vs original full forward and repeat. Full recomputation changes only motion evidence among captured inputs (states maxabs4.72e-6); surface features/querypoints exact; all CPU/CUDA RNG states unchanged; no training-mode modules or parameter version changes. Full-repeat CE differs0.001418/0.001515; RNG restore does not fix it. Localizes forward noise to recomputed motion evidence, specific CUDA primitive not isolated. Bias gradient repeat relative differences0.00416..0.00464 remain; quantify in full cached sweep. All exits0 and GPUsidle23:29.",
+    "updated_at": "2026-10-10T14:30:45.035830+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

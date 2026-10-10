@@ -60,6 +60,16 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertIn("profile_frame_budget.py", " ".join(plan["command"]))
         for frames, batch in self.config["frame_budget_profile"]["cases"]:
             self.assertLessEqual(frames * batch, 72)
+        confirm = build_plan(self.config, "frame_confirm", None)
+        self.assertIn("frame_budget_confirm", confirm["command"])
+        cases = self.config["frame_budget_confirm"]["cases"]
+        self.assertEqual({row[0] for row in cases}, set(range(2, 25)))
+        for frames, batch in cases:
+            self.assertEqual(batch, min(6, 72 // frames))
+        audit = build_plan(self.config, "bias_replay_audit", None)
+        self.assertIn("audit_bias_replay.py", " ".join(audit["command"]))
+        self.assertEqual(audit["devices"], [5])
+        self.assertIsNone(audit["expected"])
 
     @unittest.skipUnless(os.name == "posix", "requires the actual Linux Bash launcher")
     def test_actual_launcher_args_match_recorded_recipe_without_running_trainer(self):

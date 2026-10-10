@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "frame_profile"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -74,11 +74,16 @@ def main():
             "bias_diagnostic": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
             "bias_diagnostic_paired": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
             "frame_profile": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
+            "frame_confirm": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
+            "bias_replay_audit": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
         }
-        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit"} else "preflight"
         allowed = ["inspect", "report", operation]
-        if args.stage in {"preflight", "frame_profile"}:
+        if args.stage in {"preflight", "frame_profile", "frame_confirm"}:
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
+        stage_config = config[{"frame_profile": "frame_budget_profile", "frame_confirm": "frame_budget_confirm",
+                               "bias_replay_audit": "bias_replay_audit"}.get(args.stage, "bias_diagnostic"
+                               if args.stage.startswith("bias_diagnostic") else "changes")]
         state.update(
             state_id="motion-evidence-base-compare-20261010",
             human_context="model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -92,9 +97,9 @@ def main():
                               "config": remote_config, "command": command,
                               "manifests": config["baseline"]["manifests"],
                               "initialization": config["baseline"]["args"]["unirig_checkpoint"],
-                              "reference_checkpoint": (config["frame_budget_profile"]["checkpoint"] if args.stage == "frame_profile" else config["bias_diagnostic"]["checkpoint"] if args.stage.startswith("bias_diagnostic") else config["baseline"]["checkpoint"]),
+                              "reference_checkpoint": stage_config.get("checkpoint", config["baseline"]["checkpoint"]),
                               "resume_checkpoint": None,
-                              "changes": (config["frame_budget_profile"] if args.stage == "frame_profile" else config["bias_diagnostic"] if args.stage.startswith("bias_diagnostic") else config["changes"]),
+                              "changes": stage_config,
                               "output_root": config["runtime"]["output_root"],
                               "output_path": plan["output"], "evaluation_artifact": plan["evaluation_path"],
                               "runtime_result": plan["result"],

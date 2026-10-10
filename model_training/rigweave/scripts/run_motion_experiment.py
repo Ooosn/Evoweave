@@ -48,9 +48,13 @@ def build_plan(config, stage, candidate_name):
     elif stage in {"bias_diagnostic", "bias_diagnostic_paired"}:
         command += [str(scripts / "diagnose_motion_bias.py"), "--config", str(config_path),
                     "--output", str(evaluation_path)]
-    elif stage == "frame_profile":
-        command += [str(scripts / "profile_frame_budget.py"), "--config", str(config_path),
+    elif stage == "bias_replay_audit":
+        command += [str(scripts / "audit_bias_replay.py"), "--config", str(config_path),
                     "--output", str(evaluation_path)]
+    elif stage in {"frame_profile", "frame_confirm"}:
+        command += [str(scripts / "profile_frame_budget.py"), "--config", str(config_path),
+                    "--output", str(evaluation_path), "--plan-key",
+                    "frame_budget_confirm" if stage == "frame_confirm" else "frame_budget_profile"]
     else:
         expected = {key: value for key, value in config["baseline"]["args"].items() if key not in DERIVED_ARGS}
         expected.update(frame_budget=0, frame_batch_cap=0, max_samples=0)
@@ -120,7 +124,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "frame_profile"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -156,13 +160,13 @@ def main():
         require_report(job / "results/reference_evaluation.json", "complete")
     if args.stage == "full":
         require_report(job / f"results/screen_{args.candidate}_evaluation.json", "complete")
-    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "frame_profile"}:
+    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"}:
         require_report(job / "results/full_bias_h8_completion.json", "passed")
     query = ["nvidia-smi", "-i", ",".join(map(str, plan["devices"])),
              "--query-compute-apps=pid", "--format=csv,noheader"]
     if subprocess.check_output(query, text=True).strip():
         raise RuntimeError("an allocated GPU already has a compute process; inspect before retrying")
-    operation = "train" if plan["expected"] else "preflight" if args.stage in {"preflight", "frame_profile"} else "matched_eval"
+    operation = "train" if plan["expected"] else "preflight" if args.stage in {"preflight", "frame_profile", "frame_confirm"} else "matched_eval"
     guard(config, operation)
     environment = training_environment(config, plan)
     if plan["expected"]:

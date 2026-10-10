@@ -262,6 +262,20 @@
     "acceptance_fraction": 0.90,
     "cases": [[24, 3], [18, 4], [14, 5], [12, 6], [10, 7], [9, 8], [8, 9], [7, 10], [6, 12], [4, 12], [2, 12]]
   },
+  "bias_replay_audit": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "frames": 8,
+    "validation_rows": 2
+  },
+  "frame_budget_confirm": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "validation_rows": 32,
+    "frame_budget": 72,
+    "max_batch_cap": 6,
+    "memory_fraction": 0.93,
+    "acceptance_fraction": 0.90,
+    "cases": [[24, 3], [23, 3], [22, 3], [21, 3], [20, 3], [19, 3], [18, 4], [17, 4], [16, 4], [15, 4], [14, 5], [13, 5], [12, 6], [11, 6], [10, 6], [9, 6], [8, 6], [7, 6], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6]]
+  },
   "full_training": {
     "max_steps": 1667,
     "world_size": 2,

@@ -303,9 +303,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--plan-key", choices=["frame_budget_profile", "frame_budget_confirm"], default="frame_budget_profile")
     args = parser.parse_args()
     config = load_config(args.config)
-    plan = validate_plan(config["frame_budget_profile"])
+    plan = validate_plan(config[args.plan_key])
     checkpoint = Path(plan["checkpoint"])
     validate_output(args.output, [args.config, checkpoint, *(row["path"] for row in config["baseline"]["manifests"])])
     if Path(config["runtime"]["repo"]).resolve() != Path(__file__).resolve().parents[3]:

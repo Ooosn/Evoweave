@@ -173,6 +173,29 @@ used physical GPUs 5 and 7, each at 100% utilization at 09:58:22 JST.
 The primary accepted initial stability, not completed training or final
 quality. Evidence is `results/full_bias_h8_stability.json` and
 `results/full_bias_h8_checkpoint_inspection.json` under the external job root.
-Training remains running in the existing allocation; no qlogin was released.
-The runtime checkout stays at its launch commit while local state records
-`stable_running`. Do not update active runtime source or start another run.
+At initial acceptance, training remained running in the existing allocation
+and the runtime checkout stayed at its launch commit while local state
+recorded `stable_running`.
+
+### Full Run Completion
+
+The full run completed normally at 2026-10-10 21:14:25 JST, after 44,144.60
+seconds. Controller, child and outer exit checks passed. Both the final and
+sample80000 checkpoints contain step 1667, nominal exposure 80016, all 128
+matched arguments, three optimizer groups with 888 populated states, and
+scheduler total/last epoch 1667. All twelve final bias tensors are finite
+and updated, including the u/c/d columns. Last logged training step 1660
+is expected under the ten-step log interval; checkpoints establish completion.
+
+The final inline validation is step 1600: CE 1.159892 and teacher-forced EOS
+accuracy 1.0. No additional GPU generation evaluation was performed, so
+full-budget generation quality and superiority to the historical baseline
+remain unverified. Completion is execution acceptance, not quality acceptance.
+
+Evidence: `results/full_bias_h8_completion.json`,
+`results/full_bias_h8_final_checkpoint_inspection.json` and
+`results/full_bias_h8_artifact_inventory.json` under the external job root.
+A fresh 22:20 JST read-only inspection confirmed both GPUs idle and qlogin
+129547842 retained. Source ran unchanged at `fb27ce9`; completion is recorded
+locally after inspection. The state permits inspect/report only; a new GPU
+evaluation or training operation needs its own committed preparation.

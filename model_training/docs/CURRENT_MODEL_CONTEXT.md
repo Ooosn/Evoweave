@@ -30,7 +30,7 @@ token-only、hybrid 8 头。正式候选选择 bias 8 头，保留全部 u/c/d �
 hybrid 的 CE 仅低约 0.37%，在预设 1% 实用相当阈值内，F1 为 0.761046，
 步耗时高约 3%；因此保留较简单的成对偏置，不叠加 pooled token 注入。
 完整证据见比较文档和外部作业目录 results/complete_screen_summary.json。
-正式训练已从头启动，计划 1667 步，初始稳定性验收通过，仍在继续。
+正式训练已于 2026-10-10 21:14:25 JST 正常完成 1667 步，耗时约 12 小时 16 分。
 运行提交 fb27ce9；双 H100 物理设备 5/7，分配 129547842。128 项实参匹配。
 第 105 步已保存 sample5000 检查点，名义样本暴露 5040，含完整优化器三组、
 888 条参数状态及调度器；保存后继续记录到第 120 步，loss 1.479439，梯度有限。
@@ -38,7 +38,14 @@ hybrid 的 CE 仅低约 0.37%，在预设 1% 实用相当阈值内，F1 为 0.76
 2026-10-10 09:58 JST 验收时双卡利用率均为 100%，无 OOM 或 traceback。
 验收报告为外部作业目录 results/full_bias_h8_stability.json。
 输出目录为 /home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8。
-运行期间远端工作树保持启动提交不变；本地状态记录 stable_running，禁止另开训练。
+最终 checkpoint_last 与 sample80000 均确认 step1667、名义样本 80016、128 项实参
+匹配，保留完整优化器三组、888 条状态和调度器。controller、子进程与外层退出码
+均为 0。最后内置验证为 step1600，CE 1.159892、teacher-forced EOS 准确率 100%；
+这不等于自由生成质量验收，尚未进行最终配对生成评估。
+完成证据为 results/full_bias_h8_completion.json 和
+results/full_bias_h8_final_checkpoint_inspection.json。22:20 JST 只读检查确认
+分配 129547842 保留、GPU 5/7 空闲。运行源码始终保持 fb27ce9；本地状态记录
+completed。目前允许只读诊断和汇报，不由完成状态自动授权新的训练或 GPU 评估。
 短训练筛选不是完整预算质量结论；不能声称已超过历史基线或证明全局最优。
 旧初始化 RNG 未保存，无法逐位复现；新候选固定同一初始化种子。
 

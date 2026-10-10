@@ -52,6 +52,9 @@ class ExperimentPlanTest(unittest.TestCase):
         retry = build_plan(self.config, "bias_diagnostic_paired", None)
         self.assertNotEqual(retry["result"], plan["result"])
         self.assertNotEqual(retry["evaluation_path"], plan["evaluation_path"])
+        cached = build_plan(self.config, "bias_diagnostic_cached", None)
+        self.assertNotEqual(cached["result"], retry["result"])
+        self.assertEqual(self.config["bias_diagnostic"]["forward_mode"], "captured_motion_inputs_rng_locked")
 
     def test_frame_profile_is_bounded_single_gpu(self):
         plan = build_plan(self.config, "frame_profile", None)

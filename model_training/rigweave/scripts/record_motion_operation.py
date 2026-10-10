@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -76,8 +76,9 @@ def main():
             "frame_profile": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
             "frame_confirm": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
             "bias_replay_audit": "First two T8 validation assets only. Localize full-forward noise with captured feature/evidence tensors and CPU/CUDA RNG traces; cached path and repeat must match the actual full first forward within2e-5 CE. Record training flags and unchanged parameter versions. No optimizer, generation, or checkpoint writes.",
+            "bias_diagnostic_cached": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
         }
-        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit"} else "preflight"
+        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage in {"preflight", "frame_profile", "frame_confirm"}:
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.

@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
+from bias_replay import captured_forward, tensor_delta
 from eval_dynamic_rig_ce import CHECKPOINT_DEFAULTS, _build_dynamic_model, _control_batch
 from eval_dynamic_rig_generation import _continuous_range, _dynamic_generate, _output_metrics
 from motion_experiment_runtime import guard, load_config, source_metadata, verify_manifests, write_json
@@ -32,17 +33,47 @@ def gradient_summary(vectors, coefficients):
         raise ValueError("all sample gradients are zero")
     directions = gradients[active] / norms[active, None]
     cosines = (directions @ directions.T)[np.triu_indices(len(directions), 1)]
+    random_direction_ratio = np.sqrt(np.square(norms).sum()) / norms.sum()
+    actual_ratio = np.linalg.norm(gradients.sum(0)) / norms.sum()
+    pair_weight = norms.sum() ** 2 - np.square(norms).sum()
     return {
         "samples": len(gradients), "zero_gradient_samples": int((~active).sum()),
-        "norm_sum_over_sum_norms": float(np.linalg.norm(gradients.sum(0)) / norms.sum()),
+        "norm_sum_over_sum_norms": float(actual_ratio),
+        "independent_direction_rms_reference": float(random_direction_ratio),
+        "resultant_over_independent_direction_rms": float(actual_ratio / random_direction_ratio),
+        "norm_weighted_pairwise_cosine": float((np.square(gradients.sum(0)).sum() - np.square(norms).sum()) / pair_weight) if pair_weight > 0 else None,
         "mean_gradient_norm": float(np.linalg.norm(gradients.mean(0))),
         "median_sample_gradient_norm": float(np.median(norms)),
         "mean_pairwise_cosine": float(cosines.mean()) if len(cosines) else None,
         "negative_pairwise_cosine_fraction": float((cosines < 0).mean()) if len(cosines) else None,
         "mean_scale_derivative_at_one": float((gradients @ coefficients).mean()),
         "negative_scale_derivative_fraction": float(((gradients @ coefficients) < 0).mean()),
-        "interpretation": "Gradients of equal-weight per-asset CE at this fixed checkpoint. R=1 means aligned, R=0 cancellation. This is not a reconstruction of historical training gradients. A negative scale derivative locally favors increasing the common bias multiplier.",
+        "interpretation": "Gradients of equal-weight per-asset CE at this fixed checkpoint. R=1 means aligned, R=0 cancellation. The independent-direction RMS reference accounts for sample count and unequal norms; it is a geometric reference, not a significance test. This is not a reconstruction of historical training gradients. A negative scale derivative locally favors increasing the common bias multiplier.",
     }
+
+
+def grouped_gradient_summaries(vectors, coefficients):
+    gradients = np.asarray(vectors, dtype=np.float64).reshape(-1, 12, 8, 3)
+    coefficients = np.asarray(coefficients, dtype=np.float64).reshape(12, 8, 3)
+    result = {}
+    for channel, name in enumerate(("u", "c", "d")):
+        group = gradients[..., channel].reshape(len(gradients), -1)
+        result[name] = gradient_summary(group, coefficients[..., channel].reshape(-1)) if np.any(group) else {"all_gradients_zero": True}
+    return result
+
+
+def gradient_repeat_summary(vectors, repeats):
+    first, second = np.asarray(vectors, dtype=np.float64), np.asarray(repeats, dtype=np.float64)
+    if first.shape != second.shape or not np.isfinite(first).all() or not np.isfinite(second).all():
+        raise ValueError("invalid paired gradient repeats")
+    differences = second - first
+    norms = np.linalg.norm(first, axis=1)
+    relative = np.linalg.norm(differences, axis=1) / np.maximum(norms, 1e-30)
+    mean_gradient = np.linalg.norm(first.mean(0))
+    return {"samples": len(first), "median_sample_relative_l2": float(np.median(relative)),
+            "max_sample_relative_l2": float(relative.max()),
+            "mean_gradient_relative_difference": float(np.linalg.norm(differences.mean(0)) / max(mean_gradient, 1e-30)),
+            "interpretation": "Same cached condition inputs and CE, repeated BF16 backward. This measures a numerical repeat floor, not statistical uncertainty from assets or training seeds."}
 
 
 def summarize(rows):
@@ -120,6 +151,8 @@ def main():
     args = parser.parse_args()
     config = load_config(args.config)
     plan = config["bias_diagnostic"]
+    if plan["forward_mode"] != "captured_motion_inputs_rng_locked":
+        raise ValueError("this diagnostic requires the recorded cached-boundary protocol")
     guard(config, "matched_eval")
     source, manifests = source_metadata(config), verify_manifests(config)
     torch.set_num_threads(1)
@@ -160,9 +193,9 @@ def main():
     hooks = [block.motion_injection.register_forward_pre_hook(inspect_or_permute)
              for block in model.conditioner.motion_encoder.blocks]
     report = {"source": source, "manifests": manifests, "checkpoint": str(checkpoint),
-              "checkpoint_step": checkpoint_step, "plan": plan, "rows": [], "gradients": [],
+              "checkpoint_step": checkpoint_step, "plan": plan, "rows": [], "gradients": [], "input_cache_checks": [], "complete": False,
               "parameter_names": [name for name, _ in named], "coefficients": flat_coefficients,
-              "scope": "No optimizer or checkpoint writes. Identical query, selected frames, surface references and complete GT within each paired asset/frame comparison. All CE forwards use the same gradient-enabled path with Transformer fastpath disabled; nonquery permutation is not used as a negative control.",
+              "scope": "No optimizer or checkpoint writes. Identical query, selected frames, all surface references and complete GT within each paired asset/frame comparison. Actual surface features and motion evidence are captured once per normal/static input; all scale/misalignment interventions replay those tensors through the original motion encoder with its captured CPU/CUDA RNG. Every cache must reproduce its full-forward scale1 CE within2e-5. Gradient-enabled CE and disabled Transformer fastpath throughout. Nonquery permutation is not used as a negative control.",
               "limits": "Small fixed validation subset, one training seed. Scaling a learned checkpoint is not equivalent to retraining at a higher LR; gradients describe the final checkpoint, not historical minibatches."}
     collate = partial(dynamic_rig_collate, pad_token=tokenizer.pad)
     seed = model_args.seed + 17
@@ -175,23 +208,50 @@ def main():
                 original = move_batch(collate([dataset[index]]), device)
                 torch.manual_seed(seed + index)
                 refs = model.sample_references(original)
-                ref_hash = hashlib.sha256(refs.query_indices.detach().cpu().numpy().tobytes()).hexdigest()
+                ref_hash = hashlib.sha256(b"".join(getattr(refs, key).detach().cpu().numpy().tobytes()
+                    for key in ("vertex_indices", "face_indices", "barycentric", "query_indices"))).hexdigest()
                 generator = torch.Generator(device=device).manual_seed(seed + index + 991)
                 capture["permutation"] = torch.randperm(model_args.query_tokens, generator=generator, device=device)
                 variants = [("normal", scale) for scale in plan["scales"]]
                 if frames == plan["gradient_frames"] and index < plan["control_rows"]:
                     variants += [("zero", 0.0), ("zero", 1.0), ("misaligned", 1.0)]
+                cached_inputs = {}
+                for input_control in (["normal", "zero"] if any(control == "zero" for control, _ in variants) else ["normal"]):
+                    capture["control"] = input_control
+                    with torch.no_grad():
+                        for parameter, value in zip(parameters, coefficients):
+                            parameter.copy_(value)
+                    cache_batch = _control_batch(original, input_control, seed + index)
+                    with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                        full_condition, full_loss, frozen, _, rng_trace = captured_forward(model, cache_batch, refs)
+                    full_ce = float(full_loss["ce_loss"].detach())
+                    full_condition = full_condition.detach()
+                    del full_loss
+                    with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                        replay_condition = frozen.forward(model.conditioner.motion_encoder)
+                        replay_loss = model._ar_losses(replay_condition, cache_batch)
+                    cache_check = {"index": index, "frames": frames, "control": input_control,
+                        "full_ce": full_ce, "cached_ce": float(replay_loss["ce_loss"].detach()),
+                        "condition": tensor_delta(full_condition, replay_condition), "rng_trace": rng_trace}
+                    cache_check["ce_abs_difference"] = abs(cache_check["cached_ce"] - full_ce)
+                    cache_check["passed"] = bool(np.isfinite(full_ce) and cache_check["ce_abs_difference"] <= 2e-5)
+                    report["input_cache_checks"].append(cache_check)
+                    if not cache_check["passed"]:
+                        write_json(args.output, report)
+                        raise RuntimeError("captured motion input fails full-forward contract")
+                    cached_inputs[input_control] = (frozen, cache_batch)
+                    del full_condition, replay_condition, replay_loss
                 for control, scale in variants:
                     capture["control"] = control
                     with torch.no_grad():
                         for parameter, value in zip(parameters, coefficients):
                             parameter.copy_(value * scale)
-                    batch = _control_batch(original, "zero" if control == "zero" else "normal", seed + index)
+                    frozen, batch = cached_inputs["zero" if control == "zero" else "normal"]
                     needs_gradient = control == "normal" and scale == 1 and frames == plan["gradient_frames"]
                     # A no-grad Transformer can select a different fused forward path.
                     # Keep paired CE and gradient measurements on one execution path.
                     with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
-                        condition = model.build_condition(batch, refs=refs)
+                        condition = frozen.forward(model.conditioner.motion_encoder)
                         losses = model._ar_losses(condition, batch)
                     ce = float(losses["ce_loss"].detach())
                     if not np.isfinite(ce):
@@ -206,28 +266,32 @@ def main():
                         vector = torch.cat([value.detach().float().reshape(-1) for value in gradients]).cpu().tolist()
                         if not np.isfinite(vector).all():
                             raise RuntimeError("non-finite sample bias gradient")
-                        report["gradients"].append({"index": index, "path": row["path"], "frames": frames, "vector": vector})
+                        gradient_row = {"index": index, "path": row["path"], "frames": frames, "vector": vector}
+                        report["gradients"].append(gradient_row)
                         row["evidence"] = evidence_summary(capture["evidence"], coefficients)
-                        if index < 2:
-                            with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
-                                repeated = model.build_condition(batch, refs=refs)
-                                repeated_loss = model._ar_losses(repeated, batch)["ce_loss"]
-                                repeated_ce = float(repeated_loss.detach())
-                            row["replay_ce_abs_difference"] = abs(repeated_ce - ce)
-                            row["replay_condition_relative_l2"] = float((repeated.detach().float() - condition.detach().float()).norm()
-                                                                       / condition.detach().float().norm().clamp_min(1e-20))
-                            if row["replay_ce_abs_difference"] > 2e-5:
-                                report["replay_failure"] = {**row, "repeated_ce": repeated_ce}
-                                write_json(args.output, report)
-                                raise RuntimeError(f"fixed-input replay noise exceeds diagnostic resolution: {ce} vs {repeated_ce}")
-                            del repeated, repeated_loss
+                        with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                            repeated = frozen.forward(model.conditioner.motion_encoder)
+                            repeated_loss = model._ar_losses(repeated, batch)["ce_loss"]
+                            repeated_ce = float(repeated_loss.detach())
+                        repeated_gradients = torch.autograd.grad(repeated_loss, parameters)
+                        gradient_row["repeat_vector"] = torch.cat([value.detach().float().reshape(-1) for value in repeated_gradients]).cpu().tolist()
+                        if not np.isfinite(gradient_row["repeat_vector"]).all():
+                            raise RuntimeError("non-finite repeat gradient")
+                        row["replay_ce_abs_difference"] = abs(repeated_ce - ce)
+                        row["replay_condition_relative_l2"] = float((repeated.detach().float() - condition.detach().float()).norm()
+                                                                   / condition.detach().float().norm().clamp_min(1e-20))
+                        if not np.isfinite(repeated_ce) or row["replay_ce_abs_difference"] > 2e-5:
+                            report["replay_failure"] = {**row, "repeated_ce": repeated_ce}
+                            write_json(args.output, report)
+                            raise RuntimeError(f"fixed-input replay noise exceeds diagnostic resolution: {ce} vs {repeated_ce}")
+                        del repeated, repeated_loss, repeated_gradients
                         del gradients
                     if control == "normal" and frames in plan["generation_frames"] and index < plan["generation_rows"]:
                         row["generation"] = generation_result(model, tokenizer, batch, condition.detach(), plan["max_new_tokens"])
                     report["rows"].append(row)
                     del losses, condition
                 capture["evidence"] = None
-                del batch, original, refs
+                del batch, original, refs, cached_inputs, cache_batch, frozen
                 if (index + 1) % 4 == 0:
                     report["summary"] = summarize(report["rows"])
                     write_json(args.output, report)
@@ -239,8 +303,16 @@ def main():
             for parameter, value in zip(parameters, coefficients):
                 parameter.copy_(value)
         assert all(torch.equal(parameter, value) for parameter, value in zip(parameters, coefficients))
+    expected_rows = len(plan["frames"]) * plan["validation_rows"] * len(plan["scales"]) + 3 * plan["control_rows"]
+    expected_generations = len(plan["generation_frames"]) * plan["generation_rows"] * len(plan["scales"])
+    if (len(report["rows"]) != expected_rows or len(report["gradients"]) != plan["validation_rows"]
+            or sum("generation" in row for row in report["rows"]) != expected_generations):
+        raise RuntimeError("incomplete planned diagnostic comparisons")
     report["summary"] = summarize(report["rows"])
     report["gradient_summary"] = gradient_summary([row["vector"] for row in report["gradients"]], flat_coefficients)
+    report["gradient_summary_by_channel"] = grouped_gradient_summaries([row["vector"] for row in report["gradients"]], flat_coefficients)
+    report["gradient_repeat_summary"] = gradient_repeat_summary([row["vector"] for row in report["gradients"]],
+                                                                [row["repeat_vector"] for row in report["gradients"]])
     report["complete"] = True
     report["parameters_restored"] = True
     write_json(args.output, report)

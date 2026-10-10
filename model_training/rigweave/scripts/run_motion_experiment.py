@@ -45,7 +45,7 @@ def build_plan(config, stage, candidate_name):
     elif stage == "reference":
         command += [str(scripts / "evaluate_motion_candidate.py"), "--config", str(config_path),
                     "--checkpoint", config["baseline"]["checkpoint"], "--output", str(evaluation_path)]
-    elif stage in {"bias_diagnostic", "bias_diagnostic_paired"}:
+    elif stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached"}:
         command += [str(scripts / "diagnose_motion_bias.py"), "--config", str(config_path),
                     "--output", str(evaluation_path)]
     elif stage == "bias_replay_audit":
@@ -124,7 +124,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -160,8 +160,10 @@ def main():
         require_report(job / "results/reference_evaluation.json", "complete")
     if args.stage == "full":
         require_report(job / f"results/screen_{args.candidate}_evaluation.json", "complete")
-    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_replay_audit", "frame_profile", "frame_confirm"}:
+    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm"}:
         require_report(job / "results/full_bias_h8_completion.json", "passed")
+    if args.stage == "bias_diagnostic_cached":
+        require_report(job / "results/bias_replay_audit_evaluation.json", "complete")
     query = ["nvidia-smi", "-i", ",".join(map(str, plan["devices"])),
              "--query-compute-apps=pid", "--format=csv,noheader"]
     if subprocess.check_output(query, text=True).strip():

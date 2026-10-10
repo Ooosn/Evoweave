@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:54:20.729842+00:00",
+  "updated_at": "2026-10-10T15:13:10.369101+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,11 +110,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,7 +263,7 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
+  "next_required_result": "Follow-up implementation and diagnostics are complete. No new GPU work is authorized. Before any separately requested full frame-budget run, prepare an explicit step/sample/frame budget and validate extreme-target mixed-batch memory. Do not increase bias LR solely because learned coefficients are small.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "frame_budget_smoke",
@@ -273,7 +273,7 @@
       "fusion": "bias",
       "heads": 8
     },
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T14:54:20.729842+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "8e6c1c37d56a3771c0702a5256b996bcde5af431",
@@ -332,7 +332,10 @@
       "new_allocation": false
     },
     "acceptance": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
-    "note": "Primary reviewed worker script/tests and outer-controller integration.16CPU tests pass inclactualBash131args forbothphases; outerintegration4pass/1Linuxskip. F72cap6 calibratedall23Tcases. Fresh officialinitialization step1thenstrictresumeunder4stepOneCycle; predictedglobalsamples68,138,224 andframes1004,1900,2838; bothphasesmax_samples223, sofinishstep3 overshoot1. CheckfullGT/currentmanifest15920,8accum,twoH1005/7,complete888Adamstates,strictargs/scheduler/cursor(0,8)->(0,24),singlefinalmilestone223. Original80kcheckpointnotloaded. Bothboundedphasesauthorizedifphase1checks pass; no retry orfulltraining. GPUallocation129547842retainedandidle23:47."
+    "note": "Primary reviewed worker script/tests and outer-controller integration.16CPU tests pass inclactualBash131args forbothphases; outerintegration4pass/1Linuxskip. F72cap6 calibratedall23Tcases. Fresh officialinitialization step1thenstrictresumeunder4stepOneCycle; predictedglobalsamples68,138,224 andframes1004,1900,2838; bothphasesmax_samples223, sofinishstep3 overshoot1. CheckfullGT/currentmanifest15920,8accum,twoH1005/7,complete888Adamstates,strictargs/scheduler/cursor(0,8)->(0,24),singlefinalmilestone223. Original80kcheckpointnotloaded. Bothboundedphasesauthorizedifphase1checks pass; no retry orfulltraining. GPUallocation129547842retainedandidle23:47.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8_evaluation.json",
+    "result_note": "Functional2rankframe-budget smoke accepted, NOTfulltrainingmemory/qualityapproval. Source85d19fc; completed2026-10-11 00:04JST allouter/controller/fresh/resumeexits0. Both131argsmatch; actualglobal samples68,138,224/frames1004,1900,2838/tokens13589,27297,42860. Strictresume cursor(0,8)->(0,24), max_samples223 stopsstep3 at224(overshoot1) before4-stepbudget; unique sample223+last finals,3groups304/388/196,888Adamstates, scheduler3/4. Finite losses/gradients. Rank0peak72.680GiB,above singleGPU90pctcalibrationline; extremelongGTmixedbatchmemorynotverified. Original80kcheckpointuntouched; nofulltraininglaunched. Workerfinal00:08JST verifiesGPUsidle,qloginretained,sourceclean;13smallfileshashverified, nocheckpointdownloads.",
+    "updated_at": "2026-10-10T15:13:10.369101+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

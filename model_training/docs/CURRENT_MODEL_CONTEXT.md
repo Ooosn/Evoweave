@@ -1,6 +1,6 @@
 # 当前模型状态（唯一入口）
 
-更新时间：2026-10-10
+更新时间：2026-10-11
 
 状态 ID：`motion-evidence-base-compare-20261010`
 
@@ -54,8 +54,11 @@ exceeded the 90% approval ceiling. T24/B3, T18/B4, T12/B6 and T10/B7 measured
 single-GPU padding-stress measurement, not a dataset-wide memory guarantee.
 F=72/cap=6 passed all23 T2..24 single-GPU stress cases at23:38:52, with a
 maximum70.153 GiB allocated peak. The stress subset's longest target has403
-input tokens, so this is not dataset-wide safety. A separate two-rank
-save/resume/accounting smoke is still required. No next full run is authorized.
+input tokens, so this is not dataset-wide safety. The separate two-rank
+save/resume/accounting smoke passed at00:04 JST Oct11: samples68/138/224,
+frames1004/1900/2838, correct step1 resume and step3 actual-sample stop.
+Rank0 reached72.680 GiB; full training still needs extreme-target mixed-batch
+memory checks and a separately recorded budget. No next full run is authorized.
 Both earlier bias-scale attempts remain rejected because full-forward replay
 differs by more than 2e-5 CE. The two-asset boundary/RNG audit now isolates the
 variation to recomputed motion evidence: surface features/query points and

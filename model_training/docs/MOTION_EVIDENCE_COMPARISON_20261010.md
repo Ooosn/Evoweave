@@ -312,3 +312,52 @@ an abnormally severe gradient conflict. A higher-LR training intervention is
 not tested; full held-out generation superiority remains unverified.
 Evidence: external results/bias_diagnostic_cached_evaluation.json and derived
 results/bias_diagnostic_cached_analysis.json (asset-clustered bootstrap).
+
+### Frame-Budget Save And Resume Accepted
+
+The two-H100 smoke on source85d19fc completed2026-10-11 00:04:01 JST.
+Outer/controller/fresh/resume exits are0. Both real Linux launcher captures
+match all131 expected arguments. Sixteen dedicated CPU tests and five
+outer-controller Linux tests passed. No next full run was launched.
+
+| Optimizer step | Actual global samples seen | Input frames seen | Valid target-token weight seen |
+| --- | ---: | ---: | ---: |
+| 1 | 68 | 1004 | 13589 |
+| 2 | 138 | 1900 | 27297 |
+| 3 | 224 | 2838 | 42860 |
+
+Step1 saved complete optimizer state, then resumed at epoch0/batch8.
+The final cursor is epoch0/batch24. With max_samples223 and max_steps4,
+the resumed run stopped after step3 at224 actual exposures, an explicit
+whole-step overshoot of1. This independently exercises sample-based stopping;
+it did not stop by reaching the four-step scheduler budget. There is exactly
+one sample milestone, checkpoint_sample_223.pt, plus checkpoint_last.pt.
+Both final files record step3/sample224, three optimizer groups304/388/196,
+888 Adam states and scheduler last_epoch3/total_steps4. Loss and gradients
+are finite; the tests do not claim model-quality convergence or bitwise
+uninterrupted-training equivalence.
+
+Rank0 allocated peaks are67.718,71.592,72.680 GiB across the three steps.
+The DDP peak exceeds the single-GPU90% calibration line; that earlier line
+reserved headroom for additional training costs, not a guarantee that DDP
+would also remain under90%. Accept execution/accounting/resume functionality,
+not dataset-wide memory safety. Extreme-target mixed-batch stress remains
+required before a separately authorized full run. Do not infer a throughput
+speedup from this short test with two model loads and checkpoint I/O.
+
+The opt-in training controls are --frame-budget, --frame-batch-cap and
+--max-samples (launcher variables RIGWEAVE_FRAME_BUDGET,
+RIGWEAVE_FRAME_BATCH_CAP, RIGWEAVE_MAX_SAMPLES). Zero frame budget keeps the
+legacy path. The tested schedule is B=min(6,floor(72/T)), T2..24;72 is a
+ceiling, not a requirement to fill all72 frames when the asset cap binds.
+Short clips therefore produce more actual asset exposures per update, but
+not uniform frame-count exposure per asset or a matched48-sample budget.
+Use the stored actual sample/frame/token counters, not step*48, for comparisons.
+No automatic LR scaling is added. Original GT, normalization, u/c/d evidence,
+architecture and accepted80k checkpoint are unchanged.
+
+At00:08 JST both allocated GPUs were idle, qlogin129547842 retained, source
+clean85d19fc. Only small reports/args/logs were copied and hash verified;
+the roughly8GB checkpoints remain on HGC. Evidence under the external job
+root: results/frame_budget_smoke_bias_h8_evaluation.json. Local read-only
+supervision summary: results/frame_budget_smoke_readonly_supervision.json.

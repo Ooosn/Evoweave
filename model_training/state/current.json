@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:02:33.598608+00:00",
+  "updated_at": "2026-10-10T14:03:31.876500+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "matched_eval"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight",
-    "matched_eval"
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,16 +263,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "bias_diagnostic",
+    "stage": "bias_diagnostic_paired",
     "candidate": null,
     "candidate_config": null,
-    "status": "rejected",
-    "prepared_at": "2026-10-10T13:51:16.279680+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-10T14:03:31.876500+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
-    "source_code_commit": "2ae23e2253da14ae4b5b14d1bd0a0dfae0bbb120",
+    "source_code_commit": "0df0b2cf260a6e7e5e11e419b41f21a78e243006",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -281,7 +281,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "bias_diagnostic"
+      "bias_diagnostic_paired"
     ],
     "manifests": [
       {
@@ -306,10 +306,11 @@
       "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
       "validation_rows": 32,
       "frames": [
-        2,
         8,
+        2,
         24
       ],
+      "forward_mode": "grad_enabled_transformer_fastpath_disabled",
       "scales": [
         0.0,
         1.0,
@@ -327,8 +328,8 @@
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
     "output_path": null,
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -339,11 +340,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
-    "note": "User explicitly authorized this bounded follow-up. Fixed final sample80000 checkpoint; no optimizer updates or checkpoint writes. Complete recorded 32-asset scale/static/misaligned-evidence protocol and sample-gradient analysis. Primary approved direct protocol execution after CPU helper and stage-plan tests; original model/cache/data pipeline already passed GPU preflight. Frame-budget implementation remains separate and no next full training starts.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
-    "result_note": "First diagnostic stopped after completing T2 when the T8 same-input replay check exceeded 2e-5 CE. Gradient-enabled baseline and no-grad replay/other variants can use different Transformer fast paths, so no T8 result is accepted and no tolerance is relaxed. Preserve partial artifacts; align execution mode and revalidate replay in a separately recorded attempt. Original checkpoint and all training weights remain unchanged.",
-    "updated_at": "2026-10-10T14:02:33.598608+00:00"
+    "acceptance": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
+    "note": "Separately recorded repair of the rejected mixed-execution-mode attempt. All CE forwards use grad-enabled mode and Transformer fastpath is disabled, including replay. Same 2e-5 CE replay threshold, no tolerance relaxation, no optimizer updates, original checkpoint untouched. T8 is evaluated first so replay and gradients are verified before remaining generation comparisons."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1103,6 +1101,87 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/full_bias_h8_completion.json",
       "result_note": "Primary verified normal completion at 2026-10-10 21:14:25 JST: controller/child/outer exit 0, final and sample80000 checkpoints step1667 nominal80016, 128 args, complete optimizer/scheduler metadata and finite updated bias coefficients. Last inline validation step1600 CE1.159892 and teacher-forced EOS1.0 are not generation-quality acceptance. Fresh 22:20 JST inspection confirms allocation129547842 retained and GPUs5/7 idle. Final matched generation and bias-strength diagnostics remain separate work; no new training authorized by completion.",
       "updated_at": "2026-10-10T13:21:10.766797+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "bias_diagnostic",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "rejected",
+      "prepared_at": "2026-10-10T13:51:16.279680+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+      "source_code_commit": "2ae23e2253da14ae4b5b14d1bd0a0dfae0bbb120",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "bias_diagnostic"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "validation_rows": 32,
+        "frames": [
+          2,
+          8,
+          24
+        ],
+        "scales": [
+          0.0,
+          1.0,
+          3.0,
+          10.0
+        ],
+        "gradient_frames": 8,
+        "control_rows": 8,
+        "generation_rows": 8,
+        "generation_frames": [
+          2,
+          24
+        ],
+        "max_new_tokens": 1400
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": null,
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
+      "note": "User explicitly authorized this bounded follow-up. Fixed final sample80000 checkpoint; no optimizer updates or checkpoint writes. Complete recorded 32-asset scale/static/misaligned-evidence protocol and sample-gradient analysis. Primary approved direct protocol execution after CPU helper and stage-plan tests; original model/cache/data pipeline already passed GPU preflight. Frame-budget implementation remains separate and no next full training starts.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
+      "result_note": "First diagnostic stopped after completing T2 when the T8 same-input replay check exceeded 2e-5 CE. Gradient-enabled baseline and no-grad replay/other variants can use different Transformer fast paths, so no T8 result is accepted and no tolerance is relaxed. Preserve partial artifacts; align execution mode and revalidate replay in a separately recorded attempt. Original checkpoint and all training weights remain unchanged.",
+      "updated_at": "2026-10-10T14:02:33.598608+00:00"
     }
   ]
 }

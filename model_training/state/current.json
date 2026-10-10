@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:15:00.542040+00:00",
+  "updated_at": "2026-10-10T14:15:56.439294+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -104,18 +104,18 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "Final-checkpoint scale/gradient diagnostics do not establish the effect of retraining with a larger bias LR.",
+    "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified.",
     "Short screening is not proof of the final full-training quality or global optimum.",
     "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
-    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -263,16 +263,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "bias_diagnostic_paired",
+    "stage": "frame_profile",
     "candidate": null,
     "candidate_config": null,
-    "status": "rejected",
-    "prepared_at": "2026-10-10T14:03:31.876500+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-10T14:15:56.439294+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
-    "source_code_commit": "0df0b2cf260a6e7e5e11e419b41f21a78e243006",
+    "source_code_commit": "ec010ad2550833818ff3876b6c29687e102a7ea7",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -281,7 +281,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "bias_diagnostic_paired"
+      "frame_profile"
     ],
     "manifests": [
       {
@@ -305,31 +305,61 @@
     "changes": {
       "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
       "validation_rows": 32,
-      "frames": [
-        8,
-        2,
-        24
-      ],
-      "forward_mode": "grad_enabled_transformer_fastpath_disabled",
-      "scales": [
-        0.0,
-        1.0,
-        3.0,
-        10.0
-      ],
-      "gradient_frames": 8,
-      "control_rows": 8,
-      "generation_rows": 8,
-      "generation_frames": [
-        2,
-        24
-      ],
-      "max_new_tokens": 1400
+      "frame_budget": 72,
+      "max_batch_cap": 12,
+      "memory_fraction": 0.93,
+      "acceptance_fraction": 0.9,
+      "cases": [
+        [
+          24,
+          3
+        ],
+        [
+          18,
+          4
+        ],
+        [
+          14,
+          5
+        ],
+        [
+          12,
+          6
+        ],
+        [
+          10,
+          7
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          8,
+          9
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          6,
+          12
+        ],
+        [
+          4,
+          12
+        ],
+        [
+          2,
+          12
+        ]
+      ]
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
     "output_path": null,
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_profile.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -340,11 +370,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
-    "note": "Separately recorded repair of the rejected mixed-execution-mode attempt. All CE forwards use grad-enabled mode and Transformer fastpath is disabled, including replay. Same 2e-5 CE replay threshold, no tolerance relaxation, no optimizer updates, original checkpoint untouched. T8 is evaluated first so replay and gradients are verified before remaining generation comparisons.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
-    "result_note": "Execution-mode alignment alone did not resolve full-condition replay drift: first T8 asset CE0.9354378581 versus0.9335309267, condition relative L2 0.00077943. Preserve failure evidence and original checkpoint. Do not infer bias benefit from unmatched recomputation or relax thresholds. Next isolate cached pre-motion features/evidence and RNG before retrying the paired diagnostic; independent frame-budget calibration can proceed after this operation is closed.",
-    "updated_at": "2026-10-10T14:15:00.542040+00:00"
+    "acceptance": "Bounded single-H100 calibration with complete GT, resident Adam states and accumulated gradients. Record finite updates and measured peak memory; stop after first OOM. Completion of profiling does not approve unsafe/unmeasured batches or a new full training.",
+    "note": "User chose fixed frame budget with increased actual sample exposure. Primary reviewed sampler/accounting/profile code and CPU tests (12 sampler, 6 accounting, 13 profile); authorize only this bounded single-GPU calibration on a disposable model copy. Frame budget72 and cap12 are candidate ceilings, not approved training values. Include resident Adam states and accumulated gradients, complete targets, 93pct allocation cap/90pct approval ceiling; stop firstOOM. No checkpoint writes or next full training. Bias replay diagnosis remains unresolved and separately tracked."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1185,6 +1212,88 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic.json",
       "result_note": "First diagnostic stopped after completing T2 when the T8 same-input replay check exceeded 2e-5 CE. Gradient-enabled baseline and no-grad replay/other variants can use different Transformer fast paths, so no T8 result is accepted and no tolerance is relaxed. Preserve partial artifacts; align execution mode and revalidate replay in a separately recorded attempt. Original checkpoint and all training weights remain unchanged.",
       "updated_at": "2026-10-10T14:02:33.598608+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "bias_diagnostic_paired",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "rejected",
+      "prepared_at": "2026-10-10T14:03:31.876500+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+      "source_code_commit": "0df0b2cf260a6e7e5e11e419b41f21a78e243006",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "bias_diagnostic_paired"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "validation_rows": 32,
+        "frames": [
+          8,
+          2,
+          24
+        ],
+        "forward_mode": "grad_enabled_transformer_fastpath_disabled",
+        "scales": [
+          0.0,
+          1.0,
+          3.0,
+          10.0
+        ],
+        "gradient_frames": 8,
+        "control_rows": 8,
+        "generation_rows": 8,
+        "generation_frames": [
+          2,
+          24
+        ],
+        "max_new_tokens": 1400
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": null,
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
+      "note": "Separately recorded repair of the rejected mixed-execution-mode attempt. All CE forwards use grad-enabled mode and Transformer fastpath is disabled, including replay. Same 2e-5 CE replay threshold, no tolerance relaxation, no optimizer updates, original checkpoint untouched. T8 is evaluated first so replay and gradients are verified before remaining generation comparisons.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
+      "result_note": "Execution-mode alignment alone did not resolve full-condition replay drift: first T8 asset CE0.9354378581 versus0.9335309267, condition relative L2 0.00077943. Preserve failure evidence and original checkpoint. Do not infer bias benefit from unmatched recomputation or relax thresholds. Next isolate cached pre-motion features/evidence and RNG before retrying the paired diagnostic; independent frame-budget calibration can proceed after this operation is closed.",
+      "updated_at": "2026-10-10T14:15:00.542040+00:00"
     }
   ]
 }

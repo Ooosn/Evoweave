@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T18:01:55.557816+00:00",
+  "updated_at": "2026-10-10T18:10:18.533038+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Read-only16static validation inputs: rebuild original query/GT/normalization and stored surface references; updated evidence must be exactlyU and allsurfacefeatures unchanged. Correctedtrained-anchor conditions must match correctedbase exactly; check2greedy64prefixes. Reuseoldgeneration only ifbasecondition exact, otherwise generateatmost16newbaselineoutputs. Prove32nonstaticcachedcases cannotmatch exact-repeat branch. Nooptimizer/checkpoint/cachewrites orfulltraining.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "relation_static_identity",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "accepted",
     "prepared_at": "2026-10-10T18:01:55.557816+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
     "source_code_commit": "983d220c8a392d212ec12c292d7cdc696971e428",
@@ -325,7 +325,10 @@
       "new_allocation": false
     },
     "acceptance": "Read-only16static validation inputs: rebuild original query/GT/normalization and stored surface references; updated evidence must be exactlyU and allsurfacefeatures unchanged. Correctedtrained-anchor conditions must match correctedbase exactly; check2greedy64prefixes. Reuseoldgeneration only ifbasecondition exact, otherwise generateatmost16newbaselineoutputs. Prove32nonstaticcachedcases cannotmatch exact-repeat branch. Nooptimizer/checkpoint/cachewrites orfulltraining.",
-    "note": "Primaryrecordedanchorqualityrejection1365a85. LastfollowupisREADONLY,noadditionaltraining:exactlyrepeatedpoint-cloudclipsmusthavezeroobservedactivity/exactU; preserveall3channels/fullGT, no small-motionthreshold. NewasymmetricstaticCPUregressionfailedbefore at1.19e-7 andnowpasses; all8evidencetests and3controllerplantests pass. Rebuild16validationstaticinputswithoriginaldatasetseed/query/fullGT/normandsavedrefs; oldsurfacefeaturesmustmatch0,patchedEexactU. Correctedbasecondcomparedpreviouscachedbase; reusegenerationONLYifcondexact,otherwise<=16freshbasegens. Loadtrainedanchor7f66750...frozenandrequire16condition/CEidentities+2x64prefix, original32nonstaticcachedquerycloudsmustshowmovement(noaffectedformula). Nooptimizer/cp/cachewrites; sourcebase+adapter+inputshashverified. SingleH1005,existingallocation129547842,90pctcap; freshresources/FF/guard beforelaunch, preserveqlogin/A100. No retries orfulltraining."
+    "note": "Primaryrecordedanchorqualityrejection1365a85. LastfollowupisREADONLY,noadditionaltraining:exactlyrepeatedpoint-cloudclipsmusthavezeroobservedactivity/exactU; preserveall3channels/fullGT, no small-motionthreshold. NewasymmetricstaticCPUregressionfailedbefore at1.19e-7 andnowpasses; all8evidencetests and3controllerplantests pass. Rebuild16validationstaticinputswithoriginaldatasetseed/query/fullGT/normandsavedrefs; oldsurfacefeaturesmustmatch0,patchedEexactU. Correctedbasecondcomparedpreviouscachedbase; reusegenerationONLYifcondexact,otherwise<=16freshbasegens. Loadtrainedanchor7f66750...frozenandrequire16condition/CEidentities+2x64prefix, original32nonstaticcachedquerycloudsmustshowmovement(noaffectedformula). Nooptimizer/cp/cachewrites; sourcebase+adapter+inputshashverified. SingleH1005,existingallocation129547842,90pctcap; freshresources/FF/guard beforelaunch, preserveqlogin/A100. No retries orfulltraining.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_static_identity_evaluation.json",
+    "result_note": "Exact-staticbugfixandread-onlyauditACCEPTED,notblanketnewmodelqualityapproval. Source1d25c1e completed03:05:57JST all3exits0. All16originalstaticinputs rebuiltwithsamequery/fullGT/norm/savedrefs:patchedEexactU,surfacefeatures/querypointsdelta0; correctedbaseconditionmatchesoriginalcacheexact0, trainedanchoredconditionmatchescorrectedbaseexact0 andCE0; min/max2greedy64prefixmatch. Thus16oldbasegenerationsreusedwithprovenidenticalcondition;0newfullgens,staticF1.611542/14success2hitmax,quietcoverage.665786 fullyrestored. All32nonstaticcachedquerycloudsmove so exact-repeat branchnotapplicable; no change their recorded E/formula. Baseandadapterparamversionsunchanged, nooptimizer/cp/cachewrites,peak4.679209GiB.03:06freshGPU5/7idle,allocation129547842retained;5smallreceiptfilesdownloadedSHAverified. Originalmatchedmotionrowsremainexploratory:normal/weakF1improvebutmatched-successJ2Jworsens,permuted-E CEdoesnotworsen; noformaltraining ordefaultadapterpromotion. Finalizeanalysis/docs only.",
+    "updated_at": "2026-10-10T18:10:18.533038+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

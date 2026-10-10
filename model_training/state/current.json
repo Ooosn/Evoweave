@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T16:10:15.608669+00:00",
+  "updated_at": "2026-10-10T16:51:22.465137+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Both identically initialized r64 adapter arms complete 120 token-weighted steps on the same 32 assets/3 views/480 exposures. Evaluate 16 disjoint validation asset IDs, complete natural generations and offline local-motion strata; compare frozen base, actual versus unknown-only adapter, and actual adapter evidence ablation. Full u/c/d and GT retained; original model/checkpoint immutable. Completion does not establish quality gain or authorize full training.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "relation_screen",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "rejected",
     "prepared_at": "2026-10-10T16:10:15.608669+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
     "source_code_commit": "5912036140776d3762f63f85408649e3a21e7494",
@@ -348,7 +348,10 @@
       "new_allocation": false
     },
     "acceptance": "Both identically initialized r64 adapter arms complete 120 token-weighted steps on the same 32 assets/3 views/480 exposures. Evaluate 16 disjoint validation asset IDs, complete natural generations and offline local-motion strata; compare frozen base, actual versus unknown-only adapter, and actual adapter evidence ablation. Full u/c/d and GT retained; original model/checkpoint immutable. Completion does not establish quality gain or authorize full training.",
-    "note": "Primary accepted exact12cache+12zero-preflight comparisons and2finiteupdatesperarm (source53209ff,reportcomplete,baseunchanged,peak4.710GiB). GO forsingle recorded32train/16disjointvalid asset screen only: 3pairedviewsnormal8/weak2/static8, commonquery/fullGT/norm/surfacereferences andcapturedmotioninputs, freezealloldparamsincludingbias, identicalr64init, actualEversusallunknownONLYnewadapter,120AdamWsteps B1accum4 LR1e-4 WD.04clip1,480exposures/arm. Baseline+botharms+actualarmEablation naturalgenerationmax1400 onall16x3 views, offlinelocalactivitystrata andpairedassetbootstrap; failureF1/coveragezero. Sourcecheckpointimmutable; persistoneinputcacheandONLYadapter+optimizer checkpoints undernewrelation_screen directory. SingleH1005 90pctcap,retain129547842andunrelatedA100. Workerfresh-check/sync/guardsbeforelaunch; no retry, fulltraining, or targetpruning. Runtimeprobe/moduleunchangedfromacceptedpreflight; addedonlyofflineanalysis/docs."
+    "note": "Primary accepted exact12cache+12zero-preflight comparisons and2finiteupdatesperarm (source53209ff,reportcomplete,baseunchanged,peak4.710GiB). GO forsingle recorded32train/16disjointvalid asset screen only: 3pairedviewsnormal8/weak2/static8, commonquery/fullGT/norm/surfacereferences andcapturedmotioninputs, freezealloldparamsincludingbias, identicalr64init, actualEversusallunknownONLYnewadapter,120AdamWsteps B1accum4 LR1e-4 WD.04clip1,480exposures/arm. Baseline+botharms+actualarmEablation naturalgenerationmax1400 onall16x3 views, offlinelocalactivitystrata andpairedassetbootstrap; failureF1/coveragezero. Sourcecheckpointimmutable; persistoneinputcacheandONLYadapter+optimizer checkpoints undernewrelation_screen directory. SingleH1005 90pctcap,retain129547842andunrelatedA100. Workerfresh-check/sync/guardsbeforelaunch; no retry, fulltraining, or targetpruning. Runtimeprobe/moduleunchangedfromacceptedpreflight; addedonlyofflineanalysis/docs.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_analysis.json",
+    "result_note": "Execution completed correctly but candidate QUALITY REJECTED. Single source d2f88f1 run,all3exits0,1757sec,144cachecontracts exactly0,192generationscomplete,baseunchanged. Eacharm120steps480samples2880frames81045tokens,peak4.724GiB; cache4.30GB and2adapter21.8MB retainedremote; smallreceiptsdownloadedhashverified. Base/actual/unknown/actualEablated CE1.217828/1.243144/1.246196/1.243077,F1all.590208/.522948/.548763/.544602,hitmax9/12/9/10of48. Actualtraincase-normalizedlast20CE-7.37pct butvalidCE+2.08pct; unknowntrain-7.63pct alsovalworse. ActualvsunknownCE-.245pct butF1-.02582; ablatingactualEchangesCEonly-.0054pct withCIcrossing0. StaticF1base.611542->actual.487161,quietstrictcoverage.6658->.4518; hidden-demonstratedweak2 stratum8assets52joints hasnoactual-vsunknowncoverage/recallgain. This frozen32assetprobe shows prior drift/overfit, NOT absence of useful motionmechanisms. Keepacceptedbase unchanged anddoNOTenableplainresidualorlaunchfulltraining. Worker01:43:47JST verifiesGPUsidle,bothallocationsretained. Nextcandidate mustpreserve unknown-evidence baseline explicitly, separatelyrecorded.",
+    "updated_at": "2026-10-10T16:51:22.465137+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

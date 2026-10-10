@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T15:13:10.369101+00:00",
+  "updated_at": "2026-10-10T15:53:08.225074+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md"
+    "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md",
+    "model_training/docs/MOTION_RELATION_PROBE_20261011.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -110,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -263,20 +264,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Follow-up implementation and diagnostics are complete. No new GPU work is authorized. Before any separately requested full frame-budget run, prepare an explicit step/sample/frame budget and validate extreme-target mixed-batch memory. Do not increase bias LR solely because learned coefficients are small.",
+  "next_required_result": "Frozen final80k base, 2 train/2 valid assets including selected target-count extremes, normal8/weak2/static8 inputs, all complete GT. Exact zero-init condition/prefix and <=2e-5 captured CE parity; both paired adapter arms finite for 2 steps, only adapter updates, <=90pct single-H100 allocation. No full run; review before relation_screen.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "frame_budget_smoke",
-    "candidate": "bias_h8",
-    "candidate_config": {
-      "name": "bias_h8",
-      "fusion": "bias",
-      "heads": 8
-    },
-    "status": "accepted",
-    "prepared_at": "2026-10-10T14:54:20.729842+00:00",
-    "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
-    "source_code_commit": "8e6c1c37d56a3771c0702a5256b996bcde5af431",
+    "stage": "relation_preflight",
+    "candidate": null,
+    "candidate_config": null,
+    "status": "prepared",
+    "prepared_at": "2026-10-10T15:53:08.225074+00:00",
+    "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
+    "source_code_commit": "ecb478aacc4ec9e3f7c1363687bbf34fd9ece1a5",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -285,9 +282,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "frame_budget_smoke",
-      "--candidate",
-      "bias_h8"
+      "relation_preflight"
     ],
     "manifests": [
       {
@@ -306,36 +301,54 @@
       }
     ],
     "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-    "reference_checkpoint": null,
+    "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "resume_checkpoint": null,
     "changes": {
-      "frame_budget": 72,
-      "frame_batch_cap": 6,
-      "max_steps": 4,
-      "first_stop_after_steps": 1,
-      "target_stop_step": 3,
-      "sample_overshoot": 1
+      "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011",
+      "seed": 20261011,
+      "bottleneck_dim": 64,
+      "train_assets": 32,
+      "valid_assets": 16,
+      "steps": 120,
+      "accumulation": 4,
+      "lr": 0.0001,
+      "weight_decay": 0.04,
+      "clip_grad_norm": 1.0,
+      "preflight_assets_per_split": 2,
+      "preflight_steps": 2,
+      "preflight_prefix_tokens": 64,
+      "max_new_tokens": 1400,
+      "views": [
+        "normal8",
+        "weak2",
+        "static8"
+      ],
+      "arms": [
+        "actual",
+        "unknown"
+      ],
+      "selection": "Seeded round-robin dataset-source and target-joint-count bands <=16,17-40,41-64,>64. Full manifest indices/asset IDs recorded. Preflight uses min/max target-count selected assets. No observability or result-based selection.",
+      "loss": "Complete-target CE, each accumulation window weighted by valid target tokens. Freeze all old parameters, train only new relation residuals; keep decoder eval and motion dropout zero.",
+      "evidence_control": "Only NEW adapter receives allunknown [1,0,0] in the unknown arm; old pair bias and dynamic anchor features still receive true input. This is a capacity-matched explicit-E control, not a geometry-only model.",
+      "offline_strata": "Relative-to-parent transforms, near-rigid tolerance1pct. Quiet strict <=1deg and <=0.005 query units; loose <=3deg and <=0.01; active >=5deg or >=0.02. Hidden-demonstrated requires quiet in supplied frames, active in noninput frames, and another active input joint. These diagnostic thresholds are not learned anatomical truth; raw trajectories are never conditioning inputs."
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
-    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/frame_budget_smoke/bias_h8",
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8.json",
+    "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011/relation_preflight",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_preflight_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_preflight.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
       "host": "pcg01i",
       "physical_gpus": [
-        5,
-        7
+        5
       ],
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
-    "note": "Primary reviewed worker script/tests and outer-controller integration.16CPU tests pass inclactualBash131args forbothphases; outerintegration4pass/1Linuxskip. F72cap6 calibratedall23Tcases. Fresh officialinitialization step1thenstrictresumeunder4stepOneCycle; predictedglobalsamples68,138,224 andframes1004,1900,2838; bothphasesmax_samples223, sofinishstep3 overshoot1. CheckfullGT/currentmanifest15920,8accum,twoH1005/7,complete888Adamstates,strictargs/scheduler/cursor(0,8)->(0,24),singlefinalmilestone223. Original80kcheckpointnotloaded. Bothboundedphasesauthorizedifphase1checks pass; no retry orfulltraining. GPUallocation129547842retainedandidle23:47.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8_evaluation.json",
-    "result_note": "Functional2rankframe-budget smoke accepted, NOTfulltrainingmemory/qualityapproval. Source85d19fc; completed2026-10-11 00:04JST allouter/controller/fresh/resumeexits0. Both131argsmatch; actualglobal samples68,138,224/frames1004,1900,2838/tokens13589,27297,42860. Strictresume cursor(0,8)->(0,24), max_samples223 stopsstep3 at224(overshoot1) before4-stepbudget; unique sample223+last finals,3groups304/388/196,888Adamstates, scheduler3/4. Finite losses/gradients. Rank0peak72.680GiB,above singleGPU90pctcalibrationline; extremelongGTmixedbatchmemorynotverified. Original80kcheckpointuntouched; nofulltraininglaunched. Workerfinal00:08JST verifiesGPUsidle,qloginretained,sourceclean;13smallfileshashverified, nocheckpointdownloads.",
-    "updated_at": "2026-10-10T15:13:10.369101+00:00"
+    "acceptance": "Frozen final80k base, 2 train/2 valid assets including selected target-count extremes, normal8/weak2/static8 inputs, all complete GT. Exact zero-init condition/prefix and <=2e-5 captured CE parity; both paired adapter arms finite for 2 steps, only adapter updates, <=90pct single-H100 allocation. No full run; review before relation_screen.",
+    "note": "Primary approved only bounded r64 value-residual preflight: strict frozen final80k base, 2 train and 2 valid selected min/max target-count assets, normal8/weak2/static8 complete targets, common actual surface references and cached E, exact zero condition/64-token greedy-prefix parity and CE<=2e-5. Both identically initialized actual-E and new-branch-allunknown arms receive2 Adam steps, B1 accumulation4, single H1005 90pct memory cap. Check finite gradients, internal activation after second step, old parameters and source checkpoint unchanged. CPU19module+3integration+8probe+6evidence tests pass; controller4pass1Linuxskip. Preserve allocation129547842 and unrelated A100. No relation_screen until primary accepts result; no retry/full training."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1675,6 +1688,79 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_cached_evaluation.json",
       "result_note": "Completed23:47:14 source95424a4 all3exits0;408CE,32grad+32repeats,64greedygens(allnatural success),104cachecontracts/32CEreplays exactly0delta, coefficientsrestored. GradientR.19088 vsindependentRMS.19685;paircos-.00146,notunusuallyopposed;backwardrepeatmeanvariation.397pct. Scales0/1/3/10 F1 .889827/.899344/.892946/.898829 on8assetsx2T, no robust magnification benefit; clusteredCEintervalsallcross0. StaticCE+5.21pct on8T8assets. Keepcurrentscale/LR; nohigherLRtrainingcausality orfullheldoutqualityclaim. GPUsidle23:47; originalcheckpointunchanged bydiagnostic.",
       "updated_at": "2026-10-10T14:52:10.925396+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "frame_budget_smoke",
+      "candidate": "bias_h8",
+      "candidate_config": {
+        "name": "bias_h8",
+        "fusion": "bias",
+        "heads": 8
+      },
+      "status": "accepted",
+      "prepared_at": "2026-10-10T14:54:20.729842+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+      "source_code_commit": "8e6c1c37d56a3771c0702a5256b996bcde5af431",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "frame_budget_smoke",
+        "--candidate",
+        "bias_h8"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": null,
+      "resume_checkpoint": null,
+      "changes": {
+        "frame_budget": 72,
+        "frame_batch_cap": 6,
+        "max_steps": 4,
+        "first_stop_after_steps": 1,
+        "target_stop_step": 3,
+        "sample_overshoot": 1
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/frame_budget_smoke/bias_h8",
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Two-rank F72/cap6 smoke from fresh official initialization: step1 save, strict resume, stop after actual samples cross the predicted step3 threshold with overshoot1 under a4-step scheduler. Exact launcher args, T/B schedules, global sample/frame/token counters, cursor, milestone and optimizer/scheduler metadata must agree. Complete GT, no full training, no historical checkpoint mutation, no retries.",
+      "note": "Primary reviewed worker script/tests and outer-controller integration.16CPU tests pass inclactualBash131args forbothphases; outerintegration4pass/1Linuxskip. F72cap6 calibratedall23Tcases. Fresh officialinitialization step1thenstrictresumeunder4stepOneCycle; predictedglobalsamples68,138,224 andframes1004,1900,2838; bothphasesmax_samples223, sofinishstep3 overshoot1. CheckfullGT/currentmanifest15920,8accum,twoH1005/7,complete888Adamstates,strictargs/scheduler/cursor(0,8)->(0,24),singlefinalmilestone223. Original80kcheckpointnotloaded. Bothboundedphasesauthorizedifphase1checks pass; no retry orfulltraining. GPUallocation129547842retainedandidle23:47.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_budget_smoke_bias_h8_evaluation.json",
+      "result_note": "Functional2rankframe-budget smoke accepted, NOTfulltrainingmemory/qualityapproval. Source85d19fc; completed2026-10-11 00:04JST allouter/controller/fresh/resumeexits0. Both131argsmatch; actualglobal samples68,138,224/frames1004,1900,2838/tokens13589,27297,42860. Strictresume cursor(0,8)->(0,24), max_samples223 stopsstep3 at224(overshoot1) before4-stepbudget; unique sample223+last finals,3groups304/388/196,888Adamstates, scheduler3/4. Finite losses/gradients. Rank0peak72.680GiB,above singleGPU90pctcalibrationline; extremelongGTmixedbatchmemorynotverified. Original80kcheckpointuntouched; nofulltraininglaunched. Workerfinal00:08JST verifiesGPUsidle,qloginretained,sourceclean;13smallfileshashverified, nocheckpointdownloads.",
+      "updated_at": "2026-10-10T15:13:10.369101+00:00"
     }
   ]
 }

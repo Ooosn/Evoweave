@@ -14,7 +14,7 @@ from run_motion_experiment import build_plan
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full"])
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic"])
     parser.add_argument("--candidate")
     parser.add_argument("--result", choices=["accepted", "rejected", "stable_running", "completed"])
     parser.add_argument("--artifact")
@@ -71,8 +71,9 @@ def main():
             "reference": "Re-evaluate the accepted sample80000 baseline on the exact paired query/frame/surface/GT protocol; complete metrics for every planned row.",
             "screen": "120 finite optimizer steps at the original 1667-step schedule, exact expected args, complete paired CE/static/generation metrics, adapter updates and resource costs recorded.",
             "full": config["full_training"]["stability_acceptance"],
+            "bias_diagnostic": "Fixed final checkpoint, identical per-asset inputs/references/complete GT, scales 0/1/3/10, static and misaligned-evidence controls, per-asset gradients, natural generation and exact parameter restoration. No optimizer or checkpoint mutation.",
         }
-        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage == "reference" else "preflight"
+        operation = "train" if args.stage in {"screen", "full"} else "matched_eval" if args.stage in {"reference", "bias_diagnostic"} else "preflight"
         allowed = ["inspect", "report", operation]
         if args.stage == "preflight":
             allowed.append("train")  # Includes the two recorded in-memory optimizer checks.
@@ -89,8 +90,9 @@ def main():
                               "config": remote_config, "command": command,
                               "manifests": config["baseline"]["manifests"],
                               "initialization": config["baseline"]["args"]["unirig_checkpoint"],
-                              "reference_checkpoint": config["baseline"]["checkpoint"],
-                              "resume_checkpoint": None, "changes": config["changes"],
+                              "reference_checkpoint": (config["bias_diagnostic"]["checkpoint"] if args.stage == "bias_diagnostic" else config["baseline"]["checkpoint"]),
+                              "resume_checkpoint": None,
+                              "changes": (config["bias_diagnostic"] if args.stage == "bias_diagnostic" else config["changes"]),
                               "output_root": config["runtime"]["output_root"],
                               "output_path": plan["output"], "evaluation_artifact": plan["evaluation_path"],
                               "runtime_result": plan["result"],
@@ -100,8 +102,8 @@ def main():
                                   "virtual_memory": "unlimited", "new_allocation": False},
                               "acceptance": acceptance[args.stage], "note": args.note},
             next_required_result=acceptance[args.stage],
-            unknowns=[("A practical head/fusion configuration was selected from short runs; full-budget quality remains unverified."
-                       if args.stage == "full" else "Best practical head count and fusion mode await paired short-run measurements."),
+            unknowns=[("Final-checkpoint scale/gradient diagnostics do not establish the effect of retraining with a larger bias LR."
+                       if args.stage == "bias_diagnostic" else "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified."),
                       "Short screening is not proof of the final full-training quality or global optimum.",
                       "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."],
         )

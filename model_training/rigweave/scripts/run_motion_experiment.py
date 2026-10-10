@@ -45,6 +45,9 @@ def build_plan(config, stage, candidate_name):
     elif stage == "reference":
         command += [str(scripts / "evaluate_motion_candidate.py"), "--config", str(config_path),
                     "--checkpoint", config["baseline"]["checkpoint"], "--output", str(evaluation_path)]
+    elif stage == "bias_diagnostic":
+        command += [str(scripts / "diagnose_motion_bias.py"), "--config", str(config_path),
+                    "--output", str(evaluation_path)]
     else:
         expected = {key: value for key, value in config["baseline"]["args"].items() if key not in DERIVED_ARGS}
         expected.update(output_dir=str(output), resume_checkpoint=None, init_checkpoint=None,
@@ -113,7 +116,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -149,6 +152,8 @@ def main():
         require_report(job / "results/reference_evaluation.json", "complete")
     if args.stage == "full":
         require_report(job / f"results/screen_{args.candidate}_evaluation.json", "complete")
+    if args.stage == "bias_diagnostic":
+        require_report(job / "results/full_bias_h8_completion.json", "passed")
     query = ["nvidia-smi", "-i", ",".join(map(str, plan["devices"])),
              "--query-compute-apps=pid", "--format=csv,noheader"]
     if subprocess.check_output(query, text=True).strip():

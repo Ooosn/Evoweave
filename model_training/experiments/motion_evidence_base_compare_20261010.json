@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment": "motion_evidence_base_compare_20261010",
-  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and full two-H100 training after checks on 2026-10-10 JST.",
+  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
   "baseline": {
     "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
     "args": {
@@ -240,6 +240,17 @@
       "reason": "Among bias candidates, eight heads had the lowest paired CE, all 16 generations terminated and detokenized, and the highest all-row topology F1. Two/four heads each failed to terminate on two tests and had lower F1. Accept the measured 12.2% step-time increase versus two heads for this short-run suitability choice. This does not establish statistical superiority or the best full-budget head count."
     },
     "selection": "Compare paired validation CE at T=2,8,24, generation validity/topology on a fixed small validation set, static control, time, and peak memory. Short runs screen suitability, not global optimality. Prefer the cheaper candidate when quality is within 1% relative CE and generation evidence does not show material degradation. Preserve the pair-bias route unless node fusion gives clear benefit; evaluate hybrid with the best bias head count."
+  },
+  "bias_diagnostic": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "validation_rows": 32,
+    "frames": [2, 8, 24],
+    "scales": [0.0, 1.0, 3.0, 10.0],
+    "gradient_frames": 8,
+    "control_rows": 8,
+    "generation_rows": 8,
+    "generation_frames": [2, 24],
+    "max_new_tokens": 1400
   },
   "full_training": {
     "max_steps": 1667,

@@ -42,6 +42,14 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertFalse(full["no_save_optimizer"])
         self.assertEqual(full["sample_milestones"], "5000,10000,20000,30000,50000,80000")
 
+    def test_bias_diagnosis_is_not_training(self):
+        plan = build_plan(self.config, "bias_diagnostic", None)
+        self.assertIsNone(plan["expected"])
+        self.assertIsNone(plan["output"])
+        self.assertEqual(plan["devices"], [5])
+        self.assertIn("diagnose_motion_bias.py", " ".join(plan["command"]))
+        self.assertEqual(self.config["bias_diagnostic"]["scales"], [0, 1, 3, 10])
+
     @unittest.skipUnless(os.name == "posix", "requires the actual Linux Bash launcher")
     def test_actual_launcher_args_match_recorded_recipe_without_running_trainer(self):
         # Execute only the actual argparse construction, never trainer setup or CUDA.

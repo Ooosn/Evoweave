@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T17:19:30.636145+00:00",
+  "updated_at": "2026-10-10T17:52:51.946422+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Same frozenbase, initialseed,32train/16valid cachedassets,3views and120steps/480exposures asplain probe; only change is allunknown reference subtraction. Complete48natural generations and48each unknown/permuted-E CEcontrols; trainedunknown condition must match base exactly. OriginalGT/E andacceptedcheckpoint immutable. This is exploratory same-validation follow-up, not independent confirmation or fulltraining approval.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "relation_anchor_screen",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "rejected",
     "prepared_at": "2026-10-10T17:19:30.636145+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
     "source_code_commit": "4bbdad1225a76552b1519799a7803b5f34be63f1",
@@ -351,7 +351,10 @@
       "new_allocation": false
     },
     "acceptance": "Same frozenbase, initialseed,32train/16valid cachedassets,3views and120steps/480exposures asplain probe; only change is allunknown reference subtraction. Complete48natural generations and48each unknown/permuted-E CEcontrols; trainedunknown condition must match base exactly. OriginalGT/E andacceptedcheckpoint immutable. This is exploratory same-validation follow-up, not independent confirmation or fulltraining approval.",
-    "note": "PrimaryacceptedanchoredGPUpreflight98e52c0:6cache+6zero+6trainedunknownCEconditionall0,zero/trainedunknown64prefixallmatch,2finiteupdates84keyschanged12outputbiascancel,oldbase/sourcecache/reporthashunchanged,peak4.724GiB. ExplicitGO forONEfreshanchored120step arm,32train/16val samehashverified144inputs/GT andsameinitialseed/LR1e-4WD.04clip1B1acc4;480exposures2880framesexpected. ReuseverifiedoriginalbasegenerationONLYafter48exactcacheconditionreplays;48newactualnaturalgenmax1400,48trainedunknownCEconditionmustequalbase,48permutedE CEcontrols(newbranchonly,oldbiastrueE). No newdata/pivotlabels/channelpruning orLrgrid. Thissame-validationfollowup isexploratorynotindependentconfirmation. SingleH1005 withinexisting129547842 allocation,90pctcap,oldweightsimmutable,saveonlyanchoredadapter/Adam remotely. No retry orformalfulltraining; workerfreshchecks/FF/guardsbeforelaunch. F(x,U) isE-independent baselineupdate withoriginalimplicitmotionstillpresent,notpuregeometry-onlymodel."
+    "note": "PrimaryacceptedanchoredGPUpreflight98e52c0:6cache+6zero+6trainedunknownCEconditionall0,zero/trainedunknown64prefixallmatch,2finiteupdates84keyschanged12outputbiascancel,oldbase/sourcecache/reporthashunchanged,peak4.724GiB. ExplicitGO forONEfreshanchored120step arm,32train/16val samehashverified144inputs/GT andsameinitialseed/LR1e-4WD.04clip1B1acc4;480exposures2880framesexpected. ReuseverifiedoriginalbasegenerationONLYafter48exactcacheconditionreplays;48newactualnaturalgenmax1400,48trainedunknownCEconditionmustequalbase,48permutedE CEcontrols(newbranchonly,oldbiastrueE). No newdata/pivotlabels/channelpruning orLrgrid. Thissame-validationfollowup isexploratorynotindependentconfirmation. SingleH1005 withinexisting129547842 allocation,90pctcap,oldweightsimmutable,saveonlyanchoredadapter/Adam remotely. No retry orformalfulltraining; workerfreshchecks/FF/guardsbeforelaunch. F(x,U) isE-independent baselineupdate withoriginalimplicitmotionstillpresent,notpuregeometry-onlymodel.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_anchor_screen_analysis.json",
+    "result_note": "Anchoredscreencompletedcorrectly eff2138 all3exits0 at02:33JST, sourceclean,120steps480samples2880frames81045tokens,48basecache+48trainedunknownconditions exactlybase,48newnaturalgen+96CEcontrols,oldparamsunchanged,peak4.723918GiB. FullstateidentityholdsforidealU,butcandidatequalitynotapproved: macroCE1.232972 vsbase1.217828(+1.2435pct),F1.586095 vs.590208; normal8F1.620522 vs.603241,weak2.590283 vs.555841,static.547480 vs.611542. PermutedE CEdelta-.0003627 CIcrosses0; structuredpairuseunproven. Weak2hiddenstrict coverage41/52->49/52,all8additionalcoveredjointsfromoneasset,notgeneralproof. ActualstaticEisnotexactU:meanfalsec~3.7e-7..6.1e-7; despiteCEalmostunchanged,staticextra2hitmax. Thisexposesnumericalnull-inputcontractgap,nottrainingfailure. No moretraining; nextboundedread-onlyauditshouldverifyexactphysicalstatic=>exactU andsamebase/anchoredcondition. Parentverifiedcompletedruntime/liveGPUidle02:42:53 anddownloaded6smallartifactshashverifiedafterworkerdeliveryerror (GPUrunitselfsucceeded). No fulltraining/defaultmodelreplacement.",
+    "updated_at": "2026-10-10T17:52:51.946422+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

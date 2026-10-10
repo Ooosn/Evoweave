@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:40:11.589075+00:00",
+  "updated_at": "2026-10-10T14:40:12.840992+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -104,19 +104,19 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified.",
+    "Final-checkpoint scale/gradient diagnostics do not establish the effect of retraining with a larger bias LR.",
     "Short screening is not proof of the final full-training quality or global optimum.",
     "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "matched_eval"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight",
-    "matched_eval"
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,16 +263,16 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "frame_confirm",
+    "stage": "bias_diagnostic_cached",
     "candidate": null,
     "candidate_config": null,
-    "status": "accepted",
-    "prepared_at": "2026-10-10T14:31:22.017856+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-10T14:40:12.840992+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
-    "source_code_commit": "d99a676c99a14eec3585f590bfa854a4d4503e77",
+    "source_code_commit": "15bcc032b572b751adb933983f04fe1ecca12a6d",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -281,7 +281,7 @@
       "--config",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
       "--stage",
-      "frame_confirm"
+      "bias_diagnostic_cached"
     ],
     "manifests": [
       {
@@ -305,109 +305,31 @@
     "changes": {
       "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
       "validation_rows": 32,
-      "frame_budget": 72,
-      "max_batch_cap": 6,
-      "memory_fraction": 0.93,
-      "acceptance_fraction": 0.9,
-      "cases": [
-        [
-          24,
-          3
-        ],
-        [
-          23,
-          3
-        ],
-        [
-          22,
-          3
-        ],
-        [
-          21,
-          3
-        ],
-        [
-          20,
-          3
-        ],
-        [
-          19,
-          3
-        ],
-        [
-          18,
-          4
-        ],
-        [
-          17,
-          4
-        ],
-        [
-          16,
-          4
-        ],
-        [
-          15,
-          4
-        ],
-        [
-          14,
-          5
-        ],
-        [
-          13,
-          5
-        ],
-        [
-          12,
-          6
-        ],
-        [
-          11,
-          6
-        ],
-        [
-          10,
-          6
-        ],
-        [
-          9,
-          6
-        ],
-        [
-          8,
-          6
-        ],
-        [
-          7,
-          6
-        ],
-        [
-          6,
-          6
-        ],
-        [
-          5,
-          6
-        ],
-        [
-          4,
-          6
-        ],
-        [
-          3,
-          6
-        ],
-        [
-          2,
-          6
-        ]
-      ]
+      "frames": [
+        8,
+        2,
+        24
+      ],
+      "forward_mode": "captured_motion_inputs_rng_locked",
+      "scales": [
+        0.0,
+        1.0,
+        3.0,
+        10.0
+      ],
+      "gradient_frames": 8,
+      "control_rows": 8,
+      "generation_rows": 8,
+      "generation_frames": [
+        2,
+        24
+      ],
+      "max_new_tokens": 1400
     },
     "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
     "output_path": null,
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm.json",
+    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_cached_evaluation.json",
+    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_cached.json",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -418,11 +340,8 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
-    "note": "Exact F72/cap6 for all23 frame counts2..24. Same32-row stress selection, atmost2retained complete samples, Adam/gradients resident, singleH1005,93pctlimit/90pctapproval. Stop firstOOM; no checkpoint writes or fulltraining. Previous launch attempt was denied beforeGPU because local atomic state replacement hit a transient Windows file lock; preserve its bootstrap logs. Only run after this prepared state is committed and pushed. Auditclosed andGPUsidle23:31; qlogin129547842retained.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm_evaluation.json",
-    "result_note": "F72/cap6 exact23 T2..24 stress cases all approved, completeGT, finite gradients/updates with Adam states/gradients resident. Peak70.152662GiB atT12B6; T24B3 68.442213,T2B6 26.517232. All3exits0 at23:38:52 and GPU5/7idle23:39. Scope limited to32-row selection(max403tokens) with2repeated stressassets and singleGPU, not globaldataset orDDPguarantee. Source8e00ab6; no checkpointwrites. Proceed separately to32assetcachedbiasdiagnostic and2ranksmoke, notfulltraining.",
-    "updated_at": "2026-10-10T14:40:11.589075+00:00"
+    "acceptance": "Validated cached-motion-boundary protocol on32 assets atT8/2/24, scales0/1/3/10, static and misaligned controls,32 repeated sample gradients and64 natural generations. Every captured normal/static input must match its actual full-forward CE within2e-5; repeated baseline CE must pass same threshold. Quantify backward numerical repeat floor and restore coefficients exactly. No optimizer or checkpoint mutation.",
+    "note": "Primary accepted2assetcached-boundary audit andallTframeconfirmation. Execute32fixedassets T8/2/24,408CEcomparisons,32pairedrepeatgradients,64naturalgreedygenerations; scales0/1/3/10 withstatic/misaligned controls. Cacheactualfeatures+E, everycachemustmatchfullCEwithin2e-5, measurebackwardnumericalfloor/channelcancellation/RMSreference, exactcoefficientrestoration. SingleH1005,originalsample80000immutable,nooptimizer orcheckpointwrites,nohigherLRtraining. CPU9bias tests passed, priorfullsweepfailurespreserved."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -1520,6 +1439,166 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_replay_audit_evaluation.json",
       "result_note": "Two T8 assets passed cached boundary contract exactly: zero CE and condition difference vs original full forward and repeat. Full recomputation changes only motion evidence among captured inputs (states maxabs4.72e-6); surface features/querypoints exact; all CPU/CUDA RNG states unchanged; no training-mode modules or parameter version changes. Full-repeat CE differs0.001418/0.001515; RNG restore does not fix it. Localizes forward noise to recomputed motion evidence, specific CUDA primitive not isolated. Bias gradient repeat relative differences0.00416..0.00464 remain; quantify in full cached sweep. All exits0 and GPUsidle23:29.",
       "updated_at": "2026-10-10T14:30:45.035830+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "frame_confirm",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "accepted",
+      "prepared_at": "2026-10-10T14:31:22.017856+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
+      "source_code_commit": "d99a676c99a14eec3585f590bfa854a4d4503e77",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "frame_confirm"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "validation_rows": 32,
+        "frame_budget": 72,
+        "max_batch_cap": 6,
+        "memory_fraction": 0.93,
+        "acceptance_fraction": 0.9,
+        "cases": [
+          [
+            24,
+            3
+          ],
+          [
+            23,
+            3
+          ],
+          [
+            22,
+            3
+          ],
+          [
+            21,
+            3
+          ],
+          [
+            20,
+            3
+          ],
+          [
+            19,
+            3
+          ],
+          [
+            18,
+            4
+          ],
+          [
+            17,
+            4
+          ],
+          [
+            16,
+            4
+          ],
+          [
+            15,
+            4
+          ],
+          [
+            14,
+            5
+          ],
+          [
+            13,
+            5
+          ],
+          [
+            12,
+            6
+          ],
+          [
+            11,
+            6
+          ],
+          [
+            10,
+            6
+          ],
+          [
+            9,
+            6
+          ],
+          [
+            8,
+            6
+          ],
+          [
+            7,
+            6
+          ],
+          [
+            6,
+            6
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            3,
+            6
+          ],
+          [
+            2,
+            6
+          ]
+        ]
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": null,
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Confirm F72/cap6 for every integer T2..24 with complete stress targets, resident Adam and accumulated gradients. All measured cases must be finite and below90pct memory; no DDP or dataset-wide guarantee. Stop firstOOM; no checkpoint writes or full training.",
+      "note": "Exact F72/cap6 for all23 frame counts2..24. Same32-row stress selection, atmost2retained complete samples, Adam/gradients resident, singleH1005,93pctlimit/90pctapproval. Stop firstOOM; no checkpoint writes or fulltraining. Previous launch attempt was denied beforeGPU because local atomic state replacement hit a transient Windows file lock; preserve its bootstrap logs. Only run after this prepared state is committed and pushed. Auditclosed andGPUsidle23:31; qlogin129547842retained.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/frame_confirm_evaluation.json",
+      "result_note": "F72/cap6 exact23 T2..24 stress cases all approved, completeGT, finite gradients/updates with Adam states/gradients resident. Peak70.152662GiB atT12B6; T24B3 68.442213,T2B6 26.517232. All3exits0 at23:38:52 and GPU5/7idle23:39. Scope limited to32-row selection(max403tokens) with2repeated stressassets and singleGPU, not globaldataset orDDPguarantee. Source8e00ab6; no checkpointwrites. Proceed separately to32assetcachedbiasdiagnostic and2ranksmoke, notfulltraining.",
+      "updated_at": "2026-10-10T14:40:11.589075+00:00"
     }
   ]
 }

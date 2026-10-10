@@ -124,5 +124,58 @@ The loaded base hidden width is1024. Base parameter versions/gradients and
 source checkpoint size/mtime are unchanged. Peak allocated memory4.710GiB.
 No checkpoint or persistent input cache was saved by this preflight.
 
-This accepts execution correctness only. The paired120-step small-set screen
-still needs its own committed operation; no new full training is authorized.
+The plain paired screen then completed from d2f88f1 at01:41 JST, all exits0,
+144 exact cached-boundary comparisons,192 generation rows, and4.724GiB peak.
+Each arm used480 exposures/2880 frames/81045 target tokens. The source cache
+and adapter-only checkpoints remain remote. Base parameters did not change.
+
+| Model | Validation CE | All-row topology F1 | Hitmax /48 |
+| --- | ---: | ---: | ---: |
+| Frozen base | 1.217828 | 0.590208 | 9 |
+| Plain actual-E residual | 1.243144 | 0.522948 | 12 |
+| Same-capacity unknown-E residual | 1.246196 | 0.548763 | 9 |
+| Actual arm, new-branch E ablated | 1.243077 | 0.544602 | 10 |
+
+The plain candidate is REJECTED for quality. Its case-normalized training CE
+fell7.37pct in the last20 steps, but validation CE rose2.08pct. The unknown
+arm similarly improved training and worsened validation. Static F1 fell from
+0.611542 to0.487161; static quiet-joint coverage fell0.6658 to0.4518.
+Actual versus unknown changed CE by-0.245pct but topology F1 by-0.02582.
+Ablating new-branch E after training changes CE by only-0.0054pct, with an
+asset bootstrap interval spanning zero. This is consistent with an unwanted
+geometry-only feature shift and overfitting, not evidence of a useful new
+motion correction. It does not disprove motion-based structure completion.
+On the strict hidden-demonstrated weak2 stratum (8 assets,52 joints), actual
+and unknown have identical coverage/edge recall, not an extra motion benefit.
+
+## Targeted Anchored Follow-Up
+
+Change only the residual parameterization to F(x,E)-F(x,U), where U supplies
+allunknown [1,0,0] on every pair. Share every projection between both terms.
+This removes the learned geometry-only offset: for E=U the correction is
+exactly zero even after training. The old backbone still processes geometry
+and motion and predicts the complete skeleton. In partially observed inputs,
+new motion corrections can still propagate through the original global and
+temporal attention; inactive joints are not removed or assigned negative labels.
+
+This guarantees a neutral NEW correction for allunknown states, not that the
+base's static predictions are perfect. Numerical evidence from truly static
+meshes may be near rather than exactly U, so actual static behavior is also
+measured. No confidence threshold, evidence channel deletion or GT pruning is
+introduced. Shared output bias cancels and can legitimately remain unchanged.
+
+Reuse the hash-verified original inputs, full targets, selected assets, seeds,
+initial projections,120-step/480-exposure schedule and optimizer. New weights
+start fresh; do not continue the rejected plain adapter. Test only one learned
+anchored arm: an allunknown branch is identically the frozen base by design.
+Require pre-attachment cache parity, zero-init parity, and post-update allunknown
+condition/prefix parity on min/max2 train and2 valid assets before the short run.
+
+After training, generate all48 actual-input cases, check all48 unknown controls
+against the frozen-base conditions, and measure48 CE interventions that permute
+E's two anchor axes only in the new branch. The latter preserves E distributions
+but breaks correspondence; it tests aligned relation use separately from a
+generic motion-presence switch. The original pair bias always receives true E.
+Reuse previous frozen-base generations only after exact condition parity, and
+label them as reused. This second look at the same16 validation assets is
+exploratory, not an independent confirmation or authorization for full training.

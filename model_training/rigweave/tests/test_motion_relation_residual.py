@@ -46,6 +46,7 @@ class MotionRelationResidualTest(unittest.TestCase):
 
     def test_default_bottleneck_and_zero_output_initialization(self):
         module = MotionRelationResidual(12)
+        self.assertFalse(module.reference_subtraction)
         self.assertEqual(module.bottleneck_dim, 64)
         self.assertEqual(module.in_proj.out_features, 64)
         self.assertEqual(module.mix_proj.in_features, 256)
@@ -259,6 +260,175 @@ class MotionRelationResidualTest(unittest.TestCase):
             self.module(self.tokens, self.states.long())
         with self.assertRaises(ValueError):
             self.module(self.tokens, torch.empty(self.states.shape, device="meta"))
+
+
+class MotionRelationReferenceSubtractionTest(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(917)
+        self.module = MotionRelationResidual(12, 7, reference_subtraction=True).double()
+        self.tokens = torch.randn(2, 3, 7, 12, dtype=torch.float64)
+        self.states = torch.rand(2, 7, 7, 3, dtype=torch.float64).softmax(-1)
+
+    def unknown_states(self):
+        states = torch.zeros_like(self.states)
+        states[..., 0] = 1
+        return states
+
+    def enable_residual(self):
+        with torch.no_grad():
+            self.module.out_proj.weight.normal_(0, 0.2)
+            self.module.out_proj.bias.normal_(0, 0.2)
+
+    def test_unknown_is_exact_identity_with_learned_output_and_autocast(self):
+        self.enable_residual()
+        for dtype, autocast in ((torch.float64, False), (torch.float32, False),
+                                (torch.bfloat16, False), (torch.float32, True)):
+            with self.subTest(dtype=dtype, autocast=autocast):
+                self.module.to(dtype=dtype)
+                tokens = self.tokens.to(dtype=dtype)
+                captured = []
+                handle = self.module.out_proj.register_forward_hook(
+                    lambda _module, _args, output: captured.append(output.detach())
+                )
+                try:
+                    with torch.autocast("cpu", dtype=torch.bfloat16, enabled=autocast):
+                        actual = self.module(tokens, self.unknown_states())
+                finally:
+                    handle.remove()
+                self.assertEqual(len(captured), 2)
+                self.assertGreater(int(torch.count_nonzero(captured[0])), 0)
+                self.assertTrue(torch.equal(captured[0], captured[1]))
+                self.assertTrue(torch.equal(actual, tokens))
+                self.assertEqual(actual.dtype, tokens.dtype)
+
+    def test_unknown_parameter_gradients_cancel_exactly(self):
+        self.enable_residual()
+        for dtype, autocast in ((torch.float64, False), (torch.float32, False),
+                                (torch.bfloat16, False), (torch.float32, True)):
+            with self.subTest(dtype=dtype, autocast=autocast):
+                self.module.to(dtype=dtype)
+                self.module.zero_grad(set_to_none=True)
+                tokens = self.tokens.to(dtype=dtype).detach().requires_grad_(True)
+                probe = torch.randn_like(tokens)
+                with torch.autocast("cpu", dtype=torch.bfloat16, enabled=autocast):
+                    actual = self.module(tokens, self.unknown_states())
+                    loss = (actual * probe).sum()
+                loss.backward()
+                self.assertTrue(torch.equal(tokens.grad, probe))
+                for name, parameter in self.module.named_parameters():
+                    self.assertIsNotNone(parameter.grad, name)
+                    self.assertEqual(int(torch.count_nonzero(parameter.grad)), 0, name)
+
+    def test_nonuniform_evidence_opens_gradient_gate_but_bias_cancels(self):
+        probe = torch.randn_like(self.tokens)
+        actual = self.module(self.tokens, self.states)
+        self.assertTrue(torch.equal(actual, self.tokens))
+        (actual * probe).sum().backward()
+        self.assertGreater(float(self.module.out_proj.weight.grad.abs().sum()), 0)
+        self.assertEqual(int(torch.count_nonzero(self.module.out_proj.bias.grad)), 0)
+        for layer in (self.module.norm, self.module.in_proj, self.module.mix_proj):
+            for parameter in layer.parameters():
+                self.assertEqual(int(torch.count_nonzero(parameter.grad)), 0)
+        with torch.no_grad():
+            self.module.out_proj.weight.add_(self.module.out_proj.weight.grad, alpha=-0.01)
+        self.module.zero_grad(set_to_none=True)
+        (self.module(self.tokens, self.states) * probe).sum().backward()
+        for layer in (self.module.norm, self.module.in_proj, self.module.mix_proj):
+            self.assertGreater(float(layer.weight.grad.abs().sum()), 0)
+        self.assertEqual(int(torch.count_nonzero(self.module.out_proj.bias.grad)), 0)
+
+    def test_forward_and_gradients_match_explicit_subtraction(self):
+        self.enable_residual()
+        tokens = self.tokens.clone().requires_grad_(True)
+        states = self.states.clone().requires_grad_(True)
+        actual = self.module(tokens, states)
+        expected = tokens + reference(self.module, tokens, states) - reference(self.module, tokens, self.unknown_states())
+        torch.testing.assert_close(actual, expected, atol=1e-12, rtol=1e-12)
+        variables = (tokens, states, *self.module.parameters())
+        probe = torch.randn_like(tokens)
+        actual_gradients = torch.autograd.grad((actual * probe).sum(), variables)
+        expected_gradients = torch.autograd.grad((expected * probe).sum(), variables)
+        for actual_gradient, expected_gradient in zip(actual_gradients, expected_gradients):
+            torch.testing.assert_close(actual_gradient, expected_gradient, atol=1e-11, rtol=1e-11)
+
+    def test_state_dict_keys_and_strict_load_are_unchanged(self):
+        self.enable_residual()
+        plain = MotionRelationResidual(12, 7).double()
+        self.assertEqual(list(plain.state_dict()), list(self.module.state_dict()))
+        loaded = plain.load_state_dict(self.module.state_dict(), strict=True)
+        self.assertEqual(loaded.missing_keys, [])
+        self.assertEqual(loaded.unexpected_keys, [])
+        loaded = self.module.load_state_dict(plain.state_dict(), strict=True)
+        self.assertEqual(loaded.missing_keys, [])
+        self.assertEqual(loaded.unexpected_keys, [])
+        for name, parameter in self.module.state_dict().items():
+            self.assertTrue(torch.equal(parameter, plain.state_dict()[name]), name)
+        self.assertFalse(plain.reference_subtraction)
+        self.assertTrue(self.module.reference_subtraction)
+        self.assertTrue(torch.equal(self.module(self.tokens, self.unknown_states()), self.tokens))
+        self.assertFalse(torch.equal(plain(self.tokens, self.unknown_states()), self.tokens))
+
+    def test_reference_flag_is_keyword_only_and_requires_bool(self):
+        with self.assertRaises(TypeError):
+            MotionRelationResidual(12, 7, True)
+        for value in (0, 1, None, "true", [], torch.tensor(True)):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                MotionRelationResidual(12, reference_subtraction=value)
+
+    def test_readonly_evidence_and_four_compact_matching_bmms(self):
+        self.enable_residual()
+        states = self.states.transpose(1, 2)
+        before = states.clone()
+        with mock.patch.object(_MODULE.torch, "bmm", wraps=torch.bmm) as multiply:
+            self.module(self.tokens, states)
+        self.assertTrue(torch.equal(states, before))
+        self.assertEqual(multiply.call_count, 4)
+        values = multiply.call_args_list[0].args[1]
+        for index, call in enumerate(multiply.call_args_list):
+            pairs, current_values = call.args
+            self.assertEqual(pairs.shape, (2, 7, 7))
+            self.assertEqual(current_values.shape, (2, 7, 3 * 7))
+            self.assertTrue(pairs.is_contiguous())
+            self.assertIs(current_values, values)
+            expected = states[..., index] if index < 3 else torch.ones_like(pairs)
+            torch.testing.assert_close(pairs, expected, atol=0, rtol=0)
+
+    def test_normalization_and_hidden_are_shared_between_branches(self):
+        self.enable_residual()
+        with mock.patch.object(self.module.norm, "forward", wraps=self.module.norm.forward) as norm:
+            with mock.patch.object(self.module.in_proj, "forward", wraps=self.module.in_proj.forward) as hidden:
+                with mock.patch.object(self.module.mix_proj, "forward", wraps=self.module.mix_proj.forward) as mix:
+                    self.module(self.tokens, self.states)
+        self.assertEqual(norm.call_count, 1)
+        self.assertEqual(hidden.call_count, 1)
+        self.assertEqual(mix.call_count, 2)
+        first = mix.call_args_list[0].args[0][..., :self.module.bottleneck_dim]
+        second = mix.call_args_list[1].args[0][..., :self.module.bottleneck_dim]
+        torch.testing.assert_close(first, second, atol=0, rtol=0)
+
+    def test_all_three_actual_evidence_channels_remain_effective(self):
+        self.enable_residual()
+        unknown = self.unknown_states()
+        for channel in range(3):
+            with self.subTest(channel=channel):
+                states = unknown.clone()
+                states[..., channel] = self.states[..., channel]
+                delta = self.module(self.tokens, states) - self.tokens
+                self.assertGreater(float(delta.detach().abs().max()), 1e-8)
+
+    def test_anchor_permutation_equivariance(self):
+        self.enable_residual()
+        order = torch.tensor([6, 3, 0, 5, 1, 4, 2])
+        expected = self.module(self.tokens, self.states)[:, :, order]
+        actual = self.module(self.tokens[:, :, order], self.states[:, order][:, :, order])
+        torch.testing.assert_close(actual, expected, atol=1e-12, rtol=1e-12)
+
+    def test_time_permutation_equivariance(self):
+        self.enable_residual()
+        order = torch.tensor([2, 0, 1])
+        expected = self.module(self.tokens, self.states)[:, order]
+        actual = self.module(self.tokens[:, order], self.states)
+        torch.testing.assert_close(actual, expected, atol=1e-12, rtol=1e-12)
 
 
 if __name__ == "__main__":

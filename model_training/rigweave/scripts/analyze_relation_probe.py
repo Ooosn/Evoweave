@@ -62,11 +62,12 @@ def paired_measurement(reference, candidate, metric, *, seed=20261011, replicate
 
 
 def analysis(report):
-    if not report.get("complete") or report["stage"] != "relation_screen" or report["changed_base_parameters"]:
+    if not report.get("complete") or report["stage"] not in {"relation_screen", "relation_anchor_screen"} or report["changed_base_parameters"]:
         raise ValueError("require a completed, unchanged-base relation screen")
     groups = {"base": report["baseline"]["valid"], **report["evaluation"]}
-    pairs = (("base", "actual"), ("unknown", "actual"), ("base", "unknown"),
-             ("actual", "actual_evidence_ablated"))
+    anchored = report["stage"] == "relation_anchor_screen"
+    pairs = (("base", "actual"),) if anchored else (("base", "actual"), ("unknown", "actual"),
+             ("base", "unknown"), ("actual", "actual_evidence_ablated"))
     metrics = ["ce", "f1"] + [f"{stratum}:{metric}" for stratum in
         ("quiet_strict", "quiet_loose", "hidden_demonstrated_strict", "hidden_demonstrated_loose", "observed_active")
         for metric in ("joint_coverage_005", "edge_recall")]
@@ -78,6 +79,13 @@ def analysis(report):
             bb = [row for row in groups[candidate] if view == "all" or row["view"] == view]
             comparisons[view] = {metric: paired_measurement(aa, bb, metric) for metric in metrics}
         results[candidate + "_minus_" + reference] = comparisons
+    if anchored:
+        for control, values in report["ce_controls"].items():
+            results[control + "_minus_actual"] = {}
+            for view in ("all", *report["plan"]["views"]):
+                aa = [row for row in groups["actual"] if view == "all" or row["view"] == view]
+                bb = [row for row in values if view == "all" or row["view"] == view]
+                results[control + "_minus_actual"][view] = {"ce": paired_measurement(aa, bb, "ce")}
     training = {}
     baseline = report["baseline"]["train"]
     plan = report["plan"]
@@ -94,13 +102,14 @@ def analysis(report):
             relative.append(row["ce"] / base - 1)
         training[arm] = {"steps": len(rows), "samples": rows[-1]["samples"],
                          "last20_mean_relative_ce_change_pct": float(np.mean(relative[-20:]) * 100)}
-    return {"summary": report["summary"], "paired": results, "training": training,
+    return {"stage": report["stage"], "summary": report["summary"], "paired": results, "training": training,
             "source": report["source"], "source_checkpoint": report["source_checkpoint"],
             "notes": ["All-view confidence intervals resample whole assets, retaining paired frame views.",
                       "Selected stratified16 assets and one training seed; exploratory intervals are not multiplicity-corrected.",
                       "Lower CE is better; higher F1, coverage and edge recall are better.",
                       "Local-transform activity is only a proxy for what mesh motion reveals, not guaranteed surface observability.",
-                      "Ablation of an already trained arm is an intervention, not an independently trained geometry baseline."]}
+                      "Ablation of an already trained arm is an intervention, not an independently trained geometry baseline.",
+                      "Anchored follow-up reuses the first screen's validation assets and verified frozen-base generations; it is not independent confirmation." if anchored else "Plain residual is an unconstrained feature update even for allunknown evidence."]}
 
 
 def main():

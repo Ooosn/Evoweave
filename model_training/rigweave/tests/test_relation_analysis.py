@@ -3,7 +3,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from analyze_relation_probe import paired_measurement
+from analyze_relation_probe import analysis, paired_measurement
 
 
 class PairedAnalysisTest(unittest.TestCase):
@@ -44,6 +44,26 @@ class PairedAnalysisTest(unittest.TestCase):
         self.assertEqual(tiny["contributing_assets"], 1)
         self.assertEqual(tiny["delta"], 0)
         self.assertIsNone(tiny["bootstrap95"])
+
+    def test_anchored_report_accepts_ce_only_controls(self):
+        rows = self.rows()
+        strata = {name: {"joints": 1, "edges": 1, "joint_coverage_005": 0.5, "edge_recall": 0.5}
+                  for name in ("quiet_strict", "quiet_loose", "hidden_demonstrated_strict",
+                               "hidden_demonstrated_loose", "observed_active")}
+        for row in rows:
+            row.update(token_weight=1., generation={"topology_f1_or_zero": 0.5, "strata": strata})
+        actual = [{**row, "ce": row["ce"] - 0.1} for row in rows]
+        controls = {name: [{"asset_id": row["asset_id"], "view": row["view"], "ce": row["ce"]}
+                    for row in rows] for name in ("unknown", "permuted")}
+        report = {"stage": "relation_anchor_screen", "complete": True, "changed_base_parameters": [],
+                  "baseline": {"valid": rows, "train": rows}, "evaluation": {"actual": actual},
+                  "ce_controls": controls, "training": {"actual": [{"step": 1, "samples": 1, "ce": 1.}]},
+                  "plan": {"steps": 1, "accumulation": 1, "seed": 1,
+                           "views": ["normal8", "weak2", "static8"]},
+                  "summary": {}, "source": {}, "source_checkpoint": {}}
+        result = analysis(report)
+        self.assertEqual(set(result["paired"]), {"actual_minus_base", "unknown_minus_actual", "permuted_minus_actual"})
+        self.assertAlmostEqual(result["paired"]["unknown_minus_actual"]["all"]["ce"]["delta"], 0.1)
 
 
 if __name__ == "__main__":

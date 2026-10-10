@@ -23,7 +23,7 @@ def build_plan(config, stage, candidate_name):
     candidate = None
     training = stage in {"screen", "full"}
     smoke = stage == "frame_budget_smoke"
-    relation = stage in {"relation_preflight", "relation_screen"}
+    relation = stage in {"relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"}
     if training or smoke:
         options = config["screening"]["candidates"]
         if stage in {"full", "frame_budget_smoke"}:
@@ -61,8 +61,9 @@ def build_plan(config, stage, candidate_name):
         command += [str(scripts / "run_frame_budget_smoke.py"), "--config", str(config_path),
                     "--output", str(evaluation_path)]
     elif relation:
-        output = PurePosixPath(config["relation_probe"]["output_root"]) / stage
-        command += [str(scripts / "run_relation_probe.py"), "--config", str(config_path),
+        anchored = stage.startswith("relation_anchor_")
+        output = PurePosixPath(config["relation_anchor_probe" if anchored else "relation_probe"]["output_root"]) / stage
+        command += [str(scripts / ("run_relation_anchor.py" if anchored else "run_relation_probe.py")), "--config", str(config_path),
                     "--stage", stage, "--output", str(evaluation_path)]
     else:
         expected = {key: value for key, value in config["baseline"]["args"].items() if key not in DERIVED_ARGS}
@@ -133,7 +134,7 @@ def execute(command, config, environment, log_path, result):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen"], required=True)
+    parser.add_argument("--stage", choices=["preflight", "reference", "screen", "full", "bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"], required=True)
     parser.add_argument("--candidate")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -169,12 +170,18 @@ def main():
         require_report(job / "results/reference_evaluation.json", "complete")
     if args.stage == "full":
         require_report(job / f"results/screen_{args.candidate}_evaluation.json", "complete")
-    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "relation_preflight", "relation_screen"}:
+    if args.stage in {"bias_diagnostic", "bias_diagnostic_paired", "bias_diagnostic_cached", "bias_replay_audit", "frame_profile", "frame_confirm", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"}:
         require_report(job / "results/full_bias_h8_completion.json", "passed")
     if args.stage == "relation_screen":
         checked = require_report(job / "results/relation_preflight_evaluation.json", "complete")
         if checked["plan"] != config["relation_probe"] or checked["changed_base_parameters"]:
             raise RuntimeError("relation probe preflight does not match the recorded plan")
+    if args.stage == "relation_anchor_preflight":
+        require_report(job / "results/relation_screen_evaluation.json", "complete")
+    if args.stage == "relation_anchor_screen":
+        checked = require_report(job / "results/relation_anchor_preflight_evaluation.json", "complete")
+        if checked["plan"] != config["relation_anchor_probe"] or checked["changed_base_parameters"]:
+            raise RuntimeError("anchored preflight does not match the recorded plan")
     if args.stage == "bias_diagnostic_cached":
         require_report(job / "results/bias_replay_audit_evaluation.json", "complete")
     if args.stage == "frame_budget_smoke":
@@ -187,7 +194,7 @@ def main():
              "--query-compute-apps=pid", "--format=csv,noheader"]
     if subprocess.check_output(query, text=True).strip():
         raise RuntimeError("an allocated GPU already has a compute process; inspect before retrying")
-    operation = "train" if plan["expected"] or args.stage in {"frame_budget_smoke", "relation_preflight", "relation_screen"} else "preflight" if args.stage in {"preflight", "frame_profile", "frame_confirm"} else "matched_eval"
+    operation = "train" if plan["expected"] or args.stage in {"frame_budget_smoke", "relation_preflight", "relation_screen", "relation_anchor_preflight", "relation_anchor_screen"} else "preflight" if args.stage in {"preflight", "frame_profile", "frame_confirm"} else "matched_eval"
     guard(config, operation)
     environment = training_environment(config, plan)
     if plan["expected"]:

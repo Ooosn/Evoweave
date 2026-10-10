@@ -151,7 +151,7 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         )
         self.norm = nn.LayerNorm(dim)
 
-    def enable_relation_residual(self, bottleneck_dim: int = 64) -> None:
+    def enable_relation_residual(self, bottleneck_dim: int = 64, *, reference_subtraction: bool = False) -> None:
         """Attach an explicit adapter after strict loading of the base checkpoint."""
         if not self.blocks:
             raise ValueError("relation residual requires at least one motion block")
@@ -160,7 +160,8 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         if any(block.relation_residual is not None for block in self.blocks):
             raise RuntimeError("relation residual is already enabled")
         for block in self.blocks:
-            block.relation_residual = MotionRelationResidual(self.dim, bottleneck_dim).to(
+            block.relation_residual = MotionRelationResidual(
+                self.dim, bottleneck_dim, reference_subtraction=reference_subtraction).to(
                 device=self.role_token.device, dtype=self.role_token.dtype)
 
     @staticmethod

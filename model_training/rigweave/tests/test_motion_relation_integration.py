@@ -71,6 +71,19 @@ class RelationIntegrationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.encoder(x, motion_evidence=e, relation_states=unknown[:, :4])
 
+    def test_anchored_override_keeps_the_entire_base_condition(self):
+        x = torch.randn(1, 3, 5, 16, requires_grad=True)
+        e = evidence()
+        expected = self.encoder(x, motion_evidence=e)
+        self.encoder.enable_relation_residual(4, reference_subtraction=True)
+        for block in self.encoder.blocks:
+            nn.init.normal_(block.relation_residual.out_proj.weight, std=0.1)
+            nn.init.normal_(block.relation_residual.out_proj.bias, std=0.1)
+        unknown = torch.zeros_like(e.states)
+        unknown[..., 0] = 1
+        actual = self.encoder(x, motion_evidence=e, relation_states=unknown)
+        torch.testing.assert_close(actual, expected, atol=0, rtol=0)
+
 
 if __name__ == "__main__":
     unittest.main()

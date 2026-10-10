@@ -44,6 +44,10 @@ def cached_forward(model, entry, arm):
     if arm == "unknown":
         relation_states = torch.zeros_like(evidence.states)
         relation_states[..., 0] = 1
+    elif arm == "permuted":
+        generator = torch.Generator(device=device).manual_seed(entry["permutation_seed"])
+        order = torch.randperm(evidence.states.shape[1], device=device, generator=generator)
+        relation_states = evidence.states[:, order][:, :, order]
     elif arm not in {"base", "actual"}:
         raise ValueError(f"unknown arm: {arm}")
     with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16):

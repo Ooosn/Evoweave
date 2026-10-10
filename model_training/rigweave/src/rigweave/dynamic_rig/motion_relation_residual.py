@@ -11,15 +11,19 @@ class MotionRelationResidual(nn.Module):
     Inputs exclude role/register tokens. Evidence channels are ordered as
     unknown, co-moving/undecided, and relative-change. The caller owns evidence
     construction and controls; this module never changes or normalizes it.
+    Optional reference subtraction anchors the correction to all-unknown input.
     """
 
-    def __init__(self, dim: int, bottleneck_dim: int = 64) -> None:
+    def __init__(self, dim: int, bottleneck_dim: int = 64, *, reference_subtraction: bool = False) -> None:
         super().__init__()
         for name, value in (("dim", dim), ("bottleneck_dim", bottleneck_dim)):
             if not isinstance(value, int) or isinstance(value, bool) or value < 1:
                 raise ValueError(f"{name} must be a positive integer")
+        if not isinstance(reference_subtraction, bool):
+            raise ValueError("reference_subtraction must be a bool")
         self.dim = dim
         self.bottleneck_dim = bottleneck_dim
+        self.reference_subtraction = reference_subtraction
         self.norm = nn.LayerNorm(dim)
         self.in_proj = nn.Linear(dim, bottleneck_dim)
         self.mix_proj = nn.Linear(4 * bottleneck_dim, bottleneck_dim)
@@ -48,8 +52,18 @@ class MotionRelationResidual(nn.Module):
         evidence = evidence_states.to(dtype=hidden.dtype)
         messages = []
         for channel in range(3):
-            message = torch.bmm(evidence[..., channel], values) / anchors
+            weights = evidence[..., channel]
+            if self.reference_subtraction:
+                weights = weights.contiguous()
+            message = torch.bmm(weights, values) / anchors
             messages.append(message.reshape(batch, anchors, frames, self.bottleneck_dim).permute(0, 2, 1, 3))
         mixed = self.activation(self.mix_proj(torch.cat((hidden, *messages), dim=-1)))
         residual = self.out_proj(mixed).to(dtype=anchor_tokens.dtype)
+        if self.reference_subtraction:
+            # Match the actual BMM's dtype/layout; a mean can round differently.
+            unknown = torch.bmm(values.new_ones(batch, anchors, anchors), values) / anchors
+            unknown = unknown.reshape(batch, anchors, frames, self.bottleneck_dim).permute(0, 2, 1, 3)
+            zero = torch.zeros_like(unknown)
+            reference = self.activation(self.mix_proj(torch.cat((hidden, unknown, zero, zero), dim=-1)))
+            residual = residual - self.out_proj(reference).to(dtype=anchor_tokens.dtype)
         return anchor_tokens + residual

@@ -80,6 +80,9 @@ CMD=(
   --output-dir "${EVOWEAVE_OUTPUT_DIR}"
   --frames "${RIGWEAVE_FRAMES:-24}"
   --frames-min "${RIGWEAVE_FRAMES_MIN:-0}"
+  --frame-budget "${RIGWEAVE_FRAME_BUDGET:-0}"
+  --frame-batch-cap "${RIGWEAVE_FRAME_BATCH_CAP:-0}"
+  --max-samples "${RIGWEAVE_MAX_SAMPLES:-0}"
   --minimum-random-frames "${RIGWEAVE_MINIMUM_RANDOM_FRAMES:-0}"
   --surface-samples "${RIGWEAVE_SURFACE_SAMPLES:-65536}"
   --vertex-samples "${RIGWEAVE_VERTEX_SAMPLES:-8192}"
@@ -232,7 +235,11 @@ fi
 echo "[evoweave train] root=${EVOWEAVE_ROOT}"
 echo "[evoweave train] output=${EVOWEAVE_OUTPUT_DIR}"
 echo "[evoweave train] nproc=${NPROC} micro_batch=${BATCH_SIZE} grad_accum=${GRAD_ACCUM}"
-echo "[evoweave train] effective_batch=$((NPROC * BATCH_SIZE * GRAD_ACCUM))"
+if [[ "${RIGWEAVE_FRAME_BUDGET:-0}" -gt 0 ]]; then
+  echo "[evoweave train] frame_budget=${RIGWEAVE_FRAME_BUDGET} per_rank cap=${RIGWEAVE_FRAME_BATCH_CAP} effective_batch=variable actual_exposure=recorded loss=global_token_mean"
+else
+  echo "[evoweave train] effective_batch=$((NPROC * BATCH_SIZE * GRAD_ACCUM))"
+fi
 echo "[evoweave train] sample_milestones=${SAMPLE_MILESTONES}"
 echo "[evoweave train] explicit_tree_loss=${RIGWEAVE_EXPLICIT_TREE_LOSS_WEIGHT:-0.0} explicit_tree_gpr=${RIGWEAVE_EXPLICIT_TREE_GENERATED_PREFIX_WEIGHT:-0.0}:every${RIGWEAVE_EXPLICIT_TREE_GENERATED_PREFIX_EVERY:-1} explicit_tree_oracle=${RIGWEAVE_EXPLICIT_TREE_ORACLE_PREFIX_WEIGHT:-0.0} topology=${RIGWEAVE_EXPLICIT_TREE_TOPOLOGY_MODE:-geometry} coord=${RIGWEAVE_EXPLICIT_TREE_COORDINATE_MODE:-absolute} condition_action_group_bias=${RIGWEAVE_USE_CONDITION_ACTION_GROUP_BIAS:-0}"
 echo "[evoweave train] generated_prefix_weight=${RIGWEAVE_GENERATED_PREFIX_RECOVERY_WEIGHT:-0.0} condition_control_ce=${RIGWEAVE_CONDITION_CONTROL_CE_WEIGHT:-0.0}:${RIGWEAVE_CONDITION_CONTROL_CE_CONTROLS:-zero,shuffle}:every${RIGWEAVE_CONDITION_CONTROL_CE_EVERY:-1}"

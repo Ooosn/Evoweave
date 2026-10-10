@@ -332,7 +332,8 @@ def resume_contract_differences(
         if current_value != saved_value:
             differences.append(f"args.{key}: checkpoint={saved_value!r} current={current_value!r}")
     for key, default in (("frames_min", 0), ("minimum_random_frames", 0),
-                         ("motion_evidence_fusion", "off"), ("motion_evidence_heads", 0)):
+                         ("motion_evidence_fusion", "off"), ("motion_evidence_heads", 0),
+                         ("frame_budget", 0), ("frame_batch_cap", 0), ("max_samples", 0)):
         if key not in saved_args and current_args.get(key, default) != default:
             differences.append(f"args.{key}: checkpoint default={default!r} current={current_args[key]!r}")
 
@@ -350,6 +351,8 @@ def resume_contract_differences(
         differences.append("checkpoint.scheduler is missing")
     if int(checkpoint.get("step", 0)) <= 0:
         differences.append(f"checkpoint.step must be positive, got {checkpoint.get('step')!r}")
+    if current_args.get("frame_budget", 0) and not isinstance(checkpoint.get("batch_accounting"), dict):
+        differences.append("frame-budget resume requires saved actual exposure and sampler cursor")
     return differences
 
 
@@ -418,7 +421,11 @@ def parse_sample_milestones(raw: str) -> list[int]:
     return sorted(set(milestones))
 
 
-def accounting_fields(step: int, effective_batch: int, train_rows: int) -> dict[str, float | int]:
+def accounting_fields(step: int, effective_batch: int, train_rows: int, batch_accounting=None) -> dict[str, Any]:
+    if batch_accounting is not None:
+        return batch_accounting.fields(train_rows)
+    if effective_batch <= 0:
+        raise ValueError("variable batches require actual exposure accounting")
     sample_seen = int(step * effective_batch)
     epoch_equivalent = float(sample_seen / max(1, train_rows))
     return {
@@ -533,6 +540,7 @@ def save_checkpoint(
     scheduler: torch.optim.lr_scheduler.LRScheduler | None = None,
     *,
     include_optimizer: bool = True,
+    batch_accounting=None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     raw = unwrap_model(model)
@@ -549,6 +557,11 @@ def save_checkpoint(
         payload["effective_batch"] = effective_batch
         payload["train_rows"] = train_rows
         payload["epoch_equivalent"] = float(sample_seen / max(1, train_rows))
+    if batch_accounting is not None:
+        payload.update(sample_seen=batch_accounting.samples_seen, effective_batch=None,
+                       train_rows=train_rows, input_frames_seen=batch_accounting.input_frames_seen,
+                       epoch_equivalent=batch_accounting.samples_seen / max(1, train_rows),
+                       batch_accounting=batch_accounting.checkpoint())
     if include_optimizer:
         payload["optimizer"] = optimizer.state_dict()
     if include_optimizer and scheduler is not None:
@@ -668,6 +681,12 @@ def main() -> None:
     parser.add_argument("--frames", type=int, default=24)
     parser.add_argument("--frames-min", type=int, default=0,
                         help="Sample a common T per training batch from [frames-min, frames]; 0 retains fixed-T sampling.")
+    parser.add_argument("--frame-budget", type=int, default=0,
+                        help="Per-rank microbatch frame ceiling; 0 retains fixed asset batches.")
+    parser.add_argument("--frame-batch-cap", type=int, default=0,
+                        help="Explicit memory-calibrated asset cap when frame-budget is enabled.")
+    parser.add_argument("--max-samples", type=int, default=0,
+                        help="Optional actual global sample-exposure stop for frame-budget mode; checked after a complete optimizer step.")
     parser.add_argument("--minimum-random-frames", type=int, default=0,
                         help="Minimum number of non-query evidence frames drawn randomly, overriding the FPS quota.")
     parser.add_argument("--surface-samples", type=int, default=65536)
@@ -698,7 +717,7 @@ def main() -> None:
         default="5000,10000,20000,30000,50000,80000",
         help=(
             "Comma-separated optimizer sample-seen milestones.  The trainer "
-            "saves checkpoint_sample_<N>.pt when step * effective_batch crosses N. "
+            "saves checkpoint_sample_<N>.pt when sample exposure crosses N (actual counts in frame-budget mode). "
             "Use an empty string to disable."
         ),
     )
@@ -864,6 +883,25 @@ def main() -> None:
     args = parser.parse_args()
     if args.frames_min and not 2 <= args.frames_min <= args.frames:
         parser.error("--frames-min must be 0 or satisfy 2 <= frames-min <= frames")
+    if min(args.frame_budget, args.frame_batch_cap, args.max_samples) < 0:
+        parser.error("frame budget, batch cap and max samples must be nonnegative")
+    if args.frame_budget:
+        if not args.frames_min or args.frame_budget < args.frames or args.frame_batch_cap < 1:
+            parser.error("frame-budget requires frames-min, a budget >= frames and an explicit positive frame-batch-cap")
+        if args.amp_dtype != "bf16":
+            parser.error("frame-budget token-sum accumulation is validated for bf16 only")
+        auxiliary_weights = (
+            "latent_align_weight", "motion_contrast_weight", "condition_control_ce_weight",
+            "decision_loss_weight", "prefix_decision_recovery_weight", "prefix_token_recovery_weight",
+            "prefix_action_recovery_weight", "generated_prefix_recovery_weight",
+            "structure_count_loss_weight", "structure_action_loss_weight", "loop_recovery_loss_weight",
+            "branch_prior_loss_weight", "explicit_tree_loss_weight", "explicit_tree_generated_prefix_weight",
+            "explicit_tree_oracle_prefix_weight",
+        )
+        if any(getattr(args, name, 0.0) != 0.0 for name in auxiliary_weights):
+            parser.error("frame-budget mode currently requires the recorded CE-only loss recipe")
+    elif args.frame_batch_cap or args.max_samples:
+        parser.error("frame-batch-cap and max-samples require frame-budget")
     if args.stop_after_steps < 0:
         parser.error("--stop-after-steps must be nonnegative")
     run_stop = min(args.max_steps, args.stop_after_steps) if args.stop_after_steps else args.max_steps
@@ -898,6 +936,9 @@ def main() -> None:
         from rigweave.dynamic_rig import AnchorWiseAlternatingMotionEncoder, FixedQuerySurfaceTokenizer
         from rigweave.dynamic_rig.data import DynamicRigManifestDataset, dynamic_rig_collate
         from rigweave.dynamic_rig.frame_batch_sampler import VariableFrameBatchSampler
+        from rigweave.dynamic_rig.frame_budget_accounting import (
+            FrameBudgetProgress, normalize_token_gradients, target_token_weight,
+        )
         from rigweave.dynamic_rig.model import DynamicRigConditioner
         from rigweave.dynamic_rig.unirig_wrapper import DynamicRigUniRigAR
 
@@ -1149,7 +1190,7 @@ def main() -> None:
         log(rank, f"datasets built in {time.time() - stage_t0:.2f}s")
         log_process_memory(rank, "after_datasets", args.log_process_memory)
         stage_t0 = time.time()
-        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True) if world_size > 1 else None
+        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True) if world_size > 1 or args.frame_budget else None
         val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
         collate = partial(dynamic_rig_collate, pad_token=tokenizer.pad)
         frame_batch_sampler = None
@@ -1158,6 +1199,7 @@ def main() -> None:
             frame_batch_sampler = VariableFrameBatchSampler(
                 train_sampler if train_sampler is not None else RandomSampler(train_dataset), args.batch_size,
                 min_frames=args.frames_min, max_frames=args.frames, seed=args.seed,
+                frame_budget=args.frame_budget, max_batch_size=args.frame_batch_cap or None,
             )
             train_loader = DataLoader(train_dataset, batch_sampler=frame_batch_sampler, **train_loader_options)
         else:
@@ -1245,7 +1287,8 @@ def main() -> None:
         log(rank, f"optimizer/ddp setup done in {time.time() - stage_t0:.2f}s total_setup={time.time() - setup_t0:.2f}s")
         log_process_memory(rank, "after_optimizer_ddp", args.log_process_memory)
 
-        effective_batch = int(world_size * args.batch_size * args.grad_accum_steps)
+        effective_batch = 0 if args.frame_budget else int(world_size * args.batch_size * args.grad_accum_steps)
+        batch_accounting = FrameBudgetProgress() if args.frame_budget else None
         train_rows = int(len(train_dataset))
         sample_milestones = parse_sample_milestones(args.sample_milestones)
         setattr(args, "effective_batch", effective_batch)
@@ -1267,8 +1310,17 @@ def main() -> None:
             if scheduler is not None:
                 scheduler.load_state_dict(resume_payload["scheduler"])
             resume_step = int(resume_payload["step"])
-            microbatches_seen = int(resume_step * args.grad_accum_steps)
-            resume_epoch, resume_batches_to_skip = divmod(microbatches_seen, max(1, len(train_loader)))
+            if batch_accounting is not None:
+                batch_accounting = FrameBudgetProgress.restore(
+                    resume_payload["batch_accounting"], step=resume_step, grad_accum_steps=args.grad_accum_steps)
+                resume_epoch = batch_accounting.next_epoch
+                resume_batches_to_skip = batch_accounting.next_batch_in_epoch
+                frame_batch_sampler.set_epoch(resume_epoch)
+                if resume_batches_to_skip >= len(train_loader):
+                    raise ValueError("saved frame-budget cursor is outside its epoch")
+            else:
+                microbatches_seen = int(resume_step * args.grad_accum_steps)
+                resume_epoch, resume_batches_to_skip = divmod(microbatches_seen, max(1, len(train_loader)))
             scheduler_step = None if scheduler is None else int(scheduler.last_epoch)
             if scheduler is not None and scheduler_step != resume_step:
                 raise ValueError(
@@ -1298,7 +1350,7 @@ def main() -> None:
                         "event": "resume",
                         "resume_checkpoint": str(args.resume_checkpoint),
                         "step": resume_step,
-                        **accounting_fields(resume_step, effective_batch, train_rows),
+                        **accounting_fields(resume_step, effective_batch, train_rows, batch_accounting),
                         "epoch": resume_epoch,
                         "skipped_batches_in_epoch": resume_batches_to_skip,
                         "archived_interrupted_log": None if archive is None else str(archive),
@@ -1316,7 +1368,9 @@ def main() -> None:
                         "event": "run_config",
                         "args": args_json,
                         "world_size": world_size,
-                        "effective_batch": effective_batch,
+                        "effective_batch": effective_batch or None,
+                        "batch_mode": "frame_budget" if batch_accounting is not None else "fixed_assets",
+                        "loss_normalization": "global_target_token_weight" if batch_accounting is not None else "microbatch_mean",
                         "train_rows": train_rows,
                         "sample_milestones": sample_milestones,
                     },
@@ -1326,7 +1380,7 @@ def main() -> None:
         saved_sample_milestones: set[int] = {
             milestone
             for milestone in sample_milestones
-            if milestone <= int(resume_step * effective_batch)
+            if milestone <= (batch_accounting.samples_seen if batch_accounting is not None else int(resume_step * effective_batch))
         }
         log(rank, f"train rows={len(train_dataset)} val rows={len(val_dataset)}")
         log(rank, f"trainable params={count_trainable(model):,}")
@@ -1412,7 +1466,8 @@ def main() -> None:
         log(
             rank,
             f"micro_batch_per_gpu={args.batch_size} grad_accum_steps={args.grad_accum_steps} "
-            f"effective_batch={effective_batch} train_rows={train_rows} "
+            f"effective_batch={effective_batch or 'variable'} train_rows={train_rows} "
+            f"frame_budget={args.frame_budget} frame_batch_cap={args.frame_batch_cap} "
             f"sample_milestones={sample_milestones}",
         )
         log(
@@ -1471,6 +1526,10 @@ def main() -> None:
         accum_aux_sums: dict[str, float] = {}
         accum_path = ""
         accum_frames: list[int] = []
+        accum_batch_sizes: list[int] = []
+        accum_token_weight = 0.0
+        accum_sample_count = 0
+        accum_input_frames = 0
         optimizer.zero_grad(set_to_none=True)
         model.train()
         base_generated_prefix_weight = float(getattr(train_model, "generated_prefix_recovery_weight", 0.0))
@@ -1481,11 +1540,12 @@ def main() -> None:
         first_batch_mem_logged = False
         if not args.train_surface_tokenizer:
             surface_tokenizer.eval()
-        while step < run_stop:
+        while step < run_stop and (not args.max_samples or batch_accounting.samples_seen < args.max_samples):
             if train_sampler is not None:
                 train_sampler.set_epoch(epoch)
             if frame_batch_sampler is not None:
                 frame_batch_sampler.set_epoch(epoch)
+            epoch_batch_count = len(train_loader)
             for batch_index, batch in enumerate(train_loader):
                 if resume_batches_to_skip > 0 and batch_index < resume_batches_to_skip:
                     continue
@@ -1520,24 +1580,46 @@ def main() -> None:
                 with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=device.type == "cuda"):
                     out = model(batch)
                     raw_loss = out["loss"]
-                    loss = raw_loss / max(1, args.grad_accum_steps)
+                    token_weight = target_token_weight(batch, tokenizer.eos, args.eos_loss_weight) if batch_accounting is not None else 1.0
+                    loss = raw_loss * token_weight if batch_accounting is not None else raw_loss / max(1, args.grad_accum_steps)
                 loss.backward()
-                accum_loss_sum += float(raw_loss.detach().cpu())
-                accum_ce_sum += float(out["ce_loss"].detach().cpu())
+                batch_size = int(batch["input_ids"].shape[0])
+                frames_in_batch = int(batch["frame_vertices"].shape[1])
+                accum_loss_sum += float(raw_loss.detach().cpu()) * token_weight
+                accum_ce_sum += float(out["ce_loss"].detach().cpu()) * token_weight
                 accum_dis_sum += float(out["dis_loss"].detach().cpu())
+                accum_token_weight += token_weight
+                accum_sample_count += batch_size
+                accum_input_frames += batch_size * frames_in_batch
+                accum_batch_sizes.append(batch_size)
                 for key, value in out.items():
                     if key in {"loss", "ce_loss", "dis_loss"}:
                         continue
                     if isinstance(value, torch.Tensor) and value.ndim == 0:
-                        accum_aux_sums[key] = accum_aux_sums.get(key, 0.0) + float(value.detach().cpu())
+                        metric_weight = batch_size if batch_accounting is not None and key in {"eos_loss", "eos_acc"} else 1
+                        accum_aux_sums[key] = accum_aux_sums.get(key, 0.0) + float(value.detach().cpu()) * metric_weight
                 accum_path = batch["path"][0]
-                accum_frames.append(int(batch["frame_vertices"].shape[1]))
+                accum_frames.append(frames_in_batch)
 
                 accum_count += 1
                 if accum_count < max(1, args.grad_accum_steps):
                     continue
 
                 step += 1
+                global_loss = global_ce = None
+                if batch_accounting is not None:
+                    totals = torch.tensor([accum_token_weight, accum_loss_sum, accum_ce_sum,
+                                           accum_sample_count, accum_input_frames], device=device, dtype=torch.float64)
+                    if dist.is_available() and dist.is_initialized():
+                        dist.all_reduce(totals, op=dist.ReduceOp.SUM)
+                    global_tokens, global_loss_sum, global_ce_sum, global_samples, global_frames = totals.tolist()
+                    normalize_token_gradients(model.parameters(), world_size, global_tokens)
+                    next_epoch, next_batch = (epoch + 1, 0) if batch_index + 1 == epoch_batch_count else (epoch, batch_index + 1)
+                    batch_accounting.record_step(
+                        world_size=world_size, batches=accum_batch_sizes, frames=accum_frames,
+                        global_samples=int(global_samples), global_frames=int(global_frames),
+                        global_token_weight=global_tokens, next_epoch=next_epoch, next_batch_in_epoch=next_batch)
+                    global_loss, global_ce = global_loss_sum / global_tokens, global_ce_sum / global_tokens
                 grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0, error_if_nonfinite=True)
                 log_step = is_main(rank) and (step == 1 or step % args.log_every == 0)
                 adapter_grad_norm = None
@@ -1555,7 +1637,7 @@ def main() -> None:
                 accum_count = 0
 
                 if log_step:
-                    accounting = accounting_fields(step, effective_batch, train_rows)
+                    accounting = accounting_fields(step, effective_batch, train_rows, batch_accounting)
                     if device.type == "cuda":
                         mem_alloc = torch.cuda.memory_allocated(device) / (1024**3)
                         mem_reserved = torch.cuda.memory_reserved(device) / (1024**3)
@@ -1567,8 +1649,8 @@ def main() -> None:
                     row = {
                         "step": step,
                         "epoch": epoch,
-                        "loss": accum_loss_sum / micro_count,
-                        "ce": accum_ce_sum / micro_count,
+                        "loss": global_loss if batch_accounting is not None else accum_loss_sum / micro_count,
+                        "ce": global_ce if batch_accounting is not None else accum_ce_sum / micro_count,
                         "dis": accum_dis_sum / micro_count,
                         "seconds": round(time.time() - accum_t0, 3),
                         "gpu_gb": round(mem_peak, 3),
@@ -1577,7 +1659,8 @@ def main() -> None:
                         "gpu_peak_gb": round(mem_peak, 3),
                         "path": accum_path,
                         "grad_accum": args.grad_accum_steps,
-                        "micro_batch_per_gpu": args.batch_size,
+                        "micro_batch_per_gpu": None if batch_accounting is not None else args.batch_size,
+                        "micro_batch_sizes_in_step": list(accum_batch_sizes),
                         "frames_in_step": list(accum_frames),
                         "gradient_norm_before_clip": float(grad_norm),
                         "motion_adapter_gradient_norm_after_clip": adapter_grad_norm,
@@ -1618,10 +1701,11 @@ def main() -> None:
                         },
                     }
                     for key, value_sum in accum_aux_sums.items():
+                        metric_count = accum_sample_count if batch_accounting is not None and key in {"eos_loss", "eos_acc"} else micro_count
                         if key.endswith("_loss"):
-                            row[key.removesuffix("_loss")] = value_sum / micro_count
+                            row[key.removesuffix("_loss")] = value_sum / metric_count
                         elif key.endswith("_acc"):
-                            row[key] = value_sum / micro_count
+                            row[key] = value_sum / metric_count
                         elif key.endswith("_count"):
                             row[key] = value_sum
                         else:
@@ -1634,9 +1718,12 @@ def main() -> None:
                 accum_dis_sum = 0.0
                 accum_aux_sums = {}
                 accum_path = ""
+                accum_token_weight = 0.0
+                accum_sample_count = 0
+                accum_input_frames = 0
 
                 if is_main(rank):
-                    sample_seen = int(step * effective_batch)
+                    sample_seen = batch_accounting.samples_seen if batch_accounting is not None else int(step * effective_batch)
                     for milestone in sample_milestones:
                         if milestone in saved_sample_milestones or sample_seen < milestone:
                             continue
@@ -1649,13 +1736,14 @@ def main() -> None:
                             args,
                             scheduler,
                             include_optimizer=not args.no_save_optimizer,
+                            batch_accounting=batch_accounting,
                         )
                         saved_sample_milestones.add(milestone)
                         write_json_log(
                             metrics_log,
                             {
                                 "step": step,
-                                **accounting_fields(step, effective_batch, train_rows),
+                                **accounting_fields(step, effective_batch, train_rows, batch_accounting),
                                 "event": "sample_milestone_checkpoint",
                                 "sample_milestone": milestone,
                                 "path": str(save_path),
@@ -1673,12 +1761,13 @@ def main() -> None:
                         args,
                         scheduler,
                         include_optimizer=not args.no_save_optimizer,
+                        batch_accounting=batch_accounting,
                     )
                     write_json_log(
                         metrics_log,
                         {
                             "step": step,
-                            **accounting_fields(step, effective_batch, train_rows),
+                            **accounting_fields(step, effective_batch, train_rows, batch_accounting),
                             "event": "checkpoint_saved",
                             "path": str(save_path),
                             "include_optimizer": not args.no_save_optimizer,
@@ -1696,7 +1785,7 @@ def main() -> None:
                     if is_main(rank):
                         write_json_log(
                             metrics_log,
-                            {"step": step, **accounting_fields(step, effective_batch, train_rows), **metrics},
+                            {"step": step, **accounting_fields(step, effective_batch, train_rows, batch_accounting), **metrics},
                         )
                         val_ce = float(metrics.get("val_ce", float("inf")))
                         if val_ce < best_val_ce:
@@ -1710,6 +1799,7 @@ def main() -> None:
                                 args,
                                 scheduler,
                                 include_optimizer=not args.no_save_optimizer,
+                                batch_accounting=batch_accounting,
                             )
                             save_checkpoint(
                                 args.output_dir / f"checkpoint_best_val_step_{step}.pt",
@@ -1719,12 +1809,13 @@ def main() -> None:
                                 args,
                                 scheduler,
                                 include_optimizer=not args.no_save_optimizer,
+                                batch_accounting=batch_accounting,
                             )
                             write_json_log(
                                 metrics_log,
                                 {
                                     "step": step,
-                                    **accounting_fields(step, effective_batch, train_rows),
+                                    **accounting_fields(step, effective_batch, train_rows, batch_accounting),
                                     "best_val_ce": best_val_ce,
                                     "best_val_step": best_val_step,
                                     "event": "best_val_checkpoint",
@@ -1742,6 +1833,7 @@ def main() -> None:
                                 args,
                                 scheduler,
                                 include_optimizer=not args.no_save_optimizer,
+                                batch_accounting=batch_accounting,
                             )
                             save_checkpoint(
                                 args.output_dir / f"checkpoint_best_eos_step_{step}.pt",
@@ -1751,12 +1843,13 @@ def main() -> None:
                                 args,
                                 scheduler,
                                 include_optimizer=not args.no_save_optimizer,
+                                batch_accounting=batch_accounting,
                             )
                             write_json_log(
                                 metrics_log,
                                 {
                                     "step": step,
-                                    **accounting_fields(step, effective_batch, train_rows),
+                                    **accounting_fields(step, effective_batch, train_rows, batch_accounting),
                                     "best_val_eos_acc": best_val_eos_acc,
                                     "best_val_eos_step": best_val_eos_step,
                                     "event": "best_eos_checkpoint",
@@ -1764,7 +1857,8 @@ def main() -> None:
                             )
 
                 accum_frames.clear()
-                if step >= run_stop:
+                accum_batch_sizes.clear()
+                if step >= run_stop or (args.max_samples and batch_accounting.samples_seen >= args.max_samples):
                     break
             epoch += 1
 
@@ -1777,6 +1871,7 @@ def main() -> None:
                 args,
                 scheduler,
                 include_optimizer=not args.no_save_optimizer,
+                batch_accounting=batch_accounting,
             )
         log(rank, "done")
     finally:

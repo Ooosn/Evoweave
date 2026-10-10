@@ -253,6 +253,15 @@
     "generation_frames": [2, 24],
     "max_new_tokens": 1400
   },
+  "frame_budget_profile": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "validation_rows": 32,
+    "frame_budget": 72,
+    "max_batch_cap": 12,
+    "memory_fraction": 0.93,
+    "acceptance_fraction": 0.90,
+    "cases": [[24, 3], [18, 4], [14, 5], [12, 6], [10, 7], [9, 8], [8, 9], [7, 10], [6, 12], [4, 12], [2, 12]]
+  },
   "full_training": {
     "max_steps": 1667,
     "world_size": 2,

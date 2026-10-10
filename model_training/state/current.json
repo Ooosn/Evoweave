@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-10T14:03:31.876500+00:00",
+  "updated_at": "2026-10-10T14:15:00.542040+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -110,13 +110,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -263,13 +263,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "bias_diagnostic_paired",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "rejected",
     "prepared_at": "2026-10-10T14:03:31.876500+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training. On 2026-10-10 JST the user additionally authorized coefficient/gradient diagnostics and frame-budget batching implementation/calibration, choosing fixed frame budget with actual increased sample accounting; no next full training is implied by this follow-up.",
     "source_code_commit": "0df0b2cf260a6e7e5e11e419b41f21a78e243006",
@@ -341,7 +341,10 @@
       "new_allocation": false
     },
     "acceptance": "Same fixed-checkpoint diagnostic after aligning all CE forwards to the gradient-enabled path and disabling Transformer fastpath. T8 replay must pass the unchanged 2e-5 threshold before accepting scale/gradient evidence. Original first-attempt artifacts are preserved.",
-    "note": "Separately recorded repair of the rejected mixed-execution-mode attempt. All CE forwards use grad-enabled mode and Transformer fastpath is disabled, including replay. Same 2e-5 CE replay threshold, no tolerance relaxation, no optimizer updates, original checkpoint untouched. T8 is evaluated first so replay and gradients are verified before remaining generation comparisons."
+    "note": "Separately recorded repair of the rejected mixed-execution-mode attempt. All CE forwards use grad-enabled mode and Transformer fastpath is disabled, including replay. Same 2e-5 CE replay threshold, no tolerance relaxation, no optimizer updates, original checkpoint untouched. T8 is evaluated first so replay and gradients are verified before remaining generation comparisons.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/bias_diagnostic_paired.json",
+    "result_note": "Execution-mode alignment alone did not resolve full-condition replay drift: first T8 asset CE0.9354378581 versus0.9335309267, condition relative L2 0.00077943. Preserve failure evidence and original checkpoint. Do not infer bias benefit from unmatched recomputation or relax thresholds. Next isolate cached pre-motion features/evidence and RNG before retrying the paired diagnostic; independent frame-budget calibration can proceed after this operation is closed.",
+    "updated_at": "2026-10-10T14:15:00.542040+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

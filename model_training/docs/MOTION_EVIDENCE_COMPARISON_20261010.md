@@ -199,3 +199,31 @@ A fresh 22:20 JST read-only inspection confirmed both GPUs idle and qlogin
 129547842 retained. Source ran unchanged at `fb27ce9`; completion is recorded
 locally after inspection. The state permits inspect/report only; a new GPU
 evaluation or training operation needs its own committed preparation.
+
+### Frame-Budget Follow-Up Contract
+
+The user chose a fixed per-rank microbatch frame budget, allowing more asset
+exposures for short clips. The opt-in sampler uses B=min(cap, floor(F/T));
+T remains uniform per microbatch, not per asset. The default legacy path is
+unchanged. An explicit calibrated cap is required because decoder memory also
+scales with assets and complete target lengths, not only B*T.
+
+Frame-budget training accumulates token-sum CE gradients and normalizes once
+by global valid target-token weight after DDP averaging, before clipping.
+This mode currently accepts only the recorded CE-only BF16 recipe; auxiliary
+losses need an explicitly designed normalization before they can be enabled.
+Samples, input frames, token weights and the per-T exposure histogram are
+counted from actual microbatches. Checkpoints save the next epoch/batch cursor
+because variable batch counts invalidate fixed-length-epoch resume arithmetic.
+An optional actual-sample stop is checked after a complete optimizer step.
+Scheduler steps still count optimizer updates; fixed frame budget does not
+imply the old effective batch of 48 or an unchanged asset exposure budget.
+
+The first calibration uses a disposable copy of the completed checkpoint,
+at most 32 fixed validation assets and two retained padding-stress samples.
+It includes existing Adam states and gradients resident before the second
+forward. Allocation is limited to 93% of one H100; approval requires measured
+allocated peaks no greater than 90% and finite gradients/updates. The first
+OOM ends the ascending candidate sweep. Unsafe or unmeasured cases are never
+approved by a complete=true profiling report. Two-rank execution and resume
+still require a separate recorded smoke test before formal training.

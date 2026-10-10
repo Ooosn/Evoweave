@@ -53,6 +53,14 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertNotEqual(retry["result"], plan["result"])
         self.assertNotEqual(retry["evaluation_path"], plan["evaluation_path"])
 
+    def test_frame_profile_is_bounded_single_gpu(self):
+        plan = build_plan(self.config, "frame_profile", None)
+        self.assertIsNone(plan["expected"])
+        self.assertEqual(plan["devices"], [5])
+        self.assertIn("profile_frame_budget.py", " ".join(plan["command"]))
+        for frames, batch in self.config["frame_budget_profile"]["cases"]:
+            self.assertLessEqual(frames * batch, 72)
+
     @unittest.skipUnless(os.name == "posix", "requires the actual Linux Bash launcher")
     def test_actual_launcher_args_match_recorded_recipe_without_running_trainer(self):
         # Execute only the actual argparse construction, never trainer setup or CUDA.

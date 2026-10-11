@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "experiment": "shared_virtual_frame_20261012",
+  "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
+  "runtime": {
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "conda_bin": "/home/wangyy/miniconda3/envs/mygs/bin",
+    "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+    "job_root": "/home/wangyy/jobs/shared_virtual_frame_20261012",
+    "output_root": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 129547842,
+    "host": "pcg01i",
+    "physical_gpus": [5, 7],
+    "allocator_fraction": 0.98
+  },
+  "initialization": {
+    "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+    "model_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+    "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+    "seed": 20261012,
+    "position_depth": 4
+  },
+  "architecture": {
+    "dim": 1024,
+    "heads": 8,
+    "query_tokens": 1024,
+    "register_tokens": 96,
+    "motion_depth": 12,
+    "position_depth": 2,
+    "position_self_attention": true,
+    "max_joints": 512,
+    "max_frames": 48,
+    "motion_evidence_fusion": "bias",
+    "motion_evidence_heads": 8,
+    "dropout": 0.0,
+    "motion_checkpointing": true,
+    "surface_checkpointing": true,
+    "position_checkpointing": true
+  },
+  "candidates": {
+    "self_cross_1": {"position_depth": 1, "position_self_attention": true},
+    "self_cross_2": {"position_depth": 2, "position_self_attention": true},
+    "self_cross_4": {"position_depth": 4, "position_self_attention": true},
+    "cross_2": {"position_depth": 2, "position_self_attention": false}
+  },
+  "surface_sampling": {"surface_samples": 65536, "vertex_samples": 8192, "query_tokens": 1024},
+  "data": {
+    "seed": 20260529,
+    "frame_seed": 20261013,
+    "frames_min": 2,
+    "frames_max": 24,
+    "heldout_frames": 8,
+    "motion_fps_ratio": 0.75,
+    "minimum_random_frames": 1,
+    "motion_vertex_samples": 512,
+    "normalization": "one_input_reference_mesh_bbox_for_all_input_meshes_and_all_XYZ_targets",
+    "global_rt_removal": false,
+    "coordinate_clipping": false,
+    "manifests": {
+      "train": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "rows": 18018,
+        "sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 969,
+        "sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff"
+      }
+    }
+  },
+  "optimization": {
+    "precision": "bfloat16_autocast",
+    "peak_lr": 0.0001,
+    "warmup_fraction": 0.1,
+    "div_factor": 5.0,
+    "final_div_factor": 10.0,
+    "schedule_samples": 80016,
+    "weight_decay": 0.04,
+    "clip_grad_norm": 1.0,
+    "xyz_weight": 1.0,
+    "xyz_weight_status": "pending_gradient_balance_measurement"
+  },
+  "evaluation": {"train_assets": 32, "valid_assets": 64, "frames": 8, "selection_seed": 20261012},
+  "capacity_initial": {
+    "cases": [[24, 2], [24, 3], [24, 4], [24, 5], [24, 6], [24, 8], [24, 10], [24, 12]],
+    "allocated_fraction_limit": 0.93,
+    "stop_at_limit": true
+  },
+  "capacity_confirm": {"cases": [], "allocated_fraction_limit": 0.95, "stop_at_limit": true},
+  "loss_balance": {"frames": [24, 8, 2], "frame_budget": 0, "batch_cap": 0},
+  "compare": {
+    "approved": false,
+    "frame_budget": 0,
+    "batch_cap": 0,
+    "accumulation": 8,
+    "target_samples": 5040,
+    "evaluation_samples": [2016, 5040]
+  },
+  "formal": {
+    "approved": false,
+    "frame_budget": 0,
+    "batch_cap": 0,
+    "accumulation": 8,
+    "target_samples": 80016,
+    "evaluation_samples": [5040, 10032, 20016, 30000, 50016, 80016]
+  }
+}

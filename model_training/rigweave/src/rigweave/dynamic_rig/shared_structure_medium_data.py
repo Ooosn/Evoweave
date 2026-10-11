@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from numbers import Integral
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 
 import numpy as np
 import torch
@@ -90,15 +90,16 @@ def _joint_flags(value: Any, name: str, joints: int) -> np.ndarray:
 
 
 def load_medium_batch(
-    path: str | Path, frame_ids: FrameIds, cls_name: str = "articulationxl",
+    path: str | Path, frame_ids: FrameIds | Callable[[np.ndarray], FrameIds], cls_name: str = "articulationxl",
 ) -> dict[str, Any]:
     """Read a complete rootless-v3 target tree into an unpadded CPU B=1 batch.
 
     ``frame_ids`` are original NPZ row IDs in the requested order, not source
     animation frame numbers. The first selected mesh alone defines the common
-    query chart. No legacy tokenizer, joint filtering, or GT bounds are used.
+    query chart. A callable selects IDs using only the loaded mesh geometry.
+    No legacy tokenizer, joint filtering, or GT bounds are used.
     """
-    ids = _frame_ids(frame_ids, "frame_ids")
+    ids = None if callable(frame_ids) else _frame_ids(frame_ids, "frame_ids")
     path = Path(path).expanduser()
     if not isinstance(cls_name, str) or not cls_name:
         raise ValueError("cls_name must be a non-empty string")
@@ -118,6 +119,8 @@ def load_medium_batch(
         if vertices.shape[-1] != 3 or min(vertices.shape[:2]) < 1:
             raise ValueError("frame_vertices_rootspace must have non-empty shape (F,V,3)")
         total_frames, vertex_count, _ = vertices.shape
+        if callable(frame_ids):
+            ids = _frame_ids(frame_ids(vertices), "frame_ids")
         if np.any(ids >= total_frames):
             raise ValueError("frame_ids contains a row outside the NPZ frame range")
         faces = np.asarray(raw["faces"])

@@ -125,10 +125,8 @@ def _farthest_frames(features: np.ndarray, candidates: np.ndarray, count: int) -
     return [int(candidates[i]) for i in chosen_local]
 
 
-def _select_query_sequence(
+def select_mesh_frame_ids(
     frame_vertices: np.ndarray,
-    posed_joints: np.ndarray,
-    posed_tails: np.ndarray | None,
     *,
     frame_count: int,
     path: Path,
@@ -137,17 +135,10 @@ def _select_query_sequence(
     seed: int,
     motion_fps_ratio: float,
     motion_vertex_samples: int,
-    input_space_policy: str = "mesh_query_bbox",
     minimum_random_frames: int = 0,
     sampling_seed: int | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray]:
-    """Select `[query, evidence...]` frames from one clean asset sequence.
-
-    The query frame is the target pose.  Evidence frames are sampled from the
-    same asset sequence with a motion-diverse FPS component and a random
-    component. If the sequence cannot provide the requested number of frames,
-    it should have been rejected during strict cleaning.
-    """
+) -> np.ndarray:
+    """Select a query and FPS/random evidence frames using mesh geometry only."""
 
     total_frames = int(frame_vertices.shape[0])
     if frame_count <= 1:
@@ -161,11 +152,7 @@ def _select_query_sequence(
            else _rng(path, index, random_query=random_query, seed=seed))
     query_idx = int(rng.integers(0, total_frames))
 
-    if input_space_policy != "mesh_query_bbox":
-        raise ValueError(f"strict rootless training only supports input_space_policy='mesh_query_bbox', got {input_space_policy!r}")
     aligned_frames = np.asarray(frame_vertices, dtype=np.float32)
-    aligned_joints = np.asarray(posed_joints, dtype=np.float32)
-    aligned_tails = None if posed_tails is None else np.asarray(posed_tails, dtype=np.float32)
 
     candidates = np.asarray([i for i in range(total_frames) if i != query_idx], dtype=np.int64)
     evidence_count = frame_count - 1
@@ -190,8 +177,37 @@ def _select_query_sequence(
     selected = np.asarray([query_idx, *fps_ids, *[int(x) for x in random_ids]], dtype=np.int64)
     if selected.shape[0] != frame_count:
         raise RuntimeError(f"internal sampling error: selected {selected.shape[0]} frames for frame_count={frame_count}")
-    target_tails = None if aligned_tails is None else aligned_tails[query_idx]
-    return aligned_frames[selected], aligned_joints[query_idx], target_tails, selected
+    return selected
+
+
+def _select_query_sequence(
+    frame_vertices: np.ndarray,
+    posed_joints: np.ndarray,
+    posed_tails: np.ndarray | None,
+    *,
+    frame_count: int,
+    path: Path,
+    index: int,
+    random_query: bool,
+    seed: int,
+    motion_fps_ratio: float,
+    motion_vertex_samples: int,
+    input_space_policy: str = "mesh_query_bbox",
+    minimum_random_frames: int = 0,
+    sampling_seed: int | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray]:
+    if input_space_policy != "mesh_query_bbox":
+        raise ValueError(f"strict rootless training only supports input_space_policy='mesh_query_bbox', got {input_space_policy!r}")
+    selected = select_mesh_frame_ids(
+        frame_vertices, frame_count=frame_count, path=path, index=index,
+        random_query=random_query, seed=seed, motion_fps_ratio=motion_fps_ratio,
+        motion_vertex_samples=motion_vertex_samples, minimum_random_frames=minimum_random_frames,
+        sampling_seed=sampling_seed,
+    )
+    query_idx = selected[0]
+    target_tails = None if posed_tails is None else np.asarray(posed_tails, dtype=np.float32)[query_idx]
+    return (np.asarray(frame_vertices, dtype=np.float32)[selected],
+            np.asarray(posed_joints, dtype=np.float32)[query_idx], target_tails, selected)
 
 
 def _derive_tokenizer_tails(joints: np.ndarray, parents: list[int | None]) -> np.ndarray:

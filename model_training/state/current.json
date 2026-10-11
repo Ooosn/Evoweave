@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T19:08:29.317484+00:00",
+  "state_id": "shared_virtual_frame_20261012",
+  "updated_at": "2026-10-11T22:37:18.855262+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -16,6 +16,31 @@
     "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
     "npz_files_changed": 0
   },
+  "comparison_contract": {
+    "updated_by_user_at": "2026-10-12",
+    "relationship": "Independent peer methods, not transfer fine-tuning from the old method.",
+    "old_method_trained_checkpoint_initialization_allowed": false,
+    "old_method_descendant_checkpoint_initialization_allowed": false,
+    "excluded_descendants": [
+      "shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
+      "shared_structure_full_20261012_r3"
+    ],
+    "common_upstream_initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "new_motion_and_head_seed": 20261012,
+      "end_to_end": true,
+      "old_method_trained_weights": false
+    },
+    "matched_peak_learning_rate": 0.0001,
+    "precision": "Established BF16 autocast path; no unrequested FP32 neural forward.",
+    "historical_runs": "Preserve inherited-weight runs as diagnostics, not accepted independent-method comparisons; do not resume them as the new baseline.",
+    "required_localization_path": "Shared joint representation H plus EACH FRAME'S FINAL anchor tokens A_t_final after ALL spatial/temporal encoder blocks and the final norm, retaining the T dimension via return_all=True. Not initial surface tokens, intermediate-layer tokens, query-frame-only tokens, or separately re-encoded target tokens. Final-anchor spatial coordinates and joint supervision must follow an explicitly consistent common-reference coordinate contract.",
+    "localization_implementation_status": "virtual_frame_path_cpu_verified_pending_gpu_verification",
+    "localization_implementation_deviation": "Current code uses encode_surface(source) dynamic anchors only for shared structure generation. It independently normalizes target meshes, re-encodes them with the surface tokenizer, and passes target.tokens to the position head without the target motion encoder. These are not the user-specified original current-frame anchors. Matching the new target mesh and GT coordinates does not establish compliance with the required H+A_t path.",
+    "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
+    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage capacity_initial_v1."
+  },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -23,7 +48,8 @@
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
     "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md",
-    "model_training/docs/INACTIVE_JOINT_CAPABILITY_20261011.md"
+    "model_training/docs/INACTIVE_JOINT_CAPABILITY_20261011.md",
+    "model_training/experiments/shared_virtual_frame_20261012.json"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -125,12 +151,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "submit",
     "train",
-    "preflight",
+    "submit",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -314,8 +340,82 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "User-requested dataset quarantine and upstream all-frame screening are complete: current_dataset_revision pins the verified18018train/969valid manifests;81wholeassets are excluded with original NPZs intact. R3 remains intentionally stopped for this revision, not a numerical failure. No new run is selected by this data-only publication; preserve qlogin129547842 and checkpoint105. Any continuation must explicitly select the new manifests and keep the established BF16 path, with no extra GPU smoke.",
+  "next_required_result": "Execute and inspect capacity_initial_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
   "active_operation": {
+    "experiment": "shared_virtual_frame_20261012",
+    "label": "capacity_initial_v1",
+    "mode": "profile",
+    "plan": "capacity_initial",
+    "candidate": "self_cross_4",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/capacity_initial_v1",
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "--mode",
+      "profile",
+      "--plan",
+      "capacity_initial",
+      "--candidate",
+      "self_cross_4",
+      "--output",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/capacity_initial_v1"
+    ],
+    "operation": "preflight",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5
+      ]
+    },
+    "selected_settings": {
+      "cases": [
+        [
+          24,
+          2
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          4
+        ],
+        [
+          24,
+          5
+        ],
+        [
+          24,
+          6
+        ],
+        [
+          24,
+          8
+        ],
+        [
+          24,
+          10
+        ],
+        [
+          24,
+          12
+        ]
+      ],
+      "allocated_fraction_limit": 0.93,
+      "stop_at_limit": true
+    },
+    "status": "prepared",
+    "prepared_at": "2026-10-11T22:37:18.855262+00:00",
+    "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
+    "accepted": false
+  },
+  "last_operation": {
     "experiment": "shared_structure_full_20261012_r3",
     "stage": "full",
     "artifact_prefix": "shared_structure_full_r3",
@@ -455,18 +555,6 @@
         "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
       }
     }
-  },
-  "last_operation": {
-    "name": "model_structure_preflight_20260719",
-    "status": "completed",
-    "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
-    "heldout_manifest": "/home/wangyy/evorig/outputs/puppeteer_identity1024_preln_hgc2h100_full_20260715/length_balance_probe/heldout_52.jsonl",
-    "diagnosis": "The conditioner contains coarse topology information and the flat model uses it on GT prefixes, but an early coordinate error moves generation off the teacher-forced manifold; wrong self-prefix content then increasingly suppresses condition and enters a non-terminating continuation attractor. Independently, flat parent-coordinate tokenization loses parent identity on 6.21 percent of train rows. A DFS stack-close representation exactly covers all 16776 audited trees without increasing total token count, but it has not yet been trained.",
-    "diagnosis_document": "model_training/docs/MODEL_STRUCTURE_PREFLIGHT_20260719.md",
-    "primary_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/condition_signal_gt_vs_self_full.json",
-    "tree_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tree_expansion_audit_v5_stack.json",
-    "tokenizer_report": "/home/wangyy/evorig/outputs/model_structure_preflight_20260719/tokenizer_roundtrip_train_seed101.json",
-    "qlogin_job_id": 124519658
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [

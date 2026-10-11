@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T14:33:50.102902+00:00",
+  "updated_at": "2026-10-11T14:39:44.605729+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "One bounded numerical isolation at T8 and T24 on the two granted H100s. Capture the current batch and frozen motion outputs once in GPU memory; compare true B4 and B2 against B1 accumulation on exactly the same tensors, GT and padding using the existing unchanged BF16 thresholds. Also measure repeated B4 and frozen-motion recomputation to localize nondeterminism. No new architecture, quality-evaluation rerun, disk feature cache, optimizer update or training continuation. A failed gate remains failed; do not relax tolerances.",
+  "next_required_result": "Review held-out generation/reuse and physical-batch throughput before authorizing any training continuation.",
   "active_operation": {
     "experiment": "shared_structure_batch_isolation_20261011",
     "stage": "assessment",
     "artifact_prefix": "shared_structure_batch_isolation_r1",
     "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-11T14:33:50.102902+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_batch_isolation_20261011.json",
     "command": [
@@ -331,7 +331,22 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "One bounded numerical isolation at T8 and T24 on the two granted H100s. Capture the current batch and frozen motion outputs once in GPU memory; compare true B4 and B2 against B1 accumulation on exactly the same tensors, GT and padding using the existing unchanged BF16 thresholds. Also measure repeated B4 and frozen-motion recomputation to localize nondeterminism. No new architecture, quality-evaluation rerun, disk feature cache, optimizer update or training continuation. A failed gate remains failed; do not relax tolerances.",
-    "note": "Primary-only bounded batch-numerics isolation at unchanged thresholds. Fixed current-batch frozen features in memory only; no quality-evaluation rerun, architecture/data change, feature cache, optimizer update or automatic continuation."
+    "note": "Primary-only bounded batch-numerics isolation at unchanged thresholds. Fixed current-batch frozen features in memory only; no quality-evaluation rerun, architecture/data change, feature cache, optimizer update or automatic continuation.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_batch_isolation_r1_assessment.json",
+    "result_note": "Primary reviewed checkpoint quality and physical batch results; completion is not method acceptance and does not authorize automatic continuation.",
+    "controller_exit": 0,
+    "child_exit": 0,
+    "complete": true,
+    "accepted": true,
+    "updated_at": "2026-10-11T14:39:44.605729+00:00",
+    "child_report": {
+      "complete": true,
+      "accepted": true,
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      }
+    }
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

@@ -35,6 +35,22 @@ def timestamp():
     return datetime.now(timezone.utc).isoformat()
 
 
+def configure_fp32_backbone(original, implementation):
+    if implementation != "eager":
+        raise ValueError("the recorded FP32 run requires explicit eager OPT attention")
+    previous = original.transformer.model
+    config = deepcopy(previous.config)
+    config._attn_implementation = implementation
+    replacement = type(previous)(config).to(device=next(previous.parameters()).device, dtype=torch.float32)
+    replacement.load_state_dict(previous.state_dict(), strict=True)
+    replacement.eval().requires_grad_(False)
+    original.transformer.model = replacement
+    return {"implementation": config._attn_implementation,
+            "previous_class": type(previous.decoder.layers[0].self_attn).__name__,
+            "selected_class": type(replacement.decoder.layers[0].self_attn).__name__,
+            "pretrained_state_strictly_copied": True}
+
+
 class AssetStream:
     """Identical rank-local planners partition one shuffled global asset stream."""
     def __init__(self, count, seed):
@@ -316,6 +332,7 @@ def worker(config, output, rank):
     entries = online_entries({key: block["selected"] for key,block in inventory["splits"].items()}, config)
     evaluation = eval_entries(entries, config)
     original, _, _ = _load_original(config)
+    attention = configure_fp32_backbone(original, config["full"]["backbone_attention"])
     model = _new_model(original, {**config, "data": {**config["data"], "seed": config["data"]["model_seed"]}})
     model.skeleton.float()
     payload = torch.load(config["full"]["warmstart"]["path"], map_location="cpu", mmap=True, weights_only=False)
@@ -334,6 +351,7 @@ def worker(config, output, rank):
                "structure.backbone.decoder.layers.0.self_attn.q_proj.weight"}
     snapshots = {name:p.detach().clone() for name,p in model.skeleton.named_parameters() if name in watched}
     report = {"rank": rank, "pid": os.getpid(), "complete": False, "warmstart": reuse,
+              "backbone_attention": attention,
               "cuda_visible_devices": os.environ["CUDA_VISIBLE_DEVICES"], "gpu_name": torch.cuda.get_device_name(0),
               "trace": [], "checkpoints": [], "evaluations": [], "legacy_evaluations": []}
     report_path = root / f"rank_{rank}.json"

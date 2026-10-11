@@ -4,7 +4,6 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest import mock
 
 import numpy as np
 import torch
@@ -19,6 +18,30 @@ from test_shared_structure_controller import SharedStructureControllerTest
 
 
 class FullStreamTest(unittest.TestCase):
+    def test_explicit_fp32_backbone_preserves_weights_and_causal_outputs(self):
+        from transformers import OPTConfig, OPTModel
+        config = OPTConfig(hidden_size=16, word_embed_proj_dim=16, ffn_dim=32, num_hidden_layers=2,
+                           num_attention_heads=4, vocab_size=32, max_position_embeddings=64,
+                           dropout=0., attention_dropout=0., activation_dropout=0.)
+        config._attn_implementation = "eager"
+        before = OPTModel(config).eval()
+        inputs = torch.randn(2, 8, 16)
+        mask = torch.tensor([[1]*8, [1]*5+[0]*3])
+        with torch.no_grad():
+            expected = before(inputs_embeds=inputs, attention_mask=mask).last_hidden_state
+        original = SimpleNamespace(transformer=SimpleNamespace(model=before))
+        result = full.configure_fp32_backbone(original, "eager")
+        after = original.transformer.model
+        self.assertEqual(result["implementation"], "eager")
+        self.assertNotIn("Flash", result["selected_class"])
+        for name, tensor in before.state_dict().items():
+            torch.testing.assert_close(after.state_dict()[name], tensor, atol=0, rtol=0)
+        with torch.no_grad():
+            actual = after(inputs_embeds=inputs, attention_mask=mask).last_hidden_state
+        torch.testing.assert_close(actual, expected, atol=0, rtol=0)
+        with self.assertRaisesRegex(ValueError, "eager"):
+            full.configure_fp32_backbone(original, "flash_attention_2")
+
     def test_bounded_geometry_matches_existing_official_formulas(self):
         path = Path(full.__file__).with_name("eval_dynamic_rig_generation.py")
         names = {"_bones_from_parents", "_sample_bones_np", "_official_skeleton_metrics"}
@@ -31,8 +54,15 @@ class FullStreamTest(unittest.TestCase):
         pa, pb = [-1, 0, 0, 1, 1, 2], [-1, 0, 0, 1, 1, 2, 2, 3]
         bones = namespace["_bones_from_parents"]
         expected = namespace["_official_skeleton_metrics"](a, bones(a, pa), b, bones(b, pb), (-1/1.1, 1/1.1))
-        with mock.patch.dict(sys.modules, {"eval_dynamic_rig_generation": SimpleNamespace(**namespace)}):
+        previous = sys.modules.get("eval_dynamic_rig_generation")
+        sys.modules["eval_dynamic_rig_generation"] = SimpleNamespace(**namespace)
+        try:
             actual = full.geometry_metrics(a, pa, b, pb, 1.1)
+        finally:
+            if previous is None:
+                sys.modules.pop("eval_dynamic_rig_generation")
+            else:
+                sys.modules["eval_dynamic_rig_generation"] = previous
         np.testing.assert_allclose([actual[k] for k in actual], [expected[k] for k in actual], rtol=1e-6)
 
     def test_global_stream_crosses_epoch_without_dropping_or_padding(self):
@@ -106,7 +136,7 @@ class FullControllerTest(SharedStructureControllerTest):
         config["runtime"].update(probe_script="train_shared_structure_full.py", physical_gpus=[5, 7], feature_mode="online",
                                  inventory={"path": "inventory", "sha256": "b"*64})
         config["probe"].update(batch_size=8, accumulation=3)
-        config["full"] = {"world_size": 2, "core_precision": "float32", "acceptance": "early full-data eval",
+        config["full"] = {"world_size": 2, "core_precision": "float32", "backbone_attention": "eager", "acceptance": "early full-data eval",
                           "warmstart": {"path": "warm", "sha256": "c"*64}}
         plan = full.build_stage_plan(config, "full", self.config_path)
         self.assertEqual(plan["guard_operations"], ["train"])

@@ -12,6 +12,7 @@ from pathlib import Path
 import random
 import sys
 import time
+import traceback
 from typing import Any
 
 import numpy as np
@@ -125,7 +126,10 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
             print("CAPACITY " + json.dumps({"rank": rank, **case}), flush=True)
         except torch.OutOfMemoryError as exc:
             report["cases"].append({"frames": frames, "batch_per_rank": batch, "approved": False,
-                                     "oom": True, "error": str(exc)[:800]})
+                                     "oom": True, "error": str(exc)[:800],
+                                     "peak_allocated_gib": torch.cuda.max_memory_allocated(device) / 2**30,
+                                     "peak_reserved_gib": torch.cuda.max_memory_reserved(device) / 2**30,
+                                     "traceback": traceback.format_exc()})
             write_json(path, report)
             optimizer.zero_grad(set_to_none=True)
             gc.collect()

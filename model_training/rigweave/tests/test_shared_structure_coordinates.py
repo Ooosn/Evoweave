@@ -150,6 +150,32 @@ class SharedStructureCoordinatesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             restore_target_coordinates(nonfinite, centers, scales)
 
+    def test_inference_mesh_normalization_needs_no_skeleton_or_labels(self) -> None:
+        batch = self.make_batch()
+        expected = normalize_target_meshes(batch)
+        mesh_only = {key: batch[key] for key in ("frame_vertices", "vertex_count", "query_center", "query_scale")}
+        result = normalize_target_meshes(mesh_only)
+        for name in ("frame_vertices", "target_mesh_centers", "target_mesh_scales",
+                     "target_source_centers", "target_source_scales"):
+            torch.testing.assert_close(result[name], expected[name], atol=0, rtol=0)
+        self.assertNotIn("frame_target_joints", result)
+        self.assertNotIn("target_joints", result)
+        self.assertNotIn("joint_mask", result)
+        self.assertNotIn("target_parents", result)
+
+    def test_raw_mesh_inference_defaults_to_identity_input_affine(self) -> None:
+        batch = self.make_batch()
+        mesh_only = {key: batch[key] for key in ("frame_vertices", "vertex_count")}
+        result = normalize_target_meshes(mesh_only)
+        restored = restore_target_coordinates(result["frame_vertices"], result["target_source_centers"],
+                                               result["target_source_scales"])
+        for index, count in enumerate(batch["vertex_count"].tolist()):
+            torch.testing.assert_close(restored[index, :, :count], batch["frame_vertices"][index, :, :count])
+        with self.assertRaisesRegex(ValueError, "provided together"):
+            normalize_target_meshes({**mesh_only, "joint_mask": batch["joint_mask"]})
+        with self.assertRaisesRegex(ValueError, "provided together"):
+            normalize_target_meshes({**mesh_only, "query_scale": batch["query_scale"]})
+
 
 if __name__ == "__main__":
     torch.set_num_threads(1)

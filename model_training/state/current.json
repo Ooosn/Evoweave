@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T09:39:09.622635+00:00",
+  "updated_at": "2026-10-11T09:52:06+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -264,7 +264,7 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Inspect the completed execution; this is not model promotion or quality approval.",
+  "next_required_result": "Review the reusable skeleton-sequence method: small-set free generation is learned, but unseen-asset and cross-action quality are not established. Formal retraining requires its own data/resource validation and prepared operation; do not promote this temporary probe.",
   "active_operation": {
     "experiment": "shared_structure_probe_20261011",
     "stage": "probe",
@@ -332,7 +332,13 @@
     "acceptance": "Primary endpoint is a usable generated reusable skeleton sequence, not only teacher-forced pose reconstruction. Compare initialized/trained identical inputs; separate GT-prefix from natural free generation; report EOS, joint count, parents and identity-preserving geometry on excluded target frames. Save generated sequences and rebind without regeneration. Compare sequences from different evidence subsets on the same excluded meshes, and test input/memory dependence. Different subsets of one recorded action are only a reuse proxy, not proof across distinct actions. No automatic full retraining or promotion.",
     "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion.",
     "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_r2_probe.json",
-    "result_note": "Primary reviewed the exact stage outputs. Execution acceptance is distinct from skeleton representation quality; no automatic full retraining.",
+    "result_note": "Completed 240 steps/960 asset exposures, 88 initialized and 88 trained evaluations, all three exits zero. For T2/T8/T24 each of the8trainingassets freely generates exact joint count and ordered parents. T8 generated reused-sequence MPJPE0.034182, but validation0/16exactparentstreams and1/16exactcounts, one-to-onejointcoverage0.054978. Structural memory is used (trainT8CE0.039194 vszero-memory2.677090). Target frames are excluded from structure inputs but supervised on training assets; not unseen-motion proof. Only execution and small-set learnability accepted. Original checkpoint/frozenfeatures/cache unchanged; no full retraining or model promotion.",
+    "method_quality_accepted": false,
+    "small_set_learnability_demonstrated": true,
+    "evaluation_artifact_sha256": "685ddaca83921f38a5fe126e3f8b14ce6de5348983edab5d4cf97658660003af",
+    "generated_sequences": "/home/wangyy/evorig/outputs/shared_structure_probe_20261011_r2/probe/sequences_trained.pt",
+    "trained_skeleton_checkpoint": "/home/wangyy/evorig/outputs/shared_structure_probe_20261011_r2/probe/checkpoint_probe.pt",
+    "reviewed_at": "2026-10-11T09:52:06+00:00",
     "controller_exit": 0,
     "child_exit": 0,
     "complete": true,

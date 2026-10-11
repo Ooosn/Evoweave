@@ -30,13 +30,27 @@ def _require_padding(padding: float) -> float:
     return value
 
 
-def _require_batch_tensors(batch: dict[str, Any]) -> tuple[torch.Tensor, ...]:
+def _require_batch_tensors(batch: dict[str, Any]) -> tuple[torch.Tensor | None, ...]:
     if not isinstance(batch, dict):
         raise TypeError("batch must be a dictionary")
     frame_vertices = _require_float_tensor(batch.get("frame_vertices"), "frame_vertices", 4)
-    frame_targets = _require_float_tensor(
-        batch.get("frame_target_joints"), "frame_target_joints", 4
-    )
+    batch_size, frame_count, vertex_slots, coordinates = frame_vertices.shape
+    if coordinates != 3 or batch_size < 1 or frame_count < 1 or vertex_slots < 1:
+        raise ValueError("frame_vertices must have shape (B, T, V, 3) with positive B/T/V")
+    frame_targets = batch.get("frame_target_joints")
+    joint_mask = batch.get("joint_mask")
+    if (frame_targets is None) != (joint_mask is None):
+        raise ValueError("frame_target_joints and joint_mask must be provided together or both omitted")
+    if frame_targets is not None:
+        frame_targets = _require_float_tensor(frame_targets, "frame_target_joints", 4)
+        if not isinstance(joint_mask, torch.Tensor) or joint_mask.ndim != 2 or joint_mask.dtype != torch.bool:
+            raise ValueError("joint_mask must be a boolean Tensor with shape (B, J)")
+        if frame_targets.shape[:2] != (batch_size, frame_count) or frame_targets.shape[-1] != 3:
+            raise ValueError("frame_target_joints must align with frame_vertices as (B, T, J, 3)")
+        if joint_mask.shape != (batch_size, frame_targets.shape[2]):
+            raise ValueError("joint_mask must align with frame_target_joints as (B, J)")
+    elif "target_joints" in batch:
+        raise ValueError("target_joints cannot be transformed without frame_target_joints and joint_mask")
     vertex_count = batch.get("vertex_count")
     if not isinstance(vertex_count, torch.Tensor) or vertex_count.ndim != 1 or vertex_count.dtype not in {
         torch.int8,
@@ -46,30 +60,20 @@ def _require_batch_tensors(batch: dict[str, Any]) -> tuple[torch.Tensor, ...]:
         torch.uint8,
     }:
         raise ValueError("vertex_count must be a one-dimensional integer Tensor")
-    joint_mask = batch.get("joint_mask")
-    if not isinstance(joint_mask, torch.Tensor) or joint_mask.ndim != 2 or joint_mask.dtype != torch.bool:
-        raise ValueError("joint_mask must be a boolean Tensor with shape (B, J)")
-    query_center = _require_float_tensor(batch.get("query_center"), "query_center", 2)
-    query_scale = _require_float_tensor(batch.get("query_scale"), "query_scale", 1)
-    _require_same_device(
-        {
-            "frame_vertices": frame_vertices,
-            "frame_target_joints": frame_targets,
-            "vertex_count": vertex_count,
-            "joint_mask": joint_mask,
-            "query_center": query_center,
-            "query_scale": query_scale,
-        }
-    )
-    batch_size, frame_count, vertex_slots, coordinates = frame_vertices.shape
-    if coordinates != 3 or batch_size < 1 or frame_count < 1 or vertex_slots < 1:
-        raise ValueError("frame_vertices must have shape (B, T, V, 3) with positive B/T/V")
-    if frame_targets.shape[0] != batch_size or frame_targets.shape[1] != frame_count or frame_targets.shape[-1] != 3:
-        raise ValueError("frame_target_joints must align with frame_vertices as (B, T, J, 3)")
+    query_center, query_scale = batch.get("query_center"), batch.get("query_scale")
+    if (query_center is None) != (query_scale is None):
+        raise ValueError("query_center and query_scale must be provided together or both omitted")
+    if query_center is None:
+        query_center, query_scale = frame_vertices.new_zeros(batch_size, 3), frame_vertices.new_ones(batch_size)
+    query_center = _require_float_tensor(query_center, "query_center", 2)
+    query_scale = _require_float_tensor(query_scale, "query_scale", 1)
+    tensors = {"frame_vertices": frame_vertices, "vertex_count": vertex_count,
+               "query_center": query_center, "query_scale": query_scale}
+    if frame_targets is not None:
+        tensors.update(frame_target_joints=frame_targets, joint_mask=joint_mask)
+    _require_same_device(tensors)
     if vertex_count.shape != (batch_size,):
         raise ValueError("vertex_count must have shape (B,)")
-    if joint_mask.shape != (batch_size, frame_targets.shape[2]):
-        raise ValueError("joint_mask must align with frame_target_joints as (B, J)")
     if query_center.shape != (batch_size, 3) or query_scale.shape != (batch_size,):
         raise ValueError("query_center/query_scale must have shapes (B, 3)/(B,)")
     if bool(((vertex_count < 1) | (vertex_count > vertex_slots)).any()):
@@ -84,9 +88,9 @@ def _require_batch_tensors(batch: dict[str, Any]) -> tuple[torch.Tensor, ...]:
 def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict[str, Any]:
     """Normalize each selected mesh independently for the local position decoder.
 
-    Input vertices and targets are already in the base query-normalized space. The
-    returned source affine maps local decoder coordinates directly back to the raw
-    NPZ coordinate space via the base query affine.
+    Targets/masks are optional. With a base query affine, the returned inverse
+    maps directly to original source coordinates. With neither affine field,
+    the input mesh is treated as source coordinates. Inference requires no GT.
     """
 
     padding_value = _require_padding(padding)
@@ -99,7 +103,6 @@ def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict
         query_scale,
     ) = _require_batch_tensors(batch)
     batch_size, frame_count, vertex_slots, _ = frame_vertices.shape
-    joint_slots = frame_targets.shape[2]
     vertex_indices = torch.arange(vertex_slots, device=frame_vertices.device)[None, None, :]
     valid_vertices = (vertex_indices < vertex_count[:, None, None]).expand(-1, frame_count, -1)
     actual_vertices = frame_vertices[valid_vertices]
@@ -118,23 +121,25 @@ def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict
     if not bool(torch.isfinite(local_centers).all()) or not bool(torch.isfinite(local_scales).all()):
         raise ValueError("actual mesh bounds must be finite")
     if bool((local_scales <= 0).any()):
-        raise ValueError("actual mesh meshes must have positive spatial extent")
+        raise ValueError("actual meshes must have positive spatial extent")
 
     normalized_vertices = (safe_vertices - local_centers[:, :, None, :]) / local_scales[:, :, None, None]
     if not bool(torch.isfinite(normalized_vertices[valid_vertices]).all()):
         raise ValueError("normalized actual mesh vertices must be finite")
     normalized_vertices = torch.where(valid_vertices[..., None], normalized_vertices, zero_vertices)
 
-    valid_joints = joint_mask[:, None, :].expand(batch_size, frame_count, joint_slots)
-    actual_targets = frame_targets[valid_joints]
-    if actual_targets.numel() and not bool(torch.isfinite(actual_targets).all()):
-        raise ValueError("valid target joints must be finite")
-    zero_targets = torch.zeros_like(frame_targets)
-    safe_targets = torch.where(valid_joints[..., None], frame_targets, zero_targets)
-    normalized_targets = (safe_targets - local_centers[:, :, None, :]) / local_scales[:, :, None, None]
-    if actual_targets.numel() and not bool(torch.isfinite(normalized_targets[valid_joints]).all()):
-        raise ValueError("normalized valid target joints must be finite")
-    normalized_targets = torch.where(valid_joints[..., None], normalized_targets, zero_targets)
+    normalized_targets = None
+    if frame_targets is not None:
+        valid_joints = joint_mask[:, None, :].expand(batch_size, frame_count, frame_targets.shape[2])
+        actual_targets = frame_targets[valid_joints]
+        if actual_targets.numel() and not bool(torch.isfinite(actual_targets).all()):
+            raise ValueError("valid target joints must be finite")
+        zero_targets = torch.zeros_like(frame_targets)
+        safe_targets = torch.where(valid_joints[..., None], frame_targets, zero_targets)
+        normalized_targets = (safe_targets - local_centers[:, :, None, :]) / local_scales[:, :, None, None]
+        if actual_targets.numel() and not bool(torch.isfinite(normalized_targets[valid_joints]).all()):
+            raise ValueError("normalized valid target joints must be finite")
+        normalized_targets = torch.where(valid_joints[..., None], normalized_targets, zero_targets)
 
     source_centers = query_center[:, None, :] + query_scale[:, None, None] * local_centers
     source_scales = query_scale[:, None] * local_scales
@@ -145,8 +150,9 @@ def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict
 
     output = dict(batch)
     output["frame_vertices"] = normalized_vertices
-    output["frame_target_joints"] = normalized_targets
-    output["target_joints"] = normalized_targets[:, 0]
+    if normalized_targets is not None:
+        output["frame_target_joints"] = normalized_targets
+        output["target_joints"] = normalized_targets[:, 0]
     output["target_mesh_centers"] = local_centers
     output["target_mesh_scales"] = local_scales
     output["target_source_centers"] = source_centers

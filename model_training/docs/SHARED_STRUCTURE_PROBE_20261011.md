@@ -149,3 +149,80 @@ run, not copied to that directory. The failed launch log/result are retained.
 Attempt `shared_structure_r2` explicitly pins that same environment file and
 its checksum, and verifies it before preparing an operation. Model architecture,
 data selections, and optimization settings are unchanged by this repair.
+
+## Completed Feasibility Result
+
+Attempt `shared_structure_r2` completed preflight, cache, and the 240-step probe
+with all outer/controller/child exits zero. Training used 960 real asset
+exposures over eight assets, with 12,531 evidence-frame and 20,211 target-frame
+exposures. The geometry/motion feature encoder remained frozen, the original
+checkpoint was unchanged, and the surface-cache checksum still matched after
+training. No formal full retraining or model promotion was performed.
+
+Preflight passed 12 real cases, two optimizer updates, sequence save/rebinding,
+and localization-only gradients into the shared memory, joint embeddings, and
+inherited decoder. Maximum BF16 prefix-logit discrepancy was 0.0078125 against
+the declared 0.03 tolerance. The synthetic 24-source/32-target-frame, 512-joint
+stress peak was 9.5284 GiB. The bounded training peak was 10.8434 GiB. These
+figures apply to this frozen-feature probe, not a full-model training budget.
+
+The main result is learnability of the generated sequence, not just reconstruction
+under GT prefixes: all eight training assets freely generated the exact joint
+count and parent sequence under each of T=2, T=8, and T=24. The sequence is saved
+as joint features plus parents/mask, with no target-frame XYZ. Evaluation reloads
+it and calls the mesh localizer without rerunning the structure encoder or AR.
+
+For the T8 view (one result per asset):
+
+| Measurement | Training, Before -> After | Validation, Before -> After |
+| --- | --- | --- |
+| Natural EOS | 3/8 -> 8/8 | 3/16 -> 16/16 |
+| Exact joint count and parent sequence | 0/8 -> 8/8 | 0/16 -> 0/16 |
+| Exact joint count alone | 0/8 -> 8/8 | 0/16 -> 1/16 |
+| GT-prefix structure CE | 2.703208 -> 0.039194 | 2.799481 -> 1.871820 |
+| GT-prefix target-frame MPJPE | 1.059743 -> 0.034388 | 1.230323 -> 0.560986 |
+| Free-generation one-to-one joint coverage | 0 -> 0.908884 | 0 -> 0.054978 |
+
+MPJPE is mean Euclidean joint error in each target mesh's padded half-extent
+units. Coverage uses a 0.05 distance threshold and one-to-one matching, with
+generation failures scored zero; both summaries weight assets equally. Natural
+EOS means syntactic termination, not correct structure. Exact parent sequence
+is the dataset's ordered identity criterion, not unordered-tree isomorphism.
+
+The training T8 generated-sequence MPJPE is 0.034182, approximately 1.88% of
+the mesh's largest bbox side. This average is not uniform success: asset 6189
+has error 0.170148. A stricter fixed-GT-identity check finds 204/336 training
+joints within 0.05 in **all eight** target frames. This checks persistent joint
+identity instead of independently rematching each frame.
+
+The structure memory is used on this small training set: with the correct GT
+prefix but zeroed memory, structure CE rises from 0.039194 to 2.677090 and target
+MPJPE from 0.034388 to 0.532470. This is a representation-dependence diagnostic,
+not an ablation proving any particular motion-evidence channel is necessary.
+
+Changing the seven non-reference evidence frames in the validation T8 view
+preserves the exact generated parent stream for 11/16 assets. None of those
+validation streams is completely GT-correct. Consistency of an incorrect
+stream is not evidence that the desired skeleton representation is correct.
+
+Crucially, the eight target frames are excluded from **structure inputs**, not
+from training supervision on the eight training assets. Validation assets are
+not used for optimization. The fixed pool also keeps one query/reference frame
+in every source subset. The current evidence therefore establishes the separated
+interfaces and small-set learnability, but neither unseen-asset quality nor
+cross-action invariance. It must not be reported as a finished universal token
+representation. Formal retraining remains a separate phase with fresh data and
+resource validation; freezing the old encoder is only a feasibility-test choice.
+
+The raw-mesh normalization API was subsequently made label-optional and tested
+on CPU. Inference needs only mesh vertices/counts (plus faces/normals for the
+surface tokenizer); absent input affines mean raw source coordinates. No GT
+joints, masks, or parents are needed to prepare the target mesh. This API-only
+extension does not change the supervised normalization math used above.
+
+Artifacts under `/home/wangyy/evorig/outputs/shared_structure_probe_20261011_r2/`:
+
+- `cache/surface_cache.pt`: SHA256 `b7ab23a15caef31b6c811f879a0212e76ab084a87566b63fe25e603d2fa0afa8`.
+- `probe/checkpoint_probe.pt`: SHA256 `ac8cda59b6f055aa8a774251c78636d87df46c049ec5cc3df93e432c7a46f6d5`.
+- `probe/sequences_trained.pt`: 88 generated sequence records, SHA256 `0bf57e438fa204023e16579c578a7133ab89c2626117bc82f64c5fe780937879`.
+- Evaluation: job `results/shared_structure_r2_probe_evaluation.json`, SHA256 `685ddaca83921f38a5fe126e3f8b14ce6de5348983edab5d4cf97658660003af`.

@@ -27,7 +27,7 @@ class _FakeChild:
 class SharedStructureControllerTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.repo = self.root / "repo"
         self.repo.mkdir()
         (self.repo / "model_training/rigweave/scripts").mkdir(parents=True)

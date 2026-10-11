@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T14:15:12.048244+00:00",
+  "updated_at": "2026-10-11T14:33:50.102902+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "matched_eval"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight",
-    "matched_eval"
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,43 +264,30 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Complete the bounded fixed-input batch numerical isolation at unchanged thresholds. Quality at checkpoint1024 remains weak; no automatic training continuation or architecture change.",
+  "next_required_result": "One bounded numerical isolation at T8 and T24 on the two granted H100s. Capture the current batch and frozen motion outputs once in GPU memory; compare true B4 and B2 against B1 accumulation on exactly the same tensors, GT and padding using the existing unchanged BF16 thresholds. Also measure repeated B4 and frozen-motion recomputation to localize nondeterminism. No new architecture, quality-evaluation rerun, disk feature cache, optimizer update or training continuation. A failed gate remains failed; do not relax tolerances.",
   "active_operation": {
-    "experiment": "shared_structure_review_20261011",
-    "method_quality_accepted": false,
-    "physical_batching_accepted": false,
-    "quality_summary": {
-      "checkpoint_step": 1024,
-      "asset_exposures": 4096,
-      "train_t8_exact_tree": "9/32",
-      "valid_t8_exact_tree": "9/64",
-      "valid_t8_natural_eos": "64/64",
-      "valid_t8_stable_identity_coverage_all": 0.019762332667596638,
-      "evaluation_sha256": "a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380",
-      "batch_t24_b4_peak_gib_with_optimizer_state": 14.533252716064453,
-      "batch_t8_gradient_check_accepted": false
-    },
+    "experiment": "shared_structure_batch_isolation_20261011",
     "stage": "assessment",
-    "artifact_prefix": "shared_structure_review_r1",
+    "artifact_prefix": "shared_structure_batch_isolation_r1",
     "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",
-    "status": "completed",
-    "prepared_at": "2026-10-11T13:59:32.626935+00:00",
-    "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_review_20261011.json",
+    "status": "prepared",
+    "prepared_at": "2026-10-11T14:33:50.102902+00:00",
+    "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_batch_isolation_20261011.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
       "-B",
       "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/assess_shared_structure.py",
       "--config",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_review_20261011.json",
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_batch_isolation_20261011.json",
       "--stage",
       "assessment",
       "--output",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment_evaluation.json"
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_batch_isolation_r1_assessment_evaluation.json"
     ],
-    "source_code_commit": "2948229e3002b94db2aae887c1535c3452ef4d07",
+    "source_code_commit": "aadc578b7c668080e273d70632ecf7f382999456",
     "source_metadata": {
       "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
-      "git_head": "2948229e3002b94db2aae887c1535c3452ef4d07",
+      "git_head": "aadc578b7c668080e273d70632ecf7f382999456",
       "git_status": ""
     },
     "manifests": [
@@ -324,10 +311,10 @@
     },
     "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_review_20261011_r1",
-    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_review_20261011_r1/assessment",
-    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment_evaluation.json",
-    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment.json",
+    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_batch_isolation_20261011_r1",
+    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_batch_isolation_20261011_r1/assessment",
+    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_batch_isolation_r1_assessment_evaluation.json",
+    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_batch_isolation_r1_assessment.json",
     "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -343,23 +330,8 @@
       "matched_eval"
     ],
     "guard_after_record": "begin",
-    "acceptance": "Both physical H100s independently evaluate disjoint interleaved asset shards, preserving the original global diagnostic subsets: trained224 and initialized96 asset/views. Merge only exact complete nonduplicated coverage. Report freely generated ordered tree/count, natural EOS, fixed-identity heldout localization and coverage, source-view agreement conditional on correctness, and teacher/zero-memory diagnostics. On each GPU measure true physical B1/B2/B4 forward/backward at T8 or T24; compare B4 loss and five gradient groups against serial accumulation of the exact same four assets and sampled frames, within declared BF16 tolerance. No optimizer steps; all model parameters and both checkpoint files unchanged. Profile rejection is reported explicitly and never authorizes training. Execution completion is not method acceptance. No automatic continuation.",
-    "note": "Primary-owned checkpoint1024 quality assessment and physical batching profile on both H100s. No architecture/data changes, no optimizer updates, no feature cache, no automatic continuation.",
-    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment.json",
-    "result_note": "Primary reviewed checkpoint quality and physical batch results; completion is not method acceptance and does not authorize automatic continuation.",
-    "controller_exit": 0,
-    "child_exit": 0,
-    "complete": true,
-    "accepted": true,
-    "updated_at": "2026-10-11T14:15:12.048244+00:00",
-    "child_report": {
-      "complete": true,
-      "accepted": true,
-      "source_checkpoint": {
-        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
-      }
-    }
+    "acceptance": "One bounded numerical isolation at T8 and T24 on the two granted H100s. Capture the current batch and frozen motion outputs once in GPU memory; compare true B4 and B2 against B1 accumulation on exactly the same tensors, GT and padding using the existing unchanged BF16 thresholds. Also measure repeated B4 and frozen-motion recomputation to localize nondeterminism. No new architecture, quality-evaluation rerun, disk feature cache, optimizer update or training continuation. A failed gate remains failed; do not relax tolerances.",
+    "note": "Primary-only bounded batch-numerics isolation at unchanged thresholds. Fixed current-batch frozen features in memory only; no quality-evaluation rerun, architecture/data change, feature cache, optimizer update or automatic continuation."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -2844,6 +2816,102 @@
       "child_report": {
         "complete": false,
         "accepted": false,
+        "source_checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+          "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+        }
+      }
+    },
+    {
+      "experiment": "shared_structure_review_20261011",
+      "method_quality_accepted": false,
+      "physical_batching_accepted": false,
+      "quality_summary": {
+        "checkpoint_step": 1024,
+        "asset_exposures": 4096,
+        "train_t8_exact_tree": "9/32",
+        "valid_t8_exact_tree": "9/64",
+        "valid_t8_natural_eos": "64/64",
+        "valid_t8_stable_identity_coverage_all": 0.019762332667596638,
+        "evaluation_sha256": "a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380",
+        "batch_t24_b4_peak_gib_with_optimizer_state": 14.533252716064453,
+        "batch_t8_gradient_check_accepted": false
+      },
+      "stage": "assessment",
+      "artifact_prefix": "shared_structure_review_r1",
+      "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",
+      "status": "completed",
+      "prepared_at": "2026-10-11T13:59:32.626935+00:00",
+      "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_review_20261011.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/assess_shared_structure.py",
+        "--config",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_review_20261011.json",
+        "--stage",
+        "assessment",
+        "--output",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment_evaluation.json"
+      ],
+      "source_code_commit": "2948229e3002b94db2aae887c1535c3452ef4d07",
+      "source_metadata": {
+        "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+        "git_head": "2948229e3002b94db2aae887c1535c3452ef4d07",
+        "git_status": ""
+      },
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "sha256": "771317518b79ff0c6487e8308d89b078f9ad66a518824d79f07ef5a0975ea56d",
+          "rows": 18097
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "sha256": "4a2477292bbac51c08d09ddd64018047ff11422d93be491085ff7f9fd2452fa6",
+          "rows": 971
+        }
+      ],
+      "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      },
+      "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_review_20261011_r1",
+      "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_review_20261011_r1/assessment",
+      "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment_evaluation.json",
+      "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment.json",
+      "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "guard_operations": [
+        "matched_eval"
+      ],
+      "guard_after_record": "begin",
+      "acceptance": "Both physical H100s independently evaluate disjoint interleaved asset shards, preserving the original global diagnostic subsets: trained224 and initialized96 asset/views. Merge only exact complete nonduplicated coverage. Report freely generated ordered tree/count, natural EOS, fixed-identity heldout localization and coverage, source-view agreement conditional on correctness, and teacher/zero-memory diagnostics. On each GPU measure true physical B1/B2/B4 forward/backward at T8 or T24; compare B4 loss and five gradient groups against serial accumulation of the exact same four assets and sampled frames, within declared BF16 tolerance. No optimizer steps; all model parameters and both checkpoint files unchanged. Profile rejection is reported explicitly and never authorizes training. Execution completion is not method acceptance. No automatic continuation.",
+      "note": "Primary-owned checkpoint1024 quality assessment and physical batching profile on both H100s. No architecture/data changes, no optimizer updates, no feature cache, no automatic continuation.",
+      "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment.json",
+      "result_note": "Primary reviewed checkpoint quality and physical batch results; completion is not method acceptance and does not authorize automatic continuation.",
+      "controller_exit": 0,
+      "child_exit": 0,
+      "complete": true,
+      "accepted": true,
+      "updated_at": "2026-10-11T14:15:12.048244+00:00",
+      "child_report": {
+        "complete": true,
+        "accepted": true,
         "source_checkpoint": {
           "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
           "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"

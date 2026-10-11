@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T04:01:09.742006+00:00",
+  "updated_at": "2026-10-11T04:28:00.574168+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Original completed bias_h8 only, no relation adapter. Replay48 cached base conditions exactly and CEwithin2e-5, plus4greedy64prefixes. Then64new natural generations on32 nonstatic cases: replace ONLY original motion states by allunknown or aligned-axis permutation. Static controls CE/condition only and exact-identity generation reuse. Evaluate identical inactive GT joints across controls, separate hitmax from successful missing/mislocalized joints. Nooptimizer, training, GTpruning, checkpoint orcache mutation; noautomaticretry.",
+  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
   "active_operation": {
     "experiment": "motion_evidence_base_compare_20261010",
     "stage": "inactive_motion_use",
     "candidate": null,
     "candidate_config": null,
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-11T04:01:09.742006+00:00",
     "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. Earlier 2026-10-11 small relation-adapter experiments are complete and are not promoted. The user clarified that the current issue is whether the already-trained model learns that inactive regions can still contain skeleton and can be inferred using geometry and other context, then asked to act rather than keep explaining. Current work is bounded read-only diagnosis of that ability and original u/O/M usage. No new architecture or full training is authorized.",
     "source_code_commit": "8c3f4585bd8f21568fa41f5ca80f96f5f4f950ce",
@@ -339,7 +339,10 @@
       "new_allocation": false
     },
     "acceptance": "Original completed bias_h8 only, no relation adapter. Replay48 cached base conditions exactly and CEwithin2e-5, plus4greedy64prefixes. Then64new natural generations on32 nonstatic cases: replace ONLY original motion states by allunknown or aligned-axis permutation. Static controls CE/condition only and exact-identity generation reuse. Evaluate identical inactive GT joints across controls, separate hitmax from successful missing/mislocalized joints. Nooptimizer, training, GTpruning, checkpoint orcache mutation; noautomaticretry.",
-    "note": "Read-only original model ability diagnosis. Same48 cached baseline inputs, original u/O/M states only changed to unknown/permuted. Exact base replay and4prefixes before64new motion-control generations; staticreuseonlyafteridentity. No training/newadapter/fullrun. Original checkpoint immutable. Primary reviewed10workerCPUtests,3saved-audit and3one-to-one tests; controller5pass1WindowsLinuxskip. All fullGT retained. One GPU5 on existingallocation, no retries."
+    "note": "Read-only original model ability diagnosis. Same48 cached baseline inputs, original u/O/M states only changed to unknown/permuted. Exact base replay and4prefixes before64new motion-control generations; staticreuseonlyafteridentity. No training/newadapter/fullrun. Original checkpoint immutable. Primary reviewed10workerCPUtests,3saved-audit and3one-to-one tests; controller5pass1WindowsLinuxskip. All fullGT retained. One GPU5 on existingallocation, no retries.",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_analysis_20261011.json",
+    "result_note": "Original-model read-only diagnostic completed once from0ad5c0b, all3exits0;48exactbaseCE/conditionreplays,4prefixmatches,64newnaturalcontrolgens,32exactstaticreuses. Frozenparams0changed/0grads/cacheunchanged/sourcehashesverified,peak4.650649GiB. Capabilityexistsbutuneven:385has40/40quietjoints+edgeswithonly2active;202same17quietjointsnormal/weak/static10/9/1;128normalonly21/71quietmatchedandweakerinputsnonterminate. Explicitcuecontrolsweakinstablebenefit:pairedsuccessfulquietcoverageunknown179to178/354,permuted167to167/300;permuted21allcasequietlossfromonehitmax. Oldgeometry/implicitmultiframepathsretained,notproofallmotionunusedortrainingeffectabsent. Originalcheckpointpreserved,experimentaladaptersOFF,no newtraining. Smallartifactshashverified andCPU1to1analysis/figurecomplete.",
+    "updated_at": "2026-10-11T04:28:00.574168+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

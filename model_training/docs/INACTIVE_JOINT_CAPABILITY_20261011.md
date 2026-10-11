@@ -95,3 +95,65 @@ Quiet articulation does not imply its surface is fixed in world coordinates.
 The query normalization uses maximum half-extent; coverage tolerance0.05
 therefore equals2.5percent of the query mesh's maximum extent. Thresholds are
 diagnostic proxies, not labels that the network is asked to infer.
+
+## Completed Results
+
+The original-model intervention completed once from committed0ad5c0b, with
+all three exit codes0. All48 CE/condition replays have exact zero difference;
+all4 prefixes agree. It produced64 new natural generations plus32 verified
+static reuses, with4.650649GiB peak allocation. Parameters, gradients and
+cached inputs remain unchanged; all source hashes pass the final recheck.
+This is a completed diagnostic, not a new model-quality approval.
+
+The one-to-one audit confirms asset385's40 quiet joints and40 corresponding
+edges in every view. Asset202 has the SAME17 quiet joints in normal8/weak2:
+normal8 matches10 joints/6 edges, weak2 matches9/6, static matches1/1.
+Asset128 still matches only21/71 quiet joints and17/71 edges in its successful
+normal8 output; weak2/static do not terminate.
+
+Across9 assets successful in all three original views, the SAME150 quiet
+joints have84/83/71 one-to-one matches and66/57/40 located edges for
+normal8/weak2/static8. Additional supplied poses can help inactive articulation
+prediction, but this is a selected small cohort and does not isolate every
+possible context pathway or prove the nearby surfaces remain fixed.
+
+The new explicit-evidence controls show limited stable completion benefit:
+
+- In paired-success cases with allunknown explicit evidence, quiet matches
+  change179 to178 out of354 joint-condition instances; located edges remain
+ 134. The joint-coverage delta is-0.28percentage points, asset-bootstrap95%
+  interval[-1.52,+0.79]points.
+- With permuted evidence, quiet matches total167/300 for both base and control;
+  located edges change123 to121. Equal totals do not mean identical individual
+  predictions: asset296 gains2 quiet matches in normal8 and loses2 in weak2.
+- Including full-generation failures, unknown matches change188 to183 out of
+ 556 instances; permutation changes188 to167. The21-match permutation loss
+  comes from asset128 normal8 becoming nonterminating. Other termination
+  changes can improve or worsen results. Do not equate this with consistent
+  local inference benefit from correctly aligned motion relationships.
+- Only14/32 unknown-control and12/32 permuted-control nonstatic token streams
+  are identical to their originals. The cue is not numerically inert; changed
+  sequences are not by themselves evidence of useful completion.
+
+The556 instances are278 target joints evaluated under two input conditions,
+not556 distinct joints. Success-conditioned cohorts differ between controls;
+report their denominators and the all-case results together. All intervals
+are exploratory whole-asset resampling of the same reused16 validation assets.
+
+Conclusion: the completed model has some inactive-part prediction capability,
+with genuine remaining location/connection and termination failures. In this
+probe, correctly aligned explicit u/O/M states do not provide a stable large
+additional completion benefit. The old geometric and implicit multiframe
+paths remain active even in the controls, so this does NOT show that motion
+in general is unused or that training with u/O/M had no effect on the backbone.
+Keep the original checkpoint; do not promote the experimental relation adapter
+or launch new training from this diagnostic alone.
+
+Artifacts under the external job directory:
+- `results/inactive_motion_use_evaluation.json`, SHA256
+  `53cd8962709303773d0f8a5efc7179418bced43abd594ca60809c294e9e84e0b`.
+- `results/inactive_motion_use_analysis_20261011.json`, SHA256
+  `39b0726c8e9649c27a662617903b7f0e8fa1e03fae9c628803cb04c0133305bf`.
+- `results/inactive_base_unique_audit_20261011.json`, SHA256
+  `394c6a9d2f3afd0d570d7aa7ef487416213336bc54272455c9e7feeac6617179`.
+- `inactive_base_matched_examples_20261011.png`, three matched-query examples.

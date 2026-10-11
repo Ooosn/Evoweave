@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T11:57:49.000157+00:00",
+  "updated_at": "2026-10-11T12:28:14.245258+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,14 +264,14 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
+  "next_required_result": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim.",
   "active_operation": {
     "experiment": "shared_structure_medium_20261011",
-    "stage": "cache",
-    "artifact_prefix": "shared_structure_medium_r1",
-    "authorization": "User authorized beginning the medium-scale expansion after discussion of the new skeleton-token vocabulary. The primary objective is a reusable generated skeleton identity/structure sequence, with target-mesh localization providing supervision and use. This is a bounded frozen-feature experiment, not formal full-dataset retraining. Preserve all prior models and artifacts; review each stage before the next; no automatic retry or promotion.",
-    "status": "failed",
-    "prepared_at": "2026-10-11T11:45:38.165122+00:00",
+    "stage": "probe",
+    "artifact_prefix": "shared_structure_online_r1",
+    "authorization": "User authorized the medium-scale expansion and then explicitly requested canceling large feature caching and starting direct online training. Reuse the accepted network preflight; check only the changed online path. The primary objective remains a reusable generated skeleton identity/structure sequence. This is bounded frozen-feature training, not formal full-dataset retraining. Preserve prior artifacts, including the failed cache attempt; no automatic retry or promotion.",
+    "status": "prepared",
+    "prepared_at": "2026-10-11T12:28:14.245258+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -280,14 +280,14 @@
       "--config",
       "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
       "--stage",
-      "cache",
+      "probe",
       "--output",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache_evaluation.json"
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_online_r1_probe_evaluation.json"
     ],
-    "source_code_commit": "786c5c2c90c9d9995fd83ebfaad8089856f42238",
+    "source_code_commit": "d83533c4b62fa61116c7b02c75fef5e76b387ce9",
     "source_metadata": {
       "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
-      "git_head": "786c5c2c90c9d9995fd83ebfaad8089856f42238",
+      "git_head": "d83533c4b62fa61116c7b02c75fef5e76b387ce9",
       "git_status": ""
     },
     "manifests": [
@@ -311,10 +311,10 @@
     },
     "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_medium_20261011_r1",
-    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_medium_20261011_r1/cache",
-    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache_evaluation.json",
-    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache.json",
+    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1",
+    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe",
+    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_online_r1_probe_evaluation.json",
+    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_online_r1_probe.json",
     "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -326,26 +326,11 @@
       "new_allocation": false
     },
     "guard_operations": [
-      "matched_eval"
+      "train"
     ],
     "guard_after_record": "begin",
-    "acceptance": "Complete the immutable per-frame surface cache with exact source, checkpoint, manifest, cache hash, and 256 train/64 validation assets.",
-    "note": "User-authorized medium expansion:256train64valid4096updates; reusable skeleton sequence primary;32eligible8strictlyheldoutframes;two query charts;unchanged architecture/frozen-feature init;not full training or cross-action proof.",
-    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache.json",
-    "result_note": "Primary reviewed the exact medium-stage outputs; execution acceptance is distinct from representation quality. No automatic full retraining or retry.",
-    "controller_exit": 1,
-    "child_exit": 1,
-    "complete": false,
-    "accepted": false,
-    "updated_at": "2026-10-11T11:57:49.000157+00:00",
-    "child_report": {
-      "complete": false,
-      "accepted": false,
-      "source_checkpoint": {
-        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
-      }
-    }
+    "acceptance": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim.",
+    "note": "User explicitly canceled feature caching. Online training, same256/64assets4096updates32/8frame partition. Reuse accepted pinned network preflight; first update validates online gradients/prefix. No cache stage."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -2666,6 +2651,88 @@
       "child_report": {
         "complete": true,
         "accepted": true,
+        "source_checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+          "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+        }
+      }
+    },
+    {
+      "experiment": "shared_structure_medium_20261011",
+      "stage": "cache",
+      "artifact_prefix": "shared_structure_medium_r1",
+      "authorization": "User authorized beginning the medium-scale expansion after discussion of the new skeleton-token vocabulary. The primary objective is a reusable generated skeleton identity/structure sequence, with target-mesh localization providing supervision and use. This is a bounded frozen-feature experiment, not formal full-dataset retraining. Preserve all prior models and artifacts; review each stage before the next; no automatic retry or promotion.",
+      "status": "failed",
+      "prepared_at": "2026-10-11T11:45:38.165122+00:00",
+      "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/probe_shared_structure_medium.py",
+        "--config",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
+        "--stage",
+        "cache",
+        "--output",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache_evaluation.json"
+      ],
+      "source_code_commit": "786c5c2c90c9d9995fd83ebfaad8089856f42238",
+      "source_metadata": {
+        "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+        "git_head": "786c5c2c90c9d9995fd83ebfaad8089856f42238",
+        "git_status": ""
+      },
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "sha256": "771317518b79ff0c6487e8308d89b078f9ad66a518824d79f07ef5a0975ea56d",
+          "rows": 18097
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "sha256": "4a2477292bbac51c08d09ddd64018047ff11422d93be491085ff7f9fd2452fa6",
+          "rows": 971
+        }
+      ],
+      "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      },
+      "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_medium_20261011_r1",
+      "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_medium_20261011_r1/cache",
+      "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache_evaluation.json",
+      "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache.json",
+      "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "guard_operations": [
+        "matched_eval"
+      ],
+      "guard_after_record": "begin",
+      "acceptance": "Complete the immutable per-frame surface cache with exact source, checkpoint, manifest, cache hash, and 256 train/64 validation assets.",
+      "note": "User-authorized medium expansion:256train64valid4096updates; reusable skeleton sequence primary;32eligible8strictlyheldoutframes;two query charts;unchanged architecture/frozen-feature init;not full training or cross-action proof.",
+      "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache.json",
+      "result_note": "Primary reviewed the exact medium-stage outputs; execution acceptance is distinct from representation quality. No automatic full retraining or retry.",
+      "controller_exit": 1,
+      "child_exit": 1,
+      "complete": false,
+      "accepted": false,
+      "updated_at": "2026-10-11T11:57:49.000157+00:00",
+      "child_report": {
+        "complete": false,
+        "accepted": false,
         "source_checkpoint": {
           "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
           "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"

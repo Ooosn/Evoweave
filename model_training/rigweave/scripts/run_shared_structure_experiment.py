@@ -22,11 +22,11 @@ from motion_experiment_runtime import (
 )
 
 
-STAGES = ("preflight", "cache", "probe", "assessment")
+STAGES = ("preflight", "cache", "probe", "assessment", "full")
 TERMINAL_STATUSES = frozenset(("completed", "failed"))
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ARTIFACT_PREFIX_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-_PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py", "assess_shared_structure.py"))
+_PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py", "assess_shared_structure.py", "train_shared_structure_full.py"))
 _ONLINE_PREFLIGHT_DATA_FIELDS = (
     "seed", "model_seed", "frame_seed", "train_assets", "valid_assets", "pool_frames",
     "train_frames", "heldout_frames", "source_banks", "frames_min", "frames_max",
@@ -66,7 +66,7 @@ def _checkpoint_identity(config: dict[str, Any]) -> dict[str, str]:
 def _expected_resources(config: dict[str, Any]) -> dict[str, Any]:
     runtime = _require_dict(config.get("runtime"), "runtime")
     devices = runtime.get("physical_gpus")
-    expected = [5, 7] if runtime.get("probe_script") == "assess_shared_structure.py" else [5]
+    expected = [5, 7] if runtime.get("probe_script") in {"assess_shared_structure.py", "train_shared_structure_full.py"} else [5]
     if devices != expected:
         raise ValueError(f"shared-structure operation requires physical_gpus={expected}, got {devices!r}")
     if not isinstance(runtime.get("allocation"), int) or isinstance(runtime.get("allocation"), bool):
@@ -99,18 +99,33 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
     if runtime.get("probe_script", "probe_shared_structure.py") not in _PROBE_SCRIPTS:
         raise ValueError("runtime.probe_script is not an approved shared-structure entry point")
     assessment = runtime.get("probe_script") == "assess_shared_structure.py"
+    full = runtime.get("probe_script") == "train_shared_structure_full.py"
+    if full != (stage == "full"):
+        raise ValueError("full stage and entry point must be selected together")
     if assessment != (stage == "assessment"):
         raise ValueError("assessment stage and entry point must be selected together")
     feature_mode = runtime.get("feature_mode", "cached")
     if feature_mode not in ("cached", "online"):
         raise ValueError("runtime.feature_mode must be 'cached' or 'online'")
     if feature_mode == "online":
-        if not assessment and (runtime.get("probe_script") != "probe_shared_structure_medium.py" or stage != "probe"):
+        if not assessment and not full and (runtime.get("probe_script") != "probe_shared_structure_medium.py" or stage != "probe"):
             raise ValueError("online features require the medium probe entry point and stage='probe'")
-        reference = _require_dict(runtime.get("preflight_reference"), "runtime.preflight_reference")
+        reference = _require_dict(runtime.get("inventory" if full else "preflight_reference"), "runtime input reference")
         if not isinstance(reference.get("path"), str) or not reference["path"]:
             raise ValueError("runtime.preflight_reference.path must be a non-empty path")
         _require_sha256(reference.get("sha256"), "runtime.preflight_reference.sha256")
+    if full:
+        if feature_mode != "online":
+            raise ValueError("full training requires online features")
+        settings = _require_dict(config.get("full"), "full")
+        warm = _require_dict(settings.get("warmstart"), "full.warmstart")
+        _require_sha256(warm.get("sha256"), "full.warmstart.sha256")
+        if not isinstance(warm.get("path"), str) or not warm["path"]:
+            raise ValueError("full.warmstart.path is required")
+        if settings.get("world_size") != 2 or settings.get("core_precision") != "float32":
+            raise ValueError("full training requires two ranks and float32 trainable core")
+        if config["probe"]["batch_size"] * config["probe"]["accumulation"] * 2 != 48:
+            raise ValueError("full training effective asset batch must be 48")
     if assessment:
         if feature_mode != "online":
             raise ValueError("assessment requires online features")
@@ -151,6 +166,8 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
 
 def stage_acceptance(config: dict[str, Any], stage: str) -> str:
     validate_config(config, stage)
+    if stage == "full":
+        return str(config["full"]["acceptance"])
     if stage == "assessment":
         return str(config["assessment"]["acceptance"])
     if stage == "preflight":
@@ -165,6 +182,8 @@ def stage_acceptance(config: dict[str, Any], stage: str) -> str:
 
 
 def guard_operations(stage: str) -> list[str]:
+    if stage == "full":
+        return ["train"]
     if stage == "assessment":
         return ["matched_eval"]
     if stage == "preflight":
@@ -315,8 +334,13 @@ def validate_prepared_state(
         elif active.get(key) != wanted:
             raise RuntimeError(f"prepared state {key} does not match the requested stage")
     for key in ("reference_checkpoint", "initialization"):
-        if not _active_path_matches(active, key, _checkpoint_identity(config)["path"]):
+        expected_path = (config["full"]["warmstart"]["path"] if plan["stage"] == "full" and key == "initialization"
+                         else _checkpoint_identity(config)["path"])
+        if not _active_path_matches(active, key, expected_path):
             raise RuntimeError(f"prepared state {key} does not match the configured checkpoint")
+    if plan["stage"] == "full" and (active.get("warmstart") != config["full"]["warmstart"]
+                                    or active.get("training_configuration") != config["full"]):
+        raise RuntimeError("prepared state changed the full-training configuration")
     validate_source_revision({"repo": source.get("repo"), "git_head": active.get("source_code_commit"),
                               "git_status": ""}, source)
     if not isinstance(source.get("git_status"), str) or source["git_status"].strip():
@@ -397,6 +421,42 @@ def sha256_file(path: str | Path) -> str:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def require_full_inventory(config: dict[str, Any]) -> dict[str, Any]:
+    reference = config["runtime"]["inventory"]
+    if sha256_file(reference["path"]) != reference["sha256"]:
+        raise RuntimeError("full inventory checksum mismatch")
+    report = _load_json_object(reference["path"], "full inventory")
+    if report.get("complete") is not True or report.get("errors"):
+        raise RuntimeError("full inventory must cover every row without errors")
+    for key in ("frame_seed", "heldout_frames", "target_mesh_padding"):
+        if report.get(key) != config["data"][key]:
+            raise RuntimeError(f"full inventory changed {key}")
+    assets = set()
+    bound = min(-config["architecture"]["xyz_min"], config["architecture"]["xyz_max"])
+    for split, argument in (("train", "train_manifest"), ("valid", "val_manifest")):
+        item = report["splits"][split]
+        expected = next(m for m in config["baseline"]["manifests"] if m["argument"] == argument)
+        if any(item[k] != expected[k] for k in ("path", "rows", "sha256")):
+            raise RuntimeError("inventory is not from the current full manifest")
+        rows = item["selected"]
+        if len(rows) != item["rows"] or [r["index"] for r in rows] != list(range(item["rows"])):
+            raise RuntimeError("inventory omits, duplicates or reorders manifest rows")
+        for row in rows:
+            if row["asset_id"] in assets:
+                raise RuntimeError("full inventory duplicates train/valid asset identity")
+            assets.add(row["asset_id"])
+            if row["joint_count"] > config["probe"]["generation_joint_limit"]:
+                raise RuntimeError("full target tree exceeds declared generation capacity")
+            if row["frame_count"] - config["data"]["heldout_frames"] < config["data"]["frames_max"]:
+                raise RuntimeError("insufficient eligible source frames")
+            if max(row["train_coordinate_absmax"], row["heldout_coordinate_absmax"]) > bound:
+                raise RuntimeError("full target coordinates exceed fixed vocabulary range")
+    warm = config["full"]["warmstart"]
+    if sha256_file(warm["path"]) != warm["sha256"]:
+        raise RuntimeError("warm-start checkpoint checksum mismatch")
+    return report
 
 
 def validate_cache_report(report: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
@@ -623,7 +683,9 @@ def run_stage(config_path: str | Path, stage: str) -> dict[str, Any]:
     state_path = Path(config["runtime"]["repo"]) / "model_training/state/current.json"
     state = _load_json_object(state_path, "current state")
     validate_prepared_state(state, config, plan, source)
-    if config["runtime"].get("feature_mode", "cached") == "online":
+    if stage == "full":
+        require_full_inventory(config)
+    elif config["runtime"].get("feature_mode", "cached") == "online":
         plan["online_preflight"] = require_online_preflight(config)
     elif stage == "cache":
         require_prior_stage(config, config_path, "preflight", source)

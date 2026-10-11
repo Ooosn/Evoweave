@@ -169,7 +169,7 @@ def online_entries(selected, config):
     for split, rows in selected.items():
         result[split] = []
         for row in rows:
-            train, heldout = partition_raw_frames(config["data"]["pool_frames"],
+            train, heldout = partition_raw_frames(row.get("frame_count", config["data"]["pool_frames"]),
                 asset_seed(config, row["asset_id"]), config["data"]["heldout_frames"])
             train, heldout = train.tolist(), heldout.tolist()
             result[split].append({**row, "split": split,
@@ -187,10 +187,17 @@ def prepare_online_batches(entry, config, bank, frames, *, training, seed=None):
     ids = entry["source_frame_ids"][bank]
     source_raw = [ids[i] for i in evidence_slots(len(ids), frames, seed=seed).tolist()]
     requested = train if training else train[:8] + heldout
+    target_count = config["data"].get("target_frames_per_exposure") if training else None
+    if target_count is not None:
+        if seed is None or not 1 <= target_count <= len(train):
+            raise ValueError("target subsampling requires a seed and a valid frame count")
+        order = torch.randperm(len(train), generator=torch.Generator().manual_seed(seed ^ 0x51A7))
+        requested = [train[i] for i in order[:target_count].tolist()]
     if training and (set(source_raw) | set(requested)) & set(heldout):
         raise RuntimeError("held-out frames leaked into online training")
     # Only training-eligible frames are materialized during optimization.
-    base = load_medium_batch(entry["path"], train if training else train + heldout)
+    needed = list(dict.fromkeys([train[0], *source_raw, *requested]))
+    base = load_medium_batch(entry["path"], needed)
     if int(base["joint_count"][0]) != entry["joint_count"]:
         raise RuntimeError("manifest and raw NPZ joint counts differ")
     source = (load_medium_batch(entry["path"], source_raw) if bank == "heldout"

@@ -33,7 +33,7 @@ def _allowed_operations(stage: str, *, terminal: bool = False) -> tuple[list[str
         allowed = ["inspect", "report", "preflight", "train"]
     elif stage in {"cache", "assessment"}:
         allowed = ["inspect", "report", "matched_eval"]
-    elif stage == "probe":
+    elif stage in {"probe", "full"}:
         allowed = ["inspect", "report", "train"]
     else:
         raise ValueError(f"unsupported stage {stage!r}")
@@ -67,6 +67,9 @@ def build_prepared_operation(
         "source_checkpoint": checkpoint,
         "initialization": checkpoint["path"],
         "reference_checkpoint": checkpoint["path"],
+        **({"warmstart": deepcopy(config["full"]["warmstart"]),
+            "initialization": config["full"]["warmstart"]["path"],
+            "training_configuration": deepcopy(config["full"])} if plan["stage"] == "full" else {}),
         "output_root": str(Path(config["runtime"]["output_root"]).resolve()),
         "output_path": plan["output_dir"],
         "evaluation_artifact": plan["evaluation_path"],

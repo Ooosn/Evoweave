@@ -1,5 +1,33 @@
 # Medium Shared-Skeleton Expansion
 
+## Checkpoint Review Before Continuation
+
+The online run was intentionally interrupted after its first complete saved
+checkpoint, update1024:4096 asset exposures,16 complete asset passes,zero heldout
+frame exposures. Weights,optimizer,scheduler and sampler remain recoverable.
+This is a control-flow interruption for quality review and resource correction,
+not evidence of numerical failure or rejection of the architecture.
+
+The `shared_structure_review_20261011.json` assessment uses both granted H100s.
+Its independent workers take interleaved,non-overlapping asset shards, retaining
+the original full coverage of32train diagnostic assets and64validation assets:
+224 trained-checkpoint views and96 matched-initialization views. Each generated
+sequence is saved and rebound to target meshes; no GT parents or counts are
+provided to free generation. Per-asset files retain predictions and identities.
+
+The unchanged checkpoint also supplies a physical-batch profile at T8 and T24.
+Actual B1/B2/B4 surface encoding and skeleton forward/backward are measured with
+Adam state resident. B4 is compared with four serial B1 passes on identical
+assets,frame IDs,GT and per-asset surface references. The equal-asset objective
+is unchanged; joint padding uses the existing -2 parent sentinel and masks.
+CPU tests compare all gradients; real BF16 comparisons cover loss and the five
+monitored trainable components with declared tolerances. No optimizer step is
+performed. A rejected batching check cannot authorize training continuation.
+
+The primary implements and reviews this assessment without Luna. Architecture,
+dataset contracts and raw-frame partition are unchanged. Quality acceptance and
+any revised training budget remain separate decisions after these results.
+
 ## Online Execution Update
 
 The user explicitly canceled the large feature-cache preparation. The current

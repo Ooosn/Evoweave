@@ -31,7 +31,7 @@ def _allowed_operations(stage: str, *, terminal: bool = False) -> tuple[list[str
         allowed = ["inspect", "report"]
     elif stage == "preflight":
         allowed = ["inspect", "report", "preflight", "train"]
-    elif stage == "cache":
+    elif stage in {"cache", "assessment"}:
         allowed = ["inspect", "report", "matched_eval"]
     elif stage == "probe":
         allowed = ["inspect", "report", "train"]
@@ -172,6 +172,7 @@ def complete_state(
             "preflight": "Prepare cache only after the accepted preflight evaluation is reviewed.",
             "cache": "Prepare probe only after the complete cache evaluation and checksum are reviewed.",
             "probe": "Inspect the completed execution; this is not model promotion or quality approval.",
+            "assessment": "Review held-out generation/reuse and physical-batch throughput before authorizing any training continuation.",
         }[plan["stage"]]
     )
     updated["updated_at"] = now

@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "experiment": "shared_structure_review_20261011",
+  "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",
+  "baseline": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "checkpoint_sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620",
+    "manifests": [
+      {
+        "argument": "train_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "sha256": "771317518b79ff0c6487e8308d89b078f9ad66a518824d79f07ef5a0975ea56d",
+        "rows": 18097
+      },
+      {
+        "argument": "val_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "sha256": "4a2477292bbac51c08d09ddd64018047ff11422d93be491085ff7f9fd2452fa6",
+        "rows": 971
+      }
+    ],
+    "scope": "Fresh medium-task initialization from the old base, not continuation of the eight-asset overfit. Current manifests are used, including UniMate additions. Held-out frames are unseen to THIS probe; the inherited base model may have seen some base-asset frames before. Report base/addition strata separately and do not claim full-history pose holdout."
+  },
+  "runtime": {
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "conda_bin": "/home/wangyy/miniconda3/envs/mygs/bin",
+    "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+    "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+    "output_root": "/home/wangyy/evorig/outputs/shared_structure_review_20261011_r1",
+    "artifact_prefix": "shared_structure_review_r1",
+    "feature_mode": "online",
+    "preflight_reference": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_preflight_evaluation.json",
+      "sha256": "afcd30acd38ac6411a625f71a6ffa9fac938980e4305691adb7d78617e34a1ed"
+    },
+    "probe_script": "assess_shared_structure.py",
+    "saved_environment": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/resolved_env.txt",
+    "saved_environment_sha256": "069dfe9d43dc6c8f6e6038998dcdf224b021ee5639712f1dfdb9e96943a9e893",
+    "unirig_root": "/home/wangyy/evorig/model_assets/legacy_UniRig_modified_20260714",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 129547842,
+    "host": "pcg01i",
+    "physical_gpus": [
+      5,
+      7
+    ],
+    "memory_fraction": 0.9,
+    "host_memory_budget_gib": 64
+  },
+  "architecture": {
+    "dim": 1024,
+    "heads": 8,
+    "shared_tokens": 128,
+    "shared_depth": 2,
+    "position_depth": 2,
+    "max_joints": 512,
+    "xyz_bins": 256,
+    "xyz_min": -1,
+    "xyz_max": 1,
+    "dropout": 0
+  },
+  "features": {
+    "register_temporal_mode": "global",
+    "freeze_for_feasibility": true,
+    "delivery": "Read the current asset directly and compute only selected source-T and target-frame features on demand. No precomputed or persistent feature cache, including reuse of partial R1 shards. Two training-query charts, independent mesh-normalized targets and actual-T temporal encoding are unchanged. A third heldout-only source is evaluation-only. Target sampling always uses the fixed train_a reference, independent of the chosen source bank.",
+    "original_motion_evidence": "Keep original bias_h8 and all u/c/d channels, with no relation adapter or GT-derived conditioning."
+  },
+  "data": {
+    "seed": 20261012,
+    "model_seed": 20261011,
+    "frame_seed": 20261013,
+    "train_assets": 256,
+    "valid_assets": 64,
+    "pool_frames": 40,
+    "train_frames": 32,
+    "heldout_frames": 8,
+    "source_banks": 2,
+    "frames_min": 2,
+    "frames_max": 24,
+    "target_mesh_padding": 1.1,
+    "selection_audit": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_selection_audit.json",
+    "selection_audit_sha256": "b405e7083142b031786b1b40a34164772b7541b3dc968e7b27d34cf118ec3dff",
+    "coordinate_audit": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_coordinate_audit.json",
+    "coordinate_audit_sha256": "c4fe4d832889a38904e7461bd2999c2945317f2460bc90f9d239275fccd8ea11",
+    "roundtrip_diagnosis": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_roundtrip_audit.json",
+    "roundtrip_diagnosis_sha256": "2981ae41a9faaa0e24e74842f13fec905ccd7757e7c6b9c5dc022840369f0e09",
+    "inverse_precision": "Compose source-space inverse affine metadata in float64; model-space vertices and GT tensors are unchanged. The failed R1 cache receipt and partial shards are preserved but unused. Online training has a separate output directory and no cache stage.",
+    "partition": "Partition original 40-frame NPZ indices by an asset-specific deterministic seed before any query, surface, or evidence selection. The 32 training-eligible frames provide both source banks and all XYZ training targets. The eight held-out frames never enter the current optimization; validation assets never enter optimization. Canonical NPZs and final manifests are unchanged. Keep every target joint and its ordered identity.",
+    "quantization": "Unchanged strict 256-bin [-1,1] quantizer with mesh-only 1.1 padding. All 320 assets/all 40 frames were audited: unpadded training maxabs1.07687545 and validation1.01399255. No clipping, GT-derived per-instance scale, filtering or new root."
+  },
+  "preflight": {
+    "assets_per_split": 2,
+    "frames": [
+      2,
+      8,
+      24
+    ],
+    "optimizer_steps": 4,
+    "bf16_prefix_atol": 0.03,
+    "stress_joints": 512,
+    "acceptance": "Reuse pinned accepted medium R1 network preflight:20 real cases,4 optimizer steps,5 component updates,XYZ-to-structure gradients and T24/J512 stress. Verify online raw-frame isolation with focused CPU tests, then check prefix parity,XYZ-to-structure gradients,all5 updates and frozen encoder during the first real training update. Do not repeat full preflight or create feature shards. Execution acceptance is not quality acceptance."
+  },
+  "probe": {
+    "steps": 4096,
+    "batch_size": 1,
+    "accumulation": 4,
+    "lr_new": 0.0001,
+    "lr_backbone": 0.00001,
+    "weight_decay": 0.04,
+    "clip_grad_norm": 1,
+    "xyz_weight": 1,
+    "scheduler": "onecycle",
+    "dropout": 0,
+    "log_every": 32,
+    "gradient_audit_every": 64,
+    "checkpoint_steps": [
+      1024,
+      2048,
+      4096
+    ],
+    "generation_joint_limit": 256,
+    "evaluate_train_assets": 32,
+    "detailed_eval_assets": 16,
+    "loss": "Per-asset mean structure CE plus mean XYZ CE over all32eligible target frames, joints and axes; average four assets per update. Total16384asset exposures, exactly64per selected training asset. Sample T2..24 and one of two training-query charts per exposure. No heldout target or source enters optimization; no XYZ equality or blanket hidden-vector matching loss.",
+    "acceptance": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim."
+  },
+  "assessment": {
+    "checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
+      "sha256": "fef3c8e166868c8554877f7415767514ee44d1816935846d769297fd5e4207c0",
+      "step": 1024
+    },
+    "preserved_receipt": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_online_r1_preserved_1024.json",
+      "sha256": "88e88466cbdb80941bb76c9fb7f878cdaf4de6dcce31e014a13c0172d7e4d018"
+    },
+    "profile": {
+      "repeats": 2,
+      "loss_atol": 0.003,
+      "loss_rtol": 0.003,
+      "gradient_relative_l2": 0.04,
+      "gradient_cosine": 0.999
+    },
+    "acceptance": "Both physical H100s independently evaluate disjoint interleaved asset shards, preserving the original global diagnostic subsets: trained224 and initialized96 asset/views. Merge only exact complete nonduplicated coverage. Report freely generated ordered tree/count, natural EOS, fixed-identity heldout localization and coverage, source-view agreement conditional on correctness, and teacher/zero-memory diagnostics. On each GPU measure true physical B1/B2/B4 forward/backward at T8 or T24; compare B4 loss and five gradient groups against serial accumulation of the exact same four assets and sampled frames, within declared BF16 tolerance. No optimizer steps; all model parameters and both checkpoint files unchanged. Profile rejection is reported explicitly and never authorizes training. Execution completion is not method acceptance. No automatic continuation."
+  }
+}

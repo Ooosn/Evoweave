@@ -22,11 +22,11 @@ from motion_experiment_runtime import (
 )
 
 
-STAGES = ("preflight", "cache", "probe")
+STAGES = ("preflight", "cache", "probe", "assessment")
 TERMINAL_STATUSES = frozenset(("completed", "failed"))
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ARTIFACT_PREFIX_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-_PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py"))
+_PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py", "assess_shared_structure.py"))
 _ONLINE_PREFLIGHT_DATA_FIELDS = (
     "seed", "model_seed", "frame_seed", "train_assets", "valid_assets", "pool_frames",
     "train_frames", "heldout_frames", "source_banks", "frames_min", "frames_max",
@@ -66,8 +66,9 @@ def _checkpoint_identity(config: dict[str, Any]) -> dict[str, str]:
 def _expected_resources(config: dict[str, Any]) -> dict[str, Any]:
     runtime = _require_dict(config.get("runtime"), "runtime")
     devices = runtime.get("physical_gpus")
-    if devices != [5]:
-        raise ValueError(f"shared-structure operation requires physical_gpus=[5], got {devices!r}")
+    expected = [5, 7] if runtime.get("probe_script") == "assess_shared_structure.py" else [5]
+    if devices != expected:
+        raise ValueError(f"shared-structure operation requires physical_gpus={expected}, got {devices!r}")
     if not isinstance(runtime.get("allocation"), int) or isinstance(runtime.get("allocation"), bool):
         raise ValueError("runtime.allocation must be an integer")
     if not isinstance(runtime.get("host"), str) or not runtime["host"]:
@@ -75,7 +76,7 @@ def _expected_resources(config: dict[str, Any]) -> dict[str, Any]:
     return {
         "allocation": runtime["allocation"],
         "host": runtime["host"],
-        "physical_gpus": [5],
+        "physical_gpus": list(devices),
         "virtual_memory": "unlimited",
         "new_allocation": False,
     }
@@ -97,16 +98,29 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
             "runtime.artifact_prefix must contain only letters, numbers, '_' or '-'")
     if runtime.get("probe_script", "probe_shared_structure.py") not in _PROBE_SCRIPTS:
         raise ValueError("runtime.probe_script is not an approved shared-structure entry point")
+    assessment = runtime.get("probe_script") == "assess_shared_structure.py"
+    if assessment != (stage == "assessment"):
+        raise ValueError("assessment stage and entry point must be selected together")
     feature_mode = runtime.get("feature_mode", "cached")
     if feature_mode not in ("cached", "online"):
         raise ValueError("runtime.feature_mode must be 'cached' or 'online'")
     if feature_mode == "online":
-        if runtime.get("probe_script") != "probe_shared_structure_medium.py" or stage != "probe":
+        if not assessment and (runtime.get("probe_script") != "probe_shared_structure_medium.py" or stage != "probe"):
             raise ValueError("online features require the medium probe entry point and stage='probe'")
         reference = _require_dict(runtime.get("preflight_reference"), "runtime.preflight_reference")
         if not isinstance(reference.get("path"), str) or not reference["path"]:
             raise ValueError("runtime.preflight_reference.path must be a non-empty path")
         _require_sha256(reference.get("sha256"), "runtime.preflight_reference.sha256")
+    if assessment:
+        if feature_mode != "online":
+            raise ValueError("assessment requires online features")
+        settings = _require_dict(config.get("assessment"), "assessment")
+        candidate = _require_dict(settings.get("checkpoint"), "assessment.checkpoint")
+        if not isinstance(candidate.get("path"), str) or not candidate["path"]:
+            raise ValueError("assessment checkpoint path is required")
+        _require_sha256(candidate.get("sha256"), "assessment.checkpoint.sha256")
+        if not isinstance(candidate.get("step"), int) or candidate["step"] <= 0:
+            raise ValueError("assessment checkpoint step must be positive")
     _expected_resources(config)
     _checkpoint_identity(config)
     baseline = _require_dict(config["baseline"], "baseline")
@@ -129,6 +143,8 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
 
 def stage_acceptance(config: dict[str, Any], stage: str) -> str:
     validate_config(config, stage)
+    if stage == "assessment":
+        return str(config["assessment"]["acceptance"])
     if stage == "preflight":
         return str(config["preflight"]["acceptance"])
     if stage == "probe":
@@ -141,6 +157,8 @@ def stage_acceptance(config: dict[str, Any], stage: str) -> str:
 
 
 def guard_operations(stage: str) -> list[str]:
+    if stage == "assessment":
+        return ["matched_eval"]
     if stage == "preflight":
         return ["preflight", "train"]
     if stage == "cache":
@@ -313,8 +331,9 @@ def validate_launch_environment(
     if linux is None:
         linux = sys.platform.startswith("linux")
     if linux:
-        if environment.get("CUDA_VISIBLE_DEVICES") != "5":
-            raise RuntimeError("CUDA_VISIBLE_DEVICES must be exactly recorded physical GPU 5")
+        expected = ",".join(map(str, resources["physical_gpus"]))
+        if environment.get("CUDA_VISIBLE_DEVICES") != expected:
+            raise RuntimeError(f"CUDA_VISIBLE_DEVICES must be exactly recorded physical GPU {expected}")
         if resources["virtual_memory"] != "unlimited":
             raise RuntimeError("Linux compute-node launch requires unlimited virtual memory")
 
@@ -446,7 +465,7 @@ def require_prior_stage(config: dict[str, Any], config_path: str | Path, stage: 
 
 def require_online_preflight(config: dict[str, Any]) -> dict[str, Any]:
     """Validate an explicitly pinned medium preflight for online feature delivery."""
-    validate_config(config, "probe")
+    validate_config(config, "assessment" if config["runtime"].get("probe_script") == "assess_shared_structure.py" else "probe")
     if config["runtime"].get("feature_mode", "cached") != "online":
         raise ValueError("require_online_preflight requires runtime.feature_mode='online'")
     reference = config["runtime"]["preflight_reference"]

@@ -1,5 +1,53 @@
 # Medium Shared-Skeleton Expansion
 
+## Preserved Checkpoint Results
+
+The two-H100 assessment completed with all three exits zero,224 trained views
+and96 matched-initialization views. At update1024 (16 asset passes),T8 results:
+
+| Metric | Train diagnostic32 | Validation64 |
+| --- | ---: | ---: |
+| Natural EOS | 32/32 | 64/64 |
+| Exact generated joint count | 10/32 | 15/64 |
+| Exact ordered parent sequence | 9/32 | 9/64 |
+| GT-prefix heldout position MPJPE | 0.18927 | 0.32402 |
+| Generated fixed-identity stable coverage,all cases | 3.97% | 1.98% |
+
+MPJPE is in padded mesh half-extent units. Stable coverage requires the same
+GT joint identity to remain within0.05 in all eight heldout poses (2.75% of
+the longest mesh-bbox side);wrong generated counts contribute zero. This is
+not per-frame nearest-neighbor rematching. On the15 count-matched validation
+assets only,generated identity MPJPE is0.20547;do not compare that conditional
+number as though its denominator were all64 validation assets.
+
+All matched-initialization exact counts/trees were zero. The trained model
+uses structural memory (on the16-asset validation control subset,GT-prefix
+structure CE0.43156 versus zero-memory2.68506),but useful identity reuse is
+not established. On the16 validation source-view comparisons,parent sequences
+agree in12 cases for the disjoint heldout source,while both are GT-correct in
+only3. Agreement alone is not correctness. Current evidence shows incomplete
+training-set fit and limited generalization,not a verdict against the idea.
+
+True B4 forward/backward ran with Adam state resident:peak11.33GiB at T8 and
+14.53GiB at T24 with the four largest-J training assets. Thus memory did not
+require B1/accum4. The same-four-asset timings were3.119s serial versus2.432s
+B4 at T8,and5.672s versus4.808s at T24;these are forward/backward profiles,
+not full optimizer-update benchmarks or a global optimal-batch claim.
+
+The initial T8 gradient comparison was not accepted:embedding relative L2
+8.08% and body query-projection7.70% exceed the predeclared4% threshold. T24
+passed. Recomputed frozen features were not held bitwise fixed in that test;
+same-B1 loss also varied between repeats. The existing bias replay audit had
+already identified nondeterminism at the motion-evidence recomputation boundary.
+A separately recorded fixed-input isolation now compares B4/B2/B1 on the exact
+same frozen motion outputs and targets,without resampling or disk caching.
+Thresholds remain unchanged;no training continuation is authorized by a mere
+capacity result. This is a targeted batching diagnostic,not another quality run.
+
+Assessment receipt: `results/shared_structure_review_r1_assessment_evaluation.json`,
+SHA256 `a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380`.
+Both the preserved candidate and the original initialization remained unchanged.
+
 ## Checkpoint Review Before Continuation
 
 The online run was intentionally interrupted after its first complete saved

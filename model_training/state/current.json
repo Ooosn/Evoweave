@@ -264,9 +264,22 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Review held-out generation/reuse and physical-batch throughput before authorizing any training continuation.",
+  "next_required_result": "Complete the bounded fixed-input batch numerical isolation at unchanged thresholds. Quality at checkpoint1024 remains weak; no automatic training continuation or architecture change.",
   "active_operation": {
     "experiment": "shared_structure_review_20261011",
+    "method_quality_accepted": false,
+    "physical_batching_accepted": false,
+    "quality_summary": {
+      "checkpoint_step": 1024,
+      "asset_exposures": 4096,
+      "train_t8_exact_tree": "9/32",
+      "valid_t8_exact_tree": "9/64",
+      "valid_t8_natural_eos": "64/64",
+      "valid_t8_stable_identity_coverage_all": 0.019762332667596638,
+      "evaluation_sha256": "a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380",
+      "batch_t24_b4_peak_gib_with_optimizer_state": 14.533252716064453,
+      "batch_t8_gradient_check_accepted": false
+    },
     "stage": "assessment",
     "artifact_prefix": "shared_structure_review_r1",
     "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",

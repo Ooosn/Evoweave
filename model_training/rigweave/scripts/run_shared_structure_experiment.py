@@ -121,6 +121,14 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
         _require_sha256(candidate.get("sha256"), "assessment.checkpoint.sha256")
         if not isinstance(candidate.get("step"), int) or candidate["step"] <= 0:
             raise ValueError("assessment checkpoint step must be positive")
+        isolation = settings.get("batch_isolation_only", False)
+        if not isinstance(isolation, bool):
+            raise ValueError("assessment.batch_isolation_only must be boolean")
+        if isolation:
+            quality = _require_dict(settings.get("quality_reference"), "assessment.quality_reference")
+            if not isinstance(quality.get("path"), str) or not quality["path"]:
+                raise ValueError("batch isolation requires a preserved quality report")
+            _require_sha256(quality.get("sha256"), "assessment.quality_reference.sha256")
     _expected_resources(config)
     _checkpoint_identity(config)
     baseline = _require_dict(config["baseline"], "baseline")

@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import assess_shared_structure as assessment
@@ -92,6 +93,26 @@ class AssessmentTest(unittest.TestCase):
         row = {"split": "train", "index": 0, "view": "T8"}
         with self.assertRaises(RuntimeError):
             assessment.merge_evaluations([{"rows": [row, row]}], entries, config, "initialized")
+
+    def test_gradient_comparison_uses_high_precision_and_detects_change(self):
+        gradients = {name: torch.arange(1, 1001, dtype=torch.float32) / 7 for name in assessment.WATCHED}
+        same = assessment.compare_gradients(gradients, gradients)
+        for value in same.values():
+            self.assertEqual(value["relative_l2"], 0)
+            self.assertAlmostEqual(value["cosine"], 1, places=12)
+        changed = {name: value * 1.1 for name, value in gradients.items()}
+        for value in assessment.compare_gradients(changed, gradients).values():
+            self.assertAlmostEqual(value["relative_l2"], .1, places=6)
+
+    def test_isolation_configuration_keeps_the_same_model_and_thresholds(self):
+        path = Path(__file__).resolve().parents[2] / "experiments/shared_structure_batch_isolation_20261011.json"
+        config = json.loads(path.read_text())
+        original = self.config()
+        self.assertTrue(config["assessment"]["batch_isolation_only"])
+        for key in ("architecture", "data", "features"):
+            self.assertEqual(config[key], original[key])
+        self.assertEqual(config["assessment"]["profile"], original["assessment"]["profile"])
+        controller.validate_config(config, "assessment")
 
 
 if __name__ == "__main__":

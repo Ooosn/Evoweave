@@ -95,6 +95,85 @@ def gradient_snapshot(model):
     return {name: params[name].grad.detach().float().cpu().clone() for name in WATCHED}
 
 
+def compare_gradients(left, right):
+    result = {}
+    for name in WATCHED:
+        a, b = left[name].flatten().double(), right[name].flatten().double()
+        result[name] = {"relative_l2": float((a - b).norm() / b.norm().clamp_min(1e-12)),
+                        "cosine": float(torch.nn.functional.cosine_similarity(a[None], b[None]))}
+    return result
+
+
+def isolate_batch_numerics(original, model, entries, config, rank):
+    frames = (8, 24)[rank]
+    selected = entries[:4] if rank == 0 else sorted(entries, key=lambda item: item["joint_count"], reverse=True)[:4]
+    source, target, batch, selections = select_online_batch(original, selected, config,
+        ["train_a", "train_b", "train_a", "train_b"], frames, training=True,
+        seeds=[117, 118, 119, 120])
+    model.train()
+    versions = {name: p._version for name, p in model.named_parameters()}
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+        a, r = model.encode_surface(source)
+        anchors, registers = a.detach().clone(), r.detach().clone()
+        del a, r
+    source_mask = torch.ones(anchors.shape[:2], dtype=torch.bool, device=anchors.device)
+    inputs = [anchors, registers, target.tokens, target.query_points, batch["frame_target_joints"], batch["target_parents"]]
+    input_versions = [value._version for value in inputs]
+
+    def run(size, *, a=anchors, r=registers):
+        model.zero_grad(set_to_none=True)
+        loss = 0.0
+        for start in range(0, 4, size):
+            index = slice(start, start + size)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                out = model.skeleton(a[index], r[index], source_mask[index], target.tokens[index],
+                    target.query_points[index], batch["target_parents"][index], batch["joint_mask"][index],
+                    batch["frame_mask"][index], batch["frame_target_joints"][index])
+            (out["loss"] * size / 4).backward()
+            loss += float(out["loss"].detach()) * size / 4
+            del out
+        _finite_gradients(model)
+        return loss, gradient_snapshot(model)
+
+    full_loss, full_grads = run(4)
+    repeat_loss, repeat_grads = run(4)
+    serial_loss, serial_grads = run(1)
+    pair_loss, pair_grads = run(2)
+    limits = config["assessment"]["profile"]
+
+    def comparison(loss, gradients, reference_loss, reference_gradients):
+        differences = compare_gradients(gradients, reference_gradients)
+        passed = (abs(loss - reference_loss) <= limits["loss_atol"] + limits["loss_rtol"] * abs(reference_loss)
+                  and all(d["relative_l2"] <= limits["gradient_relative_l2"] and d["cosine"] >= limits["gradient_cosine"]
+                          for d in differences.values()))
+        return {"accepted": passed, "loss": loss, "reference_loss": reference_loss, "gradients": differences}
+
+    comparisons = {"B4_repeat": comparison(repeat_loss, repeat_grads, full_loss, full_grads),
+                   "B4_vs_B1_acc4": comparison(full_loss, full_grads, serial_loss, serial_grads),
+                   "B2_acc2_vs_B1_acc4": comparison(pair_loss, pair_grads, serial_loss, serial_grads)}
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+        again_a, again_r = model.encode_surface(source)
+    frozen_difference = {}
+    for name, before, after in (("anchors", anchors, again_a), ("registers", registers, again_r)):
+        delta = after.float() - before.float()
+        frozen_difference[name] = {"exact": bool(torch.equal(before, after)), "maxabs": float(delta.abs().max()),
+                                  "relative_l2": float(delta.norm() / before.float().norm().clamp_min(1e-12))}
+    reencoded_loss, reencoded_grads = run(4, a=again_a, r=again_r)
+    reencoded = comparison(reencoded_loss, reencoded_grads, full_loss, full_grads)
+    model.zero_grad(set_to_none=True)
+    if versions != {name: p._version for name, p in model.named_parameters()}:
+        raise RuntimeError("batch isolation changed model parameters")
+    if input_versions != [value._version for value in inputs]:
+        raise RuntimeError("batch isolation modified its fixed inputs")
+    return {"accepted": all(item["accepted"] for item in comparisons.values()), "source_frames": frames,
+            "comparisons": comparisons, "frozen_motion_recompute": frozen_difference,
+            "reencoded_B4_vs_fixed_B4": reencoded, "thresholds": limits,
+            "input_contract": "Capture one batch and its frozen motion outputs once in GPU memory, split the exact same tensors for B4/B2/B1; retain identical parent padding. No disk feature cache or resampling between core comparisons.",
+            "assets": [{key: entry[key] for key in ("index", "asset_id", "joint_count")} for entry in selected],
+            "selections": selections, "model_parameters_unchanged": True, "optimizer_steps": 0,
+            "peak_allocated_gib": torch.cuda.max_memory_allocated() / 2 ** 30}
+
+
 def profile_physical_batches(original, model, entries, config, rank, report, output):
     frames = (8, 24)[rank]
     profile = config["assessment"]["profile"]
@@ -154,12 +233,7 @@ def profile_physical_batches(original, model, entries, config, rank, report, out
         batched_gradients = gradient_snapshot(model)
         serial = run_group(4, serial=True)
         serial_gradients = gradient_snapshot(model)
-        differences = {}
-        for name in WATCHED:
-            a, b = batched_gradients[name].flatten(), serial_gradients[name].flatten()
-            relative = float((a - b).norm() / b.norm().clamp_min(1e-12))
-            cosine = float(torch.nn.functional.cosine_similarity(a[None], b[None]))
-            differences[name] = {"relative_l2": relative, "cosine": cosine}
+        differences = compare_gradients(batched_gradients, serial_gradients)
         equivalent = (abs(batched["loss"] - serial["loss"]) <= profile["loss_atol"] + profile["loss_rtol"] * abs(serial["loss"])
                       and all(d["relative_l2"] <= profile["gradient_relative_l2"] and d["cosine"] >= profile["gradient_cosine"] for d in differences.values()))
         report["physical_batch_equivalence"] = {"accepted": equivalent, "batched": batched, "serial_accumulation": serial,
@@ -207,14 +281,17 @@ def worker(config, plan, output, rank):
         optimizer.load_state_dict(payload["optimizer"])
         report["profile_optimizer_state_resident"] = True
         del payload
-        report["trained"] = evaluate(model, subset, view_config, root, "trained", report, output, original=original)
-        write_json(output, report)
-        profile_physical_batches(original, model, entries["train"], view_config, rank, report, output)
-        del optimizer, model, original
-        torch.cuda.empty_cache()
-        original, _, _ = _load_original(config)
-        model = _new_model(original, initialization)
-        report["initialized"] = evaluate(model, subset, view_config, root, "initialized", report, output, original=original)
+        if config["assessment"].get("batch_isolation_only", False):
+            report["physical_batch_equivalence"] = isolate_batch_numerics(original, model, entries["train"], view_config, rank)
+        else:
+            report["trained"] = evaluate(model, subset, view_config, root, "trained", report, output, original=original)
+            write_json(output, report)
+            profile_physical_batches(original, model, entries["train"], view_config, rank, report, output)
+            del optimizer, model, original
+            torch.cuda.empty_cache()
+            original, _, _ = _load_original(config)
+            model = _new_model(original, initialization)
+            report["initialized"] = evaluate(model, subset, view_config, root, "initialized", report, output, original=original)
         check_memory_budget(view_config)
         report.update(complete=True, accepted=True, finished_at=timestamp(), peak_cpu_gib=peak_cpu_gib())
         write_json(output, report)
@@ -253,6 +330,9 @@ def main():
     if (Path(recorded["path"]).resolve() != Path(candidate["path"]).resolve()
             or recorded["sha256"] != candidate["sha256"] or recorded["step"] != candidate["step"]):
         raise RuntimeError("assessment candidate is not the verified preserved checkpoint")
+    quality_reference = config["assessment"].get("quality_reference")
+    if quality_reference and file_hash(quality_reference["path"]) != quality_reference["sha256"]:
+        raise RuntimeError("previous quality assessment checksum changed")
     if file_hash(candidate["path"]) != candidate["sha256"]:
         raise RuntimeError("preserved checkpoint checksum changed")
     identity = _checkpoint_identity(config)
@@ -290,14 +370,18 @@ def main():
         if not all(part.get("complete") and part.get("accepted") for part in parts):
             raise RuntimeError("assessment worker results are incomplete")
         entries = online_entries(selected_rows(config), config)
-        for label in ("trained", "initialized"):
-            report[label] = merge_evaluations([part[label] for part in parts], entries, config, label)
+        if not config["assessment"].get("batch_isolation_only", False):
+            for label in ("trained", "initialized"):
+                report[label] = merge_evaluations([part[label] for part in parts], entries, config, label)
         report["physical_batch_results"] = [{key: part.get(key) for key in (
             "rank", "physical_gpu", "physical_batch_profile", "physical_batch_equivalence",
             "physical_batch_profile_error", "profile_parameters_unchanged", "profile_optimizer_steps",
             "profile_optimizer_state_resident", "profile_assets", "peak_cpu_gib")}
             for part in parts]
         report["physical_batching_accepted"] = all(part.get("physical_batch_equivalence", {}).get("accepted") for part in parts)
+        if config["assessment"].get("batch_isolation_only", False):
+            report["batching_acceptance_scope"] = "Fixed frozen-encoder outputs; independent frozen-motion recomputation drift is reported separately. No quality evaluation is repeated."
+            report["quality_reference"] = quality_reference
         if file_hash(candidate["path"]) != candidate["sha256"] or file_hash(identity["path"]) != identity["sha256"]:
             raise RuntimeError("assessment modified a preserved checkpoint")
         if source_metadata(config) != source:

@@ -39,10 +39,33 @@ The initial T8 gradient comparison was not accepted:embedding relative L2
 passed. Recomputed frozen features were not held bitwise fixed in that test;
 same-B1 loss also varied between repeats. The existing bias replay audit had
 already identified nondeterminism at the motion-evidence recomputation boundary.
-A separately recorded fixed-input isolation now compares B4/B2/B1 on the exact
-same frozen motion outputs and targets,without resampling or disk caching.
-Thresholds remain unchanged;no training continuation is authorized by a mere
-capacity result. This is a targeted batching diagnostic,not another quality run.
+A separately recorded fixed-input isolation completed on both H100s. It compared
+B4/B2/B1 using the exact same frozen motion outputs, targets and parent padding,
+without resampling, disk caching or parameter updates. Both batch-size checks
+were rejected at the unchanged relative-L2 limit of 4% and cosine minimum 0.999:
+
+| Maximum relative gradient difference across five monitored components | T8 | T24 |
+| --- | ---: | ---: |
+| Repeat B4 with identical inputs | 0.590% | 0.356% |
+| B4 versus B1 accumulated four times | 7.855% | 4.608% |
+| B2 accumulated twice versus B1 accumulated four times | 7.892% | 4.570% |
+| Recompute frozen encoder, then B4 versus fixed-output B4 | 7.466% | 4.264% |
+
+All loss comparisons passed, but loss agreement did not imply gradient agreement.
+Frozen-encoder recomputation contributes variation, yet cannot fully explain the
+batch-size discrepancy: it persists when those encoder outputs are held fixed.
+The remaining distinction between an implementation defect and BF16/kernel
+numerical sensitivity is unresolved. No tolerance was relaxed. This is not an
+accepted training replacement or a diagnosis of the model-quality failure.
+
+The isolation used zero optimizer updates; both checkpoint hashes and all model
+parameter versions were unchanged. Peak GPU allocation was 11.53/14.98 GiB and
+peak host memory 10.735/10.734 GiB for T8/T24, with optimizer state resident.
+Execution completion is separate from numerical acceptance. The bounded
+diagnostic is finished; no additional experiment or training is running.
+
+Isolation receipt: `results/shared_structure_batch_isolation_r1_assessment_evaluation.json`,
+SHA256 `fd72e629343db0e4692326b5a93985e816a029fb02250fb1cf5afc82108d389b`.
 
 Assessment receipt: `results/shared_structure_review_r1_assessment_evaluation.json`,
 SHA256 `a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380`.

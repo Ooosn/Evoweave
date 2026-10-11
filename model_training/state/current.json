@@ -264,9 +264,30 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Review held-out generation/reuse and physical-batch throughput before authorizing any training continuation.",
+  "next_required_result": "Report preserved-checkpoint quality and rejected fixed-input batch equivalence. No automatic experiment, architecture change or training continuation. Any future batch-path replacement requires resolving the measured discrepancy and passing the relevant numerical acceptance first.",
   "active_operation": {
     "experiment": "shared_structure_batch_isolation_20261011",
+    "method_quality_accepted": false,
+    "physical_batching_accepted": false,
+    "training_continuation_authorized": false,
+    "accepted_scope": "Execution completed only; both fixed-input T8 and T24 batch-equivalence checks were rejected at unchanged tolerances.",
+    "evaluation_artifact_sha256": "fd72e629343db0e4692326b5a93985e816a029fb02250fb1cf5afc82108d389b",
+    "numerical_summary": {
+      "gradient_relative_l2_limit": 0.04,
+      "gradient_cosine_minimum": 0.999,
+      "t8_b4_vs_b1_acc4_max_relative_l2": 0.07855198307081614,
+      "t24_b4_vs_b1_acc4_max_relative_l2": 0.04608002270022241,
+      "t8_b2_acc2_vs_b1_acc4_max_relative_l2": 0.07891748199306939,
+      "t24_b2_acc2_vs_b1_acc4_max_relative_l2": 0.04569988966548082,
+      "t8_b4_repeat_max_relative_l2": 0.005900338846000151,
+      "t24_b4_repeat_max_relative_l2": 0.0035644867561100742,
+      "loss_checks_passed": true,
+      "optimizer_steps": 0,
+      "checkpoint_hashes_unchanged": true,
+      "model_parameters_unchanged": true,
+      "interpretation": "Batch-size-dependent gradient discrepancy persists on fixed frozen-encoder outputs. Recomputed encoder variation also exists but is not a complete explanation. Implementation defect versus BF16/kernel sensitivity remains unresolved. No additional experiment or training continuation."
+    },
+    "reviewed_at": "2026-10-11T14:40:24+00:00",
     "stage": "assessment",
     "artifact_prefix": "shared_structure_batch_isolation_r1",
     "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",

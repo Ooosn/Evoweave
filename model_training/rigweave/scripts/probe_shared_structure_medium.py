@@ -18,7 +18,7 @@ from motion_experiment_runtime import guard, load_config, source_metadata, verif
 from probe_shared_structure import _cpu_targets, _finite_gradients, _load_original, _new_model, _optimizer, _prefix_parity
 from relation_probe_metrics import file_hash
 from run_shared_structure_experiment import (
-    _checkpoint_identity, build_stage_plan, require_prior_stage, validate_cache_report,
+    _checkpoint_identity, build_stage_plan, require_prior_stage, require_online_preflight, validate_cache_report,
 )
 from rigweave.dynamic_rig.shared_structure import SkeletonSequence, StrictXYZQuantizer
 from rigweave.dynamic_rig.shared_structure_coordinates import normalize_target_meshes, restore_target_coordinates
@@ -40,7 +40,7 @@ def move_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
 def validate_medium_config(config: dict[str, Any]) -> None:
     data, plan = config["data"], config["probe"]
     if not config["features"]["freeze_for_feasibility"]:
-        raise ValueError("a raw surface cache requires the recorded frozen-feature experiment")
+        raise ValueError("this bounded experiment requires the recorded frozen features")
     if data["pool_frames"] != data["train_frames"] + data["heldout_frames"]:
         raise ValueError("training and held-out frames must partition the original frame pool")
     if not 2 <= data["frames_min"] <= data["frames_max"] <= data["train_frames"]:
@@ -164,6 +164,68 @@ def select_cached_input(entry, bank: str, frames: int, *, training: bool,
     return source, target, batch, metadata
 
 
+def online_entries(selected, config):
+    result = {}
+    for split, rows in selected.items():
+        result[split] = []
+        for row in rows:
+            train, heldout = partition_raw_frames(config["data"]["pool_frames"],
+                asset_seed(config, row["asset_id"]), config["data"]["heldout_frames"])
+            train, heldout = train.tolist(), heldout.tolist()
+            result[split].append({**row, "split": split,
+                "partition": {"train_raw_ids": train, "heldout_raw_ids": heldout},
+                "source_frame_ids": {"train_a": train, "train_b": source_bank_indices(train, 1).tolist(),
+                                     "heldout": heldout}})
+    return result
+
+
+def prepare_online_batches(entry, config, bank, frames, *, training, seed=None):
+    if bank not in (*TRAIN_BANKS, "heldout") or (training and bank not in TRAIN_BANKS):
+        raise ValueError("held-out source geometry is forbidden during optimization")
+    train = entry["partition"]["train_raw_ids"]
+    heldout = entry["partition"]["heldout_raw_ids"]
+    ids = entry["source_frame_ids"][bank]
+    source_raw = [ids[i] for i in evidence_slots(len(ids), frames, seed=seed).tolist()]
+    requested = train if training else train[:8] + heldout
+    if training and (set(source_raw) | set(requested)) & set(heldout):
+        raise RuntimeError("held-out frames leaked into online training")
+    # Only training-eligible frames are materialized during optimization.
+    base = load_medium_batch(entry["path"], train if training else train + heldout)
+    if int(base["joint_count"][0]) != entry["joint_count"]:
+        raise RuntimeError("manifest and raw NPZ joint counts differ")
+    source = (load_medium_batch(entry["path"], source_raw) if bank == "heldout"
+              else select_source_view(base, source_raw))
+    targets = select_source_view(base, requested)
+    targets = normalize_target_meshes(targets, padding=config["data"]["target_mesh_padding"], precise_inverse=True)
+    reference = select_source_view(base, [train[0]])
+    selection = {"bank": bank, "query_raw_frame": source_raw[0], "source_raw_frames": source_raw,
+                 "target_raw_frames": requested,
+                 "heldout_target_positions": ([] if training else list(range(8, len(requested))))}
+    return source, targets, reference, selection
+
+
+@torch.no_grad()
+def select_online_input(original, entry, config, bank, frames, *, training, seed=None, device="cuda:0"):
+    source_cpu, target_cpu, reference_cpu, selection = prepare_online_batches(
+        entry, config, bank, frames, training=training, seed=seed)
+    device = torch.device(device)
+    source_batch, target_batch, reference_batch = (
+        move_batch(batch, device) for batch in (source_cpu, target_cpu, reference_cpu))
+    surface_seed = asset_seed(config, entry["asset_id"])
+    devices = [device.index or 0] if device.type == "cuda" else []
+    with torch.random.fork_rng(devices=devices), torch.autocast(
+            device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
+        torch.manual_seed(surface_seed)
+        target_refs = original.sample_references(reference_batch)
+        target = capture_surface_sequence(original.conditioner, target_batch, target_refs,
+                                          include_motion_geometry=False)
+        torch.manual_seed(surface_seed + {"train_a": 0, "train_b": 1, "heldout": 2}[bank])
+        source_refs = original.sample_references(source_batch)
+        source = capture_surface_sequence(original.conditioner, source_batch, source_refs)
+    batch = move_batch(_cpu_targets(target_cpu), device)
+    return source, target, batch, selection
+
+
 def peak_cpu_gib() -> float | None:
     if not sys.platform.startswith("linux"):
         return None
@@ -185,6 +247,19 @@ def tensor_bytes(value: Any) -> int:
     if isinstance(value, (tuple, list)):
         return sum(tensor_bytes(item) for item in value)
     return 0
+
+
+def coordinate_roundtrip_report(target_batch, source_batch, *, atol: float = 2e-6) -> dict[str, float]:
+    restored = restore_target_coordinates(target_batch["frame_target_joints"],
+        target_batch["target_source_centers"], target_batch["target_source_scales"])
+    expected = (source_batch["frame_target_joints"].double() * source_batch["query_scale"].double()[:, None, None, None]
+                + source_batch["query_center"].double()[:, None, None])
+    difference = (restored.double() - expected).abs()
+    normalized = difference / target_batch["target_source_scales"].double()[:, :, None, None]
+    torch.testing.assert_close(normalized, torch.zeros_like(normalized), atol=atol, rtol=0)
+    return {"source_coordinate_roundtrip_maxabs": float(difference.max()),
+            "mesh_normalized_roundtrip_maxabs": float(normalized.max()),
+            "mesh_normalized_roundtrip_atol": atol}
 
 
 def load_entry(metadata: dict[str, Any]) -> dict[str, Any]:
@@ -226,7 +301,7 @@ def build_cache(original, config, selected, stage, report, report_path):
             cpu_batch = load_medium_batch(row["path"], all_ids)
             if int(cpu_batch["joint_count"][0]) != row["joint_count"]:
                 raise RuntimeError("manifest and raw NPZ joint counts differ")
-            target_cpu = normalize_target_meshes(cpu_batch, padding=data["target_mesh_padding"])
+            target_cpu = normalize_target_meshes(cpu_batch, padding=data["target_mesh_padding"], precise_inverse=True)
             valid = target_cpu["frame_mask"][:, :, None] & target_cpu["joint_mask"][:, None]
             quantizer.encode(target_cpu["frame_target_joints"], valid)
             target_batch = move_batch(target_cpu, torch.device("cuda:0"))
@@ -268,11 +343,7 @@ def build_cache(original, config, selected, stage, report, report_path):
             for field in ("tokens", "query_points", "query_indices"):
                 if not torch.equal(entry["target"][field], restored["target"][field]):
                     raise RuntimeError("raw target surface shard changed a feature tensor")
-            raw = restore_target_coordinates(target_cpu["frame_target_joints"],
-                                              target_cpu["target_source_centers"], target_cpu["target_source_scales"])
-            expected = (cpu_batch["frame_target_joints"] * cpu_batch["query_scale"][:, None, None, None]
-                        + cpu_batch["query_center"][:, None, None])
-            torch.testing.assert_close(raw, expected, atol=1e-5, rtol=1e-5)
+            roundtrip = coordinate_roundtrip_report(target_cpu, cpu_batch)
             meta = {**row, "split": split, "partition": entry["partition"],
                     "source_frame_ids": entry["source_frame_ids"], "shard_path": str(shard),
                     "shard_sha256": file_hash(shard), "shard_bytes": shard.stat().st_size,
@@ -282,7 +353,7 @@ def build_cache(original, config, selected, stage, report, report_path):
                 "joint_count": row["joint_count"], "query_frames": {k: v[0] for k, v in entry["source_frame_ids"].items()},
                 "heldout_frames": heldout_ids, "train_frames": train_ids, "raw_surface_cache_exact": True,
                 "target_range": [float(target_cpu["frame_target_joints"].min()), float(target_cpu["frame_target_joints"].max())],
-                "source_coordinate_roundtrip_maxabs": float((raw - expected).abs().max()),
+                **roundtrip,
                 "shard_bytes": meta["shard_bytes"], "token_dtype": str(entry["target"]["tokens"].dtype)})
             report["cache_progress"] = {"assets": sum(map(len, entries.values())),
                                         "bytes": sum(r["shard_bytes"] for v in entries.values() for r in v),
@@ -291,7 +362,7 @@ def build_cache(original, config, selected, stage, report, report_path):
             write_json(report_path, report)
             print(f"CACHE {split} index={row['index']} J={row['joint_count']} "
                   f"assets={report['cache_progress']['assets']} bytes={meta['shard_bytes']}", flush=True)
-            del cpu_batch, target_cpu, entry, restored, raw, expected, refs
+            del cpu_batch, target_cpu, entry, restored, refs
     if versions != {name: p._version for name, p in original.conditioner.named_parameters()}:
         raise RuntimeError("cache construction changed the frozen encoder")
     return entries
@@ -361,7 +432,7 @@ def summarize_rows(rows) -> dict[str, Any]:
 
 
 @torch.no_grad()
-def evaluate(model, entries, config, output_root, label, report, report_path):
+def evaluate(model, entries, config, output_root, label, report, report_path, *, original=None):
     model.eval()
     output_dir = output_root / f"evaluation_{label}"
     output_dir.mkdir(exist_ok=False)
@@ -370,10 +441,13 @@ def evaluate(model, entries, config, output_root, label, report, report_path):
         if split == "train":
             values = values[:config["probe"]["evaluate_train_assets"]]
         for ordinal, meta in enumerate(values):
-            entry = load_entry(meta)
+            entry = meta if original is not None else load_entry(meta)
             saved_views = {}
             for view, bank, frames in evaluation_views(config, ordinal, label):
-                source, target, batch, selection = select_cached_input(entry, bank, frames, training=False)
+                if original is not None:
+                    source, target, batch, selection = select_online_input(original, entry, config, bank, frames, training=False)
+                else:
+                    source, target, batch, selection = select_cached_input(entry, bank, frames, training=False)
                 heldout = selection["heldout_target_positions"]
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     output = model.forward_surface(source, target, batch)
@@ -548,7 +622,7 @@ def save_training_checkpoint(model, optimizer, scheduler, config, source, output
             "contains_optimizer_and_sampler": True}
 
 
-def train_probe(model, entries, config, source_identity, output_root, report, report_path):
+def train_probe(model, entries, config, source_identity, output_root, report, report_path, *, original=None):
     plan = config["probe"]
     model.train()
     optimizer = _optimizer(model, config)
@@ -563,6 +637,10 @@ def train_probe(model, entries, config, source_identity, output_root, report, re
     trace, checkpoints = [], []
     started = time.monotonic()
     gradients = {}
+    watched_names = {"memory.queries", "structure.embedding.weight", "structure.head.weight",
+                     "positions.xyz_head.weight", "structure.backbone.decoder.layers.0.self_attn.q_proj.weight"}
+    snapshots = {name: p.detach().clone() for name, p in model.skeleton.named_parameters()
+                 if original is not None and name in watched_names}
     for step in range(1, plan["steps"] + 1):
         optimizer.zero_grad(set_to_none=True)
         losses, structures, positions = [], [], []
@@ -571,15 +649,30 @@ def train_probe(model, entries, config, source_identity, output_root, report, re
                 order, cursor = list(map(int, rng.permutation(len(entries)))), 0
             meta = entries[order[cursor]]
             cursor += 1
-            entry = load_entry(meta)
+            entry = meta if original is not None else load_entry(meta)
             bank = TRAIN_BANKS[int(rng.integers(0, len(TRAIN_BANKS)))]
             frames = int(rng.integers(config["data"]["frames_min"], config["data"]["frames_max"] + 1))
-            source, target, batch, selection = select_cached_input(entry, bank, frames, training=True,
-                                                                  seed=int(rng.integers(0, 2 ** 31)))
+            view_seed = int(rng.integers(0, 2 ** 31))
+            if original is not None:
+                source, target, batch, selection = select_online_input(original, entry, config, bank, frames,
+                                                                      training=True, seed=view_seed)
+            else:
+                source, target, batch, selection = select_cached_input(entry, bank, frames, training=True, seed=view_seed)
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 output = model.forward_surface(source, target, batch, xyz_weight=plan["xyz_weight"])
             if not bool(torch.isfinite(output["loss"])):
                 raise RuntimeError(f"nonfinite training loss at update {step}")
+            if original is not None and assets == 0:
+                with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                    parity = _prefix_parity(model, output, batch, config)
+                watched = [model.skeleton.memory.queries, model.skeleton.structure.embedding.weight,
+                           model.skeleton.structure.backbone.decoder.layers[0].self_attn.q_proj.weight]
+                xyz_gradients = torch.autograd.grad(output["xyz_loss"], watched, retain_graph=True)
+                if any(not bool(torch.isfinite(g).all()) or float(g.abs().sum()) <= 0 for g in xyz_gradients):
+                    raise RuntimeError("online XYZ supervision does not train the skeleton representation")
+                report["online_startup"] = {"prefix_maxabs": parity, "selection": selection,
+                    "xyz_only_structure_gradients": [float(g.abs().sum()) for g in xyz_gradients]}
+                del xyz_gradients
             (output["loss"] / plan["accumulation"]).backward()
             losses.append(float(output["loss"].detach()))
             structures.append(float(output["structure_loss"].detach()))
@@ -596,6 +689,16 @@ def train_probe(model, entries, config, source_identity, output_root, report, re
                                               plan["clip_grad_norm"], error_if_nonfinite=True)
         optimizer.step()
         scheduler.step()
+        if original is not None and step == 1:
+            changed = {name: bool((dict(model.skeleton.named_parameters())[name].detach() != value).any())
+                       for name, value in snapshots.items()}
+            if len(changed) != 5 or not all(changed.values()):
+                raise RuntimeError("online startup did not update all five monitored components")
+            if any(p.grad is not None for p in model.conditioner.parameters()):
+                raise RuntimeError("online feature extraction produced encoder gradients")
+            report["online_startup"].update(update_checks=changed, accepted=True,
+                                           feature_mode="online_no_disk_cache")
+            del snapshots
         item = {"step": step, "loss": float(np.mean(losses)), "structure_ce": float(np.mean(structures)),
                 "xyz_ce": float(np.mean(positions)), "gradient_norm": float(norm), "assets": assets,
                 "source_frame_exposures": source_frames, "target_frame_exposures": target_frames,
@@ -644,9 +747,12 @@ def main():
             raise RuntimeError(f"pinned preparation evidence changed: {field}")
     for operation in stage_plan["guard_operations"]:
         guard(config, operation)
-    if args.stage != "preflight":
+    online = config["runtime"].get("feature_mode", "cached") == "online"
+    if online:
+        preflight_reference = require_online_preflight(config)
+    elif args.stage != "preflight":
         require_prior_stage(config, args.config, "preflight", source)
-    if args.stage == "probe":
+    if args.stage == "probe" and not online:
         require_prior_stage(config, args.config, "cache", source)
     output_root = Path(stage_plan["output_dir"])
     output_root.mkdir(parents=True, exist_ok=False)
@@ -670,7 +776,11 @@ def main():
         original, _, _ = _load_original(config)
         selected = selected_rows(config, preflight=args.stage == "preflight")
         report["selected"] = selected
-        if args.stage in {"preflight", "cache"}:
+        if online:
+            entries = online_entries(selected, config)
+            report.update(feature_mode="online_no_disk_cache", preflight_reference=preflight_reference,
+                          initialized_evaluation="deferred; training starts before generation diagnostics")
+        elif args.stage in {"preflight", "cache"}:
             entries = build_cache(original, config, selected, args.stage, report, args.output)
         else:
             prior = json.loads(Path(build_stage_plan(config, "cache", args.config)["evaluation_path"]).read_text())
@@ -691,16 +801,29 @@ def main():
         else:
             initialization = {**config, "data": {**config["data"], "seed": config["data"]["model_seed"]}}
             model = _new_model(original, initialization)
-            del original
+            if not online:
+                del original
             report["trainable_parameters"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
             if args.stage == "preflight":
                 preflight(model, entries, config, report, args.output)
             else:
-                report["initialized"] = evaluate(model, entries, config, output_root, "initialized", report, args.output)
-                write_json(args.output, report)
-                train_probe(model, entries["train"], config, source, output_root, report, args.output)
-                report["trained"] = evaluate(model, entries, config, output_root, "trained", report, args.output)
-                report["cache_verification_after"] = verify_shards(entries)
+                if not online:
+                    report["initialized"] = evaluate(model, entries, config, output_root, "initialized", report, args.output)
+                    write_json(args.output, report)
+                train_probe(model, entries["train"], config, source, output_root, report, args.output,
+                            original=original if online else None)
+                report["trained"] = evaluate(model, entries, config, output_root, "trained", report, args.output,
+                                             original=original if online else None)
+                if online:
+                    write_json(args.output, report)
+                    del model, original
+                    original, _, _ = _load_original(config)
+                    model = _new_model(original, initialization)
+                    report["initialized"] = evaluate(model, entries, config, output_root, "initialized", report,
+                                                     args.output, original=original)
+                    report["initialized_evaluation"] = "completed after training from the original checkpoint and model seed"
+                if not online:
+                    report["cache_verification_after"] = verify_shards(entries)
                 report["checkpoint"] = report["checkpoints"][-1]
                 report["method_quality_accepted"] = False
                 report["quality_review"] = "Primary review required; complete/accepted means execution only."

@@ -27,6 +27,11 @@ TERMINAL_STATUSES = frozenset(("completed", "failed"))
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ARTIFACT_PREFIX_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py"))
+_ONLINE_PREFLIGHT_DATA_FIELDS = (
+    "seed", "model_seed", "frame_seed", "train_assets", "valid_assets", "pool_frames",
+    "train_frames", "heldout_frames", "source_banks", "frames_min", "frames_max",
+    "target_mesh_padding", "selection_audit_sha256",
+)
 
 
 def _same_path(left: str | Path, right: str | Path) -> bool:
@@ -92,6 +97,16 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
             "runtime.artifact_prefix must contain only letters, numbers, '_' or '-'")
     if runtime.get("probe_script", "probe_shared_structure.py") not in _PROBE_SCRIPTS:
         raise ValueError("runtime.probe_script is not an approved shared-structure entry point")
+    feature_mode = runtime.get("feature_mode", "cached")
+    if feature_mode not in ("cached", "online"):
+        raise ValueError("runtime.feature_mode must be 'cached' or 'online'")
+    if feature_mode == "online":
+        if runtime.get("probe_script") != "probe_shared_structure_medium.py" or stage != "probe":
+            raise ValueError("online features require the medium probe entry point and stage='probe'")
+        reference = _require_dict(runtime.get("preflight_reference"), "runtime.preflight_reference")
+        if not isinstance(reference.get("path"), str) or not reference["path"]:
+            raise ValueError("runtime.preflight_reference.path must be a non-empty path")
+        _require_sha256(reference.get("sha256"), "runtime.preflight_reference.sha256")
     _expected_resources(config)
     _checkpoint_identity(config)
     baseline = _require_dict(config["baseline"], "baseline")
@@ -429,6 +444,68 @@ def require_prior_stage(config: dict[str, Any], config_path: str | Path, stage: 
         raise RuntimeError(f"prior {stage} child did not exit zero")
 
 
+def require_online_preflight(config: dict[str, Any]) -> dict[str, Any]:
+    """Validate an explicitly pinned medium preflight for online feature delivery."""
+    validate_config(config, "probe")
+    if config["runtime"].get("feature_mode", "cached") != "online":
+        raise ValueError("require_online_preflight requires runtime.feature_mode='online'")
+    reference = config["runtime"]["preflight_reference"]
+    path = Path(reference["path"])
+    try:
+        raw = path.read_bytes()
+    except OSError as error:
+        raise RuntimeError(f"unable to read pinned online preflight: {path}: {error}") from error
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != reference["sha256"]:
+        raise RuntimeError("online preflight SHA256 does not match the pinned reference")
+    try:
+        report = json.loads(raw)
+    except (ValueError, UnicodeDecodeError) as error:
+        raise RuntimeError(f"unable to parse pinned online preflight: {path}") from error
+    if not isinstance(report, dict) or report.get("schema_version") != 1 or report.get("stage") != "preflight":
+        raise RuntimeError("online preflight reference must be a preflight child report with schema_version=1")
+    if report.get("complete") is not True or report.get("accepted") is not True:
+        raise RuntimeError("online preflight reference is not complete and accepted")
+    if report.get("source_checkpoint") != _checkpoint_identity(config):
+        raise RuntimeError("online preflight source checkpoint does not match the current baseline")
+    if report.get("source_checkpoint_unchanged") is not True:
+        raise RuntimeError("online preflight did not verify an unchanged source checkpoint")
+    cases, updates = report.get("preflight_cases"), report.get("update_checks")
+    if not isinstance(cases, list) or not cases or not all(isinstance(case, dict) for case in cases):
+        raise RuntimeError("online preflight must contain non-empty preflight_cases")
+    if not isinstance(updates, dict) or not updates or not all(value is True for value in updates.values()):
+        raise RuntimeError("online preflight update_checks must be non-empty and all true")
+    previous = _require_dict(report.get("configuration"), "online preflight configuration")
+    previous_runtime = _require_dict(previous.get("runtime"), "online preflight runtime")
+    if previous_runtime.get("probe_script") != "probe_shared_structure_medium.py":
+        raise RuntimeError("online preflight must come from the medium probe entry point")
+    architecture = _require_dict(config.get("architecture"), "architecture")
+    previous_architecture = _require_dict(previous.get("architecture"), "online preflight architecture")
+    if not architecture or previous_architecture != architecture or any(
+        type(previous_architecture[key]) is not type(value) for key, value in architecture.items()
+    ):
+        raise RuntimeError("online preflight architecture differs from the current configuration")
+    previous_baseline = _require_dict(previous.get("baseline"), "online preflight baseline")
+    if previous_baseline.get("manifests") != config["baseline"]["manifests"]:
+        raise RuntimeError("online preflight manifests differ from the current configuration")
+    for section, fields in (
+        ("data", _ONLINE_PREFLIGHT_DATA_FIELDS),
+        ("features", ("freeze_for_feasibility", "register_temporal_mode")),
+    ):
+        before = _require_dict(previous.get(section), f"online preflight {section}")
+        after = _require_dict(config.get(section), section)
+        for key in fields:
+            if key not in before or key not in after or type(before[key]) is not type(after[key]) or before[key] != after[key]:
+                raise RuntimeError(f"online preflight {section}.{key} differs from the current configuration")
+    # The pinned compatible receipt replaces cross-stage code ancestry only;
+    # the new operation still goes through the exact prepared-state guard.
+    return {
+        "path": str(path), "sha256": digest, "experiment": report.get("experiment"),
+        "source": report.get("source"), "source_checkpoint": report["source_checkpoint"],
+        "case_count": len(cases), "update_checks": updates, "finished_at": report.get("finished_at"),
+    }
+
+
 def execute_stage(
     config: dict[str, Any],
     plan: dict[str, Any],
@@ -463,6 +540,8 @@ def execute_stage(
         "child_exit": None,
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
+    if "online_preflight" in plan:
+        result["online_preflight"] = plan["online_preflight"]
     write_json(Path(plan["result_path"]), result)
     try:
         with Path(plan["log_path"]).open("x", encoding="utf-8", buffering=1) as handle:
@@ -517,7 +596,9 @@ def run_stage(config_path: str | Path, stage: str) -> dict[str, Any]:
     state_path = Path(config["runtime"]["repo"]) / "model_training/state/current.json"
     state = _load_json_object(state_path, "current state")
     validate_prepared_state(state, config, plan, source)
-    if stage == "cache":
+    if config["runtime"].get("feature_mode", "cached") == "online":
+        plan["online_preflight"] = require_online_preflight(config)
+    elif stage == "cache":
         require_prior_stage(config, config_path, "preflight", source)
     elif stage == "probe":
         require_prior_stage(config, config_path, "preflight", source)

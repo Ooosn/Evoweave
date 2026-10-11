@@ -85,7 +85,9 @@ def _require_batch_tensors(batch: dict[str, Any]) -> tuple[torch.Tensor | None, 
     return frame_vertices, frame_targets, vertex_count, joint_mask, query_center, query_scale
 
 
-def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict[str, Any]:
+def normalize_target_meshes(
+    batch: dict[str, Any], padding: float = 1.1, *, precise_inverse: bool = False,
+) -> dict[str, Any]:
     """Normalize each selected mesh independently for the local position decoder.
 
     Targets/masks are optional. With a base query affine, the returned inverse
@@ -93,6 +95,8 @@ def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict
     the input mesh is treated as source coordinates. Inference requires no GT.
     """
 
+    if not isinstance(precise_inverse, bool):
+        raise TypeError("precise_inverse must be a boolean")
     padding_value = _require_padding(padding)
     (
         frame_vertices,
@@ -141,8 +145,14 @@ def normalize_target_meshes(batch: dict[str, Any], padding: float = 1.1) -> dict
             raise ValueError("normalized valid target joints must be finite")
         normalized_targets = torch.where(valid_joints[..., None], normalized_targets, zero_targets)
 
-    source_centers = query_center[:, None, :] + query_scale[:, None, None] * local_centers
-    source_scales = query_scale[:, None] * local_scales
+    # Composed world-space affines can lose low bits when offsets are large.
+    # Higher-precision inverse metadata does not change model-space tensors.
+    inverse_center = query_center.double() if precise_inverse else query_center
+    inverse_scale = query_scale.double() if precise_inverse else query_scale
+    inverse_local_centers = local_centers.double() if precise_inverse else local_centers
+    inverse_local_scales = local_scales.double() if precise_inverse else local_scales
+    source_centers = inverse_center[:, None, :] + inverse_scale[:, None, None] * inverse_local_centers
+    source_scales = inverse_scale[:, None] * inverse_local_scales
     if not bool(torch.isfinite(source_centers).all()) or not bool(torch.isfinite(source_scales).all()):
         raise ValueError("source mesh affine must be finite")
     if bool((source_scales <= 0).any()):

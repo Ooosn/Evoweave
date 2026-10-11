@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment": "shared_structure_medium_20261011",
-  "authorization": "User authorized beginning the medium-scale expansion after discussion of the new skeleton-token vocabulary. The primary objective is a reusable generated skeleton identity/structure sequence, with target-mesh localization providing supervision and use. This is a bounded frozen-feature experiment, not formal full-dataset retraining. Preserve all prior models and artifacts; review each stage before the next; no automatic retry or promotion.",
+  "authorization": "User authorized the medium-scale expansion and then explicitly requested canceling large feature caching and starting direct online training. Reuse the accepted network preflight; check only the changed online path. The primary objective remains a reusable generated skeleton identity/structure sequence. This is bounded frozen-feature training, not formal full-dataset retraining. Preserve prior artifacts, including the failed cache attempt; no automatic retry or promotion.",
   "baseline": {
     "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "checkpoint_sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620",
@@ -26,9 +26,13 @@
     "conda_bin": "/home/wangyy/miniconda3/envs/mygs/bin",
     "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
     "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
-    "output_root": "/home/wangyy/evorig/outputs/shared_structure_medium_20261011_r1",
-    "cache_root": "/work/wangyy/shared_structure_medium_20261011_r1",
-    "artifact_prefix": "shared_structure_medium_r1",
+    "output_root": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1",
+    "artifact_prefix": "shared_structure_online_r1",
+    "feature_mode": "online",
+    "preflight_reference": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_preflight_evaluation.json",
+      "sha256": "afcd30acd38ac6411a625f71a6ffa9fac938980e4305691adb7d78617e34a1ed"
+    },
     "probe_script": "probe_shared_structure_medium.py",
     "saved_environment": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/resolved_env.txt",
     "saved_environment_sha256": "069dfe9d43dc6c8f6e6038998dcdf224b021ee5639712f1dfdb9e96943a9e893",
@@ -56,7 +60,7 @@
   "features": {
     "register_temporal_mode": "global",
     "freeze_for_feasibility": true,
-    "cache_boundary": "Independent per-frame surface tokens and raw tracks before temporal encoding or u/O/M evidence. Two mesh-only query charts per training asset; a third source bank contains only the eight held-out raw frames and is evaluation-only. Recompute temporal/evidence features after selecting actual T. Target geometry is independently normalized per mesh. Save one large shard per asset on verified compute-node NVMe; keep only one asset in process memory.",
+    "delivery": "Read the current asset directly and compute only selected source-T and target-frame features on demand. No precomputed or persistent feature cache, including reuse of partial R1 shards. Two training-query charts, independent mesh-normalized targets and actual-T temporal encoding are unchanged. A third heldout-only source is evaluation-only. Target sampling always uses the fixed train_a reference, independent of the chosen source bank.",
     "original_motion_evidence": "Keep original bias_h8 and all u/c/d channels, with no relation adapter or GT-derived conditioning."
   },
   "data": {
@@ -76,6 +80,9 @@
     "selection_audit_sha256": "b405e7083142b031786b1b40a34164772b7541b3dc968e7b27d34cf118ec3dff",
     "coordinate_audit": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_coordinate_audit.json",
     "coordinate_audit_sha256": "c4fe4d832889a38904e7461bd2999c2945317f2460bc90f9d239275fccd8ea11",
+    "roundtrip_diagnosis": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_roundtrip_audit.json",
+    "roundtrip_diagnosis_sha256": "2981ae41a9faaa0e24e74842f13fec905ccd7757e7c6b9c5dc022840369f0e09",
+    "inverse_precision": "Compose source-space inverse affine metadata in float64; model-space vertices and GT tensors are unchanged. The failed R1 cache receipt and partial shards are preserved but unused. Online training has a separate output directory and no cache stage.",
     "partition": "Partition original 40-frame NPZ indices by an asset-specific deterministic seed before any query, surface, or evidence selection. The 32 training-eligible frames provide both source banks and all XYZ training targets. The eight held-out frames never enter the current optimization; validation assets never enter optimization. Canonical NPZs and final manifests are unchanged. Keep every target joint and its ordered identity.",
     "quantization": "Unchanged strict 256-bin [-1,1] quantizer with mesh-only 1.1 padding. All 320 assets/all 40 frames were audited: unpadded training maxabs1.07687545 and validation1.01399255. No clipping, GT-derived per-instance scale, filtering or new root."
   },
@@ -85,7 +92,7 @@
     "optimizer_steps": 4,
     "bf16_prefix_atol": 0.03,
     "stress_joints": 512,
-    "acceptance": "CPU tests prove raw-frame partition/rebase alignment, cache selection independence and training loss/gradient isolation from held-out feature/label mutations. Real min/max-J train/valid cases exercise T2/T8/T24, both query charts, and the evaluation-only heldout source. Require cached tensor roundtrip, prefix parity, sequence save/rebinding, positive localization gradients into structure, all five component updates, frozen features unchanged, and T24/J512/32target stress below90% GPU memory and CPU peak below90% of64GiB. This is execution acceptance only."
+    "acceptance": "Reuse pinned accepted medium R1 network preflight:20 real cases,4 optimizer steps,5 component updates,XYZ-to-structure gradients and T24/J512 stress. Verify online raw-frame isolation with focused CPU tests, then check prefix parity,XYZ-to-structure gradients,all5 updates and frozen encoder during the first real training update. Do not repeat full preflight or create feature shards. Execution acceptance is not quality acceptance."
   },
   "probe": {
     "steps": 4096,
@@ -105,6 +112,6 @@
     "evaluate_train_assets": 32,
     "detailed_eval_assets": 16,
     "loss": "Per-asset mean structure CE plus mean XYZ CE over all32eligible target frames, joints and axes; average four assets per update. Total16384asset exposures, exactly64per selected training asset. Sample T2..24 and one of two training-query charts per exposure. No heldout target or source enters optimization; no XYZ equality or blanket hidden-vector matching loss.",
-    "acceptance": "Compare initialized/final T8 on the same32train diagnostic assets and all64validation assets. Final multi-view evaluation uses the first16of each split for T2/T24, alternate query T8 and disjoint heldout-source T8. Save each generated S and bind without rerunning source encoding/AR. Report naturalEOS, ordered parents, count, one-to-one geometry/edge coverage, fixed-identity coverage across all8heldout targets, and cross-source agreement conditional on GT correctness. Exact-tree metric is ordered identity, not unordered isomorphism. Prefix-GT positions still use learned H, not true skeleton features. Same-action holdouts and inherited base-pose exposure are limitations; do not claim independent-action invariance or formal model promotion."
+    "acceptance": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim."
   }
 }

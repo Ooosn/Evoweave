@@ -8,6 +8,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import torch
 from torch import nn
@@ -15,6 +16,8 @@ from torch import nn
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import probe_shared_structure_medium as medium
 from rigweave.dynamic_rig.shared_structure import SharedStructureConfig, SharedStructureRig
+from rigweave.dynamic_rig.shared_structure_coordinates import normalize_target_meshes
+import test_shared_structure_medium_data as data_fixtures
 
 
 class CausalBackbone(nn.Module):
@@ -71,6 +74,19 @@ class MediumProbeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             medium.evidence_slots(8, 24)
 
+    def test_roundtrip_check_is_scale_aware_and_rejects_a_real_affine_error(self):
+        batch = {"frame_vertices": torch.randn(1, 3, 7, 3),
+                 "frame_target_joints": torch.randn(1, 3, 3, 3) * .2,
+                 "vertex_count": torch.tensor([7]), "joint_mask": torch.ones(1, 3, dtype=torch.bool),
+                 "query_center": torch.tensor([[1e8, -1e8, 1e8]]), "query_scale": torch.tensor([400.3])}
+        target = normalize_target_meshes(batch, precise_inverse=True)
+        metrics = medium.coordinate_roundtrip_report(target, batch)
+        self.assertLess(metrics["mesh_normalized_roundtrip_maxabs"], 2e-6)
+        broken = deepcopy(target)
+        broken["target_source_centers"] += .001 * broken["target_source_scales"][:, :, None]
+        with self.assertRaises(AssertionError):
+            medium.coordinate_roundtrip_report(broken, batch)
+
     def test_cached_training_physically_excludes_heldout_targets_and_inputs(self):
         entry = sample_entry()
         for bank in medium.TRAIN_BANKS:
@@ -87,6 +103,75 @@ class MediumProbeTests(unittest.TestCase):
         _, _, _, selected = medium.select_cached_input(entry, "heldout", 8, training=False, device="cpu")
         self.assertEqual(selected["source_raw_frames"], list(range(32, 40)))
         self.assertEqual(selected["heldout_target_positions"], list(range(8, 16)))
+
+    def test_online_batches_exclude_heldout_and_keep_target_chart_independent(self):
+        fixture = data_fixtures.SharedStructureMediumDataTest()
+        config = {"data": {"pool_frames": 40, "heldout_frames": 8, "frame_seed": 21, "target_mesh_padding": 1.1}}
+        with tempfile.TemporaryDirectory() as directory:
+            raw = fixture.payload()
+            path = fixture.write(Path(directory), raw)
+            row = {"asset_id": "fixture", "path": str(path), "joint_count": 4, "index": 7}
+            entry = medium.online_entries({"train": [row]}, config)["train"][0]
+            train, heldout = entry["partition"].values()
+            previous_target = None
+            for bank in medium.TRAIN_BANKS:
+                for frames in (2, 8, 24):
+                    source, target, reference, selection = medium.prepare_online_batches(
+                        entry, config, bank, frames, training=True, seed=73)
+                    self.assertEqual(source["selected_frames"].shape, (1, frames))
+                    self.assertEqual(target["selected_frames"].tolist(), [train])
+                    self.assertEqual(reference["selected_frames"].tolist(), [[train[0]]])
+                    self.assertFalse(set(selection["source_raw_frames"]) & set(heldout))
+                    self.assertEqual(selection["heldout_target_positions"], [])
+                    if previous_target is not None:
+                        self.assertTrue(torch.equal(target["frame_vertices"], previous_target))
+                    previous_target = target["frame_vertices"].clone()
+            with self.assertRaisesRegex(ValueError, "forbidden"):
+                medium.prepare_online_batches(entry, config, "heldout", 8, training=True)
+            _, target, _, selection = medium.prepare_online_batches(entry, config, "heldout", 8, training=False)
+            self.assertEqual(target["selected_frames"].tolist(), [train[:8] + heldout])
+            self.assertEqual(selection["source_raw_frames"], heldout)
+            self.assertEqual(selection["heldout_target_positions"], list(range(8, 16)))
+
+    def test_online_features_are_streamed_replayable_and_heldout_independent(self):
+        fixture = data_fixtures.SharedStructureMediumDataTest()
+        config = {"data": {"pool_frames": 40, "heldout_frames": 8, "frame_seed": 21, "target_mesh_padding": 1.1}}
+        original = SimpleNamespace(conditioner=object(), sample_references=lambda batch: torch.rand(1))
+        calls = []
+
+        def capture(conditioner, batch, refs, *, include_motion_geometry=True):
+            points = batch["frame_vertices"][:, :, :3]
+            calls.append((points.shape[1], include_motion_geometry))
+            return medium.SharedSurfaceSequence(points.mean(-1, keepdim=True).repeat(1, 1, 1, 8) + refs,
+                points.clone(), torch.arange(3)[None], points.clone() if include_motion_geometry else None)
+
+        with tempfile.TemporaryDirectory() as directory:
+            raw = fixture.payload()
+            path = fixture.write(Path(directory), raw)
+            row = {"asset_id": "fixture", "path": str(path), "joint_count": 4, "index": 7}
+            entry = medium.online_entries({"train": [row]}, config)["train"][0]
+            state = torch.get_rng_state().clone()
+            with patch.object(medium, "capture_surface_sequence", side_effect=capture), \
+                    patch.object(torch, "save", side_effect=AssertionError("no feature writes")), \
+                    patch.object(torch, "load", side_effect=AssertionError("no feature reads")):
+                a = medium.select_online_input(original, entry, config, "train_b", 8,
+                                               training=True, seed=53, device="cpu")
+                self.assertTrue(torch.equal(state, torch.get_rng_state()))
+                heldout = entry["partition"]["heldout_raw_ids"]
+                raw["frame_vertices_rootspace"][heldout] += 1e5
+                raw["target_joints_rootspace"][heldout] -= 1e5
+                fixture.write(Path(directory), raw)
+                b = medium.select_online_input(original, entry, config, "train_b", 8,
+                                               training=True, seed=53, device="cpu")
+                c = medium.select_online_input(original, entry, config, "train_a", 2,
+                                               training=True, seed=54, device="cpu")
+            self.assertEqual(calls, [(32, False), (8, True), (32, False), (8, True), (32, False), (2, True)])
+            for index in (0, 1):
+                self.assertTrue(torch.equal(a[index].tokens, b[index].tokens))
+                self.assertTrue(torch.equal(a[index].query_points, b[index].query_points))
+            self.assertTrue(torch.equal(a[1].tokens, c[1].tokens))
+            self.assertTrue(torch.equal(a[2]["frame_target_joints"], b[2]["frame_target_joints"]))
+            self.assertEqual(len(list(Path(directory).iterdir())), 1)
 
     def test_heldout_feature_and_label_mutations_do_not_change_training_loss_or_gradients(self):
         entry = sample_entry()

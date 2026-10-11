@@ -15,6 +15,35 @@ from rigweave.dynamic_rig.shared_structure_coordinates import (  # noqa: E402
 
 
 class SharedStructureCoordinatesTest(unittest.TestCase):
+    def test_precise_inverse_changes_only_affine_metadata(self) -> None:
+        batch = self.make_batch()
+        batch["query_center"] = batch["query_center"] + 1e8
+        default = normalize_target_meshes(batch)
+        precise = normalize_target_meshes(batch, precise_inverse=True)
+        for key in ("frame_vertices", "frame_target_joints", "target_joints", "target_mesh_centers", "target_mesh_scales"):
+            self.assertTrue(torch.equal(default[key], precise[key]), key)
+            self.assertEqual(default[key].dtype, precise[key].dtype)
+        self.assertEqual(precise["target_source_centers"].dtype, torch.float64)
+        self.assertEqual(precise["target_source_scales"].dtype, torch.float64)
+        restored = restore_target_coordinates(precise["frame_target_joints"],
+            precise["target_source_centers"], precise["target_source_scales"])
+        expected = (batch["frame_target_joints"].double() * batch["query_scale"].double()[:, None, None, None]
+                    + batch["query_center"].double()[:, None, None])
+        valid = batch["joint_mask"][:, None].expand(*restored.shape[:3])
+        delta = ((restored - expected) / precise["target_source_scales"][:, :, None, None])[valid]
+        torch.testing.assert_close(delta, torch.zeros_like(delta), atol=2e-6, rtol=0)
+        with self.assertRaises(TypeError):
+            normalize_target_meshes(batch, precise_inverse=1)
+
+    def test_default_preserves_native_mixed_affine_dtype(self) -> None:
+        batch = self.make_batch()
+        batch["query_center"] = batch["query_center"].double()
+        normalized = normalize_target_meshes(batch)
+        self.assertEqual(normalized["target_source_centers"].dtype, torch.float64)
+        expected = (batch["query_center"][:, None] + batch["query_scale"][:, None, None]
+                    * normalized["target_mesh_centers"])
+        self.assertTrue(torch.equal(normalized["target_source_centers"], expected))
+
     def make_batch(self) -> dict[str, torch.Tensor | object]:
         query_center = torch.tensor([[100.0, -50.0, 20.0], [-30.0, 80.0, 12.0]])
         query_scale = torch.tensor([2.0, 4.0])

@@ -120,6 +120,43 @@ class SharedStructureControllerTest(unittest.TestCase):
         }
         return recorder.prepare_state(state, self.config, plan, self.source, now="2026-10-11T00:00:00+00:00")
 
+    def _pin_online_report(self, config: dict, report: dict) -> Path:
+        path = self.root / "accepted_medium_preflight.json"
+        path.write_text(json.dumps(report), encoding="utf-8")
+        config["runtime"]["preflight_reference"] = {
+            "path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        }
+        return path
+
+    def _online_fixture(self) -> tuple[dict, dict]:
+        config = deepcopy(self.config)
+        config["runtime"].update(feature_mode="online", probe_script="probe_shared_structure_medium.py")
+        (self.repo / "model_training/rigweave/scripts/probe_shared_structure_medium.py").write_text("# fixture\n")
+        config["architecture"] = {"dim": 16, "heads": 4, "max_joints": 512, "xyz_bins": 256}
+        config["features"] = {"freeze_for_feasibility": True, "register_temporal_mode": "global"}
+        config["data"] = {
+            "seed": 20261012, "model_seed": 20261011, "frame_seed": 20261013,
+            "train_assets": 256, "valid_assets": 64, "pool_frames": 40, "train_frames": 32,
+            "heldout_frames": 8, "source_banks": 2, "frames_min": 2, "frames_max": 24,
+            "target_mesh_padding": 1.1, "selection_audit_sha256": "c" * 64,
+        }
+        previous = deepcopy(config)
+        previous["runtime"]["feature_mode"] = "cached"
+        previous["runtime"]["output_root"] = str(self.root / "old_outputs")
+        previous["features"]["cache_boundary"] = "old cached delivery description"
+        config["features"]["cache_boundary"] = "online delivery description"
+        report = self._child_report("preflight")
+        report.update(
+            schema_version=1, configuration=previous, source={**self.source, "git_head": "b" * 40},
+            preflight_cases=[{"split": "train", "frames": 24, "sequence_roundtrip_rebind": True}],
+            update_checks={"memory.queries": True, "structure.embedding.weight": True,
+                           "structure.head.weight": True, "positions.xyz_head.weight": True,
+                           "structure.backbone.decoder.layers.0.self_attn.q_proj.weight": True},
+            source_checkpoint_unchanged=True,
+        )
+        self._pin_online_report(config, report)
+        return config, report
+
     def _child_report(self, stage: str, *, complete: bool = True, accepted: bool = True) -> dict:
         return {
             "experiment": self.config["experiment"],
@@ -335,6 +372,188 @@ class SharedStructureControllerTest(unittest.TestCase):
         Path(cache_plan["evaluation_path"]).write_text(json.dumps(cache_eval), encoding="utf-8")
         with self.assertRaises(RuntimeError):
             controller.require_prior_stage(self.config, self.config_path, "cache", self.source)
+
+    def test_online_preflight_accepts_pinned_compatible_report_without_source_ancestry(self) -> None:
+        config, report = self._online_fixture()
+        before = deepcopy(config)
+        with mock.patch.object(controller, "validate_source_revision", side_effect=AssertionError("old code ancestry")):
+            receipt = controller.require_online_preflight(config)
+        self.assertEqual(receipt["path"], config["runtime"]["preflight_reference"]["path"])
+        self.assertEqual(receipt["sha256"], config["runtime"]["preflight_reference"]["sha256"])
+        self.assertEqual(receipt["source"]["git_head"], "b" * 40)
+        self.assertEqual(receipt["case_count"], 1)
+        self.assertEqual(receipt["update_checks"], report["update_checks"])
+        self.assertEqual(receipt["source_checkpoint"], controller._checkpoint_identity(config))
+        self.assertEqual(config, before)
+
+    def test_online_mode_rejects_other_entrypoints_stages_or_bad_reference(self) -> None:
+        config, _ = self._online_fixture()
+        for stage in ("preflight", "cache"):
+            with self.subTest(stage=stage), self.assertRaisesRegex(ValueError, "online features"):
+                controller.build_stage_plan(config, stage, self.config_path)
+        for entrypoint in ("probe_shared_structure.py", None):
+            broken = deepcopy(config)
+            broken["runtime"]["probe_script"] = entrypoint
+            with self.subTest(entrypoint=entrypoint), self.assertRaises(ValueError):
+                controller.require_online_preflight(broken)
+        for mode in ("cached", "unknown", None):
+            broken = deepcopy(config)
+            broken["runtime"]["feature_mode"] = mode
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                controller.require_online_preflight(broken)
+        for reference in (None, {}, {"path": "", "sha256": "a" * 64},
+                          {"path": "file.json", "sha256": "invalid"}):
+            broken = deepcopy(config)
+            broken["runtime"]["preflight_reference"] = reference
+            with self.subTest(reference=reference), self.assertRaises(ValueError):
+                controller.build_stage_plan(broken, "probe", self.config_path)
+        self.assertFalse(self.outputs.exists())
+
+    def test_online_preflight_rejects_changed_hash_bytes_and_missing_file(self) -> None:
+        config, _ = self._online_fixture()
+        broken = deepcopy(config)
+        broken["runtime"]["preflight_reference"]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(RuntimeError, "SHA256"):
+            controller.require_online_preflight(broken)
+        path = Path(config["runtime"]["preflight_reference"]["path"])
+        path.write_bytes(path.read_bytes() + b"\n")
+        with self.assertRaisesRegex(RuntimeError, "SHA256"):
+            controller.require_online_preflight(config)
+        broken["runtime"]["preflight_reference"]["path"] = str(self.root / "missing.json")
+        with self.assertRaisesRegex(RuntimeError, "unable to read"):
+            controller.require_online_preflight(broken)
+
+    def test_online_preflight_rejects_architecture_data_feature_and_manifest_drift(self) -> None:
+        config, report = self._online_fixture()
+        broken = deepcopy(config)
+        broken["architecture"]["max_joints"] = 256
+        with self.assertRaisesRegex(RuntimeError, "architecture"):
+            controller.require_online_preflight(broken)
+        broken["architecture"]["max_joints"] = 512.0
+        with self.assertRaisesRegex(RuntimeError, "architecture"):
+            controller.require_online_preflight(broken)
+        for key in controller._ONLINE_PREFLIGHT_DATA_FIELDS:
+            for missing in (False, True):
+                broken = deepcopy(config)
+                if missing:
+                    del broken["data"][key]
+                else:
+                    value = broken["data"][key]
+                    broken["data"][key] = "d" * 64 if isinstance(value, str) else value + 1
+                with self.subTest(key=key, missing=missing), self.assertRaisesRegex(RuntimeError, f"data.{key}"):
+                    controller.require_online_preflight(broken)
+        broken = deepcopy(config)
+        broken["data"]["frames_min"] = 2.0
+        with self.assertRaisesRegex(RuntimeError, "data.frames_min"):
+            controller.require_online_preflight(broken)
+        for key, value in (("freeze_for_feasibility", False), ("register_temporal_mode", "aligned")):
+            broken = deepcopy(config)
+            broken["features"][key] = value
+            with self.subTest(key=key), self.assertRaisesRegex(RuntimeError, f"features.{key}"):
+                controller.require_online_preflight(broken)
+        broken = deepcopy(config)
+        broken["baseline"]["manifests"][0]["sha256"] = "d" * 64
+        with self.assertRaisesRegex(RuntimeError, "manifests"):
+            controller.require_online_preflight(broken)
+        broken_report = deepcopy(report)
+        del broken_report["configuration"]["data"]["frame_seed"]
+        self._pin_online_report(config, broken_report)
+        with self.assertRaisesRegex(RuntimeError, "data.frame_seed"):
+            controller.require_online_preflight(config)
+
+    def test_online_preflight_rejects_unaccepted_incomplete_or_unverified_reports(self) -> None:
+        config, report = self._online_fixture()
+        mutations = (
+            {"complete": False}, {"accepted": False}, {"accepted": 1}, {"stage": "cache"},
+            {"schema_version": 2}, {"source_checkpoint_unchanged": False}, {"preflight_cases": []},
+            {"preflight_cases": [None]}, {"update_checks": {}}, {"update_checks": {"memory.queries": False}},
+            {"update_checks": {"memory.queries": 1}},
+            {"source_checkpoint": {**report["source_checkpoint"], "sha256": "d" * 64}},
+            {"source_checkpoint": {**report["source_checkpoint"], "path": "other.pt"}},
+        )
+        for mutation in mutations:
+            broken = {**deepcopy(report), **mutation}
+            self._pin_online_report(config, broken)
+            with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                controller.require_online_preflight(config)
+        broken = deepcopy(report)
+        broken["configuration"]["runtime"]["probe_script"] = "probe_shared_structure.py"
+        self._pin_online_report(config, broken)
+        with self.assertRaisesRegex(RuntimeError, "medium probe entry point"):
+            controller.require_online_preflight(config)
+        for section in ("architecture", "baseline", "data", "features"):
+            broken = deepcopy(report)
+            broken["configuration"][section] = None
+            self._pin_online_report(config, broken)
+            with self.subTest(section=section), self.assertRaises(ValueError):
+                controller.require_online_preflight(config)
+
+    def test_online_run_stage_keeps_prepared_resource_and_operation_guards(self) -> None:
+        self.config, _ = self._online_fixture()
+        self.config_path.write_text(json.dumps(self.config), encoding="utf-8")
+        state = self._prepared_state("probe")
+        state_path = self.repo / "model_training/state/current.json"
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        with mock.patch.object(controller, "source_metadata", return_value=self.source), mock.patch.object(
+            controller, "verify_manifests", return_value=self.config["baseline"]["manifests"]
+        ), mock.patch.object(controller, "runtime_environment", return_value={"CUDA_VISIBLE_DEVICES": "5"}), mock.patch.object(
+            controller, "require_prior_stage", side_effect=AssertionError("online must not require cache")
+        ), mock.patch.object(controller, "guard") as guard, mock.patch.object(
+            controller, "execute_stage", return_value={"status": "fixture"}
+        ) as execute, mock.patch.object(
+            controller, "validate_prepared_state", wraps=controller.validate_prepared_state
+        ) as prepared, mock.patch.object(
+            controller, "validate_launch_environment", wraps=controller.validate_launch_environment
+        ) as environment:
+            controller.run_stage(self.config_path, "probe")
+            prepared.assert_called_once()
+            environment.assert_called_once()
+            guard.assert_called_once_with(self.config, "train")
+            self.assertEqual(execute.call_args.args[1]["online_preflight"]["case_count"], 1)
+            self.assertEqual(execute.call_args.args[1]["resources"]["physical_gpus"], [5])
+            for mutation in ({"status": "completed"}, {"command": ["changed"]},
+                             {"resources": {**state["active_operation"]["resources"], "allocation": 100}}):
+                broken = deepcopy(state)
+                broken["active_operation"].update(mutation)
+                state_path.write_text(json.dumps(broken), encoding="utf-8")
+                execute.reset_mock()
+                with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                    controller.run_stage(self.config_path, "probe")
+                execute.assert_not_called()
+
+    def test_cached_run_stage_keeps_both_old_prerequisites(self) -> None:
+        for explicit in (False, True):
+            if explicit:
+                self.config["runtime"]["feature_mode"] = "cached"
+            self.config_path.write_text(json.dumps(self.config), encoding="utf-8")
+            (self.repo / "model_training/state/current.json").write_text(
+                json.dumps(self._prepared_state("probe")), encoding="utf-8")
+            with mock.patch.object(controller, "source_metadata", return_value=self.source), mock.patch.object(
+                controller, "verify_manifests", return_value=self.config["baseline"]["manifests"]
+            ), mock.patch.object(controller, "runtime_environment", return_value={"CUDA_VISIBLE_DEVICES": "5"}), mock.patch.object(
+                controller, "require_prior_stage"
+            ) as prior, mock.patch.object(
+                controller, "require_online_preflight", side_effect=AssertionError("cached prerequisite changed")
+            ), mock.patch.object(controller, "guard"), mock.patch.object(controller, "execute_stage", return_value={}):
+                controller.run_stage(self.config_path, "probe")
+            self.assertEqual(prior.call_args_list, [
+                mock.call(self.config, self.config_path.resolve(), "preflight", self.source),
+                mock.call(self.config, self.config_path.resolve(), "cache", self.source),
+            ])
+
+    def test_online_receipt_is_preserved_in_controller_result(self) -> None:
+        config, _ = self._online_fixture()
+        plan = controller.build_stage_plan(config, "probe", self.config_path)
+        receipt = controller.require_online_preflight(config)
+        plan["online_preflight"] = receipt
+        Path(plan["evaluation_path"]).parent.mkdir(parents=True, exist_ok=True)
+        Path(plan["evaluation_path"]).write_text(json.dumps(self._child_report("probe")), encoding="utf-8")
+        with mock.patch.object(controller.subprocess, "Popen", return_value=_FakeChild(0)):
+            result = controller.execute_stage(config, plan, self.source, config["baseline"]["manifests"],
+                                              {"CUDA_VISIBLE_DEVICES": "5"})
+        self.assertEqual(result["online_preflight"], receipt)
+        saved = json.loads(Path(plan["result_path"]).read_text(encoding="utf-8"))
+        self.assertEqual(saved["online_preflight"], receipt)
 
     def test_completion_status_requires_matching_reports(self) -> None:
         plan, _, _ = self._write_reports("preflight")

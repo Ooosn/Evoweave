@@ -1,5 +1,23 @@
 # Medium Shared-Skeleton Expansion
 
+## Online Execution Update
+
+The user explicitly canceled the large feature-cache preparation. The current
+configuration uses `runtime.feature_mode=online`, with no cache stage or shard
+reads/writes. Each microbatch reads one asset, computes the selected source T
+and the 32 eligible target frames, and immediately optimizes. Architecture,
+frozen feature parameters, asset selection, frame isolation and budget remain
+unchanged. The accepted medium R1 preflight is pinned by SHA256; focused online
+tests and checks during the first actual update cover the changed delivery path.
+Initialization generation is deferred until after training, when the model is
+recreated from the immutable source checkpoint and the same model seed.
+
+Outputs: `/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1`.
+The failed cache artifacts remain preserved and unused. Its failure involved
+float32 inverse-affine roundoff in arbitrary raw units, not an out-of-memory
+condition. Inverse metadata now uses float64 without changing model-space
+geometry or labels. The historical cache plan below is superseded for execution.
+
 ## Scope And Hypothesis
 
 The user authorized a medium-scale expansion, not formal full-dataset training.

@@ -401,6 +401,23 @@ class SharedStructureControllerTest(unittest.TestCase):
             controller.validate_launch_environment(self.config, {"CUDA_VISIBLE_DEVICES": "7"}, linux=True)
         controller.validate_launch_environment(self.config, {"CUDA_VISIBLE_DEVICES": "5"}, linux=True)
 
+    def test_explicit_environment_can_live_apart_from_initialization_checkpoint(self) -> None:
+        from motion_experiment_runtime import runtime_environment
+
+        saved = self.root / "original_run_environment.txt"
+        saved.write_text("RIGWEAVE_TEST_SETTING=preserved\nNOT_A_MODEL_SETTING=ignored\n", encoding="utf-8")
+        config = deepcopy(self.config)
+        config["runtime"]["saved_environment"] = str(saved)
+        config["runtime"]["saved_environment_sha256"] = hashlib.sha256(saved.read_bytes()).hexdigest()
+        env = runtime_environment(config, [5])
+        self.assertEqual(env["RIGWEAVE_TEST_SETTING"], "preserved")
+        self.assertEqual(env["CUDA_VISIBLE_DEVICES"], "5")
+        self.assertNotIn("NOT_A_MODEL_SETTING", env)
+        self.assertFalse((self.checkpoint.parent / "resolved_env.txt").exists())
+        saved.write_text("RIGWEAVE_TEST_SETTING=changed\n", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "checksum changed"):
+            runtime_environment(config, [5])
+
     def test_recording_requires_post_record_context_begin(self) -> None:
         with mock.patch.object(recorder.subprocess, "run") as run:
             recorder.begin_context_guard(self.config)

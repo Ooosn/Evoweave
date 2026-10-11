@@ -32,8 +32,12 @@ def verify_manifests(config: dict[str, Any]) -> list[dict[str, Any]]:
 def runtime_environment(config: dict[str, Any], devices: list[int]) -> dict[str, str]:
     runtime = config["runtime"]
     environment = dict(os.environ)
-    saved = Path(config["baseline"]["checkpoint"]).parent / "resolved_env.txt"
-    for line in saved.read_text(encoding="utf-8").splitlines():
+    saved = Path(runtime.get("saved_environment", Path(config["baseline"]["checkpoint"]).parent / "resolved_env.txt"))
+    saved_bytes = saved.read_bytes()
+    expected_hash = runtime.get("saved_environment_sha256")
+    if expected_hash is not None and hashlib.sha256(saved_bytes).hexdigest() != expected_hash:
+        raise RuntimeError(f"saved runtime environment checksum changed: {saved}")
+    for line in saved_bytes.decode("utf-8").splitlines():
         key, separator, value = line.partition("=")
         if separator and key.startswith(("EVOWEAVE_", "RIGWEAVE_")):
             environment[key] = value

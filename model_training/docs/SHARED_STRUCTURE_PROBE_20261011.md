@@ -141,3 +141,11 @@ a clean, committed server checkout while GPU work is active. Every stage has
 its own prepared state, exact config, result artifact, and acceptance receipt.
 Do not retry failed stages automatically, relax range checks, or bypass the
 work guard. A completed diagnostic is not permission for full training.
+
+The first launch stopped before the model child started because the common
+runtime helper looked for `resolved_env.txt` next to the newer bias_h8
+checkpoint. Its original environment was inherited from the historical flat
+run, not copied to that directory. The failed launch log/result are retained.
+Attempt `shared_structure_r2` explicitly pins that same environment file and
+its checksum, and verifies it before preparing an operation. Model architecture,
+data selections, and optimization settings are unchanged by this repair.

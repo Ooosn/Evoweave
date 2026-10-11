@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 from typing import Any
 
-from motion_experiment_runtime import load_config, source_metadata, verify_manifests, write_json
+from motion_experiment_runtime import load_config, runtime_environment, source_metadata, verify_manifests, write_json
 from run_shared_structure_experiment import (
     STAGES,
     TERMINAL_STATUSES,
@@ -187,6 +187,7 @@ def record_prepared(
     plan = build_stage_plan(config, stage, config_path)
     source = source_metadata(config)
     verify_manifests(config)
+    runtime_environment(config, plan["resources"]["physical_gpus"])
     if source.get("git_status", "").strip():
         raise RuntimeError("source worktree is not clean")
     if state_path is None:

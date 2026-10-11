@@ -238,6 +238,7 @@ def evaluate(model, entries, config, root, samples, device, rank, world):
             key = f"{split}_{values[index]['manifest_index']}"
             predictions[key] = {"row": result, "target_joints_common": target, "target_parents": parents,
                                 "prediction_joints_common": posed, "teacher_joints_common": posed_teacher,
+                                "generated_tokens": generated["tokens"],
                                 "prediction_parents": generated.get("parents"),
                                 "skeleton_sequence": generated["skeleton_sequence"].cpu_record() if generated["success"] else None,
                                 "query_center": targets["query_center"].cpu(), "query_scale": targets["query_scale"].cpu(),

@@ -104,6 +104,7 @@ def build_virtual_model(config: dict[str, Any], candidate: str, device: torch.de
         "official_checkpoint": str(checkpoint), "sha256": initial["sha256"],
         "seed": initial["seed"], "common_position_initialization_depth": init_depth,
         "upstream_source_commit": revision, "upstream_source_clean": True,
+        "model_config_sha256": file_sha256(initial["model_config"]),
         "load_report": load_report, "architecture": asdict(architecture),
         "trainable_parameters": sum(p.numel() for p in model.parameters() if p.requires_grad),
         "groups": {name: sum(p.numel() for p in getattr(model, name).parameters() if p.requires_grad)

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "experiment": "shared_structure_probe_20261011",
+  "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
+  "baseline": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "checkpoint_sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620",
+    "manifests": [
+      {
+        "argument": "train_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+        "rows": 15920
+      },
+      {
+        "argument": "val_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+        "rows": 856
+      }
+    ],
+    "scope": "Historical checkpoint-matched manifests only for this feasibility probe; not a change to the current production dataset. Preserve the source checkpoint and all prior outputs."
+  },
+  "runtime": {
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "conda_bin": "/home/wangyy/miniconda3/envs/mygs/bin",
+    "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+    "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+    "output_root": "/home/wangyy/evorig/outputs/shared_structure_probe_20261011",
+    "artifact_prefix": "shared_structure",
+    "unirig_root": "/home/wangyy/evorig/model_assets/legacy_UniRig_modified_20260714",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 129547842,
+    "host": "pcg01i",
+    "physical_gpus": [5],
+    "memory_fraction": 0.9
+  },
+  "architecture": {
+    "dim": 1024,
+    "heads": 8,
+    "shared_tokens": 128,
+    "shared_depth": 2,
+    "position_depth": 2,
+    "max_joints": 512,
+    "xyz_bins": 256,
+    "xyz_min": -1.0,
+    "xyz_max": 1.0,
+    "dropout": 0.0
+  },
+  "features": {
+    "register_temporal_mode": "global",
+    "freeze_for_feasibility": true,
+    "cache_boundary": "Independent per-frame surface tokens and raw source point tracks, BEFORE any motion encoder or evidence aggregation. Source features preserve the existing common-query chart. Target features use each mesh's own reversible mesh-only chart and never pass through source temporal encoding. Recompute source temporal features and u/O/M evidence after selecting the actual T input frames. Never subsample full-clip contextualized features.",
+    "original_motion_evidence": "Preserve bias_h8 and all u/c/d channels. No relation residual or skeleton/GT-derived conditioning."
+  },
+  "data": {
+    "seed": 20261011,
+    "train_assets": 8,
+    "valid_assets": 16,
+    "pool_frames": 32,
+    "source_pool_frames": 24,
+    "reuse_frames": 8,
+    "target_mesh_padding": 1.1,
+    "frames_min": 2,
+    "frames_max": 24,
+    "motion_fps_ratio": 0.75,
+    "motion_vertex_samples": 512,
+    "minimum_random_frames": 1,
+    "selection": "Seeded source/joint-count-band round-robin, reusing the audited first 8 training and 16 validation asset IDs, with a new explicit 32-frame pool. First 24 pool slots are eligible motion evidence; final 8 are excluded from structure generation and reserved for sequence reuse. Dynamic T=2..24 selects evidence slots only. Supervise all selected evidence frames plus the 8 reuse frames, retaining every joint. Fixed pools are a feasibility fixture; fresh poses/actions are required for formal validation.",
+    "targets": "Complete posed GT with fixed per-asset identity and parent order. The unchanged base loader supplies common-query coordinates for source evidence. Localization applies a separate per-target-mesh bounding-box affine with fixed 1.1 padding to both mesh and GT, with an exact source-space inverse. No GT-derived bounds, clipping, filtering, new roots, or tail targets. Removing auxiliary root/RT nodes in v3 does not undo global coordinate motion.",
+    "range_audit": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_target_range_20261011.json",
+    "range_audit_sha256": "9a6c333c6c7140af125b9a7e4b4e0ddc88c0a27d5510083c71e6520d62c7fb57",
+    "coordinate_audit": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_coordinate_diagnosis_20261011.json",
+    "coordinate_audit_sha256": "728a3fc6887ff3019e5a5cb908e5ca5ca52b294f903c348ee8a9d4f996b3a71f",
+    "quantization": "Keep [-1,1]/256 on the target mesh's own padded chart. Mesh-only 1.1 padding covers the audited 48 assets/24 selected frames, whose unpadded local targets span [-1.0053182,1.0139827]. Check every new selected target strictly, including the new 32-frame pool. No clipping or GT-dependent normalization. This does not certify full-dataset coverage or preserve old common-query physical grid spacing."
+  },
+  "preflight": {
+    "assets_per_split": 2,
+    "frames": [2, 8, 24],
+    "optimizer_steps": 2,
+    "prefix_checks_per_asset": 4,
+    "bf16_prefix_atol": 0.03,
+    "stress_joints": 512,
+    "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval."
+  },
+  "probe": {
+    "steps": 240,
+    "batch_size": 1,
+    "accumulation": 4,
+    "lr_new": 0.0001,
+    "lr_backbone": 0.00001,
+    "weight_decay": 0.04,
+    "clip_grad_norm": 1.0,
+    "xyz_weight": 1.0,
+    "scheduler": "onecycle",
+    "dropout": 0.0,
+    "evaluation_frames": [2, 8, 24],
+    "generation_joint_limit": 256,
+    "loss": "Per-asset mean structure CE plus per-asset XYZ CE averaged over all valid target frames/joints/axes; average actual assets across accumulation. Target frames are the selected evidence frames plus 8 excluded reuse frames. Structure is supervised once per asset. XYZ losses backpropagate through the shared skeleton sequence. No coordinate equality or blanket latent-vector equality loss.",
+    "acceptance": "Primary endpoint is a usable generated reusable skeleton sequence, not only teacher-forced pose reconstruction. Compare initialized/trained identical inputs; separate GT-prefix from natural free generation; report EOS, joint count, parents and identity-preserving geometry on excluded target frames. Save generated sequences and rebind without regeneration. Compare sequences from different evidence subsets on the same excluded meshes, and test input/memory dependence. Different subsets of one recorded action are only a reuse proxy, not proof across distinct actions. No automatic full retraining or promotion."
+  }
+}

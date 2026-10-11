@@ -8,6 +8,24 @@ from .motion_evidence import MotionEvidence, MotionEvidenceInjection
 from .motion_relation_residual import MotionRelationResidual
 
 
+_REGISTER_TEMPORAL_MODES = frozenset(("aligned", "global"))
+
+
+def _validate_register_temporal_mode(mode: str) -> str:
+    if not isinstance(mode, str) or mode not in _REGISTER_TEMPORAL_MODES:
+        raise ValueError(
+            "register_temporal_mode must be one of 'aligned' or 'global', "
+            f"got {mode!r}"
+        )
+    return mode
+
+
+def _validate_nonnegative_count(value: int, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{name} must be a non-negative integer, got {value!r}")
+    return value
+
+
 class AnchorWiseAlternatingBlock(nn.Module):
     """One pose-inner / anchor-temporal block over `(B, T, S, D)` tokens."""
 
@@ -19,8 +37,14 @@ class AnchorWiseAlternatingBlock(nn.Module):
         dropout: float = 0.0,
         motion_evidence_fusion: str = "off",
         motion_evidence_heads: int = 0,
+        register_temporal_mode: str = "aligned",
+        register_tokens: int = 0,
+        role_prefix_count: int = 1,
     ) -> None:
         super().__init__()
+        self.register_temporal_mode = _validate_register_temporal_mode(register_temporal_mode)
+        self.register_tokens = _validate_nonnegative_count(register_tokens, "register_tokens")
+        self.role_prefix_count = _validate_nonnegative_count(role_prefix_count, "role_prefix_count")
         ff_dim = int(dim * mlp_ratio)
         self.pose_inner = nn.TransformerEncoderLayer(
             d_model=dim,
@@ -44,6 +68,52 @@ class AnchorWiseAlternatingBlock(nn.Module):
             dim, heads, fusion=motion_evidence_fusion, biased_heads=motion_evidence_heads,
         )
         self.relation_residual: MotionRelationResidual | None = None
+
+    def set_register_temporal_mode(self, mode: str) -> None:
+        self.register_temporal_mode = _validate_register_temporal_mode(mode)
+
+    def _apply_temporal_attention(
+        self,
+        z: torch.Tensor,
+        batch_size: int,
+        frame_count: int,
+        slot_count: int,
+        dim: int,
+    ) -> torch.Tensor:
+        # Aligned anchors match the same surface point across poses; global
+        # registers are free summary slots and may mix across frame and slot.
+        if self.register_temporal_mode == "aligned" or self.register_tokens == 0:
+            z = z.permute(0, 2, 1, 3).reshape(batch_size * slot_count, frame_count, dim)
+            z = self.anchor_temporal(z)
+            return z.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
+
+        register_end = self.role_prefix_count + self.register_tokens
+        if register_end > slot_count:
+            raise ValueError(
+                "register_tokens plus role_prefix_count exceeds token slot count: "
+                f"{self.register_tokens} + {self.role_prefix_count} > {slot_count}"
+            )
+
+        role_and_anchors = torch.cat(
+            (z[:, :, : self.role_prefix_count], z[:, :, register_end:]), dim=2
+        )
+        role_and_anchors = role_and_anchors.permute(0, 2, 1, 3).reshape(
+            batch_size * (slot_count - self.register_tokens), frame_count, dim
+        )
+        role_and_anchors = self.anchor_temporal(role_and_anchors)
+        role_and_anchors = role_and_anchors.reshape(
+            batch_size, slot_count - self.register_tokens, frame_count, dim
+        ).permute(0, 2, 1, 3)
+
+        registers = z[:, :, self.role_prefix_count : register_end].reshape(
+            batch_size, frame_count * self.register_tokens, dim
+        )
+        registers = self.anchor_temporal(registers)
+        registers = registers.reshape(batch_size, frame_count, self.register_tokens, dim)
+
+        role = role_and_anchors[:, :, : self.role_prefix_count]
+        anchors = role_and_anchors[:, :, self.role_prefix_count :]
+        return torch.cat((role, registers, anchors), dim=2)
 
     def forward(self, tokens: torch.Tensor, motion_evidence: MotionEvidence | None = None,
                 relation_states: torch.Tensor | None = None) -> torch.Tensor:
@@ -71,12 +141,7 @@ class AnchorWiseAlternatingBlock(nn.Module):
             z = torch.cat((z[:, :, :prefix_count],
                            self.relation_residual(z[:, :, prefix_count:], relation_states)), dim=2)
 
-        # Anchor-wise temporal attention: slot q attends only to slot q across
-        # poses. This uses our fixed vertex/surface correspondence.
-        z = z.permute(0, 2, 1, 3).reshape(batch_size * slot_count, frame_count, dim)
-        z = self.anchor_temporal(z)
-        z = z.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
-        return z
+        return self._apply_temporal_attention(z, batch_size, frame_count, slot_count, dim)
 
 
 class AnchorWiseAlternatingMotionEncoder(nn.Module):
@@ -108,16 +173,18 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         gradient_checkpointing: bool = False,
         motion_evidence_fusion: str = "off",
         motion_evidence_heads: int = 0,
+        register_temporal_mode: str = "aligned",
     ) -> None:
         super().__init__()
         self.dim = int(dim)
-        self.register_tokens = int(register_tokens)
+        self.register_tokens = _validate_nonnegative_count(register_tokens, "register_tokens")
         self.max_frames = int(max_frames)
         self.use_motion_features = bool(use_motion_features)
         self.use_time_embedding = bool(use_time_embedding)
         self.gradient_checkpointing = bool(gradient_checkpointing)
         self.motion_evidence_fusion = str(motion_evidence_fusion)
         self.motion_evidence_heads = int(motion_evidence_heads)
+        self.register_temporal_mode = _validate_register_temporal_mode(register_temporal_mode)
 
         self.role_token = nn.Parameter(torch.randn(1, 2, 1, dim) * 0.02)
         if self.register_tokens > 0:
@@ -145,11 +212,21 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
                     dropout=dropout,
                     motion_evidence_fusion=self.motion_evidence_fusion,
                     motion_evidence_heads=self.motion_evidence_heads,
+                    register_temporal_mode=self.register_temporal_mode,
+                    register_tokens=self.register_tokens,
+                    role_prefix_count=1,
                 )
                 for _ in range(depth)
             ]
         )
         self.norm = nn.LayerNorm(dim)
+
+    def set_register_temporal_mode(self, mode: str) -> None:
+        """Switch routing after an old checkpoint has been loaded strictly."""
+        mode = _validate_register_temporal_mode(mode)
+        self.register_temporal_mode = mode
+        for block in self.blocks:
+            block.set_register_temporal_mode(mode)
 
     def enable_relation_residual(self, bottleneck_dim: int = 64, *, reference_subtraction: bool = False) -> None:
         """Attach an explicit adapter after strict loading of the base checkpoint."""
@@ -287,6 +364,8 @@ class FrameTypeAnchorWiseAlternatingMotionEncoder(nn.Module):
                     heads=heads,
                     mlp_ratio=mlp_ratio,
                     dropout=dropout,
+                    register_tokens=self.register_tokens,
+                    role_prefix_count=0,
                 )
                 for _ in range(depth)
             ]

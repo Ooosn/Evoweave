@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T04:28:00.574168+00:00",
+  "updated_at": "2026-10-11T08:50:23.830729+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,12 +111,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
-    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -264,71 +264,58 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Prepare and commit the next operation only after inspecting this result.",
+  "next_required_result": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
   "active_operation": {
-    "experiment": "motion_evidence_base_compare_20261010",
-    "stage": "inactive_motion_use",
-    "candidate": null,
-    "candidate_config": null,
-    "status": "completed",
-    "prepared_at": "2026-10-11T04:01:09.742006+00:00",
-    "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. Earlier 2026-10-11 small relation-adapter experiments are complete and are not promoted. The user clarified that the current issue is whether the already-trained model learns that inactive regions can still contain skeleton and can be inferred using geometry and other context, then asked to act rather than keep explaining. Current work is bounded read-only diagnosis of that ability and original u/O/M usage. No new architecture or full training is authorized.",
-    "source_code_commit": "8c3f4585bd8f21568fa41f5ca80f96f5f4f950ce",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+    "experiment": "shared_structure_probe_20261011",
+    "stage": "preflight",
+    "artifact_prefix": "shared_structure",
+    "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
+    "status": "prepared",
+    "prepared_at": "2026-10-11T08:50:23.830729+00:00",
+    "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
       "-B",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/probe_shared_structure.py",
       "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
       "--stage",
-      "inactive_motion_use"
+      "preflight",
+      "--output",
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json"
     ],
+    "source_code_commit": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+    "source_metadata": {
+      "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+      "git_head": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+      "git_status": ""
+    },
     "manifests": [
       {
         "argument": "train_manifest",
         "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-        "exists": true,
         "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
         "rows": 15920
       },
       {
         "argument": "val_manifest",
         "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-        "exists": true,
         "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
         "rows": 856
       }
     ],
-    "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-    "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "resume_checkpoint": null,
-    "changes": {
-      "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-      "source_evaluation": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_evaluation.json",
-      "source_evaluation_sha256": "073b7824d04b9e07e9bfc587b8b1dcf512b30d187978e6aa9bf62144e6584222",
-      "source_cache": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011/relation_screen/cached_inputs.pt",
-      "source_cache_sha256": "aea71682062b399e2cb967d8250bad71499ea43e0a3135f8d1afe89f80550a20",
-      "seed": 20261011,
-      "permutation_seed": 99173,
-      "max_new_tokens": 1400,
-      "prefix_tokens": 64,
-      "views": [
-        "normal8",
-        "weak2",
-        "static8"
-      ],
-      "controls": [
-        "unknown",
-        "permuted"
-      ],
-      "scope": "Diagnose the completed original bias_h8 model's inactive-joint capability, not a new architecture or training recipe. Preserve exact cached geometry, poses, complete GT, query normalization and all original model weights. Intervene only on the ORIGINAL explicit pair-state input; no experimental relation adapters. Reuse saved base generations only after exact condition/CE replay and four64token prefixes. Static controls reuse only after exact condition identity. Offline same-joint comparisons and separate full-generation failures from local underprediction. No training, optimizer orcheckpoint/cache writes."
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "source_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
     },
-    "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
-    "output_path": null,
-    "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_evaluation.json",
-    "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use.json",
-    "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+    "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011",
+    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011/preflight",
+    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json",
+    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
+    "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
       "host": "pcg01i",
@@ -338,11 +325,13 @@
       "virtual_memory": "unlimited",
       "new_allocation": false
     },
-    "acceptance": "Original completed bias_h8 only, no relation adapter. Replay48 cached base conditions exactly and CEwithin2e-5, plus4greedy64prefixes. Then64new natural generations on32 nonstatic cases: replace ONLY original motion states by allunknown or aligned-axis permutation. Static controls CE/condition only and exact-identity generation reuse. Evaluate identical inactive GT joints across controls, separate hitmax from successful missing/mislocalized joints. Nooptimizer, training, GTpruning, checkpoint orcache mutation; noautomaticretry.",
-    "note": "Read-only original model ability diagnosis. Same48 cached baseline inputs, original u/O/M states only changed to unknown/permuted. Exact base replay and4prefixes before64new motion-control generations; staticreuseonlyafteridentity. No training/newadapter/fullrun. Original checkpoint immutable. Primary reviewed10workerCPUtests,3saved-audit and3one-to-one tests; controller5pass1WindowsLinuxskip. All fullGT retained. One GPU5 on existingallocation, no retries.",
-    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_analysis_20261011.json",
-    "result_note": "Original-model read-only diagnostic completed once from0ad5c0b, all3exits0;48exactbaseCE/conditionreplays,4prefixmatches,64newnaturalcontrolgens,32exactstaticreuses. Frozenparams0changed/0grads/cacheunchanged/sourcehashesverified,peak4.650649GiB. Capabilityexistsbutuneven:385has40/40quietjoints+edgeswithonly2active;202same17quietjointsnormal/weak/static10/9/1;128normalonly21/71quietmatchedandweakerinputsnonterminate. Explicitcuecontrolsweakinstablebenefit:pairedsuccessfulquietcoverageunknown179to178/354,permuted167to167/300;permuted21allcasequietlossfromonehitmax. Oldgeometry/implicitmultiframepathsretained,notproofallmotionunusedortrainingeffectabsent. Originalcheckpointpreserved,experimentaladaptersOFF,no newtraining. Smallartifactshashverified andCPU1to1analysis/figurecomplete.",
-    "updated_at": "2026-10-11T04:28:00.574168+00:00"
+    "guard_operations": [
+      "preflight",
+      "train"
+    ],
+    "guard_after_record": "begin",
+    "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
+    "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -2178,6 +2167,85 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_static_identity_evaluation.json",
       "result_note": "Exact-staticbugfixandread-onlyauditACCEPTED,notblanketnewmodelqualityapproval. Source1d25c1e completed03:05:57JST all3exits0. All16originalstaticinputs rebuiltwithsamequery/fullGT/norm/savedrefs:patchedEexactU,surfacefeatures/querypointsdelta0; correctedbaseconditionmatchesoriginalcacheexact0, trainedanchoredconditionmatchescorrectedbaseexact0 andCE0; min/max2greedy64prefixmatch. Thus16oldbasegenerationsreusedwithprovenidenticalcondition;0newfullgens,staticF1.611542/14success2hitmax,quietcoverage.665786 fullyrestored. All32nonstaticcachedquerycloudsmove so exact-repeat branchnotapplicable; no change their recorded E/formula. Baseandadapterparamversionsunchanged, nooptimizer/cp/cachewrites,peak4.679209GiB.03:06freshGPU5/7idle,allocation129547842retained;5smallreceiptfilesdownloadedSHAverified. Originalmatchedmotionrowsremainexploratory:normal/weakF1improvebutmatched-successJ2Jworsens,permuted-E CEdoesnotworsen; noformaltraining ordefaultadapterpromotion. Finalizeanalysis/docs only.",
       "updated_at": "2026-10-10T18:10:18.533038+00:00"
+    },
+    {
+      "experiment": "motion_evidence_base_compare_20261010",
+      "stage": "inactive_motion_use",
+      "candidate": null,
+      "candidate_config": null,
+      "status": "completed",
+      "prepared_at": "2026-10-11T04:01:09.742006+00:00",
+      "authorization": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. Earlier 2026-10-11 small relation-adapter experiments are complete and are not promoted. The user clarified that the current issue is whether the already-trained model learns that inactive regions can still contain skeleton and can be inferred using geometry and other context, then asked to act rather than keep explaining. Current work is bounded read-only diagnosis of that ability and original u/O/M usage. No new architecture or full training is authorized.",
+      "source_code_commit": "8c3f4585bd8f21568fa41f5ca80f96f5f4f950ce",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/run_motion_experiment.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/motion_evidence_base_compare_20261010.json",
+        "--stage",
+        "inactive_motion_use"
+      ],
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "exists": true,
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "exists": true,
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "initialization": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "resume_checkpoint": null,
+      "changes": {
+        "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "source_evaluation": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_evaluation.json",
+        "source_evaluation_sha256": "073b7824d04b9e07e9bfc587b8b1dcf512b30d187978e6aa9bf62144e6584222",
+        "source_cache": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011/relation_screen/cached_inputs.pt",
+        "source_cache_sha256": "aea71682062b399e2cb967d8250bad71499ea43e0a3135f8d1afe89f80550a20",
+        "seed": 20261011,
+        "permutation_seed": 99173,
+        "max_new_tokens": 1400,
+        "prefix_tokens": 64,
+        "views": [
+          "normal8",
+          "weak2",
+          "static8"
+        ],
+        "controls": [
+          "unknown",
+          "permuted"
+        ],
+        "scope": "Diagnose the completed original bias_h8 model's inactive-joint capability, not a new architecture or training recipe. Preserve exact cached geometry, poses, complete GT, query normalization and all original model weights. Intervene only on the ORIGINAL explicit pair-state input; no experimental relation adapters. Reuse saved base generations only after exact condition/CE replay and four64token prefixes. Static controls reuse only after exact condition identity. Offline same-joint comparisons and separate full-generation failures from local underprediction. No training, optimizer orcheckpoint/cache writes."
+      },
+      "output_root": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010",
+      "output_path": null,
+      "evaluation_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_evaluation.json",
+      "runtime_result": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use.json",
+      "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "acceptance": "Original completed bias_h8 only, no relation adapter. Replay48 cached base conditions exactly and CEwithin2e-5, plus4greedy64prefixes. Then64new natural generations on32 nonstatic cases: replace ONLY original motion states by allunknown or aligned-axis permutation. Static controls CE/condition only and exact-identity generation reuse. Evaluate identical inactive GT joints across controls, separate hitmax from successful missing/mislocalized joints. Nooptimizer, training, GTpruning, checkpoint orcache mutation; noautomaticretry.",
+      "note": "Read-only original model ability diagnosis. Same48 cached baseline inputs, original u/O/M states only changed to unknown/permuted. Exact base replay and4prefixes before64new motion-control generations; staticreuseonlyafteridentity. No training/newadapter/fullrun. Original checkpoint immutable. Primary reviewed10workerCPUtests,3saved-audit and3one-to-one tests; controller5pass1WindowsLinuxskip. All fullGT retained. One GPU5 on existingallocation, no retries.",
+      "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_analysis_20261011.json",
+      "result_note": "Original-model read-only diagnostic completed once from0ad5c0b, all3exits0;48exactbaseCE/conditionreplays,4prefixmatches,64newnaturalcontrolgens,32exactstaticreuses. Frozenparams0changed/0grads/cacheunchanged/sourcehashesverified,peak4.650649GiB. Capabilityexistsbutuneven:385has40/40quietjoints+edgeswithonly2active;202same17quietjointsnormal/weak/static10/9/1;128normalonly21/71quietmatchedandweakerinputsnonterminate. Explicitcuecontrolsweakinstablebenefit:pairedsuccessfulquietcoverageunknown179to178/354,permuted167to167/300;permuted21allcasequietlossfromonehitmax. Oldgeometry/implicitmultiframepathsretained,notproofallmotionunusedortrainingeffectabsent. Originalcheckpointpreserved,experimentaladaptersOFF,no newtraining. Smallartifactshashverified andCPU1to1analysis/figurecomplete.",
+      "updated_at": "2026-10-11T04:28:00.574168+00:00"
     }
   ]
 }

@@ -31,10 +31,11 @@ class VirtualFrameRigConfig:
     surface_checkpointing: bool = True
     position_checkpointing: bool = True
     generation_cache: bool = True
+    temporal_chunk_size: int = 4096
 
     def __post_init__(self) -> None:
         counts = (self.dim, self.heads, self.query_tokens, self.register_tokens,
-                  self.motion_depth, self.position_depth, self.max_joints, self.max_frames)
+                  self.motion_depth, self.position_depth, self.max_joints, self.max_frames, self.temporal_chunk_size)
         if any(isinstance(x, bool) or not isinstance(x, int) or x < 1 for x in counts):
             raise ValueError("dimensions, counts and depths must be positive integers")
         if self.dim % self.heads or not 0 <= self.dropout < 1:
@@ -58,11 +59,20 @@ class VirtualFrameMotionEncoder(AnchorWiseAlternatingMotionEncoder):
             register_temporal_mode="aligned",
         )
         self.query_tokens = config.query_tokens
+        self.temporal_chunk_size = config.temporal_chunk_size
+
+    @staticmethod
+    def _temporal(layer: nn.Module, sequences: torch.Tensor, chunk_size: int) -> torch.Tensor:
+        # The leading axis contains independent aligned-slot sequences. Keep
+        # every frame together while bounding FlashAttention's backward workspace.
+        if sequences.shape[0] <= chunk_size:
+            return layer(sequences)
+        return torch.cat([layer(part) for part in sequences.split(chunk_size, dim=0)], dim=0)
 
     @staticmethod
     def _block(
         block: nn.Module, real: torch.Tensor, virtual: torch.Tensor,
-        evidence: MotionEvidence | None,
+        evidence: MotionEvidence | None, chunk_size: int,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         batch, frames, slots, dim = real.shape
         prefix = virtual.shape[1]
@@ -77,10 +87,11 @@ class VirtualFrameMotionEncoder(AnchorWiseAlternatingMotionEncoder):
         # real-frame correspondence, with no padding or invented virtual mesh.
         shared = torch.cat((real[:, :, :prefix], virtual[:, None]), dim=1)
         shared = shared.permute(0, 2, 1, 3).reshape(batch * prefix, frames + 1, dim)
-        shared = block.anchor_temporal(shared)
+        shared = VirtualFrameMotionEncoder._temporal(block.anchor_temporal, shared, chunk_size)
         shared = shared.reshape(batch, prefix, frames + 1, dim).permute(0, 2, 1, 3)
         anchors = real[:, :, prefix:].permute(0, 2, 1, 3)
-        anchors = block.anchor_temporal(anchors.reshape(batch * (slots - prefix), frames, dim))
+        anchors = VirtualFrameMotionEncoder._temporal(
+            block.anchor_temporal, anchors.reshape(batch * (slots - prefix), frames, dim), chunk_size)
         anchors = anchors.reshape(batch, slots - prefix, frames, dim).permute(0, 2, 1, 3)
         return torch.cat((shared[:, :frames], anchors), dim=2), shared[:, -1]
 
@@ -107,9 +118,10 @@ class VirtualFrameMotionEncoder(AnchorWiseAlternatingMotionEncoder):
         virtual = torch.cat((self.role_token[:, 0], self.register[None]), dim=1).expand(batch, -1, -1)
         for block in self.blocks:
             if self.gradient_checkpointing and self.training and torch.is_grad_enabled():
-                real, virtual = checkpoint(self._block, block, real, virtual, motion_evidence, use_reentrant=False)
+                real, virtual = checkpoint(self._block, block, real, virtual, motion_evidence,
+                                           self.temporal_chunk_size, use_reentrant=False)
             else:
-                real, virtual = self._block(block, real, virtual, motion_evidence)
+                real, virtual = self._block(block, real, virtual, motion_evidence, self.temporal_chunk_size)
         real, virtual = self.norm(real), self.norm(virtual)
         return real[:, :, 1 + self.register_tokens:], virtual[:, 1:]
 

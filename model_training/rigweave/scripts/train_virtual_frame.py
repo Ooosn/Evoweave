@@ -69,9 +69,10 @@ def _stress_indices(entries):
     return list(dict.fromkeys(largest_joints[:3] + largest_meshes[:1]))
 
 
-def profile_case(model, optimizer, dataset, config, device, frames, batch_size, indices, xyz_weight):
+def profile_case(model, optimizer, dataset, config, device, frames, batch_size, indices, xyz_weight, *, empty_cache=True):
     optimizer.zero_grad(set_to_none=True)
-    torch.cuda.empty_cache()
+    if empty_cache:
+        torch.cuda.empty_cache()
     torch.cuda.reset_peak_memory_stats(device)
     started = time.monotonic()
     requests = [FrameSampleRequest(indices[i % len(indices)], frames, 77000 + i) for i in range(batch_size)]
@@ -102,7 +103,7 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
     dataset = dataset_for(entries["train"], config)
     optimizer = optimizer_for(model, config)
     wrapped = DistributedDataParallel(
-        model, device_ids=[device.index], find_unused_parameters=True,
+        model, device_ids=[device.index], find_unused_parameters=config["runtime"]["ddp_find_unused_parameters"],
         gradient_as_bucket_view=config["runtime"]["ddp_gradient_as_bucket_view"],
     ) if world > 1 else model
     indices = _stress_indices(entries["train"])
@@ -122,7 +123,8 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
         try:
             context = torch.autograd.detect_anomaly(check_nan=False) if plan.get("trace_autograd") else nullcontext()
             with context:
-                case = profile_case(wrapped, optimizer, dataset, config, device, frames, batch, indices, 1.)
+                case = profile_case(wrapped, optimizer, dataset, config, device, frames, batch, indices, 1.,
+                                    empty_cache=plan.get("empty_cache_between_cases", True))
             case["approved"] = case["peak_allocated_gib"] <= plan["allocated_fraction_limit"] * report["gpu_total_gib"]
             report["cases"].append(case)
             print("CAPACITY " + json.dumps({"rank": rank, **case}), flush=True)
@@ -342,7 +344,7 @@ def run_training(model, initialization, entries, config, args, device, rank, wor
         random.setstate(states["python_rng"])
         del resume
     wrapped = DistributedDataParallel(
-        model, device_ids=[device.index], find_unused_parameters=True,
+        model, device_ids=[device.index], find_unused_parameters=config["runtime"]["ddp_find_unused_parameters"],
         gradient_as_bucket_view=config["runtime"]["ddp_gradient_as_bucket_view"],
     ) if world > 1 else model
     started = time.monotonic()

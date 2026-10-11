@@ -147,6 +147,34 @@ class VirtualFrameTests(unittest.TestCase):
             self.assertTrue(torch.isfinite(gradient).all())
             self.assertGreater(gradient.abs().sum().item(), 0)
 
+    def test_temporal_chunks_preserve_full_time_sequences_outputs_and_gradients(self):
+        for use_checkpoint in (False, True):
+            config = settings(motion_checkpointing=use_checkpoint)
+            full = VirtualFrameMotionEncoder(config).train()
+            chunked = VirtualFrameMotionEncoder(replace(config, temporal_chunk_size=3)).train()
+            chunked.load_state_dict(full.state_dict())
+            left = torch.randn(3, 5, 7, 16, requires_grad=True)
+            right = left.detach().clone().requires_grad_(True)
+            shapes = []
+            hooks = [block.anchor_temporal.register_forward_pre_hook(lambda m, a: shapes.append(a[0].shape))
+                     for block in chunked.blocks]
+            expected = full(left)
+            actual = chunked(right)
+            self.assertTrue(all(shape[0] <= 3 and shape[1] in (5, 6) for shape in shapes))
+            for a, b in zip(expected, actual):
+                torch.testing.assert_close(a, b, rtol=2e-5, atol=2e-6)
+            weights = [torch.randn_like(value) for value in expected]
+            sum((value * weight).mean() for value, weight in zip(expected, weights)).backward()
+            sum((value * weight).mean() for value, weight in zip(actual, weights)).backward()
+            torch.testing.assert_close(left.grad, right.grad, rtol=3e-5, atol=3e-6)
+            for (name, p), (other_name, q) in zip(full.named_parameters(), chunked.named_parameters()):
+                self.assertEqual(name, other_name)
+                self.assertEqual(p.grad is None, q.grad is None)
+                if p.grad is not None:
+                    torch.testing.assert_close(p.grad, q.grad, rtol=3e-5, atol=3e-6)
+            for hook in hooks:
+                hook.remove()
+
     def test_depth_attention_variants_and_unbounded_output(self):
         for depth, use_self in ((1, True), (2, True), (4, True), (2, False)):
             localizer = ContinuousJointLocalizer(settings(position_depth=depth, position_self_attention=use_self))

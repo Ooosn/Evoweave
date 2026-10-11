@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T09:04:13.065806+00:00",
+  "updated_at": "2026-10-11T09:15:13.724238+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,12 +111,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
+  "next_required_result": "Prepare cache only after the accepted preflight evaluation is reviewed.",
   "active_operation": {
     "experiment": "shared_structure_probe_20261011",
     "stage": "preflight",
     "artifact_prefix": "shared_structure_r2",
     "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-11T09:04:13.065806+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
     "command": [
@@ -331,7 +331,22 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
-    "note": "Primary reviewed first prelaunch failure, pinned original environment, and verified 40 shared-structure plus 6 register Linux tests on identical a51b134 source. The SSH wait timed out after tests but before state recording; resume only state recording here, do not repeat passed tests. Bounded user-authorized method feasibility, not full retraining."
+    "note": "Primary reviewed first prelaunch failure, pinned original environment, and verified 40 shared-structure plus 6 register Linux tests on identical a51b134 source. The SSH wait timed out after tests but before state recording; resume only state recording here, do not repeat passed tests. Bounded user-authorized method feasibility, not full retraining.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_r2_preflight.json",
+    "result_note": "Primary reviewed the exact stage outputs. Execution acceptance is distinct from skeleton representation quality; no automatic full retraining.",
+    "controller_exit": 0,
+    "child_exit": 0,
+    "complete": true,
+    "accepted": true,
+    "updated_at": "2026-10-11T09:15:13.724238+00:00",
+    "child_report": {
+      "complete": true,
+      "accepted": true,
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      }
+    }
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

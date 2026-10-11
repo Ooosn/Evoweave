@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T17:44:23.770436+00:00",
+  "updated_at": "2026-10-11T17:50:24.875430+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -300,13 +300,13 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. Earlier BF16 batch-equivalence rejection remains rejected, not relaxed or claimed resolved.",
+  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
   "active_operation": {
     "experiment": "shared_structure_full_20261012_r2",
     "stage": "full",
     "artifact_prefix": "shared_structure_full_r2",
     "authorization": "User explicitly authorized more data, larger/standard batch and both granted H100s, and requested actual full-data training with early matched legacy F1/eval trends instead of any further standalone smoke test. Primary owns implementation and acceptance.",
-    "status": "prepared",
+    "status": "failed",
     "prepared_at": "2026-10-11T17:44:23.770436+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_full_20261012_r2.json",
     "command": [
@@ -412,7 +412,14 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. Earlier BF16 batch-equivalence rejection remains rejected, not relaxed or claimed resolved.",
-    "note": "Full18097 train assets, two H100 DDP, physical8 each/accumulate3/global48, FP32 trainable core, preserved1024-step skeleton warmstart with fresh optimizer. Actual training with early legacy F1/geometry evaluation; no standalone GPU smoke and no feature cache."
+    "note": "Full18097 train assets, two H100 DDP, physical8 each/accumulate3/global48, FP32 trainable core, preserved1024-step skeleton warmstart with fresh optimizer. Actual training with early legacy F1/geometry evaluation; no standalone GPU smoke and no feature cache.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r2_full.json",
+    "result_note": "Withdrawn before any launch: user rejected the unrequested FP32 training path and asked to retain uniform BF16. No GPU/model child, optimizer update or output checkpoint exists for R2. This is not a numerical training failure.",
+    "controller_exit": 1,
+    "child_exit": null,
+    "complete": false,
+    "accepted": false,
+    "updated_at": "2026-10-11T17:50:24.875430+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

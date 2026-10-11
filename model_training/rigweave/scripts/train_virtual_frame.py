@@ -100,7 +100,10 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
     plan = config[args.plan]
     dataset = dataset_for(entries["train"], config)
     optimizer = optimizer_for(model, config)
-    wrapped = DistributedDataParallel(model, device_ids=[device.index], find_unused_parameters=True) if world > 1 else model
+    wrapped = DistributedDataParallel(
+        model, device_ids=[device.index], find_unused_parameters=True,
+        gradient_as_bucket_view=config["runtime"]["ddp_gradient_as_bucket_view"],
+    ) if world > 1 else model
     indices = _stress_indices(entries["train"])
     root = Path(args.output)
     root.mkdir(parents=True, exist_ok=True)
@@ -332,7 +335,10 @@ def run_training(model, initialization, entries, config, args, device, rank, wor
         np.random.set_state(states["numpy_rng"])
         random.setstate(states["python_rng"])
         del resume
-    wrapped = DistributedDataParallel(model, device_ids=[device.index], find_unused_parameters=True) if world > 1 else model
+    wrapped = DistributedDataParallel(
+        model, device_ids=[device.index], find_unused_parameters=True,
+        gradient_as_bucket_view=config["runtime"]["ddp_gradient_as_bucket_view"],
+    ) if world > 1 else model
     started = time.monotonic()
     report = {"complete": False, "started_at": now(), "rank": rank, "world_size": world, "plan": plan,
               "candidate": args.candidate, "initialization": initialization, "source": source,

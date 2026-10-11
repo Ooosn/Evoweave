@@ -14,7 +14,8 @@
     "allocation": 129547842,
     "host": "pcg01i",
     "physical_gpus": [5, 7],
-    "allocator_fraction": 0.98
+    "allocator_fraction": 0.98,
+    "ddp_gradient_as_bucket_view": true
   },
   "initialization": {
     "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
@@ -40,7 +41,8 @@
     "dropout": 0.0,
     "motion_checkpointing": true,
     "surface_checkpointing": true,
-    "position_checkpointing": true
+    "position_checkpointing": true,
+    "generation_cache": true
   },
   "candidates": {
     "self_cross_1": {"position_depth": 1, "position_self_attention": true},
@@ -93,6 +95,11 @@
     "stop_at_limit": true
   },
   "capacity_confirm": {"cases": [], "allocated_fraction_limit": 0.95, "stop_at_limit": true},
+  "capacity_mixed": {
+    "cases": [[24, 13], [10, 32], [2, 32], [11, 29], [16, 20], [24, 14]],
+    "allocated_fraction_limit": 0.93,
+    "stop_at_limit": true
+  },
   "loss_balance": {"frames": [24, 8, 2], "frame_budget": 0, "batch_cap": 0},
   "compare": {
     "approved": false,

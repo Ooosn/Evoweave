@@ -18,6 +18,7 @@ def settings(**overrides):
     base = VirtualFrameRigConfig(
         dim=16, heads=4, query_tokens=7, register_tokens=2, motion_depth=3,
         position_depth=2, max_joints=8, motion_evidence_fusion="off", motion_evidence_heads=0,
+        generation_cache=False,
     )
     return replace(base, **overrides)
 

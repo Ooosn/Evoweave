@@ -277,6 +277,43 @@ class SharedParentDecoder(nn.Module):
             ids = torch.cat((ids, ids.new_tensor([[token]])), dim=1)
         raise AssertionError("unreachable structure-generation termination")
 
+    @torch.no_grad()
+    def generate_cached(self, memory: torch.Tensor, *, joint_limit: int | None = None) -> dict[str, Any]:
+        """Use the backbone's KV cache, retaining each joint's post-token feature."""
+        if self.training or memory.shape[0] != 1:
+            raise ValueError("cached structure generation requires eval mode and one asset")
+        limit = self.config.max_joints if joint_limit is None else int(joint_limit)
+        if not 1 <= limit <= self.config.max_joints:
+            raise ValueError("generation joint limit is outside the model capacity")
+        bos = torch.tensor([[self.tokens.bos]], dtype=torch.long, device=memory.device)
+        attention = torch.ones((1, memory.shape[1] + 1), dtype=torch.bool, device=memory.device)
+        result = self.backbone(inputs_embeds=torch.cat((memory, self.embedding(bos)), dim=1),
+                               attention_mask=attention, use_cache=True, return_dict=True)
+        generated, features = [], []
+        for step in range(limit + 1):
+            hidden = result.last_hidden_state[:, -1:]
+            if step:
+                features.append(hidden)
+            logits = self.head(hidden)[:, -1]
+            allowed = self.tokens.allowed(torch.tensor([step], dtype=torch.long, device=memory.device))
+            token = int(logits.masked_fill(~allowed, -torch.finfo(logits.dtype).max)[0].argmax())
+            if token == self.tokens.eos:
+                generated.append(token)
+                return {"success": True, "status": "eos", "tokens": generated,
+                        "parents": self.tokens.decode(generated), "joint_features": torch.cat(features, dim=1)}
+            if len(generated) == limit:
+                return {"success": False, "status": "max_joints", "tokens": generated,
+                        "parents": None, "joint_limit": limit}
+            generated.append(token)
+            past = result.past_key_values
+            if past is None:
+                raise RuntimeError("backbone did not return the requested generation cache")
+            attention = torch.cat((attention, attention.new_ones((1, 1))), dim=1)
+            ids = torch.tensor([[token]], dtype=torch.long, device=memory.device)
+            result = self.backbone(inputs_embeds=self.embedding(ids), attention_mask=attention,
+                                   past_key_values=past, use_cache=True, return_dict=True)
+        raise AssertionError("unreachable cached structure-generation termination")
+
 
 class FrameJointPositionDecoder(nn.Module):
     def __init__(self, config: SharedStructureConfig) -> None:

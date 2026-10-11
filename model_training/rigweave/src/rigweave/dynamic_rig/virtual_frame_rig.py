@@ -30,6 +30,7 @@ class VirtualFrameRigConfig:
     motion_checkpointing: bool = True
     surface_checkpointing: bool = True
     position_checkpointing: bool = True
+    generation_cache: bool = True
 
     def __post_init__(self) -> None:
         counts = (self.dim, self.heads, self.query_tokens, self.register_tokens,
@@ -257,7 +258,8 @@ class VirtualFrameRig(nn.Module):
         self, anchors: torch.Tensor, memory: torch.Tensor, anchor_points: torch.Tensor,
         *, joint_limit: int | None = None,
     ) -> dict[str, Any]:
-        result = self.structure.generate(memory, joint_limit=joint_limit)
+        generate = self.structure.generate_cached if self.config.generation_cache else self.structure.generate
+        result = generate(memory, joint_limit=joint_limit)
         if not result["success"]:
             return result
         mask = torch.ones(result["joint_features"].shape[:2], dtype=torch.bool, device=anchors.device)

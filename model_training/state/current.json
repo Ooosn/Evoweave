@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-11T22:37:18.855262+00:00",
+  "updated_at": "2026-10-11T22:59:00.941709+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_verified_pending_gpu_verification",
     "localization_implementation_deviation": "Current code uses encode_surface(source) dynamic anchors only for shared structure generation. It independently normalizes target meshes, re-encodes them with the surface tokenizer, and passes target.tokens to the position head without the target motion encoder. These are not the user-specified original current-frame anchors. Matching the new target mesh and GT coordinates does not establish compliance with the required H+A_t path.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage capacity_initial_v1."
+    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage capacity_mixed_v1."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -340,8 +340,74 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Execute and inspect capacity_initial_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
+  "next_required_result": "Execute and inspect capacity_mixed_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
   "active_operation": {
+    "experiment": "shared_virtual_frame_20261012",
+    "label": "capacity_mixed_v1",
+    "mode": "profile",
+    "plan": "capacity_mixed",
+    "candidate": "self_cross_4",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/capacity_mixed_v1",
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "--mode",
+      "profile",
+      "--plan",
+      "capacity_mixed",
+      "--candidate",
+      "self_cross_4",
+      "--output",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/capacity_mixed_v1"
+    ],
+    "operation": "preflight",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5
+      ]
+    },
+    "selected_settings": {
+      "cases": [
+        [
+          24,
+          13
+        ],
+        [
+          10,
+          32
+        ],
+        [
+          2,
+          32
+        ],
+        [
+          11,
+          29
+        ],
+        [
+          16,
+          20
+        ],
+        [
+          24,
+          14
+        ]
+      ],
+      "allocated_fraction_limit": 0.93,
+      "stop_at_limit": true
+    },
+    "status": "prepared",
+    "prepared_at": "2026-10-11T22:59:00.941709+00:00",
+    "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
+    "accepted": false
+  },
+  "last_operation": {
     "experiment": "shared_virtual_frame_20261012",
     "label": "capacity_initial_v1",
     "mode": "profile",
@@ -414,147 +480,6 @@
     "prepared_at": "2026-10-11T22:37:18.855262+00:00",
     "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
     "accepted": false
-  },
-  "last_operation": {
-    "experiment": "shared_structure_full_20261012_r3",
-    "stage": "full",
-    "artifact_prefix": "shared_structure_full_r3",
-    "authorization": "User explicitly authorized more data, larger/standard batch and both granted H100s, and requested actual full-data training with early matched legacy F1/eval trends instead of any further standalone smoke test. Primary owns implementation and acceptance. User corrected the primary's unjustified FP32 switch and explicitly directs the established BF16 training path. Do not infer gradient explosion from batch-dependent finite gradient differences.",
-    "status": "failed",
-    "prepared_at": "2026-10-11T17:58:29.875863+00:00",
-    "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_full_20261012_r3.json",
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_shared_structure_full.py",
-      "--config",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_full_20261012_r3.json",
-      "--stage",
-      "full",
-      "--output",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_full_evaluation.json"
-    ],
-    "source_code_commit": "5f61e24bb2878f8b425b155296e0b91cb7f9401b",
-    "source_metadata": {
-      "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
-      "git_head": "5f61e24bb2878f8b425b155296e0b91cb7f9401b",
-      "git_status": ""
-    },
-    "manifests": [
-      {
-        "argument": "train_manifest",
-        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-        "sha256": "771317518b79ff0c6487e8308d89b078f9ad66a518824d79f07ef5a0975ea56d",
-        "rows": 18097
-      },
-      {
-        "argument": "val_manifest",
-        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-        "sha256": "4a2477292bbac51c08d09ddd64018047ff11422d93be491085ff7f9fd2452fa6",
-        "rows": 971
-      }
-    ],
-    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "source_checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-      "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
-    },
-    "initialization": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
-    "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "warmstart": {
-      "path": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
-      "sha256": "fef3c8e166868c8554877f7415767514ee44d1816935846d769297fd5e4207c0",
-      "step": 1024,
-      "prior_head_asset_exposures": 4096
-    },
-    "training_configuration": {
-      "world_size": 2,
-      "core_precision": "bfloat16_autocast",
-      "coordinate_extension": "Full training-eligible maxabs1.69815004 determines the next symmetric power-of-two range[-2,2]. Training heldout max1.74905789 and validation max1.03565979 also fit. Double bins256->512 at unchanged grid spacing1/128; copy each old XYZ output row into centered offset128. Only new outer-bin rows initialize with zero weights and bias-8. Mesh-only normalization/padding1.1 and all other pretrained weights are unchanged. No per-instance GT normalization or coordinate clipping.",
-      "warmstart": {
-        "path": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
-        "sha256": "fef3c8e166868c8554877f7415767514ee44d1816935846d769297fd5e4207c0",
-        "step": 1024,
-        "prior_head_asset_exposures": 4096
-      },
-      "optimizer": "Fresh AdamW moments, OneCycleLR total1667, pct_start0.1, div_factor5, final_div_factor10. Both trainable parameter groups peak at1e-4. Exact effective batch48: physical8 per rank, two ranks, accumulate3. No dropped or padded manifest exposures across epochs.",
-      "evaluation_selection": {
-        "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_selection_audit.json",
-        "sha256": "b405e7083142b031786b1b40a34164772b7541b3dc968e7b27d34cf118ec3dff"
-      },
-      "legacy_at_step": {
-        "105": 5000,
-        "209": 10000
-      },
-      "legacy_checkpoints": {
-        "5000": {
-          "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
-          "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8"
-        },
-        "10000": {
-          "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_10000.pt",
-          "sha256": "6836b6a55590f4033b2bdedfbfb555c2f38c1f357012073f1af15e5f83517b75"
-        }
-      },
-      "comparison_limitations": "Same new optimizer update105/209 and effective asset batch48 give5040/10032 new asset exposures, matching native old checkpoint progress. These are reference trends, not initialization/data-matched causal A/B: new head already saw4096 exposures; its frozen encoder/backbone originated from old80016-exposure training. Old method trained15920 base assets whereas this run uses18097 current assets. Eval fixes32 prior training-diagnostic and64 validation assets and query raw poses. Eight heldout poses are excluded from this run, not guaranteed unseen across inherited pretraining history. No cross-action claim.",
-      "acceptance": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. The prior BF16 cross-batch equivalence threshold remains rejected, not relaxed or equated to gradient explosion; the user explicitly directs BF16 full training and early quality trends.",
-      "backbone_attention": "flash_attention_2",
-      "previous_attempts": [
-        {
-          "experiment": "shared_structure_full_20261012",
-          "status": "failed",
-          "optimizer_steps": 0,
-          "reason": "Unrequested FP32 core rejected by source FlashAttention2 during the first forward, before backward. Not gradient explosion."
-        },
-        {
-          "experiment": "shared_structure_full_20261012_r2",
-          "status": "withdrawn_before_launch",
-          "optimizer_steps": 0,
-          "reason": "User rejected FP32/eager attention change. No model child or GPU optimization was launched."
-        }
-      ],
-      "coordinate_diagnosis": {
-        "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_outlier_diagnosis_20261012.json",
-        "sha256": "70f6e19a2813a8919d6447047cdd74970916389bf1305dede1ae645942158c38",
-        "findings": "75 training assets exceed the old range in eligible poses;79 across all40/41poses and2validation assets.67/79 have skinned outlier joints, so it is not only unused tips. Direct NPZ per-frame bounds and the actual normalization path match to1.2e-7 in the5worst train/valid cases. The data screening checks bbox diagonal size consistency, not joint containment in the mesh bbox. This is a representation-domain mismatch, not evidence for low overall F1 or a normalization arithmetic defect. No dataset row or target is removed/changed."
-      }
-    },
-    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_full_20261012_r3",
-    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_full_20261012_r3/full",
-    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_full_evaluation.json",
-    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_full.json",
-    "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ],
-      "virtual_memory": "unlimited",
-      "new_allocation": false
-    },
-    "guard_operations": [
-      "train"
-    ],
-    "guard_after_record": "begin",
-    "acceptance": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. The prior BF16 cross-batch equivalence threshold remains rejected, not relaxed or equated to gradient explosion; the user explicitly directs BF16 full training and early quality trends.",
-    "note": "Full18097 train assets, two H100 DDP, physical8 each/accumulate3/global48, uniform BF16 with original attention, preserved1024-step skeleton warmstart with fresh optimizer. Actual training with early legacy F1/geometry evaluation; no standalone GPU smoke and no feature cache.",
-    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_full.json",
-    "result_note": "Intentionally stopped at the user's dataset-revision request on 2026-10-12 03:40 JST. Last completed update114; checkpoints32 and105 preserved, including checkpoint105 SHA256 72cbc717d8d8437a0468557aac1423fe1fd3155d7f31ddc0638eeacdac192af3. Both training children stopped and qlogin129547842 preserved. Terminal failed status represents SIGINT for dataset quarantine, not numerical failure. Receipt: /home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_dataset_stop_20261012.json. Do not restart the old manifests.",
-    "controller_exit": 1,
-    "child_exit": -2,
-    "complete": false,
-    "accepted": false,
-    "updated_at": "2026-10-11T18:40:06.312979+00:00",
-    "child_report": {
-      "complete": false,
-      "accepted": false,
-      "source_checkpoint": {
-        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
-      }
-    }
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [

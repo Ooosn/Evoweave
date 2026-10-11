@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T13:59:32.626935+00:00",
+  "updated_at": "2026-10-11T14:15:12.048244+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Both physical H100s independently evaluate disjoint interleaved asset shards, preserving the original global diagnostic subsets: trained224 and initialized96 asset/views. Merge only exact complete nonduplicated coverage. Report freely generated ordered tree/count, natural EOS, fixed-identity heldout localization and coverage, source-view agreement conditional on correctness, and teacher/zero-memory diagnostics. On each GPU measure true physical B1/B2/B4 forward/backward at T8 or T24; compare B4 loss and five gradient groups against serial accumulation of the exact same four assets and sampled frames, within declared BF16 tolerance. No optimizer steps; all model parameters and both checkpoint files unchanged. Profile rejection is reported explicitly and never authorizes training. Execution completion is not method acceptance. No automatic continuation.",
+  "next_required_result": "Review held-out generation/reuse and physical-batch throughput before authorizing any training continuation.",
   "active_operation": {
     "experiment": "shared_structure_review_20261011",
     "stage": "assessment",
     "artifact_prefix": "shared_structure_review_r1",
     "authorization": "The user requested that the primary correct missing quality feedback and poor use of two H100s and physical batches. Assess the checksum-preserved step1024 checkpoint and original initialization on unchanged assets/frames/architecture; measure genuine physical batches on both granted H100s. No new architecture, feature cache, optimizer updates, or automatic training continuation. The primary performs implementation and review without Luna.",
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-11T13:59:32.626935+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_review_20261011.json",
     "command": [
@@ -331,7 +331,22 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Both physical H100s independently evaluate disjoint interleaved asset shards, preserving the original global diagnostic subsets: trained224 and initialized96 asset/views. Merge only exact complete nonduplicated coverage. Report freely generated ordered tree/count, natural EOS, fixed-identity heldout localization and coverage, source-view agreement conditional on correctness, and teacher/zero-memory diagnostics. On each GPU measure true physical B1/B2/B4 forward/backward at T8 or T24; compare B4 loss and five gradient groups against serial accumulation of the exact same four assets and sampled frames, within declared BF16 tolerance. No optimizer steps; all model parameters and both checkpoint files unchanged. Profile rejection is reported explicitly and never authorizes training. Execution completion is not method acceptance. No automatic continuation.",
-    "note": "Primary-owned checkpoint1024 quality assessment and physical batching profile on both H100s. No architecture/data changes, no optimizer updates, no feature cache, no automatic continuation."
+    "note": "Primary-owned checkpoint1024 quality assessment and physical batching profile on both H100s. No architecture/data changes, no optimizer updates, no feature cache, no automatic continuation.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_assessment.json",
+    "result_note": "Primary reviewed checkpoint quality and physical batch results; completion is not method acceptance and does not authorize automatic continuation.",
+    "controller_exit": 0,
+    "child_exit": 0,
+    "complete": true,
+    "accepted": true,
+    "updated_at": "2026-10-11T14:15:12.048244+00:00",
+    "child_report": {
+      "complete": true,
+      "accepted": true,
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      }
+    }
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

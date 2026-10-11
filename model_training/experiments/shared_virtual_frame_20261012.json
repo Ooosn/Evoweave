@@ -100,7 +100,7 @@
     "allocated_fraction_limit": 0.93,
     "stop_at_limit": true
   },
-  "capacity_oom_trace": {"cases": [[10, 32]], "allocated_fraction_limit": 0.93, "stop_at_limit": true},
+  "capacity_oom_trace": {"cases": [[10, 32]], "allocated_fraction_limit": 0.93, "stop_at_limit": true, "trace_autograd": true},
   "loss_balance": {"frames": [24, 8, 2], "frame_budget": 0, "batch_cap": 0},
   "compare": {
     "approved": false,

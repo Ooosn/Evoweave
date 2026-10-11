@@ -120,7 +120,9 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
     write_json(path, report)
     for frames, batch in plan["cases"]:
         try:
-            case = profile_case(wrapped, optimizer, dataset, config, device, frames, batch, indices, 1.)
+            context = torch.autograd.detect_anomaly(check_nan=False) if plan.get("trace_autograd") else nullcontext()
+            with context:
+                case = profile_case(wrapped, optimizer, dataset, config, device, frames, batch, indices, 1.)
             case["approved"] = case["peak_allocated_gib"] <= plan["allocated_fraction_limit"] * report["gpu_total_gib"]
             report["cases"].append(case)
             print("CAPACITY " + json.dumps({"rank": rank, **case}), flush=True)

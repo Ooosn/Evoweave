@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T12:28:14.245258+00:00",
+  "updated_at": "2026-10-11T13:38:38.296118+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,11 +111,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "preflight",
     "matched_eval"
   ],
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim.",
+  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
   "active_operation": {
     "experiment": "shared_structure_medium_20261011",
     "stage": "probe",
     "artifact_prefix": "shared_structure_online_r1",
     "authorization": "User authorized the medium-scale expansion and then explicitly requested canceling large feature caching and starting direct online training. Reuse the accepted network preflight; check only the changed online path. The primary objective remains a reusable generated skeleton identity/structure sequence. This is bounded frozen-feature training, not formal full-dataset retraining. Preserve prior artifacts, including the failed cache attempt; no automatic retry or promotion.",
-    "status": "prepared",
+    "status": "failed",
     "prepared_at": "2026-10-11T12:28:14.245258+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
     "command": [
@@ -330,7 +330,22 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Start optimization directly with online features and no cache stage. After training compare final and initialized T8 on the same32train assets and all64validation assets; rebuild initialization from the immutable source and model seed after final evaluation, so baseline generation does not delay training. Final multi-view evaluation uses first16of each split for T2/T24,alternate-queryT8 and heldout-sourceT8. Save each generated S and bind without source/AR rerun. Report naturalEOS,ordered parents,count,one-to-one geometry/edge coverage,stable fixed-identity coverage across8heldout targets,and source agreement conditional on GT correctness. Same-action holdouts and inherited base-pose exposure remain limitations; no independent-action invariance or formal promotion claim.",
-    "note": "User explicitly canceled feature caching. Online training, same256/64assets4096updates32/8frame partition. Reuse accepted pinned network preflight; first update validates online gradients/prefix. No cache stage."
+    "note": "User explicitly canceled feature caching. Online training, same256/64assets4096updates32/8frame partition. Reuse accepted pinned network preflight; first update validates online gradients/prefix. No cache stage.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_online_r1_probe.json",
+    "result_note": "Intentionally interrupted ONLY the training child after checksum-verified checkpoint1024 to correct missing quality feedback and poor physical batching/dual-GPU use. This is not a numerical or architecture failure. Checkpoint, optimizer, scheduler and sampler preserved; see results/shared_structure_online_r1_preserved_1024.json. Do not automatically resume4096steps.",
+    "controller_exit": 1,
+    "child_exit": 1,
+    "complete": false,
+    "accepted": false,
+    "updated_at": "2026-10-11T13:38:38.296118+00:00",
+    "child_report": {
+      "complete": false,
+      "accepted": false,
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      }
+    }
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

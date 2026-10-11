@@ -41,6 +41,65 @@ are additional endpoints, not replacements.
 Reanalysis receipt: `results/shared_structure_review_r1_legacy_f1.json`, SHA256
 `e9f50827d5fcede7de8183ad8e07da51d42b8c853cf9cf57d46a74a78012e45d`.
 
+### Localization Under Correct Structure
+
+A second CPU-only read of the same saved predictions scores the existing
+teacher-forced coordinates with GT parents. This supplies the correct count and
+parent prefix; it is a diagnostic control, not a free-generation model result.
+No forward pass, optimizer update or new training was performed.
+
+| Split and target pose | Free-generation legacy F1 | GT-prefix coordinates with GT parents |
+| --- | ---: | ---: |
+| Train diagnostic (32), query | 0.347885 | 0.333437 |
+| Validation (64), query | 0.281405 | 0.264132 |
+| Train diagnostic (32), eight heldout poses | 0.297373 | 0.300034 |
+| Validation (64), eight heldout poses | 0.259038 | 0.264293 |
+
+Supplying correct structure does not restore high F1. The failure is already
+present in the GT-prefix localization task on training assets; it cannot be
+explained solely by free-generation parent/EOS errors or a validation-only gap.
+This does not distinguish weak joint features, the position readout, supervision
+issues or insufficient optimization. The control is not a quantitative additive
+decomposition of those causes. Existing free-generation scores were reproduced
+exactly, and the teacher MPJPE agrees with the original assessment.
+
+The saved complete checkpoint was independently rehashed and read on CPU.
+All 473 optimizer parameter tensors have state at update 1024 with no missing
+optimizer entries: 70,220,036 elements in new modules and 305,463,296 in the
+inherited backbone. The new memory, parent embeddings/head and position decoder
+are freshly initialized by the constructor; old coordinate-output competence is
+not automatically inherited by this new output path. These counts do not imply
+that every scalar changed on every update. Recorded first-update checks and
+nonzero XYZ-to-structure gradients separately confirm updates and supervision
+flow through the five monitored components.
+
+The first versus last 32 update means are structure CE 2.5692 -> 0.6046 and
+XYZ CE 5.6145 -> 3.6161. This rules out a completely inactive training loop, not
+an inadequate objective or design. Every one of 256 assets has 16 exposures.
+The OneCycle schedule is at update 1024 of 4096; its rising phase ends at 1227.8.
+Actual new/backbone learning rates are 9.3620e-5/9.3620e-6, already 93.6% of
+their maxima, so "still warming up" is not evidence of a near-zero learning rate
+or a demonstrated explanation of the poor score.
+
+For the nine exact-tree assets in each split, mean free/teacher coordinate
+disagreement is 0.002975 (train)/0.003177 (valid) in padded half-extent units.
+Sparse individual jumps reach 0.6172/1.625. Frozen motion encoding was recomputed
+separately in the original evaluation; these jumps are an unresolved inference
+sensitivity, not a proven source of the overall low F1. The later B4 diagnostic
+never updated this checkpoint and therefore did not train these poor weights.
+
+The next research decision must address poor GT-prefix localization before
+interpreting reusable-identity or free-generation quality. No specific code bug
+or architecture impossibility has been established; no automatic continuation
+or architecture change is authorized by this analysis.
+
+Evidence: `results/shared_structure_review_r1_gt_prefix_f1.json`, SHA256
+`7f6c577868a3c54831585d105fb0856f7e5b237414f847a6fa01a19abf86c69c`;
+`results/shared_structure_review_r1_optimizer_accounting.json`, SHA256
+`5f0d6cb28cb0f1d7ae525bd6a417b8a454a132b22b3212bdd585f4788d893f1c`.
+Training trace: `results/shared_structure_online_r1_probe_evaluation.json`, SHA256
+`c4f71c2e69b6202771baf33e27d08bf0e8f43122a245530070cf35d19ffe8d1a`.
+
 ### Exact Structure And Identity Reuse
 
 The two-H100 assessment completed with all three exits zero,224 trained views

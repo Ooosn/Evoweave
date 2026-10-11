@@ -56,9 +56,9 @@
     "position_depth": 2,
     "max_joints": 512,
     "xyz_bins": 256,
-    "xyz_min": -1,
-    "xyz_max": 1,
-    "dropout": 0
+    "xyz_min": -1.0,
+    "xyz_max": 1.0,
+    "dropout": 0.0
   },
   "features": {
     "register_temporal_mode": "global",

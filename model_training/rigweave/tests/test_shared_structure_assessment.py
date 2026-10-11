@@ -35,6 +35,14 @@ class AssessmentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             assessment.worker_entries(entries, config, 2)
 
+    def test_recorded_architecture_values_and_types_are_unchanged(self):
+        config = self.config()
+        path = Path(__file__).resolve().parents[2] / "experiments/shared_structure_medium_20261011.json"
+        original = json.loads(path.read_text())
+        self.assertEqual(config["architecture"], original["architecture"])
+        for key, value in original["architecture"].items():
+            self.assertIs(type(config["architecture"][key]), type(value), key)
+
     def test_candidate_contract_rejects_architecture_sampling_and_holdout_drift(self):
         config = self.config()
         payload = {"step": 1024, "source_checkpoint": controller._checkpoint_identity(config),

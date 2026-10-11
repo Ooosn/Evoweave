@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T11:45:38.165122+00:00",
+  "updated_at": "2026-10-11T11:57:49.000157+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,13 +111,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Complete the immutable per-frame surface cache with exact source, checkpoint, manifest, cache hash, and 256 train/64 validation assets.",
+  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
   "active_operation": {
     "experiment": "shared_structure_medium_20261011",
     "stage": "cache",
     "artifact_prefix": "shared_structure_medium_r1",
     "authorization": "User authorized beginning the medium-scale expansion after discussion of the new skeleton-token vocabulary. The primary objective is a reusable generated skeleton identity/structure sequence, with target-mesh localization providing supervision and use. This is a bounded frozen-feature experiment, not formal full-dataset retraining. Preserve all prior models and artifacts; review each stage before the next; no automatic retry or promotion.",
-    "status": "prepared",
+    "status": "failed",
     "prepared_at": "2026-10-11T11:45:38.165122+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_medium_20261011.json",
     "command": [
@@ -330,7 +330,22 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Complete the immutable per-frame surface cache with exact source, checkpoint, manifest, cache hash, and 256 train/64 validation assets.",
-    "note": "User-authorized medium expansion:256train64valid4096updates; reusable skeleton sequence primary;32eligible8strictlyheldoutframes;two query charts;unchanged architecture/frozen-feature init;not full training or cross-action proof."
+    "note": "User-authorized medium expansion:256train64valid4096updates; reusable skeleton sequence primary;32eligible8strictlyheldoutframes;two query charts;unchanged architecture/frozen-feature init;not full training or cross-action proof.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_r1_cache.json",
+    "result_note": "Primary reviewed the exact medium-stage outputs; execution acceptance is distinct from representation quality. No automatic full retraining or retry.",
+    "controller_exit": 1,
+    "child_exit": 1,
+    "complete": false,
+    "accepted": false,
+    "updated_at": "2026-10-11T11:57:49.000157+00:00",
+    "child_report": {
+      "complete": false,
+      "accepted": false,
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      }
+    }
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T08:50:23.830729+00:00",
+  "updated_at": "2026-10-11T08:55:50.632340+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,12 +111,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -264,13 +264,13 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
+  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
   "active_operation": {
     "experiment": "shared_structure_probe_20261011",
     "stage": "preflight",
     "artifact_prefix": "shared_structure",
     "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
-    "status": "prepared",
+    "status": "failed",
     "prepared_at": "2026-10-11T08:50:23.830729+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
     "command": [
@@ -331,7 +331,14 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
-    "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion."
+    "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion.",
+    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
+    "result_note": "Controller preparation failed before child launch: inherited runtime_environment expected resolved_env.txt beside the new bias_h8 checkpoint. No GPU/model child ran. Parent will explicitly pin the original environment file in a separately recorded attempt; no silent fallback.",
+    "controller_exit": 1,
+    "child_exit": null,
+    "complete": false,
+    "accepted": false,
+    "updated_at": "2026-10-11T08:55:50.632340+00:00"
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",

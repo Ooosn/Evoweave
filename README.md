@@ -3,6 +3,11 @@
 Evoweave is organized as separate code modules with GitHub as the source of
 truth for code synchronization.
 
+The current HGC dataset has 18,018 train / 969 validation assets after the
+2026-10-12 all-frame normalized-joint coordinate screen. Read
+[DATASET_SOURCE_OF_TRUTH.md](DATASET_SOURCE_OF_TRUTH.md) for the canonical
+manifest paths, quarantine records, and retained backing NPZ storage.
+
 ## Modules
 
 - `data_processing/`: raw-data export, rootless skeleton cleanup, quality

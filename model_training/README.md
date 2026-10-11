@@ -1,5 +1,16 @@
 # Evoweave Model Training
 
+Dataset revision (2026-10-12): use the immutable coordinate-screened HGC
+manifests in [dataset authority](../DATASET_SOURCE_OF_TRUTH.md), containing
+18,018 train / 969 validation assets. The 81 quarantined assets are excluded
+from future training. The bound is defined using per-frame mesh padding 1.1;
+it must not be assumed for a different normalization. Historical experiment
+configs retain their original manifest identities for reproducibility.
+R3 was intentionally stopped for this dataset change with checkpoint105
+preserved. No replacement run was launched by this data-publication task.
+Read `state/current.json` for operation status; historical baselines below
+are not permission to restart an old-data job.
+
 This is the canonical Evoweave model-side module. It owns model architecture,
 training scripts, checkpoint workflows, and generation/evaluation code.
 

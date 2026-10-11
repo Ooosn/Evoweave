@@ -1,5 +1,22 @@
 # Model Training Jobs
 
+## Current Dataset Inputs
+
+As of 2026-10-12, new training must use the coordinate-screened manifest
+version from [dataset authority](../../DATASET_SOURCE_OF_TRUTH.md):
+
+```text
+/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl
+/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl
+```
+
+Counts are 18,018 train and 969 valid. Read each accepted row's `path`;
+do not enumerate NPZ directories or include quarantined manifests. The gate
+uses every stored frame and retained joint with per-frame mesh padding 1.1.
+Dated launchers/configs below retain historical paths for reproducibility,
+not defaults for a new run. The old-manifest R3 training was intentionally
+stopped; preserve its checkpoints and declare any new run separately.
+
 This folder stores model-training job scripts.
 
 ## Immediate Baseline

@@ -1,7 +1,21 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T18:40:06.312979+00:00",
+  "updated_at": "2026-10-11T19:08:29.317484+00:00",
+  "current_dataset_revision": {
+    "status": "verified_published",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+    "train_rows": 18018,
+    "valid_rows": 969,
+    "quarantined_rows": 81,
+    "target_mesh_padding": 1.1,
+    "all_frame_all_target_joint_abs_limit": 1.0,
+    "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+    "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+    "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+    "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+    "npz_files_changed": 0
+  },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -300,7 +314,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "User requested quarantine of all assets with mesh-normalized joints outside [-1,1] and a permanent upstream screening gate. R3 was intentionally interrupted for this dataset revision, not for a numerical failure. Publish and verify a new immutable screened manifest version before selecting another training operation; preserve the qlogin allocation and checkpoints.",
+  "next_required_result": "User-requested dataset quarantine and upstream all-frame screening are complete: current_dataset_revision pins the verified18018train/969valid manifests;81wholeassets are excluded with original NPZs intact. R3 remains intentionally stopped for this revision, not a numerical failure. No new run is selected by this data-only publication; preserve qlogin129547842 and checkpoint105. Any continuation must explicitly select the new manifests and keep the established BF16 path, with no extra GPU smoke.",
   "active_operation": {
     "experiment": "shared_structure_full_20261012_r3",
     "stage": "full",

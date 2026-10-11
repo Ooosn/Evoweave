@@ -1,5 +1,11 @@
 # Evoweave Workspace Map
 
+Current dataset revision (2026-10-12): 18,018 train / 969 validation assets
+after isolating 81 assets with out-of-bounds normalized target joints. Use
+[DATASET_SOURCE_OF_TRUTH.md](DATASET_SOURCE_OF_TRUTH.md) for the immutable HGC
+manifest paths and hashes. Acceptance receipts are under
+`server_ops/outputs/coordinate_bounds_hgc_20261012/`.
+
 This workspace is organized by module. Each module owns its own code, runbook,
 contracts, and validation notes. New work should be added inside the appropriate
 module instead of creating temporary scripts in the workspace root.

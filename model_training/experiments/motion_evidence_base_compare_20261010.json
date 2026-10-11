@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment": "motion_evidence_base_compare_20261010",
-  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. On 2026-10-11 JST the user asked to continue small-sample testing of mechanisms that use motion to reduce geometry ambiguity while retaining plausible complete structure in inactive regions. This authorizes the recorded frozen-base paired relation-adapter probe, not another full training.",
+  "approval": "User authorized implementation, small-scale checks, head/fusion selection, and the completed full two-H100 training, then coefficient/gradient diagnostics and frame-budget batching. Earlier 2026-10-11 small relation-adapter experiments are complete and are not promoted. The user clarified that the current issue is whether the already-trained model learns that inactive regions can still contain skeleton and can be inferred using geometry and other context, then asked to act rather than keep explaining. Current work is bounded read-only diagnosis of that ability and original u/O/M usage. No new architecture or full training is authorized.",
   "baseline": {
     "checkpoint": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/checkpoint_sample_80000.pt",
     "args": {
@@ -340,6 +340,20 @@
     "anchor_report_sha256": "0a52158554fbee9f783440ba05ff64785a5ab57b0ad06a713b21bc8c9dfda79e",
     "change": "Only bitwise-identical complete point-cloud clips set observed activity exactlyzero before allthree evidence states arecomputed. No threshold for small true motion; no GT/channel pruning. Fix scatter/SVD roundoff creating false motion in an exactly repeated query.",
     "scope": "Read-only16static cases, frozenbase andexistingtrainedanchoredadapter, originalsurface references/fullGT. Up to16baselinegenerations onlyifcorrectedbaseconditiondiffers; otherwise reuseverifiedidenticalcondition outputs. Two64prefixchecks. No additionaltraining orcheckpointwrites."
+  },
+  "inactive_motion_use": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "source_evaluation": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/relation_screen_evaluation.json",
+    "source_evaluation_sha256": "073b7824d04b9e07e9bfc587b8b1dcf512b30d187978e6aa9bf62144e6584222",
+    "source_cache": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/relation_probe_20261011/relation_screen/cached_inputs.pt",
+    "source_cache_sha256": "aea71682062b399e2cb967d8250bad71499ea43e0a3135f8d1afe89f80550a20",
+    "seed": 20261011,
+    "permutation_seed": 99173,
+    "max_new_tokens": 1400,
+    "prefix_tokens": 64,
+    "views": ["normal8", "weak2", "static8"],
+    "controls": ["unknown", "permuted"],
+    "scope": "Diagnose the completed original bias_h8 model's inactive-joint capability, not a new architecture or training recipe. Preserve exact cached geometry, poses, complete GT, query normalization and all original model weights. Intervene only on the ORIGINAL explicit pair-state input; no experimental relation adapters. Reuse saved base generations only after exact condition/CE replay and four64token prefixes. Static controls reuse only after exact condition identity. Offline same-joint comparisons and separate full-generation failures from local underprediction. No training, optimizer orcheckpoint/cache writes."
   },
   "full_training": {
     "max_steps": 1667,

@@ -74,6 +74,18 @@ class ExperimentPlanTest(unittest.TestCase):
         self.assertEqual(audit["devices"], [5])
         self.assertIsNone(audit["expected"])
 
+    def test_inactive_motion_use_is_original_model_read_only(self):
+        plan = build_plan(self.config, "inactive_motion_use", None)
+        self.assertIsNone(plan["expected"])
+        self.assertIsNone(plan["output"])
+        self.assertEqual(plan["devices"], [5])
+        self.assertIn("probe_inactive_motion_use.py", " ".join(plan["command"]))
+        config = self.config["inactive_motion_use"]
+        self.assertEqual(config["checkpoint"], self.config["relation_probe"]["checkpoint"])
+        self.assertEqual(config["controls"], ["unknown", "permuted"])
+        self.assertNotIn("lr", config)
+        self.assertNotIn("steps", config)
+
     def test_frame_smoke_uses_selected_candidate_and_two_devices(self):
         plan = build_plan(self.config, "frame_budget_smoke", "bias_h8")
         self.assertEqual(plan["devices"], [5, 7])

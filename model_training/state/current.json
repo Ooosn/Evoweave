@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "motion-evidence-base-compare-20261010",
-  "updated_at": "2026-10-11T08:55:50.632340+00:00",
+  "updated_at": "2026-10-11T09:04:13.065806+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -111,12 +111,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "train",
-    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -264,14 +264,14 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
+  "next_required_result": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
   "active_operation": {
     "experiment": "shared_structure_probe_20261011",
     "stage": "preflight",
-    "artifact_prefix": "shared_structure",
+    "artifact_prefix": "shared_structure_r2",
     "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
-    "status": "failed",
-    "prepared_at": "2026-10-11T08:50:23.830729+00:00",
+    "status": "prepared",
+    "prepared_at": "2026-10-11T09:04:13.065806+00:00",
     "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
     "command": [
       "/home/wangyy/miniconda3/envs/mygs/bin/python",
@@ -282,12 +282,12 @@
       "--stage",
       "preflight",
       "--output",
-      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json"
+      "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_r2_preflight_evaluation.json"
     ],
-    "source_code_commit": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+    "source_code_commit": "a51b1346bf1093621c3500606f4f96d3c3d1ffff",
     "source_metadata": {
       "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
-      "git_head": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+      "git_head": "a51b1346bf1093621c3500606f4f96d3c3d1ffff",
       "git_status": ""
     },
     "manifests": [
@@ -311,10 +311,10 @@
     },
     "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
     "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
-    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011",
-    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011/preflight",
-    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json",
-    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
+    "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011_r2",
+    "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011_r2/preflight",
+    "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_r2_preflight_evaluation.json",
+    "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_r2_preflight.json",
     "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
     "resources": {
       "allocation": 129547842,
@@ -331,14 +331,7 @@
     ],
     "guard_after_record": "begin",
     "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
-    "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion.",
-    "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
-    "result_note": "Controller preparation failed before child launch: inherited runtime_environment expected resolved_env.txt beside the new bias_h8 checkpoint. No GPU/model child ran. Parent will explicitly pin the original environment file in a separately recorded attempt; no silent fallback.",
-    "controller_exit": 1,
-    "child_exit": null,
-    "complete": false,
-    "accepted": false,
-    "updated_at": "2026-10-11T08:55:50.632340+00:00"
+    "note": "Primary reviewed first prelaunch failure, pinned original environment, and verified 40 shared-structure plus 6 register Linux tests on identical a51b134 source. The SSH wait timed out after tests but before state recording; resume only state recording here, do not repeat passed tests. Bounded user-authorized method feasibility, not full retraining."
   },
   "last_operation": {
     "name": "model_structure_preflight_20260719",
@@ -2253,6 +2246,81 @@
       "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/inactive_motion_use_analysis_20261011.json",
       "result_note": "Original-model read-only diagnostic completed once from0ad5c0b, all3exits0;48exactbaseCE/conditionreplays,4prefixmatches,64newnaturalcontrolgens,32exactstaticreuses. Frozenparams0changed/0grads/cacheunchanged/sourcehashesverified,peak4.650649GiB. Capabilityexistsbutuneven:385has40/40quietjoints+edgeswithonly2active;202same17quietjointsnormal/weak/static10/9/1;128normalonly21/71quietmatchedandweakerinputsnonterminate. Explicitcuecontrolsweakinstablebenefit:pairedsuccessfulquietcoverageunknown179to178/354,permuted167to167/300;permuted21allcasequietlossfromonehitmax. Oldgeometry/implicitmultiframepathsretained,notproofallmotionunusedortrainingeffectabsent. Originalcheckpointpreserved,experimentaladaptersOFF,no newtraining. Smallartifactshashverified andCPU1to1analysis/figurecomplete.",
       "updated_at": "2026-10-11T04:28:00.574168+00:00"
+    },
+    {
+      "experiment": "shared_structure_probe_20261011",
+      "stage": "preflight",
+      "artifact_prefix": "shared_structure",
+      "authorization": "User authorized starting hierarchical skeleton generation and clarified that the primary product is a generated skeleton-token sequence reusable across poses/motions. Per-mesh localization supplies supervision and deployment, not the research objective. Existing trained weights are only a temporary initialization for bounded method-feasibility tests. Keep dynamic-frame evidence, unknown variable-length skeleton generation, and all joint identities. Do not launch formal full retraining before method validation.",
+      "status": "failed",
+      "prepared_at": "2026-10-11T08:50:23.830729+00:00",
+      "config": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/probe_shared_structure.py",
+        "--config",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_structure_probe_20261011.json",
+        "--stage",
+        "preflight",
+        "--output",
+        "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json"
+      ],
+      "source_code_commit": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+      "source_metadata": {
+        "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+        "git_head": "30fd5c80f67ec7e801169b275c0f776dd28596eb",
+        "git_status": ""
+      },
+      "manifests": [
+        {
+          "argument": "train_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "sha256": "de8f8faf7eb523384f372c9a43eedbbc50f3d5f8b7b82870abd7557ea92624b2",
+          "rows": 15920
+        },
+        {
+          "argument": "val_manifest",
+          "path": "/home/wangyy/evorig/evoweave_rebuild_rootless_v3_hgc_20260714/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "sha256": "d3cbea75c22d75fc90721b147ac16dc3fe5ceac94be858ab2c58db785b19928f",
+          "rows": 856
+        }
+      ],
+      "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "source_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+        "sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620"
+      },
+      "initialization": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "reference_checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+      "output_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011",
+      "output_path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/shared_structure_probe_20261011/preflight",
+      "evaluation_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight_evaluation.json",
+      "runtime_result": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
+      "job_root": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "virtual_memory": "unlimited",
+        "new_allocation": false
+      },
+      "guard_operations": [
+        "preflight",
+        "train"
+      ],
+      "guard_after_record": "begin",
+      "acceptance": "Exact full-joint identity, reversible mesh-only target charts and source/data hashes; raw-versus-cached geometry parity; masked tree roundtrip; teacher-forcing/manual-prefix consistency; reusable sequence serialization/rebinding with no source encoder or AR rerun; finite all-frame losses/gradients and new-module/backbone updates; XYZ-only gradients reach the structure generator; frozen features unchanged; T24/J512 with 32 target frames fits 90% GPU memory. Natural EOS and max-length failure remain distinct. Execution acceptance only, not quality approval.",
+      "note": "User-authorized reusable skeleton-sequence feasibility. Hierarchical generation is primary; target-mesh localization provides supervision/use. Existing checkpoint is temporary initialization only. Bounded stage, no automatic retry or full-training promotion.",
+      "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_preflight.json",
+      "result_note": "Controller preparation failed before child launch: inherited runtime_environment expected resolved_env.txt beside the new bias_h8 checkpoint. No GPU/model child ran. Parent will explicitly pin the original environment file in a separately recorded attempt; no silent fallback.",
+      "controller_exit": 1,
+      "child_exit": null,
+      "complete": false,
+      "accepted": false,
+      "updated_at": "2026-10-11T08:55:50.632340+00:00"
     }
   ]
 }

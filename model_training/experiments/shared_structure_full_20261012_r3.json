@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "experiment": "shared_structure_full_20261012_r3",
+  "authorization": "User explicitly authorized more data, larger/standard batch and both granted H100s, and requested actual full-data training with early matched legacy F1/eval trends instead of any further standalone smoke test. Primary owns implementation and acceptance. User corrected the primary's unjustified FP32 switch and explicitly directs the established BF16 training path. Do not infer gradient explosion from batch-dependent finite gradient differences.",
+  "baseline": {
+    "checkpoint": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_80000.pt",
+    "checkpoint_sha256": "e9b2aee8fea26a8cca120e4689d4c4c5f7732cf7cfa79d534d6537109a5f3620",
+    "manifests": [
+      {
+        "argument": "train_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "sha256": "771317518b79ff0c6487e8308d89b078f9ad66a518824d79f07ef5a0975ea56d",
+        "rows": 18097
+      },
+      {
+        "argument": "val_manifest",
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_hgc_20261001/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "sha256": "4a2477292bbac51c08d09ddd64018047ff11422d93be491085ff7f9fd2452fa6",
+        "rows": 971
+      }
+    ]
+  },
+  "runtime": {
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "conda_bin": "/home/wangyy/miniconda3/envs/mygs/bin",
+    "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+    "job_root": "/home/wangyy/jobs/motion_compare_hgc_20261010",
+    "output_root": "/home/wangyy/evorig/outputs/shared_structure_full_20261012_r3",
+    "artifact_prefix": "shared_structure_full_r3",
+    "feature_mode": "online",
+    "probe_script": "train_shared_structure_full.py",
+    "inventory": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_inventory_20261012.json",
+      "sha256": "8c6787fd59574f601daefc2d0d3fd58b3c7c4790ed743f21aefd73b0fe4337d2"
+    },
+    "saved_environment": "/home/wangyy/evorig/outputs/flat_unirig_hgc2h100_matched80k_20260717/resolved_env.txt",
+    "saved_environment_sha256": "069dfe9d43dc6c8f6e6038998dcdf224b021ee5639712f1dfdb9e96943a9e893",
+    "unirig_root": "/home/wangyy/evorig/model_assets/legacy_UniRig_modified_20260714",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 129547842,
+    "host": "pcg01i",
+    "physical_gpus": [
+      5,
+      7
+    ],
+    "memory_fraction": 0.9,
+    "host_memory_budget_gib": 64
+  },
+  "architecture": {
+    "dim": 1024,
+    "heads": 8,
+    "shared_tokens": 128,
+    "shared_depth": 2,
+    "position_depth": 2,
+    "max_joints": 512,
+    "xyz_bins": 512,
+    "xyz_min": -2,
+    "xyz_max": 2,
+    "dropout": 0
+  },
+  "features": {
+    "register_temporal_mode": "global",
+    "freeze_for_feasibility": true,
+    "delivery": "Online current-batch raw geometry and features only; no persistent feature cache. Frozen frontend and trainable network both use the established BF16 autocast path. Preserve original FlashAttention2. Parameter storage, AdamW state and loss reductions follow the old mixed-precision training implementation; no separate FP32 neural-network forward path.",
+    "original_motion_evidence": "Original bias_h8 with all u/c/d channels. No relation adapter or GT-derived input."
+  },
+  "data": {
+    "seed": 20261012,
+    "model_seed": 20261011,
+    "frame_seed": 20261013,
+    "train_assets": 18097,
+    "valid_assets": 971,
+    "pool_frames": 40,
+    "heldout_frames": 8,
+    "source_banks": 2,
+    "frames_min": 2,
+    "frames_max": 24,
+    "target_mesh_padding": 1.1,
+    "target_frames_per_exposure": 8,
+    "partition": "Use each NPZ's actual 40 or 41 frames; immutable per-asset frame partition reserves eight raw frames. Training samples 8 distinct XYZ target frames uniformly from its 32/33 eligible frames per exposure, an unbiased estimate of the previous per-asset all-eligible-frame mean. Two source-query banks and T2..24 use only eligible frames. Keep every real target joint, canonical rootspace, and all manifest rows."
+  },
+  "preflight": {},
+  "probe": {
+    "steps": 1667,
+    "batch_size": 8,
+    "accumulation": 3,
+    "lr_new": 0.0001,
+    "lr_backbone": 0.0001,
+    "weight_decay": 0.04,
+    "clip_grad_norm": 1,
+    "xyz_weight": 1,
+    "checkpoint_steps": [
+      32,
+      105,
+      209,
+      417,
+      625,
+      1042,
+      1667
+    ],
+    "generation_joint_limit": 256
+  },
+  "full": {
+    "world_size": 2,
+    "core_precision": "bfloat16_autocast",
+    "coordinate_extension": "Full training-eligible maxabs1.69815004 determines the next symmetric power-of-two range[-2,2]. Training heldout max1.74905789 and validation max1.03565979 also fit. Double bins256->512 at unchanged grid spacing1/128; copy each old XYZ output row into centered offset128. Only new outer-bin rows initialize with zero weights and bias-8. Mesh-only normalization/padding1.1 and all other pretrained weights are unchanged. No per-instance GT normalization or coordinate clipping.",
+    "warmstart": {
+      "path": "/home/wangyy/evorig/outputs/shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
+      "sha256": "fef3c8e166868c8554877f7415767514ee44d1816935846d769297fd5e4207c0",
+      "step": 1024,
+      "prior_head_asset_exposures": 4096
+    },
+    "optimizer": "Fresh AdamW moments, OneCycleLR total1667, pct_start0.1, div_factor5, final_div_factor10. Both trainable parameter groups peak at1e-4. Exact effective batch48: physical8 per rank, two ranks, accumulate3. No dropped or padded manifest exposures across epochs.",
+    "evaluation_selection": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_medium_selection_audit.json",
+      "sha256": "b405e7083142b031786b1b40a34164772b7541b3dc968e7b27d34cf118ec3dff"
+    },
+    "legacy_at_step": {
+      "105": 5000,
+      "209": 10000
+    },
+    "legacy_checkpoints": {
+      "5000": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
+        "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8"
+      },
+      "10000": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_10000.pt",
+        "sha256": "6836b6a55590f4033b2bdedfbfb555c2f38c1f357012073f1af15e5f83517b75"
+      }
+    },
+    "comparison_limitations": "Same new optimizer update105/209 and effective asset batch48 give5040/10032 new asset exposures, matching native old checkpoint progress. These are reference trends, not initialization/data-matched causal A/B: new head already saw4096 exposures; its frozen encoder/backbone originated from old80016-exposure training. Old method trained15920 base assets whereas this run uses18097 current assets. Eval fixes32 prior training-diagnostic and64 validation assets and query raw poses. Eight heldout poses are excluded from this run, not guaranteed unseen across inherited pretraining history. No cross-action claim.",
+    "acceptance": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. The prior BF16 cross-batch equivalence threshold remains rejected, not relaxed or equated to gradient explosion; the user explicitly directs BF16 full training and early quality trends.",
+    "backbone_attention": "flash_attention_2",
+    "previous_attempts": [
+      {
+        "experiment": "shared_structure_full_20261012",
+        "status": "failed",
+        "optimizer_steps": 0,
+        "reason": "Unrequested FP32 core rejected by source FlashAttention2 during the first forward, before backward. Not gradient explosion."
+      },
+      {
+        "experiment": "shared_structure_full_20261012_r2",
+        "status": "withdrawn_before_launch",
+        "optimizer_steps": 0,
+        "reason": "User rejected FP32/eager attention change. No model child or GPU optimization was launched."
+      }
+    ],
+    "coordinate_diagnosis": {
+      "path": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_outlier_diagnosis_20261012.json",
+      "sha256": "70f6e19a2813a8919d6447047cdd74970916389bf1305dede1ae645942158c38",
+      "findings": "75 training assets exceed the old range in eligible poses;79 across all40/41poses and2validation assets.67/79 have skinned outlier joints, so it is not only unused tips. Direct NPZ per-frame bounds and the actual normalization path match to1.2e-7 in the5worst train/valid cases. The data screening checks bbox diagonal size consistency, not joint containment in the mesh bbox. This is a representation-domain mismatch, not evidence for low overall F1 or a normalization arithmetic defect. No dataset row or target is removed/changed."
+    }
+  }
+}

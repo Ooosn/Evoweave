@@ -18,30 +18,6 @@ from test_shared_structure_controller import SharedStructureControllerTest
 
 
 class FullStreamTest(unittest.TestCase):
-    def test_explicit_fp32_backbone_preserves_weights_and_causal_outputs(self):
-        from transformers import OPTConfig, OPTModel
-        config = OPTConfig(hidden_size=16, word_embed_proj_dim=16, ffn_dim=32, num_hidden_layers=2,
-                           num_attention_heads=4, vocab_size=32, max_position_embeddings=64,
-                           dropout=0., attention_dropout=0., activation_dropout=0.)
-        config._attn_implementation = "eager"
-        before = OPTModel(config).eval()
-        inputs = torch.randn(2, 8, 16)
-        mask = torch.tensor([[1]*8, [1]*5+[0]*3])
-        with torch.no_grad():
-            expected = before(inputs_embeds=inputs, attention_mask=mask).last_hidden_state
-        original = SimpleNamespace(transformer=SimpleNamespace(model=before))
-        result = full.configure_fp32_backbone(original, "eager")
-        after = original.transformer.model
-        self.assertEqual(result["implementation"], "eager")
-        self.assertNotIn("Flash", result["selected_class"])
-        for name, tensor in before.state_dict().items():
-            torch.testing.assert_close(after.state_dict()[name], tensor, atol=0, rtol=0)
-        with torch.no_grad():
-            actual = after(inputs_embeds=inputs, attention_mask=mask).last_hidden_state
-        torch.testing.assert_close(actual, expected, atol=0, rtol=0)
-        with self.assertRaisesRegex(ValueError, "eager"):
-            full.configure_fp32_backbone(original, "flash_attention_2")
-
     def test_bounded_geometry_matches_existing_official_formulas(self):
         path = Path(full.__file__).with_name("eval_dynamic_rig_generation.py")
         names = {"_bones_from_parents", "_sample_bones_np", "_official_skeleton_metrics"}
@@ -136,7 +112,7 @@ class FullControllerTest(SharedStructureControllerTest):
         config["runtime"].update(probe_script="train_shared_structure_full.py", physical_gpus=[5, 7], feature_mode="online",
                                  inventory={"path": "inventory", "sha256": "b"*64})
         config["probe"].update(batch_size=8, accumulation=3)
-        config["full"] = {"world_size": 2, "core_precision": "float32", "backbone_attention": "eager", "acceptance": "early full-data eval",
+        config["full"] = {"world_size": 2, "core_precision": "bfloat16_autocast", "backbone_attention": "flash_attention_2", "acceptance": "early full-data eval",
                           "warmstart": {"path": "warm", "sha256": "c"*64}}
         plan = full.build_stage_plan(config, "full", self.config_path)
         self.assertEqual(plan["guard_operations"], ["train"])
@@ -147,6 +123,10 @@ class FullControllerTest(SharedStructureControllerTest):
         self.assertNotIn("preflight", state["allowed_operations"])
         import run_shared_structure_experiment as controller
         controller.validate_prepared_state(state, config, plan, self.source)
+        rejected = deepcopy(config)
+        rejected["full"]["core_precision"] = "float32"
+        with self.assertRaisesRegex(ValueError, "BF16"):
+            full.build_stage_plan(rejected, "full", self.config_path)
         config["probe"]["batch_size"] = 4
         with self.assertRaisesRegex(ValueError, "48"):
             full.build_stage_plan(config, "full", self.config_path)

@@ -35,22 +35,6 @@ def timestamp():
     return datetime.now(timezone.utc).isoformat()
 
 
-def configure_fp32_backbone(original, implementation):
-    if implementation != "eager":
-        raise ValueError("the recorded FP32 run requires explicit eager OPT attention")
-    previous = original.transformer.model
-    config = deepcopy(previous.config)
-    config._attn_implementation = implementation
-    replacement = type(previous)(config).to(device=next(previous.parameters()).device, dtype=torch.float32)
-    replacement.load_state_dict(previous.state_dict(), strict=True)
-    replacement.eval().requires_grad_(False)
-    original.transformer.model = replacement
-    return {"implementation": config._attn_implementation,
-            "previous_class": type(previous.decoder.layers[0].self_attn).__name__,
-            "selected_class": type(replacement.decoder.layers[0].self_attn).__name__,
-            "pretrained_state_strictly_copied": True}
-
-
 class AssetStream:
     """Identical rank-local planners partition one shuffled global asset stream."""
     def __init__(self, count, seed):
@@ -118,10 +102,10 @@ def warmstart_skeleton(model, payload, config):
 def core_inputs(model, source, target, batch):
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
         anchors, registers = model.encode_surface(source)
-    return (anchors.float(), registers.float(),
+    return (anchors, registers,
             torch.ones(source.tokens.shape[:2], dtype=torch.bool, device=anchors.device),
-            target.tokens.float(), target.query_points.float(), batch["target_parents"], batch["joint_mask"],
-            batch["frame_mask"], batch["frame_target_joints"].float())
+            target.tokens, target.query_points, batch["target_parents"], batch["joint_mask"],
+            batch["frame_mask"], batch["frame_target_joints"])
 
 
 def geometry_metrics(pred, parents, target, target_parents, padding):
@@ -196,14 +180,15 @@ def evaluate(model, original, entries, config, root, step, rank):
         for entry in values[rank::2]:
             source, target, batch, selection = select_online_input(
                 original, entry, config, "train_a", 8, training=False)
-            inputs = core_inputs(model, source, target, batch)
-            output = model.skeleton(*inputs, xyz_weight=config["probe"]["xyz_weight"])
-            teacher = model.skeleton.quantizer.decode(output["xyz_logits"].argmax(-1))
-            generated = model.skeleton.generate_structure(*inputs[:3], joint_limit=config["probe"]["generation_joint_limit"])
-            record = None
-            if generated["success"]:
-                record = generated["skeleton_sequence"].cpu_record()
-                generated.update(model.skeleton.localize(generated["skeleton_sequence"], inputs[3], inputs[4]))
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                inputs = core_inputs(model, source, target, batch)
+                output = model.skeleton(*inputs, xyz_weight=config["probe"]["xyz_weight"])
+                teacher = model.skeleton.quantizer.decode(output["xyz_logits"].argmax(-1))
+                generated = model.skeleton.generate_structure(*inputs[:3], joint_limit=config["probe"]["generation_joint_limit"])
+                record = None
+                if generated["success"]:
+                    record = generated["skeleton_sequence"].cpu_record()
+                    generated.update(model.skeleton.localize(generated["skeleton_sequence"], inputs[3], inputs[4]))
             identity = generation_metrics(generated, batch, selection["heldout_target_positions"],
                                           padding=config["data"]["target_mesh_padding"])
             saved = {"selection": selection, "generation": identity, "skeleton_sequence": record,
@@ -320,10 +305,6 @@ def worker(config, output, rank):
         raise RuntimeError("each worker must see exactly its one recorded physical GPU")
     torch.cuda.set_device(0)
     torch.cuda.set_per_process_memory_fraction(config["runtime"]["memory_fraction"])
-    torch.backends.cuda.matmul.allow_tf32 = False
-    torch.backends.cudnn.allow_tf32 = False
-    torch.backends.mha.set_fastpath_enabled(False)
-    torch.set_float32_matmul_precision("highest")
     torch.manual_seed(config["data"]["model_seed"])
     random.seed(config["data"]["seed"] + rank)
     dist.init_process_group("nccl", rank=rank, world_size=2, timeout=timedelta(hours=2))
@@ -332,9 +313,11 @@ def worker(config, output, rank):
     entries = online_entries({key: block["selected"] for key,block in inventory["splits"].items()}, config)
     evaluation = eval_entries(entries, config)
     original, _, _ = _load_original(config)
-    attention = configure_fp32_backbone(original, config["full"]["backbone_attention"])
+    attention = {"implementation": original.transformer.model.config._attn_implementation,
+                 "class": type(original.transformer.model.decoder.layers[0].self_attn).__name__}
+    if attention["implementation"] != config["full"]["backbone_attention"]:
+        raise RuntimeError("source attention implementation differs from the recorded BF16 runtime")
     model = _new_model(original, {**config, "data": {**config["data"], "seed": config["data"]["model_seed"]}})
-    model.skeleton.float()
     payload = torch.load(config["full"]["warmstart"]["path"], map_location="cpu", mmap=True, weights_only=False)
     reuse = warmstart_skeleton(model, payload, config)
     del payload
@@ -378,7 +361,12 @@ def worker(config, output, rank):
                     "core_input_dtype": str(inputs[0].dtype), "frozen_token_dtype": str(source.tokens.dtype)}
             context = ddp.no_sync() if micro+1 < plan["accumulation"] else nullcontext()
             with context:
-                result = ddp(*inputs, xyz_weight=plan["xyz_weight"])
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    result = ddp(*inputs, xyz_weight=plan["xyz_weight"])
+                if step == 1 and micro == 0:
+                    report["observed_first_batch"].update(
+                        structure_logit_dtype=str(result["structure_logits"].dtype),
+                        xyz_logit_dtype=str(result["xyz_logits"].dtype), loss_dtype=str(result["loss"].dtype))
                 if not torch.isfinite(result["loss"]):
                     raise RuntimeError(f"nonfinite loss at step {step}")
                 (result["loss"] / plan["accumulation"]).backward()

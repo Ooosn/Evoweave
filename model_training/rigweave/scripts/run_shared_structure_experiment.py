@@ -122,10 +122,10 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
         _require_sha256(warm.get("sha256"), "full.warmstart.sha256")
         if not isinstance(warm.get("path"), str) or not warm["path"]:
             raise ValueError("full.warmstart.path is required")
-        if settings.get("world_size") != 2 or settings.get("core_precision") != "float32":
-            raise ValueError("full training requires two ranks and float32 trainable core")
-        if settings.get("backbone_attention") != "eager":
-            raise ValueError("FP32 full training requires explicit eager backbone attention")
+        if settings.get("world_size") != 2 or settings.get("core_precision") != "bfloat16_autocast":
+            raise ValueError("full training requires two ranks and uniform BF16 autocast")
+        if settings.get("backbone_attention") != "flash_attention_2":
+            raise ValueError("BF16 full training preserves the source FlashAttention2 backend")
         if config["probe"]["batch_size"] * config["probe"]["accumulation"] * 2 != 48:
             raise ValueError("full training effective asset batch must be 48")
     if assessment:

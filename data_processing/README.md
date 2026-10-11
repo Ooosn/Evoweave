@@ -103,8 +103,9 @@ Important environment variables:
 8. Run the first formal hard quality reject on rootless target fields.
 9. Validate/audit rootless target strict data.
 10. Run final dynamic quality histogram screening.
-11. Run final skeleton/mesh bbox-consistency histogram screening and write final
-    accepted/rejected manifests.
+11. Run final skeleton/mesh bbox-consistency screening plus the all-frame
+    normalized-joint coordinate bound check, then write final accepted/rejected
+    manifests.
 
 The detailed contract is in `docs/DATA_PIPELINE_CONTRACT.md`.
 
@@ -138,6 +139,14 @@ The detailed contract is in `docs/DATA_PIPELINE_CONTRACT.md`.
   max(joint_bbox_diag, mesh_bbox_diag)`.
 - Final screened manifests are train/valid only. Original test rows are merged
   into train at the final bbox-consistency screening stage.
+- The final stage also checks every retained target joint in every stored frame
+  against `[-1, 1]` after that frame's mesh-bbox normalization with padding
+  `1.1`. One out-of-bounds coordinate rejects the whole asset, including
+  violations in heldout frames or inactive-skin joints. Exact boundary values
+  pass; no clipping or target-dependent rescaling is allowed.
+- Rejected manifests provide the quarantine record and original NPZ paths.
+  Raw/derived NPZ files remain unchanged. A dataset revision publishes new
+  accepted manifests; historical manifests and training artifacts stay intact.
 
 ## Validation Expectations
 

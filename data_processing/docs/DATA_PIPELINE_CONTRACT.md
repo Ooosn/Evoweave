@@ -175,6 +175,28 @@ rows for this source, its generated source manifest should simply be empty.
    skeletons score near zero. The default final cutoff is
    `target_joint_mesh_bbox_diag_consistency >= 0.4`.
 
+   Before publishing final manifests, this same stage also requires all retained
+   target joints in every stored frame to fit the mesh-local coordinate interval
+   `[-1, 1]`. For each frame independently, compute `lo/hi` from all retained
+   mesh vertices, `center = (lo + hi) / 2`,
+   `scale = 1.1 * max((hi - lo) / 2)`, and
+   `normalized_joint = (joint - center) / scale`. Require the maximum absolute
+   coordinate over all frames, joints, and axes to be at most `1.0`.
+   The 1.1 padding is part of this normalization contract, not a joint-derived
+   adjustment. The check includes inactive-skin joints and heldout frames; it is
+   independent of the histogram's single `--frame-index`.
+
+   Any out-of-bounds frame rejects the whole asset with reason
+   `target_joint_mesh_normalized_coordinate_out_of_bounds`. Invalid/nonfinite
+   geometry or a nonpositive mesh extent also fails closed. Never clip labels,
+   drop individual joints/frames, or derive normalization from target joints.
+   Record the maximum, offending frame/joint/axis, violation counts, and
+   normalization parameters in the rejected manifest. Original NPZ files stay
+   intact; only accepted rows enter the final training/validation manifests.
+   Dataset additions must pass this gate after merging and before publication.
+   Publish a new immutable manifest version instead of rewriting inputs of a
+   running or historical experiment.
+
    Final screened manifests are train/valid only:
 
    - original `train` rows stay in train;

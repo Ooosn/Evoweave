@@ -75,7 +75,8 @@ env file. For the full 80k rebuild, keep it at `0`.
 8. Run the first formal hard reject on rootless target fields.
 9. Validate and audit the rootless target strict dataset.
 10. Build rootless dynamic quality histograms.
-11. Build final skeleton/mesh bbox-consistency histograms and final manifests.
+11. Build final skeleton/mesh bbox-consistency histograms, reject all-frame
+    normalized-joint coordinate violations, and publish final manifests.
 
 ## Final Training Inputs
 
@@ -100,6 +101,19 @@ The score is:
 ```text
 min(joint_bbox_diag, mesh_bbox_diag) / max(joint_bbox_diag, mesh_bbox_diag)
 ```
+
+The same final stage also enforces `abs(normalized_joint) <= 1.0` for every
+axis of every retained joint in every stored frame. Normalization uses each
+frame's retained mesh center and maximum half-extent with padding `1.1`;
+it does not use joint bounds. Pass `--target-mesh-padding 1.1` when invoking
+`build_rootless_bbox_consistency_distributions.py` directly. This check does
+not depend on `--frame-index` and cannot be disabled by the skin threshold.
+
+An asset with any violation belongs only in the rejected manifests. Preserve
+its NPZ, source/license metadata, and rejection evidence. Merged additions
+must be re-screened before publication. For existing production data, write
+a new output root and update the dataset authority only after checking that
+accepted and rejected rows form an exact, disjoint partition of the inputs.
 
 ## Main Debug Files
 

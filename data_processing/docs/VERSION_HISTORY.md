@@ -3,6 +3,19 @@
 This file records contract-level data-processing changes. It is documentation
 only; old code paths are not kept as fallback implementations.
 
+## 2026-10-12: All-Frame Normalized Joint Bounds
+
+- The final bbox-consistency stage now rejects an entire asset if any retained
+  target joint coordinate exceeds `[-1, 1]` after that frame's mesh-only
+  normalization with padding `1.1`.
+- All stored frames and all retained joints are checked, including heldout
+  poses and inactive-skin joints. The existing bbox-diagonal cutoff remains.
+- Rejection records include the extremum, frame/joint/axis, violation counts,
+  and normalization parameters. Invalid geometry fails closed.
+- No source/NPZ rewriting, label clipping, joint removal, or target-derived
+  normalization is introduced. Publish accepted and quarantined manifest
+  partitions as a new version; preserve historical inputs and checkpoints.
+
 ## 2026-07-14: Deterministic Blender Process and FBX Media Handling
 
 - Formal Blender subprocesses run in separate process groups. Timeout and

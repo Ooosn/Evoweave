@@ -31,18 +31,49 @@ METRIC_COLUMNS = [
     "target_joint_mesh_bbox_diag_consistency",
     "active_joint_mesh_bbox_diag_consistency",
 ]
+DEFAULT_TARGET_MESH_PADDING = 1.1
+COORDINATE_ABS_LIMIT = 1.0
+COORDINATE_METRIC_COLUMNS = [
+    "target_joint_mesh_normalized_coordinate_maxabs",
+    "target_joint_mesh_normalized_coordinate_violating_joint_frame_count",
+    "target_joint_mesh_normalized_coordinate_violating_frame_count",
+    "target_joint_mesh_normalized_coordinate_worst_frame",
+    "target_joint_mesh_normalized_coordinate_worst_joint",
+    "target_joint_mesh_normalized_coordinate_worst_axis",
+    "target_joint_mesh_normalized_coordinate_worst_value",
+    "target_mesh_padding",
+    "coordinate_abs_limit",
+]
+SCREENING_EVIDENCE_COLUMNS = [*METRIC_COLUMNS, *COORDINATE_METRIC_COLUMNS]
+PROGRESS_INTERVAL = 200
 
 
 def threshold_args(args: argparse.Namespace) -> dict[str, float]:
+    target_mesh_padding = validate_target_mesh_padding(
+        getattr(args, "target_mesh_padding", DEFAULT_TARGET_MESH_PADDING)
+    )
     return {
         "min_target_joint_mesh_bbox_consistency": float(args.min_target_joint_mesh_bbox_consistency),
         "min_active_joint_mesh_bbox_consistency": float(args.min_active_joint_mesh_bbox_consistency),
+        "target_mesh_padding": target_mesh_padding,
+        "coordinate_abs_limit": COORDINATE_ABS_LIMIT,
     }
 
 
 def safe_float(value: float | np.floating) -> float:
     out = float(value)
     return out if math.isfinite(out) else 0.0
+
+
+def validate_target_mesh_padding(value: float) -> float:
+    padding = float(value)
+    if not math.isfinite(padding) or padding < 1.0:
+        raise ValueError("target_mesh_padding must be finite and >= 1.0")
+    with np.errstate(over="ignore", invalid="ignore"):
+        padding32 = np.float32(padding)
+    if not np.isfinite(padding32):
+        raise ValueError("target_mesh_padding must be representable as finite float32")
+    return padding
 
 
 def choose_frame(count: int, frame_index: int) -> int:
@@ -70,7 +101,82 @@ def bbox_diag_consistency(a: float, b: float) -> float:
     return safe_float(min(x, y) / denom)
 
 
-def compute_bbox_consistency_metrics(path: Path, *, active_skin_threshold: float, frame_index: int) -> dict[str, Any]:
+def compute_target_joint_mesh_normalized_coordinate_metrics(
+    frame_vertices: np.ndarray,
+    joints_all: np.ndarray,
+    *,
+    target_mesh_padding: float = DEFAULT_TARGET_MESH_PADDING,
+) -> dict[str, Any]:
+    vertices = np.asarray(frame_vertices, dtype=np.float32)
+    joints = np.asarray(joints_all, dtype=np.float32)
+    if vertices.ndim != 3 or vertices.shape[-1] != 3 or vertices.shape[0] == 0 or vertices.shape[1] == 0:
+        raise ValueError(f"frame_vertices_rootspace must be nonempty [T,V,3], got {vertices.shape}")
+    if joints.ndim != 3 or joints.shape[0] != vertices.shape[0] or joints.shape[-1] != 3 or joints.shape[1] == 0:
+        raise ValueError(f"target_joints_rootspace must be nonempty [T,J,3] compatible with frames {vertices.shape}, got {joints.shape}")
+    if not np.isfinite(vertices).all():
+        raise ValueError("frame_vertices_rootspace contains nonfinite values")
+    if not np.isfinite(joints).all():
+        raise ValueError("target_joints_rootspace contains nonfinite values")
+
+    padding = validate_target_mesh_padding(target_mesh_padding)
+    padding32 = np.float32(padding)
+    limit32 = np.float32(COORDINATE_ABS_LIMIT)
+    maxabs32 = np.float32(0.0)
+    violating_joint_frame_count = 0
+    violating_frame_count = 0
+    worst_frame = -1
+    worst_joint = -1
+    worst_axis = -1
+    worst_value = np.float32(0.0)
+
+    for frame_idx in range(int(vertices.shape[0])):
+        frame = vertices[frame_idx]
+        joints_frame = joints[frame_idx]
+        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+            lo = np.min(frame, axis=0)
+            hi = np.max(frame, axis=0)
+            center = (lo + hi) * np.float32(0.5)
+            scale = np.max((hi - lo) * np.float32(0.5)) * padding32
+            normalized = (joints_frame - center) / scale
+        if not np.isfinite(center).all() or not np.isfinite(scale) or float(scale) <= 0.0:
+            raise ValueError(f"invalid target mesh coordinate scale at frame {frame_idx}: {scale!r}")
+        if not np.isfinite(normalized).all():
+            raise ValueError(f"nonfinite normalized target joints at frame {frame_idx}")
+
+        absolute = np.abs(normalized)
+        frame_maxabs32 = np.max(absolute)
+        if worst_frame < 0 or frame_maxabs32 > maxabs32:
+            maxabs32 = frame_maxabs32
+            frame_worst = np.unravel_index(int(np.argmax(absolute)), absolute.shape)
+            worst_frame = int(frame_idx)
+            worst_joint = int(frame_worst[0])
+            worst_axis = int(frame_worst[1])
+            worst_value = normalized[frame_worst]
+
+        violating_joint_mask = np.any(absolute > limit32, axis=1)
+        violating_joint_frame_count += int(np.count_nonzero(violating_joint_mask))
+        violating_frame_count += int(np.any(violating_joint_mask))
+
+    return {
+        "target_joint_mesh_normalized_coordinate_maxabs": float(maxabs32),
+        "target_joint_mesh_normalized_coordinate_violating_joint_frame_count": violating_joint_frame_count,
+        "target_joint_mesh_normalized_coordinate_violating_frame_count": violating_frame_count,
+        "target_joint_mesh_normalized_coordinate_worst_frame": worst_frame,
+        "target_joint_mesh_normalized_coordinate_worst_joint": worst_joint,
+        "target_joint_mesh_normalized_coordinate_worst_axis": worst_axis,
+        "target_joint_mesh_normalized_coordinate_worst_value": float(worst_value),
+        "target_mesh_padding": padding,
+        "coordinate_abs_limit": COORDINATE_ABS_LIMIT,
+    }
+
+
+def compute_bbox_consistency_metrics(
+    path: Path,
+    *,
+    active_skin_threshold: float,
+    frame_index: int,
+    target_mesh_padding: float = DEFAULT_TARGET_MESH_PADDING,
+) -> dict[str, Any]:
     with np.load(path, allow_pickle=True) as data:
         required = [
             "frame_vertices_rootspace",
@@ -90,6 +196,18 @@ def compute_bbox_consistency_metrics(path: Path, *, active_skin_threshold: float
         raise ValueError(f"target_joints_rootspace shape {joints_all.shape} incompatible with frames {frame_vertices.shape}")
     if skin.ndim != 2 or skin.shape != (frame_vertices.shape[1], joints_all.shape[1]):
         raise ValueError(f"target_skin_weights shape {skin.shape} incompatible with vertices/joints")
+    if frame_vertices.shape[0] == 0 or frame_vertices.shape[1] == 0 or joints_all.shape[1] == 0:
+        raise ValueError(
+            "frame_vertices_rootspace and target_joints_rootspace must contain at least one frame, vertex, and joint"
+        )
+    if not np.isfinite(skin).all():
+        raise ValueError("target_skin_weights contains nonfinite values")
+
+    coordinate_metrics = compute_target_joint_mesh_normalized_coordinate_metrics(
+        frame_vertices,
+        joints_all,
+        target_mesh_padding=target_mesh_padding,
+    )
 
     idx = choose_frame(int(frame_vertices.shape[0]), int(frame_index))
     vertices = frame_vertices[idx]
@@ -102,6 +220,7 @@ def compute_bbox_consistency_metrics(path: Path, *, active_skin_threshold: float
     active_joint_diag = bbox_diag(active_joints)
 
     return {
+        **coordinate_metrics,
         "rootless_bbox_frame_index": int(idx),
         "rootless_mesh_bbox_diag": safe_float(mesh_diag),
         "rootless_target_joint_bbox_diag": safe_float(joint_diag),
@@ -149,10 +268,32 @@ def analyze_job(job: dict[str, Any]) -> dict[str, Any]:
             Path(str(job["path"])),
             active_skin_threshold=float(job["active_skin_threshold"]),
             frame_index=int(job["frame_index"]),
+            target_mesh_padding=float(job.get("target_mesh_padding", DEFAULT_TARGET_MESH_PADDING)),
         )
         return {**job, "status": "ok", "reason": "", **metrics}
     except Exception as exc:  # noqa: BLE001
         return {**job, "status": "error", "reason": repr(exc)}
+
+
+def analyze_jobs(jobs: list[dict[str, Any]], *, workers: int) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    total = len(jobs)
+
+    def append_with_progress(row: dict[str, Any]) -> None:
+        rows.append(row)
+        done = len(rows)
+        if done % PROGRESS_INTERVAL == 0 or done == total:
+            errors = sum(result.get("status") == "error" for result in rows)
+            print(f"bbox consistency progress: {done}/{total} done, errors={errors}", flush=True)
+
+    if int(workers) <= 1:
+        for job in jobs:
+            append_with_progress(analyze_job(job))
+    else:
+        with ProcessPoolExecutor(max_workers=int(workers)) as executor:
+            for row in executor.map(analyze_job, jobs, chunksize=8):
+                append_with_progress(row)
+    return rows
 
 
 def screening_reasons(row: dict[str, Any], args: argparse.Namespace) -> list[str]:
@@ -160,6 +301,25 @@ def screening_reasons(row: dict[str, Any], args: argparse.Namespace) -> list[str
         return ["bbox_consistency_metric_error"]
 
     reasons: list[str] = []
+    try:
+        coordinate_values = {
+            key: float(row[key])
+            for key in COORDINATE_METRIC_COLUMNS
+        }
+    except (TypeError, ValueError):
+        return ["bbox_consistency_metric_error"]
+    if not all(math.isfinite(value) for value in coordinate_values.values()):
+        return ["bbox_consistency_metric_error"]
+    if coordinate_values["coordinate_abs_limit"] != COORDINATE_ABS_LIMIT:
+        return ["bbox_consistency_metric_error"]
+    if coordinate_values["target_mesh_padding"] < 1.0:
+        return ["bbox_consistency_metric_error"]
+    coordinate_maxabs = coordinate_values["target_joint_mesh_normalized_coordinate_maxabs"]
+    if coordinate_maxabs < 0.0:
+        return ["bbox_consistency_metric_error"]
+    if coordinate_maxabs > COORDINATE_ABS_LIMIT:
+        reasons.append("target_joint_mesh_normalized_coordinate_out_of_bounds")
+
     min_joint = float(args.min_target_joint_mesh_bbox_consistency)
     min_active = float(args.min_active_joint_mesh_bbox_consistency)
 
@@ -200,6 +360,7 @@ def write_csv(rows: list[dict[str, Any]], path: Path) -> None:
         "rootless_joint_count",
         "rootless_active_joint_count",
         *METRIC_COLUMNS,
+        *COORDINATE_METRIC_COLUMNS,
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -212,6 +373,8 @@ def write_csv(rows: list[dict[str, Any]], path: Path) -> None:
 
 def final_manifest_row(row: dict[str, Any]) -> dict[str, Any]:
     out = dict(row.get("manifest_row") or {})
+    if row.get("source_split") is not None:
+        out.setdefault("source_split", row.get("source_split"))
     out["final_bbox_consistency_screening"] = {
         "status": row.get("screening_status"),
         "reasons": list(row.get("screening_reasons", [])),
@@ -225,7 +388,7 @@ def final_manifest_row(row: dict[str, Any]) -> dict[str, Any]:
                 "rootless_active_joint_bbox_diag",
                 "rootless_joint_count",
                 "rootless_active_joint_count",
-                *METRIC_COLUMNS,
+                *SCREENING_EVIDENCE_COLUMNS,
             ]
         },
     }
@@ -245,7 +408,13 @@ def with_final_split(row: dict[str, Any]) -> dict[str, Any]:
     split = final_split(str(row.get("split", "")))
     out = dict(row)
     manifest = dict(out.get("manifest_row") or {})
-    source_split = str(manifest.get("split") or row.get("split") or "")
+    source_split = str(
+        manifest.get("source_split")
+        or manifest.get("split")
+        or row.get("source_split")
+        or row.get("split")
+        or ""
+    )
     manifest["split"] = split
     out["split"] = split
     out["source_split"] = source_split
@@ -395,6 +564,7 @@ def write_report(rows: list[dict[str, Any]], out_path: Path, args: argparse.Name
         f"Frame index: {args.frame_index}",
         f"Active skin threshold: {args.active_skin_threshold}",
         f"Screening thresholds: `{json.dumps(threshold_args(args), sort_keys=True)}`",
+        "Coordinate gate: all target joints are normalized against each frame's retained mesh bounds in float32; inclusive [-1, 1] is accepted.",
         f"Total rows: {len(rows)}",
         f"Status counts: {status_counts}",
         f"Screening counts: {screening_counts}",
@@ -420,9 +590,14 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--active-skin-threshold", type=float, default=1.0e-4)
     parser.add_argument("--frame-index", type=int, default=0)
+    parser.add_argument("--target-mesh-padding", type=float, default=DEFAULT_TARGET_MESH_PADDING)
     parser.add_argument("--min-target-joint-mesh-bbox-consistency", type=float, default=0.4)
     parser.add_argument("--min-active-joint-mesh-bbox-consistency", type=float, default=0.0)
     args = parser.parse_args()
+    try:
+        args.target_mesh_padding = validate_target_mesh_padding(args.target_mesh_padding)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "metrics").mkdir(exist_ok=True)
@@ -430,12 +605,9 @@ def main() -> None:
     for job in jobs:
         job["active_skin_threshold"] = float(args.active_skin_threshold)
         job["frame_index"] = int(args.frame_index)
+        job["target_mesh_padding"] = float(args.target_mesh_padding)
 
-    if int(args.workers) <= 1:
-        rows = [analyze_job(job) for job in jobs]
-    else:
-        with ProcessPoolExecutor(max_workers=int(args.workers)) as executor:
-            rows = list(executor.map(analyze_job, jobs, chunksize=8))
+    rows = analyze_jobs(jobs, workers=int(args.workers))
 
     apply_screening(rows, args)
     write_csv(rows, args.out_dir / "rootless_bbox_consistency_metrics.csv")

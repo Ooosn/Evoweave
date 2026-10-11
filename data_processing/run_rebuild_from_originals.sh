@@ -306,6 +306,7 @@ ROOTLESS_BBOX_QUALITY="${QUALITY}/rootless_bbox_consistency"
   --out-dir "${ROOTLESS_BBOX_QUALITY}" \
   --active-skin-threshold "${ACTIVE_SKIN_THRESHOLD}" \
   --min-target-joint-mesh-bbox-consistency "${ROOTLESS_MIN_TARGET_JOINT_MESH_BBOX_CONSISTENCY}" \
+  --target-mesh-padding 1.1 \
   --workers "${AUDIT_WORKERS}" \
   --bins 80
 

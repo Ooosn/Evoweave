@@ -300,7 +300,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "No automatic retry; inspect the failed shared-structure stage and its preserved log.",
+  "next_required_result": "User requested quarantine of all assets with mesh-normalized joints outside [-1,1] and a permanent upstream screening gate. R3 was intentionally interrupted for this dataset revision, not for a numerical failure. Publish and verify a new immutable screened manifest version before selecting another training operation; preserve the qlogin allocation and checkpoints.",
   "active_operation": {
     "experiment": "shared_structure_full_20261012_r3",
     "stage": "full",
@@ -427,7 +427,7 @@
     "acceptance": "Actual full-data two-H100 DDP training, no standalone GPU smoke or feature cache. Runtime finite losses/gradients and all five component updates on the first real optimizer step; full manifests and raw40/41-frame inventory pinned. Periodically save reusable skeleton predictions and checkpoints. Report unchanged legacy directed-edge precision/recall/F1 with failed generations scoring zero, query J2J/J2B/B2B in mesh bbox-side units on successful generations with denominators, GT-prefix F1, and heldout fixed-identity localization. Compare early curves before deciding any method acceptance; completion is not quality promotion. The prior BF16 cross-batch equivalence threshold remains rejected, not relaxed or equated to gradient explosion; the user explicitly directs BF16 full training and early quality trends.",
     "note": "Full18097 train assets, two H100 DDP, physical8 each/accumulate3/global48, uniform BF16 with original attention, preserved1024-step skeleton warmstart with fresh optimizer. Actual training with early legacy F1/geometry evaluation; no standalone GPU smoke and no feature cache.",
     "result_artifact": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_full.json",
-    "result_note": "Full-data operation reached terminal state; preserve all checkpoints and early paired metric artifacts. Execution completion does not establish method-quality acceptance.",
+    "result_note": "Intentionally stopped at the user's dataset-revision request on 2026-10-12 03:40 JST. Last completed update114; checkpoints32 and105 preserved, including checkpoint105 SHA256 72cbc717d8d8437a0468557aac1423fe1fd3155d7f31ddc0638eeacdac192af3. Both training children stopped and qlogin129547842 preserved. Terminal failed status represents SIGINT for dataset quarantine, not numerical failure. Receipt: /home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_full_r3_dataset_stop_20261012.json. Do not restart the old manifests.",
     "controller_exit": 1,
     "child_exit": -2,
     "complete": false,

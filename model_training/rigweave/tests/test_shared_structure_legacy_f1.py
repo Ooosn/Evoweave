@@ -67,6 +67,19 @@ class LegacyF1Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "eight distinct"):
             scoring.score_view(saved, self.metric)
 
+    def test_teacher_control_reads_saved_teacher_not_free_prediction(self):
+        saved = self.saved()
+        saved["teacher_joints_mesh_local"] = saved["gt_joints_mesh_local"].copy()
+        saved["pred_joints_mesh_local"][:] = 0
+        saved["generation"]["exact_tree"] = True
+        self.assertEqual(scoring.score_view(saved, self.metric)["query"]["edge_f1"], 0.)
+        result = scoring.teacher_control(saved, self.metric)
+        self.assertEqual(result["query"]["edge_f1"], 1.)
+        self.assertEqual(result["heldout_identity_mpjpe"], 0.)
+        self.assertEqual(result["heldout_stable_identity_coverage"], 1.)
+        self.assertGreater(result["exact_tree_free_teacher_mpjpe"], 0.)
+        self.assertTrue((saved["pred_joints_mesh_local"] == 0).all())
+
 
 if __name__ == "__main__":
     unittest.main()

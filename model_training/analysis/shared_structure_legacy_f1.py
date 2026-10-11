@@ -61,6 +61,30 @@ def score_view(saved, metric):
                              for name in ("edge_precision", "edge_recall", "edge_f1")}}
 
 
+def teacher_control(saved, metric):
+    parents = np.asarray(saved["gt_parents"]).reshape(-1).tolist()
+    teacher = np.asarray(saved["teacher_joints_mesh_local"], dtype=np.float32)
+    target = np.asarray(saved["gt_joints_mesh_local"], dtype=np.float32)
+    if teacher.shape != target.shape or not np.isfinite(teacher).all():
+        raise ValueError("invalid saved GT-prefix prediction")
+    controlled = {**saved, "pred_joints_mesh_local": teacher,
+                  "generation": {"success": True, "parents": parents}}
+    result = score_view(controlled, metric)
+    result["ground_truth_topology_supplied"] = True
+    heldout = saved["selection"]["heldout_target_positions"]
+    errors = np.linalg.norm(teacher[0] - target[0], axis=-1)
+    result["heldout_identity_mpjpe"] = float(errors[heldout].mean())
+    result["heldout_stable_identity_coverage"] = float((errors[heldout] <= .05).all(axis=0).mean())
+    if saved["generation"].get("exact_tree", False):
+        free = np.asarray(saved["pred_joints_mesh_local"], dtype=np.float32)
+        if free.shape != teacher.shape:
+            raise ValueError("exact-tree prediction has the wrong coordinate shape")
+        difference = np.linalg.norm(free[0] - teacher[0], axis=-1)
+        result["exact_tree_free_teacher_mpjpe"] = float(difference.mean())
+        result["exact_tree_free_teacher_max_joint_distance"] = float(difference.max())
+    return result
+
+
 def summarize(rows):
     result = {}
     for key in sorted({(row["label"], row["split"], row["view"]) for row in rows}):
@@ -72,6 +96,11 @@ def summarize(rows):
             scores = [row[pose]["edge_f1"] for row in selected]
             block[pose].update(f1_median=float(np.median(scores)), f1_min=float(min(scores)),
                                f1_max=float(max(scores)), zero_f1_assets=sum(value == 0 for value in scores))
+        for name in ("heldout_identity_mpjpe", "heldout_stable_identity_coverage", "exact_tree_free_teacher_mpjpe",
+                     "exact_tree_free_teacher_max_joint_distance"):
+            values = [row[name] for row in selected if name in row]
+            if values:
+                block[name] = {"assets": len(values), "mean": float(np.mean(values)), "max": float(max(values))}
         result["/".join(key)] = block
     return result
 
@@ -81,6 +110,7 @@ def main():
     parser.add_argument("--assessment", type=Path, required=True)
     parser.add_argument("--assessment-sha256", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--teacher-controls", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -112,6 +142,10 @@ def main():
                 raise ValueError("saved prediction and assessment metadata disagree")
             rows.append({"label": label, **{name: source[name] for name in ("split", "index", "asset_id", "view")},
                          "exact_tree": source["generation"]["exact_tree"], **score_view(saved, metric)})
+            if args.teacher_controls:
+                rows.append({"label": label + "_gt_prefix",
+                             **{name: source[name] for name in ("split", "index", "asset_id", "view")},
+                             **teacher_control(saved, metric)})
             artifacts.append({"label": label, "path": str(path), "sha256": artifact["sha256"]})
             seen.add(key)
             del payload, saved
@@ -122,6 +156,8 @@ def main():
               "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TRAINING, text=True).strip(),
               "legacy_metric": {"path": str(LEGACY), "sha256": file_hash(LEGACY), "function": "_topology_metrics"},
               "protocol": "Unchanged legacy directed-edge P/R/F1 after independent nearest-position mappings in each direction; no distance cutoff or one-to-one assignment. Failed/invalid generation scores zero. Compute per-frame F1, then mean across the eight heldout frames per asset, then macro-average assets. Query uses the saved source-query raw frame. Shared translation/isotropic scale does not change this metric. Same formula as prior training, not the same asset/frame protocol, and not an identity-reuse or geometry-distance metric.",
+              "teacher_controls": {"enabled": args.teacher_controls,
+                  "meaning": "GT parent prefix and GT topology with the saved teacher-forced coordinate predictions. A diagnostic control, not free generation. Exact-tree free/teacher coordinate differences also expose potential prefix-reuse mismatch; frozen encoder outputs were recomputed separately in the original evaluation."},
               "no_model_inference": True, "optimizer_steps": 0, "artifacts": artifacts,
               "summary": summarize(rows), "rows": rows}
     if file_hash(args.assessment) != args.assessment_sha256:

@@ -50,6 +50,20 @@ class SharedStructureControllerTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp.cleanup()
 
+    def test_medium_entry_point_is_explicit_and_default_is_preserved(self) -> None:
+        self.assertEqual(Path(self.plan["script"]).name, "probe_shared_structure.py")
+        medium = deepcopy(self.config)
+        medium["runtime"]["probe_script"] = "probe_shared_structure_medium.py"
+        expected = self.repo / "model_training/rigweave/scripts/probe_shared_structure_medium.py"
+        expected.write_text("# medium fixture\n")
+        plan = controller.build_stage_plan(medium, "preflight", self.config_path)
+        self.assertEqual(Path(plan["script"]), expected)
+        controller.validate_launch_paths(plan)
+        for invalid in ("../probe_shared_structure.py", "unreviewed.py", "", None):
+            medium["runtime"]["probe_script"] = invalid
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, "entry point"):
+                controller.build_stage_plan(medium, "preflight", self.config_path)
+
     def _config(self) -> dict:
         return {
             "schema_version": 1,

@@ -26,6 +26,7 @@ STAGES = ("preflight", "cache", "probe")
 TERMINAL_STATUSES = frozenset(("completed", "failed"))
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _ARTIFACT_PREFIX_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+_PROBE_SCRIPTS = frozenset(("probe_shared_structure.py", "probe_shared_structure_medium.py"))
 
 
 def _same_path(left: str | Path, right: str | Path) -> bool:
@@ -89,6 +90,8 @@ def validate_config(config: dict[str, Any], stage: str) -> None:
     if _ARTIFACT_PREFIX_RE.fullmatch(runtime["artifact_prefix"]) is None:
         raise ValueError(
             "runtime.artifact_prefix must contain only letters, numbers, '_' or '-'")
+    if runtime.get("probe_script", "probe_shared_structure.py") not in _PROBE_SCRIPTS:
+        raise ValueError("runtime.probe_script is not an approved shared-structure entry point")
     _expected_resources(config)
     _checkpoint_identity(config)
     baseline = _require_dict(config["baseline"], "baseline")
@@ -142,7 +145,8 @@ def build_stage_plan(config: dict[str, Any], stage: str, config_path: str | Path
     evaluation_path = job_root / "results" / f"{artifact_prefix}_{stage}_evaluation.json"
     result_path = job_root / "results" / f"{artifact_prefix}_{stage}.json"
     log_path = job_root / "logs" / f"{artifact_prefix}_{stage}.log"
-    child_script = Path(runtime["repo"]).resolve() / "model_training/rigweave/scripts/probe_shared_structure.py"
+    script_name = runtime.get("probe_script", "probe_shared_structure.py")
+    child_script = Path(runtime["repo"]).resolve() / "model_training/rigweave/scripts" / script_name
     command = [
         runtime["python"],
         "-B",

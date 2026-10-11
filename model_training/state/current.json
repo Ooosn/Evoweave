@@ -264,7 +264,24 @@
       "identity_edge_f1_min": 0.21568627450980393
     }
   },
-  "next_required_result": "Report preserved-checkpoint quality and rejected fixed-input batch equivalence. No automatic experiment, architecture change or training continuation. Any future batch-path replacement requires resolving the measured discrepancy and passing the relevant numerical acceptance first.",
+  "supplemental_quality_analysis": {
+    "kind": "cpu_reanalysis_of_saved_predictions",
+    "reviewed_at": "2026-10-11T16:02:15+00:00",
+    "source_commit": "d2bae5f9a0c30b713ad8c929b86f67b57944b4a2",
+    "result_artifact": "/home/wangyy/jobs/motion_compare_hgc_20261010/results/shared_structure_review_r1_legacy_f1.json",
+    "result_sha256": "e9f50827d5fcede7de8183ad8e07da51d42b8c853cf9cf57d46a74a78012e45d",
+    "source_assessment_sha256": "a84ab6bc1227567fd033144625746abc949e6ba99bcf6de3ca6e0ab67d1f3380",
+    "legacy_metric_sha256": "4aa5f6a57464a98b4243c6e6f34e47a89c0351b5b23d3bc405706ff9b74a6b40",
+    "verified_prediction_artifacts": 192,
+    "model_inference_performed": false,
+    "optimizer_steps": 0,
+    "trained_t8_query_f1_train32": 0.3478845415653663,
+    "trained_t8_query_f1_valid64": 0.2814050360503506,
+    "trained_t8_heldout_f1_train32": 0.2973725923362144,
+    "trained_t8_heldout_f1_valid64": 0.25903801489836775,
+    "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
+  },
+  "next_required_result": "Future quality reports must retain legacy P/R/F1 and geometric errors alongside exact-tree and identity-reuse metrics. No automatic experiment, architecture change or training continuation. Any future batch-path replacement requires resolving the measured discrepancy and passing the relevant numerical acceptance first.",
   "active_operation": {
     "experiment": "shared_structure_batch_isolation_20261011",
     "method_quality_accepted": false,

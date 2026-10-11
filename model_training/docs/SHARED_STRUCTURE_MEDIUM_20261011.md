@@ -2,6 +2,47 @@
 
 ## Preserved Checkpoint Results
 
+### Legacy Topology Precision, Recall And F1
+
+The original summary omitted the existing topology P/R/F1. Exact ordered-tree
+match is an additional diagnostic, not a substitute for those partial-match
+metrics. CPU-only reanalysis now reuses `_topology_metrics` from the unchanged
+`eval_dynamic_rig_generation.py` on all saved T8 predictions and continuous GT:
+
+| Split | Target pose | Edge precision | Edge recall | Edge F1 |
+| --- | --- | ---: | ---: | ---: |
+| Train diagnostic, 32 assets | Source query | 0.328965 | 0.425823 | 0.347885 |
+| Validation, 64 assets | Source query | 0.279508 | 0.317256 | 0.281405 |
+| Train diagnostic, 32 assets | Eight heldout poses | 0.284154 | 0.360911 | 0.297373 |
+| Validation, 64 assets | Eight heldout poses | 0.256329 | 0.300071 | 0.259038 |
+
+This is the legacy directed-edge score: map joints to spatial nearest neighbors
+independently in each direction, obtain predicted-edge precision and GT-edge
+recall, then their harmonic mean per pose. It has no distance cutoff and is not
+a one-to-one assignment. Failures receive zero, rather than being excluded.
+Average frame-level F1 within each asset, then macro-average assets; the displayed
+mean P/R cannot be used to reconstruct the mean F1. Query means the actual saved
+source-query raw frame, not a newly selected pose. Common translation/isotropic
+scale leaves the formula invariant, so mesh-local saved coordinates are valid.
+
+All 192 initialized/trained artifact hashes were verified. The initialized
+shared-structure model has zero F1 on these same subsets; this is not the old
+fully trained baseline model's score. No model inference, optimization, source
+report overwrite, or checkpoint modification occurred. Six focused CPU tests
+cover partial credit, reindexing, absence of a distance cutoff, failure-zeroing,
+the averaging convention, and frame-partition validation.
+
+The metric formula matches prior training, but historical aggregate values use
+different assets/frames and sometimes different GT handling. They are not a
+paired old-versus-new model comparison. Legacy P/R/F1 and geometric errors must
+remain in future quality reports; exact-tree and fixed-identity reuse metrics
+are additional endpoints, not replacements.
+
+Reanalysis receipt: `results/shared_structure_review_r1_legacy_f1.json`, SHA256
+`e9f50827d5fcede7de8183ad8e07da51d42b8c853cf9cf57d46a74a78012e45d`.
+
+### Exact Structure And Identity Reuse
+
 The two-H100 assessment completed with all three exits zero,224 trained views
 and96 matched-initialization views. At update1024 (16 asset passes),T8 results:
 

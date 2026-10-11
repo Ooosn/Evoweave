@@ -126,6 +126,11 @@ def run_profile(model, initialization, entries, config, args, device, rank, worl
                 case = profile_case(wrapped, optimizer, dataset, config, device, frames, batch, indices, 1.,
                                     empty_cache=plan.get("empty_cache_between_cases", True))
             case["approved"] = case["peak_allocated_gib"] <= plan["allocated_fraction_limit"] * report["gpu_total_gib"]
+            if world > 1:
+                case["locally_approved"] = case["approved"]
+                approved = torch.tensor(int(case["approved"]), device=device)
+                dist.all_reduce(approved, op=dist.ReduceOp.MIN)
+                case["approved"] = bool(approved.item())
             report["cases"].append(case)
             print("CAPACITY " + json.dumps({"rank": rank, **case}), flush=True)
         except torch.OutOfMemoryError as exc:

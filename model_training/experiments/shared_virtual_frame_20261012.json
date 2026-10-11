@@ -96,7 +96,12 @@
     "allocated_fraction_limit": 0.93,
     "stop_at_limit": true
   },
-  "capacity_confirm": {"cases": [], "allocated_fraction_limit": 0.95, "stop_at_limit": true, "empty_cache_between_cases": false},
+  "capacity_confirm": {
+    "cases": [[24,13],[2,32],[10,32],[16,20],[3,32],[23,13],[11,29],[17,18],[4,32],[22,14],[12,26],[18,17],[5,32],[21,15],[13,24],[19,16],[6,32],[20,16],[14,22],[7,32],[15,21],[8,32],[9,32]],
+    "allocated_fraction_limit": 0.95,
+    "stop_at_limit": true,
+    "empty_cache_between_cases": false
+  },
   "capacity_mixed": {
     "cases": [[24, 13], [10, 32], [2, 32], [11, 29], [16, 20], [24, 14]],
     "allocated_fraction_limit": 0.93,
@@ -108,20 +113,20 @@
     "allocated_fraction_limit": 0.93,
     "stop_at_limit": true
   },
-  "loss_balance": {"frames": [24, 8, 2], "frame_budget": 0, "batch_cap": 0},
+  "loss_balance": {"frames": [24, 8, 2], "frame_budget": 320, "batch_cap": 32},
   "compare": {
     "approved": false,
-    "frame_budget": 0,
-    "batch_cap": 0,
-    "accumulation": 8,
+    "frame_budget": 320,
+    "batch_cap": 32,
+    "accumulation": 1,
     "target_samples": 5040,
     "evaluation_samples": [2016, 5040]
   },
   "formal": {
     "approved": false,
-    "frame_budget": 0,
-    "batch_cap": 0,
-    "accumulation": 8,
+    "frame_budget": 320,
+    "batch_cap": 32,
+    "accumulation": 1,
     "target_samples": 80016,
     "evaluation_samples": [5040, 10032, 20016, 30000, 50016, 80016]
   }

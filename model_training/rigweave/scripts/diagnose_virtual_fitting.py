@@ -21,7 +21,7 @@ from rigweave.dynamic_rig.virtual_frame_rig import coordinate_regression_loss
 
 
 @torch.no_grad()
-def measure(model, surface, targets, xyz_weight):
+def measure(model, surface, targets, xyz_weight, cached_reference=None):
     from eval_dynamic_rig_generation import _topology_metrics
     model.eval()
     with torch.autocast("cuda", dtype=torch.bfloat16):
@@ -29,6 +29,12 @@ def measure(model, surface, targets, xyz_weight):
         teacher = model.forward_encoded(anchors, memory, surface["query_points"], targets, xyz_weight=xyz_weight)
         shuffled = model.forward_encoded(anchors.flip(0), memory, surface["query_points"].flip(0), targets, xyz_weight=xyz_weight)
         wrong_memory = model.forward_encoded(anchors, memory.flip(0), surface["query_points"], targets, xyz_weight=xyz_weight)
+        replay = {}
+        if cached_reference is not None:
+            fixed_xyz = model.positions(cached_reference[1], targets["joint_mask"], cached_reference[0], surface["query_points"])
+            replay = {"cached_input_postupdate_l1": float(coordinate_regression_loss(fixed_xyz, targets["frame_target_joints"], targets["joint_mask"], targets["frame_mask"]).mean()),
+                      "refreshed_anchor_meanabs_change": float((anchors-cached_reference[0]).abs().float().mean()),
+                      "refreshed_H_meanabs_change": float((teacher["joint_features"]-cached_reference[1]).abs().float().mean())}
         model.positions.train()
         with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16, cache_enabled=False):
             training_xyz = model.positions(teacher["joint_features"].detach(), targets["joint_mask"], anchors.detach(), surface["query_points"])
@@ -63,7 +69,7 @@ def measure(model, surface, targets, xyz_weight):
                "teacher_F1": float(np.mean([row["teacher_F1"] for row in rows])),
                "generation_F1": float(np.mean([row["generation_F1"] for row in rows])),
                "wrong_asset_anchors_xyz_l1": float(shuffled["xyz_loss"]),
-               "wrong_asset_structure_memory_xyz_l1": float(wrong_memory["xyz_loss"]), **consistency}
+               "wrong_asset_structure_memory_xyz_l1": float(wrong_memory["xyz_loss"]), **consistency, **replay}
     return summary, rows, (anchors.detach(), teacher["joint_features"].detach())
 
 
@@ -136,7 +142,12 @@ def main():
                 per_xyz = coordinate_regression_loss(xyz, targets["frame_target_joints"], targets["joint_mask"], targets["frame_mask"])
                 xyz_loss = per_xyz.mean()
                 structure_loss = xyz_loss.new_tensor(initial["structure_ce"])
-                per_asset = xyz_weight * per_xyz
+                if plan.get("diagnostic_loss", {}).get(mode) == "smooth_l1":
+                    valid = (targets["joint_mask"][:, None, :, None] & targets["frame_mask"][:, :, None, None]).expand_as(xyz)
+                    smooth = torch.nn.functional.smooth_l1_loss(xyz.float(), targets["frame_target_joints"], reduction="none", beta=plan["smooth_l1_beta"])
+                    per_asset = xyz_weight * (smooth * valid).sum((1, 2, 3)) / valid.sum((1, 2, 3))
+                else:
+                    per_asset = xyz_weight * per_xyz
             if not bool(torch.isfinite(per_asset).all()):
                 raise ValueError("nonfinite diagnostic loss")
             per_asset.sum().backward()
@@ -147,7 +158,7 @@ def main():
                "gradient_norm": float(gradient_norm), "lr": lr, "seconds": time.monotonic()-started}
         report["updates"].append(row)
         if step in plan["evaluation_updates"]:
-            measured, records, _ = measure(model, surface, targets, xyz_weight)
+            measured, records, _ = measure(model, surface, targets, xyz_weight, cached if mode != "end_to_end" else None)
             report["evaluations"][str(step)] = measured
             torch.save({"initial": initial_rows, "current": records}, root / f"{mode}_predictions_step{step}.pt")
             print("FIT_EVAL " + json.dumps({"mode": mode, "step": step, **measured}), flush=True)

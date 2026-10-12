@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import nullcontext
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -66,6 +67,24 @@ def pair_stats(values):
             'slot_mean_cosine': float(F.cosine_similarity(a, b, dim=-1).mean())}
 
 
+def eager_decoder_for_diagnosis(model):
+    """Use the installed reference operator with exactly the same learned tensors."""
+    from transformers.models.opt.modeling_opt import OPTAttention
+    decoder = model.xyz_decoder.model.decoder
+    config = deepcopy(model.xyz_decoder.config)
+    config._attn_implementation = 'eager'
+    for layer in decoder.layers:
+        previous = layer.self_attn
+        reference = OPTAttention(config=config, is_decoder=True).to(previous.q_proj.weight.device)
+        reference.load_state_dict(previous.state_dict(), strict=True)
+        if any(not torch.equal(value, reference.state_dict()[key]) for key, value in previous.state_dict().items()):
+            raise ValueError('attention backend conversion changed learned tensors')
+        layer.self_attn = reference.requires_grad_(False).eval()
+    decoder._use_flash_attention_2 = False
+    decoder._use_sdpa = False
+    decoder.config._attn_implementation = 'eager'
+
+
 @torch.no_grad()
 def run(args, config):
     device = torch.device('cuda:0')
@@ -114,6 +133,7 @@ def run(args, config):
         hook.remove()
     stages['final_real'] = pair_stats(real)
     stages['final_condition'] = pair_stats(conditions)
+    write_json(args.output/'feature_stages.json', stages)
     ids = targets['main_input_ids'][0]
     mask = targets['main_attention_mask'][0]
     differences = (ids[0] != ids[1]).nonzero().flatten()
@@ -123,8 +143,10 @@ def run(args, config):
     controls = {'frame_0': conditions[:, 0], 'frame_1': conditions[:, 1],
                 'mean': conditions.mean(1), 'zero': torch.zeros_like(conditions[:, 0])}
     fork_rows, teacher_rows = [], []
-    for precision in ('bfloat16', 'float32'):
-        context = torch.autocast('cuda', dtype=torch.bfloat16) if precision == 'bfloat16' else nullcontext()
+    for precision in ('bfloat16_flash', 'bfloat16_eager', 'float32_eager'):
+        if precision == 'bfloat16_eager':
+            eager_decoder_for_diagnosis(model)
+        context = nullcontext() if precision == 'float32_eager' else torch.autocast('cuda', dtype=torch.bfloat16)
         with context:
             for name, condition in controls.items():
                 logits = model.main_logits(condition.float(), prefix, torch.ones_like(prefix))[:, -1].float()
@@ -133,7 +155,7 @@ def run(args, config):
                     'candidate_tokens': candidates, 'probabilities': probabilities[candidates].tolist(),
                     'logits': logits[0, candidates].tolist(), 'argmax': int(logits.argmax(-1)),
                     'logit_margin_token0_minus_token1': float(logits[0, candidates[0]]-logits[0, candidates[1]])})
-                if precision == 'bfloat16':
+                if precision == 'bfloat16_flash':
                     for target_frame in range(2):
                         logits = model.main_logits(condition, ids[target_frame:target_frame+1, :-1],
                             mask[target_frame:target_frame+1, :-1]).float()
@@ -143,11 +165,14 @@ def run(args, config):
                         teacher_rows.append({'condition': name, 'target_frame': target_frame,
                             'mean_ce': float(loss[valid].mean()), 'first_fork_ce': float(loss[fork-1]),
                             'accuracy': float((logits[0].argmax(-1)[valid]==labels[valid]).float().mean())})
+                write_json(args.output/'readout_progress.json', {'first_fork': fork_rows,
+                    'teacher_forcing_controls': teacher_rows})
     report = {'accepted': True, 'accepted_meaning': 'read_only_replay_and_measurement_valid_not_model_quality',
         'optimizer_updates': 0, 'replay_exact': True, 'frames': geometry['selected_frames'].cpu().tolist(),
         'first_different_full_token_index': fork, 'different_target_positions': int(len(differences)),
         'target_candidate_tokens': candidates, 'feature_stages': stages, 'first_fork': fork_rows,
         'teacher_forcing_controls': teacher_rows, 'formal_training_allowed': False,
+        'precision_control': 'Same BF16-encoded conditions. Eager OPT attention uses exactly equal learned tensors; BF16 eager separates backend from precision effects.',
         'zero_condition_is_out_of_distribution': True}
     write_json(args.output/'diagnosis.json', report)
     return report

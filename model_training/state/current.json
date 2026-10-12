@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T19:29:18.489658+00:00",
+  "updated_at": "2026-10-12T19:33:33.353936+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,12 +126,12 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "train",
     "preflight",
+    "matched_eval",
     "submit"
   ],
   "compute_allocation": {
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review exact read-only frame-conditioning diagnosis before selecting any bounded intervention. Formal remains blocked.",
+  "next_required_result": "Read-only diagnosis exactly reproduced fit128 targets/free predictions, then failed only in extra FP32 decoder control because installed OPT FlashAttention supports fp16/bf16 only. No optimizer or weight changes. Preserve execution failure and retry bounded diagnosis with an explicitly equivalent eager-attention FP32 diagnostic backend and incremental measurement receipts; model fit remains unaccepted.",
   "active_operation": {
     "label": "vquery_xyz_diagnose_single_v1_20261013",
     "mode": "diagnose",
     "operation": "matched_eval",
-    "status": "prepared_not_started",
+    "status": "failed_execution",
     "required_entrypoint": "model_training/rigweave/scripts/diagnose_virtual_query_xyz.py",
-    "complete": false,
+    "complete": true,
     "accepted": false,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "authorization": "User requests fitting evidence and analysis before further training; primary reviewed failed fixed fit.",
     "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "code_commit": "9d4c3c92a3a175837ae15ab3bfd9552d8dcc2451",
@@ -397,7 +397,14 @@
       "OOM",
       "measurement complete"
     ],
-    "prepared_utc": "2026-10-12T19:29:18.489633+00:00"
+    "prepared_utc": "2026-10-12T19:29:18.489633+00:00",
+    "execution_finished": true,
+    "exit_code": 1,
+    "completed_updates": 0,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\diagnose_single_v1_result.json",
+    "result_sha256": "93e1fed0c6bb668a4650ec90754d30cf88eaf9a35ef069b79120b0ba5293482f",
+    "conclusion": "Read-only diagnosis exactly reproduced fit128 targets/free predictions, then failed only in extra FP32 decoder control because installed OPT FlashAttention supports fp16/bf16 only. No optimizer or weight changes. Preserve execution failure and retry bounded diagnosis with an explicitly equivalent eager-attention FP32 diagnostic backend and incremental measurement receipts; model fit remains unaccepted.",
+    "finished_utc": "2026-10-12T19:33:33.353916+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

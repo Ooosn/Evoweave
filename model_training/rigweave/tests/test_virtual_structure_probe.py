@@ -7,6 +7,14 @@ from motion_experiment_runtime import load_config
 
 
 class StructureProbeTests(unittest.TestCase):
+    def test_cohort_configuration_matches_checkpoint_on_both_ranks(self):
+        path=Path(__file__).resolve().parents[2]/'experiments/virtual_structure_cohort_20261012.json'
+        plan=load_config(path)
+        self.assertEqual(plan['mode'],'cohort')
+        self.assertEqual(plan['models'][0]['checkpoint'],plan['models'][1]['checkpoint'])
+        self.assertEqual(plan['models'][0]['sha256'],plan['models'][1]['sha256'])
+        self.assertTrue(plan['output'].endswith(plan['label']))
+
     def test_actual_launch_configuration_is_readable(self):
         path=Path(__file__).resolve().parents[2]/'experiments/virtual_structure_audit_20261012.json'
         plan=load_config(path)

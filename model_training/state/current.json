@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T06:16:52.223431+00:00",
+  "updated_at": "2026-10-12T06:25:29.651595+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Inspect actual representation and routing in sample5040 versus fitted single-asset models, including frozen-feature readout capacity. No formal launch and no root-cause claim from constructed branch ambiguity alone."
+    "current_action": "Complete the exact96asset read-only geometry-conditioning controls. No formal launch and no dataset-level attribution from a constructed counterexample or one-case attention observation."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -340,12 +340,64 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Inspect actual representation and routing in sample5040 versus fitted single-asset models, including frozen-feature readout capacity. No formal launch and no root-cause claim from constructed branch ambiguity alone.",
+  "next_required_result": "Complete the exact96asset read-only geometry-conditioning controls. No formal launch and no dataset-level attribution from a constructed counterexample or one-case attention observation.",
   "active_operation": {
-    "label": "structure_signal_audit_v2",
+    "label": "structure_cohort_audit_v1",
     "operation": "preflight",
     "status": "prepared",
     "accepted": false,
+    "prepared_at": "2026-10-12T06:25:29.625635+00:00",
+    "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
+    "config_sha256": "1213d30817e99655db79d4ba0e3d63d873c77a64796e384153e80ee54f2528aa",
+    "checkpoints": [
+      {
+        "name": "rank_0",
+        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+      },
+      {
+        "name": "rank_1",
+        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+      }
+    ],
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
+    "manifests": {
+      "status": "verified_published",
+      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+      "train_rows": 18018,
+      "valid_rows": 969,
+      "quarantined_rows": 81,
+      "target_mesh_padding": 1.1,
+      "all_frame_all_target_joint_abs_limit": 1.0,
+      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+      "npz_files_changed": 0
+    },
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "bash",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+    ],
+    "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
+    "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
+    "formal_training_allowed": false
+  },
+  "last_operation": {
+    "label": "structure_signal_audit_v2",
+    "operation": "preflight",
+    "status": "completed",
+    "accepted": true,
     "prepared_at": "2026-10-12T06:16:52.186693+00:00",
     "code_parent_commit": "a6bc1f310c3060b901ed1d55c2bca4507c32ad81",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
@@ -391,65 +443,17 @@
     ],
     "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
     "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
-    "formal_training_allowed": false
-  },
-  "last_operation": {
-    "label": "structure_signal_audit_v1",
-    "operation": "preflight",
-    "status": "failed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T06:13:30.185874+00:00",
-    "code_parent_commit": "a3c2b075f318d3da4f69d86ab123c2f704e8c9e5",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
-    "config_sha256": "3e5aeae9c6c019f288233784765dba98071cf8dc08c8c3c0c7eb2955e23db863",
-    "checkpoints": [
-      {
-        "name": "sample5040",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
-      },
-      {
-        "name": "single_asset_fitted",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
-        "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
-      }
-    ],
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v1",
-    "manifests": {
-      "status": "verified_published",
-      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
-      "train_rows": 18018,
-      "valid_rows": 969,
-      "quarantined_rows": 81,
-      "target_mesh_padding": 1.1,
-      "all_frame_all_target_joint_abs_limit": 1.0,
-      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
-      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
-      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
-      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
-      "npz_files_changed": 0
-    },
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "bash",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
-    ],
-    "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
-    "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
     "formal_training_allowed": false,
-    "complete": false,
-    "exit_code": 1,
-    "finished_at": "2026-10-12T15:15:30+09:00",
-    "model_forward_started": false,
-    "failure": "Diagnostic plan omitted schema_version=1; rejected by load_config before model loading or CUDA setup.",
-    "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/structure_signal_audit_v1.log"
+    "complete": true,
+    "accepted_meaning": "read_only_diagnostic_execution_valid_NOT_model_quality",
+    "exit_code": 0,
+    "finished_at": "2026-10-12T06:18:47.809568+00:00",
+    "report_hashes": {
+      "sample5040": "45be1d3262b6a1a12f24b7bfd81be8515e16719eada3c33d9970e1995c760cda",
+      "single_asset_fitted": "8c2cb13568f84efcad805a9ba9ae294625e934bb85266cea914dd76fadba307c"
+    },
+    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_signal_audit_v2",
+    "result_note": "Observed joint/frame/anchor routes behave as expected within measured BF16 repeat noise; no representation-wide collapse. Sample5040 geometry ablations on ONEasset did not worsen localization, whereas the fitted model depends on those inputs. Frozen-feature query readout can fit, but this oracle is not model quality. Extend paired read-only geometry-use measurement to96 before interpreting generally."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -5283,6 +5287,68 @@
       "model_forward_started": false,
       "failure": "Diagnostic plan omitted schema_version=1; rejected by load_config before model loading or CUDA setup.",
       "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/structure_signal_audit_v1.log"
+    },
+    {
+      "label": "structure_signal_audit_v2",
+      "operation": "preflight",
+      "status": "completed",
+      "accepted": true,
+      "prepared_at": "2026-10-12T06:16:52.186693+00:00",
+      "code_parent_commit": "a6bc1f310c3060b901ed1d55c2bca4507c32ad81",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
+      "config_sha256": "f8f5ad5e83cb656ec6c3ecceba5409059c0684ec36f2f20f12abdb1169f5a403",
+      "checkpoints": [
+        {
+          "name": "sample5040",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+          "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+        },
+        {
+          "name": "single_asset_fitted",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+        }
+      ],
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v2",
+      "manifests": {
+        "status": "verified_published",
+        "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+        "train_rows": 18018,
+        "valid_rows": 969,
+        "quarantined_rows": 81,
+        "target_mesh_padding": 1.1,
+        "all_frame_all_target_joint_abs_limit": 1.0,
+        "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+        "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+        "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+        "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+        "npz_files_changed": 0
+      },
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "bash",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+      ],
+      "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
+      "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
+      "formal_training_allowed": false,
+      "complete": true,
+      "accepted_meaning": "read_only_diagnostic_execution_valid_NOT_model_quality",
+      "exit_code": 0,
+      "finished_at": "2026-10-12T06:18:47.809568+00:00",
+      "report_hashes": {
+        "sample5040": "45be1d3262b6a1a12f24b7bfd81be8515e16719eada3c33d9970e1995c760cda",
+        "single_asset_fitted": "8c2cb13568f84efcad805a9ba9ae294625e934bb85266cea914dd76fadba307c"
+      },
+      "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_signal_audit_v2",
+      "result_note": "Observed joint/frame/anchor routes behave as expected within measured BF16 repeat noise; no representation-wide collapse. Sample5040 geometry ablations on ONEasset did not worsen localization, whereas the fitted model depends on those inputs. Frozen-feature query readout can fit, but this oracle is not model quality. Extend paired read-only geometry-use measurement to96 before interpreting generally."
     }
   ],
   "localization_diagnosis_20261012": {
@@ -5517,6 +5583,920 @@
         "mixed_groups": 0,
         "conclusion": "No left/right direction conflict observed within the recognized same-parent-token groups in this96asset subset. Constructed ambiguity remains a design risk, NOT an established explanation of observed low F1."
       }
+    },
+    "structure_signal_audit": {
+      "artifact": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_signal_audit_v2",
+      "reports": {
+        "sample5040": {
+          "complete": true,
+          "source": {
+            "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+            "git_head": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
+            "git_status": ""
+          },
+          "model": {
+            "name": "sample5040",
+            "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+            "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+          },
+          "initialization": {
+            "official_checkpoint": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+            "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+            "seed": 20261012,
+            "common_position_initialization_depth": 4,
+            "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+            "upstream_source_clean": true,
+            "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+            "load_report": {
+              "transformer.model.": {
+                "strict": true,
+                "tensors": 388,
+                "parameters": 305736704
+              },
+              "mesh_encoder.": {
+                "strict": true,
+                "tensors": 194,
+                "parameters": 53594624
+              },
+              "output_proj.": {
+                "strict": true,
+                "tensors": 2,
+                "parameters": 525312
+              },
+              "unused_upstream_keys": [
+                "transformer.lm_head.weight"
+              ]
+            },
+            "architecture": {
+              "dim": 1024,
+              "heads": 8,
+              "query_tokens": 1024,
+              "register_tokens": 96,
+              "motion_depth": 12,
+              "position_depth": 2,
+              "position_self_attention": true,
+              "max_joints": 512,
+              "max_frames": 48,
+              "motion_evidence_fusion": "bias",
+              "motion_evidence_heads": 8,
+              "dropout": 0.0,
+              "motion_checkpointing": true,
+              "surface_checkpointing": true,
+              "position_checkpointing": true,
+              "generation_cache": true,
+              "temporal_chunk_size": 4096
+            },
+            "trainable_parameters": 697704743,
+            "groups": {
+              "surface_tokenizer": 54119936,
+              "motion_encoder": 302412064,
+              "structure": 306520580,
+              "positions": 34652163
+            },
+            "backbone_attention": "flash_attention_2",
+            "old_method_trained_weights_loaded": false
+          },
+          "started_at": "2026-10-12T06:18:25.226300+00:00",
+          "asset": "oxl_704f5523f60cb9da3b1d",
+          "selected_frames": [
+            [
+              14,
+              39,
+              0,
+              19,
+              29,
+              11,
+              32,
+              7
+            ]
+          ],
+          "no_optimizer_or_parameter_updates": true,
+          "baseline": {
+            "xyz_l1": 0.25148293375968933,
+            "query_F1": 0.11204481792717084,
+            "temporal_contrast": {
+              "rms": 0.7440712451934814,
+              "contrast_rms": 0.5716871023178101,
+              "contrast_over_rms": 0.7683230638504028
+            }
+          },
+          "signals": {
+            "H_joint": {
+              "rms": 1.027036428451538,
+              "contrast_rms": 0.9105156064033508,
+              "contrast_over_rms": 0.8865465521812439
+            },
+            "anchor_spatial": {
+              "rms": 0.9999043345451355,
+              "contrast_rms": 0.7221507430076599,
+              "contrast_over_rms": 0.7222198247909546
+            },
+            "anchor_temporal": {
+              "rms": 0.9999043345451355,
+              "contrast_rms": 0.6463918089866638,
+              "contrast_over_rms": 0.6464536786079407
+            },
+            "GT_temporal": {
+              "rms": 0.6104772090911865,
+              "contrast_rms": 0.45025524497032166,
+              "contrast_over_rms": 0.7375463843345642
+            },
+            "layers": {
+              "0": {
+                "joints": {
+                  "rms": 1.2989492416381836,
+                  "contrast_rms": 0.9302175641059875,
+                  "contrast_over_rms": 0.716130793094635
+                },
+                "frames": {
+                  "rms": 1.2989492416381836,
+                  "contrast_rms": 0.2978859543800354,
+                  "contrast_over_rms": 0.22932840883731842
+                }
+              },
+              "1": {
+                "joints": {
+                  "rms": 1.7452632188796997,
+                  "contrast_rms": 0.942623496055603,
+                  "contrast_over_rms": 0.5401039123535156
+                },
+                "frames": {
+                  "rms": 1.7452632188796997,
+                  "contrast_rms": 0.5225727558135986,
+                  "contrast_over_rms": 0.2994234561920166
+                }
+              }
+            },
+            "attention": {
+              "0": {
+                "fp32_reconstruction_not_a_replacement_forward": true,
+                "normalized_entropy_mean": 0.9824587106704712,
+                "max_probability_mean": 0.003535365918651223,
+                "joint_attention_contrast_rms": 0.00036301647196523845
+              },
+              "1": {
+                "fp32_reconstruction_not_a_replacement_forward": true,
+                "normalized_entropy_mean": 0.9760880470275879,
+                "max_probability_mean": 0.00421534338966012,
+                "joint_attention_contrast_rms": 0.0003086409706156701
+              }
+            },
+            "final_joint": {
+              "rms": 0.9996659755706787,
+              "contrast_rms": 0.5696346759796143,
+              "contrast_over_rms": 0.5698249936103821
+            },
+            "final_temporal": {
+              "rms": 0.9996659755706787,
+              "contrast_rms": 0.27875497937202454,
+              "contrast_over_rms": 0.2788481116294861
+            }
+          },
+          "ablations": {
+            "repeat_same_position_inputs": {
+              "changed_from_baseline": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.25148293375968933,
+                "query_F1": 0.11204481792717084,
+                "temporal_contrast": {
+                  "rms": 0.7440712451934814,
+                  "contrast_rms": 0.5716871023178101,
+                  "contrast_over_rms": 0.7683230638504028
+                }
+              },
+              "joint_spread": {
+                "rms": 0.7440712451934814,
+                "contrast_rms": 0.308514267206192,
+                "contrast_over_rms": 0.4146299958229065
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              }
+            },
+            "joint_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.34549567103385925,
+                "maxabs": 2.064453125
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.44674813747406006,
+                "query_F1": 0.0,
+                "temporal_contrast": {
+                  "rms": 0.744072675704956,
+                  "contrast_rms": 0.5716864466667175,
+                  "contrast_over_rms": 0.7683207392692566
+                }
+              },
+              "joint_spread": {
+                "rms": 0.744072675704956,
+                "contrast_rms": 0.3085143566131592,
+                "contrast_over_rms": 0.41462934017181396
+              },
+              "routing_equivariance_error": {
+                "meanabs": 6.308922365860781e-06,
+                "maxabs": 0.00390625
+              }
+            },
+            "frame_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.6891638040542603,
+                "maxabs": 2.000244140625
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.6979228258132935,
+                "query_F1": 0.11204481792717084,
+                "temporal_contrast": {
+                  "rms": 0.7440712451934814,
+                  "contrast_rms": 0.5716870427131653,
+                  "contrast_over_rms": 0.7683230042457581
+                }
+              },
+              "joint_spread": {
+                "rms": 0.7440712451934814,
+                "contrast_rms": 0.308514267206192,
+                "contrast_over_rms": 0.4146299958229065
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              }
+            },
+            "paired_anchor_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.0010394745040684938,
+                "maxabs": 0.0078125
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.2514876127243042,
+                "query_F1": 0.14705882352941177,
+                "temporal_contrast": {
+                  "rms": 0.7441259026527405,
+                  "contrast_rms": 0.5717543959617615,
+                  "contrast_over_rms": 0.7683570384979248
+                }
+              },
+              "joint_spread": {
+                "rms": 0.7441259026527405,
+                "contrast_rms": 0.30843979120254517,
+                "contrast_over_rms": 0.4144994616508484
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0010394745040684938,
+                "maxabs": 0.0078125
+              }
+            },
+            "same_H_for_all_joints": {
+              "changed_from_baseline": {
+                "meanabs": 0.217265784740448,
+                "maxabs": 1.851318359375
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.32964378595352173,
+                "query_F1": 0.0,
+                "temporal_contrast": {
+                  "rms": 0.6473880410194397,
+                  "contrast_rms": 0.5545015335083008,
+                  "contrast_over_rms": 0.8565211296081543
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6473880410194397,
+                "contrast_rms": 2.8258645201617583e-08,
+                "contrast_over_rms": 4.3650242531612093e-08
+              }
+            },
+            "repeat_query_frame_memory": {
+              "changed_from_baseline": {
+                "meanabs": 0.4526216983795166,
+                "maxabs": 1.7763671875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.4369374215602875,
+                "query_F1": 0.11204481792717084,
+                "temporal_contrast": {
+                  "rms": 0.31775110960006714,
+                  "contrast_rms": 0.0,
+                  "contrast_over_rms": 0.0
+                }
+              },
+              "joint_spread": {
+                "rms": 0.31775110960006714,
+                "contrast_rms": 0.2626156806945801,
+                "contrast_over_rms": 0.826482355594635
+              }
+            },
+            "zero_learned_anchors": {
+              "changed_from_baseline": {
+                "meanabs": 0.2544591426849365,
+                "maxabs": 0.921875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.24800963699817657,
+                "query_F1": 0.09243697478991597,
+                "temporal_contrast": {
+                  "rms": 0.5148625373840332,
+                  "contrast_rms": 0.2743127644062042,
+                  "contrast_over_rms": 0.5327883362770081
+                }
+              },
+              "joint_spread": {
+                "rms": 0.5148625373840332,
+                "contrast_rms": 0.37831464409828186,
+                "contrast_over_rms": 0.73478764295578
+              }
+            },
+            "zero_explicit_points": {
+              "changed_from_baseline": {
+                "meanabs": 0.19399826228618622,
+                "maxabs": 0.84375
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.22721852362155914,
+                "query_F1": 0.14640522875816994,
+                "temporal_contrast": {
+                  "rms": 0.498919814825058,
+                  "contrast_rms": 0.3285568654537201,
+                  "contrast_over_rms": 0.658536434173584
+                }
+              },
+              "joint_spread": {
+                "rms": 0.498919814825058,
+                "contrast_rms": 0.3064669072628021,
+                "contrast_over_rms": 0.6142608523368835
+              }
+            },
+            "break_feature_point_pairing": {
+              "changed_from_baseline": {
+                "meanabs": 0.01083058025687933,
+                "maxabs": 0.04296875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.24748118221759796,
+                "query_F1": 0.13725490196078433,
+                "temporal_contrast": {
+                  "rms": 0.7433078289031982,
+                  "contrast_rms": 0.5724546909332275,
+                  "contrast_over_rms": 0.7701448202133179
+                }
+              },
+              "joint_spread": {
+                "rms": 0.7433078289031982,
+                "contrast_rms": 0.3054293096065521,
+                "contrast_over_rms": 0.41090553998947144
+              }
+            },
+            "different_asset_anchors_and_points": {
+              "changed_from_baseline": {
+                "meanabs": 0.5071018934249878,
+                "maxabs": 2.1123046875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.4667961895465851,
+                "query_F1": 0.0904977375565611,
+                "temporal_contrast": {
+                  "rms": 0.3271274268627167,
+                  "contrast_rms": 0.09732571989297867,
+                  "contrast_over_rms": 0.29751622676849365
+                }
+              }
+            }
+          },
+          "whole_nonquery_frame_permutation": {
+            "XYZ": {
+              "meanabs": 0.0019422158366069198,
+              "maxabs": 0.01171875
+            },
+            "H": {
+              "meanabs": 0.005148293450474739,
+              "maxabs": 0.044982749968767166
+            }
+          },
+          "whole_same_input_repeat": {
+            "XYZ": {
+              "meanabs": 0.002061626873910427,
+              "maxabs": 0.01171875
+            },
+            "H": {
+              "meanabs": 0.005348625127226114,
+              "maxabs": 0.035106658935546875
+            },
+            "readout": {
+              "meanabs": 0.003472280688583851,
+              "maxabs": 0.029796361923217773
+            }
+          },
+          "linear_readout_capacity": {
+            "query": {
+              "rows": 52,
+              "columns": 1025,
+              "singular_max": 202.3183080309058,
+              "singular_min": 4.701223664395763,
+              "condition_number": 43.03524411381293,
+              "fits": {
+                "0.001": {
+                  "retained_rank": 52,
+                  "FP64_fit_l1": 5.956328735078314e-16,
+                  "actual_BF16_linear_l1": 0.0007149110897444189,
+                  "refreshed_forward_BF16_linear_l1": 0.001329363789409399,
+                  "weight_norm": 0.30765404801894614
+                },
+                "1e-06": {
+                  "retained_rank": 52,
+                  "FP64_fit_l1": 5.956328735078314e-16,
+                  "actual_BF16_linear_l1": 0.0007149110897444189,
+                  "refreshed_forward_BF16_linear_l1": 0.001329363789409399,
+                  "weight_norm": 0.30765404801894614
+                }
+              }
+            },
+            "all_frames": {
+              "rows": 416,
+              "columns": 1025,
+              "singular_max": 514.49069593349,
+              "singular_min": 0.042240869619947635,
+              "condition_number": 12179.926705167292,
+              "fits": {
+                "0.001": {
+                  "retained_rank": 138,
+                  "FP64_fit_l1": 0.028170124869264308,
+                  "actual_BF16_linear_l1": 0.028255390003323555,
+                  "refreshed_forward_BF16_linear_l1": 0.028720702975988388,
+                  "weight_norm": 2.08908217244694
+                },
+                "1e-06": {
+                  "retained_rank": 416,
+                  "FP64_fit_l1": 9.054289102660407e-15,
+                  "actual_BF16_linear_l1": 0.011610301211476326,
+                  "refreshed_forward_BF16_linear_l1": 0.028490189462900162,
+                  "weight_norm": 12.524819413366494
+                }
+              }
+            }
+          },
+          "current_XYZ_head_weight_norm": 0.987034261226654,
+          "finished_at": "2026-10-12T06:18:47.809116+00:00",
+          "peak_allocated_gib": 4.094119548797607
+        },
+        "single_asset_fitted": {
+          "complete": true,
+          "source": {
+            "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
+            "git_head": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
+            "git_status": ""
+          },
+          "model": {
+            "name": "single_asset_fitted",
+            "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+            "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+          },
+          "initialization": {
+            "official_checkpoint": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+            "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+            "seed": 20261012,
+            "common_position_initialization_depth": 4,
+            "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+            "upstream_source_clean": true,
+            "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+            "load_report": {
+              "transformer.model.": {
+                "strict": true,
+                "tensors": 388,
+                "parameters": 305736704
+              },
+              "mesh_encoder.": {
+                "strict": true,
+                "tensors": 194,
+                "parameters": 53594624
+              },
+              "output_proj.": {
+                "strict": true,
+                "tensors": 2,
+                "parameters": 525312
+              },
+              "unused_upstream_keys": [
+                "transformer.lm_head.weight"
+              ]
+            },
+            "architecture": {
+              "dim": 1024,
+              "heads": 8,
+              "query_tokens": 1024,
+              "register_tokens": 96,
+              "motion_depth": 12,
+              "position_depth": 2,
+              "position_self_attention": true,
+              "max_joints": 512,
+              "max_frames": 48,
+              "motion_evidence_fusion": "bias",
+              "motion_evidence_heads": 8,
+              "dropout": 0.0,
+              "motion_checkpointing": true,
+              "surface_checkpointing": true,
+              "position_checkpointing": true,
+              "generation_cache": true,
+              "temporal_chunk_size": 4096
+            },
+            "trainable_parameters": 697704743,
+            "groups": {
+              "surface_tokenizer": 54119936,
+              "motion_encoder": 302412064,
+              "structure": 306520580,
+              "positions": 34652163
+            },
+            "backbone_attention": "flash_attention_2",
+            "old_method_trained_weights_loaded": false
+          },
+          "started_at": "2026-10-12T06:18:25.226071+00:00",
+          "asset": "oxl_704f5523f60cb9da3b1d",
+          "selected_frames": [
+            [
+              14,
+              39,
+              0,
+              19,
+              29,
+              11,
+              32,
+              7
+            ]
+          ],
+          "no_optimizer_or_parameter_updates": true,
+          "baseline": {
+            "xyz_l1": 0.004004284273833036,
+            "query_F1": 1.0,
+            "temporal_contrast": {
+              "rms": 0.6106858253479004,
+              "contrast_rms": 0.4506378769874573,
+              "contrast_over_rms": 0.7379209995269775
+            }
+          },
+          "signals": {
+            "H_joint": {
+              "rms": 1.0261387825012207,
+              "contrast_rms": 0.9473783373832703,
+              "contrast_over_rms": 0.9232457876205444
+            },
+            "anchor_spatial": {
+              "rms": 0.9982107281684875,
+              "contrast_rms": 0.26741814613342285,
+              "contrast_over_rms": 0.26789748668670654
+            },
+            "anchor_temporal": {
+              "rms": 0.9982107281684875,
+              "contrast_rms": 0.2978861331939697,
+              "contrast_over_rms": 0.29842010140419006
+            },
+            "GT_temporal": {
+              "rms": 0.6104772090911865,
+              "contrast_rms": 0.45025524497032166,
+              "contrast_over_rms": 0.7375463843345642
+            },
+            "layers": {
+              "0": {
+                "joints": {
+                  "rms": 2.5368268489837646,
+                  "contrast_rms": 0.9863057732582092,
+                  "contrast_over_rms": 0.38879507780075073
+                },
+                "frames": {
+                  "rms": 2.5368268489837646,
+                  "contrast_rms": 0.2723943591117859,
+                  "contrast_over_rms": 0.10737601667642593
+                }
+              },
+              "1": {
+                "joints": {
+                  "rms": 5.408288955688477,
+                  "contrast_rms": 0.9919958114624023,
+                  "contrast_over_rms": 0.18342137336730957
+                },
+                "frames": {
+                  "rms": 5.408288955688477,
+                  "contrast_rms": 0.40422844886779785,
+                  "contrast_over_rms": 0.074742391705513
+                }
+              }
+            },
+            "attention": {
+              "0": {
+                "fp32_reconstruction_not_a_replacement_forward": true,
+                "normalized_entropy_mean": 0.876973569393158,
+                "max_probability_mean": 0.020650390535593033,
+                "joint_attention_contrast_rms": 0.002621233928948641
+              },
+              "1": {
+                "fp32_reconstruction_not_a_replacement_forward": true,
+                "normalized_entropy_mean": 0.9890643358230591,
+                "max_probability_mean": 0.0026373888831585646,
+                "joint_attention_contrast_rms": 0.0003623347729444504
+              }
+            },
+            "final_joint": {
+              "rms": 0.997132420539856,
+              "contrast_rms": 0.17986424267292023,
+              "contrast_over_rms": 0.18038150668144226
+            },
+            "final_temporal": {
+              "rms": 0.997132420539856,
+              "contrast_rms": 0.07416657358407974,
+              "contrast_over_rms": 0.07437986135482788
+            }
+          },
+          "ablations": {
+            "repeat_same_position_inputs": {
+              "changed_from_baseline": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.004004284273833036,
+                "query_F1": 1.0,
+                "temporal_contrast": {
+                  "rms": 0.6106858253479004,
+                  "contrast_rms": 0.4506378769874573,
+                  "contrast_over_rms": 0.7379209995269775
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6106858253479004,
+                "contrast_rms": 0.35863080620765686,
+                "contrast_over_rms": 0.5872591137886047
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              }
+            },
+            "joint_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.36504051089286804,
+                "maxabs": 1.1416015625
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.3650190830230713,
+                "query_F1": 0.0,
+                "temporal_contrast": {
+                  "rms": 0.6106829047203064,
+                  "contrast_rms": 0.4506339728832245,
+                  "contrast_over_rms": 0.7379180788993835
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6106829047203064,
+                "contrast_rms": 0.3586280047893524,
+                "contrast_over_rms": 0.5872573256492615
+              },
+              "routing_equivariance_error": {
+                "meanabs": 3.2278207982017193e-06,
+                "maxabs": 0.00390625
+              }
+            },
+            "frame_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.5403594374656677,
+                "maxabs": 1.8125
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.5411010384559631,
+                "query_F1": 1.0,
+                "temporal_contrast": {
+                  "rms": 0.6106858253479004,
+                  "contrast_rms": 0.4506378769874573,
+                  "contrast_over_rms": 0.7379209995269775
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6106858253479004,
+                "contrast_rms": 0.35863080620765686,
+                "contrast_over_rms": 0.5872591137886047
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0,
+                "maxabs": 0.0
+              }
+            },
+            "paired_anchor_permutation": {
+              "changed_from_baseline": {
+                "meanabs": 0.0005996651598252356,
+                "maxabs": 0.0078125
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.004044123459607363,
+                "query_F1": 1.0,
+                "temporal_contrast": {
+                  "rms": 0.6106182932853699,
+                  "contrast_rms": 0.45062386989593506,
+                  "contrast_over_rms": 0.7379796504974365
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6106182932853699,
+                "contrast_rms": 0.3585561513900757,
+                "contrast_over_rms": 0.5872017741203308
+              },
+              "routing_equivariance_error": {
+                "meanabs": 0.0005996651598252356,
+                "maxabs": 0.0078125
+              }
+            },
+            "same_H_for_all_joints": {
+              "changed_from_baseline": {
+                "meanabs": 0.2737896740436554,
+                "maxabs": 1.099609375
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.27373701333999634,
+                "query_F1": 0.0,
+                "temporal_contrast": {
+                  "rms": 0.4651337265968323,
+                  "contrast_rms": 0.4189249575138092,
+                  "contrast_over_rms": 0.9006548523902893
+                }
+              },
+              "joint_spread": {
+                "rms": 0.4651337265968323,
+                "contrast_rms": 1.858110287855652e-08,
+                "contrast_over_rms": 3.99478743418058e-08
+              }
+            },
+            "repeat_query_frame_memory": {
+              "changed_from_baseline": {
+                "meanabs": 0.348283052444458,
+                "maxabs": 1.787109375
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.348523885011673,
+                "query_F1": 1.0,
+                "temporal_contrast": {
+                  "rms": 0.3645508289337158,
+                  "contrast_rms": 0.0,
+                  "contrast_over_rms": 0.0
+                }
+              },
+              "joint_spread": {
+                "rms": 0.3645508289337158,
+                "contrast_rms": 0.35771608352661133,
+                "contrast_over_rms": 0.98125159740448
+              }
+            },
+            "zero_learned_anchors": {
+              "changed_from_baseline": {
+                "meanabs": 0.23465724289417267,
+                "maxabs": 1.19140625
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.23443184792995453,
+                "query_F1": 0.11764705882352941,
+                "temporal_contrast": {
+                  "rms": 0.7501683831214905,
+                  "contrast_rms": 0.44619613885879517,
+                  "contrast_over_rms": 0.5947946310043335
+                }
+              },
+              "joint_spread": {
+                "rms": 0.7501683831214905,
+                "contrast_rms": 0.5726965665817261,
+                "contrast_over_rms": 0.7634240388870239
+              }
+            },
+            "zero_explicit_points": {
+              "changed_from_baseline": {
+                "meanabs": 0.22232557833194733,
+                "maxabs": 0.88671875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.22219227254390717,
+                "query_F1": 0.6358974358974359,
+                "temporal_contrast": {
+                  "rms": 0.39012977480888367,
+                  "contrast_rms": 0.16434785723686218,
+                  "contrast_over_rms": 0.4212645888328552
+                }
+              },
+              "joint_spread": {
+                "rms": 0.39012977480888367,
+                "contrast_rms": 0.3485157787799835,
+                "contrast_over_rms": 0.8933329582214355
+              }
+            },
+            "break_feature_point_pairing": {
+              "changed_from_baseline": {
+                "meanabs": 0.01643504947423935,
+                "maxabs": 0.18231201171875
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.017292652279138565,
+                "query_F1": 0.6358974358974359,
+                "temporal_contrast": {
+                  "rms": 0.6045838594436646,
+                  "contrast_rms": 0.4473327100276947,
+                  "contrast_over_rms": 0.7399018406867981
+                }
+              },
+              "joint_spread": {
+                "rms": 0.6045838594436646,
+                "contrast_rms": 0.35021525621414185,
+                "contrast_over_rms": 0.5792666077613831
+              }
+            },
+            "different_asset_anchors_and_points": {
+              "changed_from_baseline": {
+                "meanabs": 0.35709473490715027,
+                "maxabs": 1.6376953125
+              },
+              "metrics_against_original_GT": {
+                "xyz_l1": 0.35696905851364136,
+                "query_F1": 0.5304812834224598,
+                "temporal_contrast": {
+                  "rms": 0.3718622922897339,
+                  "contrast_rms": 0.032348547130823135,
+                  "contrast_over_rms": 0.08699066191911697
+                }
+              }
+            }
+          },
+          "whole_nonquery_frame_permutation": {
+            "XYZ": {
+              "meanabs": 0.0008655366254970431,
+              "maxabs": 0.0078125
+            },
+            "H": {
+              "meanabs": 0.0024384146090596914,
+              "maxabs": 0.02242112159729004
+            }
+          },
+          "whole_same_input_repeat": {
+            "XYZ": {
+              "meanabs": 0.0,
+              "maxabs": 0.0
+            },
+            "H": {
+              "meanabs": 0.0,
+              "maxabs": 0.0
+            },
+            "readout": {
+              "meanabs": 0.0,
+              "maxabs": 0.0
+            }
+          },
+          "linear_readout_capacity": {
+            "query": {
+              "rows": 52,
+              "columns": 1025,
+              "singular_max": 226.47646998906248,
+              "singular_min": 0.8206238175668881,
+              "condition_number": 275.9808637538145,
+              "fits": {
+                "0.001": {
+                  "retained_rank": 52,
+                  "FP64_fit_l1": 3.7952636048133604e-16,
+                  "actual_BF16_linear_l1": 0.0007420078036375344,
+                  "refreshed_forward_BF16_linear_l1": 0.0007420078036375344,
+                  "weight_norm": 0.44771307317859876
+                },
+                "1e-06": {
+                  "retained_rank": 52,
+                  "FP64_fit_l1": 3.7952636048133604e-16,
+                  "actual_BF16_linear_l1": 0.0007420078036375344,
+                  "refreshed_forward_BF16_linear_l1": 0.0007420078036375344,
+                  "weight_norm": 0.44771307317859876
+                }
+              }
+            },
+            "all_frames": {
+              "rows": 416,
+              "columns": 1025,
+              "singular_max": 638.7475870287278,
+              "singular_min": 0.015039519329918158,
+              "condition_number": 42471.276708828416,
+              "fits": {
+                "0.001": {
+                  "retained_rank": 76,
+                  "FP64_fit_l1": 0.0038441594063289577,
+                  "actual_BF16_linear_l1": 0.004083701875060797,
+                  "refreshed_forward_BF16_linear_l1": 0.004083701875060797,
+                  "weight_norm": 0.61655585006139
+                },
+                "1e-06": {
+                  "retained_rank": 416,
+                  "FP64_fit_l1": 5.0591152972741425e-15,
+                  "actual_BF16_linear_l1": 0.003928641323000193,
+                  "refreshed_forward_BF16_linear_l1": 0.003928641323000193,
+                  "weight_norm": 4.2645067925726075
+                }
+              }
+            }
+          },
+          "current_XYZ_head_weight_norm": 0.9481216669082642,
+          "finished_at": "2026-10-12T06:18:47.809568+00:00",
+          "peak_allocated_gib": 4.094119548797607
+        }
+      },
+      "interpretation": "One-asset evidence only, not a proof of absent implementation bugs or a dataset-level root cause."
     }
   }
 }

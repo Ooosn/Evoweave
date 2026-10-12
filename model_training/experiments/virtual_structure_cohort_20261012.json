@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "label": "structure_cohort_audit_v1",
+  "mode": "cohort",
+  "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
+  "models": [
+    {"name":"rank_0", "checkpoint":"/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt", "sha256":"c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"},
+    {"name":"rank_1", "checkpoint":"/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt", "sha256":"c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"}
+  ],
+  "contract": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked."
+}

@@ -82,6 +82,38 @@ def readout_capacity(features, refreshed, targets, device):
     return results
 
 
+def cohort(model, config, plan, spec, device, rank, path):
+    rows=[]
+    report={'complete':False,'source':source_metadata(config),'model':spec,'rows':rows,
+            'no_optimizer_or_parameter_updates':True,'GT_parent_conditioning_only_not_free_generation':True,
+            'started_at':datetime.now(timezone.utc).isoformat()}
+    selected=evaluation_rows(load_entries(config),config)
+    for split,values in selected.items():
+        dataset=dataset_for(values,config,mode='seen_eval')
+        for index in range(rank,len(values),len(plan['models'])):
+            surface,targets=prepare(dataset,[index],config,device)
+            with torch.autocast('cuda',dtype=torch.bfloat16):
+                anchors,memory=model.encode(surface)
+                teacher=model.forward_encoded(anchors,memory,surface['query_points'],targets,xyz_weight=.5)
+            h,points,mask=teacher['joint_features'],surface['query_points'],targets['joint_mask']
+            results={'normal':coordinates(teacher['joints'],targets)}
+            alternatives={'zero_learned_anchors':(torch.zeros_like(anchors),points),
+                          'zero_explicit_points':(anchors,torch.zeros_like(points)),
+                          'break_feature_point_pairing':(anchors,points.flip(2)),
+                          'spatial_mean_anchors':(anchors.mean(2,keepdim=True).expand_as(anchors),points)}
+            for name,(a,p) in alternatives.items():
+                with torch.autocast('cuda',dtype=torch.bfloat16):xyz=model.positions(h,mask,a,p)
+                results[name]=coordinates(xyz,targets)
+            rows.append({'split':split,'asset_id':values[index]['asset_id'],'manifest_index':values[index]['manifest_index'],
+                         'selected_frames':targets['selected_frames'].cpu().tolist(),'metrics':results})
+            write_json(path,report)
+            print('COHORT '+json.dumps({'rank':rank,'completed':len(rows),'split':split,
+                                       'normal_xyz_l1':results['normal']['xyz_l1']}),flush=True)
+            del surface,targets,anchors,memory,teacher,h,points,mask,alternatives,xyz
+    report.update(complete=True,finished_at=datetime.now(timezone.utc).isoformat())
+    write_json(path,report)
+
+
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser()
@@ -108,6 +140,9 @@ def main():
     model.load_state_dict(payload['model'],strict=True)
     del payload
     model.requires_grad_(False).eval()
+    if plan.get('mode')=='cohort':
+        cohort(model,config,plan,spec,device,rank,path)
+        return
     selected = evaluation_rows(load_entries(config),config)['train']
     dataset = dataset_for(selected,config,mode='seen_eval')
     indices = [next(i for i,row in enumerate(selected) if row['manifest_index']==j) for j in plan['manifest_indices']]

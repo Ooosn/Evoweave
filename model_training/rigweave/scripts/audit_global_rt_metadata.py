@@ -58,6 +58,31 @@ TRAINING_ROOT_FIELDS = (
     "world_from_rootspace_mats",
 )
 
+SKELETON_ARRAY_FIELDS = (
+    "parents",
+    "rest_joints",
+    "rest_bone_mats",
+    "bone_transforms",
+    "raw_root_index",
+    "raw_root_indices",
+    "target_parents",
+    "target_raw_indices",
+    "target_entry_raw_indices",
+)
+SKELETON_INTEGER_FIELDS = {
+    "parents",
+    "raw_root_index",
+    "raw_root_indices",
+    "target_parents",
+    "target_raw_indices",
+    "target_entry_raw_indices",
+}
+SKELETON_GAUGE_NOTE = (
+    "finite 4x4 values alone do not establish rigid usability or exact RT; "
+    "raw-root rigid checks describe the skeleton rest-to-posed gauge from "
+    "bone_transforms and are not authoritative object/world RT"
+)
+
 # No current Evoweave producer writes these names.  They are recognized so a
 # future/source-side export is reported separately rather than being confused
 # with deleted-root metadata.  Per-bone ``bone_transforms`` is intentionally
@@ -110,6 +135,13 @@ UNIQUE = "unique_candidate"
 IDENTITY_COMPATIBILITY = "identity_compatibility"
 NONIDENTITY_COMPATIBILITY = "nonidentity_training_transform"
 NOT_AUDITED = "not_audited"
+
+SKELETON_VALID = "valid"
+RELATIONSHIP_NONE = "none"
+RELATIONSHIP_SINGLE = "single"
+RELATIONSHIP_ANCESTOR_CHAIN = "ancestor_chain"
+RELATIONSHIP_DISCONNECTED_OR_MIXED = "disconnected_or_mixed"
+RELATIONSHIP_INVALID = "invalid"
 
 _VALID_CANDIDATE_STATUSES = {UNIQUE}
 _FAILURE_STATUSES = {
@@ -260,6 +292,555 @@ def _record_shape_error(result: dict[str, Any], details: Sequence[str]) -> dict[
     result["shape_valid"] = False
     result["details"] = list(details)[:8]
     return _set_status(result, MALFORMED)
+
+
+def _skeleton_field_result(
+    name: str,
+    *,
+    expected_shape: str,
+    present: bool,
+    value: np.ndarray | None = None,
+    shape_valid: bool | None = None,
+    finite: bool | None = None,
+    error: str | None = None,
+) -> dict[str, Any]:
+    if not present:
+        status = ABSENT
+    elif error is not None or shape_valid is False:
+        status = MALFORMED
+    elif finite is False:
+        status = NONFINITE
+    else:
+        status = SKELETON_VALID
+    result: dict[str, Any] = {
+        "status": status,
+        "expected_shape": expected_shape,
+        "shape": list(value.shape) if value is not None else None,
+        "dtype": str(value.dtype) if value is not None else None,
+        "shape_valid": shape_valid,
+        "finite": finite,
+        "error": error,
+    }
+    return result
+
+
+def _load_skeleton_fields(z: Any) -> tuple[dict[str, np.ndarray], dict[str, dict[str, Any]], list[str]]:
+    expected_shapes = {
+        "parents": "[J]",
+        "rest_joints": "[J,3]",
+        "rest_bone_mats": "[J,4,4]",
+        "bone_transforms": "[T,J,4,4]",
+        "raw_root_index": "scalar",
+        "raw_root_indices": "[R]",
+        "target_parents": "[K]",
+        "target_raw_indices": "[K]",
+        "target_entry_raw_indices": "[1]",
+    }
+    values: dict[str, np.ndarray] = {}
+    reports: dict[str, dict[str, Any]] = {}
+    details: list[str] = []
+    for name in SKELETON_ARRAY_FIELDS:
+        if name not in z.files:
+            reports[name] = _skeleton_field_result(
+                name,
+                expected_shape=expected_shapes[name],
+                present=False,
+            )
+            continue
+        try:
+            raw = np.asarray(z[name])
+            if name in SKELETON_INTEGER_FIELDS:
+                if raw.dtype.kind in "fc":
+                    if not np.isfinite(raw).all() or not np.equal(raw, np.floor(raw)).all():
+                        raise ValueError(f"{name} contains non-integral or nonfinite values")
+                value = np.asarray(raw, dtype=np.int64)
+            else:
+                value = np.asarray(raw, dtype=np.float64)
+            values[name] = value
+            if name == "raw_root_index":
+                shape_valid = value.ndim == 0
+            elif name == "parents" or name in {"raw_root_indices", "target_parents", "target_raw_indices"}:
+                shape_valid = value.ndim == 1
+            elif name == "target_entry_raw_indices":
+                shape_valid = value.ndim == 1 and value.shape == (1,)
+            elif name == "rest_joints":
+                shape_valid = value.ndim == 2 and value.shape[-1] == 3
+            elif name == "rest_bone_mats":
+                shape_valid = value.ndim == 3 and tuple(value.shape[-2:]) == (4, 4)
+            elif name == "bone_transforms":
+                shape_valid = value.ndim == 4 and tuple(value.shape[-2:]) == (4, 4)
+            else:
+                shape_valid = False
+            finite = bool(np.isfinite(value).all())
+            reports[name] = _skeleton_field_result(
+                name,
+                expected_shape=expected_shapes[name],
+                present=True,
+                value=raw,
+                shape_valid=bool(shape_valid),
+                finite=finite,
+            )
+            if not shape_valid:
+                details.append(f"{name}_shape={tuple(value.shape)}")
+            if not finite:
+                details.append(f"{name}_nonfinite")
+        except Exception as exc:  # noqa: BLE001 - preserve per-field audit evidence.
+            reports[name] = _skeleton_field_result(
+                name,
+                expected_shape=expected_shapes[name],
+                present=True,
+                error=_short_error(exc),
+            )
+            details.append(f"{name}_read_error:{_short_error(exc)}")
+    return values, reports, details[:16]
+
+
+def _rigid_transform_result(transforms: np.ndarray | None) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "status": NOT_AUDITED,
+        "shape": list(transforms.shape) if transforms is not None else None,
+        "finite": None,
+        "rotation_valid": None,
+        "orthogonality_max_error": None,
+        "determinant_max_error": None,
+        "affine_last_row_max_error": None,
+        "details": [],
+    }
+    if transforms is None:
+        return result
+    value = np.asarray(transforms, dtype=np.float64)
+    if value.ndim < 2 or tuple(value.shape[-2:]) != (4, 4):
+        result["status"] = MALFORMED
+        result["details"] = [f"transform_shape={tuple(value.shape)}"]
+        return result
+    finite = bool(np.isfinite(value).all())
+    result["finite"] = finite
+    if not finite:
+        result["status"] = NONFINITE
+        result["details"] = ["transform_nonfinite"]
+        return result
+    affine_target = np.asarray([0.0, 0.0, 0.0, 1.0], dtype=np.float64)
+    affine_error = float(np.max(np.abs(value[..., 3, :] - affine_target))) if value.size else 0.0
+    result["affine_last_row_max_error"] = affine_error
+    if not math.isfinite(affine_error) or affine_error > AFFINE_LAST_ROW_ATOL:
+        result["status"] = INVALID_AFFINE
+        result["details"] = [f"affine_last_row_error:{affine_error:.9g}"]
+        return result
+    rotation_valid, orth_error, determinant_error = _rotation_metrics(value[..., :3, :3])
+    result["rotation_valid"] = bool(rotation_valid)
+    result["orthogonality_max_error"] = float(orth_error)
+    result["determinant_max_error"] = float(determinant_error)
+    if not rotation_valid:
+        result["status"] = INVALID_ROTATION
+        result["details"] = [
+            f"orthogonality_error:{orth_error:.9g}",
+            f"determinant_error:{determinant_error:.9g}",
+        ]
+        return result
+    result["status"] = SKELETON_VALID
+    return result
+
+
+def _index_list(value: np.ndarray) -> list[int]:
+    return [int(item) for item in np.asarray(value, dtype=np.int64).reshape(-1).tolist()]
+
+
+def _recorded_root_relationship(
+    recorded: Mapping[str, Any],
+    recorded_indices: np.ndarray | None,
+    parents: np.ndarray | None,
+) -> dict[str, Any]:
+    relationship: dict[str, Any] = {
+        "class": RELATIONSHIP_INVALID,
+        "recorded_indices": _index_list(recorded_indices) if recorded_indices is not None else None,
+        "parent_edges": [],
+        "details": [],
+    }
+    recorded_status = str(recorded.get("status", NOT_AUDITED))
+    if recorded_status in {ABSENT, EMPTY}:
+        relationship["class"] = RELATIONSHIP_NONE
+        relationship["details"] = ["no_recorded_root_indices"]
+        return relationship
+    if recorded_indices is None or parents is None or parents.ndim != 1:
+        relationship["details"] = ["recorded_indices_or_parents_unavailable"]
+        return relationship
+    indices = _index_list(recorded_indices)
+    parent_values = np.asarray(parents, dtype=np.int64)
+    joint_count = int(parent_values.shape[0])
+    if len(indices) != int(recorded.get("root_count") or -1):
+        relationship["details"].append("recorded_root_count_mismatch")
+    if len(set(indices)) != len(indices):
+        relationship["details"].append("recorded_root_indices_not_unique")
+    if any(index < 0 or index >= joint_count for index in indices):
+        relationship["details"].append("recorded_root_index_out_of_range")
+    if any(
+        int(parent) < -1 or int(parent) >= joint_count or int(parent) == child
+        for child, parent in enumerate(parent_values.tolist())
+    ):
+        relationship["details"].append("parents_invalid")
+    if relationship["details"]:
+        return relationship
+    for start in range(joint_count):
+        seen: set[int] = set()
+        node = start
+        while node >= 0:
+            if node in seen:
+                relationship["details"] = ["parents_cycle"]
+                return relationship
+            seen.add(node)
+            node = int(parent_values[node])
+    relationship["parent_edges"] = [
+        {"child": index, "parent": int(parent_values[index])}
+        for index in indices
+    ]
+    if recorded_status in {
+        MALFORMED,
+        NONFINITE,
+        INVALID_ROTATION,
+        INVALID_AFFINE,
+        INVERSE_MISMATCH,
+    }:
+        relationship["details"] = ["recorded_root_metadata_invalid"]
+        return relationship
+    if len(indices) == 1:
+        relationship["class"] = RELATIONSHIP_SINGLE
+        return relationship
+    recorded_set = set(indices)
+    child_map: dict[int, list[int]] = {index: [] for index in indices}
+    for child in indices:
+        parent = int(parent_values[child])
+        if parent in recorded_set:
+            child_map[parent].append(child)
+    tops = [index for index in indices if int(parent_values[index]) not in recorded_set]
+    if len(tops) != 1 or any(len(children) > 1 for children in child_map.values()):
+        relationship["class"] = RELATIONSHIP_DISCONNECTED_OR_MIXED
+        relationship["details"] = [
+            f"recorded_component_tops={tops}",
+            "recorded_parent_branching" if any(len(children) > 1 for children in child_map.values()) else "",
+        ]
+        relationship["details"] = [detail for detail in relationship["details"] if detail]
+        return relationship
+    visited: list[int] = []
+    current = tops[0]
+    while current not in visited:
+        visited.append(current)
+        children = child_map[current]
+        if not children:
+            break
+        current = children[0]
+    if len(visited) == len(indices) and set(visited) == recorded_set:
+        relationship["class"] = RELATIONSHIP_ANCESTOR_CHAIN
+        return relationship
+    relationship["class"] = RELATIONSHIP_DISCONNECTED_OR_MIXED
+    relationship["details"] = ["recorded_parent_cycle_or_unvisited_node"]
+    return relationship
+
+
+def _mapping_result(
+    values: Mapping[str, np.ndarray],
+    *,
+    raw_joint_count: int | None,
+    raw_roots: np.ndarray | None,
+    parents: np.ndarray | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    raw_mapping: dict[str, Any] = {
+        "status": MALFORMED,
+        "raw_root_index": None,
+        "raw_root_indices": _index_list(values["raw_root_indices"]) if "raw_root_indices" in values else None,
+        "computed_raw_root_indices": _index_list(raw_roots) if raw_roots is not None else None,
+        "details": [],
+    }
+    target_mapping: dict[str, Any] = {
+        "status": MALFORMED,
+        "target_raw_indices": _index_list(values["target_raw_indices"]) if "target_raw_indices" in values else None,
+        "target_entry_raw_indices": (
+            _index_list(values["target_entry_raw_indices"])
+            if "target_entry_raw_indices" in values
+            else None
+        ),
+        "target_root_target_indices": None,
+        "target_root_raw_indices": None,
+        "details": [],
+    }
+    if raw_joint_count is None or raw_roots is None:
+        raw_mapping["details"].append("parents_unavailable")
+    elif "raw_root_index" not in values or "raw_root_indices" not in values:
+        raw_mapping["details"].append("raw_root_index_fields_unavailable")
+    else:
+        raw_index_value = np.asarray(values["raw_root_index"])
+        raw_indices_value = np.asarray(values["raw_root_indices"])
+        raw_index = None
+        if raw_index_value.ndim != 0:
+            raw_mapping["details"].append("raw_root_index_must_be_scalar")
+        else:
+            raw_index = int(raw_index_value.item())
+        if raw_indices_value.ndim != 1:
+            raw_mapping["details"].append("raw_root_indices_must_be_vector")
+        raw_indices = _index_list(raw_indices_value)
+        computed = _index_list(raw_roots)
+        raw_mapping["raw_root_index"] = raw_index
+        if not raw_indices:
+            raw_mapping["details"].append("raw_root_indices_empty")
+        if len(set(raw_indices)) != len(raw_indices):
+            raw_mapping["details"].append("raw_root_indices_not_unique")
+        if any(index < 0 or index >= raw_joint_count for index in raw_indices):
+            raw_mapping["details"].append("raw_root_index_out_of_range")
+        if raw_indices != computed:
+            raw_mapping["details"].append("raw_root_indices_do_not_match_parents")
+        if raw_index is not None and raw_index not in raw_indices:
+            raw_mapping["details"].append("raw_root_index_not_in_raw_root_indices")
+        if not raw_mapping["details"]:
+            raw_mapping["status"] = SKELETON_VALID
+
+    if (
+        raw_joint_count is None
+        or "target_parents" not in values
+        or "target_raw_indices" not in values
+        or "target_entry_raw_indices" not in values
+    ):
+        target_mapping["details"].append("target_mapping_fields_unavailable")
+        return raw_mapping, target_mapping
+    target_parents = np.asarray(values["target_parents"], dtype=np.int64)
+    target_raw_indices_value = np.asarray(values["target_raw_indices"])
+    entry_raw_indices_value = np.asarray(values["target_entry_raw_indices"])
+    target_raw_indices = _index_list(target_raw_indices_value)
+    entry_raw_indices = _index_list(entry_raw_indices_value)
+    target_count = len(target_raw_indices)
+    shape_ok = (
+        target_parents.ndim == 1
+        and target_raw_indices_value.ndim == 1
+        and entry_raw_indices_value.ndim == 1
+        and entry_raw_indices_value.shape == (1,)
+        and int(target_parents.shape[0]) == target_count
+    )
+    if not shape_ok:
+        target_mapping["details"].append("target_parent_index_count_mismatch")
+    if len(set(target_raw_indices)) != target_count:
+        target_mapping["details"].append("target_raw_indices_not_unique")
+    if any(index < 0 or index >= raw_joint_count for index in target_raw_indices):
+        target_mapping["details"].append("target_raw_index_out_of_range")
+    if len(entry_raw_indices) != 1:
+        target_mapping["details"].append("target_entry_raw_indices_must_have_one_entry")
+    elif entry_raw_indices[0] not in target_raw_indices:
+        target_mapping["details"].append("target_entry_not_in_target_raw_indices")
+    target_roots = (
+        [index for index, parent in enumerate(target_parents.tolist()) if int(parent) < 0]
+        if target_parents.ndim == 1
+        else []
+    )
+    target_mapping["target_root_target_indices"] = target_roots
+    target_mapping["target_root_raw_indices"] = [target_raw_indices[index] for index in target_roots]
+    if len(target_roots) != 1:
+        target_mapping["details"].append("target_root_count_must_be_one")
+    elif len(entry_raw_indices) == 1 and target_raw_indices[target_roots[0]] != entry_raw_indices[0]:
+        target_mapping["details"].append("target_entry_does_not_match_target_root")
+    if target_parents.ndim == 1:
+        for child, parent in enumerate(target_parents.tolist()):
+            parent_index = int(parent)
+            if parent_index < -1 or parent_index >= target_count or parent_index == child:
+                target_mapping["details"].append(f"target_parent_invalid:{child}:{parent_index}")
+            elif parent_index >= child:
+                target_mapping["details"].append(f"target_parent_order_invalid:{child}:{parent_index}")
+    if (
+        not target_mapping["details"]
+        and parents is not None
+        and parents.ndim == 1
+        and target_parents.ndim == 1
+    ):
+        raw_to_target = {raw: target for target, raw in enumerate(target_raw_indices)}
+        for target_child, raw_child in enumerate(target_raw_indices):
+            raw_parent = int(parents[raw_child])
+            seen_raw: set[int] = set()
+            while raw_parent >= 0 and raw_parent not in raw_to_target:
+                if raw_parent in seen_raw or raw_parent >= int(parents.shape[0]):
+                    target_mapping["details"].append("target_parent_raw_mapping_cycle_or_range")
+                    break
+                seen_raw.add(raw_parent)
+                raw_parent = int(parents[raw_parent])
+            if target_mapping["details"]:
+                break
+            expected_parent = raw_to_target.get(raw_parent, -1)
+            if int(target_parents[target_child]) != int(expected_parent):
+                target_mapping["details"].append(
+                    f"target_parent_raw_mapping_mismatch:{target_child}:{int(target_parents[target_child])}!={int(expected_parent)}"
+                )
+    if not target_mapping["details"]:
+        target_mapping["status"] = SKELETON_VALID
+    return raw_mapping, target_mapping
+
+
+def _audit_skeleton_metadata(z: Any, recorded: Mapping[str, Any]) -> dict[str, Any]:
+    present = [name for name in SKELETON_ARRAY_FIELDS if name in z.files]
+    result: dict[str, Any] = {
+        "status": ABSENT if not present else MALFORMED,
+        "field_presence": "absent" if not present else "present",
+        "fields_present": present,
+        "interpretation": SKELETON_GAUGE_NOTE,
+        "fields": {},
+        "bone_transforms_frame_count": None,
+        "frame_vertices_rootspace_header_shape": None,
+        "raw_root_mapping": {
+            "status": NOT_AUDITED,
+            "details": ["skeleton_fields_absent"] if not present else [],
+        },
+        "target_mapping": {
+            "status": NOT_AUDITED,
+            "details": ["skeleton_fields_absent"] if not present else [],
+        },
+        "raw_root_transform_rigid": _rigid_transform_result(None),
+        "rest_root_matrix_rigid": _rigid_transform_result(None),
+        "recorded_root_relationship": {
+            "class": RELATIONSHIP_NONE if recorded.get("status") in {ABSENT, EMPTY} else RELATIONSHIP_INVALID,
+            "recorded_indices": None,
+            "parent_edges": [],
+            "details": [],
+        },
+        "details": [],
+    }
+    if not present:
+        result["recorded_root_relationship"]["details"] = ["no_recorded_root_indices"]
+        return result
+
+    values, field_reports, field_details = _load_skeleton_fields(z)
+    result["fields"] = field_reports
+    result["details"].extend(field_details)
+    missing = [name for name in SKELETON_ARRAY_FIELDS if name not in values]
+    if missing:
+        result["details"].append(f"skeleton_core_fields_missing:{','.join(missing)}")
+    invalid_shape = [
+        name
+        for name, report in field_reports.items()
+        if report.get("shape_valid") is False or report.get("error")
+    ]
+    nonfinite = [name for name, report in field_reports.items() if report.get("finite") is False]
+    parents = values.get("parents")
+    rest_joints = values.get("rest_joints")
+    rest_bone_mats = values.get("rest_bone_mats")
+    bone_transforms = values.get("bone_transforms")
+    raw_joint_count: int | None = None
+    if parents is not None and parents.ndim == 1:
+        raw_joint_count = int(parents.shape[0])
+        invalid_parents = [
+            int(parent)
+            for parent in parents.tolist()
+            if int(parent) < -1 or int(parent) >= raw_joint_count
+        ]
+        if invalid_parents:
+            result["details"].append("parents_out_of_range")
+        if any(int(parent) == index for index, parent in enumerate(parents.tolist())):
+            result["details"].append("parents_self_reference")
+        if not invalid_parents and "parents_self_reference" not in result["details"]:
+            for start in range(raw_joint_count):
+                seen: set[int] = set()
+                node = start
+                while node >= 0:
+                    if node in seen:
+                        result["details"].append("parents_cycle")
+                        break
+                    seen.add(node)
+                    node = int(parents[node])
+                if "parents_cycle" in result["details"]:
+                    break
+    if rest_joints is not None and rest_joints.ndim == 2 and raw_joint_count is not None:
+        if int(rest_joints.shape[0]) != raw_joint_count:
+            result["details"].append("rest_joints_joint_count_mismatch")
+    if rest_bone_mats is not None and rest_bone_mats.ndim == 3 and raw_joint_count is not None:
+        if int(rest_bone_mats.shape[0]) != raw_joint_count:
+            result["details"].append("rest_bone_mats_joint_count_mismatch")
+    if bone_transforms is not None and bone_transforms.ndim == 4 and raw_joint_count is not None:
+        if int(bone_transforms.shape[1]) != raw_joint_count:
+            result["details"].append("bone_transforms_joint_count_mismatch")
+    if bone_transforms is not None and bone_transforms.ndim == 4:
+        frame_count = int(bone_transforms.shape[0])
+        result["bone_transforms_frame_count"] = frame_count
+        if frame_count <= 0:
+            result["details"].append("bone_transforms_frame_count_must_be_positive")
+        try:
+            frame_header_shape = _read_npy_shape_header(z, "frame_vertices_rootspace")
+            result["frame_vertices_rootspace_header_shape"] = list(frame_header_shape)
+            if not frame_header_shape:
+                result["details"].append("frame_vertices_rootspace_header_has_no_frame_axis")
+            else:
+                actual_frame_count = int(frame_header_shape[0])
+                if actual_frame_count <= 0:
+                    result["details"].append("frame_vertices_rootspace_frame_count_must_be_positive")
+                if actual_frame_count != frame_count:
+                    result["details"].append(
+                        f"bone_transforms_frame_count_mismatch:{frame_count}!={actual_frame_count}"
+                    )
+        except Exception as exc:  # noqa: BLE001 - preserve row-level header evidence.
+            result["details"].append(
+                f"frame_vertices_rootspace_header_error:{_short_error(exc)}"
+            )
+
+    parents_report = field_reports.get("parents", {})
+    raw_roots = None
+    if (
+        parents is not None
+        and parents.ndim == 1
+        and parents_report.get("shape_valid") is True
+        and parents_report.get("finite") is True
+        and "parents_out_of_range" not in result["details"]
+        and "parents_self_reference" not in result["details"]
+    ):
+        raw_roots = np.flatnonzero(parents < 0).astype(np.int64)
+    raw_mapping, target_mapping = _mapping_result(
+        values,
+        raw_joint_count=raw_joint_count,
+        raw_roots=raw_roots,
+        parents=parents if parents is not None and parents.ndim == 1 else None,
+    )
+    result["raw_root_mapping"] = raw_mapping
+    result["target_mapping"] = target_mapping
+    if raw_mapping["status"] != SKELETON_VALID:
+        result["details"].extend(raw_mapping.get("details", []))
+    if target_mapping["status"] != SKELETON_VALID:
+        result["details"].extend(target_mapping.get("details", []))
+    structural_details = list(result["details"])
+
+    recorded_indices = None
+    if recorded.get("status") not in {ABSENT, EMPTY} and "recorded_root_indices" in z.files:
+        try:
+            recorded_indices = _load_indices(z, "recorded_root_indices")
+        except Exception as exc:  # noqa: BLE001 - relationship remains invalid.
+            result["details"].append(f"recorded_root_indices_read_error:{_short_error(exc)}")
+    result["recorded_root_relationship"] = _recorded_root_relationship(
+        recorded,
+        recorded_indices,
+        parents if parents is not None and parents.ndim == 1 else None,
+    )
+    relationship = result["recorded_root_relationship"]
+    if relationship["class"] in {RELATIONSHIP_INVALID, RELATIONSHIP_DISCONNECTED_OR_MIXED}:
+        result["details"].extend(relationship.get("details", []))
+
+    if raw_mapping["status"] == SKELETON_VALID and bone_transforms is not None and bone_transforms.ndim == 4:
+        raw_indices = values["raw_root_indices"]
+        root_transforms = bone_transforms[:, raw_indices, :, :]
+        result["raw_root_transform_rigid"] = _rigid_transform_result(root_transforms)
+    if raw_mapping["status"] == SKELETON_VALID and rest_bone_mats is not None and rest_bone_mats.ndim == 3:
+        raw_indices = values["raw_root_indices"]
+        result["rest_root_matrix_rigid"] = _rigid_transform_result(rest_bone_mats[raw_indices])
+
+    if missing or invalid_shape or structural_details:
+        if nonfinite:
+            result["status"] = NONFINITE
+        elif missing or invalid_shape:
+            result["status"] = MALFORMED
+        else:
+            result["status"] = MALFORMED
+    elif result["raw_root_transform_rigid"]["status"] == NONFINITE:
+        result["status"] = NONFINITE
+    elif result["raw_root_transform_rigid"]["status"] == INVALID_AFFINE:
+        result["status"] = INVALID_AFFINE
+    elif result["raw_root_transform_rigid"]["status"] == INVALID_ROTATION:
+        result["status"] = INVALID_ROTATION
+    elif not values.get("parents", np.asarray([], dtype=np.int64)).size:
+        result["status"] = EMPTY
+    else:
+        result["status"] = SKELETON_VALID
+    result["details"] = list(dict.fromkeys(str(detail) for detail in result["details"] if detail))[:16]
+    result["field_presence"] = "present"
+    return result
 
 
 def _audit_recorded_root(z: Any) -> dict[str, Any]:
@@ -565,6 +1146,27 @@ def _not_audited_family() -> dict[str, Any]:
     return _new_family_result(NOT_AUDITED)
 
 
+def _not_audited_skeleton() -> dict[str, Any]:
+    return {
+        "status": NOT_AUDITED,
+        "field_presence": "not_audited",
+        "fields_present": [],
+        "interpretation": SKELETON_GAUGE_NOTE,
+        "fields": {},
+        "raw_root_mapping": {"status": NOT_AUDITED, "details": []},
+        "target_mapping": {"status": NOT_AUDITED, "details": []},
+        "raw_root_transform_rigid": _rigid_transform_result(None),
+        "rest_root_matrix_rigid": _rigid_transform_result(None),
+        "recorded_root_relationship": {
+            "class": NOT_AUDITED,
+            "recorded_indices": None,
+            "parent_edges": [],
+            "details": [],
+        },
+        "details": [],
+    }
+
+
 def _normalise_split(value: Any, manifest_path: Path) -> str:
     raw = str(value or "").strip().lower()
     if raw in {"val", "valid", "validation"}:
@@ -656,8 +1258,15 @@ def _new_summary(manifests: Sequence[Path], representative_limit: int) -> dict[s
             "recorded_root": _new_family_summary(),
             "source_object_transform": _new_family_summary(),
             "training_root_compatibility": _new_family_summary(),
+            "skeleton_metadata": _new_family_summary(),
         },
         "candidate_global_rt": {
+            "status_counts": {},
+            "status_by_split": {},
+            "status_by_source": {},
+            "status_by_split_source": {},
+        },
+        "recorded_root_relationship": {
             "status_counts": {},
             "status_by_split": {},
             "status_by_source": {},
@@ -691,6 +1300,21 @@ def _increment_candidate(summary: dict[str, Any], status: str, split: str, sourc
     ) + 1
 
 
+def _increment_relationship(summary: dict[str, Any], relationship: Mapping[str, Any], split: str, source: str) -> None:
+    counts = summary["recorded_root_relationship"]
+    status = str(relationship.get("class", NOT_AUDITED))
+    counts["status_counts"][status] = int(counts["status_counts"].get(status, 0)) + 1
+    counts["status_by_split"].setdefault(split, {})[status] = int(
+        counts["status_by_split"].setdefault(split, {}).get(status, 0)
+    ) + 1
+    counts["status_by_source"].setdefault(source, {})[status] = int(
+        counts["status_by_source"].setdefault(source, {}).get(status, 0)
+    ) + 1
+    counts["status_by_split_source"].setdefault(split, {}).setdefault(source, {})[status] = int(
+        counts["status_by_split_source"].setdefault(split, {}).setdefault(source, {}).get(status, 0)
+    ) + 1
+
+
 def _increment_failure(summary: dict[str, Any], category: str) -> None:
     summary["failure_categories"][category] = int(summary["failure_categories"].get(category, 0)) + 1
 
@@ -700,6 +1324,7 @@ def _failure_categories(
     candidate_status: str,
     recorded: Mapping[str, Any],
     explicit: Mapping[str, Any],
+    skeleton: Mapping[str, Any] | None = None,
 ) -> list[str]:
     categories: list[str] = []
     if row_status != "audited":
@@ -714,6 +1339,15 @@ def _failure_categories(
             categories.append(f"{name}:{status}")
     if candidate_status not in {"recorded_root_unique_candidate", "source_object_unique_candidate"}:
         categories.append(f"candidate_global_rt:{candidate_status}")
+    if skeleton is not None:
+        skeleton_status = str(skeleton.get("status", NOT_AUDITED))
+        if skeleton_status not in {SKELETON_VALID, NOT_AUDITED}:
+            categories.append(f"skeleton_metadata:{skeleton_status}")
+        relationship_class = str(
+            skeleton.get("recorded_root_relationship", {}).get("class", NOT_AUDITED)
+        )
+        if relationship_class in {RELATIONSHIP_INVALID, RELATIONSHIP_DISCONNECTED_OR_MIXED}:
+            categories.append(f"recorded_root_relationship:{relationship_class}")
     return categories
 
 
@@ -742,6 +1376,7 @@ def _audit_one_row(row: Mapping[str, Any], manifest_path: Path, manifest_line: i
                 "recorded_root": _not_audited_family(),
                 "source_object_transform": _not_audited_family(),
                 "training_root_compatibility": _not_audited_family(),
+                "skeleton_metadata": _not_audited_skeleton(),
             },
             "candidate_global_rt": {"status": NOT_AUDITED, "family_statuses": {}},
             "failure_categories": ["manifest_missing_path"],
@@ -754,6 +1389,7 @@ def _audit_one_row(row: Mapping[str, Any], manifest_path: Path, manifest_line: i
                 "recorded_root": _not_audited_family(),
                 "source_object_transform": _not_audited_family(),
                 "training_root_compatibility": _not_audited_family(),
+                "skeleton_metadata": _not_audited_skeleton(),
             },
             "candidate_global_rt": {"status": NOT_AUDITED, "family_statuses": {}},
             "failure_categories": ["npz_missing"],
@@ -767,6 +1403,7 @@ def _audit_one_row(row: Mapping[str, Any], manifest_path: Path, manifest_line: i
             recorded = _audit_recorded_root(z)
             explicit = _audit_explicit_object_transform(z)
             training = _audit_training_root_compatibility(z)
+            skeleton = _audit_skeleton_metadata(z, recorded)
     except Exception as exc:  # noqa: BLE001 - one bad NPZ must not stop census.
         return {
             **base,
@@ -776,13 +1413,14 @@ def _audit_one_row(row: Mapping[str, Any], manifest_path: Path, manifest_line: i
                 "recorded_root": _not_audited_family(),
                 "source_object_transform": _not_audited_family(),
                 "training_root_compatibility": _not_audited_family(),
+                "skeleton_metadata": _not_audited_skeleton(),
             },
             "candidate_global_rt": {"status": NOT_AUDITED, "family_statuses": {}},
             "failure_categories": ["npz_load_error"],
         }
 
     candidate_status = _candidate_status(recorded, explicit)
-    categories = _failure_categories("audited", candidate_status, recorded, explicit)
+    categories = _failure_categories("audited", candidate_status, recorded, explicit, skeleton)
     return {
         **base,
         "row_status": "audited",
@@ -790,6 +1428,7 @@ def _audit_one_row(row: Mapping[str, Any], manifest_path: Path, manifest_line: i
             "recorded_root": recorded,
             "source_object_transform": explicit,
             "training_root_compatibility": training,
+            "skeleton_metadata": skeleton,
         },
         "candidate_global_rt": {
             "status": candidate_status,
@@ -844,6 +1483,7 @@ def _audit_manifest_rows(
                             "recorded_root": _not_audited_family(),
                             "source_object_transform": _not_audited_family(),
                             "training_root_compatibility": _not_audited_family(),
+                            "skeleton_metadata": _not_audited_skeleton(),
                         },
                         "candidate_global_rt": {"status": NOT_AUDITED, "family_statuses": {}},
                         "failure_categories": ["manifest_row_error"],
@@ -857,8 +1497,19 @@ def _audit_manifest_rows(
                 summary["rows"] = int(summary["rows"]) + 1
                 if result["row_status"] == "manifest_row_error":
                     summary["manifest_errors"] = int(summary["manifest_errors"]) + 1
-                for family_name in ("recorded_root", "source_object_transform", "training_root_compatibility"):
+                for family_name in (
+                    "recorded_root",
+                    "source_object_transform",
+                    "training_root_compatibility",
+                    "skeleton_metadata",
+                ):
                     _increment_status(summary, family_name, result["metadata"][family_name], split, source)
+                _increment_relationship(
+                    summary,
+                    result["metadata"]["skeleton_metadata"]["recorded_root_relationship"],
+                    split,
+                    source,
+                )
                 candidate_status = str(result["candidate_global_rt"]["status"])
                 _increment_candidate(summary, candidate_status, split, source)
                 for category in result.get("failure_categories", []):

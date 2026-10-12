@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T20:08:24.683716+00:00",
+  "updated_at": "2026-10-12T20:14:25.431242+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,10 +126,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review old-path reference fitting under exact same data/RT/targets/budget. Do not promote reference architecture; use result to isolate the failure. Formal remains blocked.",
+  "next_required_result": "Legacy query-first REFERENCE control passes at64updates on same selected RT-aligned frames: both free token sequences exactly equal own GT, bothF1=1/J2J=0, teacheraccuracy1 and CE.0004508348. This is reference-only, NOT approved-model acceptance. It shows exact current data/RT/XYZ target task is learnable through established path. New virtual path still fails128; next test unchanged approved baseline (scale0) fresh official init with bounded512-update budget to distinguish slower convergence from persistent new-path failure. No other structural/optimizer/loss change; formal blocked.",
   "active_operation": {
     "label": "vquery_xyz_reference_legacy128_v1_20261013",
     "mode": "reference_fit",
     "operation": "train",
-    "status": "prepared_not_started",
+    "status": "completed_accepted",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_reference.py",
-    "complete": false,
-    "accepted": false,
+    "complete": true,
+    "accepted": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "reference_control_only": true,
     "approved_virtual_route": false,
     "authorization": "User authorized thorough autonomous implementation/data/RT/supervision/capacity/budget diagnosis; primary selects old-path regression control before further architecture changes.",
@@ -384,7 +384,14 @@
       "reference acceptance reached",
       "128 updates"
     ],
-    "prepared_utc": "2026-10-12T20:08:24.683690+00:00"
+    "prepared_utc": "2026-10-12T20:08:24.683690+00:00",
+    "execution_finished": true,
+    "exit_code": 0,
+    "completed_updates": 64,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\reference_legacy128_v1_result.json",
+    "result_sha256": "28ba373af6deb6ddcf857d97b051d393a88501e33211846cb9487002658d9fbb",
+    "conclusion": "Legacy query-first REFERENCE control passes at64updates on same selected RT-aligned frames: both free token sequences exactly equal own GT, bothF1=1/J2J=0, teacheraccuracy1 and CE.0004508348. This is reference-only, NOT approved-model acceptance. It shows exact current data/RT/XYZ target task is learnable through established path. New virtual path still fails128; next test unchanged approved baseline (scale0) fresh official init with bounded512-update budget to distinguish slower convergence from persistent new-path failure. No other structural/optimizer/loss change; formal blocked.",
+    "finished_utc": "2026-10-12T20:14:25.431224+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

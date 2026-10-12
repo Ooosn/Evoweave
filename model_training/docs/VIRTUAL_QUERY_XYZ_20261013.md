@@ -261,3 +261,14 @@ without analyzing the previous stage.
   with an explicit scope marker. The optimization objective, aggregate means,
   and all recorded free predictions were unaffected. Combined model, adapter
   and legacy-parity CPU suite now passes 22 tests.
+- Legacy query-first reference passed at update 64 on the exact same two
+  targets and RT-aligned data: both full free token sequences equal their own
+  GT, both F1=1 and J2J=0, teacher CE=0.000450835, accuracy=1. This is a
+  reference result only, not acceptance of the virtual-query candidate.
+  It establishes learnability of this exact data/target task through the old
+  path; the remaining failure is specific to the new path or its convergence.
+- Next isolated test: unchanged approved virtual-query baseline (residual scale
+  0), fresh official initialization, same data/seed/LR/lambda0; increase only
+  the fixed maximum budget from128 to512 with intermediate per-frame/free
+  evaluations. This explicitly tests slower convergence, not a new architecture
+  or an inherited checkpoint. No automatic continuation beyond512.

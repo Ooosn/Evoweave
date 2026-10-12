@@ -240,3 +240,19 @@ without analyzing the previous stage.
   from the two-run evidence. No unchanged extension, lambda sweep or full-data
   run is authorized. The proposed independent consultation has not been sent;
   its code/measurement transfer is awaiting explicit user approval.
+- User subsequently authorized autonomous thorough diagnosis and repair,
+  including implementation, supervision, module capacity, training duration and
+  retained-root RT checks; formal training only after the problem is resolved.
+  Priority is now regression against the established training path, not a new
+  architecture proposal. No external consultation has been sent.
+- Legacy-decoder CPU regression passed: actual old `_ar_losses` versus new
+  per-frame code agrees on logits, CE, condition/decoder gradients and one
+  AdamW update; variable padding, frame averaging and single-frame reduction
+  are covered. This verifies decoder/loss plumbing, not full-model fitting.
+- Next reference control: same fixed asset/two frames, RT/normalization/surface
+  sampling, official initialization, LR and 128-update budget, but call the
+  actual legacy query-first motion encoder once per target frame. This is an
+  explicitly separate diagnostic baseline, NOT replacement of the approved
+  1024-virtual-query architecture or a candidate for formal training. It tests
+  whether the old path fits under this exact small-sample protocol before
+  assigning the failure to new conditioning or training duration.

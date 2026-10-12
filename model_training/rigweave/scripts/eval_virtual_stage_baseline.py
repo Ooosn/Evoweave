@@ -17,7 +17,7 @@ import torch.distributed as dist
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from motion_experiment_runtime import guard, load_config, source_metadata, write_json
-from train_virtual_frame import dataset_for, evaluation_rows, geometry_scores, load_entries, prepare
+from train_virtual_frame import dataset_for, evaluation_rows, geometry_scores, load_entries
 from virtual_frame_runtime import file_sha256
 
 
@@ -31,6 +31,21 @@ def verify_saved_input(batch, saved):
             raise ValueError(f"native baseline input differs from saved new-model evaluation: {field}")
     if batch["path"] != saved["path"]:
         raise ValueError("native baseline backing NPZ differs")
+
+
+def prepare_paired_surface(batch, config, device):
+    from rigweave.dynamic_rig import virtual_frame_data
+    captured = []
+    sample = virtual_frame_data.sample_trackable_surface
+    def capture(*args, **kwargs):
+        refs = sample(*args, **kwargs)
+        captured.append(refs)
+        return refs
+    with patch.object(virtual_frame_data, "sample_trackable_surface", capture):
+        surface, targets = virtual_frame_data.prepare_virtual_surface([batch], device, **config["surface_sampling"])
+    if len(captured) != 1:
+        raise ValueError("paired preparation must draw exactly one surface correspondence")
+    return surface, targets, captured[0]
 
 
 def joint_coordinate_offsets(ids, parents, tokenizer):
@@ -116,10 +131,9 @@ def run(args):
     if payload["step"] != reference["step"] or payload["sample_seen"] != reference["sample_seen"]:
         raise ValueError("native checkpoint training progress differs")
     from eval_dynamic_rig_ce import CHECKPOINT_DEFAULTS, _build_dynamic_model
-    from eval_dynamic_rig_generation import _parents_from_output, _topology_metrics
+    from eval_dynamic_rig_generation import _topology_metrics
     from probe_common_range import generation_metrics
     from rigweave.dynamic_rig.data import _make_token_input
-    from rigweave.dynamic_rig.sampling import sample_trackable_surface
     from train_dynamic_rig import build_tokenizer, move_batch
     model_args = SimpleNamespace(**{**CHECKPOINT_DEFAULTS, **payload["args"], "checkpoint": Path(reference["path"])})
     del payload
@@ -162,18 +176,15 @@ def run(args):
             cpu_batch["input_ids"] = torch.as_tensor(ids, dtype=torch.long)[None]
             cpu_batch["attention_mask"] = torch.ones_like(cpu_batch["input_ids"])
             batch = move_batch(cpu_batch, device)
-            surface, _ = prepare(dataset, [index], virtual, device)
-            sampling = virtual["surface_sampling"]
-            refs = sample_trackable_surface(batch["frame_vertices"][:, 0], batch["faces"],
-                num_samples=sampling["surface_samples"], vertex_samples=sampling["vertex_samples"],
-                query_tokens=sampling["query_tokens"], vertex_counts=batch["vertex_count"], face_counts=batch["face_count"],
-                generator=torch.Generator(device=device).manual_seed(cpu_batch["sampling_seed"]))
+            surface, _, refs = prepare_paired_surface(cpu_batch, virtual, device)
             observed = 0
             def observe(_module, inputs):
                 nonlocal observed
                 for name, actual in zip(("dense_points", "dense_normals", "query_points", "query_normals"), inputs):
                     if not torch.equal(actual, surface[name][:, observed]):
-                        raise ValueError(f"old/new sampled encoder input mismatch: {name}, frame {observed}")
+                        delta = (actual.float() - surface[name][:, observed].float()).abs()
+                        raise ValueError(f"old/new sampled encoder input mismatch: {name}, frame {observed}, "
+                                         f"maxabs={float(delta.max())}, values={int((delta > 0).sum())}")
                 observed += 1
             hook = model.conditioner.surface_tokenizer.register_forward_pre_hook(observe)
             try:

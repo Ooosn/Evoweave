@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 import torch
 
-from eval_virtual_stage_baseline import joint_coordinate_offsets, summarize, verify_saved_input
+from eval_virtual_stage_baseline import joint_coordinate_offsets, prepare_paired_surface, summarize, verify_saved_input
 
 
 class VirtualStageBaselineTests(unittest.TestCase):
@@ -32,6 +32,25 @@ class VirtualStageBaselineTests(unittest.TestCase):
         result = summarize([])
         self.assertIsNone(result["valid"]["edge_f1"])
         self.assertEqual(result["valid"]["assets"], 0)
+
+    def test_prepared_surface_reuses_the_actual_correspondence(self):
+        from rigweave.dynamic_rig.sampling import materialize_trackable_surface
+        vertices = torch.tensor([[[[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+                                   [[0., 0., 1.], [1., 0., 1.], [0., 1., 1.]]]])
+        batch = {"frame_vertices": vertices, "faces": torch.tensor([[[0, 1, 2]]]),
+                 "vertex_normals": torch.ones_like(vertices), "face_normals": torch.ones(1, 2, 1, 3),
+                 "frame_target_joints": torch.zeros(1, 2, 1, 3), "target_parents": torch.tensor([[-1]]),
+                 "joint_mask": torch.ones(1, 1, dtype=torch.bool), "frame_mask": torch.ones(1, 2, dtype=torch.bool),
+                 "vertex_count": torch.tensor([3]), "face_count": torch.tensor([1]), "sampling_seed": 19,
+                 "asset_id": "x", "path": ["x.npz"], "heldout_raw_ids": [2], "selected_frames": torch.tensor([[0, 1]]),
+                 "query_center": torch.zeros(1, 3), "query_scale": torch.ones(1), "frame_mesh_bbox_side": torch.ones(1, 2)}
+        config = {"surface_sampling": {"surface_samples": 12, "vertex_samples": 3, "query_tokens": 4}}
+        surface, _, refs = prepare_paired_surface(batch, config, "cpu")
+        for frame in range(2):
+            material = materialize_trackable_surface(vertices[:, frame], batch["faces"], refs,
+                         batch["vertex_normals"][:, frame], batch["face_normals"][:, frame])
+            for name in ("dense_points", "dense_normals", "query_points", "query_normals"):
+                self.assertTrue(torch.equal(surface[name][:, frame], getattr(material, name)))
 
 
 if __name__ == "__main__":

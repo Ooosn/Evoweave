@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "label": "native_bias_h8_sample5040_paired_v1",
+  "label": "native_bias_h8_sample5040_paired_v2",
   "runtime": {
     "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
     "repo": "/home/wangyy/evorig/Evoweave-motion-compare-20261010",
@@ -21,7 +21,7 @@
   "new_prediction_root": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040",
   "new_prediction_sha256": ["87ed6af0a60e4dc6fc3dbb93249f7308d0a46ac4e08f0c0895ce1a21e5d6024c", "d7f821e0e108e33a07f963deff6c711943201e5560a5216bc9d6a19b6a6ec854"],
   "new_world_size": 2,
-  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v1",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v2",
   "max_new_tokens": 1400,
   "comparability": {
     "matched": ["105_optimizer_updates", "5040_actual_asset_exposures", "same_32_train_and_64_valid_assets", "same_8_raw_frames", "same_query_normalization", "same_mesh_surface_and_anchor_sampling", "continuous_GT_and_legacy_edge_F1", "greedy_natural_EOS_failures_score_zero", "geometry_in_query_bbox_side_units"],

@@ -293,3 +293,12 @@ without analyzing the previous stage.
   No NaN/Inf, out-of-bounds or clipping. Parent-inspected XY/XZ/YZ overlay shows
   mesh/GT alignment and the256-update predictions matching each own pose.
   This checks cache binding/application, not rederivation from source animation.
+- Next G2 stage: eight fixed TRAIN assets, four distinct eligible frames each,
+  spanning base/addition and4..10/11..60/61+ joint strata. Deterministic selection
+  and seed are recorded before fitting; full RT descriptors remain attached.
+  All16 focused selector tests passed, including original single-case parity.
+  Fresh official initialization, original virtual architecture, lambda0 and
+  the same AdamW1e-4 recipe; cap2048 optimizer updates =256 exposures per asset.
+  Review at0/32/64/128/256/512/1024/1536/2048, with early stop only on the
+  unchanged all-EOS/99%-accuracy/90%-geometry acceptance gate. No next-stage
+  automatic continuation. Formal and lambda comparison remain blocked.

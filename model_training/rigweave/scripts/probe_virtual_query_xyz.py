@@ -83,7 +83,7 @@ def require_gradients(model, norms, auxiliary_weight):
 
 
 @torch.no_grad()
-def evaluate(model, items, tokenizer, config, output, step):
+def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=None):
     from rigweave.dynamic_rig.virtual_query_xyz import original_xyz_vocabulary_processor
     from eval_dynamic_rig_generation import _topology_metrics, _parents_from_output
     model.eval()
@@ -93,7 +93,12 @@ def evaluate(model, items, tokenizer, config, output, step):
             real, virtual = model.encode(surface)
             conditions = model.conditions(real, virtual)
             teacher = model.forward_encoded(real, virtual, targets, auxiliary_weight=config['probe']['auxiliary_weight'])
-        for frame in range(conditions.shape[1]):
+        selected = list(range(conditions.shape[1])) if frame_indices is None else list(frame_indices)
+        if not selected or len(set(selected)) != len(selected) or any(
+                isinstance(frame, bool) or not isinstance(frame, int) or frame < 0 or frame >= conditions.shape[1]
+                for frame in selected):
+            raise ValueError('generation frame selection is empty, duplicated or out of range')
+        for frame in selected:
             start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulationxl')], device=conditions.device)
             processor = original_xyz_vocabulary_processor(tokenizer, start)
             with torch.autocast('cuda', dtype=torch.bfloat16):

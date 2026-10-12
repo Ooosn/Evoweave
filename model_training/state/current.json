@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T19:38:09.281734+00:00",
+  "updated_at": "2026-10-12T19:42:26.412895+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,11 +126,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "train",
+    "preflight",
     "matched_eval",
     "submit"
   ],
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review R1 controlled fixed-fit outputs against unchanged baseline before extending cohort or selecting lambda. Formal remains blocked.",
+  "next_required_result": "Controlled R1 final-frame residual did NOT solve two-frame fit: at128updates CE.00694108056, teacher accuracy.995097995, free predictions both exactly frame7 target again, frame9F1.887345679/J2J.04545138. Official init seed/data/frames/LR/lambda/parameter counts verified matched. Do NOT promote R1, extend unchanged, sweeplambda, or full-train. Preserve as failed candidate and obtain independent high-level interpretation of raw two-run/diagnostic evidence before choosing a discriminating experiment.",
   "active_operation": {
     "label": "vquery_xyz_fit_single_r1_l0_v1_20261013",
     "mode": "fit",
     "operation": "train",
-    "status": "prepared_not_started",
+    "status": "completed_not_accepted",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_xyz.py",
-    "complete": false,
+    "complete": true,
     "accepted": false,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "authorization": "User authorized model/parameter tests with fitting evidence and analysis before full training; primary reviewed diagnosis and selected one isolated intervention.",
     "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "code_commit": "01a9bfb3d98afafe0bddaad8e3d5a53b737dc174",
@@ -385,7 +385,14 @@
       "acceptance reached",
       "128 updates"
     ],
-    "prepared_utc": "2026-10-12T19:38:09.281706+00:00"
+    "prepared_utc": "2026-10-12T19:38:09.281706+00:00",
+    "execution_finished": true,
+    "exit_code": 0,
+    "completed_updates": 128,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\fit_single_r1_v1_result.json",
+    "result_sha256": "ecac31213fadd714cb6439b255e73e01d9e050b624cc698e0b49631ca0eeb108",
+    "conclusion": "Controlled R1 final-frame residual did NOT solve two-frame fit: at128updates CE.00694108056, teacher accuracy.995097995, free predictions both exactly frame7 target again, frame9F1.887345679/J2J.04545138. Official init seed/data/frames/LR/lambda/parameter counts verified matched. Do NOT promote R1, extend unchanged, sweeplambda, or full-train. Preserve as failed candidate and obtain independent high-level interpretation of raw two-run/diagnostic evidence before choosing a discriminating experiment.",
+    "finished_utc": "2026-10-12T19:42:26.412875+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

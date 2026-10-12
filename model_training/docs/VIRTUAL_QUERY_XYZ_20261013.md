@@ -231,3 +231,12 @@ without analyzing the previous stage.
   the same asset/frames/surface seed, lambda 0, LR 1e-4 and maximum 128 updates.
   No simultaneous optimizer or loss change. R1 remains experimental until its
   generated per-frame outputs pass the same predeclared fit gates.
+- R1 result, 128 updates: NOT accepted. CE 0.00694108 and teacher accuracy
+  99.5098%; both generated sequences again exactly match frame 7. Frame 9
+  retains F1 0.88735 and J2J 0.04545. Official initialization, random seed,
+  selected frames and parameter counts were verified matched. Adding this
+  residual alone did not fix the failure and is not promoted to the default.
+  Stop further training here until a discriminating experiment is selected
+  from the two-run evidence. No unchanged extension, lambda sweep or full-data
+  run is authorized. The proposed independent consultation has not been sent;
+  its code/measurement transfer is awaiting explicit user approval.

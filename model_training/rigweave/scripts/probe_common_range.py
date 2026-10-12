@@ -45,7 +45,7 @@ def transform_batch(batch, gauge, mode):
         for key in ("frame_vertices", "vertex_normals", "face_normals"):
             result[key] = batch[key][:, :1].expand_as(batch[key]).clone()
     else:
-        value = gauge["gauges"][mode]
+        value = gauge["gauges"]["rigid" if mode == "rigid_original_evidence" else mode]
         if not value["available"] or value.get("requires_gt_skeleton"):
             raise ValueError("only available mesh-only gauges may enter this model diagnostic")
         positions = gauge["selected_positions"]
@@ -70,6 +70,19 @@ def point_stats(points):
     return {"maxabs": float(maxima.max()), "point_fraction_outside_1": float((maxima > 1).float().mean()),
             "point_fraction_outside_2": float((maxima > 2).float().mean()),
             "point_fraction_outside_4": float((maxima > 4).float().mean())}
+
+
+def evidence_stats(evidence):
+    return {"valid_group_fraction": float(evidence.valid_groups.float().mean()),
+            "pair_state_means_unknown_comoving_relative": evidence.states.float().mean(dim=(0, 1, 2)).tolist()}
+
+
+def select_evidence(mode, computed, original):
+    if mode != "rigid_original_evidence":
+        return computed
+    if original is None or computed.states.shape != original.states.shape:
+        raise ValueError("original-motion-evidence control needs the paired original input first")
+    return original
 
 
 def teacher_metrics(model, condition, batch):
@@ -159,6 +172,9 @@ def main():
     if args.output.exists():
         raise FileExistsError(args.output)
     plan = json.loads(args.plan.read_text())
+    if (not plan["modes"] or plan["modes"][0] != "original"
+            or not set(plan["modes"]).issubset({"original", "rigid", "rigid_original_evidence", "static"})):
+        raise ValueError("paired probe modes must begin with the original observation")
     runtime = plan["runtime"]
     os.environ.update(EVOWEAVE_UNIRIG_ROOT=runtime["unirig_root"], EVOWEAVE_OPT_CONFIG_ROOT=runtime["opt_config_root"],
                       RIGWEAVE_DISABLE_OPEN3D="1", RIGWEAVE_DISABLE_LIGHTNING_IMPORT="1", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1")
@@ -243,12 +259,23 @@ def main():
             original = move_batch(dynamic_rig_collate([sample], tokenizer.pad), device)
             torch.manual_seed(plan["sampling_seed"] + index)
             refs = model.sample_references(original)
+            original_evidence = None
             for mode in plan["modes"]:
                 batch = transform_batch(original, gauge, mode)
-                observed_points = []
+                observed_points, observed_evidence = [], []
                 def observe(_module, inputs):
                     observed_points.append({"dense": point_stats(inputs[0]), "anchors": point_stats(inputs[2])})
+                def observe_motion(_module, inputs, kwargs):
+                    nonlocal original_evidence
+                    computed = kwargs["motion_evidence"]
+                    if mode == "original":
+                        original_evidence = computed
+                    used = select_evidence(mode, computed, original_evidence)
+                    observed_evidence.append({"computed": evidence_stats(computed), "used": evidence_stats(used),
+                                              "original_evidence_frozen": mode == "rigid_original_evidence"})
+                    return inputs, {**kwargs, "motion_evidence": used}
                 hook = model.conditioner.surface_tokenizer.register_forward_pre_hook(observe)
+                motion_hook = model.conditioner.motion_encoder.register_forward_pre_hook(observe_motion, with_kwargs=True)
                 tick = time.monotonic()
                 torch.cuda.reset_peak_memory_stats()
                 try:
@@ -256,13 +283,22 @@ def main():
                         condition = model.build_condition(batch, refs=refs)
                 finally:
                     hook.remove()
-                if len(observed_points) != 8 or not torch.isfinite(condition).all():
+                    motion_hook.remove()
+                if len(observed_points) != 8 or len(observed_evidence) != 1 or not torch.isfinite(condition).all():
                     raise RuntimeError("actual encoder input capture or condition finiteness failed")
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     teacher = teacher_metrics(model, condition, batch)
+                    if index == indices[0] and mode == "original":
+                        legacy_ce = float(model._ar_losses(condition, batch, include_loop_recovery=False,
+                                                           include_generated_prefix_recovery=False)["ce_loss"])
+                        difference = abs(legacy_ce - teacher["all"]["ce"])
+                        if difference > 2e-5:
+                            raise RuntimeError(f"teacher CE differs from original training implementation: {difference}")
+                        report["teacher_ce_parity"] = {"legacy_ce": legacy_ce, "difference": difference, "limit": 2e-5}
                     generated = generation_metrics(model, tokenizer, batch, condition, plan["max_new_tokens"])
                 row = {**case, "mode": mode, "teacher": teacher, "generation": generated,
                        "sampled_encoder_points": observed_points, "wholemesh": point_stats(batch["frame_vertices"]),
+                       "motion_evidence": observed_evidence[0],
                        "query_target": point_stats(batch["target_joints"]), "target_ids": sample.input_ids.tolist(),
                        "target_joints": sample.target_joints.tolist(), "target_parents": sample.target_parents.tolist(),
                        "seconds": time.monotonic() - tick, "peak_allocated_gib": torch.cuda.max_memory_allocated() / 2**30}
@@ -271,7 +307,7 @@ def main():
                 print(json.dumps({"case": index, "mode": mode, "ce": teacher["all"]["ce"],
                                   "success": generated["success"], "f1": generated["edge_f1_or_zero"]}), flush=True)
                 del batch, condition
-            del original, refs, sample
+            del original, refs, sample, original_evidence
     report.update(complete=True, finished_at=datetime.now(timezone.utc).isoformat(), summary=summarize(report["rows"]))
     args.output.write_text(json.dumps(report) + "\n")
     print(json.dumps({"complete": True, "rows": len(report["rows"])}), flush=True)

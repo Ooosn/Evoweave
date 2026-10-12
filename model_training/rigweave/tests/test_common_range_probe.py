@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import torch
 
-from probe_common_range import require_formal_started, teacher_metrics, transform_batch
+from probe_common_range import require_formal_started, select_evidence, teacher_metrics, transform_batch
 
 
 class CommonRangeProbeTests(unittest.TestCase):
@@ -33,10 +33,20 @@ class CommonRangeProbeTests(unittest.TestCase):
         self.assertTrue(torch.allclose(result["frame_vertices"][:, 1:], batch["frame_vertices"][:, 1:] + 1))
         self.assertTrue(torch.equal(result["vertex_normals"], batch["vertex_normals"]))
         self.assertIs(result["target_joints"], batch["target_joints"])
+        frozen_evidence = transform_batch(batch, gauge, "rigid_original_evidence")
+        self.assertTrue(torch.equal(result["frame_vertices"], frozen_evidence["frame_vertices"]))
 
     def test_skeleton_oracle_cannot_enter_mesh_only_inference(self):
         with self.assertRaisesRegex(ValueError, "mesh-only"):
             transform_batch(self.batch(), {"gauges": {"root": {"available": True, "requires_gt_skeleton": True}}}, "root")
+
+    def test_original_evidence_control_is_exact_and_fail_closed(self):
+        original = SimpleNamespace(states=torch.ones(1, 4, 4, 3))
+        computed = SimpleNamespace(states=torch.zeros(1, 4, 4, 3))
+        self.assertIs(select_evidence("rigid", computed, original), computed)
+        self.assertIs(select_evidence("rigid_original_evidence", computed, original), original)
+        with self.assertRaisesRegex(ValueError, "paired original"):
+            select_evidence("rigid_original_evidence", computed, None)
 
     def test_teacher_shift_and_token_groups(self):
         ids = torch.tensor([[5, 6, 1, 2, 4]])

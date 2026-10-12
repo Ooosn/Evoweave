@@ -302,3 +302,29 @@ without analyzing the previous stage.
   Review at0/32/64/128/256/512/1024/1536/2048, with early stop only on the
   unchanged all-EOS/99%-accuracy/90%-geometry acceptance gate. No next-stage
   automatic continuation. Formal and lambda comparison remain blocked.
+- Diverse8 lambda0 completed2048 updates but FAILED acceptance. All32 views
+  ended naturally; mean main CE=0.0454355, teacher accuracy=0.979061, quantized
+  F1=0.0737431 and correct-count fraction=0.0625. Only1/32 views passed the
+  joint-count/F1/J2J gate. At512/1024/1536 all32 full predictions were identical;
+  at2048 they comprised only two repeated sequences (9 and10 joints), although
+  the eight true skeleton sizes are5/34/62/10/52/64/180/9. This is an observed
+  cross-asset conditioning failure at this budget, not proof of insufficient
+  parameter count or a newly established implementation bug. Single-case
+  acceptance therefore does not release G2 or authorize full training.
+- Next bounded G2 diagnostic enables the already-approved auxiliary ID loss
+  at the predeclared weight0.1. Keep the exact same eight assets/four frames,
+  official fresh seed, architecture (residual scale0), AdamW1e-4 and2048-update
+  maximum. This tests whether shared structure supervision prevents the
+  cross-asset collapse; it does not promote the weight on auxiliary CE alone.
+  Apply the unchanged free-generation gate. No further lambda0 budget extension,
+  no diagnostic checkpoint reuse, no automatic G3/formal continuation.
+- Matched-comparison tooling is available but not GPU-authorized yet:64 fixed
+  training assets,8 disjoint heldout-pose assets,32 validation assets with
+  low-joint and full-train-unseen exact DFS-topology quotas. Preprocessing
+  caches only raw sampled geometry/labels, never learned features. Eleven
+  selection tests and eleven runner/evaluator tests passed; an independent
+  mocked CPU control-flow audit checked all104 cache items, equal initial-state
+  fingerprints/order/schedules and no early quality-based budget termination.
+  The runner additionally rejects cross-split duplicate file paths, even when
+  IDs differ. Real GPU comparison/smoke and exact candidate-config equality
+  remain prerequisites, not claims implied by these CPU tests.

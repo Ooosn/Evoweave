@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T00:20:20.542684+00:00",
+  "updated_at": "2026-10-12T01:05:40.721361+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -340,7 +340,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Execute and inspect compare_self_cross_2_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
+  "next_required_result": "Prepare and execute compare_self_cross_1_v1 only after preserving this completed receipt and committing this state.",
   "active_operation": {
     "experiment": "shared_virtual_frame_20261012",
     "label": "compare_self_cross_2_v1",
@@ -395,10 +395,252 @@
       ],
       "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
     },
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-12T00:20:20.542684+00:00",
     "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
-    "accepted": false
+    "accepted": true,
+    "finished_at": "2026-10-12T01:05:40.721361+00:00",
+    "controller_exit": 0,
+    "child_exit": 0,
+    "complete": true,
+    "execution_valid": true,
+    "accepted_meaning": "execution_valid_not_quality_superiority",
+    "result_artifact": "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_2_v1.json",
+    "evaluation_artifacts": [
+      {
+        "endpoint": 2016,
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/summary.json",
+        "summary": {
+          "complete": true,
+          "rows": 96,
+          "samples": 2016,
+          "split_counts": {
+            "train": 32,
+            "valid": 64
+          },
+          "status_counts": {
+            "eos": 96
+          },
+          "summary": {
+            "train": {
+              "assets": 32,
+              "edge_f1": 0.03192956210796409,
+              "edge_precision": 0.06671564714406981,
+              "edge_recall": 0.035234298322291746,
+              "exact_count": 0.03125,
+              "exact_tree": 0.0,
+              "frame_mean_f1": 0.029441731849831114,
+              "geometry": {
+                "b2b": 0.17191358152017938,
+                "j2b": 0.17609568620646218,
+                "j2j": 0.18145648220557792
+              },
+              "geometry_successful_assets": 32,
+              "gt_prefix_query_f1": 0.028071155803346404,
+              "natural_eos": 32,
+              "structure_ce": 1.4662668742239475,
+              "xyz_l1": 0.3378375852480531
+            },
+            "valid": {
+              "assets": 64,
+              "edge_f1": 0.03301868167002152,
+              "edge_precision": 0.07949228257367484,
+              "edge_recall": 0.029352333524123503,
+              "exact_count": 0.0,
+              "exact_tree": 0.0,
+              "frame_mean_f1": 0.029892317342233483,
+              "geometry": {
+                "b2b": 0.16138947019702216,
+                "j2b": 0.16436939269142792,
+                "j2j": 0.1691099508610323
+              },
+              "geometry_successful_assets": 64,
+              "gt_prefix_query_f1": 0.04960347379244286,
+              "natural_eos": 64,
+              "structure_ce": 1.3932349681854248,
+              "xyz_l1": 0.32220604456961155
+            }
+          }
+        }
+      },
+      {
+        "endpoint": 5040,
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/summary.json",
+        "summary": {
+          "complete": true,
+          "rows": 96,
+          "samples": 5040,
+          "split_counts": {
+            "train": 32,
+            "valid": 64
+          },
+          "status_counts": {
+            "eos": 96
+          },
+          "summary": {
+            "train": {
+              "assets": 32,
+              "edge_f1": 0.0753802916070637,
+              "edge_precision": 0.12087575414781297,
+              "edge_recall": 0.07846268898251549,
+              "exact_count": 0.34375,
+              "exact_tree": 0.34375,
+              "frame_mean_f1": 0.07339830175893897,
+              "geometry": {
+                "b2b": 0.1113327040129847,
+                "j2b": 0.11816314692623758,
+                "j2j": 0.12710433617415506
+              },
+              "geometry_successful_assets": 32,
+              "gt_prefix_query_f1": 0.0636621521590325,
+              "natural_eos": 32,
+              "structure_ce": 0.6187652196967974,
+              "xyz_l1": 0.27266073832288384
+            },
+            "valid": {
+              "assets": 64,
+              "edge_f1": 0.093265606728312,
+              "edge_precision": 0.13824864881850174,
+              "edge_recall": 0.09596786053983508,
+              "exact_count": 0.28125,
+              "exact_tree": 0.265625,
+              "frame_mean_f1": 0.08283670751341682,
+              "geometry": {
+                "b2b": 0.10328616624398473,
+                "j2b": 0.10900554566047678,
+                "j2j": 0.11637729348218549
+              },
+              "geometry_successful_assets": 64,
+              "gt_prefix_query_f1": 0.0887574198552397,
+              "natural_eos": 64,
+              "structure_ce": 0.5527461430174299,
+              "xyz_l1": 0.23808593244757503
+            }
+          }
+        }
+      }
+    ],
+    "final_checkpoint": {
+      "bytes": 8379324146,
+      "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+      "samples": 5040,
+      "step": 105
+    },
+    "final_checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+    "artifact_receipt": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\execution_receipt.json",
+    "artifact_receipt_sha256": "1f355aff9acbea2be188df630a5f964398261217ec4d7b55d56d5a804452f9b5",
+    "artifact_fetch_manifest": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\fetch_manifest.json",
+    "artifact_fetch_manifest_sha256": "84e50a06fc1f7dfc37f582f4f7278021f2af7131c2e6a0d47c948c22bf4abd8d",
+    "artifact_files": [
+      {
+        "remote": "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_2_v1.json",
+        "sha256": "4d0d6fb8f7690c8837d0b8e89b6f55a5744d5fc316cea18ac965056e92fba9cd",
+        "bytes": 2668,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\controller\\compare_self_cross_2_v1.json"
+      },
+      {
+        "remote": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/compare_self_cross_2_v1.log",
+        "sha256": "2ff5d92f902758c8cbcf80463bd3d3df9ac9567aae05fa6cf130d2239191f74b",
+        "bytes": 221151,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\controller\\compare_self_cross_2_v1.log"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/rank_0.json",
+        "sha256": "b36e366fc87999c817ccbaa205b46d8a5b9873ba54636eabc12e1c5ee80339dd",
+        "bytes": 4209,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\rank_0.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/rank_1.json",
+        "sha256": "548fa4d53b127a4bb296b7bc704a54f12f14d240ac6d4e586ed722d8e9ab9365",
+        "bytes": 4209,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\rank_1.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/trace_rank_0.jsonl",
+        "sha256": "ff986646b8700614bbd4a7ac1f5cdaae48491221db8b453cb7810faeaa790d3c",
+        "bytes": 53560,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\trace_rank_0.jsonl"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/trace_rank_1.jsonl",
+        "sha256": "02164823c4375af300db3dbf850b2cbf548abfdb7e0783c2c8e78786c7b118d9",
+        "bytes": 53567,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\trace_rank_1.jsonl"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/latest_checkpoint.json",
+        "sha256": "e477c5f66c1b5107064cce35b9d97aa651557e66bad9a45a148c7b830270b078",
+        "bytes": 183,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\latest_checkpoint.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/summary.json",
+        "sha256": "aaa239a65a40218202539d796ba139157bbdc1ff16e9c52808c1ddd3ae307711",
+        "bytes": 65904,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_002016\\summary.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/rank_0.json",
+        "sha256": "1f215dc3a6e3d72c524c5893311c270c05ca47ce501d21954eff9abbe987b4b9",
+        "bytes": 32342,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_002016\\rank_0.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/rank_1.json",
+        "sha256": "b76c6a7fc58cb4fc70118d36a3aafaedf876c5cbd7a8e6a7b53172ef6819f59e",
+        "bytes": 32329,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_002016\\rank_1.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/summary.json",
+        "sha256": "dfc993ef3717ce85e7d419359f6e06fbd6606e2a51cfa9be34ab864e3f0987ee",
+        "bytes": 66948,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_005040\\summary.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/rank_0.json",
+        "sha256": "d167fcc70cb58692611ab94bf3fe6f45976a499c81f27b0f5bcfefc067e94224",
+        "bytes": 32909,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_005040\\rank_0.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/rank_1.json",
+        "sha256": "9af7e9a780ab8b808bf67406a22f5564f3c9df15dbbdf642c733c0be71529c76",
+        "bytes": 32802,
+        "local": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\compare_self_cross_2_v1\\compare_self_cross_2_v1\\evaluation_sample_005040\\rank_1.json"
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_002016.pt",
+        "sha256": "133a838f5ca09384dee4f22c729d984fc2f768e39c85bb7ac14e334e0466f14a",
+        "bytes": 8379322994,
+        "local": null
+      },
+      {
+        "remote": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+        "bytes": 8379324146,
+        "local": null
+      }
+    ],
+    "report_hashes": {
+      "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_2_v1.json": "4d0d6fb8f7690c8837d0b8e89b6f55a5744d5fc316cea18ac965056e92fba9cd",
+      "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/compare_self_cross_2_v1.log": "2ff5d92f902758c8cbcf80463bd3d3df9ac9567aae05fa6cf130d2239191f74b",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/rank_0.json": "b36e366fc87999c817ccbaa205b46d8a5b9873ba54636eabc12e1c5ee80339dd",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/rank_1.json": "548fa4d53b127a4bb296b7bc704a54f12f14d240ac6d4e586ed722d8e9ab9365",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/trace_rank_0.jsonl": "ff986646b8700614bbd4a7ac1f5cdaae48491221db8b453cb7810faeaa790d3c",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/trace_rank_1.jsonl": "02164823c4375af300db3dbf850b2cbf548abfdb7e0783c2c8e78786c7b118d9",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/latest_checkpoint.json": "e477c5f66c1b5107064cce35b9d97aa651557e66bad9a45a148c7b830270b078",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/summary.json": "aaa239a65a40218202539d796ba139157bbdc1ff16e9c52808c1ddd3ae307711",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/rank_0.json": "1f215dc3a6e3d72c524c5893311c270c05ca47ce501d21954eff9abbe987b4b9",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_002016/rank_1.json": "b76c6a7fc58cb4fc70118d36a3aafaedf876c5cbd7a8e6a7b53172ef6819f59e",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/summary.json": "dfc993ef3717ce85e7d419359f6e06fbd6606e2a51cfa9be34ab864e3f0987ee",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/rank_0.json": "d167fcc70cb58692611ab94bf3fe6f45976a499c81f27b0f5bcfefc067e94224",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/evaluation_sample_005040/rank_1.json": "9af7e9a780ab8b808bf67406a22f5564f3c9df15dbbdf642c733c0be71529c76",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_002016.pt": "133a838f5ca09384dee4f22c729d984fc2f768e39c85bb7ac14e334e0466f14a",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+    },
+    "result_note": "Execution completed with required finite reports and evaluations; accepted means execution-valid only, not quality superiority."
   },
   "last_operation": {
     "experiment": "shared_virtual_frame_20261012",

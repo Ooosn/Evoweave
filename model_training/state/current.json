@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T03:09:46.327397+00:00",
+  "updated_at": "2026-10-12T04:00:39.435406+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage compare_cross_2_v1."
+    "current_action": "Compare actual native old sample5040 checkpoint against all new trials on the same evaluation inputs before interpreting poor F1. Formal training and additional architecture trials remain blocked. Preserve qlogin."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -152,12 +152,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "train"
+    "matched_eval"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
-    "submit",
-    "matched_eval"
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -340,8 +340,47 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Execute and inspect compare_cross_2_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
+  "next_required_result": "Compare actual native old sample5040 checkpoint against all new trials on the same evaluation inputs before interpreting poor F1. Formal training and additional architecture trials remain blocked. Preserve qlogin.",
   "active_operation": {
+    "label": "native_bias_h8_sample5040_paired_v1",
+    "operation": "matched_eval",
+    "status": "prepared",
+    "accepted": false,
+    "prepared_at": "2026-10-12T04:00:39.435406+00:00",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
+    "config_sha256": "d1da48963b68c893aef13f081700727fd34d3cb2bd271f693eb8ad9807e604ca",
+    "checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
+      "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
+      "step": 105,
+      "sample_seen": 5040
+    },
+    "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v1",
+    "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
+    ],
+    "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
+    "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences."
+  },
+  "last_operation": {
     "experiment": "shared_virtual_frame_20261012",
     "label": "compare_cross_2_v1",
     "mode": "train",
@@ -395,96 +434,65 @@
       ],
       "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
     },
-    "status": "prepared",
+    "status": "completed",
     "prepared_at": "2026-10-12T03:09:46.327397+00:00",
     "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
-    "accepted": false
-  },
-  "last_operation": {
-    "experiment": "shared_virtual_frame_20261012",
-    "label": "compare_self_cross_4_v1",
-    "mode": "train",
-    "plan": "compare",
-    "candidate": "self_cross_4",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_4_v1",
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-      "--mode",
-      "train",
-      "--plan",
-      "compare",
-      "--candidate",
-      "self_cross_4",
-      "--output",
-      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_4_v1"
-    ],
-    "operation": "train",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "selected_settings": {
-      "approved": true,
-      "frame_budget": 320,
-      "batch_cap": 32,
-      "accumulation": 1,
-      "target_samples": 5040,
-      "evaluation_samples": [
-        2016,
-        5040
-      ],
-      "candidate_order": [
-        "self_cross_2",
-        "self_cross_1",
-        "self_cross_4",
-        "cross_2"
-      ],
-      "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
-    },
-    "status": "completed",
-    "prepared_at": "2026-10-12T02:29:29.091819+00:00",
-    "started_at": "2026-10-12T02:30:36.245600+00:00",
-    "finished_at": "2026-10-12T03:07:37.571697+00:00",
-    "accepted_meaning": "execution_valid_not_quality_superiority",
-    "result": {
-      "controller": "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_4_v1.json",
-      "source_commit": "91bad8e639f6ea3b8668978924aaee18bc246e1a",
-      "exit_code": 0,
-      "samples": 5040,
-      "input_frames": 56466,
-      "steps": 105,
-      "rank_reports_sha256": [
-        "55c86346feaeae9800ddfdf09235ffa6db86234fc5f31f8271c0c8ff672cf704",
-        "156927518ab3b10d0d42198f59e077803d99053813f4d95cf26f4439954dd268"
-      ],
-      "evaluation_summary_sha256": {
-        "2016": "27cd691265607759935d09f23fd185552417a737ba339adb782df4a490b1f82c",
-        "5040": "3f5abb029289def4d2b6dbf597fa10ae4257675ed5fef969d23b799a3cca34aa"
+    "accepted": true,
+    "complete": true,
+    "finished_at": "2026-10-12T03:47:28.535001+00:00",
+    "exit_code": 0,
+    "accepted_meaning": "execution_valid_only_not_quality_acceptance",
+    "quality_accepted": false,
+    "actual_samples": 5040,
+    "optimizer_updates": 105,
+    "actual_input_frames": 56466,
+    "final_evaluation": {
+      "train": {
+        "assets": 32,
+        "natural_eos": 32,
+        "edge_f1": 0.034286415385525265,
+        "edge_precision": 0.07416454024532187,
+        "edge_recall": 0.031729169967905535,
+        "gt_prefix_query_f1": 0.02565318596147033,
+        "frame_mean_f1": 0.032611198172178696,
+        "structure_ce": 0.6237980717560276,
+        "xyz_l1": 0.38823883328586817,
+        "exact_count": 0.4375,
+        "exact_tree": 0.4375,
+        "geometry_successful_assets": 32,
+        "geometry": {
+          "j2j": 0.23916063238908597,
+          "j2b": 0.2352000523400723,
+          "b2b": 0.22917064334500672
+        }
       },
-      "all_train_metrics_finite": true,
-      "exact_exposure_frame_trace_match": "compare_self_cross_2_v1",
-      "validation_assets": 64,
-      "validation_natural_eos": 64,
-      "validation_f1": 0.07595542548535968,
-      "validation_xyz_l1": 0.3324836166575551,
-      "validation_structure_ce": 0.5903462572605349,
-      "validation_gt_prefix_f1": 0.06778608265396868
+      "valid": {
+        "assets": 64,
+        "natural_eos": 64,
+        "edge_f1": 0.04134988395413695,
+        "edge_precision": 0.07774681409854658,
+        "edge_recall": 0.050611976813734944,
+        "gt_prefix_query_f1": 0.03849241672138258,
+        "frame_mean_f1": 0.03966723331838603,
+        "structure_ce": 0.5644076162134297,
+        "xyz_l1": 0.3615431704092771,
+        "exact_count": 0.328125,
+        "exact_tree": 0.3125,
+        "geometry_successful_assets": 64,
+        "geometry": {
+          "j2j": 0.22527157967925887,
+          "j2b": 0.22228710649679212,
+          "b2b": 0.21699997090740009
+        }
+      }
     },
-    "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
-    "accepted": true
+    "report_hashes": {
+      "rank_0.json": "22f5d640df63ef29c4f06ac8da904546d394a55f1704a11e608dc0af8b702cc4",
+      "rank_1.json": "b7f29ed6d0a03f90001e4ebe531e7de64b324daea7087b503d7ab4f200e453f1"
+    },
+    "controller_sha256": "ddaee9a1daeb4b37fe497039148c5980de1579fdf3f86485117e90ea4b649474",
+    "final_evaluation_sha256": "098f7e11683d8e636c3b2429af72bc292bbacae4fe9a2c8c07f4959ff2ff0bb2",
+    "result_note": "All candidate runs completed. User rejected proceeding without native baseline comparison; no formal run approved."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -3403,6 +3411,120 @@
       "complete": false,
       "accepted": false,
       "updated_at": "2026-10-11T17:50:24.875430+00:00"
+    },
+    {
+      "experiment": "shared_virtual_frame_20261012",
+      "label": "compare_cross_2_v1",
+      "mode": "train",
+      "plan": "compare",
+      "candidate": "cross_2",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_cross_2_v1",
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+        "--mode",
+        "train",
+        "--plan",
+        "compare",
+        "--candidate",
+        "cross_2",
+        "--output",
+        "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_cross_2_v1"
+      ],
+      "operation": "train",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "selected_settings": {
+        "approved": true,
+        "frame_budget": 320,
+        "batch_cap": 32,
+        "accumulation": 1,
+        "target_samples": 5040,
+        "evaluation_samples": [
+          2016,
+          5040
+        ],
+        "candidate_order": [
+          "self_cross_2",
+          "self_cross_1",
+          "self_cross_4",
+          "cross_2"
+        ],
+        "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
+      },
+      "status": "completed",
+      "prepared_at": "2026-10-12T03:09:46.327397+00:00",
+      "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
+      "accepted": true,
+      "complete": true,
+      "finished_at": "2026-10-12T03:47:28.535001+00:00",
+      "exit_code": 0,
+      "accepted_meaning": "execution_valid_only_not_quality_acceptance",
+      "quality_accepted": false,
+      "actual_samples": 5040,
+      "optimizer_updates": 105,
+      "actual_input_frames": 56466,
+      "final_evaluation": {
+        "train": {
+          "assets": 32,
+          "natural_eos": 32,
+          "edge_f1": 0.034286415385525265,
+          "edge_precision": 0.07416454024532187,
+          "edge_recall": 0.031729169967905535,
+          "gt_prefix_query_f1": 0.02565318596147033,
+          "frame_mean_f1": 0.032611198172178696,
+          "structure_ce": 0.6237980717560276,
+          "xyz_l1": 0.38823883328586817,
+          "exact_count": 0.4375,
+          "exact_tree": 0.4375,
+          "geometry_successful_assets": 32,
+          "geometry": {
+            "j2j": 0.23916063238908597,
+            "j2b": 0.2352000523400723,
+            "b2b": 0.22917064334500672
+          }
+        },
+        "valid": {
+          "assets": 64,
+          "natural_eos": 64,
+          "edge_f1": 0.04134988395413695,
+          "edge_precision": 0.07774681409854658,
+          "edge_recall": 0.050611976813734944,
+          "gt_prefix_query_f1": 0.03849241672138258,
+          "frame_mean_f1": 0.03966723331838603,
+          "structure_ce": 0.5644076162134297,
+          "xyz_l1": 0.3615431704092771,
+          "exact_count": 0.328125,
+          "exact_tree": 0.3125,
+          "geometry_successful_assets": 64,
+          "geometry": {
+            "j2j": 0.22527157967925887,
+            "j2b": 0.22228710649679212,
+            "b2b": 0.21699997090740009
+          }
+        }
+      },
+      "report_hashes": {
+        "rank_0.json": "22f5d640df63ef29c4f06ac8da904546d394a55f1704a11e608dc0af8b702cc4",
+        "rank_1.json": "b7f29ed6d0a03f90001e4ebe531e7de64b324daea7087b503d7ab4f200e453f1"
+      },
+      "controller_sha256": "ddaee9a1daeb4b37fe497039148c5980de1579fdf3f86485117e90ea4b649474",
+      "final_evaluation_sha256": "098f7e11683d8e636c3b2429af72bc292bbacae4fe9a2c8c07f4959ff2ff0bb2",
+      "result_note": "All candidate runs completed. User rejected proceeding without native baseline comparison; no formal run approved."
     }
   ]
 }

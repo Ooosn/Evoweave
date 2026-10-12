@@ -272,3 +272,17 @@ without analyzing the previous stage.
   the fixed maximum budget from128 to512 with intermediate per-frame/free
   evaluations. This explicitly tests slower convergence, not a new architecture
   or an inherited checkpoint. No automatic continuation beyond512.
+- The unchanged approved baseline PASSED at update256, before its512 cap.
+  Both free sequences exactly equal their own distinct targets, with natural
+  EOS, F1=1, J2J=0 and teacher accuracy=1; mean CE=0.0000753484. Main accuracy
+  first reached1 at update232. This directly establishes sufficient capacity
+  on this case and that128 updates were insufficient, not a required fusion
+  architecture change. The old path converged earlier (64), but speed alone
+  does not establish a bug. R1 remains unselected and default scale stays0.
+  G2 single-case acceptance is not generalization or full-training approval.
+- CPU-only real-case audit is now published to independently solve the raw
+  cached column-vector RT equation, compare actual loader mesh AND skeleton,
+  check a common mesh-only bbox, inverse consistency and bone preservation,
+  and export the exact [9,7] normalized poses for visual inspection. Five
+  local CLI synthetic tests passed, including four expected rejection cases;
+  these synthetic results are not yet the real-asset audit result.

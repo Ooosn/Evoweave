@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T20:15:24.981664+00:00",
+  "updated_at": "2026-10-12T20:22:57.080449+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,13 +126,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
-    "submit",
-    "matched_eval"
+    "train",
+    "preflight",
+    "matched_eval",
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run only the exact recorded bounded fit operation; review evidence and update state before any next run. Formal remains blocked.",
+  "next_required_result": "Original approved virtual-query route passes fixed single-asset two-frame fit at update256: both natural generated streams exactly equal their own GT; F1=1, J2J=0, accuracy=1, CE=0.0000753484. No R1 or initialization change. Earlier128 budget was insufficient for this case. Next: verify real RT geometry and diverse8/T4 fitting before G3; formal remains blocked.",
   "active_operation": {
     "label": "vquery_xyz_fit_single_l0_512_v1_20261013",
     "mode": "fit",
     "operation": "train",
-    "status": "prepared_not_started",
+    "status": "completed_accepted",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_xyz.py",
-    "complete": false,
-    "accepted": false,
+    "complete": true,
+    "accepted": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "authorization": "User explicitly approved new-route implementation, fitting and experimental parameter selection before full training; primary reviewed predecessor evidence.",
     "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "code_commit": "c3744046488b680dc94858e37926073275b1b80e",
@@ -383,7 +383,14 @@
       "fixed maximum budget",
       "acceptance reached"
     ],
-    "prepared_utc": "2026-10-12T20:15:24.981633+00:00"
+    "prepared_utc": "2026-10-12T20:15:24.981633+00:00",
+    "execution_finished": true,
+    "exit_code": 0,
+    "completed_updates": 256,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\fit_single_512_v1_result.json",
+    "result_sha256": "dffc8727b08af8d26190b8a266c4e5f1000889d41255c1d79d7f17d5e1a10acc",
+    "conclusion": "Original approved virtual-query route passes fixed single-asset two-frame fit at update256: both natural generated streams exactly equal their own GT; F1=1, J2J=0, accuracy=1, CE=0.0000753484. No R1 or initialization change. Earlier128 budget was insufficient for this case. Next: verify real RT geometry and diverse8/T4 fitting before G3; formal remains blocked.",
+    "finished_utc": "2026-10-12T20:22:57.080433+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

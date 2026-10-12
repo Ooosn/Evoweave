@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T05:34:04.933566+00:00",
+  "updated_at": "2026-10-12T06:03:51.706264+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Compare actual full backward paths, then test single-asset fitting with the original OneCycle LR/beta1 function over the diagnostic update budget. Do not launch formal training or reuse diagnostic weights."
+    "current_action": "User prioritizes architecture/implementation audit, not optimizer attribution. Investigate parent-only structural identity and ordered-coordinate supervision under interchangeable branches on actual data. Single-asset fitting is now demonstrated, but whole-dataset quality remains unacceptable; formal training stays blocked."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -151,13 +151,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
-    "submit",
+    "train",
+    "preflight",
     "matched_eval",
-    "preflight"
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -340,12 +340,12 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Compare actual full backward paths, then test single-asset fitting with the original OneCycle LR/beta1 function over the diagnostic update budget. Do not launch formal training or reuse diagnostic weights.",
+  "next_required_result": "User prioritizes architecture/implementation audit, not optimizer attribution. Investigate parent-only structural identity and ordered-coordinate supervision under interchangeable branches on actual data. Single-asset fitting is now demonstrated, but whole-dataset quality remains unacceptable; formal training stays blocked.",
   "active_operation": {
     "label": "single_asset_cycle_v1",
     "operation": "train",
-    "status": "prepared",
-    "accepted": false,
+    "status": "completed",
+    "accepted": true,
     "prepared_at": "2026-10-12T05:34:04.933566+00:00",
     "code_parent_commit": "3109f219c58e364b65715efc6e003d6af3da4cb0",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_single_asset_cycle_20261012.json",
@@ -381,20 +381,168 @@
     ],
     "authorization": "User demands a direct single-sample overfit to verify the real training/inference chain. No delegation. Only this bounded diagnostic is approved, NOT formal training.",
     "acceptance": "Same full-model single-asset fixed static/eight-real-frame controls, same new sample5040 weights, original BF16/CE+0.5L1/clipping/decay, fresh AdamW. Use the exact original set_exposure_lr learning-rate AND beta1 function across1024 diagnostic updates, preserving peak1e-4/warmup0.1/div5/finaldiv10; production80016 schedule unchanged. Before fitting compare every trainable gradient at the same weights/inputs: production backward outside autocast versus previous diagnostic inside autocast, then checkpointing versus no checkpointing. Record per-group norm/cosine/difference, stop on nonfinite or >10percent gradient relative L2; this is a gross-error stop, not a mathematical equivalence tolerance. Restore all checkpoint flags before training. Stop at1024 or two consecutive checks with XYZ/query L1<=0.01, CE<=0.01, exact tree and generationF1>=GTselfF1-0.05. No model/loss change, no formal authorization, no diagnostic-weight reuse for formal training. Passing one asset does not establish dataset-level quality.",
-    "formal_training_allowed": false
+    "formal_training_allowed": false,
+    "complete": true,
+    "exit_code": 0,
+    "execution_valid": true,
+    "accepted_meaning": "single_asset_learnability_only_NOT_population_quality_or_formal_approval",
+    "finished_at": "2026-10-12T05:48:15.228393+00:00",
+    "result": {
+      "single_static": {
+        "updates": 960,
+        "final": {
+          "structure_ce": 0.00010297768312739208,
+          "xyz_l1": 0.0014072962803766131,
+          "query_xyz_l1": 0.0014072962803766131,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
+          "oracle_query_F1": 1.0,
+          "all_generated_parents_exact": true,
+          "per_asset_frame_xyz_l1": [
+            [
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131
+            ]
+          ],
+          "wrong_asset_anchors_xyz_l1": 0.0014072962803766131,
+          "wrong_asset_structure_memory_xyz_l1": 0.0014072962803766131,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.1025390625,
+            -0.0128173828125,
+            -0.1025390625
+          ],
+          "last_bias_gradient_expected": [
+            0.10256410390138626,
+            -0.012820513918995857,
+            -0.10256411135196686
+          ],
+          "last_bias_gradient_maxabs_error": 2.504885196685791e-05,
+          "full_train_eval_xyz_meanabs": 0.0,
+          "full_train_eval_xyz_maxabs": 0.0,
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
+        },
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_static_diagnostic_final.pt",
+          "bytes": 8379298978,
+          "sha256": "a7b60ebf5cf4d143cad4a7d0ff015720cad6105b637437f263c0b739e45cc6c1"
+        },
+        "generated_frame_F1": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942
+        ],
+        "report_sha256": "205d6938353ed57a56200cbbcb877dded05b641131506a1204c0e26cde416e0e"
+      },
+      "single_dynamic": {
+        "updates": 896,
+        "final": {
+          "structure_ce": 7.87625031080097e-05,
+          "xyz_l1": 0.004041680134832859,
+          "query_xyz_l1": 0.003661853028461337,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
+          "oracle_query_F1": 1.0,
+          "all_generated_parents_exact": true,
+          "per_asset_frame_xyz_l1": [
+            [
+              0.003661853028461337,
+              0.004377261269837618,
+              0.0037229948211461306,
+              0.0038460034411400557,
+              0.003106718184426427,
+              0.0039899395778775215,
+              0.004547684453427792,
+              0.005080987233668566
+            ]
+          ],
+          "wrong_asset_anchors_xyz_l1": 0.004041680134832859,
+          "wrong_asset_structure_memory_xyz_l1": 0.004041680134832859,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            -0.043212890625,
+            0.019287109375,
+            0.0016021728515625
+          ],
+          "last_bias_gradient_expected": [
+            -0.04326923191547394,
+            0.01923077180981636,
+            0.0016025637742131948
+          ],
+          "last_bias_gradient_maxabs_error": 5.634129047393799e-05,
+          "full_train_eval_xyz_meanabs": 0.0008242741459980607,
+          "full_train_eval_xyz_maxabs": 0.0078125,
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
+        },
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+          "bytes": 8379302726,
+          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+        },
+        "generated_frame_F1": [
+          1.0,
+          0.9803921568627451,
+          1.0,
+          0.9375,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0037748562172055244,
+          0.004184781573712826,
+          0.0037136429455131292,
+          0.00392191531136632,
+          0.003134641097858548,
+          0.003986205905675888,
+          0.00455110939219594,
+          0.005087525583803654
+        ],
+        "report_sha256": "5cd0199e05dad70ca042731417422d5921dc6a715af4a4016765b03b8cad6764"
+      }
+    },
+    "result_note": "Static and dynamic single-asset fitting meet the predeclared two-check acceptance. This does not establish correctness/generalization of the new architecture on the dataset, nor explain the matched old/new5040 F1 gap. All production core code, loss and formal schedule remain unchanged."
   },
   "last_operation": {
-    "label": "single_asset_fit_v1",
+    "label": "single_asset_cycle_v1",
     "operation": "train",
     "status": "completed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T05:16:30.794682+00:00",
-    "code_parent_commit": "53940a9f8e168f1937d713cadfc8763f860c5d68",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_single_asset_fit_20261012.json",
-    "config_sha256": "4a762963c9b8591ab4fd1a3d4c77c2402bad7f5b9c28a0f3b867dfa6585d698d",
+    "accepted": true,
+    "prepared_at": "2026-10-12T05:34:04.933566+00:00",
+    "code_parent_commit": "3109f219c58e364b65715efc6e003d6af3da4cb0",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_single_asset_cycle_20261012.json",
+    "config_sha256": "00479311aa89fc8f6c869c7c87e5e260623189667706e7f65488b381801d9c65",
     "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
     "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_fit_v1",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1",
     "manifests": {
       "status": "verified_published",
       "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -422,579 +570,156 @@
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_fixed_fit.sh"
     ],
     "authorization": "User demands a direct single-sample overfit to verify the real training/inference chain. No delegation. Only this bounded diagnostic is approved, NOT formal training.",
-    "acceptance": "Full end-to-end single-asset overfit from the new model's own sample5040 checkpoint, NEVER old-method weights. Fresh AdamW; constant diagnostic LR1e-4, original betas0.95/0.999, decay, clipping, BF16, CE+0.5L1, original core model. Same fixed sampled geometry and labels on both arms; single_static repeats the query pose eight times, single_dynamic retains the eight real frames. Stop at1024 or two consecutive checks with all-frame/query XYZ L1<=0.01 (0.5percent query-mesh bbox side), structure CE<=0.01, exact generated parents, and query generation F1 within0.05 of GT-self oracle. Assert immutable input hashes; report whole-model same-weight grad-enabled training versus inference difference. Diagnostic weights cannot initialize formal training; this passing would prove only this sample is learnable, not full-dataset correctness. Formal configuration and approval unchanged.",
+    "acceptance": "Same full-model single-asset fixed static/eight-real-frame controls, same new sample5040 weights, original BF16/CE+0.5L1/clipping/decay, fresh AdamW. Use the exact original set_exposure_lr learning-rate AND beta1 function across1024 diagnostic updates, preserving peak1e-4/warmup0.1/div5/finaldiv10; production80016 schedule unchanged. Before fitting compare every trainable gradient at the same weights/inputs: production backward outside autocast versus previous diagnostic inside autocast, then checkpointing versus no checkpointing. Record per-group norm/cosine/difference, stop on nonfinite or >10percent gradient relative L2; this is a gross-error stop, not a mathematical equivalence tolerance. Restore all checkpoint flags before training. Stop at1024 or two consecutive checks with XYZ/query L1<=0.01, CE<=0.01, exact tree and generationF1>=GTselfF1-0.05. No model/loss change, no formal authorization, no diagnostic-weight reuse for formal training. Passing one asset does not establish dataset-level quality.",
     "formal_training_allowed": false,
     "complete": true,
-    "execution_valid": true,
     "exit_code": 0,
-    "finished_at": "2026-10-12T05:30:25.940755+00:00",
-    "evaluations": {
+    "execution_valid": true,
+    "accepted_meaning": "single_asset_learnability_only_NOT_population_quality_or_formal_approval",
+    "finished_at": "2026-10-12T05:48:15.228393+00:00",
+    "result": {
       "single_static": {
-        "0": {
-          "structure_ce": 0.04194573312997818,
-          "xyz_l1": 0.19395974278450012,
-          "query_xyz_l1": 0.1939597725868225,
-          "teacher_F1": 0.10859728506787332,
-          "generation_F1": 0.10457516339869281,
+        "updates": 960,
+        "final": {
+          "structure_ce": 0.00010297768312739208,
+          "xyz_l1": 0.0014072962803766131,
+          "query_xyz_l1": 0.0014072962803766131,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
           "oracle_query_F1": 1.0,
           "all_generated_parents_exact": true,
           "per_asset_frame_xyz_l1": [
             [
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225,
-              0.1939597725868225
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131
             ]
           ],
-          "wrong_asset_anchors_xyz_l1": 0.19395974278450012,
-          "wrong_asset_structure_memory_xyz_l1": 0.19395974278450012,
+          "wrong_asset_anchors_xyz_l1": 0.0014072962803766131,
+          "wrong_asset_structure_memory_xyz_l1": 0.0014072962803766131,
           "same_weight_train_eval_xyz_meanabs": 0.0,
           "same_weight_train_eval_xyz_maxabs": 0.0,
           "last_bias_gradient_actual": [
-            0.08984375,
-            0.025634765625,
-            0.2177734375
-          ],
-          "last_bias_gradient_expected": [
-            0.08974359929561615,
-            0.025641027837991714,
-            0.21794873476028442
-          ],
-          "last_bias_gradient_maxabs_error": 0.00017529726028442383,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0
-        },
-        "25": {
-          "structure_ce": 0.005658256355673075,
-          "xyz_l1": 0.181645005941391,
-          "query_xyz_l1": 0.181645005941391,
-          "teacher_F1": 0.03594771241830066,
-          "generation_F1": 0.03594771241830066,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391,
-              0.181645005941391
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.181645005941391,
-          "wrong_asset_structure_memory_xyz_l1": 0.181645005941391,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.30859375,
-            0.3203125,
-            0.26953125
-          ],
-          "last_bias_gradient_expected": [
-            -0.3076923191547394,
-            0.3205128312110901,
-            0.26923078298568726
-          ],
-          "last_bias_gradient_maxabs_error": 0.0009014308452606201,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "100": {
-          "structure_ce": 0.0005863002152182162,
-          "xyz_l1": 0.035445768386125565,
-          "query_xyz_l1": 0.035445764660835266,
-          "teacher_F1": 0.41711229946524064,
-          "generation_F1": 0.40310077519379844,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266,
-              0.035445764660835266
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.035445768386125565,
-          "wrong_asset_structure_memory_xyz_l1": 0.035445768386125565,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.333984375,
             0.1025390625,
-            -0.333984375
+            -0.0128173828125,
+            -0.1025390625
           ],
           "last_bias_gradient_expected": [
-            -0.3333333432674408,
             0.10256410390138626,
-            -0.3333333432674408
+            -0.012820513918995857,
+            -0.10256411135196686
           ],
-          "last_bias_gradient_maxabs_error": 0.0006510317325592041,
+          "last_bias_gradient_maxabs_error": 2.504885196685791e-05,
           "full_train_eval_xyz_meanabs": 0.0,
           "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
         },
-        "256": {
-          "structure_ce": 0.00029178906697779894,
-          "xyz_l1": 0.05767590552568436,
-          "query_xyz_l1": 0.05767590552568436,
-          "teacher_F1": 0.3333333333333333,
-          "generation_F1": 0.32323232323232326,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436,
-              0.05767590552568436
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.05767590552568436,
-          "wrong_asset_structure_memory_xyz_l1": 0.05767590552568436,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.333984375,
-            0.3203125,
-            0.294921875
-          ],
-          "last_bias_gradient_expected": [
-            0.3333333432674408,
-            0.3205128312110901,
-            0.29487180709838867
-          ],
-          "last_bias_gradient_maxabs_error": 0.0006510317325592041,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_static_diagnostic_final.pt",
+          "bytes": 8379298978,
+          "sha256": "a7b60ebf5cf4d143cad4a7d0ff015720cad6105b637437f263c0b739e45cc6c1"
         },
-        "512": {
-          "structure_ce": 0.00021406014275271446,
-          "xyz_l1": 0.02520633675158024,
-          "query_xyz_l1": 0.02520633675158024,
-          "teacher_F1": 0.5578093306288032,
-          "generation_F1": 0.5578093306288032,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024,
-              0.02520633675158024
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.02520633675158024,
-          "wrong_asset_structure_memory_xyz_l1": 0.02520633675158024,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.025634765625,
-            0.333984375,
-            0.205078125
-          ],
-          "last_bias_gradient_expected": [
-            0.025641025975346565,
-            0.3333333432674408,
-            0.20512822270393372
-          ],
-          "last_bias_gradient_maxabs_error": 0.0006510317325592041,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "768": {
-          "structure_ce": 0.00013754125393461436,
-          "xyz_l1": 0.061572521924972534,
-          "query_xyz_l1": 0.06157252565026283,
-          "teacher_F1": 0.2823529411764706,
-          "generation_F1": 0.26190476190476186,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283,
-              0.06157252565026283
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.061572521924972534,
-          "wrong_asset_structure_memory_xyz_l1": 0.061572521924972534,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.333984375,
-            0.333984375,
-            0.333984375
-          ],
-          "last_bias_gradient_expected": [
-            -0.3333333432674408,
-            0.3333333432674408,
-            0.3333333432674408
-          ],
-          "last_bias_gradient_maxabs_error": 0.0006510317325592041,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "1024": {
-          "structure_ce": 0.00010657073289621621,
-          "xyz_l1": 0.02799694985151291,
-          "query_xyz_l1": 0.02799694612622261,
-          "teacher_F1": 0.5380116959064327,
-          "generation_F1": 0.5315126050420168,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261,
-              0.02799694612622261
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.02799694985151291,
-          "wrong_asset_structure_memory_xyz_l1": 0.02799694985151291,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.08984375,
-            -0.30859375,
-            -0.333984375
-          ],
-          "last_bias_gradient_expected": [
-            -0.08974359929561615,
-            -0.3076923191547394,
-            -0.3333333432674408
-          ],
-          "last_bias_gradient_maxabs_error": 0.0009014308452606201,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        }
+        "generated_frame_F1": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942
+        ],
+        "report_sha256": "205d6938353ed57a56200cbbcb877dded05b641131506a1204c0e26cde416e0e"
       },
       "single_dynamic": {
-        "0": {
-          "structure_ce": 0.04120649769902229,
-          "xyz_l1": 0.2517653703689575,
-          "query_xyz_l1": 0.19917143881320953,
-          "teacher_F1": 0.14705882352941177,
-          "generation_F1": 0.14705882352941177,
+        "updates": 896,
+        "final": {
+          "structure_ce": 7.87625031080097e-05,
+          "xyz_l1": 0.004041680134832859,
+          "query_xyz_l1": 0.003661853028461337,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
           "oracle_query_F1": 1.0,
           "all_generated_parents_exact": true,
           "per_asset_frame_xyz_l1": [
             [
-              0.19917143881320953,
-              0.3670387268066406,
-              0.19419291615486145,
-              0.21464167535305023,
-              0.2762945890426636,
-              0.2033490091562271,
-              0.34675636887550354,
-              0.21267837285995483
+              0.003661853028461337,
+              0.004377261269837618,
+              0.0037229948211461306,
+              0.0038460034411400557,
+              0.003106718184426427,
+              0.0039899395778775215,
+              0.004547684453427792,
+              0.005080987233668566
             ]
           ],
-          "wrong_asset_anchors_xyz_l1": 0.2517653703689575,
-          "wrong_asset_structure_memory_xyz_l1": 0.2517653703689575,
+          "wrong_asset_anchors_xyz_l1": 0.004041680134832859,
+          "wrong_asset_structure_memory_xyz_l1": 0.004041680134832859,
           "same_weight_train_eval_xyz_meanabs": 0.0,
           "same_weight_train_eval_xyz_maxabs": 0.0,
           "last_bias_gradient_actual": [
-            0.043212890625,
-            0.1943359375,
-            0.2119140625
+            -0.043212890625,
+            0.019287109375,
+            0.0016021728515625
           ],
           "last_bias_gradient_expected": [
-            0.04326923191547394,
-            0.19391027092933655,
-            0.21153847873210907
+            -0.04326923191547394,
+            0.01923077180981636,
+            0.0016025637742131948
           ],
-          "last_bias_gradient_maxabs_error": 0.00042566657066345215,
-          "full_train_eval_xyz_meanabs": 0.002080605598166585,
-          "full_train_eval_xyz_maxabs": 0.015625
-        },
-        "25": {
-          "structure_ce": 0.0038210111670196056,
-          "xyz_l1": 0.09924593567848206,
-          "query_xyz_l1": 0.0853782519698143,
-          "teacher_F1": 0.20460358056265984,
-          "generation_F1": 0.20460358056265984,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.0853782519698143,
-              0.08691884577274323,
-              0.10200560092926025,
-              0.10067351907491684,
-              0.11829641461372375,
-              0.08901233226060867,
-              0.12193794548511505,
-              0.08974456787109375
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.09924593567848206,
-          "wrong_asset_structure_memory_xyz_l1": 0.09924593567848206,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.1845703125,
-            -0.1298828125,
-            0.1572265625
-          ],
-          "last_bias_gradient_expected": [
-            0.18429487943649292,
-            -0.12980769574642181,
-            0.15705129504203796
-          ],
-          "last_bias_gradient_maxabs_error": 0.0002754330635070801,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "100": {
-          "structure_ce": 0.00036789855221286416,
-          "xyz_l1": 0.05176667496562004,
-          "query_xyz_l1": 0.05605098977684975,
-          "teacher_F1": 0.4233511586452763,
-          "generation_F1": 0.4233511586452763,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.05605098977684975,
-              0.05012338608503342,
-              0.039584022015333176,
-              0.09951671957969666,
-              0.035488445311784744,
-              0.04527439922094345,
-              0.04213395342230797,
-              0.04596149921417236
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.05176667496562004,
-          "wrong_asset_structure_memory_xyz_l1": 0.05176667496562004,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.2001953125,
-            -0.05615234375,
-            -0.08642578125
-          ],
-          "last_bias_gradient_expected": [
-            -0.2003205120563507,
-            -0.056089743971824646,
-            -0.08653847128152847
-          ],
-          "last_bias_gradient_maxabs_error": 0.000125199556350708,
-          "full_train_eval_xyz_meanabs": 0.0009105809149332345,
+          "last_bias_gradient_maxabs_error": 5.634129047393799e-05,
+          "full_train_eval_xyz_meanabs": 0.0008242741459980607,
           "full_train_eval_xyz_maxabs": 0.0078125,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
         },
-        "256": {
-          "structure_ce": 0.00023197269183583558,
-          "xyz_l1": 0.07298852503299713,
-          "query_xyz_l1": 0.07385902851819992,
-          "teacher_F1": 0.2928104575163399,
-          "generation_F1": 0.3036053130929791,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.07385902851819992,
-              0.0821867510676384,
-              0.06452708691358566,
-              0.09945746511220932,
-              0.07135820388793945,
-              0.0664539486169815,
-              0.06023619696497917,
-              0.06582953035831451
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.07298852503299713,
-          "wrong_asset_structure_memory_xyz_l1": 0.07298852503299713,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.171875,
-            0.31640625,
-            -0.306640625
-          ],
-          "last_bias_gradient_expected": [
-            0.1714743822813034,
-            0.317307710647583,
-            -0.30608975887298584
-          ],
-          "last_bias_gradient_maxabs_error": 0.0009014606475830078,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+          "bytes": 8379302726,
+          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
         },
-        "512": {
-          "structure_ce": 0.00013749627396464348,
-          "xyz_l1": 0.04921475425362587,
-          "query_xyz_l1": 0.047335922718048096,
-          "teacher_F1": 0.3137254901960785,
-          "generation_F1": 0.3044982698961938,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.047335922718048096,
-              0.047843657433986664,
-              0.051907479763031006,
-              0.05430274084210396,
-              0.04776543751358986,
-              0.04596618190407753,
-              0.05098309367895126,
-              0.047613516449928284
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.04921475425362587,
-          "wrong_asset_structure_memory_xyz_l1": 0.04921475425362587,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.2734375,
-            0.043212890625,
-            -0.33203125
-          ],
-          "last_bias_gradient_expected": [
-            0.27403849363327026,
-            0.04326923191547394,
-            -0.33173078298568726
-          ],
-          "last_bias_gradient_maxabs_error": 0.0006009936332702637,
-          "full_train_eval_xyz_meanabs": 0.0006582079804502428,
-          "full_train_eval_xyz_maxabs": 0.0078125,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "768": {
-          "structure_ce": 9.453708480577916e-05,
-          "xyz_l1": 0.03430486470460892,
-          "query_xyz_l1": 0.03330796957015991,
-          "teacher_F1": 0.5105438401775805,
-          "generation_F1": 0.4977375565610861,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.03330796957015991,
-              0.03205683082342148,
-              0.036091260612010956,
-              0.04029208421707153,
-              0.03227986395359039,
-              0.03378644213080406,
-              0.03262846916913986,
-              0.03399597108364105
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.03430486470460892,
-          "wrong_asset_structure_memory_xyz_l1": 0.03430486470460892,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.203125,
-            0.333984375,
-            0.263671875
-          ],
-          "last_bias_gradient_expected": [
-            -0.20352566242218018,
-            0.3333333432674408,
-            0.2628205418586731
-          ],
-          "last_bias_gradient_maxabs_error": 0.0008513331413269043,
-          "full_train_eval_xyz_meanabs": 0.0006491824751719832,
-          "full_train_eval_xyz_maxabs": 0.0078125,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        },
-        "1024": {
-          "structure_ce": 7.247181929415092e-05,
-          "xyz_l1": 0.025316612794995308,
-          "query_xyz_l1": 0.023196743801236153,
-          "teacher_F1": 0.5856209150326798,
-          "generation_F1": 0.5965927354548377,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.023196743801236153,
-              0.03105216845870018,
-              0.019028356298804283,
-              0.029325464740395546,
-              0.029440775513648987,
-              0.021020134910941124,
-              0.029344262555241585,
-              0.020124994218349457
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.025316612794995308,
-          "wrong_asset_structure_memory_xyz_l1": 0.025316612794995308,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.328125,
-            -0.1845703125,
-            -0.330078125
-          ],
-          "last_bias_gradient_expected": [
-            -0.3285256624221802,
-            -0.18429487943649292,
-            -0.33012819290161133
-          ],
-          "last_bias_gradient_maxabs_error": 0.0004006624221801758,
-          "full_train_eval_xyz_meanabs": 0.0006518092704936862,
-          "full_train_eval_xyz_maxabs": 0.0078125,
-          "fitting_threshold_passed": false,
-          "consecutive_passes": 0
-        }
+        "generated_frame_F1": [
+          1.0,
+          0.9803921568627451,
+          1.0,
+          0.9375,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0037748562172055244,
+          0.004184781573712826,
+          0.0037136429455131292,
+          0.00392191531136632,
+          0.003134641097858548,
+          0.003986205905675888,
+          0.00455110939219594,
+          0.005087525583803654
+        ],
+        "report_sha256": "5cd0199e05dad70ca042731417422d5921dc6a715af4a4016765b03b8cad6764"
       }
     },
-    "report_hashes": {
-      "single_static": "dcea4b60e0ac54899c27d5ca11e8026526f767679ec6311b9787a958419b4a44",
-      "single_dynamic": "365480bf7a29dd6aeb88c3907ac9bb472caf5494f8742712c3adbe2275a7f4d6"
-    },
-    "result_note": "Full-model single-asset constant-peak1024-update fit FAILED on both static and dynamic inputs; no quality approval. Labels/input hashes stable, exact tree learned but coordinate oscillation remains. BF16-rounded-GT query F1=1, so this sample precision ceiling does not explain the failure."
+    "result_note": "Static and dynamic single-asset fitting meet the predeclared two-check acceptance. This does not establish correctness/generalization of the new architecture on the dataset, nor explain the matched old/new5040 F1 gap. All production core code, loss and formal schedule remain unchanged."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -5580,6 +5305,196 @@
         "single_dynamic": "365480bf7a29dd6aeb88c3907ac9bb472caf5494f8742712c3adbe2275a7f4d6"
       },
       "result_note": "Full-model single-asset constant-peak1024-update fit FAILED on both static and dynamic inputs; no quality approval. Labels/input hashes stable, exact tree learned but coordinate oscillation remains. BF16-rounded-GT query F1=1, so this sample precision ceiling does not explain the failure."
+    },
+    {
+      "label": "single_asset_cycle_v1",
+      "operation": "train",
+      "status": "completed",
+      "accepted": true,
+      "prepared_at": "2026-10-12T05:34:04.933566+00:00",
+      "code_parent_commit": "3109f219c58e364b65715efc6e003d6af3da4cb0",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_single_asset_cycle_20261012.json",
+      "config_sha256": "00479311aa89fc8f6c869c7c87e5e260623189667706e7f65488b381801d9c65",
+      "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+      "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1",
+      "manifests": {
+        "status": "verified_published",
+        "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+        "train_rows": 18018,
+        "valid_rows": 969,
+        "quarantined_rows": 81,
+        "target_mesh_padding": 1.1,
+        "all_frame_all_target_joint_abs_limit": 1.0,
+        "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+        "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+        "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+        "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+        "npz_files_changed": 0
+      },
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "bash",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_fixed_fit.sh"
+      ],
+      "authorization": "User demands a direct single-sample overfit to verify the real training/inference chain. No delegation. Only this bounded diagnostic is approved, NOT formal training.",
+      "acceptance": "Same full-model single-asset fixed static/eight-real-frame controls, same new sample5040 weights, original BF16/CE+0.5L1/clipping/decay, fresh AdamW. Use the exact original set_exposure_lr learning-rate AND beta1 function across1024 diagnostic updates, preserving peak1e-4/warmup0.1/div5/finaldiv10; production80016 schedule unchanged. Before fitting compare every trainable gradient at the same weights/inputs: production backward outside autocast versus previous diagnostic inside autocast, then checkpointing versus no checkpointing. Record per-group norm/cosine/difference, stop on nonfinite or >10percent gradient relative L2; this is a gross-error stop, not a mathematical equivalence tolerance. Restore all checkpoint flags before training. Stop at1024 or two consecutive checks with XYZ/query L1<=0.01, CE<=0.01, exact tree and generationF1>=GTselfF1-0.05. No model/loss change, no formal authorization, no diagnostic-weight reuse for formal training. Passing one asset does not establish dataset-level quality.",
+      "formal_training_allowed": false,
+      "complete": true,
+      "exit_code": 0,
+      "execution_valid": true,
+      "accepted_meaning": "single_asset_learnability_only_NOT_population_quality_or_formal_approval",
+      "finished_at": "2026-10-12T05:48:15.228393+00:00",
+      "result": {
+        "single_static": {
+          "updates": 960,
+          "final": {
+            "structure_ce": 0.00010297768312739208,
+            "xyz_l1": 0.0014072962803766131,
+            "query_xyz_l1": 0.0014072962803766131,
+            "teacher_F1": 1.0,
+            "generation_F1": 1.0,
+            "oracle_query_F1": 1.0,
+            "all_generated_parents_exact": true,
+            "per_asset_frame_xyz_l1": [
+              [
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131,
+                0.0014072962803766131
+              ]
+            ],
+            "wrong_asset_anchors_xyz_l1": 0.0014072962803766131,
+            "wrong_asset_structure_memory_xyz_l1": 0.0014072962803766131,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.1025390625,
+              -0.0128173828125,
+              -0.1025390625
+            ],
+            "last_bias_gradient_expected": [
+              0.10256410390138626,
+              -0.012820513918995857,
+              -0.10256411135196686
+            ],
+            "last_bias_gradient_maxabs_error": 2.504885196685791e-05,
+            "full_train_eval_xyz_meanabs": 0.0,
+            "full_train_eval_xyz_maxabs": 0.0,
+            "fitting_threshold_passed": true,
+            "consecutive_passes": 2
+          },
+          "input_hash_unchanged": true,
+          "checkpoint": {
+            "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_static_diagnostic_final.pt",
+            "bytes": 8379298978,
+            "sha256": "a7b60ebf5cf4d143cad4a7d0ff015720cad6105b637437f263c0b739e45cc6c1"
+          },
+          "generated_frame_F1": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "generated_frame_l1": [
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942,
+            0.0013979037757962942
+          ],
+          "report_sha256": "205d6938353ed57a56200cbbcb877dded05b641131506a1204c0e26cde416e0e"
+        },
+        "single_dynamic": {
+          "updates": 896,
+          "final": {
+            "structure_ce": 7.87625031080097e-05,
+            "xyz_l1": 0.004041680134832859,
+            "query_xyz_l1": 0.003661853028461337,
+            "teacher_F1": 1.0,
+            "generation_F1": 1.0,
+            "oracle_query_F1": 1.0,
+            "all_generated_parents_exact": true,
+            "per_asset_frame_xyz_l1": [
+              [
+                0.003661853028461337,
+                0.004377261269837618,
+                0.0037229948211461306,
+                0.0038460034411400557,
+                0.003106718184426427,
+                0.0039899395778775215,
+                0.004547684453427792,
+                0.005080987233668566
+              ]
+            ],
+            "wrong_asset_anchors_xyz_l1": 0.004041680134832859,
+            "wrong_asset_structure_memory_xyz_l1": 0.004041680134832859,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              -0.043212890625,
+              0.019287109375,
+              0.0016021728515625
+            ],
+            "last_bias_gradient_expected": [
+              -0.04326923191547394,
+              0.01923077180981636,
+              0.0016025637742131948
+            ],
+            "last_bias_gradient_maxabs_error": 5.634129047393799e-05,
+            "full_train_eval_xyz_meanabs": 0.0008242741459980607,
+            "full_train_eval_xyz_maxabs": 0.0078125,
+            "fitting_threshold_passed": true,
+            "consecutive_passes": 2
+          },
+          "input_hash_unchanged": true,
+          "checkpoint": {
+            "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+            "bytes": 8379302726,
+            "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+          },
+          "generated_frame_F1": [
+            1.0,
+            0.9803921568627451,
+            1.0,
+            0.9375,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "generated_frame_l1": [
+            0.0037748562172055244,
+            0.004184781573712826,
+            0.0037136429455131292,
+            0.00392191531136632,
+            0.003134641097858548,
+            0.003986205905675888,
+            0.00455110939219594,
+            0.005087525583803654
+          ],
+          "report_sha256": "5cd0199e05dad70ca042731417422d5921dc6a715af4a4016765b03b8cad6764"
+        }
+      },
+      "result_note": "Static and dynamic single-asset fitting meet the predeclared two-check acceptance. This does not establish correctness/generalization of the new architecture on the dataset, nor explain the matched old/new5040 F1 gap. All production core code, loss and formal schedule remain unchanged."
     }
   ],
   "localization_diagnosis_20261012": {
@@ -5630,6 +5545,182 @@
     "production_model_or_loss_changed": false,
     "workers_active": false,
     "report": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\native_5040_comparison\\comparison.json",
-    "figure": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\native_5040_comparison\\matched_skeletons.png"
+    "figure": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\native_5040_comparison\\matched_skeletons.png",
+    "single_asset_fit": {
+      "single_static": {
+        "updates": 960,
+        "final": {
+          "structure_ce": 0.00010297768312739208,
+          "xyz_l1": 0.0014072962803766131,
+          "query_xyz_l1": 0.0014072962803766131,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
+          "oracle_query_F1": 1.0,
+          "all_generated_parents_exact": true,
+          "per_asset_frame_xyz_l1": [
+            [
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131,
+              0.0014072962803766131
+            ]
+          ],
+          "wrong_asset_anchors_xyz_l1": 0.0014072962803766131,
+          "wrong_asset_structure_memory_xyz_l1": 0.0014072962803766131,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.1025390625,
+            -0.0128173828125,
+            -0.1025390625
+          ],
+          "last_bias_gradient_expected": [
+            0.10256410390138626,
+            -0.012820513918995857,
+            -0.10256411135196686
+          ],
+          "last_bias_gradient_maxabs_error": 2.504885196685791e-05,
+          "full_train_eval_xyz_meanabs": 0.0,
+          "full_train_eval_xyz_maxabs": 0.0,
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
+        },
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_static_diagnostic_final.pt",
+          "bytes": 8379298978,
+          "sha256": "a7b60ebf5cf4d143cad4a7d0ff015720cad6105b637437f263c0b739e45cc6c1"
+        },
+        "generated_frame_F1": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942,
+          0.0013979037757962942
+        ],
+        "report_sha256": "205d6938353ed57a56200cbbcb877dded05b641131506a1204c0e26cde416e0e"
+      },
+      "single_dynamic": {
+        "updates": 896,
+        "final": {
+          "structure_ce": 7.87625031080097e-05,
+          "xyz_l1": 0.004041680134832859,
+          "query_xyz_l1": 0.003661853028461337,
+          "teacher_F1": 1.0,
+          "generation_F1": 1.0,
+          "oracle_query_F1": 1.0,
+          "all_generated_parents_exact": true,
+          "per_asset_frame_xyz_l1": [
+            [
+              0.003661853028461337,
+              0.004377261269837618,
+              0.0037229948211461306,
+              0.0038460034411400557,
+              0.003106718184426427,
+              0.0039899395778775215,
+              0.004547684453427792,
+              0.005080987233668566
+            ]
+          ],
+          "wrong_asset_anchors_xyz_l1": 0.004041680134832859,
+          "wrong_asset_structure_memory_xyz_l1": 0.004041680134832859,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            -0.043212890625,
+            0.019287109375,
+            0.0016021728515625
+          ],
+          "last_bias_gradient_expected": [
+            -0.04326923191547394,
+            0.01923077180981636,
+            0.0016025637742131948
+          ],
+          "last_bias_gradient_maxabs_error": 5.634129047393799e-05,
+          "full_train_eval_xyz_meanabs": 0.0008242741459980607,
+          "full_train_eval_xyz_maxabs": 0.0078125,
+          "fitting_threshold_passed": true,
+          "consecutive_passes": 2
+        },
+        "input_hash_unchanged": true,
+        "checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+          "bytes": 8379302726,
+          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+        },
+        "generated_frame_F1": [
+          1.0,
+          0.9803921568627451,
+          1.0,
+          0.9375,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "generated_frame_l1": [
+          0.0037748562172055244,
+          0.004184781573712826,
+          0.0037136429455131292,
+          0.00392191531136632,
+          0.003134641097858548,
+          0.003986205905675888,
+          0.00455110939219594,
+          0.005087525583803654
+        ],
+        "report_sha256": "5cd0199e05dad70ca042731417422d5921dc6a715af4a4016765b03b8cad6764"
+      }
+    },
+    "structure_order_ambiguity": {
+      "status": "valid_relabeling_counterexample_verified_NOT_dataset_cause_established",
+      "artifact": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\joint_order_ambiguity_20261012_v2\\audit.json",
+      "sha256": "592a12775e2ff98f0dbd21d814d4177e6cbda71c09000363661341f823647c30",
+      "summary": {
+        "train": {
+          "assets": 32,
+          "with_equivalent_siblings": 31
+        },
+        "valid": {
+          "assets": 64,
+          "with_equivalent_siblings": 64
+        }
+      },
+      "actual_asset_counterexample": {
+        "key": "train_2724",
+        "asset_id": "oxl_704f5523f60cb9da3b1d",
+        "split": "train",
+        "joint_count": 52,
+        "interchangeable_groups": 4,
+        "has_equivalent_sibling_subtrees": true,
+        "parent": 11,
+        "subtree_size": 19,
+        "equivalent_child_count": 2,
+        "swapped_query_ordered_l1": 0.3547225296497345,
+        "valid_solution_pair_loss": 0.17731145024299622,
+        "collapsed_solution_pair_loss": 0.17731145024299622,
+        "collapsed_solution_gradient_maxabs": 0.0,
+        "GT_self_query_F1": 1.0,
+        "swapped_query_F1": 1.0,
+        "collapsed_query_F1": 0.3431372549019608
+      },
+      "limit": "The pair is constructed from valid relabelings of an actual asset; this does NOT show that both annotations of identical input geometry exist in the training set, nor prove this is the measured dataset-level regression cause."
+    }
   }
 }

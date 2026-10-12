@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from contextlib import nullcontext
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,13 +17,51 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from motion_experiment_runtime import guard, load_config, source_metadata, write_json
 from train_virtual_frame import dataset_for, evaluation_rows, load_entries, optimizer_for, prepare
-from virtual_frame_runtime import build_virtual_model, file_sha256, normalize_asset_gradients, set_exposure_lr
+from virtual_frame_runtime import build_virtual_model, file_sha256, finite_gradient_groups, normalize_asset_gradients, set_exposure_lr
 from rigweave.dynamic_rig.virtual_frame_rig import coordinate_regression_loss
 
 
+def single_asset_inputs(surface, targets, mode):
+    if mode not in {"single_static", "single_dynamic"} or len(targets["asset_id"]) != 1:
+        raise ValueError("single-asset diagnosis requires exactly one asset and a known mode")
+    surface, targets = dict(surface), dict(targets)
+    if mode == "single_static":
+        for key in ("dense_points", "dense_normals", "query_points", "query_normals"):
+            surface[key] = surface[key][:, :1].expand_as(surface[key]).clone()
+        for key in ("frame_target_joints", "selected_frames", "frame_mesh_bbox_side"):
+            targets[key] = targets[key][:, :1].expand_as(targets[key]).clone()
+        targets["target_joints"] = targets["frame_target_joints"][:, 0]
+    return surface, targets
+
+
+def input_digest(surface, targets):
+    digest = hashlib.sha256()
+    for prefix, mapping in (("surface", surface), ("targets", targets)):
+        for key, value in sorted(mapping.items()):
+            if isinstance(value, torch.Tensor):
+                digest.update(f"{prefix}.{key}:{tuple(value.shape)}:{value.dtype}".encode())
+                digest.update(value.detach().cpu().contiguous().numpy().tobytes())
+    return digest.hexdigest()
+
+
+def fitting_passed(measured, threshold):
+    return (measured["xyz_l1"] <= threshold and measured["query_xyz_l1"] <= threshold
+            and measured["structure_ce"] <= .01 and measured["all_generated_parents_exact"]
+            and measured["generation_F1"] >= measured["oracle_query_F1"] - .05)
+
+
 @torch.no_grad()
-def measure(model, surface, targets, xyz_weight, cached_reference=None):
+def measure(model, surface, targets, xyz_weight, cached_reference=None, full_path_check=False):
     from eval_dynamic_rig_generation import _topology_metrics
+    full_train = None
+    if full_path_check:
+        model.train()
+        with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16, cache_enabled=False):
+            output = model(surface, targets, xyz_weight=xyz_weight)
+            if not output["loss"].requires_grad:
+                raise RuntimeError("training loss has no gradient graph")
+            full_train = output["joints"].detach()
+            del output
     model.eval()
     with torch.autocast("cuda", dtype=torch.bfloat16):
         anchors, memory = model.encode(surface)
@@ -63,13 +102,23 @@ def measure(model, surface, targets, xyz_weight, cached_reference=None):
             rows.append({"asset_id": targets["asset_id"][i], "parents": parents, "target": gt,
                          "teacher_xyz": xyz, "generated_xyz": pred, "generated_parents": generated.get("parents"),
                          "success": generated["success"], "teacher_F1": _topology_metrics(xyz[0], parents, gt[0], parents)["edge_f1"],
+                         "oracle_query_F1": _topology_metrics(gt[0], parents, gt[0], parents)["edge_f1"],
+                         "generated_parents_exact": generated.get("parents") == parents,
+                         "frame_xyz_l1": np.abs(xyz-gt).mean((1, 2)).tolist(),
                          "generation_F1": _topology_metrics(pred[0], generated["parents"], gt[0], parents)["edge_f1"] if pred is not None else 0.})
     summary = {"structure_ce": float(teacher["structure_loss"]), "xyz_l1": float(teacher["xyz_loss"]),
                "query_xyz_l1": float(np.mean([np.abs(row["teacher_xyz"][0] - row["target"][0]).mean() for row in rows])),
                "teacher_F1": float(np.mean([row["teacher_F1"] for row in rows])),
                "generation_F1": float(np.mean([row["generation_F1"] for row in rows])),
+               "oracle_query_F1": float(np.mean([row["oracle_query_F1"] for row in rows])),
+               "all_generated_parents_exact": all(row["generated_parents_exact"] for row in rows),
+               "per_asset_frame_xyz_l1": [row["frame_xyz_l1"] for row in rows],
                "wrong_asset_anchors_xyz_l1": float(shuffled["xyz_loss"]),
                "wrong_asset_structure_memory_xyz_l1": float(wrong_memory["xyz_loss"]), **consistency, **replay}
+    if full_train is not None:
+        difference = (full_train.float() - teacher["joints"].float()).abs()
+        summary.update(full_train_eval_xyz_meanabs=float(difference.mean()),
+                       full_train_eval_xyz_maxabs=float(difference.max()))
     return summary, rows, (anchors.detach(), teacher["joint_features"].detach())
 
 
@@ -79,13 +128,15 @@ def main():
     args = parser.parse_args()
     plan = load_config(args.config)
     config = load_config(plan["virtual_config"])
-    guard(config, "preflight")
+    guard(config, plan.get("operation", "preflight"))
     state = json.loads((Path(config["runtime"]["repo"]) / "model_training/state/current.json").read_text())
     if state["active_operation"]["label"] != plan["label"] or state["active_operation"]["config_sha256"] != file_sha256(args.config):
         raise ValueError("fitting diagnostic differs from recorded operation")
     source = source_metadata(config)
     rank = int(os.environ.get("LOCAL_RANK", 0))
     mode = plan["rank_modes"][rank]
+    single = mode in {"single_static", "single_dynamic"}
+    end_to_end = single or mode == "end_to_end"
     device = torch.device("cuda", rank)
     torch.cuda.set_device(device)
     torch.cuda.set_per_process_memory_fraction(.9, device)
@@ -101,7 +152,8 @@ def main():
     payload = torch.load(plan["checkpoint"], map_location="cpu", mmap=True, weights_only=False)
     assert payload["samples"] == 5040 and payload["step"] == 105
     model.load_state_dict(payload["model"], strict=True)
-    optimizer.load_state_dict(payload["optimizer"])
+    if not plan.get("reset_optimizer", False):
+        optimizer.load_state_dict(payload["optimizer"])
     del payload
     selected = evaluation_rows(load_entries(config), config)["train"]
     positions = [next(i for i, row in enumerate(selected) if row["manifest_index"] == index) for index in plan["manifest_indices"]]
@@ -110,29 +162,39 @@ def main():
         raise ValueError("diagnostic assets must actually have been exposed during the trial")
     dataset = dataset_for(selected, config, mode="seen_eval")
     surface, targets = prepare(dataset, positions, config, device)
+    original_frames = targets["selected_frames"].cpu().tolist()
+    if single:
+        surface, targets = single_asset_inputs(surface, targets, mode)
+    frozen_digest = input_digest(surface, targets)
     xyz_weight = config["optimization"]["xyz_weight"]
-    initial, initial_rows, cached = measure(model, surface, targets, xyz_weight)
+    initial, initial_rows, cached = measure(model, surface, targets, xyz_weight, full_path_check=single)
     report = {"complete": False, "mode": mode, "source": source, "checkpoint": plan["checkpoint"],
               "initialization": initialization, "initial": initial, "updates": [], "evaluations": {"0": initial},
               "assets": targets["asset_id"], "selected_frames": targets["selected_frames"].cpu().tolist(),
+              "original_selected_frames": original_frames, "input_sha256": frozen_digest,
+              "optimizer_reset": plan.get("reset_optimizer", False),
               "started_at": datetime.now(timezone.utc).isoformat(), "diagnostic_only_no_formal_weight_reuse": True}
     write_json(report_path, report)
-    if mode != "end_to_end":
+    if not end_to_end:
         model.requires_grad_(False)
         model.positions.requires_grad_(True)
     model.train()
     size = len(positions)
+    stable_passes = 0
     print("FIT_INITIAL " + json.dumps({"mode": mode, **initial}), flush=True)
     for step in range(1, plan["updates"] + 1):
         started = time.monotonic()
         optimizer.zero_grad(set_to_none=True)
-        lr, _ = set_exposure_lr(optimizer, 5040 + (step - 1) * size, config)
+        if "constant_lr" in plan:
+            lr = plan["constant_lr"]
+        else:
+            lr, _ = set_exposure_lr(optimizer, 5040 + (step - 1) * size, config)
         multiplier = plan.get("diagnostic_lr_multipliers", {}).get(mode, 1.)
         lr *= multiplier
         for group in optimizer.param_groups:
             group["lr"] = lr
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            if mode == "end_to_end":
+            if end_to_end:
                 output = model(surface, targets, xyz_weight=xyz_weight)
                 per_asset = output["loss_per_asset"]
                 xyz_loss = output["xyz_loss"]
@@ -152,13 +214,22 @@ def main():
                 raise ValueError("nonfinite diagnostic loss")
             per_asset.sum().backward()
         normalize_asset_gradients(model.parameters(), global_assets=size, world_size=1)
+        if single and step == 1:
+            report["first_gradient_groups"] = finite_gradient_groups(model)
         gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
         optimizer.step()
         row = {"step": step, "xyz_l1": float(xyz_loss.detach()), "structure_ce": float(structure_loss.detach()),
                "gradient_norm": float(gradient_norm), "lr": lr, "seconds": time.monotonic()-started}
         report["updates"].append(row)
         if step in plan["evaluation_updates"]:
-            measured, records, _ = measure(model, surface, targets, xyz_weight, cached if mode != "end_to_end" else None)
+            measured, records, _ = measure(model, surface, targets, xyz_weight, cached if not end_to_end else None,
+                                          full_path_check=single)
+            if input_digest(surface, targets) != frozen_digest:
+                raise RuntimeError("fixed training inputs or labels mutated")
+            if single:
+                passed = fitting_passed(measured, plan["acceptance_xyz_l1"])
+                stable_passes = stable_passes + 1 if passed else 0
+                measured.update(fitting_threshold_passed=passed, consecutive_passes=stable_passes)
             report["evaluations"][str(step)] = measured
             torch.save({"initial": initial_rows, "current": records}, root / f"{mode}_predictions_step{step}.pt")
             print("FIT_EVAL " + json.dumps({"mode": mode, "step": step, **measured}), flush=True)
@@ -166,11 +237,17 @@ def main():
         write_json(report_path, report)
         print("FIT " + json.dumps({"mode": mode, **row}), flush=True)
         del per_asset, xyz_loss, structure_loss
-        if mode == "end_to_end":
+        if end_to_end:
             del output
         else:
             del xyz, per_xyz
-    report.update(complete=True, finished_at=datetime.now(timezone.utc).isoformat())
+        if single and stable_passes >= 2:
+            break
+    report.update(complete=True, finished_at=datetime.now(timezone.utc).isoformat(),
+                  final_input_sha256=input_digest(surface, targets))
+    if single:
+        report.update(fitting_accepted=stable_passes >= 2,
+                      stop_reason="two_consecutive_fit_checks" if stable_passes >= 2 else "update_limit")
     write_json(report_path, report)
 
 

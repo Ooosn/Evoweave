@@ -46,6 +46,8 @@ def _validate_target_parents(parents: np.ndarray, path: Path) -> None:
 
 
 def _load_frame_target_joints(base: DynamicRigSample) -> torch.Tensor:
+    if getattr(base, "root_rt", None) is not None:
+        raise ValueError("legacy SharedStructureDataset does not support root_rt; use VirtualFrameDataset")
     path = Path(base.path)
     selected = _require_integer_array(base.selected_frames, "selected_frames", path)
     frame_vertices = _as_numpy(base.frame_vertices)

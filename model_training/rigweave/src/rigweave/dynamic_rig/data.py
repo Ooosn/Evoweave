@@ -10,6 +10,7 @@ import torch
 from torch.utils.data import Dataset
 
 from .frame_batch_sampler import FrameSampleRequest
+from .root_rt import BATCH_KEYS, align_points, load_root_rt, normalize_inputs, validate_descriptor
 
 def _resolve_manifest_path(value: str | Path) -> Path:
     path = Path(value).expanduser()
@@ -43,10 +44,11 @@ class DynamicRigSample:
     alignment_root_index: int
     vertex_count: int
     face_count: int
+    root_rt: dict[str, torch.Tensor] | None = None
 
 
-def _load_manifest(path: Path, limit: int = 0) -> list[Path]:
-    rows: list[Path] = []
+def _load_manifest_entries(path: Path, limit: int = 0) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
@@ -58,12 +60,27 @@ def _load_manifest(path: Path, limit: int = 0) -> list[Path]:
             value = row.get("path") or row.get("npz_path") or row.get("file")
             if value is None:
                 raise ValueError(f"manifest JSON row has no path-like field: {line[:160]}")
-            rows.append(_resolve_manifest_path(value))
+            validate_descriptor(row)
+            _resolve_manifest_path(value)
+            rows.append({**row, "path": value})
         else:
-            rows.append(_resolve_manifest_path(line))
+            _resolve_manifest_path(line)
+            rows.append({"path": line})
     if limit > 0:
         rows = rows[:limit]
     return rows
+
+
+def _load_manifest(path: Path, limit: int = 0) -> list[Path]:
+    return [_resolve_manifest_path(row["path"]) for row in _load_manifest_entries(path, limit)]
+
+
+def _collate_root_rt(values: list[dict[str, torch.Tensor] | None]) -> dict[str, torch.Tensor]:
+    if all(value is None for value in values):
+        return {}
+    if any(value is None for value in values):
+        raise ValueError("cannot mix root_rt and legacy samples in one batch")
+    return {key: torch.stack([value[key] for value in values]) for key in BATCH_KEYS}
 
 
 def _parents_to_list(parents: np.ndarray) -> list[int | None]:
@@ -328,8 +345,13 @@ class DynamicRigManifestDataset(Dataset):
         target_root_policy: str = "legacy",
         input_space_policy: str = "mesh_query_bbox",
         minimum_random_frames: int = 0,
+        global_rotation: np.ndarray | None = None,
     ) -> None:
-        self.paths = _load_manifest(Path(manifest), limit=limit)
+        self.entries = _load_manifest_entries(Path(manifest), limit=limit)
+        self.paths = [_resolve_manifest_path(row["path"]) for row in self.entries]
+        self.global_rotation = global_rotation
+        if global_rotation is not None and any("root_rt" not in row for row in self.entries):
+            raise ValueError("global_rotation requires root_rt manifest metadata")
         self.tokenizer = tokenizer
         self.frame_count = int(frame_count)
         self.cls_name = cls_name
@@ -366,7 +388,6 @@ class DynamicRigManifestDataset(Dataset):
             sampling_seed = index.sampling_seed if self.random_query else None
             index = index.item_index
         path = self.paths[int(index)]
-        raw = np.load(path, allow_pickle=True)
         required = [
             "canonical_schema_version",
             "frame_vertices_rootspace",
@@ -378,9 +399,14 @@ class DynamicRigManifestDataset(Dataset):
             "target_has_skin",
             "target_is_synthetic_root",
         ]
-        missing = [name for name in required if name not in raw.files]
-        if missing:
-            raise KeyError(f"{path} is not a strict rootless training NPZ; missing {missing}")
+        with np.load(path, allow_pickle=True) as archive:
+            missing = [name for name in required if name not in archive.files]
+            if missing:
+                raise KeyError(f"{path} is not a strict rootless training NPZ; missing {missing}")
+            raw = {key: archive[key] for key in required}
+            for key in ("frame_numbers", "target_raw_indices"):
+                if key in archive.files:
+                    raw[key] = archive[key]
         schema_arr = np.asarray(raw["canonical_schema_version"])
         schema_version = str(schema_arr.reshape(-1)[0])
         if schema_version not in {"rootless_dynamic_npz_v1", "rootless_dynamic_npz_v2", "rootless_dynamic_npz_v3"}:
@@ -416,6 +442,14 @@ class DynamicRigManifestDataset(Dataset):
         if bool(target_is_synthetic_root.any()):
             raise ValueError(f"{path} target still contains synthetic root entries")
         active_skin_joint_count = int(target_has_skin.sum())
+        rt = load_root_rt(
+            self.entries[int(index)], len(raw_frame_vertices), raw.get("frame_numbers"),
+            root_index=int(raw["target_raw_indices"][roots[0]]) if "target_raw_indices" in raw else None,
+        )
+        if rt is not None:
+            alignment_root_index = rt.root_index
+            raw_frame_vertices = align_points(raw_frame_vertices, rt)
+            posed_joints = align_points(posed_joints, rt)
         posed_tails = None
         frame_vertices, target_joints, target_tails, _selected = _select_query_sequence(
             raw_frame_vertices,
@@ -433,19 +467,25 @@ class DynamicRigManifestDataset(Dataset):
             sampling_seed=sampling_seed,
         )
 
-        # Normalize by the query mesh bbox. Root removal has already been done
-        # by the cleaned rootless NPZ builder; the model reader does not derive
-        # or rewrite roots.
-        query_vertices = frame_vertices[0]
-        lo = query_vertices.min(axis=0)
-        hi = query_vertices.max(axis=0)
-        query_center = ((lo + hi) * 0.5).astype(np.float32)
-        query_scale = float(np.max((hi - lo) * 0.5))
-        if not np.isfinite(query_scale) or query_scale < 1.0e-8:
-            raise ValueError(f"{path} query mesh has degenerate bbox after query-root alignment")
-        frames_n = ((frame_vertices - query_center) / query_scale).astype(np.float32)
+        rt_metadata = None
+        if rt is not None:
+            frames_n, all_joints_n, query_center, query_scale, augmentation = normalize_inputs(
+                frame_vertices, posed_joints[_selected], self.global_rotation)
+            joints_n = all_joints_n[0]
+            rt_metadata = {key: torch.from_numpy(value) for key, value in rt.selected_metadata(
+                _selected, augmentation).items()}
+        else:
+            # Preserve legacy query-mesh coordinates when no RT descriptor exists.
+            query_vertices = frame_vertices[0]
+            lo = query_vertices.min(axis=0)
+            hi = query_vertices.max(axis=0)
+            query_center = ((lo + hi) * 0.5).astype(np.float32)
+            query_scale = float(np.max((hi - lo) * 0.5))
+            if not np.isfinite(query_scale) or query_scale < 1.0e-8:
+                raise ValueError(f"{path} query mesh has degenerate bbox after query-root alignment")
+            frames_n = ((frame_vertices - query_center) / query_scale).astype(np.float32)
+            joints_n = ((target_joints - query_center) / query_scale).astype(np.float32)
         target_parents = _parents_to_list(target_parent_array)
-        joints_n = ((target_joints - query_center) / query_scale).astype(np.float32)
         tails_n = _derive_tokenizer_tails(joints_n, target_parents)
 
         face_normals_seq = np.stack([_face_normals(frame, faces) for frame in frames_n], axis=0)
@@ -481,6 +521,7 @@ class DynamicRigManifestDataset(Dataset):
             alignment_root_index=int(alignment_root_index),
             vertex_count=int(raw_frame_vertices.shape[1]),
             face_count=int(faces.shape[0]),
+            root_rt=rt_metadata,
         )
 
 
@@ -562,4 +603,5 @@ def dynamic_rig_collate(batch: list[DynamicRigSample], pad_token: int) -> dict[s
         "vertex_count": torch.tensor([item.vertex_count for item in batch], dtype=torch.long),
         "face_count": torch.tensor([item.face_count for item in batch], dtype=torch.long),
         "pad_token": pad_token,
+        **_collate_root_rt([item.root_rt for item in batch]),
     }

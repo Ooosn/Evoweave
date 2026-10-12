@@ -494,6 +494,8 @@ def _load_puppeteer_manifest(
         raw_rows += 1
         if line.startswith("{"):
             row = json.loads(line)
+            if "root_rt" in row:
+                raise ValueError("Puppeteer root_rt manifest preprocessing is not supported; use flat or virtual-frame loader")
             value = row.get("path") or row.get("npz_path") or row.get("file")
             if value is None:
                 raise ValueError(f"manifest JSON row has no path-like field: {line[:160]}")

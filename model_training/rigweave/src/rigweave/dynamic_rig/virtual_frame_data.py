@@ -1,4 +1,4 @@
-"""Online, mesh-only frame selection and trainable surface inputs."""
+"""Online frame selection and surface inputs with optional manifest-bound root RT."""
 from __future__ import annotations
 
 import hashlib
@@ -14,6 +14,7 @@ from .data import select_mesh_frame_ids
 from .frame_batch_sampler import FrameSampleRequest
 from .sampling import materialize_trackable_surface, sample_trackable_surface
 from .shared_structure_medium_data import load_medium_batch, partition_raw_frames
+from .root_rt import BATCH_KEYS
 
 
 def read_virtual_manifest(path: str | Path, *, expected_count: int, expected_sha256: str) -> list[dict[str, Any]]:
@@ -41,6 +42,7 @@ class VirtualFrameDataset(Dataset):
         sampling_seed: int = 20260529, frames: int = 8, heldout_frames: int = 8,
         mode: str = "train", motion_fps_ratio: float = .75, minimum_random_frames: int = 1,
         motion_vertex_samples: int = 512,
+        global_rotation: np.ndarray | None = None,
     ) -> None:
         if mode not in {"train", "seen_eval", "heldout_eval"}:
             raise ValueError("unknown frame partition mode")
@@ -53,6 +55,7 @@ class VirtualFrameDataset(Dataset):
         self.motion_fps_ratio = motion_fps_ratio
         self.minimum_random_frames = minimum_random_frames
         self.motion_vertex_samples = motion_vertex_samples
+        self.global_rotation = global_rotation
 
     def __len__(self) -> int:
         return len(self.entries)
@@ -83,7 +86,7 @@ class VirtualFrameDataset(Dataset):
             selection.update(raw_frame_count=len(vertices), heldout_raw_ids=heldout.tolist())
             return selected
 
-        batch = load_medium_batch(path, choose)
+        batch = load_medium_batch(entry, choose, global_rotation=self.global_rotation)
         vertices = batch["frame_vertices"]
         batch["frame_mesh_bbox_side"] = (vertices.amax(dim=2) - vertices.amin(dim=2)).amax(dim=-1)
         batch.update(asset_id=entry["asset_id"], sampling_seed=int(seed), frame_partition=self.mode, **selection)
@@ -115,6 +118,11 @@ def collate_virtual_targets(batches: list[dict[str, Any]], device: torch.device 
     }
     for key in ("selected_frames", "query_center", "query_scale", "frame_mesh_bbox_side"):
         result[key] = torch.cat([x[key] for x in batches], dim=0).to(device)
+    if any(any(key in batch for key in BATCH_KEYS) for batch in batches):
+        if not all(all(key in batch for key in BATCH_KEYS) for batch in batches):
+            raise ValueError("cannot mix root_rt and legacy/incomplete samples in one batch")
+        for key in BATCH_KEYS:
+            result[key] = torch.cat([batch[key] for batch in batches], dim=0).to(device)
     return result
 
 

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from numbers import Integral
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 import torch
 
 from .data import _face_normals, _vertex_normals
 from .shared_structure_data import _require_integer_array, _validate_target_parents
+from .root_rt import BATCH_KEYS, PADDING, align_points, load_root_rt, normalize_inputs
 
 
 FrameIds = Sequence[int] | np.ndarray | torch.Tensor
@@ -90,17 +91,21 @@ def _joint_flags(value: Any, name: str, joints: int) -> np.ndarray:
 
 
 def load_medium_batch(
-    path: str | Path, frame_ids: FrameIds | Callable[[np.ndarray], FrameIds], cls_name: str = "articulationxl",
+    path: str | Path | Mapping[str, Any], frame_ids: FrameIds | Callable[[np.ndarray], FrameIds],
+    cls_name: str = "articulationxl", *, global_rotation: np.ndarray | None = None,
 ) -> dict[str, Any]:
     """Read a complete rootless-v3 target tree into an unpadded CPU B=1 batch.
 
     ``frame_ids`` are original NPZ row IDs in the requested order, not source
-    animation frame numbers. The first selected mesh alone defines the common
-    query chart. A callable selects IDs using only the loaded mesh geometry.
-    No legacy tokenizer, joint filtering, or GT bounds are used.
+    animation frame numbers. Pass the complete manifest row to consume root_rt.
+    RT rows use the selected input meshes' union bbox; legacy paths retain the
+    query chart. A callable sees aligned meshes before selecting input frames.
     """
     ids = None if callable(frame_ids) else _frame_ids(frame_ids, "frame_ids")
-    path = Path(path).expanduser()
+    row = dict(path) if isinstance(path, Mapping) else {"path": str(path)}
+    path = Path(row["path"]).expanduser()
+    if global_rotation is not None and "root_rt" not in row:
+        raise ValueError("global_rotation requires root_rt manifest metadata")
     if not isinstance(cls_name, str) or not cls_name:
         raise ValueError("cls_name must be a non-empty string")
     required = (
@@ -119,6 +124,13 @@ def load_medium_batch(
         if vertices.shape[-1] != 3 or min(vertices.shape[:2]) < 1:
             raise ValueError("frame_vertices_rootspace must have non-empty shape (F,V,3)")
         total_frames, vertex_count, _ = vertices.shape
+        all_frame_numbers = raw["frame_numbers"] if "frame_numbers" in raw.files else None
+        retained_root = None
+        if "target_raw_indices" in raw.files:
+            retained_root = int(np.asarray(raw["target_raw_indices"])[0])
+        rt = load_root_rt(row, total_frames, all_frame_numbers, root_index=retained_root)
+        if rt is not None:
+            vertices = align_points(vertices, rt)
         if callable(frame_ids):
             ids = _frame_ids(frame_ids(vertices), "frame_ids")
         if np.any(ids >= total_frames):
@@ -144,6 +156,8 @@ def load_medium_batch(
         synthetic = _joint_flags(raw["target_is_synthetic_root"], "target_is_synthetic_root", joints)
         if synthetic.any():
             raise ValueError("target_is_synthetic_root must be false for every real target joint")
+        if rt is not None:
+            targets = align_points(targets, rt)
         frame_numbers = None
         if "frame_numbers" in raw.files:
             frame_numbers = _require_integer_array(raw["frame_numbers"], "frame_numbers", path)
@@ -152,15 +166,19 @@ def load_medium_batch(
             frame_numbers = frame_numbers[ids].copy()
         selected_vertices, selected_targets = vertices[ids], targets[ids]
 
-    query = selected_vertices[0]
-    lo, hi = query.min(axis=0), query.max(axis=0)
-    center = (lo + hi) * 0.5
-    scale = np.max((hi - lo) * 0.5)
-    if not np.isfinite(center).all() or not np.isfinite(scale) or scale < 1.0e-8:
-        raise ValueError("first selected query mesh must have finite non-degenerate bounds")
-    with np.errstate(over="ignore", invalid="ignore"):
-        vertices_n = ((selected_vertices - center) / scale).astype(np.float32)
-        targets_n = ((selected_targets - center) / scale).astype(np.float32)
+    if rt is not None:
+        vertices_n, targets_n, center, scale, augmentation = normalize_inputs(
+            selected_vertices, selected_targets, global_rotation)
+    else:
+        query = selected_vertices[0]
+        lo, hi = query.min(axis=0), query.max(axis=0)
+        center = (lo + hi) * 0.5
+        scale = np.max((hi - lo) * 0.5)
+        if not np.isfinite(center).all() or not np.isfinite(scale) or scale < 1.0e-8:
+            raise ValueError("first selected query mesh must have finite non-degenerate bounds")
+        with np.errstate(over="ignore", invalid="ignore"):
+            vertices_n = ((selected_vertices - center) / scale).astype(np.float32)
+            targets_n = ((selected_targets - center) / scale).astype(np.float32)
     if not np.isfinite(vertices_n).all() or not np.isfinite(targets_n).all():
         raise ValueError("query normalization produced non-finite geometry or targets")
     face_normals = np.stack([_face_normals(frame, faces) for frame in vertices_n])
@@ -191,10 +209,15 @@ def load_medium_batch(
     }
     if frame_numbers is not None:
         batch["frame_numbers"] = torch.from_numpy(frame_numbers)[None]
+    if rt is not None:
+        batch.update({key: torch.from_numpy(value)[None] for key, value in rt.selected_metadata(
+            ids, augmentation).items()})
     return batch
 
 
 def _validate_source_batch(batch: dict[str, Any]) -> np.ndarray:
+    if any(key in batch for key in BATCH_KEYS) and not all(key in batch for key in BATCH_KEYS):
+        raise ValueError("source view has incomplete root_rt metadata")
     if any(key in batch for key in _TARGET_AFFINES):
         raise ValueError("source view requires a common query chart, not per-mesh target normalization")
     required = (
@@ -276,13 +299,20 @@ def select_source_view(batch: dict[str, Any], raw_frame_ids: FrameIds) -> dict[s
     indices = torch.tensor([slots[int(raw_id)] for raw_id in requested], dtype=torch.long, device=device)
     output = dict(batch)
     for key in ("frame_vertices", "vertex_normals", "face_normals", "frame_target_joints",
-                "selected_frames", "frame_mask", "frame_numbers"):
+                "selected_frames", "frame_mask", "frame_numbers", "root_rt_rotations", "root_rt_translations"):
         if key in batch:
             output[key] = batch[key].index_select(1, indices)
-    query = output["frame_vertices"][:, 0]
-    lo, hi = query.amin(dim=1), query.amax(dim=1)
+    uses_rt = "root_rt_rotations" in batch
+    if uses_rt:
+        lo = output["frame_vertices"].amin(dim=(1, 2))
+        hi = output["frame_vertices"].amax(dim=(1, 2))
+    else:
+        query = output["frame_vertices"][:, 0]
+        lo, hi = query.amin(dim=1), query.amax(dim=1)
     local_center = (lo + hi) * 0.5
     local_scale = ((hi - lo) * 0.5).amax(dim=-1)
+    if uses_rt:
+        local_scale = local_scale * PADDING
     source_center = batch["query_center"] + batch["query_scale"][:, None] * local_center
     source_scale = batch["query_scale"] * local_scale
     if not bool(torch.isfinite(source_center).all()) or not bool(torch.isfinite(source_scale).all()) or not bool((source_scale >= 1e-8).all()):
@@ -292,5 +322,7 @@ def select_source_view(batch: dict[str, Any], raw_frame_ids: FrameIds) -> dict[s
         if not bool(torch.isfinite(output[key]).all()):
             raise ValueError(f"rebased {key} must be finite")
     output["target_joints"] = output["frame_target_joints"][:, 0].clone()
+    if uses_rt and bool((output["frame_target_joints"].abs() > 1).any()):
+        raise ValueError("root_rt normalized GT outside [-1,1] in selected source view")
     output["query_center"], output["query_scale"] = source_center, source_scale
     return output

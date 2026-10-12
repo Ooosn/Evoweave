@@ -444,12 +444,24 @@ def collect_skin_weights(mesh_offsets, bone_to_index, joint_count):
     weights = weights / np.maximum(sums[:, None], 1e-8)
     return weights.astype(np.float32), coverage
 
+def reject_invisible_sampled_mesh(obj, frame):
+    if obj.hide_viewport or obj.hide_render or not obj.visible_get():
+        fail(
+            "selected_mesh_hidden_at_sampled_frame",
+            mesh=obj.name,
+            frame=int(frame),
+            hide_viewport=bool(obj.hide_viewport),
+            hide_render=bool(obj.hide_render),
+            visible_in_view_layer=bool(obj.visible_get()),
+        )
+
 def collect_frame_vertices(mesh_offsets, frame):
     bpy.context.scene.frame_set(int(frame))
     bpy.context.view_layer.update()
     depsgraph = bpy.context.evaluated_depsgraph_get()
     coords = []
     for obj, _, rest_count in mesh_offsets:
+        reject_invisible_sampled_mesh(obj, frame)
         eval_obj = obj.evaluated_get(depsgraph)
         eval_mesh = eval_obj.to_mesh()
         try:

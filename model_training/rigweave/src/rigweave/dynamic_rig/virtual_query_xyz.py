@@ -242,7 +242,9 @@ class VirtualQueryXYZRig(nn.Module):
             loss, accuracy = sequence_ce(logits, labels)
             losses.append(loss)
             accuracies.append(accuracy)
-        main = torch.stack(losses, dim=1).mean(dim=1)
+        main_per_frame = torch.stack(losses, dim=1)
+        accuracy_per_frame = torch.stack(accuracies, dim=1)
+        main = main_per_frame.mean(dim=1)
         auxiliary = main.new_zeros(main.shape)
         auxiliary_accuracy = auxiliary
         if auxiliary_weight > 0:
@@ -250,7 +252,8 @@ class VirtualQueryXYZRig(nn.Module):
             auxiliary, auxiliary_accuracy = sequence_ce(aux_logits, targets['aux_labels'])
         per_asset = main + auxiliary_weight * auxiliary
         return {'loss': per_asset.mean(), 'loss_per_asset': per_asset, 'main_loss': main.mean(),
-                'auxiliary_loss': auxiliary.mean(), 'main_accuracy': torch.stack(accuracies, dim=1).mean(),
+                'main_loss_per_frame': main_per_frame, 'main_accuracy_per_frame': accuracy_per_frame,
+                'auxiliary_loss': auxiliary.mean(), 'main_accuracy': accuracy_per_frame.mean(),
                 'auxiliary_accuracy': auxiliary_accuracy.mean()}
 
     def forward(self, surface, targets, *, auxiliary_weight):

@@ -18,8 +18,6 @@ from torch.utils.checkpoint import checkpoint
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'model_training/rigweave/src'))
-import probe_virtual_query_xyz as probe
-from virtual_query_xyz_runtime import build_model, sha256, write_json
 from rigweave.dynamic_rig.motion_encoder import AnchorWiseAlternatingMotionEncoder
 from rigweave.dynamic_rig.motion_evidence import grouped_motion_evidence
 from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZRig
@@ -106,6 +104,7 @@ class ReferenceConditionRig(nn.Module):
 
 
 def verify(args):
+    from virtual_query_xyz_runtime import sha256
     state = json.loads((ROOT/'model_training/state/current.json').read_text())
     op = state['active_operation']
     if state['architecture_contract']['id'] != 'virtual_query_xyz_aux_ids_v1':
@@ -127,6 +126,8 @@ def verify(args):
 
 
 def main():
+    import probe_virtual_query_xyz as probe
+    from virtual_query_xyz_runtime import build_model, write_json
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)

@@ -177,6 +177,20 @@ class ModelTests(unittest.TestCase):
         loss.backward()
         self.assertTrue(torch.isfinite(self.model.motion_encoder.virtual_slots.grad).all())
 
+    def test_teacher_metric_rows_are_per_frame_not_repeated_asset_means(self):
+        self.model.eval()
+        real, virtual = self.model.encode(self.surface)
+        output = self.model.forward_encoded(real, virtual, self.targets, auxiliary_weight=0.)
+        self.assertEqual(output['main_loss_per_frame'].shape, (2, 3))
+        condition = self.model.conditions(real, virtual)
+        for frame in range(3):
+            ids, mask = self.targets['main_input_ids'][:, frame], self.targets['main_attention_mask'][:, frame]
+            logits = self.model.main_logits(condition[:, frame], ids[:, :-1], mask[:, :-1])
+            loss, accuracy = sequence_ce(logits, ids[:, 1:].masked_fill(~mask[:, 1:], -100))
+            torch.testing.assert_close(output['main_loss_per_frame'][:, frame], loss, atol=0, rtol=0)
+            torch.testing.assert_close(output['main_accuracy_per_frame'][:, frame], accuracy, atol=0, rtol=0)
+        torch.testing.assert_close(output['main_loss'], output['main_loss_per_frame'].mean(1).mean(), atol=0, rtol=0)
+
     def test_original_vocabulary_processor_preserves_prefix_and_scores(self):
         seen = []
         class Tokenizer:

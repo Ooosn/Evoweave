@@ -103,7 +103,8 @@ def evaluate(model, items, tokenizer, config, output, step):
             record = {'asset_index': asset_index, 'asset_id': geometry['asset_id'][0], 'frame_index': frame,
                       'raw_frame_index': int(geometry['selected_frames'][0, frame]), 'status': predicted['status'],
                       'success': False, 'quantized_edge_f1': 0., 'original_edge_f1': 0., 'exact_count': False,
-                      'main_ce': float(teacher['main_loss']), 'main_accuracy': float(teacher['main_accuracy']),
+                      'main_ce': float(teacher['main_loss_per_frame'][0, frame]),
+                      'main_accuracy': float(teacher['main_accuracy_per_frame'][0, frame]),
                       'generated_tokens': predicted['tokens'], 'target_tokens': ids.tolist(),
                       'target_quantized_joints': truth.joints.tolist(), 'target_quantized_parents': truth_parents,
                       'quantized_j2j': None}
@@ -136,7 +137,7 @@ def evaluate(model, items, tokenizer, config, output, step):
     summary['quantized_j2j_successful_views'] = float(np.mean(distances)) if distances else None
     summary['geometry_scored_views'] = len(distances)
     report = {'step': step, 'views': len(records), 'summary': summary, 'fit_acceptance': bool(fit_acceptance),
-              'rows': records, 'failed_generations_scored_zero': True}
+              'rows': records, 'failed_generations_scored_zero': True, 'teacher_metrics_scope': 'per_frame'}
     write_json(output/f'evaluation_{step:04d}.json', report)
     print('EVALUATION '+json.dumps({k:v for k,v in report.items() if k!='rows'}), flush=True)
     model.train()

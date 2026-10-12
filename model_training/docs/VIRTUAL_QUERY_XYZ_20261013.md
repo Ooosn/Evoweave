@@ -256,3 +256,8 @@ without analyzing the previous stage.
   1024-virtual-query architecture or a candidate for formal training. It tests
   whether the old path fits under this exact small-sample protocol before
   assigning the failure to new conditioning or training duration.
+- Fixed a diagnostic-recording defect: per-frame rows previously repeated the
+  asset's mean teacher CE/accuracy. New rows carry their actual frame metrics,
+  with an explicit scope marker. The optimization objective, aggregate means,
+  and all recorded free predictions were unaffected. Combined model, adapter
+  and legacy-parity CPU suite now passes 22 tests.

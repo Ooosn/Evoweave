@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T04:41:42.076226+00:00",
+  "updated_at": "2026-10-12T04:50:27.855769+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Resolve fixed-input position-head oscillation with exact train/eval and analytic-gradient checks plus one isolated step-size contrast. Formal training remains blocked; do not change its approved peakLR or initialization."
+    "current_action": "Check one isolated SmoothL1 contrast at unchanged originalLR to test near-target oscillation; comparecachedpoststepversusrefreshedfeatureerrors. Formaltrainingstillblocked."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -340,11 +340,44 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Resolve fixed-input position-head oscillation with exact train/eval and analytic-gradient checks plus one isolated step-size contrast. Formal training remains blocked; do not change its approved peakLR or initialization.",
+  "next_required_result": "Check one isolated SmoothL1 contrast at unchanged originalLR to test near-target oscillation; comparecachedpoststepversusrefreshedfeatureerrors. Formaltrainingstillblocked.",
   "active_operation": {
-    "label": "fixed_pair_step_scale_v2",
+    "label": "fixed_pair_smooth_loss_v1",
     "operation": "preflight",
     "status": "prepared",
+    "accepted": false,
+    "prepared_at": "2026-10-12T04:50:27.855769+00:00",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_smooth_loss_20261012.json",
+    "config_sha256": "8789a33d77e4f4fa2e1cb827536403212134188d6b27e8c51b0e156cd8ce996c",
+    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_smooth_loss_v1",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_smooth_loss_20261012.json"
+    ],
+    "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
+    "acceptance": "One controlled loss-smoothness diagnostic, both arms retain original LR1x/BF16/head weights/Adam state/inputs. SmoothL1 beta0.1 common-coordinate units (5percent query bbox side) softens near-target gradients while keeping linear tails. Report ordinary L1/F1 for both, plus fixed-cached versus refreshed-feature losses to distinguish optimizer oscillation from feature jitter. No production loss change, no architecture change, no diagnostic-weight reuse or formal promotion."
+  },
+  "last_operation": {
+    "label": "fixed_pair_step_scale_v2",
+    "operation": "preflight",
+    "status": "completed",
     "accepted": false,
     "prepared_at": "2026-10-12T04:41:42.076226+00:00",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
@@ -373,44 +406,242 @@
     ],
     "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
     "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
-    "change": "Disable weight-cast cache only inside the diagnostic grad-enabled subcontext, preserving BF16; CPU minimal reproduction confirms cause and correction. Training autocast untouched."
-  },
-  "last_operation": {
-    "label": "fixed_pair_step_scale_v1",
-    "operation": "preflight",
-    "status": "failed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T04:38:09.727523+00:00",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
-    "config_sha256": "0963aacab8d8a4f2c8e92ce80f95a7f38c354f41a34258a6a54f5102e440bede",
-    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v1",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
+    "change": "Disable weight-cast cache only inside the diagnostic grad-enabled subcontext, preserving BF16; CPU minimal reproduction confirms cause and correction. Training autocast untouched.",
+    "complete": true,
+    "exit_code": 0,
+    "execution_valid": true,
+    "finished_at": "2026-10-12T04:50:27.855769+00:00",
+    "evaluations": {
+      "position_only": {
+        "0": {
+          "structure_ce": 0.612949788570404,
+          "xyz_l1": 0.273301899433136,
+          "query_xyz_l1": 0.2640049457550049,
+          "teacher_F1": 0.09777183600713013,
+          "generation_F1": 0.07352941176470588,
+          "wrong_asset_anchors_xyz_l1": 0.5389137864112854,
+          "wrong_asset_structure_memory_xyz_l1": 0.26209691166877747,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.0205078125,
+            0.10986328125,
+            0.1396484375
+          ],
+          "last_bias_gradient_expected": [
+            0.020456261932849884,
+            0.11001131683588028,
+            0.13928167521953583
+          ],
+          "last_bias_gradient_maxabs_error": 0.00036676228046417236
+        },
+        "10": {
+          "structure_ce": 0.6123352646827698,
+          "xyz_l1": 0.15215253829956055,
+          "query_xyz_l1": 0.1654050648212433,
+          "teacher_F1": 0.1576585179526356,
+          "generation_F1": 0.15179088323390974,
+          "wrong_asset_anchors_xyz_l1": 0.4272803068161011,
+          "wrong_asset_structure_memory_xyz_l1": 0.1716892570257187,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            -0.049072265625,
+            -0.00799560546875,
+            -0.0196533203125
+          ],
+          "last_bias_gradient_expected": [
+            -0.04911388084292412,
+            -0.007965689525008202,
+            -0.019560711458325386
+          ],
+          "last_bias_gradient_maxabs_error": 9.260885417461395e-05
+        },
+        "40": {
+          "structure_ce": 0.6124142408370972,
+          "xyz_l1": 0.17848150432109833,
+          "query_xyz_l1": 0.2072802186012268,
+          "teacher_F1": 0.10338680926916222,
+          "generation_F1": 0.10603596277220564,
+          "wrong_asset_anchors_xyz_l1": 0.40887022018432617,
+          "wrong_asset_structure_memory_xyz_l1": 0.19459637999534607,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.330078125,
+            0.2236328125,
+            0.1552734375
+          ],
+          "last_bias_gradient_expected": [
+            0.33008110523223877,
+            0.22336916625499725,
+            0.15483598411083221
+          ],
+          "last_bias_gradient_maxabs_error": 0.00043745338916778564
+        },
+        "80": {
+          "structure_ce": 0.6121964454650879,
+          "xyz_l1": 0.1559825986623764,
+          "query_xyz_l1": 0.17607535421848297,
+          "teacher_F1": 0.14409642644936763,
+          "generation_F1": 0.14353784524562513,
+          "wrong_asset_anchors_xyz_l1": 0.4180392324924469,
+          "wrong_asset_structure_memory_xyz_l1": 0.1732976734638214,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            -0.3203125,
+            -0.09326171875,
+            -0.296875
+          ],
+          "last_bias_gradient_expected": [
+            -0.3204185664653778,
+            -0.09337293356657028,
+            -0.29581448435783386
+          ],
+          "last_bias_gradient_maxabs_error": 0.0010605156421661377
+        },
+        "256": {
+          "structure_ce": 0.6123093962669373,
+          "xyz_l1": 0.11243858933448792,
+          "query_xyz_l1": 0.13505013287067413,
+          "teacher_F1": 0.24420677361853832,
+          "generation_F1": 0.19386464263124603,
+          "wrong_asset_anchors_xyz_l1": 0.40818434953689575,
+          "wrong_asset_structure_memory_xyz_l1": 0.12176510691642761,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.3125,
+            0.26953125,
+            -0.197265625
+          ],
+          "last_bias_gradient_expected": [
+            0.31278282403945923,
+            0.2685237526893616,
+            -0.1965026557445526
+          ],
+          "last_bias_gradient_maxabs_error": 0.0010074973106384277
+        }
+      },
+      "position_only_lr01": {
+        "0": {
+          "structure_ce": 0.6123896837234497,
+          "xyz_l1": 0.2731580138206482,
+          "query_xyz_l1": 0.26386144757270813,
+          "teacher_F1": 0.07352941176470588,
+          "generation_F1": 0.07352941176470588,
+          "wrong_asset_anchors_xyz_l1": 0.5389188528060913,
+          "wrong_asset_structure_memory_xyz_l1": 0.2621551752090454,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.0220947265625,
+            0.10888671875,
+            0.140625
+          ],
+          "last_bias_gradient_expected": [
+            0.022058825939893723,
+            0.10878582298755646,
+            0.1400829553604126
+          ],
+          "last_bias_gradient_maxabs_error": 0.0005420446395874023
+        },
+        "10": {
+          "structure_ce": 0.6123670339584351,
+          "xyz_l1": 0.1977522075176239,
+          "query_xyz_l1": 0.21804630756378174,
+          "teacher_F1": 0.05997693194925028,
+          "generation_F1": 0.05997693194925028,
+          "wrong_asset_anchors_xyz_l1": 0.450100839138031,
+          "wrong_asset_structure_memory_xyz_l1": 0.20947647094726562,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.00592041015625,
+            0.060791015625,
+            0.048583984375
+          ],
+          "last_bias_gradient_expected": [
+            0.005891779437661171,
+            0.0607089065015316,
+            0.048595406115055084
+          ],
+          "last_bias_gradient_maxabs_error": 8.210912346839905e-05
+        },
+        "40": {
+          "structure_ce": 0.6123644709587097,
+          "xyz_l1": 0.1121717020869255,
+          "query_xyz_l1": 0.1397686004638672,
+          "teacher_F1": 0.172756981580511,
+          "generation_F1": 0.19346405228758168,
+          "wrong_asset_anchors_xyz_l1": 0.4101003408432007,
+          "wrong_asset_structure_memory_xyz_l1": 0.14104165136814117,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.07958984375,
+            0.042724609375,
+            -0.02734375
+          ],
+          "last_bias_gradient_expected": [
+            0.07946833223104477,
+            0.042656488716602325,
+            -0.027290726080536842
+          ],
+          "last_bias_gradient_maxabs_error": 0.00012151151895523071
+        },
+        "80": {
+          "structure_ce": 0.6124082803726196,
+          "xyz_l1": 0.08716611564159393,
+          "query_xyz_l1": 0.11759859323501587,
+          "teacher_F1": 0.3302987861811391,
+          "generation_F1": 0.2533121356650768,
+          "wrong_asset_anchors_xyz_l1": 0.396747350692749,
+          "wrong_asset_structure_memory_xyz_l1": 0.12890610098838806,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            0.1318359375,
+            0.0177001953125,
+            -0.034912109375
+          ],
+          "last_bias_gradient_expected": [
+            0.13197587430477142,
+            0.01772247441112995,
+            -0.03497360646724701
+          ],
+          "last_bias_gradient_maxabs_error": 0.00013993680477142334
+        },
+        "256": {
+          "structure_ce": 0.6125392317771912,
+          "xyz_l1": 0.06232263520359993,
+          "query_xyz_l1": 0.08778169751167297,
+          "teacher_F1": 0.5181224004753417,
+          "generation_F1": 0.37513873473917875,
+          "wrong_asset_anchors_xyz_l1": 0.3910926580429077,
+          "wrong_asset_structure_memory_xyz_l1": 0.12049736082553864,
+          "same_weight_train_eval_xyz_meanabs": 0.0,
+          "same_weight_train_eval_xyz_maxabs": 0.0,
+          "last_bias_gradient_actual": [
+            -0.208984375,
+            -0.0211181640625,
+            0.04248046875
+          ],
+          "last_bias_gradient_expected": [
+            -0.20875754952430725,
+            -0.021069005131721497,
+            0.04246795177459717
+          ],
+          "last_bias_gradient_maxabs_error": 0.00022682547569274902
+        }
+      }
     },
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json"
-    ],
-    "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
-    "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
-    "complete": false,
-    "exit_code": 1,
-    "finished_at": "2026-10-12T04:41:42.076226+00:00",
-    "result_note": "New diagnostic gradient probe reused a no-grad BF16 autocast weight cache while re-enabling gradients; bias tensor detached in the probe. Failure occurred before report initialization or any optimizer update. Original training has separate autocast scopes and is not implicated by this probe error."
+    "report_hashes": {
+      "position_only": "1f83d79e740d8fe256f7ea3a2411ab8879791b4603fdfb6ed599b8d8c43ef7be",
+      "position_only_lr01": "c561a119b4bed32c394bf654e0bc13d852857131f710bc2e7dd5168d82b065ac"
+    },
+    "result_note": "Same-weight same-input position train/eval outputs exactly equal atallchecks. Lower diagnostic head step reducesL1.11244->.06232 and increasesGTstructureF1.2442->.5181 at256updates; doesnotfullyfit or establish allcauses. ProductionpeakLRunchanged."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -3822,6 +4053,275 @@
       "exit_code": 1,
       "finished_at": "2026-10-12T04:41:42.076226+00:00",
       "result_note": "New diagnostic gradient probe reused a no-grad BF16 autocast weight cache while re-enabling gradients; bias tensor detached in the probe. Failure occurred before report initialization or any optimizer update. Original training has separate autocast scopes and is not implicated by this probe error."
+    },
+    {
+      "label": "fixed_pair_step_scale_v2",
+      "operation": "preflight",
+      "status": "completed",
+      "accepted": false,
+      "prepared_at": "2026-10-12T04:41:42.076226+00:00",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
+      "config_sha256": "b4c453a4e293f90aca7de9af4a7487d5139cee0133776083e81d7f73e0f8bb76",
+      "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+      "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v2",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json"
+      ],
+      "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
+      "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
+      "change": "Disable weight-cast cache only inside the diagnostic grad-enabled subcontext, preserving BF16; CPU minimal reproduction confirms cause and correction. Training autocast untouched.",
+      "complete": true,
+      "exit_code": 0,
+      "execution_valid": true,
+      "finished_at": "2026-10-12T04:50:27.855769+00:00",
+      "evaluations": {
+        "position_only": {
+          "0": {
+            "structure_ce": 0.612949788570404,
+            "xyz_l1": 0.273301899433136,
+            "query_xyz_l1": 0.2640049457550049,
+            "teacher_F1": 0.09777183600713013,
+            "generation_F1": 0.07352941176470588,
+            "wrong_asset_anchors_xyz_l1": 0.5389137864112854,
+            "wrong_asset_structure_memory_xyz_l1": 0.26209691166877747,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.0205078125,
+              0.10986328125,
+              0.1396484375
+            ],
+            "last_bias_gradient_expected": [
+              0.020456261932849884,
+              0.11001131683588028,
+              0.13928167521953583
+            ],
+            "last_bias_gradient_maxabs_error": 0.00036676228046417236
+          },
+          "10": {
+            "structure_ce": 0.6123352646827698,
+            "xyz_l1": 0.15215253829956055,
+            "query_xyz_l1": 0.1654050648212433,
+            "teacher_F1": 0.1576585179526356,
+            "generation_F1": 0.15179088323390974,
+            "wrong_asset_anchors_xyz_l1": 0.4272803068161011,
+            "wrong_asset_structure_memory_xyz_l1": 0.1716892570257187,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              -0.049072265625,
+              -0.00799560546875,
+              -0.0196533203125
+            ],
+            "last_bias_gradient_expected": [
+              -0.04911388084292412,
+              -0.007965689525008202,
+              -0.019560711458325386
+            ],
+            "last_bias_gradient_maxabs_error": 9.260885417461395e-05
+          },
+          "40": {
+            "structure_ce": 0.6124142408370972,
+            "xyz_l1": 0.17848150432109833,
+            "query_xyz_l1": 0.2072802186012268,
+            "teacher_F1": 0.10338680926916222,
+            "generation_F1": 0.10603596277220564,
+            "wrong_asset_anchors_xyz_l1": 0.40887022018432617,
+            "wrong_asset_structure_memory_xyz_l1": 0.19459637999534607,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.330078125,
+              0.2236328125,
+              0.1552734375
+            ],
+            "last_bias_gradient_expected": [
+              0.33008110523223877,
+              0.22336916625499725,
+              0.15483598411083221
+            ],
+            "last_bias_gradient_maxabs_error": 0.00043745338916778564
+          },
+          "80": {
+            "structure_ce": 0.6121964454650879,
+            "xyz_l1": 0.1559825986623764,
+            "query_xyz_l1": 0.17607535421848297,
+            "teacher_F1": 0.14409642644936763,
+            "generation_F1": 0.14353784524562513,
+            "wrong_asset_anchors_xyz_l1": 0.4180392324924469,
+            "wrong_asset_structure_memory_xyz_l1": 0.1732976734638214,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              -0.3203125,
+              -0.09326171875,
+              -0.296875
+            ],
+            "last_bias_gradient_expected": [
+              -0.3204185664653778,
+              -0.09337293356657028,
+              -0.29581448435783386
+            ],
+            "last_bias_gradient_maxabs_error": 0.0010605156421661377
+          },
+          "256": {
+            "structure_ce": 0.6123093962669373,
+            "xyz_l1": 0.11243858933448792,
+            "query_xyz_l1": 0.13505013287067413,
+            "teacher_F1": 0.24420677361853832,
+            "generation_F1": 0.19386464263124603,
+            "wrong_asset_anchors_xyz_l1": 0.40818434953689575,
+            "wrong_asset_structure_memory_xyz_l1": 0.12176510691642761,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.3125,
+              0.26953125,
+              -0.197265625
+            ],
+            "last_bias_gradient_expected": [
+              0.31278282403945923,
+              0.2685237526893616,
+              -0.1965026557445526
+            ],
+            "last_bias_gradient_maxabs_error": 0.0010074973106384277
+          }
+        },
+        "position_only_lr01": {
+          "0": {
+            "structure_ce": 0.6123896837234497,
+            "xyz_l1": 0.2731580138206482,
+            "query_xyz_l1": 0.26386144757270813,
+            "teacher_F1": 0.07352941176470588,
+            "generation_F1": 0.07352941176470588,
+            "wrong_asset_anchors_xyz_l1": 0.5389188528060913,
+            "wrong_asset_structure_memory_xyz_l1": 0.2621551752090454,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.0220947265625,
+              0.10888671875,
+              0.140625
+            ],
+            "last_bias_gradient_expected": [
+              0.022058825939893723,
+              0.10878582298755646,
+              0.1400829553604126
+            ],
+            "last_bias_gradient_maxabs_error": 0.0005420446395874023
+          },
+          "10": {
+            "structure_ce": 0.6123670339584351,
+            "xyz_l1": 0.1977522075176239,
+            "query_xyz_l1": 0.21804630756378174,
+            "teacher_F1": 0.05997693194925028,
+            "generation_F1": 0.05997693194925028,
+            "wrong_asset_anchors_xyz_l1": 0.450100839138031,
+            "wrong_asset_structure_memory_xyz_l1": 0.20947647094726562,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.00592041015625,
+              0.060791015625,
+              0.048583984375
+            ],
+            "last_bias_gradient_expected": [
+              0.005891779437661171,
+              0.0607089065015316,
+              0.048595406115055084
+            ],
+            "last_bias_gradient_maxabs_error": 8.210912346839905e-05
+          },
+          "40": {
+            "structure_ce": 0.6123644709587097,
+            "xyz_l1": 0.1121717020869255,
+            "query_xyz_l1": 0.1397686004638672,
+            "teacher_F1": 0.172756981580511,
+            "generation_F1": 0.19346405228758168,
+            "wrong_asset_anchors_xyz_l1": 0.4101003408432007,
+            "wrong_asset_structure_memory_xyz_l1": 0.14104165136814117,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.07958984375,
+              0.042724609375,
+              -0.02734375
+            ],
+            "last_bias_gradient_expected": [
+              0.07946833223104477,
+              0.042656488716602325,
+              -0.027290726080536842
+            ],
+            "last_bias_gradient_maxabs_error": 0.00012151151895523071
+          },
+          "80": {
+            "structure_ce": 0.6124082803726196,
+            "xyz_l1": 0.08716611564159393,
+            "query_xyz_l1": 0.11759859323501587,
+            "teacher_F1": 0.3302987861811391,
+            "generation_F1": 0.2533121356650768,
+            "wrong_asset_anchors_xyz_l1": 0.396747350692749,
+            "wrong_asset_structure_memory_xyz_l1": 0.12890610098838806,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              0.1318359375,
+              0.0177001953125,
+              -0.034912109375
+            ],
+            "last_bias_gradient_expected": [
+              0.13197587430477142,
+              0.01772247441112995,
+              -0.03497360646724701
+            ],
+            "last_bias_gradient_maxabs_error": 0.00013993680477142334
+          },
+          "256": {
+            "structure_ce": 0.6125392317771912,
+            "xyz_l1": 0.06232263520359993,
+            "query_xyz_l1": 0.08778169751167297,
+            "teacher_F1": 0.5181224004753417,
+            "generation_F1": 0.37513873473917875,
+            "wrong_asset_anchors_xyz_l1": 0.3910926580429077,
+            "wrong_asset_structure_memory_xyz_l1": 0.12049736082553864,
+            "same_weight_train_eval_xyz_meanabs": 0.0,
+            "same_weight_train_eval_xyz_maxabs": 0.0,
+            "last_bias_gradient_actual": [
+              -0.208984375,
+              -0.0211181640625,
+              0.04248046875
+            ],
+            "last_bias_gradient_expected": [
+              -0.20875754952430725,
+              -0.021069005131721497,
+              0.04246795177459717
+            ],
+            "last_bias_gradient_maxabs_error": 0.00022682547569274902
+          }
+        }
+      },
+      "report_hashes": {
+        "position_only": "1f83d79e740d8fe256f7ea3a2411ab8879791b4603fdfb6ed599b8d8c43ef7be",
+        "position_only_lr01": "c561a119b4bed32c394bf654e0bc13d852857131f710bc2e7dd5168d82b065ac"
+      },
+      "result_note": "Same-weight same-input position train/eval outputs exactly equal atallchecks. Lower diagnostic head step reducesL1.11244->.06232 and increasesGTstructureF1.2442->.5181 at256updates; doesnotfullyfit or establish allcauses. ProductionpeakLRunchanged."
     }
   ]
 }

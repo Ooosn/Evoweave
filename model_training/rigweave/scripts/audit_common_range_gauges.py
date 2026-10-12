@@ -73,7 +73,7 @@ def summarize(rows):
                      "assets_over_2": int(np.sum(ranges > 2.)), "assets_over_4": int(np.sum(ranges > 4.))}
             fits = [frame for value in available for frame in value.get("frames", []) if frame["frame_position"]]
             if fits:
-                for key in ("fit_rms_bbox", "split_rotation_degrees", "split_translation_bbox"):
+                for key in ("fit_rms_bbox", "split_rotation_degrees", "split_translation_bbox", "split_alignment_rms_bbox"):
                     stats[key] = {"median": float(np.median([item[key] for item in fits])),
                                   "maximum": max(item[key] for item in fits)}
                 stats["ill_conditioned_frames"] = sum(item["second_to_first_singular_ratio"] is not None

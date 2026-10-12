@@ -18,6 +18,7 @@ class CommonRangeGeometryTests(unittest.TestCase):
         np.testing.assert_allclose(result[1], reference, atol=2e-14)
         self.assertLess(report["frames"][1]["inverse_max_error_bbox"], 1e-13)
         self.assertLess(report["frames"][1]["split_rotation_degrees"], 1e-10)
+        self.assertLess(report["frames"][1]["split_alignment_rms_bbox"], 1e-13)
 
     def test_translation_does_not_rotate(self):
         ref = np.random.default_rng(22).normal(size=(12, 3))
@@ -39,6 +40,13 @@ class CommonRangeGeometryTests(unittest.TestCase):
         points = np.ones((2, 6, 3))
         rotations = np.repeat(np.eye(3)[None], 2, 0)
         np.testing.assert_array_equal(transform_sequence(points, rotations, np.ones((2, 3)), normals=True), points)
+
+    def test_translation_stability_is_measured(self):
+        ref = np.random.default_rng(7).normal(size=(12, 3))
+        moving = ref.copy()
+        moving[::2] += [2, 0, 0]
+        _, _, report = mesh_gauge(np.stack((ref, moving)), "translation")
+        self.assertGreater(report["frames"][1]["split_alignment_rms_bbox"], 0.)
 
     def test_root_gauge_matches_world_to_common_coordinates(self):
         deltas = np.repeat(np.eye(4)[None, None], 3, 0)

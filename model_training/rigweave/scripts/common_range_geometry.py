@@ -64,22 +64,29 @@ def mesh_gauge(vertices, method, *, fit_vertices=5000):
     for frame in range(len(vertices)):
         moving = vertices[frame, indices].astype(np.float64)
         info = {"warnings": [], "second_to_first_singular_ratio": None, "minimum_weight": 1.}
-        angle, displacement = 0., 0.
+        angle, displacement, split_alignment = 0., 0., 0.
         if frame:
             if method == "translation":
                 translations[frame] = reference.mean(0) - moving.mean(0)
+                left_t = reference[::2].mean(0) - moving[::2].mean(0)
+                right_t = reference[1::2].mean(0) - moving[1::2].mean(0)
+                displacement = float(np.linalg.norm(left_t - right_t) / bbox_side)
+                split_alignment = displacement
             else:
                 rotations[frame], translations[frame], info = fit_points(moving, reference, robust=method == "robust_rigid")
                 left_r, left_t, _ = fit_points(moving[::2], reference[::2], robust=method == "robust_rigid")
                 right_r, right_t, _ = fit_points(moving[1::2], reference[1::2], robust=method == "robust_rigid")
                 angle = float(np.degrees(Rotation.from_matrix(left_r @ right_r.T).magnitude()))
                 displacement = float(np.linalg.norm(left_t - right_t) / bbox_side)
+                difference = moving @ left_r.T + left_t - (moving @ right_r.T + right_t)
+                split_alignment = float(np.sqrt(np.mean(np.sum(difference ** 2, axis=-1))) / bbox_side)
         posed = vertices[frame].astype(np.float64) @ rotations[frame].T + translations[frame]
         residual = np.linalg.norm(posed - vertices[0], axis=-1)
         restored = (posed - translations[frame]) @ rotations[frame]
         frames.append({
             "frame_position": frame, "fit_rms_bbox": float(np.sqrt(np.mean(residual ** 2)) / bbox_side),
             "split_rotation_degrees": angle, "split_translation_bbox": displacement,
+            "split_alignment_rms_bbox": split_alignment,
             "inverse_max_error_bbox": float(np.max(np.abs(restored - vertices[frame])) / bbox_side),
             "determinant": float(np.linalg.det(rotations[frame])), **info,
         })

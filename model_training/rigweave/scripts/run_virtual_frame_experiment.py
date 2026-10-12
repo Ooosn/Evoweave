@@ -85,7 +85,7 @@ def record_prepared(config, plan, config_name):
     )
     contract = state.setdefault("comparison_contract", {})
     contract["current_action"] = f"User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage {plan['label']}."
-    contract["localization_implementation_status"] = "virtual_frame_path_cpu_verified_pending_gpu_verification"
+    contract.setdefault("localization_implementation_status", "virtual_frame_path_cpu_verified_pending_gpu_verification")
     contract["common_upstream_initialization"] = {
         "checkpoint": config["initialization"]["checkpoint"], "sha256": config["initialization"]["sha256"],
         "new_motion_and_head_seed": config["initialization"]["seed"], "end_to_end": True,

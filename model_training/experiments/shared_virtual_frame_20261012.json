@@ -114,6 +114,21 @@
     "stop_at_limit": true
   },
   "loss_balance": {"frames": [24, 8, 2], "frame_budget": 320, "batch_cap": 32},
+  "capacity_acceptance": {
+    "accepted": true,
+    "stage": "capacity_confirm_v1",
+    "source_commit": "679d1e1779fc95d8e0014402c34d13fe8cdf1bda",
+    "all_frame_counts_2_to_24_passed_on_both_ranks": true,
+    "worst_candidate": "self_cross_4",
+    "peak_allocated_gib": 71.68662595748901,
+    "peak_reserved_gib": 74.080078125,
+    "rank_report_sha256": ["534f11c74a247260763274bea38e9ed2284e95e465ee6fc0959aa956a6e4ab66", "2872ef3c5902976f96cace0717a11c17b9808b41084f345ce20edadda0d4b40d"],
+    "frame_budget_per_rank": 320,
+    "batch_cap_per_rank": 32,
+    "accumulation": 1,
+    "expected_global_assets_per_update": 48.0,
+    "scope": "Largest actual train GT/mesh stress cases, resident Adam states and gradients, full forward/backward/step, no allocator cache clearing between cases. Not a claim of learning quality."
+  },
   "compare": {
     "approved": false,
     "frame_budget": 320,

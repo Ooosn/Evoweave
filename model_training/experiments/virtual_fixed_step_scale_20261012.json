@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "label": "fixed_pair_step_scale_v1",
+  "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+  "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+  "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v1",
+  "rank_modes": ["position_only", "position_only_lr01"],
+  "diagnostic_lr_multipliers": {"position_only": 1.0, "position_only_lr01": 0.1},
+  "manifest_indices": [1622, 2724],
+  "updates": 256,
+  "evaluation_updates": [10, 40, 80, 256],
+  "contract": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion."
+}

@@ -29,6 +29,23 @@ def measure(model, surface, targets, xyz_weight):
         teacher = model.forward_encoded(anchors, memory, surface["query_points"], targets, xyz_weight=xyz_weight)
         shuffled = model.forward_encoded(anchors.flip(0), memory, surface["query_points"].flip(0), targets, xyz_weight=xyz_weight)
         wrong_memory = model.forward_encoded(anchors, memory.flip(0), surface["query_points"], targets, xyz_weight=xyz_weight)
+        model.positions.train()
+        with torch.enable_grad():
+            training_xyz = model.positions(teacher["joint_features"].detach(), targets["joint_mask"], anchors.detach(), surface["query_points"])
+            training_loss = coordinate_regression_loss(training_xyz, targets["frame_target_joints"], targets["joint_mask"], targets["frame_mask"]).mean()
+            bias_gradient, = torch.autograd.grad(training_loss, model.positions.xyz_head.bias)
+            valid = (targets["joint_mask"][:, None, :, None] & targets["frame_mask"][:, :, None, None]).expand_as(training_xyz)
+            counts = valid.sum((1, 2, 3))
+            expected = (torch.sign(training_xyz.detach().float() - targets["frame_target_joints"]) * valid
+                        / counts[:, None, None, None] / training_xyz.shape[0]).sum((0, 1, 2))
+            delta = (training_xyz.detach().float() - teacher["joints"].float()).abs()[valid]
+            consistency = {"same_weight_train_eval_xyz_meanabs": float(delta.mean()),
+                           "same_weight_train_eval_xyz_maxabs": float(delta.max()),
+                           "last_bias_gradient_actual": bias_gradient.detach().float().cpu().tolist(),
+                           "last_bias_gradient_expected": expected.cpu().tolist(),
+                           "last_bias_gradient_maxabs_error": float((bias_gradient.float() - expected).abs().max())}
+            del training_xyz, training_loss, bias_gradient
+        model.positions.eval()
         rows = []
         for i in range(len(targets["asset_id"])):
             count = int(targets["joint_count"][i])
@@ -46,7 +63,7 @@ def measure(model, surface, targets, xyz_weight):
                "teacher_F1": float(np.mean([row["teacher_F1"] for row in rows])),
                "generation_F1": float(np.mean([row["generation_F1"] for row in rows])),
                "wrong_asset_anchors_xyz_l1": float(shuffled["xyz_loss"]),
-               "wrong_asset_structure_memory_xyz_l1": float(wrong_memory["xyz_loss"])}
+               "wrong_asset_structure_memory_xyz_l1": float(wrong_memory["xyz_loss"]), **consistency}
     return summary, rows, (anchors.detach(), teacher["joint_features"].detach())
 
 
@@ -94,7 +111,7 @@ def main():
               "assets": targets["asset_id"], "selected_frames": targets["selected_frames"].cpu().tolist(),
               "started_at": datetime.now(timezone.utc).isoformat(), "diagnostic_only_no_formal_weight_reuse": True}
     write_json(report_path, report)
-    if mode == "position_only":
+    if mode != "end_to_end":
         model.requires_grad_(False)
         model.positions.requires_grad_(True)
     model.train()
@@ -104,6 +121,10 @@ def main():
         started = time.monotonic()
         optimizer.zero_grad(set_to_none=True)
         lr, _ = set_exposure_lr(optimizer, 5040 + (step - 1) * size, config)
+        multiplier = plan.get("diagnostic_lr_multipliers", {}).get(mode, 1.)
+        lr *= multiplier
+        for group in optimizer.param_groups:
+            group["lr"] = lr
         with torch.autocast("cuda", dtype=torch.bfloat16):
             if mode == "end_to_end":
                 output = model(surface, targets, xyz_weight=xyz_weight)

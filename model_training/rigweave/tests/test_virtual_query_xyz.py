@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from transformers import OPTConfig, OPTForCausalLM
 
-from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZConfig, VirtualQueryXYZRig, sequence_ce
+from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZConfig, VirtualQueryXYZRig, sequence_ce, original_xyz_vocabulary_processor
 
 
 class Surface(nn.Module):
@@ -146,6 +146,21 @@ class ModelTests(unittest.TestCase):
         loss = self.model(self.surface, self.targets, auxiliary_weight=.1)['loss']
         loss.backward()
         self.assertTrue(torch.isfinite(self.model.motion_encoder.virtual_slots.grad).all())
+
+    def test_original_vocabulary_processor_preserves_prefix_and_scores(self):
+        seen = []
+        class Tokenizer:
+            def next_posible_token(self, ids):
+                seen.append(ids.tolist())
+                return [3, 5, 8]
+        scores = torch.randn(2, 12)
+        original = scores.clone()
+        process = original_xyz_vocabulary_processor(Tokenizer(), torch.tensor([1, 4]))
+        actual = process(torch.tensor([[7, 9], [6, 10]]), scores)
+        self.assertEqual(seen, [[1, 4, 7, 9], [1, 4, 6, 10]])
+        self.assertTrue(torch.equal(scores, original))
+        self.assertTrue(torch.equal(actual[:, [3, 5, 8]], scores[:, [3, 5, 8]]))
+        self.assertTrue(torch.isneginf(actual[:, [0, 1, 2, 4, 6, 7, 9, 10, 11]]).all())
 
 
 if __name__ == '__main__':

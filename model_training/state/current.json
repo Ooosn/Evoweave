@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T19:10:20.848607+00:00",
+  "updated_at": "2026-10-12T19:14:08.946273+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,13 +126,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
-    "submit",
-    "matched_eval"
+    "train",
+    "preflight",
+    "matched_eval",
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run only the exact recorded bounded fit operation; review evidence and update state before any next run. Formal remains blocked.",
+  "next_required_result": "Initial free-generation evaluation failed before optimization: importing upstream VocabSwitchingLogitsProcessor loads Asset with invalid Python3.10 Dict[str,Ellipsis] annotation. Preserve failure; use the pinned tokenizer next_posible_token API directly with equivalent masking, validate, then rerun the same bounded fitting plan. No fitting-quality result exists yet.",
   "active_operation": {
     "label": "vquery_xyz_fit_single_l0_v1_20261013",
     "mode": "fit",
     "operation": "train",
-    "status": "prepared_not_started",
+    "status": "failed_execution",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_xyz.py",
-    "complete": false,
+    "complete": true,
     "accepted": false,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "authorization": "User explicitly approved new-route implementation, fitting and experimental parameter selection before full training; primary reviewed predecessor evidence.",
     "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "code_commit": "04bf96d1a94a1ffbeae287f8ab633aa9ce003716",
@@ -383,7 +383,14 @@
       "fixed maximum budget",
       "acceptance reached"
     ],
-    "prepared_utc": "2026-10-12T19:10:20.848582+00:00"
+    "prepared_utc": "2026-10-12T19:10:20.848582+00:00",
+    "execution_finished": true,
+    "exit_code": 1,
+    "completed_updates": 0,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\fit_single_v1_result.json",
+    "result_sha256": "54e6d064578cac8e6a053fe3451a4e832f5e75350517b07100632c77e47cd544",
+    "conclusion": "Initial free-generation evaluation failed before optimization: importing upstream VocabSwitchingLogitsProcessor loads Asset with invalid Python3.10 Dict[str,Ellipsis] annotation. Preserve failure; use the pinned tokenizer next_posible_token API directly with equivalent masking, validate, then rerun the same bounded fitting plan. No fitting-quality result exists yet.",
+    "finished_utc": "2026-10-12T19:14:08.946253+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

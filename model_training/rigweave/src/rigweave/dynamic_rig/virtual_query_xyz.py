@@ -150,6 +150,26 @@ def sequence_ce(logits, labels):
     return per_sequence, accuracy
 
 
+def original_xyz_vocabulary_processor(tokenizer, start_tokens):
+    """Apply the original tokenizer grammar without importing its asset loader.
+
+    Equivalent to upstream VocabSwitchingLogitsProcessor: prepend the fixed
+    BOS/class prefix, ask next_posible_token, and mask all other vocabulary IDs.
+    """
+    def process(generated_ids, scores):
+        output = scores.clone()
+        for batch, sequence in enumerate(generated_ids):
+            full = torch.cat((start_tokens, sequence))
+            allowed = tokenizer.next_posible_token(ids=full.detach().cpu().numpy())
+            if not len(allowed):
+                raise ValueError('original XYZ tokenizer returned no legal next token')
+            mask = torch.full_like(scores[batch], float('-inf'))
+            mask[allowed] = 0
+            output[batch] = scores[batch] + mask
+        return output
+    return process
+
+
 class VirtualQueryXYZRig(nn.Module):
     def __init__(self, surface_tokenizer, xyz_decoder, config, *, auxiliary_vocab_size, auxiliary_pad=0):
         super().__init__()

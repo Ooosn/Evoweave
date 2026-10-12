@@ -82,7 +82,7 @@ def require_gradients(model, norms, auxiliary_weight):
 
 @torch.no_grad()
 def evaluate(model, items, tokenizer, config, output, step):
-    from src.model.unirig_ar import VocabSwitchingLogitsProcessor
+    from rigweave.dynamic_rig.virtual_query_xyz import original_xyz_vocabulary_processor
     from eval_dynamic_rig_generation import _topology_metrics, _parents_from_output
     model.eval()
     records = []
@@ -93,7 +93,7 @@ def evaluate(model, items, tokenizer, config, output, step):
             teacher = model.forward_encoded(real, virtual, targets, auxiliary_weight=config['probe']['auxiliary_weight'])
         for frame in range(conditions.shape[1]):
             start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulationxl')], device=conditions.device)
-            processor = VocabSwitchingLogitsProcessor(tokenizer, start)
+            processor = original_xyz_vocabulary_processor(tokenizer, start)
             with torch.autocast('cuda', dtype=torch.bfloat16):
                 predicted = model.generate_condition(conditions[:, frame], start, eos_token=tokenizer.eos,
                     max_new_tokens=config['probe']['max_new_tokens'], logits_processor=processor)

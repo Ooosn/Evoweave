@@ -2,7 +2,7 @@
 set -euo pipefail
 repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 job=/home/wangyy/jobs/shared_virtual_frame_20261012
-label=fixed_pair_step_scale_v1
+label=fixed_pair_step_scale_v2
 py=/home/wangyy/miniconda3/envs/mygs/bin/python
 source "$HOME/1.sh"
 case "$(hostname)" in pcg01|pcg01i) ;; *) exit 2 ;; esac

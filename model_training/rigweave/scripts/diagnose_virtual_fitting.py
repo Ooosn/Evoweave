@@ -30,7 +30,7 @@ def measure(model, surface, targets, xyz_weight):
         shuffled = model.forward_encoded(anchors.flip(0), memory, surface["query_points"].flip(0), targets, xyz_weight=xyz_weight)
         wrong_memory = model.forward_encoded(anchors, memory.flip(0), surface["query_points"], targets, xyz_weight=xyz_weight)
         model.positions.train()
-        with torch.enable_grad():
+        with torch.enable_grad(), torch.autocast("cuda", dtype=torch.bfloat16, cache_enabled=False):
             training_xyz = model.positions(teacher["joint_features"].detach(), targets["joint_mask"], anchors.detach(), surface["query_points"])
             training_loss = coordinate_regression_loss(training_xyz, targets["frame_target_joints"], targets["joint_mask"], targets["frame_mask"]).mean()
             bias_gradient, = torch.autograd.grad(training_loss, model.positions.xyz_head.bias)

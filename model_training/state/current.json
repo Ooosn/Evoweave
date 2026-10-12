@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T04:38:09.727523+00:00",
+  "updated_at": "2026-10-12T04:41:42.076226+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -342,9 +342,43 @@
   },
   "next_required_result": "Resolve fixed-input position-head oscillation with exact train/eval and analytic-gradient checks plus one isolated step-size contrast. Formal training remains blocked; do not change its approved peakLR or initialization.",
   "active_operation": {
-    "label": "fixed_pair_step_scale_v1",
+    "label": "fixed_pair_step_scale_v2",
     "operation": "preflight",
     "status": "prepared",
+    "accepted": false,
+    "prepared_at": "2026-10-12T04:41:42.076226+00:00",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
+    "config_sha256": "b4c453a4e293f90aca7de9af4a7487d5139cee0133776083e81d7f73e0f8bb76",
+    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v2",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json"
+    ],
+    "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
+    "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
+    "change": "Disable weight-cast cache only inside the diagnostic grad-enabled subcontext, preserving BF16; CPU minimal reproduction confirms cause and correction. Training autocast untouched."
+  },
+  "last_operation": {
+    "label": "fixed_pair_step_scale_v1",
+    "operation": "preflight",
+    "status": "failed",
     "accepted": false,
     "prepared_at": "2026-10-12T04:38:09.727523+00:00",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
@@ -372,128 +406,11 @@
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json"
     ],
     "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
-    "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion."
-  },
-  "last_operation": {
-    "label": "fixed_pair_fit_v1",
-    "operation": "preflight",
-    "status": "completed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T04:29:23.729843+00:00",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_fit_20261012.json",
-    "config_sha256": "75512d92aaab2c097fd99a74af48f64bd2b17c453ea24c537c6be238aa147d3a",
-    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_fit_v1",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_fit_20261012.json"
-    ],
-    "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
-    "acceptance": "Diagnostic only: first two actually-exposed training-diagnostic assets in manifest-index order, fixed originalT8 views/surface samples, actualnewtrial5040 weights+Adam states, originalCE+0.5L1/schedule/gradientclipping. Rank0 updates all originally trainable modules. Rank1 freezes all but the existing position head and reuses detached fixed anchors/H, retaining its original Adam state. No architecture change, no formal checkpoint or promotion, no old-trained weights used as new initialization. This tests fixed-sample learnability, not generalization.",
-    "complete": true,
-    "exit_code": 0,
-    "execution_valid": true,
-    "quality_accepted": false,
-    "finished_at": "2026-10-12T04:33:40+00:00",
-    "evaluations": {
-      "end_to_end": {
-        "0": {
-          "structure_ce": 0.6124321222305298,
-          "xyz_l1": 0.2732309401035309,
-          "query_xyz_l1": 0.2640635669231415,
-          "teacher_F1": 0.05602240896358542,
-          "generation_F1": 0.07352941176470588,
-          "wrong_asset_anchors_xyz_l1": 0.5389777421951294,
-          "wrong_asset_structure_memory_xyz_l1": 0.26226767897605896
-        },
-        "10": {
-          "structure_ce": 0.020009133964776993,
-          "xyz_l1": 0.37436631321907043,
-          "query_xyz_l1": 0.39125901460647583,
-          "teacher_F1": 0.06363636363636363,
-          "generation_F1": 0.06363636363636363,
-          "wrong_asset_anchors_xyz_l1": 0.5233775973320007,
-          "wrong_asset_structure_memory_xyz_l1": 0.3794102370738983
-        },
-        "40": {
-          "structure_ce": 0.0029756249859929085,
-          "xyz_l1": 0.1405520737171173,
-          "query_xyz_l1": 0.16492845118045807,
-          "teacher_F1": 0.24225713012477718,
-          "generation_F1": 0.24539512774806893,
-          "wrong_asset_anchors_xyz_l1": 0.41543829441070557,
-          "wrong_asset_structure_memory_xyz_l1": 0.1837424337863922
-        },
-        "80": {
-          "structure_ce": 0.0017051160102710128,
-          "xyz_l1": 0.17305997014045715,
-          "query_xyz_l1": 0.1860906481742859,
-          "teacher_F1": 0.1975404196766426,
-          "generation_F1": 0.19382681302185945,
-          "wrong_asset_anchors_xyz_l1": 0.3870220482349396,
-          "wrong_asset_structure_memory_xyz_l1": 0.2067711502313614
-        }
-      },
-      "position_only": {
-        "0": {
-          "structure_ce": 0.6115884184837341,
-          "xyz_l1": 0.27324455976486206,
-          "query_xyz_l1": 0.26391860842704773,
-          "teacher_F1": 0.07352941176470588,
-          "generation_F1": 0.07352941176470588,
-          "wrong_asset_anchors_xyz_l1": 0.5389971733093262,
-          "wrong_asset_structure_memory_xyz_l1": 0.2621718645095825
-        },
-        "10": {
-          "structure_ce": 0.6124475598335266,
-          "xyz_l1": 0.1541721522808075,
-          "query_xyz_l1": 0.16986797749996185,
-          "teacher_F1": 0.16042780748663102,
-          "generation_F1": 0.16667072626151908,
-          "wrong_asset_anchors_xyz_l1": 0.4213458001613617,
-          "wrong_asset_structure_memory_xyz_l1": 0.17622002959251404
-        },
-        "40": {
-          "structure_ce": 0.6123265027999878,
-          "xyz_l1": 0.19262683391571045,
-          "query_xyz_l1": 0.21295775473117828,
-          "teacher_F1": 0.15095492742551567,
-          "generation_F1": 0.12965469373590144,
-          "wrong_asset_anchors_xyz_l1": 0.4343149960041046,
-          "wrong_asset_structure_memory_xyz_l1": 0.20875594019889832
-        },
-        "80": {
-          "structure_ce": 0.6119208335876465,
-          "xyz_l1": 0.21202175319194794,
-          "query_xyz_l1": 0.24417032301425934,
-          "teacher_F1": 0.06681945505474918,
-          "generation_F1": 0.04733893557422969,
-          "wrong_asset_anchors_xyz_l1": 0.4301822781562805,
-          "wrong_asset_structure_memory_xyz_l1": 0.22867746651172638
-        }
-      }
-    },
-    "report_hashes": {
-      "end_to_end": "0e48c789b2cd78ab2383e150b4fa0a078dea6a7eaf4f088d38e42d1f150b6cbf",
-      "position_only": "a8c526351de260d07d37d70739722669319afdafcae95b41df4a0c6bc346baff"
-    },
-    "result_note": "Structure fits two fixed assets but XYZ does not stably fit in80updates: fullXYZ.273->.141 at40->.173 at80; frozenfeature head.273->.154 at10->.212 at80. No formal approval."
+    "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
+    "complete": false,
+    "exit_code": 1,
+    "finished_at": "2026-10-12T04:41:42.076226+00:00",
+    "result_note": "New diagnostic gradient probe reused a no-grad BF16 autocast weight cache while re-enabling gradients; bias tensor detached in the probe. Failure occurred before report initialization or any optimizer update. Original training has separate autocast scopes and is not implicated by this probe error."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -3868,6 +3785,43 @@
         "position_only": "a8c526351de260d07d37d70739722669319afdafcae95b41df4a0c6bc346baff"
       },
       "result_note": "Structure fits two fixed assets but XYZ does not stably fit in80updates: fullXYZ.273->.141 at40->.173 at80; frozenfeature head.273->.154 at10->.212 at80. No formal approval."
+    },
+    {
+      "label": "fixed_pair_step_scale_v1",
+      "operation": "preflight",
+      "status": "failed",
+      "accepted": false,
+      "prepared_at": "2026-10-12T04:38:09.727523+00:00",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json",
+      "config_sha256": "0963aacab8d8a4f2c8e92ce80f95a7f38c354f41a34258a6a54f5102e440bede",
+      "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+      "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v1",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_step_scale_20261012.json"
+      ],
+      "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
+      "acceptance": "Causal diagnostic of observed fixed-input localization oscillation. Same actual new checkpoint, head weights/Adam state, cached input features, BF16, targets and loss. Both ranks update only the current position head; second rank changes only diagnostic step size to0.1x. Formal peakLR1e-4 remains unchanged. Also compare train/eval outputs at identical weights and analytic final-bias L1 gradient. No architecture changes, no reuse of diagnostic weights, no formal promotion.",
+      "complete": false,
+      "exit_code": 1,
+      "finished_at": "2026-10-12T04:41:42.076226+00:00",
+      "result_note": "New diagnostic gradient probe reused a no-grad BF16 autocast weight cache while re-enabling gradients; bias tensor detached in the probe. Failure occurred before report initialization or any optimizer update. Original training has separate autocast scopes and is not implicated by this probe error."
     }
   ]
 }

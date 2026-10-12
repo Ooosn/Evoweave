@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "label": "fixed_pair_step_scale_v1",
+  "label": "fixed_pair_step_scale_v2",
   "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
   "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
   "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
-  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v1",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_step_scale_v2",
   "rank_modes": ["position_only", "position_only_lr01"],
   "diagnostic_lr_multipliers": {"position_only": 1.0, "position_only_lr01": 0.1},
   "manifest_indices": [1622, 2724],

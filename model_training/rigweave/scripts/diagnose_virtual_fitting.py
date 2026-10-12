@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import nullcontext
+from dataclasses import replace
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -48,6 +49,83 @@ def fitting_passed(measured, threshold):
     return (measured["xyz_l1"] <= threshold and measured["query_xyz_l1"] <= threshold
             and measured["structure_ce"] <= .01 and measured["all_generated_parents_exact"]
             and measured["generation_F1"] >= measured["oracle_query_F1"] - .05)
+
+
+def check_backward_paths(model, surface, targets, xyz_weight):
+    """Compare every trainable gradient at identical weights without Adam steps."""
+    original_config = model.config
+    original_positions = model.positions.config
+    original_motion = model.motion_encoder.gradient_checkpointing
+    original_backbone = model.structure.backbone.is_gradient_checkpointing
+    cpu_rng, cuda_rng = torch.get_rng_state(), torch.cuda.get_rng_state()
+
+    def backward(inside_autocast):
+        torch.set_rng_state(cpu_rng)
+        torch.cuda.set_rng_state(cuda_rng)
+        model.zero_grad(set_to_none=True)
+        model.train()
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            output = model(surface, targets, xyz_weight=xyz_weight)
+            loss = output["loss_per_asset"].sum()
+            if inside_autocast:
+                loss.backward()
+        if not inside_autocast:
+            loss.backward()
+        return float(loss.detach()), output["joints"].detach().float().cpu()
+
+    reference_loss, reference_xyz = backward(False)
+    reference = {name: parameter.grad.detach().cpu() for name, parameter in model.named_parameters()
+                 if parameter.requires_grad and parameter.grad is not None}
+    results = {}
+    try:
+        for label, inside in (("backward_inside_autocast", True), ("without_checkpointing", False)):
+            if label == "without_checkpointing":
+                model.config = replace(original_config, surface_checkpointing=False)
+                model.positions.config = replace(original_positions, position_checkpointing=False)
+                model.motion_encoder.gradient_checkpointing = False
+                model.structure.backbone.gradient_checkpointing_disable()
+            loss, xyz = backward(inside)
+            groups = {}
+            actual_names = set()
+            for name, parameter in model.named_parameters():
+                if not parameter.requires_grad or parameter.grad is None:
+                    continue
+                actual_names.add(name)
+                if name not in reference:
+                    raise RuntimeError(f"gradient presence changed for {name}")
+                left, right = reference[name].double(), parameter.grad.detach().cpu().double()
+                if not bool(torch.isfinite(right).all()):
+                    raise RuntimeError(f"nonfinite comparison gradient for {name}")
+                delta = right-left
+                group = groups.setdefault(name.split('.')[0], dict(tensors=0, reference_squared=0., actual_squared=0.,
+                                                                    difference_squared=0., dot=0., maxabs=0.))
+                group['tensors'] += 1
+                group['reference_squared'] += float(left.square().sum())
+                group['actual_squared'] += float(right.square().sum())
+                group['difference_squared'] += float(delta.square().sum())
+                group['dot'] += float((left*right).sum())
+                group['maxabs'] = max(group['maxabs'], float(delta.abs().max()))
+            if actual_names != set(reference):
+                raise RuntimeError("comparison lost trainable gradients")
+            for group in groups.values():
+                group['relative_l2'] = (group['difference_squared']/max(group['reference_squared'], 1e-30))**.5
+                group['cosine'] = group['dot']/max((group['reference_squared']*group['actual_squared'])**.5, 1e-30)
+            results[label] = dict(reference_loss=reference_loss, actual_loss=loss, groups=groups,
+                                  forward_xyz_maxabs=float((xyz-reference_xyz).abs().max()),
+                                  forward_xyz_meanabs=float((xyz-reference_xyz).abs().mean()))
+            print('BACKWARD_CHECK '+json.dumps({"mode": label, **results[label]}), flush=True)
+            if any(x['relative_l2'] > .1 for x in groups.values()):
+                raise RuntimeError("backward paths differ materially; stop fitting and inspect evidence")
+    finally:
+        model.config = original_config
+        model.positions.config = original_positions
+        model.motion_encoder.gradient_checkpointing = original_motion
+        if original_backbone:
+            model.structure.backbone.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        model.zero_grad(set_to_none=True)
+        torch.set_rng_state(cpu_rng)
+        torch.cuda.set_rng_state(cuda_rng)
+    return results
 
 
 @torch.no_grad()
@@ -167,12 +245,14 @@ def main():
         surface, targets = single_asset_inputs(surface, targets, mode)
     frozen_digest = input_digest(surface, targets)
     xyz_weight = config["optimization"]["xyz_weight"]
+    backward_checks = check_backward_paths(model, surface, targets, xyz_weight) if plan.get("check_backward_paths") else None
     initial, initial_rows, cached = measure(model, surface, targets, xyz_weight, full_path_check=single)
     report = {"complete": False, "mode": mode, "source": source, "checkpoint": plan["checkpoint"],
               "initialization": initialization, "initial": initial, "updates": [], "evaluations": {"0": initial},
               "assets": targets["asset_id"], "selected_frames": targets["selected_frames"].cpu().tolist(),
               "original_selected_frames": original_frames, "input_sha256": frozen_digest,
               "optimizer_reset": plan.get("reset_optimizer", False),
+              "backward_checks": backward_checks, "diagnostic_schedule": plan.get("diagnostic_schedule", "unchanged"),
               "started_at": datetime.now(timezone.utc).isoformat(), "diagnostic_only_no_formal_weight_reuse": True}
     write_json(report_path, report)
     if not end_to_end:
@@ -185,7 +265,10 @@ def main():
     for step in range(1, plan["updates"] + 1):
         started = time.monotonic()
         optimizer.zero_grad(set_to_none=True)
-        if "constant_lr" in plan:
+        if plan.get("diagnostic_schedule") == "original_onecycle_by_update":
+            schedule = {"optimization": {**config["optimization"], "schedule_samples": plan["updates"]}}
+            lr, _ = set_exposure_lr(optimizer, step-1, schedule)
+        elif "constant_lr" in plan:
             lr = plan["constant_lr"]
         else:
             lr, _ = set_exposure_lr(optimizer, 5040 + (step - 1) * size, config)
@@ -212,14 +295,15 @@ def main():
                     per_asset = xyz_weight * per_xyz
             if not bool(torch.isfinite(per_asset).all()):
                 raise ValueError("nonfinite diagnostic loss")
-            per_asset.sum().backward()
+        per_asset.sum().backward()
         normalize_asset_gradients(model.parameters(), global_assets=size, world_size=1)
         if single and step == 1:
             report["first_gradient_groups"] = finite_gradient_groups(model)
         gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
         optimizer.step()
         row = {"step": step, "xyz_l1": float(xyz_loss.detach()), "structure_ce": float(structure_loss.detach()),
-               "gradient_norm": float(gradient_norm), "lr": lr, "seconds": time.monotonic()-started}
+               "gradient_norm": float(gradient_norm), "lr": lr, "beta1": optimizer.param_groups[0]['betas'][0],
+               "seconds": time.monotonic()-started}
         report["updates"].append(row)
         if step in plan["evaluation_updates"]:
             measured, records, _ = measure(model, surface, targets, xyz_weight, cached if not end_to_end else None,
@@ -243,6 +327,11 @@ def main():
             del xyz, per_xyz
         if single and stable_passes >= 2:
             break
+    if plan.get("save_final_checkpoint"):
+        path = root / f"{mode}_diagnostic_final.pt"
+        torch.save({"model": model.state_dict(), "optimizer": optimizer.state_dict(), "updates": step,
+                    "plan": plan, "source": source, "diagnostic_only_no_formal_weight_reuse": True}, path)
+        report['diagnostic_checkpoint'] = {"path": str(path), "bytes": path.stat().st_size, "sha256": file_sha256(path)}
     report.update(complete=True, finished_at=datetime.now(timezone.utc).isoformat(),
                   final_input_sha256=input_digest(surface, targets))
     if single:

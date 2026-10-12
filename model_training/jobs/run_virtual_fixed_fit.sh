@@ -2,7 +2,7 @@
 set -euo pipefail
 repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 job=/home/wangyy/jobs/shared_virtual_frame_20261012
-label=single_asset_fit_v1
+label=single_asset_cycle_v1
 py=/home/wangyy/miniconda3/envs/mygs/bin/python
 source "$HOME/1.sh"
 case "$(hostname)" in pcg01|pcg01i) ;; *) exit 2 ;; esac
@@ -27,5 +27,5 @@ date -Is
 "$py" -B model_training/tools/agent_work_guard.py check --operation train > "$job/logs/${label}_guard.log"
 "$py" -B -m torch.distributed.run --standalone --nproc_per_node=2 \
     model_training/rigweave/scripts/diagnose_virtual_fitting.py \
-    --config "$repo/model_training/experiments/virtual_single_asset_fit_20261012.json"
+    --config "$repo/model_training/experiments/virtual_single_asset_cycle_20261012.json"
 date -Is

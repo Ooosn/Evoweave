@@ -138,7 +138,9 @@ Do not automatically add steps or replace the task to make the score improve.
 
 Provisional fit acceptance: finite execution; main valid-token accuracy >=99%;
 all fixed views end naturally; >=90% of fixed views have correct joint count
-and edge F1 >=0.95 against the decoded quantized training target. Record original
+and edge F1 >=0.95 against the decoded quantized training target, together with
+symmetric mean nearest-joint distance <=4/256 in normalized coordinates (two
+coordinate bins across the [-1,1] range). Record original
 continuous-GT metrics separately. These are diagnostic gates, not claims of
 generalization. Main UniRig quantization can itself change parent identity, so
 report encode/decode label ceilings rather than hiding those errors or modifying
@@ -170,6 +172,9 @@ Formal training remains blocked until this release decision is recorded.
 must name the exact stage, source commit, config/hash, manifests/hashes,
 initialization/hash, selected assets/frames, resource allocation, output,
 acceptance and stop criteria. Commit/publish before execution, then run the guard.
+Bounded GPU operations also pin the entrypoint, production code ancestry/diff,
+and original model/tokenizer configuration hashes. Historical launchers fail
+the entrypoint gate even while a new-route probe is authorized.
 Keep metrics, predictions, losses, gradients, throughput, memory and checkpoints
 with exit status. Log failures and hypotheses, not just successful runs.
 

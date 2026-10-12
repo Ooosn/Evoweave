@@ -25,19 +25,23 @@ def verify_operation(args):
     operation = state['active_operation']
     if state.get('architecture_contract', {}).get('id') != 'virtual_query_xyz_aux_ids_v1':
         raise ValueError('active state is not this model route')
+    if not operation.get('gpu_work_allowed') or operation.get('formal_training_allowed'):
+        raise ValueError('no bounded GPU operation has been published for this route')
     if operation['mode'] != args.mode or Path(operation['config']).resolve() != args.config.resolve():
         raise ValueError('CLI does not match the exact recorded stage/config')
     if operation['config_sha256'] != sha256(args.config):
         raise ValueError('config differs from the published operation')
     if Path(operation['output']).resolve() != args.output.resolve():
         raise ValueError('output differs from the published operation')
-    if not operation['gpu_work_allowed'] or operation['formal_training_allowed']:
-        raise ValueError('this bounded probe cannot execute under a formal-training operation')
     subprocess.run([sys.executable, str(ROOT/'model_training/tools/agent_work_guard.py'),
-                    'check', '--operation', 'train'], check=True)
+                    'check', '--operation', 'train', '--entrypoint', str(Path(__file__).resolve())], check=True)
     dirty = subprocess.check_output(['git', '-C', str(ROOT), 'status', '--porcelain'], text=True).strip()
     if dirty:
         raise ValueError('GPU probe requires a clean committed code checkout')
+    expected = operation['code_commit']
+    subprocess.run(['git', '-C', str(ROOT), 'merge-base', '--is-ancestor', expected, 'HEAD'], check=True)
+    subprocess.run(['git', '-C', str(ROOT), 'diff', '--quiet', expected, 'HEAD', '--',
+                    'model_training/rigweave', 'model_training/tools'], check=True)
     return subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
 
 
@@ -57,7 +61,7 @@ def choose_rows(rows, config):
 
 def grad_norms(model):
     result = {}
-    for name in ('surface_tokenizer', 'motion_encoder', 'frame_fusion', 'xyz_decoder', 'auxiliary'):
+    for name in ('surface_tokenizer', 'motion_encoder', 'frame_fusion', 'condition_norm', 'xyz_decoder', 'auxiliary'):
         gradients = [p.grad.detach().float() for p in getattr(model, name).parameters() if p.grad is not None]
         if any(not bool(torch.isfinite(g).all()) for g in gradients):
             raise RuntimeError(f'nonfinite gradients in {name}')
@@ -65,10 +69,21 @@ def grad_norms(model):
     return result
 
 
+def require_gradients(model, norms, auxiliary_weight):
+    required = set(norms) - ({'auxiliary'} if auxiliary_weight == 0 else set())
+    if any(norms[name] <= 0 for name in required):
+        raise RuntimeError(f'disconnected required parameter group: {norms}')
+    for name, parameter in [('virtual_slots', model.motion_encoder.virtual_slots),
+                            ('xyz_embedding', model.xyz_decoder.get_input_embeddings().weight),
+                            ('xyz_output_head', model.xyz_decoder.get_output_embeddings().weight)]:
+        if parameter.grad is None or not bool(torch.isfinite(parameter.grad).all()) or float(parameter.grad.float().norm()) <= 0:
+            raise RuntimeError(f'missing/nonfinite learning signal for {name}')
+
+
 @torch.no_grad()
 def evaluate(model, items, tokenizer, config, output, step):
     from src.model.unirig_ar import VocabSwitchingLogitsProcessor
-    from eval_dynamic_rig_generation import _topology_metrics
+    from eval_dynamic_rig_generation import _topology_metrics, _parents_from_output
     model.eval()
     records = []
     for asset_index, (surface, targets, geometry) in enumerate(items):
@@ -84,25 +99,30 @@ def evaluate(model, items, tokenizer, config, output, step):
                     max_new_tokens=config['probe']['max_new_tokens'], logits_processor=processor)
             ids = targets['main_input_ids'][0, frame][targets['main_attention_mask'][0, frame]].cpu().numpy()
             truth = tokenizer.detokenize(ids.astype(np.int64))
+            truth_parents = _parents_from_output(truth)
             record = {'asset_index': asset_index, 'asset_id': geometry['asset_id'][0], 'frame_index': frame,
                       'raw_frame_index': int(geometry['selected_frames'][0, frame]), 'status': predicted['status'],
                       'success': False, 'quantized_edge_f1': 0., 'original_edge_f1': 0., 'exact_count': False,
                       'main_ce': float(teacher['main_loss']), 'main_accuracy': float(teacher['main_accuracy']),
                       'generated_tokens': predicted['tokens'], 'target_tokens': ids.tolist(),
-                      'target_quantized_joints': truth.joints.tolist(), 'target_quantized_parents': truth.parents}
+                      'target_quantized_joints': truth.joints.tolist(), 'target_quantized_parents': truth_parents,
+                      'quantized_j2j': None}
             size = int(geometry['joint_count'][0])
             original = geometry['frame_target_joints'][0, frame, :size].cpu().numpy()
             original_parents = geometry['target_parents'][0, :size].cpu().tolist()
-            record['quantization_label_ceiling_f1'] = _topology_metrics(truth.joints, truth.parents,
+            record['quantization_label_ceiling_f1'] = _topology_metrics(truth.joints, truth_parents,
                 original, original_parents)['edge_f1']
             if predicted['success']:
                 try:
                     parsed = tokenizer.detokenize(np.asarray(predicted['tokens'], dtype=np.int64))
                     if parsed.joints.shape[0] < 1 or not np.isfinite(parsed.joints).all():
                         raise ValueError('nonfinite or empty skeleton')
-                    record.update(success=True, predicted_joints=parsed.joints.tolist(), predicted_parents=parsed.parents,
-                        quantized_edge_f1=_topology_metrics(parsed.joints, parsed.parents, truth.joints, truth.parents)['edge_f1'],
-                        original_edge_f1=_topology_metrics(parsed.joints, parsed.parents, original, original_parents)['edge_f1'],
+                    parsed_parents = _parents_from_output(parsed)
+                    distances = np.linalg.norm(parsed.joints[:, None]-truth.joints[None], axis=-1)
+                    record.update(success=True, predicted_joints=parsed.joints.tolist(), predicted_parents=parsed_parents,
+                        quantized_j2j=float(.5*(distances.min(0).mean()+distances.min(1).mean())),
+                        quantized_edge_f1=_topology_metrics(parsed.joints, parsed_parents, truth.joints, truth_parents)['edge_f1'],
+                        original_edge_f1=_topology_metrics(parsed.joints, parsed_parents, original, original_parents)['edge_f1'],
                         exact_count=len(parsed.joints)==len(truth.joints))
                 except Exception as exc:
                     record.update(status='invalid_eos_sequence', error=repr(exc))
@@ -110,7 +130,11 @@ def evaluate(model, items, tokenizer, config, output, step):
     summary = {key: float(np.mean([r[key] for r in records])) for key in
                ('success', 'quantized_edge_f1', 'original_edge_f1', 'exact_count', 'main_ce', 'main_accuracy')}
     fit_acceptance = (summary['main_accuracy'] >= .99 and all(r['success'] for r in records)
-        and np.mean([r['exact_count'] and r['quantized_edge_f1'] >= .95 for r in records]) >= .9)
+        and np.mean([r['exact_count'] and r['quantized_edge_f1'] >= .95
+                     and r['quantized_j2j'] is not None and r['quantized_j2j'] <= 4/256 for r in records]) >= .9)
+    distances = [r['quantized_j2j'] for r in records if r['quantized_j2j'] is not None]
+    summary['quantized_j2j_successful_views'] = float(np.mean(distances)) if distances else None
+    summary['geometry_scored_views'] = len(distances)
     report = {'step': step, 'views': len(records), 'summary': summary, 'fit_acceptance': bool(fit_acceptance),
               'rows': records, 'failed_generations_scored_zero': True}
     write_json(output/f'evaluation_{step:04d}.json', report)
@@ -160,6 +184,7 @@ def run(args, config, source):
                 write_json(args.output/'shared_gradient_check.json', gradients)
             out['loss'].backward()
             norms = grad_norms(model)
+            require_gradients(model, norms, .1)
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.)
             optimizer.step()
             torch.cuda.synchronize()
@@ -191,6 +216,7 @@ def run(args, config, source):
             raise RuntimeError('nonfinite fitting loss; further training stopped')
         out['loss'].backward()
         norms = grad_norms(model)
+        require_gradients(model, norms, config['probe']['auxiliary_weight'])
         clipped = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1.))
         optimizer.step()
         torch.cuda.synchronize()

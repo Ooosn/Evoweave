@@ -100,7 +100,15 @@ def begin() -> int:
     return 0
 
 
-def check(operation: str) -> int:
+def _check_entrypoint(state: dict[str, Any], operation: str, entrypoint: str | None) -> None:
+    expected = state.get("active_operation", {}).get("required_entrypoint")
+    if operation not in {"train", "preflight", "submit"} or expected is None:
+        return
+    if not entrypoint or (REPO_ROOT / entrypoint).resolve() != (REPO_ROOT / expected).resolve():
+        raise RuntimeError(f"operation requires the recorded entrypoint {expected!r}; historical launchers are blocked")
+
+
+def check(operation: str, entrypoint: str | None = None) -> int:
     state = _load_json(STATE_PATH)
     context_path = _context_path(state)
     if not RECEIPT_PATH.is_file():
@@ -147,6 +155,8 @@ def check(operation: str) -> int:
             f"operation {operation!r} is not explicitly allowed; allowed={sorted(allowed)}"
         )
 
+    _check_entrypoint(state, operation, entrypoint)
+
     print(
         json.dumps(
             {
@@ -172,10 +182,11 @@ def main() -> int:
     subparsers.add_parser("begin")
     check_parser = subparsers.add_parser("check")
     check_parser.add_argument("--operation", required=True)
+    check_parser.add_argument("--entrypoint")
     args = parser.parse_args()
     if args.command == "begin":
         return begin()
-    return check(args.operation)
+    return check(args.operation, args.entrypoint)
 
 
 if __name__ == "__main__":

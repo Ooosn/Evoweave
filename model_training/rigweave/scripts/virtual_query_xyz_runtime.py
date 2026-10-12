@@ -50,6 +50,10 @@ def build_model(config, device):
         raise ValueError('only the official upstream checkpoint may initialize this route')
     if sha256(initial['checkpoint']) != initial['sha256']:
         raise ValueError('official initialization checkpoint hash changed')
+    if sha256(initial['model_config']) != initial['model_config_sha256']:
+        raise ValueError('published original XYZ model configuration hash changed')
+    if sha256(runtime['tokenizer_config']) != runtime['tokenizer_config_sha256']:
+        raise ValueError('published original XYZ tokenizer configuration hash changed')
     random.seed(initial['seed'])
     np.random.seed(initial['seed'] % 2**32)
     torch.manual_seed(initial['seed'])

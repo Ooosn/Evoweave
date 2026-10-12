@@ -32,10 +32,13 @@ class VirtualFrameRigConfig:
     position_checkpointing: bool = True
     generation_cache: bool = True
     temporal_chunk_size: int = 4096
+    position_coordinate_readout: bool = False
+    position_coordinate_dim: int = 128
 
     def __post_init__(self) -> None:
         counts = (self.dim, self.heads, self.query_tokens, self.register_tokens,
-                  self.motion_depth, self.position_depth, self.max_joints, self.max_frames, self.temporal_chunk_size)
+                  self.motion_depth, self.position_depth, self.max_joints, self.max_frames,
+                  self.temporal_chunk_size, self.position_coordinate_dim)
         if any(isinstance(x, bool) or not isinstance(x, int) or x < 1 for x in counts):
             raise ValueError("dimensions, counts and depths must be positive integers")
         if self.dim % self.heads or not 0 <= self.dropout < 1:
@@ -44,6 +47,8 @@ class VirtualFrameRigConfig:
             raise ValueError("virtual-frame baseline supports off or bias motion evidence")
         if not isinstance(self.position_self_attention, bool):
             raise ValueError("position_self_attention must be boolean")
+        if not isinstance(self.position_coordinate_readout, bool):
+            raise ValueError("position_coordinate_readout must be boolean")
 
 
 class VirtualFrameMotionEncoder(AnchorWiseAlternatingMotionEncoder):
@@ -154,6 +159,27 @@ class JointLocalizationLayer(nn.Module):
         return joints + self.dropout(self.ffn(self.ffn_norm(joints)))
 
 
+class AnchorCoordinateReadout(nn.Module):
+    """Read a spatial correction directly from learned anchor probabilities."""
+
+    def __init__(self, dim: int, attention_dim: int) -> None:
+        super().__init__()
+        self.query = nn.Linear(dim, attention_dim, bias=False)
+        self.key = nn.Linear(dim, attention_dim, bias=False)
+        self.scale = attention_dim ** -0.5
+        nn.init.zeros_(self.key.weight)
+
+    def forward(self, joints: torch.Tensor, memory: torch.Tensor, points: torch.Tensor) -> torch.Tensor:
+        query, key = self.query(joints), self.key(memory)
+        logits = torch.bmm(query, key.transpose(1, 2)) * self.scale
+        # A zero key projection makes the correction zero at attachment. The
+        # original unbounded XYZ head still predicts the absolute component.
+        with torch.autocast(device_type=joints.device.type, enabled=False):
+            weights = logits.float().softmax(dim=-1)
+            centered = points.float() - points.float().mean(dim=1, keepdim=True)
+            return torch.bmm(weights, centered)
+
+
 class ContinuousJointLocalizer(nn.Module):
     def __init__(self, config: VirtualFrameRigConfig) -> None:
         super().__init__()
@@ -163,6 +189,10 @@ class ContinuousJointLocalizer(nn.Module):
         self.layers = nn.ModuleList([JointLocalizationLayer(config) for _ in range(config.position_depth)])
         self.norm = nn.LayerNorm(config.dim)
         self.xyz_head = nn.Linear(config.dim, 3)
+        self.coordinate_readout = (
+            AnchorCoordinateReadout(config.dim, config.position_coordinate_dim)
+            if config.position_coordinate_readout else None
+        )
 
     def forward(
         self, joints: torch.Tensor, joint_mask: torch.Tensor,
@@ -185,7 +215,16 @@ class ContinuousJointLocalizer(nn.Module):
                 posed = checkpoint(layer, posed, memory, padding, use_reentrant=False)
             else:
                 posed = layer(posed, memory, padding)
-        xyz = self.xyz_head(self.norm(posed)).reshape(batch, frames, count, 3)
+        posed = self.norm(posed)
+        xyz = self.xyz_head(posed)
+        if self.coordinate_readout is not None:
+            points = anchor_points.reshape(batch * frames, queries, 3)
+            if self.config.position_checkpointing and self.training and torch.is_grad_enabled():
+                correction = checkpoint(self.coordinate_readout, posed, memory, points, use_reentrant=False)
+            else:
+                correction = self.coordinate_readout(posed, memory, points)
+            xyz = xyz.float() + correction
+        xyz = xyz.reshape(batch, frames, count, 3)
         return xyz.masked_fill(~joint_mask[:, None, :, None], 0)
 
 

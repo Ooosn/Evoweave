@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "label": "full_data_readout_comparison_v1",
+  "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+  "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+  "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1",
+  "arms": ["control", "coordinate_readout"],
+  "frame_budget": 320,
+  "batch_cap": 32,
+  "target_samples": 20016,
+  "evaluation_samples": [10032, 20016],
+  "readout_seed": 20261017,
+  "readout_dim": 128,
+  "contract": "Full-data learning experiment, not another frozen-signal audit. Both arms strictly load the identical NEW sample5040 model and all existing Adam states, replay both original data-rank streams on one GPU per arm and perform one optimizer update per original global batch. Same accepted train18018/valid969, same actual assets/frames, original80016 OneCycle schedule/peak1e-4/beta1/BF16/L1/CE+0.5XYZ/clip1. Only intervention is a low-rank attention-weighted centered-coordinate residual in the localization readout. Zero key initialization preserves original outputs initially; existing absolute XYZ prediction remains unbounded. No old-method trained weights, label reordering, normalization, RT removal or clipping. These trial weights must not initialize formal training.",
+  "acceptance": "Compare fixed32train64valid natural generation F1 (failures zero), GT-parent localization L1/F1 and all-frame F1 at10032 and20016, paired by asset. Report control learning versus the5040 starting point separately from treatment-minus-control. Promote the coordinate path only for a consistent localization/generation improvement, not solely lower training loss; otherwise reject it. Neither outcome establishes a unique root cause. Formal still starts fresh and uses80016 actual assets."
+}

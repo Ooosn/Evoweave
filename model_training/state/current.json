@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T06:32:55.805264+00:00",
+  "updated_at": "2026-10-12T07:02:06+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Resolve the observed weak local-geometry localization and validate a remedy against the matched old baseline. Do not presume an optimizer-only cause or launch formal training based on single-asset fitting."
+    "current_action": "Train matched full-data continuations from the NEW sample5040 checkpoint: unchanged control versus zero-initialized direct anchor-coordinate readout. Preserve data, schedule, losses and existing Adam state. This tests a structural learning hypothesis, not a confirmed implementation bug."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -151,10 +151,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -340,29 +340,26 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Resolve the observed weak local-geometry localization and validate a remedy against the matched old baseline. Do not presume an optimizer-only cause or launch formal training based on single-asset fitting.",
+  "next_required_result": "Run only full_data_readout_comparison_v1 to20016 actual asset exposures, with fixed matched evaluations at10032/20016. Separate unchanged-model learning from treatment-minus-control; reject unsupported structural improvement claims. Formal remains unapproved and must start fresh from official upstream, never these trial checkpoints.",
   "active_operation": {
-    "label": "structure_cohort_audit_v1",
-    "operation": "preflight",
-    "status": "completed",
-    "accepted": true,
-    "prepared_at": "2026-10-12T06:25:29.625635+00:00",
-    "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
-    "config_sha256": "1213d30817e99655db79d4ba0e3d63d873c77a64796e384153e80ee54f2528aa",
+    "label": "full_data_readout_comparison_v1",
+    "operation": "train",
+    "mode": "train",
+    "status": "prepared",
+    "accepted": false,
+    "complete": false,
+    "prepared_at": "2026-10-12T07:02:06+00:00",
+    "code_parent_commit": "8d79fe66739e56140a75b2095a14759fe3061848",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_readout_comparison_20261012.json",
+    "config_sha256": "99668dfb23e58f3f166c33a137cb00ee8aaa4e59a6ce36d69c5654e71d443922",
     "checkpoints": [
       {
-        "name": "rank_0",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
-      },
-      {
-        "name": "rank_1",
+        "name": "both_arms",
         "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
         "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
       }
     ],
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1",
     "manifests": {
       "status": "verified_published",
       "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -370,7 +367,7 @@
       "valid_rows": 969,
       "quarantined_rows": 81,
       "target_mesh_padding": 1.1,
-      "all_frame_all_target_joint_abs_limit": 1.0,
+      "all_frame_all_target_joint_abs_limit": 1,
       "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
       "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
       "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
@@ -387,131 +384,28 @@
     },
     "command": [
       "bash",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_readout_comparison.sh"
     ],
-    "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
-    "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
-    "formal_training_allowed": false,
-    "complete": true,
-    "exit_code": 0,
-    "execution_valid": true,
-    "accepted_meaning": "paired_read_only_diagnostic_execution_valid_NOT_model_quality_or_formal_approval",
-    "finished_at": "2026-10-12T06:29:58.857782+00:00",
-    "result": {
-      "train": {
-        "assets": 32,
-        "modes": {
-          "normal": {
-            "xyz_l1": 0.2726979572325945,
-            "query_F1": 0.0625471782496353,
-            "paired_xyz_delta": 0.0,
-            "XYZ_better": 0,
-            "XYZ_worse": 0,
-            "paired_F1_delta": 0.0,
-            "F1_better": 0,
-            "F1_worse": 0
-          },
-          "zero_learned_anchors": {
-            "xyz_l1": 0.3136663497425616,
-            "query_F1": 0.06553405147367745,
-            "paired_xyz_delta": 0.04096839250996709,
-            "XYZ_better": 4,
-            "XYZ_worse": 28,
-            "paired_F1_delta": 0.0029868732240421613,
-            "F1_better": 15,
-            "F1_worse": 13
-          },
-          "zero_explicit_points": {
-            "xyz_l1": 0.28192367404699326,
-            "query_F1": 0.06282186846344187,
-            "paired_xyz_delta": 0.009225716814398766,
-            "XYZ_better": 6,
-            "XYZ_worse": 26,
-            "paired_F1_delta": 0.0002746902138065827,
-            "F1_better": 13,
-            "F1_worse": 12
-          },
-          "break_feature_point_pairing": {
-            "xyz_l1": 0.27318301796913147,
-            "query_F1": 0.06504229343461423,
-            "paired_xyz_delta": 0.0004850607365369797,
-            "XYZ_better": 15,
-            "XYZ_worse": 17,
-            "paired_F1_delta": 0.0024951151849789523,
-            "F1_better": 8,
-            "F1_worse": 8
-          },
-          "spatial_mean_anchors": {
-            "xyz_l1": 0.2759845503605902,
-            "query_F1": 0.06664629773108752,
-            "paired_xyz_delta": 0.0032865931279957294,
-            "XYZ_better": 10,
-            "XYZ_worse": 22,
-            "paired_F1_delta": 0.004099119481452236,
-            "F1_better": 13,
-            "F1_worse": 11
-          }
-        }
-      },
-      "valid": {
-        "assets": 64,
-        "modes": {
-          "normal": {
-            "xyz_l1": 0.23812025121878833,
-            "query_F1": 0.08758685849361329,
-            "paired_xyz_delta": 0.0,
-            "XYZ_better": 0,
-            "XYZ_worse": 0,
-            "paired_F1_delta": 0.0,
-            "F1_better": 0,
-            "F1_worse": 0
-          },
-          "zero_learned_anchors": {
-            "xyz_l1": 0.2849637344479561,
-            "query_F1": 0.07276180125604838,
-            "paired_xyz_delta": 0.04684348322916776,
-            "XYZ_better": 4,
-            "XYZ_worse": 60,
-            "paired_F1_delta": -0.014825057237564906,
-            "F1_better": 21,
-            "F1_worse": 34
-          },
-          "zero_explicit_points": {
-            "xyz_l1": 0.2661725413054228,
-            "query_F1": 0.0849171982874475,
-            "paired_xyz_delta": 0.028052290086634457,
-            "XYZ_better": 24,
-            "XYZ_worse": 40,
-            "paired_F1_delta": -0.002669660206165789,
-            "F1_better": 22,
-            "F1_worse": 26
-          },
-          "break_feature_point_pairing": {
-            "xyz_l1": 0.23805889359209687,
-            "query_F1": 0.09296123081865454,
-            "paired_xyz_delta": -6.135762669146061e-05,
-            "XYZ_better": 35,
-            "XYZ_worse": 29,
-            "paired_F1_delta": 0.005374372325041256,
-            "F1_better": 21,
-            "F1_worse": 13
-          },
-          "spatial_mean_anchors": {
-            "xyz_l1": 0.240139972534962,
-            "query_F1": 0.07983840448081338,
-            "paired_xyz_delta": 0.0020197213161736727,
-            "XYZ_better": 25,
-            "XYZ_worse": 39,
-            "paired_F1_delta": -0.007748454012799908,
-            "F1_better": 16,
-            "F1_worse": 28
-          }
-        }
-      }
+    "authorization": "User requires substantive analysis and actual attempts to solve the training-quality problem, not more disconnected read-only audits. Bounded controlled full-data continuation tests one explicit coordinate-readout hypothesis against the unchanged new model.",
+    "acceptance": "Compare fixed32train64valid natural generation F1 (failures zero), GT-parent localization L1/F1 and all-frame F1 at10032 and20016, paired by asset. Report control learning versus the5040 starting point separately from treatment-minus-control. Promote the coordinate path only for a consistent localization/generation improvement, not solely lower training loss; otherwise reject it. Neither outcome establishes a unique root cause. Formal still starts fresh and uses80016 actual assets.",
+    "contract": "Full-data learning experiment, not another frozen-signal audit. Both arms strictly load the identical NEW sample5040 model and all existing Adam states, replay both original data-rank streams on one GPU per arm and perform one optimizer update per original global batch. Same accepted train18018/valid969, same actual assets/frames, original80016 OneCycle schedule/peak1e-4/beta1/BF16/L1/CE+0.5XYZ/clip1. Only intervention is a low-rank attention-weighted centered-coordinate residual in the localization readout. Zero key initialization preserves original outputs initially; existing absolute XYZ prediction remains unbounded. No old-method trained weights, label reordering, normalization, RT removal or clipping. These trial weights must not initialize formal training.",
+    "selected_settings": {
+      "arms": [
+        "control",
+        "coordinate_readout"
+      ],
+      "target_samples": 20016,
+      "evaluation_samples": [
+        10032,
+        20016
+      ],
+      "frame_budget": 320,
+      "batch_cap": 32,
+      "original_data_ranks": 2,
+      "independent_model_gpus": 2
     },
-    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
-    "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
-    "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
+    "formal_training_allowed": false,
+    "old_method_trained_weights_loaded": false
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

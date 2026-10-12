@@ -315,7 +315,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Both reference controls fit: legacy exact32/32, virtual-final-real exact31/32 and all32 pass corrected gate; raw F1 self-matching defect audited separately. Original fusion fits still rejected. Test fresh aligned-final-real residual candidate at single512/diverse2048 before G3; formal remains blocked.",
+  "next_required_result": "Obtain explicit user approval to publish code/configuration/diagnostic summaries to existing GitHub origin Ooosn/Evoweave. Automatic safety review denied push; do not bypass. After approved publication, test fresh aligned-final-real residual candidate at single512/diverse2048 before G3. Both reference controls fit under audited exact-target gate, but original fusion fits remain rejected and formal training remains blocked.",
   "active_operation": {
     "label": "vquery_reference_pair8_v1_20261013",
     "mode": "reference_fit",

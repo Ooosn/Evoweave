@@ -411,3 +411,9 @@ without analyzing the previous stage.
   selection evidence, not measured GPU capacity. CPU real8 replay also
   reproduced all32 target streams and found no literally identical mesh input
   with conflicting target tokens among48 within-asset pose pairs.
+- Publication is currently blocked by automatic safety review pending explicit
+  human authorization for pushing code/configuration/diagnostic summaries to
+  the existing GitHub origin Ooosn/Evoweave. Local result commit fdffcf8 and
+  tested runner/gate commit c1429e7 are preserved; no new GPU operation has
+  been registered or launched. The remote/node remain at d540542. Do not use
+  a bundle or another transport to bypass the denied publication requirement.

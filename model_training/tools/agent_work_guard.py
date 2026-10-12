@@ -102,7 +102,7 @@ def begin() -> int:
 
 def _check_entrypoint(state: dict[str, Any], operation: str, entrypoint: str | None) -> None:
     expected = state.get("active_operation", {}).get("required_entrypoint")
-    if operation not in {"train", "preflight", "submit"} or expected is None:
+    if operation not in {"train", "preflight", "submit", "matched_eval"} or expected is None:
         return
     if not entrypoint or (REPO_ROOT / entrypoint).resolve() != (REPO_ROOT / expected).resolve():
         raise RuntimeError(f"operation requires the recorded entrypoint {expected!r}; historical launchers are blocked")

@@ -193,4 +193,23 @@ without analyzing the previous stage.
   explicit joint IDs replacing XYZ. Earlier depth-token suggestion is superseded.
 - 2026-10-13 JST: user delegated lambda selection to experiments and required
   written records, demonstrated fitting and analysis before full-data training.
-- Current: contract recorded; implementation/tests/fit/selection still pending.
+- G0: current 18969-asset auxiliary codec round trips passed with no errors;
+  CPU model/adapter tests passed. Original XYZ grammar equivalence was checked
+  on all 202 real next-token prefixes of the fixed fitting case.
+- G1: full-size B1, T2/T8/T24 forward/backward/optimizer passed. T24 peaked at
+  14.70 GiB allocated and 17.30 GiB reserved. Both losses reached virtual slots.
+- G2 initial attempt: execution failed before updates because an upstream
+  grammar wrapper imported an unrelated invalid Python annotation. The wrapper
+  was replaced by an exactly equivalent call to the unchanged original
+  tokenizer grammar; the vendor source and tokenizer were not modified.
+- G2 main-only fixed fit, 128 updates: NOT accepted. Teacher accuracy 99.5098%
+  and CE 0.006759 masked identical free predictions for two different poses.
+  Both outputs exactly matched frame 7; frame 9 had F1 0.88735 and J2J 0.04545.
+  Targets differ at 45/103 positions, beginning at full-token index 8 (114/113).
+  The unconditioned two-sequence teacher-forcing floor is ln(2)/102 = 0.006796,
+  consistent with GT-prefix memorization, not proof of a specific root cause.
+- Next: replay the same checkpoint/geometry without optimization; measure
+  frame differences through encoder/fusion and correct/swapped/mean/zero
+  condition logits at the first fork, including a decoder FP32 check. A
+  successful diagnostic means valid measurement, NOT model acceptance.
+  No longer fitting, lambda sweep or full-data training is authorized yet.

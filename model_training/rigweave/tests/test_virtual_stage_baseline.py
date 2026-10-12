@@ -1,10 +1,12 @@
 from types import SimpleNamespace
+import sys
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import torch
 
-from eval_virtual_stage_baseline import joint_coordinate_offsets, prepare_paired_surface, summarize, verify_saved_input
+from eval_virtual_stage_baseline import joint_coordinate_offsets, prepare_paired_surface, summarize, teacher_result, verify_saved_input
 
 
 class VirtualStageBaselineTests(unittest.TestCase):
@@ -51,6 +53,32 @@ class VirtualStageBaselineTests(unittest.TestCase):
                          batch["vertex_normals"][:, frame], batch["face_normals"][:, frame])
             for name in ("dense_points", "dense_normals", "query_points", "query_normals"):
                 self.assertTrue(torch.equal(surface[name][:, frame], getattr(material, name)))
+
+    def test_teacher_diagnostic_uses_one_native_forward(self):
+        class Transformer(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.calls = 0
+            def forward(self):
+                self.calls += 1
+                return SimpleNamespace(logits=torch.randn(1, 8, 12))
+        class Model:
+            uses_action_group_bias = False
+            eos_loss_weight = 1.
+            transformer = Transformer()
+            def _ar_losses(self, condition, batch, **kwargs):
+                logits = self.transformer().logits[:, 2:-1]
+                return {"ce_loss": torch.nn.functional.cross_entropy(logits.transpose(1, 2), batch["input_ids"][:, 1:])}
+        model = Model()
+        tokenizer = SimpleNamespace(num_discrete=8, token_id_branch=8, eos=9, continuous_range=(-1., 1.))
+        batch = {"input_ids": torch.tensor([[10, 11, 1, 2, 3, 9]]),
+                 "target_parents": torch.tensor([[-1]]), "target_joints": torch.zeros(1, 1, 3)}
+        modules = {"eval_dynamic_rig_generation": SimpleNamespace(_topology_metrics=lambda *args: {"edge_f1": 0.}),
+                   "src.tokenizer.tokenizer_part": SimpleNamespace(undiscretize=lambda bins, limits, count: bins / count * 2 - 1)}
+        with patch.dict(sys.modules, modules):
+            result = teacher_result(model, tokenizer, torch.zeros(1, 2, 3), batch)
+        self.assertEqual(model.transformer.calls, 1)
+        self.assertLessEqual(result["same_forward_ce_difference"], 2e-5)
 
 
 if __name__ == "__main__":

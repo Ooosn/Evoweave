@@ -27,7 +27,7 @@ class ReferenceConditionRig(nn.Module):
     """Reuse the actual surface, legacy encoder and verified original XYZ loss."""
     def __init__(self, base, route):
         super().__init__()
-        if route not in ('static_surface', 'legacy_query_first'):
+        if route not in ('static_surface', 'legacy_query_first', 'virtual_final_real'):
             raise ValueError('unrecognized reference control')
         self.base = base
         self.route = route
@@ -61,6 +61,8 @@ class ReferenceConditionRig(nn.Module):
         return self.base.auxiliary
 
     def encode(self, surface):
+        if self.route == 'virtual_final_real':
+            return self.base.encode(surface)
         frames = surface['query_points'].shape[1]
         tokens = []
         for frame in range(frames):
@@ -103,6 +105,19 @@ class ReferenceConditionRig(nn.Module):
         return self.base.generate_condition(*args, **kwargs)
 
 
+def declared_reference_run(operation, args, config_digest):
+    matches = [run for run in operation.get('runs', [operation])
+               if Path(run['config']).resolve() == args.config.resolve()]
+    if len(matches) != 1:
+        raise ValueError('reference configuration is not uniquely declared')
+    run = matches[0]
+    if run['config_sha256'] != config_digest:
+        raise ValueError('wrong reference configuration')
+    if Path(run['output']).resolve() != args.output.resolve():
+        raise ValueError('wrong reference output')
+    return run
+
+
 def verify(args):
     from virtual_query_xyz_runtime import sha256
     state = json.loads((ROOT/'model_training/state/current.json').read_text())
@@ -111,10 +126,7 @@ def verify(args):
         raise ValueError('wrong current route')
     if not op.get('gpu_work_allowed') or op.get('formal_training_allowed') or op['mode'] != 'reference_fit':
         raise ValueError('reference fit is not the authorized bounded operation')
-    if op['config_sha256'] != sha256(args.config) or Path(op['config']).resolve() != args.config.resolve():
-        raise ValueError('wrong reference configuration')
-    if Path(op['output']).resolve() != args.output.resolve():
-        raise ValueError('wrong reference output')
+    declared_reference_run(op, args, sha256(args.config))
     subprocess.run([sys.executable, str(ROOT/'model_training/tools/agent_work_guard.py'), 'check',
         '--operation', 'train', '--entrypoint', str(Path(__file__).resolve())], check=True)
     if subprocess.check_output(['git', '-C', str(ROOT), 'status', '--porcelain'], text=True).strip():
@@ -146,10 +158,14 @@ def main():
         return ReferenceConditionRig(model, route), tokenizer, codec, initial
     def require_reference_gradients(model, norms, weight):
         required = ['surface_tokenizer', 'xyz_decoder']
-        if route == 'legacy_query_first':
+        if route in ('legacy_query_first', 'virtual_final_real'):
             required.append('motion_encoder')
         if any(norms[name] <= 0 for name in required):
             raise RuntimeError('missing required reference gradient: '+json.dumps(norms))
+        if route == 'virtual_final_real':
+            gradient = model.motion_encoder.virtual_slots.grad
+            if gradient is None or not bool(torch.isfinite(gradient).all()) or float(gradient.norm()) <= 0:
+                raise RuntimeError('module-isolation control must retain virtual-slot learning through the encoder')
         for module in (model.xyz_decoder.get_input_embeddings(), model.xyz_decoder.get_output_embeddings()):
             if module.weight.grad is None or not torch.isfinite(module.weight.grad).all():
                 raise RuntimeError('missing or nonfinite original XYZ embedding/head gradient')

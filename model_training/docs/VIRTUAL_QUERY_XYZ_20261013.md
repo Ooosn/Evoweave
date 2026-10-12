@@ -328,3 +328,47 @@ without analyzing the previous stage.
   The runner additionally rejects cross-split duplicate file paths, even when
   IDs differ. Real GPU comparison/smoke and exact candidate-config equality
   remain prerequisites, not claims implied by these CPU tests.
+- Diverse8 lambda0.1 also completed2048 updates and FAILED: all32 natural EOS,
+  one repeated full prediction, F1=0.1619892, accuracy=0.9767485, CE=0.0451565
+  and only1/32 views passing the geometry/count gate. At1024 F1 temporarily
+  reached0.3650033 and CE0.0368916, but this improvement regressed. Asset IDs,
+  fixed-frame records and the complete update0 evaluation are byte-identical
+  to lambda0; initialization records differ only in run config/code provenance.
+  Auxiliary supervision alone did not produce stable fitting at this budget.
+- Exact empirical prefix-only analysis gives a condition-free main CE minimum
+  of0.04454644 on these32 targets, or0.02056472 when asset identity is known but
+  pose is ignored. The final failed runs remain near the fully condition-free
+  level. The analogous auxiliary-ID bound is0.06383669; its last8 training
+  updates average0.07038794 (different successive weights, not a fixed-weight
+  evaluation). These are counterfactual memorization bounds, not trained-model
+  baselines or proof of a unique cause. The earlier successful single-case
+  update256 did beat its own0.00679556 condition-free bound decisively.
+- Next diagnostic: paired reference-only fits on the same8 assets/T4, original
+  XYZ loss/head, fresh official seed and maximum2048 updates. One calls the
+  actual legacy query-first motion encoder for each target frame. The other
+  keeps the approved virtual-participating encoder but feeds its FINAL real
+  frame tokens directly to XYZ, bypassing only final virtual-query fusion.
+  Neither reference may replace the formal model. The second control must
+  retain nonzero main gradients through virtual slots and leave fusion unused.
+  Six focused reference/parity/authority tests pass, including exact frame
+  routing, original-loss equivalence and individually pinned paired configs.
+- Preparatory training code remains release-locked. Nine CPU tests cover exact
+  asset accounting, formal48-assets/2-rank enforcement, all-T capacity bindings
+  and resident-gradient accumulation. A real two-process HGC CPU/Gloo test
+  executed the actual accumulation/checkpoint/evaluation flow on a tiny model;
+  maximum gradient error versus the analytic global-asset mean was5.55e-17,
+  AdamW state matched, and sampler checkpoint replay plus uneven validation
+  shards passed. This does not certify NCCL/BF16/full-model GPU capacity.
+- Capacity input selection now uses exact original-order token lengths and the
+  conservative7*N-1 upper bound, not joint count alone. It also selects maximum
+  geometry buffers at every T=2..24. Sixteen CPU tests pass; real selected-token
+  crosschecks and GPU measurements are still required. Full-data execution
+  requires capacity receipts bound to its model, coefficient and every T/B
+  shape, including two-microbatch accumulation with resident gradients.
+- CPU comparison predeclaration completed on all18969 real parent arrays:
+  train has3424 distinct exact DFS-ID structures; validation has130 assets
+  unseen to full train. The fixed64 training cohort is32 base/32 addition,
+  with16 low/32 mid/16 high-joint assets. Validation32 includes10 low-joint
+  assets and12 distinct globally unseen structures. This is intentionally
+  stratified diagnostic membership, not a population-weighted quality estimate;
+  G3 GPU work remains blocked until fitting is accepted.

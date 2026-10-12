@@ -14,7 +14,7 @@ from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZConfig, Virtua
 from rigweave.dynamic_rig.motion_encoder import AnchorWiseAlternatingMotionEncoder
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts'))
-from probe_virtual_query_reference import ReferenceConditionRig
+from probe_virtual_query_reference import ReferenceConditionRig, declared_reference_run
 
 
 class Surface(nn.Module):
@@ -27,6 +27,19 @@ class Surface(nn.Module):
 
 
 class LegacyParityTests(unittest.TestCase):
+    def test_reference_authority_accepts_only_exact_single_or_declared_paired_runs(self):
+        first = {'config': '/reference/a.json', 'config_sha256': 'hash-a', 'output': '/reference/out-a'}
+        second = {'config': '/reference/b.json', 'config_sha256': 'hash-b', 'output': '/reference/out-b'}
+        args = SimpleNamespace(config=Path(first['config']), output=Path(first['output']))
+        self.assertIs(declared_reference_run(first, args, 'hash-a'), first)
+        self.assertIs(declared_reference_run({'runs': [second, first]}, args, 'hash-a'), first)
+        for operation, digest, output in (({'runs': [first, first]}, 'hash-a', first['output']),
+                                           ({'runs': [second]}, 'hash-a', first['output']),
+                                           ({'runs': [first]}, 'wrong', first['output']),
+                                           ({'runs': [first, second]}, 'hash-a', second['output'])):
+            with self.subTest(operation=operation, digest=digest, output=output), self.assertRaises(ValueError):
+                declared_reference_run(operation, SimpleNamespace(config=args.config, output=Path(output)), digest)
+
     def setUp(self):
         torch.manual_seed(723)
         torch.set_num_threads(1)
@@ -138,6 +151,30 @@ class LegacyParityTests(unittest.TestCase):
         self.assertGreater(float(self.new.motion_encoder.blocks[0].pose_inner.self_attn.in_proj_weight.grad.norm()), 0)
         self.assertIsNone(self.new.motion_encoder.virtual_slots.grad)
         self.assertIsNone(self.new.frame_fusion[0].cross.in_proj_weight.grad)
+
+    def test_virtual_final_real_isolation_preserves_encoder_and_bypasses_only_fusion(self):
+        self.new.surface_tokenizer = Surface()
+        surface = {key: torch.randn(2, 2, 5, 3) for key in
+                   ('dense_points', 'dense_normals', 'query_points', 'query_normals')}
+        reference = ReferenceConditionRig(self.new, 'virtual_final_real').eval()
+        expected_real, expected_virtual = self.new.encode(surface)
+        real, virtual = reference.encode(surface)
+        torch.testing.assert_close(real, expected_real, atol=0, rtol=0)
+        torch.testing.assert_close(virtual, expected_virtual, atol=0, rtol=0)
+        self.assertIs(reference.conditions(real, virtual), real)
+        targets = {'main_input_ids': self.ids, 'main_attention_mask': self.mask}
+        out = reference.forward_encoded(real, virtual, targets, auxiliary_weight=0.)
+        expected = torch.stack([self.old_loss(expected_real[b:b+1, t], self.ids[b:b+1, t], self.mask[b:b+1, t])
+                                for b in range(2) for t in range(2)]).mean()
+        torch.testing.assert_close(out['main_loss'], expected, atol=1e-6, rtol=1e-6)
+        out['loss'].backward()
+        self.assertGreater(float(self.new.motion_encoder.virtual_slots.grad.norm()), 0)
+        self.assertGreater(float(self.new.surface_tokenizer.projection.weight.grad.norm()), 0)
+        self.assertGreater(float(self.new.motion_encoder.blocks[0].pose_inner.self_attn.in_proj_weight.grad.norm()), 0)
+        self.assertIsNone(self.new.frame_fusion[0].cross.in_proj_weight.grad)
+        self.assertIsNone(self.new.auxiliary.embedding.weight.grad)
+        with self.assertRaisesRegex(ValueError, 'no auxiliary'):
+            reference.forward_encoded(real, virtual, targets, auxiliary_weight=.1)
 
 
 if __name__ == '__main__':

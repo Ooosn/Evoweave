@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T21:27:09.897380+00:00",
+  "updated_at": "2026-10-12T22:26:16.229435+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,13 +126,13 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
-    "submit",
-    "matched_eval"
+    "train",
+    "preflight",
+    "matched_eval",
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -315,17 +315,17 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run only the exact recorded bounded fit operation; review evidence and update state before any next run. Formal remains blocked.",
+  "next_required_result": "Matched auxiliary-weight0.1 fit rejected: initial evaluation, asset IDs and fixed frames exactly match lambda0; temporary improvement at1024 regressed. At2048 all32EOS but one repeated prediction, F1 0.161989, accuracy 0.976748 and only1/32 views passes geometry/count. No extension, G3 or formal release. Next isolate the actual legacy query-first path and new virtual-encoder final real tokens without fusion, as reference-only controls on the same cohort.",
   "active_operation": {
     "label": "vquery_xyz_fit_diverse8_l01_v1_20261013",
     "mode": "fit",
     "operation": "train",
-    "status": "prepared_not_started",
+    "status": "completed_not_accepted",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_xyz.py",
-    "complete": false,
+    "complete": true,
     "accepted": false,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "authorization": "User explicitly approved new-route implementation, fitting and experimental parameter selection before full training; primary reviewed predecessor evidence.",
     "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "code_commit": "e7e6371e2c539b9a9b539cdca4b8cf5be21193bc",
@@ -383,7 +383,14 @@
       "fixed maximum budget",
       "acceptance reached"
     ],
-    "prepared_utc": "2026-10-12T21:27:09.897356+00:00"
+    "prepared_utc": "2026-10-12T21:27:09.897356+00:00",
+    "execution_finished": true,
+    "exit_code": 0,
+    "completed_updates": 2048,
+    "result_receipt": "D:\\evoweave\\server_ops\\outputs\\virtual_query_xyz_20261013\\fit_diverse8_l01_v1_result.json",
+    "result_sha256": "60c6d978fb1d67f1f06fe59839607370eea4ac5ad8ba8b8e778ac217a40af49b",
+    "conclusion": "Matched auxiliary-weight0.1 fit rejected: initial evaluation, asset IDs and fixed frames exactly match lambda0; temporary improvement at1024 regressed. At2048 all32EOS but one repeated prediction, F1 0.161989, accuracy 0.976748 and only1/32 views passes geometry/count. No extension, G3 or formal release. Next isolate the actual legacy query-first path and new virtual-encoder final real tokens without fusion, as reference-only controls on the same cohort.",
+    "finished_utc": "2026-10-12T22:26:16.229417+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

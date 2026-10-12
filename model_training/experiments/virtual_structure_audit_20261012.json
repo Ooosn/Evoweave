@@ -1,7 +1,8 @@
 {
-  "label": "structure_signal_audit_v1",
+  "schema_version": 1,
+  "label": "structure_signal_audit_v2",
   "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v1",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v2",
   "manifest_indices": [2724, 1622],
   "models": [
     {"name":"sample5040", "checkpoint":"/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt", "sha256":"c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"},

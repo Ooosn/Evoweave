@@ -1,10 +1,21 @@
 import unittest
+from pathlib import Path
 import numpy as np
 import torch
 from diagnose_virtual_structure import attention_summary, contrast, difference
+from motion_experiment_runtime import load_config
 
 
 class StructureProbeTests(unittest.TestCase):
+    def test_actual_launch_configuration_is_readable(self):
+        path=Path(__file__).resolve().parents[2]/'experiments/virtual_structure_audit_20261012.json'
+        plan=load_config(path)
+        self.assertEqual(len(plan['models']),2)
+        self.assertEqual(plan['manifest_indices'],[2724,1622])
+        self.assertTrue(plan['output'].endswith(plan['label']))
+        for spec in plan['models']:
+            self.assertEqual(len(spec['sha256']),64)
+
     def test_attention_measurement_matches_actual_weights(self):
         torch.manual_seed(7)
         layer=torch.nn.MultiheadAttention(16,4,dropout=0,batch_first=True).eval()

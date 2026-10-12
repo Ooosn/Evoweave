@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T06:13:30.222839+00:00",
+  "updated_at": "2026-10-12T06:16:52.223431+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -342,9 +342,61 @@
   },
   "next_required_result": "Inspect actual representation and routing in sample5040 versus fitted single-asset models, including frozen-feature readout capacity. No formal launch and no root-cause claim from constructed branch ambiguity alone.",
   "active_operation": {
-    "label": "structure_signal_audit_v1",
+    "label": "structure_signal_audit_v2",
     "operation": "preflight",
     "status": "prepared",
+    "accepted": false,
+    "prepared_at": "2026-10-12T06:16:52.186693+00:00",
+    "code_parent_commit": "a6bc1f310c3060b901ed1d55c2bca4507c32ad81",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
+    "config_sha256": "f8f5ad5e83cb656ec6c3ecceba5409059c0684ec36f2f20f12abdb1169f5a403",
+    "checkpoints": [
+      {
+        "name": "sample5040",
+        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+      },
+      {
+        "name": "single_asset_fitted",
+        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+        "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+      }
+    ],
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v2",
+    "manifests": {
+      "status": "verified_published",
+      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+      "train_rows": 18018,
+      "valid_rows": 969,
+      "quarantined_rows": 81,
+      "target_mesh_padding": 1.1,
+      "all_frame_all_target_joint_abs_limit": 1.0,
+      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+      "npz_files_changed": 0
+    },
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "bash",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+    ],
+    "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
+    "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
+    "formal_training_allowed": false
+  },
+  "last_operation": {
+    "label": "structure_signal_audit_v1",
+    "operation": "preflight",
+    "status": "failed",
     "accepted": false,
     "prepared_at": "2026-10-12T06:13:30.185874+00:00",
     "code_parent_commit": "a3c2b075f318d3da4f69d86ab123c2f704e8c9e5",
@@ -391,197 +443,13 @@
     ],
     "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
     "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
-    "formal_training_allowed": false
-  },
-  "last_operation": {
-    "label": "single_asset_cycle_v1",
-    "operation": "train",
-    "status": "completed",
-    "accepted": true,
-    "prepared_at": "2026-10-12T05:34:04.933566+00:00",
-    "code_parent_commit": "3109f219c58e364b65715efc6e003d6af3da4cb0",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_single_asset_cycle_20261012.json",
-    "config_sha256": "00479311aa89fc8f6c869c7c87e5e260623189667706e7f65488b381801d9c65",
-    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1",
-    "manifests": {
-      "status": "verified_published",
-      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
-      "train_rows": 18018,
-      "valid_rows": 969,
-      "quarantined_rows": 81,
-      "target_mesh_padding": 1.1,
-      "all_frame_all_target_joint_abs_limit": 1.0,
-      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
-      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
-      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
-      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
-      "npz_files_changed": 0
-    },
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "bash",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_fixed_fit.sh"
-    ],
-    "authorization": "User demands a direct single-sample overfit to verify the real training/inference chain. No delegation. Only this bounded diagnostic is approved, NOT formal training.",
-    "acceptance": "Same full-model single-asset fixed static/eight-real-frame controls, same new sample5040 weights, original BF16/CE+0.5L1/clipping/decay, fresh AdamW. Use the exact original set_exposure_lr learning-rate AND beta1 function across1024 diagnostic updates, preserving peak1e-4/warmup0.1/div5/finaldiv10; production80016 schedule unchanged. Before fitting compare every trainable gradient at the same weights/inputs: production backward outside autocast versus previous diagnostic inside autocast, then checkpointing versus no checkpointing. Record per-group norm/cosine/difference, stop on nonfinite or >10percent gradient relative L2; this is a gross-error stop, not a mathematical equivalence tolerance. Restore all checkpoint flags before training. Stop at1024 or two consecutive checks with XYZ/query L1<=0.01, CE<=0.01, exact tree and generationF1>=GTselfF1-0.05. No model/loss change, no formal authorization, no diagnostic-weight reuse for formal training. Passing one asset does not establish dataset-level quality.",
     "formal_training_allowed": false,
-    "complete": true,
-    "exit_code": 0,
-    "execution_valid": true,
-    "accepted_meaning": "single_asset_learnability_only_NOT_population_quality_or_formal_approval",
-    "finished_at": "2026-10-12T05:48:15.228393+00:00",
-    "result": {
-      "single_static": {
-        "updates": 960,
-        "final": {
-          "structure_ce": 0.00010297768312739208,
-          "xyz_l1": 0.0014072962803766131,
-          "query_xyz_l1": 0.0014072962803766131,
-          "teacher_F1": 1.0,
-          "generation_F1": 1.0,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131,
-              0.0014072962803766131
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.0014072962803766131,
-          "wrong_asset_structure_memory_xyz_l1": 0.0014072962803766131,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            0.1025390625,
-            -0.0128173828125,
-            -0.1025390625
-          ],
-          "last_bias_gradient_expected": [
-            0.10256410390138626,
-            -0.012820513918995857,
-            -0.10256411135196686
-          ],
-          "last_bias_gradient_maxabs_error": 2.504885196685791e-05,
-          "full_train_eval_xyz_meanabs": 0.0,
-          "full_train_eval_xyz_maxabs": 0.0,
-          "fitting_threshold_passed": true,
-          "consecutive_passes": 2
-        },
-        "input_hash_unchanged": true,
-        "checkpoint": {
-          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_static_diagnostic_final.pt",
-          "bytes": 8379298978,
-          "sha256": "a7b60ebf5cf4d143cad4a7d0ff015720cad6105b637437f263c0b739e45cc6c1"
-        },
-        "generated_frame_F1": [
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "generated_frame_l1": [
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942,
-          0.0013979037757962942
-        ],
-        "report_sha256": "205d6938353ed57a56200cbbcb877dded05b641131506a1204c0e26cde416e0e"
-      },
-      "single_dynamic": {
-        "updates": 896,
-        "final": {
-          "structure_ce": 7.87625031080097e-05,
-          "xyz_l1": 0.004041680134832859,
-          "query_xyz_l1": 0.003661853028461337,
-          "teacher_F1": 1.0,
-          "generation_F1": 1.0,
-          "oracle_query_F1": 1.0,
-          "all_generated_parents_exact": true,
-          "per_asset_frame_xyz_l1": [
-            [
-              0.003661853028461337,
-              0.004377261269837618,
-              0.0037229948211461306,
-              0.0038460034411400557,
-              0.003106718184426427,
-              0.0039899395778775215,
-              0.004547684453427792,
-              0.005080987233668566
-            ]
-          ],
-          "wrong_asset_anchors_xyz_l1": 0.004041680134832859,
-          "wrong_asset_structure_memory_xyz_l1": 0.004041680134832859,
-          "same_weight_train_eval_xyz_meanabs": 0.0,
-          "same_weight_train_eval_xyz_maxabs": 0.0,
-          "last_bias_gradient_actual": [
-            -0.043212890625,
-            0.019287109375,
-            0.0016021728515625
-          ],
-          "last_bias_gradient_expected": [
-            -0.04326923191547394,
-            0.01923077180981636,
-            0.0016025637742131948
-          ],
-          "last_bias_gradient_maxabs_error": 5.634129047393799e-05,
-          "full_train_eval_xyz_meanabs": 0.0008242741459980607,
-          "full_train_eval_xyz_maxabs": 0.0078125,
-          "fitting_threshold_passed": true,
-          "consecutive_passes": 2
-        },
-        "input_hash_unchanged": true,
-        "checkpoint": {
-          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
-          "bytes": 8379302726,
-          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
-        },
-        "generated_frame_F1": [
-          1.0,
-          0.9803921568627451,
-          1.0,
-          0.9375,
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "generated_frame_l1": [
-          0.0037748562172055244,
-          0.004184781573712826,
-          0.0037136429455131292,
-          0.00392191531136632,
-          0.003134641097858548,
-          0.003986205905675888,
-          0.00455110939219594,
-          0.005087525583803654
-        ],
-        "report_sha256": "5cd0199e05dad70ca042731417422d5921dc6a715af4a4016765b03b8cad6764"
-      }
-    },
-    "result_note": "Static and dynamic single-asset fitting meet the predeclared two-check acceptance. This does not establish correctness/generalization of the new architecture on the dataset, nor explain the matched old/new5040 F1 gap. All production core code, loss and formal schedule remain unchanged."
+    "complete": false,
+    "exit_code": 1,
+    "finished_at": "2026-10-12T15:15:30+09:00",
+    "model_forward_started": false,
+    "failure": "Diagnostic plan omitted schema_version=1; rejected by load_config before model loading or CUDA setup.",
+    "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/structure_signal_audit_v1.log"
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -5357,6 +5225,64 @@
         }
       },
       "result_note": "Static and dynamic single-asset fitting meet the predeclared two-check acceptance. This does not establish correctness/generalization of the new architecture on the dataset, nor explain the matched old/new5040 F1 gap. All production core code, loss and formal schedule remain unchanged."
+    },
+    {
+      "label": "structure_signal_audit_v1",
+      "operation": "preflight",
+      "status": "failed",
+      "accepted": false,
+      "prepared_at": "2026-10-12T06:13:30.185874+00:00",
+      "code_parent_commit": "a3c2b075f318d3da4f69d86ab123c2f704e8c9e5",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
+      "config_sha256": "3e5aeae9c6c019f288233784765dba98071cf8dc08c8c3c0c7eb2955e23db863",
+      "checkpoints": [
+        {
+          "name": "sample5040",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+          "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+        },
+        {
+          "name": "single_asset_fitted",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
+          "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+        }
+      ],
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v1",
+      "manifests": {
+        "status": "verified_published",
+        "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+        "train_rows": 18018,
+        "valid_rows": 969,
+        "quarantined_rows": 81,
+        "target_mesh_padding": 1.1,
+        "all_frame_all_target_joint_abs_limit": 1.0,
+        "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+        "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+        "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+        "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+        "npz_files_changed": 0
+      },
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "bash",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+      ],
+      "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
+      "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
+      "formal_training_allowed": false,
+      "complete": false,
+      "exit_code": 1,
+      "finished_at": "2026-10-12T15:15:30+09:00",
+      "model_forward_started": false,
+      "failure": "Diagnostic plan omitted schema_version=1; rejected by load_config before model loading or CUDA setup.",
+      "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/structure_signal_audit_v1.log"
     }
   ],
   "localization_diagnosis_20261012": {

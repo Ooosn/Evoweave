@@ -224,6 +224,13 @@ def main():
     if args.formal_controller is None or args.formal_rank is None:
         raise ValueError("formal-start evidence is required before old-model inference")
     report["formal_start_evidence"] = require_formal_started(args.formal_controller, args.formal_rank)
+    guard = Path(__file__).resolve().parents[3] / "model_training/tools/agent_work_guard.py"
+    for arguments in (("begin",), ("check", "--operation", "matched_eval")):
+        result = subprocess.run([sys.executable, str(guard), *arguments], text=True, capture_output=True)
+        if result.returncode:
+            raise RuntimeError("old-model diagnostic is not permitted by current recorded state: " + result.stderr.strip())
+    gate = json.loads(result.stdout)
+    report["execution_gate"] = {key: gate[key] for key in ("allowed", "operation", "state_id", "git_head")}
     device = torch.device("cuda:0")
     torch.cuda.set_device(device)
     free, total = torch.cuda.mem_get_info()

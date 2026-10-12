@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T07:02:06+00:00",
+  "updated_at": "2026-10-12T09:51:39+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,9 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Train matched full-data continuations from the NEW sample5040 checkpoint: unchanged control versus zero-initialized direct anchor-coordinate readout. Preserve data, schedule, losses and existing Adam state. This tests a structural learning hypothesis, not a confirmed implementation bug."
+    "current_action": "User clarified that level1 replaces the old real query frame with a virtual query retaining the same1024 query-token slots. The current96-register generator prefix is an implementation deviation. Stop this branch, preserve checkpoints/allocation, and correct this architecture understanding before further model edits or GPU work.",
+    "virtual_query_architecture_status": "incorrect_96_register_prefix_instead_of_requested_1024_virtual_query_tokens",
+    "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -151,10 +153,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -340,12 +342,12 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run only full_data_readout_comparison_v1 to20016 actual asset exposures, with fixed matched evaluations at10032/20016. Separate unchanged-model learning from treatment-minus-control; reject unsupported structural improvement claims. Formal remains unapproved and must start fresh from official upstream, never these trial checkpoints.",
+  "next_required_result": "Honor the clarified same1024-token virtual-query architecture rather than replacing its generator input with96 registers. Do not add more XYZ-head changes or launch another experiment before that architecture is correctly understood and implemented. Preserve all old artifacts and the qlogin allocation. Formal must initialize fresh from official upstream, never the misimplemented trial checkpoints.",
   "active_operation": {
     "label": "full_data_readout_comparison_v1",
     "operation": "train",
     "mode": "train",
-    "status": "prepared",
+    "status": "stopped_architecture_mismatch",
     "accepted": false,
     "complete": false,
     "prepared_at": "2026-10-12T07:02:06+00:00",
@@ -405,7 +407,46 @@
       "independent_model_gpus": 2
     },
     "formal_training_allowed": false,
-    "old_method_trained_weights_loaded": false
+    "old_method_trained_weights_loaded": false,
+    "execution_finished": true,
+    "finished_at": "2026-10-12T09:51:39+00:00",
+    "exit_code": 1,
+    "termination": "Primary deliberately sent SIGTERM only to the exact torchrun training controller PID2269103; workers2662214/2662215 exited; qlogin129547842 and its physical5/7 grant preserved.",
+    "stop_reason": "User clarified that the virtual query must retain the same1024 query-token slots as the former real query frame. This implementation wrongly substitutes96 virtual registers as the generator condition. The readout comparison does not implement the intended architecture and must not be continued or promoted.",
+    "last_completed_update": {
+      "samples": 16804,
+      "step": 353,
+      "input_frames": 189212
+    },
+    "preserved_checkpoint_samples": 10032,
+    "preserved_checkpoints": [
+      {
+        "arm": "control",
+        "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/control/checkpoint_sample_010032.pt",
+        "bytes": 8379297078
+      },
+      {
+        "arm": "coordinate_readout",
+        "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/coordinate_readout/checkpoint_sample_010032.pt",
+        "bytes": 8382445846
+      }
+    ],
+    "result_at_10032": {
+      "control": {
+        "valid_edge_f1": 0.136421503144392,
+        "valid_xyz_l1": 0.18771334597840905
+      },
+      "coordinate_readout": {
+        "valid_edge_f1": 0.13443820920177374,
+        "valid_xyz_l1": 0.1940634084166959
+      },
+      "conclusion": "No validation benefit established for the added readout. These results describe the wrong96-register-prefix architecture, not the requested1024-token virtual-query model."
+    },
+    "local_artifacts": "D:/evoweave-artifacts/shared-virtual-frame-20261012/training/full_data_readout_comparison_v1",
+    "report_sha256": {
+      "control": "5e1b0a0f0b65c34d6b8b90decf55a888c7ba76296284046accc581a792c2812e",
+      "coordinate_readout": "bae2da894eb1c0759cfcda2af0a701cf201096e627294d8a9f076358f5beb333"
+    }
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

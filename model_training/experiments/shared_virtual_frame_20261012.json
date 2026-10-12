@@ -87,8 +87,8 @@
     "schedule_samples": 80016,
     "weight_decay": 0.04,
     "clip_grad_norm": 1.0,
-    "xyz_weight": 1.0,
-    "xyz_weight_status": "pending_gradient_balance_measurement"
+    "xyz_weight": 0.5,
+    "xyz_weight_status": "selected_after_measurement"
   },
   "evaluation": {"train_assets": 32, "valid_assets": 64, "frames": 8, "selection_seed": 20261012},
   "capacity_initial": {
@@ -114,6 +114,15 @@
     "stop_at_limit": true
   },
   "loss_balance": {"frames": [24, 8, 2], "frame_budget": 320, "batch_cap": 32},
+  "loss_balance_acceptance": {
+    "accepted": true,
+    "stage": "loss_balance_v1",
+    "source_commit": "f7c47ce150c9e554e25480d95f4d974652660747",
+    "report_sha256": "8b4c25c65d1ad1e48ee9e9ea72bf85b9e8275696b15d5e14a96686d3e257f26f",
+    "median_structure_to_xyz_gradient_ratios": {"motion_encoder.norm.weight": 0.4758585815589844, "structure.embedding.weight": 0.6373440988298703},
+    "selected_xyz_weight": 0.5,
+    "scope": "Initial shared-gradient calibration across actual full-size T24/T8/T2 batches; same fixed coefficient for all attention/depth candidates. Reassess learning trends, not scalar loss magnitudes alone."
+  },
   "capacity_acceptance": {
     "accepted": true,
     "stage": "capacity_confirm_v1",
@@ -130,12 +139,14 @@
     "scope": "Largest actual train GT/mesh stress cases, resident Adam states and gradients, full forward/backward/step, no allocator cache clearing between cases. Not a claim of learning quality."
   },
   "compare": {
-    "approved": false,
+    "approved": true,
     "frame_budget": 320,
     "batch_cap": 32,
     "accumulation": 1,
     "target_samples": 5040,
-    "evaluation_samples": [2016, 5040]
+    "evaluation_samples": [2016, 5040],
+    "candidate_order": ["self_cross_2", "self_cross_1", "self_cross_4", "cross_2"],
+    "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
   },
   "formal": {
     "approved": false,

@@ -103,6 +103,36 @@ class ModelTests(unittest.TestCase):
                 attention_mask=torch.ones(1, 5+index+1, dtype=torch.long), use_cache=True)
             self.assertTrue(torch.allclose(first.logits[:, -1], full[:, index], atol=1e-6))
 
+    def test_aligned_final_frame_residual_is_post_fusion_and_optional(self):
+        self.model.eval()
+        real = torch.randn(2, 3, 5, 16)
+        virtual = torch.randn(2, 5, 16)
+        base = self.model.conditions(real, virtual)
+        self.model.config = VirtualQueryXYZConfig(**{**self.config.__dict__, 'frame_residual_scale': 1.})
+        seen = []
+        hook = self.model.frame_fusion[-1].register_forward_hook(
+            lambda module, args, output: seen.append(output))
+        actual = self.model.conditions(real, virtual)
+        hook.remove()
+        expected = self.model.condition_norm(seen[0]+real.reshape(6, 5, 16)).reshape_as(real)
+        self.assertTrue(torch.equal(actual, expected))
+        self.assertFalse(torch.allclose(actual, base))
+        changed = real.clone()
+        changed[:, 1] = torch.randn_like(real[:, 1])
+        other = self.model.conditions(changed, virtual)
+        self.assertTrue(torch.equal(actual[:, 0], other[:, 0]))
+        self.assertTrue(torch.equal(actual[:, 2], other[:, 2]))
+        self.assertFalse(torch.allclose(actual[:, 1], other[:, 1]))
+        self.model.config = self.config
+        self.assertTrue(torch.equal(self.model.conditions(real, virtual), base))
+
+    def test_residual_route_still_trains_virtual_queries_and_xyz_head(self):
+        self.model.config = VirtualQueryXYZConfig(**{**self.config.__dict__, 'frame_residual_scale': 1.})
+        self.test_each_loss_reaches_virtual_and_main_xyz_head()
+        for value in (-1., float('nan'), float('inf'), True):
+            with self.assertRaises(ValueError):
+                VirtualQueryXYZConfig(frame_residual_scale=value)
+
     def test_natural_eos_and_token_cap_are_distinct(self):
         self.model.eval()
         def choose(token):

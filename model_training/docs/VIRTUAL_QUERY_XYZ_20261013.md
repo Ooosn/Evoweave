@@ -213,3 +213,21 @@ without analyzing the previous stage.
   condition logits at the first fork, including a decoder FP32 check. A
   successful diagnostic means valid measurement, NOT model acceptance.
   No longer fitting, lambda sweep or full-data training is authorized yet.
+- Read-only diagnosis completed: exact free predictions/targets reproduced.
+  Relative frame-feature L2 was 0.219107 at the surface encoder, 0.018726 at
+  final real-frame tokens and 0.001415 at fused conditions. Across the 12 motion
+  blocks, absolute frame delta RMS stayed near 0.38 while common feature RMS
+  grew to 20.82. FP32 reference attention still selected token 113 for both
+  conditions; this is not fixed by readout precision alone. Zero condition
+  destroyed teacher fit: the common asset signal is used, but pose contrast is
+  insufficient in this case. These measurements locate a bottleneck but do
+  not alone establish the causal training remedy.
+- Bounded intervention R1: set `frame_residual_scale=1` in
+  `C_t = LN(Fusion(V_final, A_t_final) + scale * A_t_final)`. The residual
+  preserves same-index final real-frame detail; virtual slots remain all 1024
+  cross-attention queries. It uses neither raw initial surface features nor GT
+  coordinates nor auxiliary predictions. Scale 0 is the exact original
+  implementation, and remains the code default. Compare fresh official init,
+  the same asset/frames/surface seed, lambda 0, LR 1e-4 and maximum 128 updates.
+  No simultaneous optimizer or loss change. R1 remains experimental until its
+  generated per-frame outputs pass the same predeclared fit gates.

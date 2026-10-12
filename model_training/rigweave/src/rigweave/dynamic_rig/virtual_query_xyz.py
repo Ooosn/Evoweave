@@ -22,6 +22,7 @@ class VirtualQueryXYZConfig:
     register_tokens: int = 96
     motion_depth: int = 12
     fusion_depth: int = 1
+    frame_residual_scale: float = 0.
     auxiliary_depth: int = 2
     auxiliary_max_tokens: int = 1024
     max_frames: int = 24
@@ -41,6 +42,8 @@ class VirtualQueryXYZConfig:
             raise ValueError('register_tokens must be a nonnegative integer')
         if self.dim % self.heads or not 0 <= self.dropout < 1:
             raise ValueError('invalid attention dimension/dropout')
+        if isinstance(self.frame_residual_scale, bool) or not math.isfinite(self.frame_residual_scale) or self.frame_residual_scale < 0:
+            raise ValueError('frame_residual_scale must be finite and nonnegative')
         if self.motion_evidence_fusion not in {'off', 'bias'}:
             raise ValueError('only established off/bias motion evidence is supported')
 
@@ -213,6 +216,9 @@ class VirtualQueryXYZRig(nn.Module):
                 query = checkpoint(layer, query, memory, use_reentrant=False)
             else:
                 query = layer(query, memory)
+        # Preserve aligned final-frame detail without replacing virtual queries.
+        if self.config.frame_residual_scale:
+            query = query + self.config.frame_residual_scale * memory
         return self.condition_norm(query).reshape(batch, frames, queries, dim)
 
     def main_logits(self, condition, input_ids, attention_mask):

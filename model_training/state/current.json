@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T04:19:28.612905+00:00",
+  "updated_at": "2026-10-12T04:29:23.729843+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Compare actual native old sample5040 checkpoint against all new trials on the same evaluation inputs before interpreting poor F1. Formal training and additional architecture trials remain blocked. Preserve qlogin."
+    "current_action": "Inspect actual fixed-batch fitting and train/inference outputs of the existing model; formal training blocked until poor localization is understood. Preserve qlogin; do not reuse diagnostic weights for formal initialization."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -152,12 +152,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "matched_eval"
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
-    "submit"
+    "submit",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -340,12 +340,45 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Compare actual native old sample5040 checkpoint against all new trials on the same evaluation inputs before interpreting poor F1. Formal training and additional architecture trials remain blocked. Preserve qlogin.",
+  "next_required_result": "Inspect actual fixed-batch fitting and train/inference outputs of the existing model; formal training blocked until poor localization is understood. Preserve qlogin; do not reuse diagnostic weights for formal initialization.",
   "active_operation": {
-    "label": "native_bias_h8_sample5040_paired_v4",
-    "operation": "matched_eval",
+    "label": "fixed_pair_fit_v1",
+    "operation": "preflight",
     "status": "prepared",
     "accepted": false,
+    "prepared_at": "2026-10-12T04:29:23.729843+00:00",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_fit_20261012.json",
+    "config_sha256": "75512d92aaab2c097fd99a74af48f64bd2b17c453ea24c537c6be238aa147d3a",
+    "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+    "checkpoint_sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/fixed_pair_fit_v1",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/diagnose_virtual_fitting.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_fixed_fit_20261012.json"
+    ],
+    "authorization": "User explicitly demands rapid direct verification of actual training and inference and fitting; parent owns execution, no delegated tasks. Bounded diagnostic parameter updates only, not formal or architecture comparison.",
+    "acceptance": "Diagnostic only: first two actually-exposed training-diagnostic assets in manifest-index order, fixed originalT8 views/surface samples, actualnewtrial5040 weights+Adam states, originalCE+0.5L1/schedule/gradientclipping. Rank0 updates all originally trainable modules. Rank1 freezes all but the existing position head and reuses detached fixed anchors/H, retaining its original Adam state. No architecture change, no formal checkpoint or promotion, no old-trained weights used as new initialization. This tests fixed-sample learnability, not generalization."
+  },
+  "last_operation": {
+    "label": "native_bias_h8_sample5040_paired_v4",
+    "operation": "matched_eval",
+    "status": "completed",
+    "accepted": true,
     "prepared_at": "2026-10-12T04:19:28.612905+00:00",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
     "config_sha256": "bc1adf9c16b35a45237188796a78599b29da0c8031c6f817d388e6dac949d50c",
@@ -379,52 +412,54 @@
     ],
     "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
     "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
-    "change": "Report the actual original _ar_losses CE directly. Keep alternate reduction discrepancy as diagnostic, not an unsupported rejection threshold. Preserve original rejected threshold result; do not claim parity passed. Exact input matching remains enforced."
-  },
-  "last_operation": {
-    "label": "native_bias_h8_sample5040_paired_v3",
-    "operation": "matched_eval",
-    "status": "failed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T04:14:12.215804+00:00",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
-    "config_sha256": "9a610bacdf9532217c4e219a539ed1550c5ff1513c1b0b533ad5ddbd4309dbc3",
-    "checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
-      "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
-      "step": 105,
-      "sample_seen": 5040
+    "change": "Report the actual original _ar_losses CE directly. Keep alternate reduction discrepancy as diagnostic, not an unsupported rejection threshold. Preserve original rejected threshold result; do not claim parity passed. Exact input matching remains enforced.",
+    "complete": true,
+    "accepted_meaning": "paired_evaluation_execution_valid",
+    "finished_at": "2026-10-12T04:25:05+00:00",
+    "exit_code": 0,
+    "result": {
+      "train": {
+        "assets": 32,
+        "natural_eos": 26,
+        "edge_f1": 0.5783055571482345,
+        "edge_precision": 0.6094375606602289,
+        "edge_recall": 0.5659390505624586,
+        "exact_count": 0.34375,
+        "full_gt_prefix_ce": 1.4563012346625328,
+        "coordinate_ce": 1.5479567125439644,
+        "coordinate_accuracy": 0.47550621815025806,
+        "full_gt_prefix_joint_xyz_l1": 0.020620787516236305,
+        "full_gt_prefix_edge_f1": 0.7917693361589493,
+        "geometry_successful_assets": 26,
+        "geometry": {
+          "j2j": 0.024778033082535712,
+          "j2b": 0.018760614056510885,
+          "b2b": 0.016421819156052706
+        }
+      },
+      "valid": {
+        "assets": 64,
+        "natural_eos": 54,
+        "edge_f1": 0.5986201411746895,
+        "edge_precision": 0.6253275731120158,
+        "edge_recall": 0.5987222803398708,
+        "exact_count": 0.296875,
+        "full_gt_prefix_ce": 1.5154149048030376,
+        "coordinate_ce": 1.6096092453226447,
+        "coordinate_accuracy": 0.4520962918177247,
+        "full_gt_prefix_joint_xyz_l1": 0.020736248312459793,
+        "full_gt_prefix_edge_f1": 0.8000070775617762,
+        "geometry_successful_assets": 54,
+        "geometry": {
+          "j2j": 0.027257428763690125,
+          "j2b": 0.021580428114315,
+          "b2b": 0.02034118123968284
+        }
+      }
     },
-    "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v3",
-    "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
-    ],
-    "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
-    "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
-    "change": "Reuse the original native _ar_losses forward, capturing its actual logits for diagnostics and same-forward CE parity. Eliminate separately reimplemented teacher forward and retain exact input checks. No model or metric change.",
-    "complete": false,
-    "finished_at": "2026-10-12T04:16:57+00:00",
-    "exit_code": 1,
-    "result_note": "Exact input equality passed. Diagnostic mean-of-token-loss versus native CE reduction differed by 2.7657e-5 and1.0407e-4 on the same forward; unnecessarily tight2e-5 diagnostic threshold stopped generation. Native CE itself is available directly. No parameter update.",
-    "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v3.log"
+    "result_artifact": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v4/summary.json",
+    "result_sha256": "5d7c6395573d76b70ef0fae95ea4c7855f0443a7c70e7e4fec741afef51c0f77",
+    "conclusion": "Matched old105update/5040exposure validF1 .598620 versus new .093266. New quality not accepted; formal launch stays blocked."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -3591,6 +3626,93 @@
       "exit_code": 1,
       "result_note": "Exact input equality passed. Diagnostic mean-of-token-loss versus native CE reduction differed by 2.7657e-5 and1.0407e-4 on the same forward; unnecessarily tight2e-5 diagnostic threshold stopped generation. Native CE itself is available directly. No parameter update.",
       "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v3.log"
+    },
+    {
+      "label": "native_bias_h8_sample5040_paired_v4",
+      "operation": "matched_eval",
+      "status": "completed",
+      "accepted": true,
+      "prepared_at": "2026-10-12T04:19:28.612905+00:00",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
+      "config_sha256": "bc1adf9c16b35a45237188796a78599b29da0c8031c6f817d388e6dac949d50c",
+      "checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
+        "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
+        "step": 105,
+        "sample_seen": 5040
+      },
+      "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v4",
+      "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
+      ],
+      "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
+      "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
+      "change": "Report the actual original _ar_losses CE directly. Keep alternate reduction discrepancy as diagnostic, not an unsupported rejection threshold. Preserve original rejected threshold result; do not claim parity passed. Exact input matching remains enforced.",
+      "complete": true,
+      "accepted_meaning": "paired_evaluation_execution_valid",
+      "finished_at": "2026-10-12T04:25:05+00:00",
+      "exit_code": 0,
+      "result": {
+        "train": {
+          "assets": 32,
+          "natural_eos": 26,
+          "edge_f1": 0.5783055571482345,
+          "edge_precision": 0.6094375606602289,
+          "edge_recall": 0.5659390505624586,
+          "exact_count": 0.34375,
+          "full_gt_prefix_ce": 1.4563012346625328,
+          "coordinate_ce": 1.5479567125439644,
+          "coordinate_accuracy": 0.47550621815025806,
+          "full_gt_prefix_joint_xyz_l1": 0.020620787516236305,
+          "full_gt_prefix_edge_f1": 0.7917693361589493,
+          "geometry_successful_assets": 26,
+          "geometry": {
+            "j2j": 0.024778033082535712,
+            "j2b": 0.018760614056510885,
+            "b2b": 0.016421819156052706
+          }
+        },
+        "valid": {
+          "assets": 64,
+          "natural_eos": 54,
+          "edge_f1": 0.5986201411746895,
+          "edge_precision": 0.6253275731120158,
+          "edge_recall": 0.5987222803398708,
+          "exact_count": 0.296875,
+          "full_gt_prefix_ce": 1.5154149048030376,
+          "coordinate_ce": 1.6096092453226447,
+          "coordinate_accuracy": 0.4520962918177247,
+          "full_gt_prefix_joint_xyz_l1": 0.020736248312459793,
+          "full_gt_prefix_edge_f1": 0.8000070775617762,
+          "geometry_successful_assets": 54,
+          "geometry": {
+            "j2j": 0.027257428763690125,
+            "j2b": 0.021580428114315,
+            "b2b": 0.02034118123968284
+          }
+        }
+      },
+      "result_artifact": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v4/summary.json",
+      "result_sha256": "5d7c6395573d76b70ef0fae95ea4c7855f0443a7c70e7e4fec741afef51c0f77",
+      "conclusion": "Matched old105update/5040exposure validF1 .598620 versus new .093266. New quality not accepted; formal launch stays blocked."
     }
   ]
 }

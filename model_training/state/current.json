@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_query_xyz_20261013",
-  "updated_at": "2026-10-12T22:29:51.207059+00:00",
+  "updated_at": "2026-10-12T23:40:16.147854+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -126,10 +126,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -315,15 +315,15 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review both bounded reference controls and localize encoder/fusion versus fitting protocol. Do not promote either reference as the formal model.",
+  "next_required_result": "Both reference controls fit: legacy exact32/32, virtual-final-real exact31/32 and all32 pass corrected gate; raw F1 self-matching defect audited separately. Original fusion fits still rejected. Test fresh aligned-final-real residual candidate at single512/diverse2048 before G3; formal remains blocked.",
   "active_operation": {
     "label": "vquery_reference_pair8_v1_20261013",
     "mode": "reference_fit",
     "operation": "train",
-    "status": "prepared_not_started",
-    "complete": false,
+    "status": "completed_not_accepted",
+    "complete": true,
     "accepted": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "reference_control_only": true,
     "approved_virtual_route": false,
@@ -408,7 +408,14 @@
       "per-control acceptance reached",
       "per-control maximum2048 updates"
     ],
-    "prepared_utc": "2026-10-12T22:29:51.207034+00:00"
+    "prepared_utc": "2026-10-12T22:29:51.207034+00:00",
+    "execution_finished": true,
+    "exit_code": 0,
+    "completed_updates": 4096,
+    "result_receipt": "reference_pair8_v1_result.json",
+    "result_sha256": "d43c07b8edb0b53ce51e5d082b215188e4774e8bb233d9aacb96c3c9f3d27631",
+    "conclusion": "Both reference controls fit: legacy exact32/32, virtual-final-real exact31/32 and all32 pass corrected gate; raw F1 self-matching defect audited separately. Original fusion fits still rejected. Test fresh aligned-final-real residual candidate at single512/diverse2048 before G3; formal remains blocked.",
+    "finished_utc": "2026-10-12T23:40:16.147835+00:00"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

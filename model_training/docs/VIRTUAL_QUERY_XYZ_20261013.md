@@ -372,3 +372,42 @@ without analyzing the previous stage.
   assets and12 distinct globally unseen structures. This is intentionally
   stratified diagnostic membership, not a population-weighted quality estimate;
   G3 GPU work remains blocked until fitting is accepted.
+- Paired reference controls completed2048 updates each (both exit0). Legacy
+  query-first generated the exact GT token stream for32/32 views, teacher
+  accuracy1.0, CE0.00019019 and J2J0. Virtual-final-real generated31/32 exact
+  streams; its remaining9-joint view had J2J0.01098115 and raw F1=1, with
+  overall teacher accuracy0.9989224 and CE0.00439181. Both full initial model
+  fingerprints are a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635.
+  IDs, frames and every target token match the failed original fit.
+- The old geometric acceptance was not reflexive: nearest-neighbor argmin
+  collapses coincident joint indices, so8/32 targets have self-edge F1<0.95.
+  Legacy's exact32/32 output still averaged raw F1=0.95348109. Do not rewrite
+  historical raw scores or silently replace the project's shared metric.
+  Gate v2 accepts exact target token equality as stronger topology evidence,
+  OR the original raw F1>=0.95; it STILL requires valid natural EOS, exact
+  joint count, J2J<=4/256, >=90percent passing views and teacher accuracy>=0.99.
+  Replay of immutable files (reference_gate_audit_v1.json,
+  SHA a8467d9d43ed27fd86e6e7381d372d91951d75847b623f6243567fde12f3e99d)
+  passes legacy at2048 and final-real at1536. Both failed original lambda0/0.1
+  runs still pass only1/32 views at2048 and remain rejected.
+- These controls localize a fitting bottleneck to the final fusion/condition
+  interface under this recipe; the virtual-participating encoder and retained
+  RT data CAN fit the cohort. They do not justify replacing virtual fusion
+  with direct real tokens in the formal model. Next candidate is the existing
+  aligned final-frame residual, C=LN(Fusion(V,A_t)+A_t), tested fresh on the
+  single asset (max512) and identical diverse8 (max2048), lambda0 and unchanged
+  constant AdamW1e-4. The original R1 single max128 failure was not conclusive.
+  Full formal release remains blocked until candidate G2/G3/capacity review.
+- Diagnostic-only optimization controls are now testable without changing
+  defaults: optional mean-over-assets accumulation and the established
+  exposure-based OneCycle schedule. Eighteen CPU tests passed for the updated
+  runner/evaluator: default AdamW trajectory and moments exactly match, actual
+  accumulation matches the direct mean, exposure/LR accounting and exact
+  paired authority are checked. Neither option is selected for the residual
+  comparison, which isolates the architecture change.
+- Real capacity metadata is now certified:52 parent arrays inspected and15
+  synthetic-XYZ original-tokenizer crosschecks passed. The longest main target
+  is1362 tokens; largest geometry-buffer proxy atT24 is0.32782GiB. This is input
+  selection evidence, not measured GPU capacity. CPU real8 replay also
+  reproduced all32 target streams and found no literally identical mesh input
+  with conflicting target tokens among48 within-asset pose pairs.

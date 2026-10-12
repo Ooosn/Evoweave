@@ -1,0 +1,11 @@
+{
+  "label": "structure_signal_audit_v1",
+  "virtual_config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+  "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v1",
+  "manifest_indices": [2724, 1622],
+  "models": [
+    {"name":"sample5040", "checkpoint":"/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt", "sha256":"c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"},
+    {"name":"single_asset_fitted", "checkpoint":"/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt", "sha256":"3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"}
+  ],
+  "contract": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked."
+}

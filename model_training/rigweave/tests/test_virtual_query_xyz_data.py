@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass
 import importlib.util
+import os
 from pathlib import Path
 import sys
 import types
+from typing import Any
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -16,6 +20,7 @@ import torch
 ROOT = Path(__file__).parents[1]
 CODEC_PATH = ROOT / "src" / "rigweave" / "dynamic_rig" / "aux_skeleton_tokens.py"
 ADAPTER_PATH = ROOT / "src" / "rigweave" / "dynamic_rig" / "virtual_query_xyz_data.py"
+DATA_RELATIVE_PATH = Path("src") / "rigweave" / "dynamic_rig" / "data.py"
 
 
 @dataclass
@@ -55,42 +60,60 @@ class RecordingTokenizer:
         return np.asarray(tokens, dtype=np.int64)
 
 
-def install_isolated_modules() -> tuple[types.ModuleType, types.ModuleType, list[tuple[str, object]]]:
-    """Install only the package names needed by the relative adapter import."""
+def _source_data_path() -> Path:
+    """Find the repository's real data helper source without embedding a checkout path."""
 
-    for name in ("rigweave", "rigweave.dynamic_rig", "src", "src.tokenizer"):
-        package = types.ModuleType(name)
-        package.__path__ = []
-        sys.modules[name] = package
+    candidates = [ROOT / DATA_RELATIVE_PATH]
+    source_root = os.environ.get("EVOWEAVE_TEST_SOURCE_ROOT")
+    if source_root:
+        root = Path(source_root)
+        candidates.extend((root / DATA_RELATIVE_PATH, root / "model_training" / "rigweave" / DATA_RELATIVE_PATH))
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    searched = ", ".join(str(candidate) for candidate in candidates)
+    raise RuntimeError(
+        "real data.py is required for helper-equivalence tests; set "
+        f"EVOWEAVE_TEST_SOURCE_ROOT to the source checkout (searched: {searched})"
+    )
+
+
+def _load_original_helpers() -> tuple[Any, Any]:
+    """Extract the two production helper definitions without importing the model package."""
+
+    source_path = _source_data_path()
+    tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=str(source_path))
+    wanted = {"_derive_tokenizer_tails", "_make_token_input"}
+    functions = [
+        node for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in wanted
+    ]
+    if {node.name for node in functions} != wanted:
+        raise RuntimeError(f"{source_path} does not define both required data helpers")
+    extracted = ast.Module(body=functions, type_ignores=[])
+    ast.fix_missing_locations(extracted)
+    namespace: dict[str, Any] = {"np": np, "Any": Any, "__name__": "real_data_helpers"}
+    exec(compile(extracted, str(source_path), "exec"), namespace)
+    return namespace["_derive_tokenizer_tails"], namespace["_make_token_input"]
+
+
+def install_isolated_modules() -> tuple[types.ModuleType, types.ModuleType, list[tuple[str, object]]]:
+    """Load the adapter with temporary package names and restore ``sys.modules`` afterward."""
+
+    real_derive_tokenizer_tails, real_make_token_input = _load_original_helpers()
+    fake_src = types.ModuleType("src")
+    fake_src.__path__ = []
+    fake_tokenizer = types.ModuleType("src.tokenizer")
+    fake_tokenizer.__path__ = []
     spec_module = types.ModuleType("src.tokenizer.spec")
     spec_module.TokenizeInput = TokenizeInput
-    sys.modules["src.tokenizer.spec"] = spec_module
 
     helper_calls: list[tuple[str, object]] = []
     data_module = types.ModuleType("rigweave.dynamic_rig.data")
 
     def derive_tokenizer_tails(joints: np.ndarray, parents: list[int | None]) -> np.ndarray:
         helper_calls.append(("tails", np.asarray(joints).copy()))
-        points = np.asarray(joints, dtype=np.float32)
-        children: list[list[int]] = [[] for _ in range(int(points.shape[0]))]
-        for child, parent in enumerate(parents):
-            if parent is not None:
-                children[int(parent)].append(int(child))
-        tails = points.copy()
-        for index, kids in enumerate(children):
-            if kids:
-                tails[index] = points[int(kids[0])]
-                continue
-            parent = parents[index]
-            if parent is None:
-                tails[index] = points[index]
-                continue
-            direction = points[index] - points[int(parent)]
-            if float(np.linalg.norm(direction)) <= 1.0e-8:
-                tails[index] = points[index]
-            else:
-                tails[index] = points[index] + direction
-        return tails.astype(np.float32, copy=False)
+        return real_derive_tokenizer_tails(joints, parents)
 
     def make_token_input(
         joints: np.ndarray,
@@ -99,54 +122,45 @@ def install_isolated_modules() -> tuple[types.ModuleType, types.ModuleType, list
         tokenizer: RecordingTokenizer,
         tails: np.ndarray | None,
     ) -> np.ndarray:
-        """The existing data._make_token_input body, with no coordinate edits."""
-
-        from src.tokenizer.spec import TokenizeInput as InjectedTokenizeInput
-
-        parent_joints = []
-        branch = []
-        child_count = np.zeros((joints.shape[0],), dtype=np.int64)
-        for index, parent in enumerate(parents):
-            if parent is not None:
-                child_count[parent] += 1
-            parent_joints.append(joints[index] if parent is None else joints[parent])
-            branch.append(False if index == 0 else parent != index - 1)
-        bones = np.concatenate([np.asarray(parent_joints, dtype=np.float32), joints.astype(np.float32)], axis=-1)
-        if tails is None:
-            tails = derive_tokenizer_tails(joints, parents)
-        else:
-            tails = np.asarray(tails, dtype=np.float32)
-        if tails.shape != joints.shape:
-            raise ValueError("tails shape does not match joints shape")
-        token_input = InjectedTokenizeInput(
-            bones=bones,
-            tails=tails,
-            branch=np.asarray(branch, dtype=bool),
-            is_leaf=child_count == 0,
-            no_skin=None,
-            cls=cls,
-            parts_bias={},
-        )
-        helper_calls.append(("token_input", token_input))
-        return tokenizer.tokenize(token_input)
+        before = len(getattr(tokenizer, "calls", ()))
+        with patch.dict(
+            sys.modules,
+            {"src": fake_src, "src.tokenizer": fake_tokenizer, "src.tokenizer.spec": spec_module},
+            clear=False,
+        ):
+            result = real_make_token_input(joints, parents, cls, tokenizer, tails)
+        calls = getattr(tokenizer, "calls", ())
+        payload = calls[-1] if len(calls) == before + 1 else None
+        helper_calls.append(("token_input", payload))
+        return result
 
     data_module._derive_tokenizer_tails = derive_tokenizer_tails
     data_module._make_token_input = make_token_input
     sys.modules[data_module.__name__] = data_module
 
-    codec_spec = importlib.util.spec_from_file_location("rigweave.dynamic_rig.aux_skeleton_tokens", CODEC_PATH)
-    if codec_spec is None or codec_spec.loader is None:
-        raise RuntimeError(f"cannot load {CODEC_PATH}")
-    codec_module = importlib.util.module_from_spec(codec_spec)
-    sys.modules[codec_spec.name] = codec_module
-    codec_spec.loader.exec_module(codec_module)
+    fake_rigweave = types.ModuleType("rigweave")
+    fake_rigweave.__path__ = []
+    fake_dynamic_rig = types.ModuleType("rigweave.dynamic_rig")
+    fake_dynamic_rig.__path__ = []
+    isolated_modules = {
+        "rigweave": fake_rigweave,
+        "rigweave.dynamic_rig": fake_dynamic_rig,
+        "rigweave.dynamic_rig.data": data_module,
+    }
+    with patch.dict(sys.modules, isolated_modules, clear=False):
+        codec_spec = importlib.util.spec_from_file_location("rigweave.dynamic_rig.aux_skeleton_tokens", CODEC_PATH)
+        if codec_spec is None or codec_spec.loader is None:
+            raise RuntimeError(f"cannot load {CODEC_PATH}")
+        codec_module = importlib.util.module_from_spec(codec_spec)
+        sys.modules[codec_spec.name] = codec_module
+        codec_spec.loader.exec_module(codec_module)
 
-    adapter_spec = importlib.util.spec_from_file_location("rigweave.dynamic_rig.virtual_query_xyz_data", ADAPTER_PATH)
-    if adapter_spec is None or adapter_spec.loader is None:
-        raise RuntimeError(f"cannot load {ADAPTER_PATH}")
-    adapter_module = importlib.util.module_from_spec(adapter_spec)
-    sys.modules[adapter_spec.name] = adapter_module
-    adapter_spec.loader.exec_module(adapter_module)
+        adapter_spec = importlib.util.spec_from_file_location("rigweave.dynamic_rig.virtual_query_xyz_data", ADAPTER_PATH)
+        if adapter_spec is None or adapter_spec.loader is None:
+            raise RuntimeError(f"cannot load {ADAPTER_PATH}")
+        adapter_module = importlib.util.module_from_spec(adapter_spec)
+        sys.modules[adapter_spec.name] = adapter_module
+        adapter_spec.loader.exec_module(adapter_module)
     return codec_module, adapter_module, helper_calls
 
 

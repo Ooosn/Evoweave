@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T06:25:29.651595+00:00",
+  "updated_at": "2026-10-12T06:32:55.805264+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "Complete the exact96asset read-only geometry-conditioning controls. No formal launch and no dataset-level attribution from a constructed counterexample or one-case attention observation."
+    "current_action": "Resolve the observed weak local-geometry localization and validate a remedy against the matched old baseline. Do not presume an optimizer-only cause or launch formal training based on single-asset fitting."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -151,11 +151,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
     "train",
+    "preflight",
     "matched_eval",
     "submit"
   ],
@@ -340,12 +340,12 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Complete the exact96asset read-only geometry-conditioning controls. No formal launch and no dataset-level attribution from a constructed counterexample or one-case attention observation.",
+  "next_required_result": "Resolve the observed weak local-geometry localization and validate a remedy against the matched old baseline. Do not presume an optimizer-only cause or launch formal training based on single-asset fitting.",
   "active_operation": {
     "label": "structure_cohort_audit_v1",
     "operation": "preflight",
-    "status": "prepared",
-    "accepted": false,
+    "status": "completed",
+    "accepted": true,
     "prepared_at": "2026-10-12T06:25:29.625635+00:00",
     "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
@@ -391,30 +391,150 @@
     ],
     "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
     "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
-    "formal_training_allowed": false
+    "formal_training_allowed": false,
+    "complete": true,
+    "exit_code": 0,
+    "execution_valid": true,
+    "accepted_meaning": "paired_read_only_diagnostic_execution_valid_NOT_model_quality_or_formal_approval",
+    "finished_at": "2026-10-12T06:29:58.857782+00:00",
+    "result": {
+      "train": {
+        "assets": 32,
+        "modes": {
+          "normal": {
+            "xyz_l1": 0.2726979572325945,
+            "query_F1": 0.0625471782496353,
+            "paired_xyz_delta": 0.0,
+            "XYZ_better": 0,
+            "XYZ_worse": 0,
+            "paired_F1_delta": 0.0,
+            "F1_better": 0,
+            "F1_worse": 0
+          },
+          "zero_learned_anchors": {
+            "xyz_l1": 0.3136663497425616,
+            "query_F1": 0.06553405147367745,
+            "paired_xyz_delta": 0.04096839250996709,
+            "XYZ_better": 4,
+            "XYZ_worse": 28,
+            "paired_F1_delta": 0.0029868732240421613,
+            "F1_better": 15,
+            "F1_worse": 13
+          },
+          "zero_explicit_points": {
+            "xyz_l1": 0.28192367404699326,
+            "query_F1": 0.06282186846344187,
+            "paired_xyz_delta": 0.009225716814398766,
+            "XYZ_better": 6,
+            "XYZ_worse": 26,
+            "paired_F1_delta": 0.0002746902138065827,
+            "F1_better": 13,
+            "F1_worse": 12
+          },
+          "break_feature_point_pairing": {
+            "xyz_l1": 0.27318301796913147,
+            "query_F1": 0.06504229343461423,
+            "paired_xyz_delta": 0.0004850607365369797,
+            "XYZ_better": 15,
+            "XYZ_worse": 17,
+            "paired_F1_delta": 0.0024951151849789523,
+            "F1_better": 8,
+            "F1_worse": 8
+          },
+          "spatial_mean_anchors": {
+            "xyz_l1": 0.2759845503605902,
+            "query_F1": 0.06664629773108752,
+            "paired_xyz_delta": 0.0032865931279957294,
+            "XYZ_better": 10,
+            "XYZ_worse": 22,
+            "paired_F1_delta": 0.004099119481452236,
+            "F1_better": 13,
+            "F1_worse": 11
+          }
+        }
+      },
+      "valid": {
+        "assets": 64,
+        "modes": {
+          "normal": {
+            "xyz_l1": 0.23812025121878833,
+            "query_F1": 0.08758685849361329,
+            "paired_xyz_delta": 0.0,
+            "XYZ_better": 0,
+            "XYZ_worse": 0,
+            "paired_F1_delta": 0.0,
+            "F1_better": 0,
+            "F1_worse": 0
+          },
+          "zero_learned_anchors": {
+            "xyz_l1": 0.2849637344479561,
+            "query_F1": 0.07276180125604838,
+            "paired_xyz_delta": 0.04684348322916776,
+            "XYZ_better": 4,
+            "XYZ_worse": 60,
+            "paired_F1_delta": -0.014825057237564906,
+            "F1_better": 21,
+            "F1_worse": 34
+          },
+          "zero_explicit_points": {
+            "xyz_l1": 0.2661725413054228,
+            "query_F1": 0.0849171982874475,
+            "paired_xyz_delta": 0.028052290086634457,
+            "XYZ_better": 24,
+            "XYZ_worse": 40,
+            "paired_F1_delta": -0.002669660206165789,
+            "F1_better": 22,
+            "F1_worse": 26
+          },
+          "break_feature_point_pairing": {
+            "xyz_l1": 0.23805889359209687,
+            "query_F1": 0.09296123081865454,
+            "paired_xyz_delta": -6.135762669146061e-05,
+            "XYZ_better": 35,
+            "XYZ_worse": 29,
+            "paired_F1_delta": 0.005374372325041256,
+            "F1_better": 21,
+            "F1_worse": 13
+          },
+          "spatial_mean_anchors": {
+            "xyz_l1": 0.240139972534962,
+            "query_F1": 0.07983840448081338,
+            "paired_xyz_delta": 0.0020197213161736727,
+            "XYZ_better": 25,
+            "XYZ_worse": 39,
+            "paired_F1_delta": -0.007748454012799908,
+            "F1_better": 16,
+            "F1_worse": 28
+          }
+        }
+      }
+    },
+    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
+    "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
+    "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
   },
   "last_operation": {
-    "label": "structure_signal_audit_v2",
+    "label": "structure_cohort_audit_v1",
     "operation": "preflight",
     "status": "completed",
     "accepted": true,
-    "prepared_at": "2026-10-12T06:16:52.186693+00:00",
-    "code_parent_commit": "a6bc1f310c3060b901ed1d55c2bca4507c32ad81",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_audit_20261012.json",
-    "config_sha256": "f8f5ad5e83cb656ec6c3ecceba5409059c0684ec36f2f20f12abdb1169f5a403",
+    "prepared_at": "2026-10-12T06:25:29.625635+00:00",
+    "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
+    "config_sha256": "1213d30817e99655db79d4ba0e3d63d873c77a64796e384153e80ee54f2528aa",
     "checkpoints": [
       {
-        "name": "sample5040",
+        "name": "rank_0",
         "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
         "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
       },
       {
-        "name": "single_asset_fitted",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/single_asset_cycle_v1/single_dynamic_diagnostic_final.pt",
-        "sha256": "3a88ea009d3b260f6a8987c08d46aa97328faed6e179c8faaa50511f1d47ad21"
+        "name": "rank_1",
+        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
       }
     ],
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_signal_audit_v2",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
     "manifests": {
       "status": "verified_published",
       "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -441,19 +561,129 @@
       "bash",
       "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
     ],
-    "authorization": "User explicitly prioritizes actual architecture and implementation diagnosis instead of presuming optimization is the cause. Read-only new-model inference, no old extreme probe and no training.",
-    "acceptance": "Read-only inference on actual new sample5040 and single-asset-fitted checkpoints. No optimizer, training or parameter changes. Audit H identity, anchor spatial/temporal signals, localization-layer attention, exact joint/frame/paired-anchor routing equivariances, same-input whole-path repeat, and geometry ablations. Fit an algebraic linear readout to captured features only as a representational upper bound, reporting BF16 execution and fresh-forward stability; never treat this oracle fit as model accuracy or formal weights. All frames fixed to the original8 and labels unchanged. Formal remains blocked.",
+    "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
+    "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
     "formal_training_allowed": false,
     "complete": true,
-    "accepted_meaning": "read_only_diagnostic_execution_valid_NOT_model_quality",
     "exit_code": 0,
-    "finished_at": "2026-10-12T06:18:47.809568+00:00",
-    "report_hashes": {
-      "sample5040": "45be1d3262b6a1a12f24b7bfd81be8515e16719eada3c33d9970e1995c760cda",
-      "single_asset_fitted": "8c2cb13568f84efcad805a9ba9ae294625e934bb85266cea914dd76fadba307c"
+    "execution_valid": true,
+    "accepted_meaning": "paired_read_only_diagnostic_execution_valid_NOT_model_quality_or_formal_approval",
+    "finished_at": "2026-10-12T06:29:58.857782+00:00",
+    "result": {
+      "train": {
+        "assets": 32,
+        "modes": {
+          "normal": {
+            "xyz_l1": 0.2726979572325945,
+            "query_F1": 0.0625471782496353,
+            "paired_xyz_delta": 0.0,
+            "XYZ_better": 0,
+            "XYZ_worse": 0,
+            "paired_F1_delta": 0.0,
+            "F1_better": 0,
+            "F1_worse": 0
+          },
+          "zero_learned_anchors": {
+            "xyz_l1": 0.3136663497425616,
+            "query_F1": 0.06553405147367745,
+            "paired_xyz_delta": 0.04096839250996709,
+            "XYZ_better": 4,
+            "XYZ_worse": 28,
+            "paired_F1_delta": 0.0029868732240421613,
+            "F1_better": 15,
+            "F1_worse": 13
+          },
+          "zero_explicit_points": {
+            "xyz_l1": 0.28192367404699326,
+            "query_F1": 0.06282186846344187,
+            "paired_xyz_delta": 0.009225716814398766,
+            "XYZ_better": 6,
+            "XYZ_worse": 26,
+            "paired_F1_delta": 0.0002746902138065827,
+            "F1_better": 13,
+            "F1_worse": 12
+          },
+          "break_feature_point_pairing": {
+            "xyz_l1": 0.27318301796913147,
+            "query_F1": 0.06504229343461423,
+            "paired_xyz_delta": 0.0004850607365369797,
+            "XYZ_better": 15,
+            "XYZ_worse": 17,
+            "paired_F1_delta": 0.0024951151849789523,
+            "F1_better": 8,
+            "F1_worse": 8
+          },
+          "spatial_mean_anchors": {
+            "xyz_l1": 0.2759845503605902,
+            "query_F1": 0.06664629773108752,
+            "paired_xyz_delta": 0.0032865931279957294,
+            "XYZ_better": 10,
+            "XYZ_worse": 22,
+            "paired_F1_delta": 0.004099119481452236,
+            "F1_better": 13,
+            "F1_worse": 11
+          }
+        }
+      },
+      "valid": {
+        "assets": 64,
+        "modes": {
+          "normal": {
+            "xyz_l1": 0.23812025121878833,
+            "query_F1": 0.08758685849361329,
+            "paired_xyz_delta": 0.0,
+            "XYZ_better": 0,
+            "XYZ_worse": 0,
+            "paired_F1_delta": 0.0,
+            "F1_better": 0,
+            "F1_worse": 0
+          },
+          "zero_learned_anchors": {
+            "xyz_l1": 0.2849637344479561,
+            "query_F1": 0.07276180125604838,
+            "paired_xyz_delta": 0.04684348322916776,
+            "XYZ_better": 4,
+            "XYZ_worse": 60,
+            "paired_F1_delta": -0.014825057237564906,
+            "F1_better": 21,
+            "F1_worse": 34
+          },
+          "zero_explicit_points": {
+            "xyz_l1": 0.2661725413054228,
+            "query_F1": 0.0849171982874475,
+            "paired_xyz_delta": 0.028052290086634457,
+            "XYZ_better": 24,
+            "XYZ_worse": 40,
+            "paired_F1_delta": -0.002669660206165789,
+            "F1_better": 22,
+            "F1_worse": 26
+          },
+          "break_feature_point_pairing": {
+            "xyz_l1": 0.23805889359209687,
+            "query_F1": 0.09296123081865454,
+            "paired_xyz_delta": -6.135762669146061e-05,
+            "XYZ_better": 35,
+            "XYZ_worse": 29,
+            "paired_F1_delta": 0.005374372325041256,
+            "F1_better": 21,
+            "F1_worse": 13
+          },
+          "spatial_mean_anchors": {
+            "xyz_l1": 0.240139972534962,
+            "query_F1": 0.07983840448081338,
+            "paired_xyz_delta": 0.0020197213161736727,
+            "XYZ_better": 25,
+            "XYZ_worse": 39,
+            "paired_F1_delta": -0.007748454012799908,
+            "F1_better": 16,
+            "F1_worse": 28
+          }
+        }
+      }
     },
-    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_signal_audit_v2",
-    "result_note": "Observed joint/frame/anchor routes behave as expected within measured BF16 repeat noise; no representation-wide collapse. Sample5040 geometry ablations on ONEasset did not worsen localization, whereas the fitted model depends on those inputs. Frozen-feature query readout can fit, but this oracle is not model quality. Extend paired read-only geometry-use measurement to96 before interpreting generally."
+    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
+    "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
+    "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -5349,6 +5579,178 @@
       },
       "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_signal_audit_v2",
       "result_note": "Observed joint/frame/anchor routes behave as expected within measured BF16 repeat noise; no representation-wide collapse. Sample5040 geometry ablations on ONEasset did not worsen localization, whereas the fitted model depends on those inputs. Frozen-feature query readout can fit, but this oracle is not model quality. Extend paired read-only geometry-use measurement to96 before interpreting generally."
+    },
+    {
+      "label": "structure_cohort_audit_v1",
+      "operation": "preflight",
+      "status": "completed",
+      "accepted": true,
+      "prepared_at": "2026-10-12T06:25:29.625635+00:00",
+      "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
+      "config_sha256": "1213d30817e99655db79d4ba0e3d63d873c77a64796e384153e80ee54f2528aa",
+      "checkpoints": [
+        {
+          "name": "rank_0",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+          "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+        },
+        {
+          "name": "rank_1",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+          "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+        }
+      ],
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
+      "manifests": {
+        "status": "verified_published",
+        "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+        "train_rows": 18018,
+        "valid_rows": 969,
+        "quarantined_rows": 81,
+        "target_mesh_padding": 1.1,
+        "all_frame_all_target_joint_abs_limit": 1.0,
+        "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+        "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+        "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+        "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+        "npz_files_changed": 0
+      },
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "bash",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
+      ],
+      "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
+      "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
+      "formal_training_allowed": false,
+      "complete": true,
+      "exit_code": 0,
+      "execution_valid": true,
+      "accepted_meaning": "paired_read_only_diagnostic_execution_valid_NOT_model_quality_or_formal_approval",
+      "finished_at": "2026-10-12T06:29:58.857782+00:00",
+      "result": {
+        "train": {
+          "assets": 32,
+          "modes": {
+            "normal": {
+              "xyz_l1": 0.2726979572325945,
+              "query_F1": 0.0625471782496353,
+              "paired_xyz_delta": 0.0,
+              "XYZ_better": 0,
+              "XYZ_worse": 0,
+              "paired_F1_delta": 0.0,
+              "F1_better": 0,
+              "F1_worse": 0
+            },
+            "zero_learned_anchors": {
+              "xyz_l1": 0.3136663497425616,
+              "query_F1": 0.06553405147367745,
+              "paired_xyz_delta": 0.04096839250996709,
+              "XYZ_better": 4,
+              "XYZ_worse": 28,
+              "paired_F1_delta": 0.0029868732240421613,
+              "F1_better": 15,
+              "F1_worse": 13
+            },
+            "zero_explicit_points": {
+              "xyz_l1": 0.28192367404699326,
+              "query_F1": 0.06282186846344187,
+              "paired_xyz_delta": 0.009225716814398766,
+              "XYZ_better": 6,
+              "XYZ_worse": 26,
+              "paired_F1_delta": 0.0002746902138065827,
+              "F1_better": 13,
+              "F1_worse": 12
+            },
+            "break_feature_point_pairing": {
+              "xyz_l1": 0.27318301796913147,
+              "query_F1": 0.06504229343461423,
+              "paired_xyz_delta": 0.0004850607365369797,
+              "XYZ_better": 15,
+              "XYZ_worse": 17,
+              "paired_F1_delta": 0.0024951151849789523,
+              "F1_better": 8,
+              "F1_worse": 8
+            },
+            "spatial_mean_anchors": {
+              "xyz_l1": 0.2759845503605902,
+              "query_F1": 0.06664629773108752,
+              "paired_xyz_delta": 0.0032865931279957294,
+              "XYZ_better": 10,
+              "XYZ_worse": 22,
+              "paired_F1_delta": 0.004099119481452236,
+              "F1_better": 13,
+              "F1_worse": 11
+            }
+          }
+        },
+        "valid": {
+          "assets": 64,
+          "modes": {
+            "normal": {
+              "xyz_l1": 0.23812025121878833,
+              "query_F1": 0.08758685849361329,
+              "paired_xyz_delta": 0.0,
+              "XYZ_better": 0,
+              "XYZ_worse": 0,
+              "paired_F1_delta": 0.0,
+              "F1_better": 0,
+              "F1_worse": 0
+            },
+            "zero_learned_anchors": {
+              "xyz_l1": 0.2849637344479561,
+              "query_F1": 0.07276180125604838,
+              "paired_xyz_delta": 0.04684348322916776,
+              "XYZ_better": 4,
+              "XYZ_worse": 60,
+              "paired_F1_delta": -0.014825057237564906,
+              "F1_better": 21,
+              "F1_worse": 34
+            },
+            "zero_explicit_points": {
+              "xyz_l1": 0.2661725413054228,
+              "query_F1": 0.0849171982874475,
+              "paired_xyz_delta": 0.028052290086634457,
+              "XYZ_better": 24,
+              "XYZ_worse": 40,
+              "paired_F1_delta": -0.002669660206165789,
+              "F1_better": 22,
+              "F1_worse": 26
+            },
+            "break_feature_point_pairing": {
+              "xyz_l1": 0.23805889359209687,
+              "query_F1": 0.09296123081865454,
+              "paired_xyz_delta": -6.135762669146061e-05,
+              "XYZ_better": 35,
+              "XYZ_worse": 29,
+              "paired_F1_delta": 0.005374372325041256,
+              "F1_better": 21,
+              "F1_worse": 13
+            },
+            "spatial_mean_anchors": {
+              "xyz_l1": 0.240139972534962,
+              "query_F1": 0.07983840448081338,
+              "paired_xyz_delta": 0.0020197213161736727,
+              "XYZ_better": 25,
+              "XYZ_worse": 39,
+              "paired_F1_delta": -0.007748454012799908,
+              "F1_better": 16,
+              "F1_worse": 28
+            }
+          }
+        }
+      },
+      "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
+      "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
+      "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
     }
   ],
   "localization_diagnosis_20261012": {
@@ -6497,6 +6899,132 @@
         }
       },
       "interpretation": "One-asset evidence only, not a proof of absent implementation bugs or a dataset-level root cause."
+    },
+    "structure_cohort_audit": {
+      "artifact": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1\\summary.json",
+      "sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
+      "summary": {
+        "train": {
+          "assets": 32,
+          "modes": {
+            "normal": {
+              "xyz_l1": 0.2726979572325945,
+              "query_F1": 0.0625471782496353,
+              "paired_xyz_delta": 0.0,
+              "XYZ_better": 0,
+              "XYZ_worse": 0,
+              "paired_F1_delta": 0.0,
+              "F1_better": 0,
+              "F1_worse": 0
+            },
+            "zero_learned_anchors": {
+              "xyz_l1": 0.3136663497425616,
+              "query_F1": 0.06553405147367745,
+              "paired_xyz_delta": 0.04096839250996709,
+              "XYZ_better": 4,
+              "XYZ_worse": 28,
+              "paired_F1_delta": 0.0029868732240421613,
+              "F1_better": 15,
+              "F1_worse": 13
+            },
+            "zero_explicit_points": {
+              "xyz_l1": 0.28192367404699326,
+              "query_F1": 0.06282186846344187,
+              "paired_xyz_delta": 0.009225716814398766,
+              "XYZ_better": 6,
+              "XYZ_worse": 26,
+              "paired_F1_delta": 0.0002746902138065827,
+              "F1_better": 13,
+              "F1_worse": 12
+            },
+            "break_feature_point_pairing": {
+              "xyz_l1": 0.27318301796913147,
+              "query_F1": 0.06504229343461423,
+              "paired_xyz_delta": 0.0004850607365369797,
+              "XYZ_better": 15,
+              "XYZ_worse": 17,
+              "paired_F1_delta": 0.0024951151849789523,
+              "F1_better": 8,
+              "F1_worse": 8
+            },
+            "spatial_mean_anchors": {
+              "xyz_l1": 0.2759845503605902,
+              "query_F1": 0.06664629773108752,
+              "paired_xyz_delta": 0.0032865931279957294,
+              "XYZ_better": 10,
+              "XYZ_worse": 22,
+              "paired_F1_delta": 0.004099119481452236,
+              "F1_better": 13,
+              "F1_worse": 11
+            }
+          }
+        },
+        "valid": {
+          "assets": 64,
+          "modes": {
+            "normal": {
+              "xyz_l1": 0.23812025121878833,
+              "query_F1": 0.08758685849361329,
+              "paired_xyz_delta": 0.0,
+              "XYZ_better": 0,
+              "XYZ_worse": 0,
+              "paired_F1_delta": 0.0,
+              "F1_better": 0,
+              "F1_worse": 0
+            },
+            "zero_learned_anchors": {
+              "xyz_l1": 0.2849637344479561,
+              "query_F1": 0.07276180125604838,
+              "paired_xyz_delta": 0.04684348322916776,
+              "XYZ_better": 4,
+              "XYZ_worse": 60,
+              "paired_F1_delta": -0.014825057237564906,
+              "F1_better": 21,
+              "F1_worse": 34
+            },
+            "zero_explicit_points": {
+              "xyz_l1": 0.2661725413054228,
+              "query_F1": 0.0849171982874475,
+              "paired_xyz_delta": 0.028052290086634457,
+              "XYZ_better": 24,
+              "XYZ_worse": 40,
+              "paired_F1_delta": -0.002669660206165789,
+              "F1_better": 22,
+              "F1_worse": 26
+            },
+            "break_feature_point_pairing": {
+              "xyz_l1": 0.23805889359209687,
+              "query_F1": 0.09296123081865454,
+              "paired_xyz_delta": -6.135762669146061e-05,
+              "XYZ_better": 35,
+              "XYZ_worse": 29,
+              "paired_F1_delta": 0.005374372325041256,
+              "F1_better": 21,
+              "F1_worse": 13
+            },
+            "spatial_mean_anchors": {
+              "xyz_l1": 0.240139972534962,
+              "query_F1": 0.07983840448081338,
+              "paired_xyz_delta": 0.0020197213161736727,
+              "XYZ_better": 25,
+              "XYZ_worse": 39,
+              "paired_F1_delta": -0.007748454012799908,
+              "F1_better": 16,
+              "F1_worse": 28
+            }
+          }
+        }
+      },
+      "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
+    },
+    "current_conclusion": {
+      "single_asset_learnability_demonstrated": true,
+      "whole_dataset_quality_accepted": false,
+      "specific_implementation_root_cause_identified": false,
+      "optimizer_only_attribution_supported": false,
+      "formal_started": false,
+      "focus": "Why the parent-conditioned localization decoder has not learned useful joint-to-local-geometry correspondence across assets; assess architecture, representation/initialization compatibility and supervision. Do not promote the constructed branch-label ambiguity without actual-dataset evidence.",
+      "scope_limit": "Single-asset algebraic readout fits and successful memorization do not establish generalization. Routing tests cover the measured cases and numerical noise, not all possible implementation defects."
     }
   }
 }

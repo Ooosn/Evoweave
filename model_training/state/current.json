@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T04:09:10.605658+00:00",
+  "updated_at": "2026-10-12T04:14:12.215804+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -342,9 +342,49 @@
   },
   "next_required_result": "Compare actual native old sample5040 checkpoint against all new trials on the same evaluation inputs before interpreting poor F1. Formal training and additional architecture trials remain blocked. Preserve qlogin.",
   "active_operation": {
-    "label": "native_bias_h8_sample5040_paired_v2",
+    "label": "native_bias_h8_sample5040_paired_v3",
     "operation": "matched_eval",
     "status": "prepared",
+    "accepted": false,
+    "prepared_at": "2026-10-12T04:14:12.215804+00:00",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
+    "config_sha256": "9a610bacdf9532217c4e219a539ed1550c5ff1513c1b0b533ad5ddbd4309dbc3",
+    "checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
+      "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
+      "step": 105,
+      "sample_seen": 5040
+    },
+    "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v3",
+    "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
+    ],
+    "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
+    "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
+    "change": "Reuse the original native _ar_losses forward, capturing its actual logits for diagnostics and same-forward CE parity. Eliminate separately reimplemented teacher forward and retain exact input checks. No model or metric change."
+  },
+  "last_operation": {
+    "label": "native_bias_h8_sample5040_paired_v2",
+    "operation": "matched_eval",
+    "status": "failed",
     "accepted": false,
     "prepared_at": "2026-10-12T04:09:10.605658+00:00",
     "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
@@ -379,51 +419,12 @@
     ],
     "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
     "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
-    "change": "Capture and reuse the single actual surface correspondence from the virtual input preparation instead of drawing a second one; retain exact tensor equality checks. No model or metric change."
-  },
-  "last_operation": {
-    "label": "native_bias_h8_sample5040_paired_v1",
-    "operation": "matched_eval",
-    "status": "failed",
-    "accepted": false,
-    "prepared_at": "2026-10-12T04:00:39.435406+00:00",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
-    "config_sha256": "d1da48963b68c893aef13f081700727fd34d3cb2bd271f693eb8ad9807e604ca",
-    "checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
-      "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
-      "step": 105,
-      "sample_seen": 5040
-    },
-    "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v1",
-    "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
-    ],
-    "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
-    "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
+    "change": "Capture and reuse the single actual surface correspondence from the virtual input preparation instead of drawing a second one; retain exact tensor equality checks. No model or metric change.",
     "complete": false,
-    "finished_at": "2026-10-12T04:04:28+00:00",
+    "finished_at": "2026-10-12T04:12:20+00:00",
     "exit_code": 1,
-    "result_note": "Strict model loading passed; input equality failed for dense_points at first frame before a complete generated row. No metric accepted and no parameter updates.",
-    "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v1.log"
+    "result_note": "Strict model loading and exact all-frame input equality passed on both first assets. Separate teacher diagnostic/native CE comparisons failed before complete generated rows; no metric accepted and no parameter updates.",
+    "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v2.log"
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -3500,6 +3501,51 @@
       "exit_code": 1,
       "result_note": "Strict model loading passed; input equality failed for dense_points at first frame before a complete generated row. No metric accepted and no parameter updates.",
       "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v1.log"
+    },
+    {
+      "label": "native_bias_h8_sample5040_paired_v2",
+      "operation": "matched_eval",
+      "status": "failed",
+      "accepted": false,
+      "prepared_at": "2026-10-12T04:09:10.605658+00:00",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json",
+      "config_sha256": "43ddeecf242e1611ce075ae8b1e27e91efe709b7918c4cb54e0e6237cc9e66ef",
+      "checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/motion_evidence_base_compare_20261010/full/bias_h8/checkpoint_sample_5000.pt",
+        "sha256": "b1ec1c16c99961e991a76ac7faccf135206ddb0672f3bf0e273759d0617bd7e8",
+        "step": 105,
+        "sample_seen": 5040
+      },
+      "input_protocol": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/native_bias_h8_sample5040_paired_v2",
+      "source_base_commit": "f7544a24db5274377eeb4e36eb8f88ff0c25b317",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "/home/wangyy/miniconda3/envs/mygs/bin/python",
+        "-B",
+        "-m",
+        "torch.distributed.run",
+        "--standalone",
+        "--nproc_per_node=2",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/eval_virtual_stage_baseline.py",
+        "--config",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_stage_baseline_20261012.json"
+      ],
+      "authorization": "User explicitly requires native old-training baseline comparison at matched early progress after objecting to low F1. Read-only generation/teacher-forcing evaluation; no new training or formal launch.",
+      "acceptance": "Native checkpoint actual step105/sample5040; exact same96assets/rawframes/normalization/GT/surface sampling as saved new trial; all rows including failures, no parameter update, natural EOS and identical legacy F1/geometry. Distinguish teacher conditioning and training-history differences.",
+      "change": "Capture and reuse the single actual surface correspondence from the virtual input preparation instead of drawing a second one; retain exact tensor equality checks. No model or metric change.",
+      "complete": false,
+      "finished_at": "2026-10-12T04:12:20+00:00",
+      "exit_code": 1,
+      "result_note": "Strict model loading and exact all-frame input equality passed on both first assets. Separate teacher diagnostic/native CE comparisons failed before complete generated rows; no metric accepted and no parameter updates.",
+      "log": "/home/wangyy/jobs/shared_virtual_frame_20261012/logs/native_bias_h8_sample5040_paired_v2.log"
     }
   ]
 }

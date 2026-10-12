@@ -68,11 +68,18 @@ def joint_coordinate_offsets(ids, parents, tokenizer):
 def teacher_result(model, tokenizer, condition, batch):
     from eval_dynamic_rig_generation import _topology_metrics
     from src.tokenizer.tokenizer_part import undiscretize
-    ids, mask = batch["input_ids"], batch["attention_mask"]
-    prompt = torch.cat((condition.to(model.transformer.dtype), model.token_inputs_embeds(ids, mask)), dim=1)
-    attention = torch.nn.functional.pad(mask, (condition.shape[1], 0), value=1)
-    logits = model.transformer(inputs_embeds=prompt, attention_mask=attention, use_cache=False).logits
-    logits = logits[:, condition.shape[1]:-1].float()
+    ids = batch["input_ids"]
+    if model.uses_action_group_bias or model.eos_loss_weight != 1.:
+        raise ValueError("teacher diagnostic expects the native unweighted/no-action-bias baseline")
+    captured = []
+    hook = model.transformer.register_forward_hook(lambda _m, _a, output: captured.append(output.logits))
+    try:
+        native = model._ar_losses(condition, batch, include_loop_recovery=False, include_generated_prefix_recovery=False)
+    finally:
+        hook.remove()
+    if len(captured) != 1:
+        raise ValueError("native teacher pass must produce exactly one full-prefix forward")
+    logits = captured[0][:, condition.shape[1]:-1].float()
     labels = ids[:, 1:]
     losses = torch.nn.functional.cross_entropy(logits.transpose(1, 2), labels, reduction="none")
     coordinate = (labels >= 0) & (labels < tokenizer.num_discrete)
@@ -81,7 +88,12 @@ def teacher_result(model, tokenizer, condition, batch):
     bins = logits[0, torch.as_tensor(offsets - 1, device=logits.device), :tokenizer.num_discrete].argmax(-1).cpu().numpy()
     xyz = undiscretize(bins, tokenizer.continuous_range, tokenizer.num_discrete).astype(np.float32)
     target = batch["target_joints"][0].cpu().numpy()
-    return {"full_gt_prefix_ce": float(losses.mean()), "coordinate_ce": float(losses[coordinate].mean()),
+    difference = abs(float(native["ce_loss"]) - float(losses.mean()))
+    if difference > 2e-5:
+        raise ValueError(f"same-forward teacher CE mismatch: native={float(native['ce_loss'])}, "
+                         f"captured={float(losses.mean())}, difference={difference}")
+    return {"full_gt_prefix_ce": float(native["ce_loss"]), "same_forward_ce_difference": difference,
+            "coordinate_ce": float(losses[coordinate].mean()),
             "coordinate_accuracy": float((logits.argmax(-1)[coordinate] == labels[coordinate]).float().mean()),
             "full_gt_prefix_joint_xyz_l1": float(np.abs(xyz - target).mean()),
             "full_gt_prefix_edge_f1": _topology_metrics(xyz, parents, target, parents)["edge_f1"],
@@ -197,11 +209,8 @@ def run(args):
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 teacher = teacher_result(model, tokenizer, condition, batch)
                 if not report["rows"]:
-                    native_ce = float(model._ar_losses(condition, batch, include_loop_recovery=False,
-                                                       include_generated_prefix_recovery=False)["ce_loss"])
-                    if abs(native_ce - teacher["full_gt_prefix_ce"]) > 2e-5:
-                        raise ValueError("teacher forcing differs from native training CE")
-                    report["teacher_ce_parity"] = {"native_ce": native_ce, "difference": abs(native_ce - teacher["full_gt_prefix_ce"])}
+                    report["teacher_ce_parity"] = {"native_ce": teacher["full_gt_prefix_ce"],
+                                                    "difference": teacher["same_forward_ce_difference"], "same_native_forward": True}
                 generated = generation_metrics(model, tokenizer, batch, condition, config["max_new_tokens"])
             target = cpu_batch["target_joints"][0].numpy()
             row = {"split": split, "asset_id": entry["asset_id"], "manifest_index": entry["manifest_index"],

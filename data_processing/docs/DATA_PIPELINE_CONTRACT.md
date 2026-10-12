@@ -56,6 +56,13 @@ rows for this source, its generated source manifest should simply be empty.
    scan unrelated shared-storage paths. Disabling that search changes no mesh,
    armature, animation, skinning, or row-skeleton field.
 
+   Selected meshes must remain visible in the active view layer and have
+   neither `hide_viewport` nor `hide_render` set at sampled frames. Reject the
+   whole asset with `selected_mesh_hidden_at_sampled_frame` when this fails,
+   including during dense motion-FPS candidate sampling. A hidden mesh can
+   return a stale evaluated pose after the skeleton has changed. Do not silently
+   force visibility, reuse stale vertices, or prune only the hidden frame.
+
    Pass1 must use the row-skeleton contract:
 
    - joints are explicit Blender bone rows / heads;
@@ -202,6 +209,47 @@ rows for this source, its generated source manifest should simply be empty.
    - original `train` rows stay in train;
    - original `test` rows are merged into train;
    - original `val` rows are written as `valid`.
+
+12. `build_root_rt_overlay.py`
+
+   The October 13 training-coordinate revision consumes the immutable accepted
+   manifests, never an NPZ directory scan. It preserves every original manifest
+   field and source NPZ, and adds a `root_rt` descriptor referencing compact
+   `retained_root_rigid_v1` cache shards. Historical source arrays named
+   `*_rootspace` remain unchanged until the RT-aware data loader applies them.
+
+   The retained root is resolved from `target_parents`, `target_raw_indices`
+   and `target_entry_raw_indices`. With original transform `D_t`, reference
+   frame zero, and rest root position, compute `G_t = D_t @ inverse(D_0)`.
+   Obtain proper `R_t` by SVD polar projection, compute actual root positions
+   `p_t`, and cache `t_t = p_t - R_t @ p_0`. Apply `(x - t_t) @ R_t` to row-vector
+   mesh vertices and all GT joints. Preserve topology, skin weights, and any
+   scale/shear residual. Singular, nonfinite, orientation-reversing or otherwise
+   invalid root transforms fail closed; nonrigidity alone is not a rejection.
+
+   Normalize only the selected aligned input meshes' union bbox, with one
+   float32 center and maximum half-extent times 1.1. The exact float32 arithmetic
+   is shared by the offline gate and online loader. Require all supervised
+   normalized coordinates to be within inclusive `[-1,1]`. Checking every
+   single/pair frame window bounds all stored-frame subsets: any larger-window
+   directional violation also occurs in the pair containing that joint's frame
+   and the frame attaining the relevant extreme mesh bound.
+
+   Reject the entire asset when any such input window exceeds the coordinate
+   bound, retained-root drift exceeds `1e-5` of frame mesh bbox diagonal, or
+   float32 RT roundtrip error exceeds the same relative limit. The numerical
+   gate is a conservative preprocessing safety rule, not proof of corrupt raw
+   assets. Do not clip GT, prune frames/joints, or use GT to enlarge the scale.
+   A versioned evidence-backed exclusion list handles previously demonstrated
+   source visibility failures. No source NPZ is changed or removed.
+
+   Publish new accepted/quarantine manifests, cache hashes, per-asset metrics,
+   and `provenance/root_rt_receipt.json`; `.READY` binds that receipt. A separate
+   consumer acceptance receipt and `.CONSUMER_READY` bind successful real-loader
+   verification. Old checkpoints/configurations keep their original manifests.
+   Additional rotation augmentation is checked online and is not certified by
+   the unaugmented pair-window gate. GT-derived root RT does not establish a
+   GT-free mesh-only inference preprocessing path.
 
 ## Tail Endpoint Policy
 

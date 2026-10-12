@@ -1,12 +1,96 @@
 # Evoweave Dataset Source of Truth
 
-Status: current as of 2026-10-12.
+Status: current as of 2026-10-13.
 
 This file is the workspace-level source of truth for the current HGC training
 dataset. Do not infer the current dataset from report folders, NPZ directory
 scans, or `latest_*` names outside the recorded results directory.
 
 ## Current Training Dataset
+
+The current version is the retained-root rigid-motion cache overlay:
+
+```text
+/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013
+```
+
+Its immutable manifests are:
+
+```text
+/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl
+/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl
+```
+
+| Split | Base | UniMate | Total |
+| --- | ---: | ---: | ---: |
+| Train | 15,831 | 2,171 | 18,002 |
+| Valid | 852 | 115 | 967 |
+| Total | 16,683 | 2,286 | 18,969 |
+
+This revision inspected all 18,987 rows of the October 12 input with zero
+processing errors and isolated another 18 whole assets: 16 train and 2 valid.
+Eight violate aligned input-window coordinate bounds, nine fail the numerical
+root-position consistency gate, and one has a hidden source mesh at its first
+sampled frame. Four of the nine numerical failures also fail float32 RT
+roundtrip checks; they are not four additional exclusions. The previous 81
+exclusions remain excluded. No joints/frames were pruned and no labels clipped.
+
+Of the 73 assets with nonrigid relative root matrices, 72 pass the same proper
+polar-rotation and root-pivot algorithm. Only the independently identified
+hidden-frame asset is excluded. Scale and shear residuals are preserved.
+
+Every accepted row preserves its original fields and backing NPZ `path`, and
+adds a `root_rt` descriptor. **Do not discard that descriptor or interpret the
+unchanged NPZ arrays as already RT-aligned.** The 75 cache shards total
+60,761,423 bytes. Source NPZs and historical manifests were not modified.
+
+The data loader applies cached inverse RT to mesh and every GT frame, selects
+input frames in aligned space, and uses one selected-input mesh-union bbox
+center/scale with padding 1.1. All single/pair frame windows were checked; this
+bounds any subset of stored frames before additional rotation augmentation.
+The accepted maximum normalized joint coordinate is 0.9973959923. Root drift
+and float32 RT roundtrip limits are `1e-5` of the corresponding frame mesh bbox
+diagonal. Additional global augmentation is checked again online, not covered
+by the cached canonical-coordinate certificate.
+
+The RT-aware flat and virtual-frame loaders require consumer commit
+`6ea3be2f5eb94c342a9446eb6e43b755ac933b33` or later. The current implementation
+checkout is `C:/Users/namew/.codex/worktrees/skeleton-throughput-20261011/evoweave`
+on `codex/root-rt-alignment-20261013`. HGC has the verified checkout at
+`/work/wangyy/root_rt_publish_20261013/consumer_code` and a durable Git bundle at
+`/home/wangyy/jobs/root_rt_publish_20261013_v1/root_rt_consumer.bundle`.
+Legacy Puppeteer and the old shared-structure wrapper reject this overlay.
+The cache uses source skeleton metadata; it is not a GT-free inference method.
+No new model training was launched with this revision.
+
+Current manifest SHA-256:
+
+```text
+train: 653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27
+valid: fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a
+```
+
+Publication evidence under the new root:
+
+```text
+provenance/root_rt_receipt.json
+SHA-256: 169abe6f564f0e150d9c99fcdbf24aa3d584425cf55f4de26a36a0ffc4b46a9f
+provenance/deployment_receipt.json
+SHA-256: ca91f2085524e548292f7a1a2c729d24c4f12e45950f0a9bfe6c11f2a327a926
+```
+
+Both `.READY` and `.CONSUMER_READY` were verified. Acceptance includes 48 CPU
+unit/regression tests, 80 real-loader checks on 24 boundary/nonrigid/random
+assets, and a real hidden-asset rejection plus visible-asset export. Local
+receipts and the complete 18-row exclusion indexes are under
+`server_ops/outputs/root_rt_publish_20261013/`; remote indexes are under the
+new root's `quarantine/root_rt_quality/` directory.
+
+## October 12 Input Snapshot
+
+Everything below records the unchanged input snapshot and its provenance.
+These old manifests and counts are historical inputs, not the current RT
+training membership or normalization contract.
 
 The current dataset is the HGC rootless-v3/UniMate manifest overlay after the
 all-frame normalized-joint coordinate screen. It excludes 81 assets from the

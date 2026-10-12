@@ -27,7 +27,8 @@ This module owns:
 - rootless training-target rewrite before the first formal hard quality reject;
 - rootless target strict hard screening;
 - rootless validation/audit;
-- final histogram screening and final screened manifests.
+- final histogram screening and final screened manifests;
+- immutable retained-root RT caches and aligned input-window bounds screening.
 
 This module does not own:
 
@@ -68,6 +69,7 @@ data_processing/
     audit_rootless_final_dataset.py
     build_rootless_quality_score_distributions.py
     build_rootless_bbox_consistency_distributions.py
+    build_root_rt_overlay.py
   src/
     rigweave/
 ```
@@ -106,6 +108,12 @@ Important environment variables:
 11. Run final skeleton/mesh bbox-consistency screening plus the all-frame
     normalized-joint coordinate bound check, then write final accepted/rejected
     manifests.
+12. For the current RT training contract, run `build_root_rt_overlay.py` on
+    those accepted manifests. It adds versioned RT cache descriptors, checks
+    every single/pair input window, and publishes an immutable accepted-only
+    overlay without rewriting source NPZs. Use the RT-aware loader, not a
+    path-only legacy reader. Current evidence is in
+    `../server_ops/outputs/root_rt_publish_20261013/`.
 
 The detailed contract is in `docs/DATA_PIPELINE_CONTRACT.md`.
 

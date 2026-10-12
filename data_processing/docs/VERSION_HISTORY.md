@@ -3,6 +3,24 @@
 This file records contract-level data-processing changes. It is documentation
 only; old code paths are not kept as fallback implementations.
 
+## 2026-10-13: Retained Root RT Cache Overlay
+
+- Publish immutable `retained_root_rigid_v1` R/t cache shards and full manifest
+  descriptors without rewriting source NPZs. Remove rigid root motion only;
+  preserve scale/shear, target topology, joints and weights.
+- Train/valid now contain 18,002 / 967 assets. Eighteen additional whole assets
+  are isolated: 8 aligned-window bounds failures, 9 numerical consistency
+  failures and 1 hidden-source-frame case. Seventy-two of 73 nonrigid-root
+  assets pass the standard algorithm. Earlier exclusions remain excluded.
+- Use one selected-input mesh-union normalization with padding 1.1. Exhaustive
+  single/pair bounds checks cover arbitrary stored-frame subsets before extra
+  rotation augmentation; the online consumer uses matching float32 arithmetic.
+- RT metadata is retained through flat/virtual-frame loading and inversion;
+  incompatible older wrappers reject the new manifest rather than ignore it.
+- Pass1 rejects selected meshes hidden at sampled frames, preventing stale
+  evaluated geometry. Publication passed 48 CPU tests and 80 real-loader checks.
+- Source receipts and current hashes are in `DATASET_SOURCE_OF_TRUTH.md`.
+
 ## 2026-10-12: All-Frame Normalized Joint Bounds
 
 - The final bbox-consistency stage now rejects an entire asset if any retained

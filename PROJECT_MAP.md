@@ -1,10 +1,15 @@
 # Evoweave Workspace Map
 
-Current dataset revision (2026-10-12): 18,018 train / 969 validation assets
-after isolating 81 assets with out-of-bounds normalized target joints. Use
+Current dataset revision (2026-10-13): 18,002 train / 967 validation assets
+with retained-root RT caches and selected-input sequence normalization.
+Eighteen additional whole assets are isolated; the earlier 81 remain excluded. Use
 [DATASET_SOURCE_OF_TRUTH.md](DATASET_SOURCE_OF_TRUTH.md) for the immutable HGC
 manifest paths and hashes. Acceptance receipts are under
-`server_ops/outputs/coordinate_bounds_hgc_20261012/`.
+`server_ops/outputs/root_rt_publish_20261013/`.
+
+RT-aware data consumers require commit `6ea3be2` or later and the complete
+manifest row, including `root_rt`. This revision changes data preprocessing,
+not model architecture, and does not authorize or start a training run.
 
 This workspace is organized by module. Each module owns its own code, runbook,
 contracts, and validation notes. New work should be added inside the appropriate

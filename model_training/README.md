@@ -1,13 +1,17 @@
 # Evoweave Model Training
 
-Dataset revision (2026-10-12): use the immutable coordinate-screened HGC
+Dataset revision (2026-10-13): use the immutable root-RT-cache HGC
 manifests in [dataset authority](../DATASET_SOURCE_OF_TRUTH.md), containing
-18,018 train / 969 validation assets. The 81 quarantined assets are excluded
-from future training. The bound is defined using per-frame mesh padding 1.1;
-it must not be assumed for a different normalization. Historical experiment
+18,002 train / 967 validation assets. This revision adds 18 whole-asset
+exclusions; the previous 81 remain excluded. Complete manifest rows, including
+`root_rt`, are required by the RT-aware flat and virtual-frame data loaders.
+They remove rigid root motion, preserve nonrigid residuals, and use one
+selected-input mesh-union normalization with padding 1.1. Legacy Puppeteer and
+the old shared wrapper fail closed on these manifests. Historical experiment
 configs retain their original manifest identities for reproducibility.
-R3 was intentionally stopped for this dataset change with checkpoint105
-preserved. No replacement run was launched by this data-publication task.
+Data preprocessing passed full screening, 48 CPU tests and 80 real-loader
+checks; no model architecture was changed or training launched by this task.
+The root cache depends on source skeleton metadata, not a mesh-only RT estimator.
 Read `state/current.json` for operation status; historical baselines below
 are not permission to restart an old-data job.
 

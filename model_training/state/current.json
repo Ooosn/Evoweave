@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T02:29:29.091819+00:00",
+  "updated_at": "2026-10-12T03:09:46.327397+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
@@ -39,7 +39,7 @@
     "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
     "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
     "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage compare_self_cross_4_v1."
+    "current_action": "User authorized the new implementation, capacity/architecture tests and subsequent formal run; current stage compare_cross_2_v1."
   },
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
@@ -340,8 +340,67 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Execute and inspect compare_self_cross_4_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
+  "next_required_result": "Execute and inspect compare_cross_2_v1 only with its recorded source/config/data/resources. Capacity measurements are not learning-quality acceptance. Choose attention/depth using matched early exposure curves; formal training starts fresh from the official upstream and targets 80016 actual asset exposures. Never initialize from the old trained method or its descendants. Preserve the existing qlogin allocation.",
   "active_operation": {
+    "experiment": "shared_virtual_frame_20261012",
+    "label": "compare_cross_2_v1",
+    "mode": "train",
+    "plan": "compare",
+    "candidate": "cross_2",
+    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_cross_2_v1",
+    "command": [
+      "/home/wangyy/miniconda3/envs/mygs/bin/python",
+      "-B",
+      "-m",
+      "torch.distributed.run",
+      "--standalone",
+      "--nproc_per_node=2",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
+      "--config",
+      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
+      "--mode",
+      "train",
+      "--plan",
+      "compare",
+      "--candidate",
+      "cross_2",
+      "--output",
+      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_cross_2_v1"
+    ],
+    "operation": "train",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5,
+        7
+      ]
+    },
+    "selected_settings": {
+      "approved": true,
+      "frame_budget": 320,
+      "batch_cap": 32,
+      "accumulation": 1,
+      "target_samples": 5040,
+      "evaluation_samples": [
+        2016,
+        5040
+      ],
+      "candidate_order": [
+        "self_cross_2",
+        "self_cross_1",
+        "self_cross_4",
+        "cross_2"
+      ],
+      "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
+    },
+    "status": "prepared",
+    "prepared_at": "2026-10-12T03:09:46.327397+00:00",
+    "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
+    "accepted": false
+  },
+  "last_operation": {
     "experiment": "shared_virtual_frame_20261012",
     "label": "compare_self_cross_4_v1",
     "mode": "train",
@@ -395,93 +454,34 @@
       ],
       "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
     },
-    "status": "prepared",
-    "prepared_at": "2026-10-12T02:29:29.091819+00:00",
-    "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
-    "accepted": false
-  },
-  "last_operation": {
-    "experiment": "shared_virtual_frame_20261012",
-    "label": "compare_self_cross_1_v1",
-    "mode": "train",
-    "plan": "compare",
-    "candidate": "self_cross_1",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_1_v1",
-    "command": [
-      "/home/wangyy/miniconda3/envs/mygs/bin/python",
-      "-B",
-      "-m",
-      "torch.distributed.run",
-      "--standalone",
-      "--nproc_per_node=2",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/rigweave/scripts/train_virtual_frame.py",
-      "--config",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/shared_virtual_frame_20261012.json",
-      "--mode",
-      "train",
-      "--plan",
-      "compare",
-      "--candidate",
-      "self_cross_1",
-      "--output",
-      "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_1_v1"
-    ],
-    "operation": "train",
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "selected_settings": {
-      "approved": true,
-      "frame_budget": 320,
-      "batch_cap": 32,
-      "accumulation": 1,
-      "target_samples": 5040,
-      "evaluation_samples": [
-        2016,
-        5040
-      ],
-      "candidate_order": [
-        "self_cross_2",
-        "self_cross_1",
-        "self_cross_4",
-        "cross_2"
-      ],
-      "selection": "Match actual asset/frame exposure streams, upstream/new-module initialization and loss weighting. Compare validation generation with failures scoring zero, GT-prefix localization, structure CE and XYZ L1. Extend the best two to 10032 if the warmup-stage trends do not separate them; formal run always restarts fresh."
-    },
     "status": "completed",
-    "prepared_at": "2026-10-12T01:06:10.613389+00:00",
-    "started_at": "2026-10-12T01:49:51.544339+00:00",
-    "finished_at": "2026-10-12T02:26:47.859697+00:00",
+    "prepared_at": "2026-10-12T02:29:29.091819+00:00",
+    "started_at": "2026-10-12T02:30:36.245600+00:00",
+    "finished_at": "2026-10-12T03:07:37.571697+00:00",
     "accepted_meaning": "execution_valid_not_quality_superiority",
     "result": {
-      "controller": "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_1_v1.json",
-      "source_commit": "b24b973a8583726154fd02deb59250909f556637",
+      "controller": "/home/wangyy/jobs/shared_virtual_frame_20261012/results/compare_self_cross_4_v1.json",
+      "source_commit": "91bad8e639f6ea3b8668978924aaee18bc246e1a",
       "exit_code": 0,
       "samples": 5040,
       "input_frames": 56466,
       "steps": 105,
       "rank_reports_sha256": [
-        "86e99d22fbef7501dee4444b5c50e1c53fa3c0a1b5d4916eb051acd11f0083a9",
-        "97b7acc4a2b6dd33c75cc35cad8b03fb7f1fa612752acc2a65e8b52bacfd666d"
+        "55c86346feaeae9800ddfdf09235ffa6db86234fc5f31f8271c0c8ff672cf704",
+        "156927518ab3b10d0d42198f59e077803d99053813f4d95cf26f4439954dd268"
       ],
       "evaluation_summary_sha256": {
-        "2016": "48d2cd695fd2ddb267a0d6ffd9733eebe72b001ec9ce44a196d1bd3f1ebc89a5",
-        "5040": "3aec8b30aa498fd80d655db18bf354e71f972743f19832ebe1de71eee0fbc5f9"
+        "2016": "27cd691265607759935d09f23fd185552417a737ba339adb782df4a490b1f82c",
+        "5040": "3f5abb029289def4d2b6dbf597fa10ae4257675ed5fef969d23b799a3cca34aa"
       },
       "all_train_metrics_finite": true,
       "exact_exposure_frame_trace_match": "compare_self_cross_2_v1",
       "validation_assets": 64,
       "validation_natural_eos": 64,
-      "validation_f1": 0.0748692723394983,
-      "validation_xyz_l1": 0.33804285945370793,
-      "validation_structure_ce": 0.5959558055037633,
-      "validation_gt_prefix_f1": 0.071322566613984
+      "validation_f1": 0.07595542548535968,
+      "validation_xyz_l1": 0.3324836166575551,
+      "validation_structure_ce": 0.5903462572605349,
+      "validation_gt_prefix_f1": 0.06778608265396868
     },
     "authorization": "User authorized implementation, realistic frame-budget capacity exploration and early-trend comparisons of attention/depth designs before formal training. Formal training must match old actual asset exposure count. After formal training starts, evaluate the old model on extreme common-reference coordinate inputs and investigate global RT metadata/estimation. No old-method trained initialization is permitted.",
     "accepted": true

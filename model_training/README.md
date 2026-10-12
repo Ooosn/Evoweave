@@ -1,5 +1,18 @@
 # Evoweave Model Training
 
+## Active Route: Virtual Query XYZ
+
+The current approved route is specified in
+[Virtual Query XYZ](docs/VIRTUAL_QUERY_XYZ_20261013.md). It uses 1024 virtual
+anchor-aligned slots, 12 spatial/temporal blocks, per-frame final-mesh attention,
+and the original complete XYZ AR decoder. Explicit-ID skeleton prediction is
+auxiliary loss only. The old 96-register / continuous-XYZ route is stopped and
+must not be resumed. Data acceptance does not imply model acceptance. Fitting
+and matched parameter checks are required before full-data training.
+
+Read `state/current.json` for the current stage and exact operation permissions.
+Older documentation and configs below are historical unless explicitly selected.
+
 Dataset revision (2026-10-13): use the immutable root-RT-cache HGC
 manifests in [dataset authority](../DATASET_SOURCE_OF_TRUTH.md), containing
 18,002 train / 967 validation assets. This revision adds 18 whole-asset

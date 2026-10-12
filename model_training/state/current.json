@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "shared_virtual_frame_20261012",
-  "updated_at": "2026-10-12T09:51:39+00:00",
+  "state_id": "virtual_query_xyz_20261013",
+  "updated_at": "2026-10-12T18:32:39.588942+00:00",
   "current_dataset_revision": {
     "status": "verified_published",
     "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
@@ -20,42 +20,12 @@
     "valid_manifest_sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a",
     "npz_files_changed": 0
   },
-  "comparison_contract": {
-    "updated_by_user_at": "2026-10-12",
-    "relationship": "Independent peer methods, not transfer fine-tuning from the old method.",
-    "old_method_trained_checkpoint_initialization_allowed": false,
-    "old_method_descendant_checkpoint_initialization_allowed": false,
-    "excluded_descendants": [
-      "shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
-      "shared_structure_full_20261012_r3"
-    ],
-    "common_upstream_initialization": {
-      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
-      "new_motion_and_head_seed": 20261012,
-      "end_to_end": true,
-      "old_method_trained_weights": false
-    },
-    "matched_peak_learning_rate": 0.0001,
-    "precision": "Established BF16 autocast path; no unrequested FP32 neural forward.",
-    "historical_runs": "Preserve inherited-weight runs as diagnostics, not accepted independent-method comparisons; do not resume them as the new baseline.",
-    "required_localization_path": "Shared joint representation H plus EACH FRAME'S FINAL anchor tokens A_t_final after ALL spatial/temporal encoder blocks and the final norm, retaining the T dimension via return_all=True. Not initial surface tokens, intermediate-layer tokens, query-frame-only tokens, or separately re-encoded target tokens. Final-anchor spatial coordinates and joint supervision must follow an explicitly consistent common-reference coordinate contract.",
-    "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
-    "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
-    "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
-    "current_action": "User clarified that level1 replaces the old real query frame with a virtual query retaining the same1024 query-token slots. The current96-register generator prefix is an implementation deviation. Stop this branch, preserve checkpoints/allocation, and correct this architecture understanding before further model edits or GPU work.",
-    "virtual_query_architecture_status": "incorrect_96_register_prefix_instead_of_requested_1024_virtual_query_tokens",
-    "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
-  },
   "module": "model_training",
-  "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+  "human_context": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
-    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/MOTION_EVIDENCE_COMPARISON_20261010.md",
-    "model_training/docs/INACTIVE_JOINT_CAPABILITY_20261011.md",
-    "model_training/experiments/shared_virtual_frame_20261012.json"
+    "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -151,9 +121,8 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "A practical head/fusion configuration was selected; full-budget generation superiority remains unverified.",
-    "Short screening is not proof of the final full-training quality or global optimum.",
-    "Historical motion-encoder initialization RNG was not saved; only initialization recipe is reproducible."
+    "New route fit, free-generation quality, capacity and auxiliary lambda have not yet been measured.",
+    "Main original XYZ tokenization has known quantization parent-collision limitations; report label ceilings without silently changing it."
   ],
   "allowed_operations": [
     "inspect",
@@ -346,111 +315,20 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Honor the clarified same1024-token virtual-query architecture rather than replacing its generator input with96 registers. Do not add more XYZ-head changes or launch another experiment before that architecture is correctly understood and implemented. Preserve all old artifacts and the qlogin allocation. Formal must initialize fresh from official upstream, never the misimplemented trial checkpoints.",
+  "next_required_result": "Implement approved 1024 virtual query / per-frame full UniRig XYZ AR with explicit-ID auxiliary loss; pass and record G0 before registering an exact G1 GPU operation. Never resume historical wrong-route trials.",
   "active_operation": {
-    "label": "full_data_readout_comparison_v1",
-    "operation": "train",
-    "mode": "train",
-    "status": "stopped_architecture_mismatch",
+    "label": "virtual_query_xyz_implementation_v1",
+    "operation": "inspect",
+    "status": "implementation_and_cpu_validation",
     "accepted": false,
     "complete": false,
-    "prepared_at": "2026-10-12T07:02:06+00:00",
-    "code_parent_commit": "8d79fe66739e56140a75b2095a14759fe3061848",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_readout_comparison_20261012.json",
-    "config_sha256": "99668dfb23e58f3f166c33a137cb00ee8aaa4e59a6ce36d69c5654e71d443922",
-    "checkpoints": [
-      {
-        "name": "both_arms",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
-      }
-    ],
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1",
-    "manifests": {
-      "status": "verified_published",
-      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
-      "train_rows": 18018,
-      "valid_rows": 969,
-      "quarantined_rows": 81,
-      "target_mesh_padding": 1.1,
-      "all_frame_all_target_joint_abs_limit": 1,
-      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
-      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
-      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
-      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
-      "npz_files_changed": 0
-    },
-    "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
-      ]
-    },
-    "command": [
-      "bash",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_readout_comparison.sh"
-    ],
-    "authorization": "User requires substantive analysis and actual attempts to solve the training-quality problem, not more disconnected read-only audits. Bounded controlled full-data continuation tests one explicit coordinate-readout hypothesis against the unchanged new model.",
-    "acceptance": "Compare fixed32train64valid natural generation F1 (failures zero), GT-parent localization L1/F1 and all-frame F1 at10032 and20016, paired by asset. Report control learning versus the5040 starting point separately from treatment-minus-control. Promote the coordinate path only for a consistent localization/generation improvement, not solely lower training loss; otherwise reject it. Neither outcome establishes a unique root cause. Formal still starts fresh and uses80016 actual assets.",
-    "contract": "Full-data learning experiment, not another frozen-signal audit. Both arms strictly load the identical NEW sample5040 model and all existing Adam states, replay both original data-rank streams on one GPU per arm and perform one optimizer update per original global batch. Same accepted train18018/valid969, same actual assets/frames, original80016 OneCycle schedule/peak1e-4/beta1/BF16/L1/CE+0.5XYZ/clip1. Only intervention is a low-rank attention-weighted centered-coordinate residual in the localization readout. Zero key initialization preserves original outputs initially; existing absolute XYZ prediction remains unbounded. No old-method trained weights, label reordering, normalization, RT removal or clipping. These trial weights must not initialize formal training.",
-    "selected_settings": {
-      "arms": [
-        "control",
-        "coordinate_readout"
-      ],
-      "target_samples": 20016,
-      "evaluation_samples": [
-        10032,
-        20016
-      ],
-      "frame_budget": 320,
-      "batch_cap": 32,
-      "original_data_ranks": 2,
-      "independent_model_gpus": 2
-    },
+    "authorization": "User approved explicit-ID auxiliary route, requested durable specifications/logs and analysis-led fit/parameter tests before full training.",
     "formal_training_allowed": false,
-    "old_method_trained_weights_loaded": false,
-    "execution_finished": true,
-    "finished_at": "2026-10-12T09:51:39+00:00",
-    "exit_code": 1,
-    "termination": "Primary deliberately sent SIGTERM only to the exact torchrun training controller PID2269103; workers2662214/2662215 exited; qlogin129547842 and its physical5/7 grant preserved.",
-    "stop_reason": "User clarified that the virtual query must retain the same1024 query-token slots as the former real query frame. This implementation wrongly substitutes96 virtual registers as the generator condition. The readout comparison does not implement the intended architecture and must not be continued or promoted.",
-    "last_completed_update": {
-      "samples": 16804,
-      "step": 353,
-      "input_frames": 189212
-    },
-    "preserved_checkpoint_samples": 10032,
-    "preserved_checkpoints": [
-      {
-        "arm": "control",
-        "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/control/checkpoint_sample_010032.pt",
-        "bytes": 8379297078
-      },
-      {
-        "arm": "coordinate_readout",
-        "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/coordinate_readout/checkpoint_sample_010032.pt",
-        "bytes": 8382445846
-      }
-    ],
-    "result_at_10032": {
-      "control": {
-        "valid_edge_f1": 0.136421503144392,
-        "valid_xyz_l1": 0.18771334597840905
-      },
-      "coordinate_readout": {
-        "valid_edge_f1": 0.13443820920177374,
-        "valid_xyz_l1": 0.1940634084166959
-      },
-      "conclusion": "No validation benefit established for the added readout. These results describe the wrong96-register-prefix architecture, not the requested1024-token virtual-query model."
-    },
-    "local_artifacts": "D:/evoweave-artifacts/shared-virtual-frame-20261012/training/full_data_readout_comparison_v1",
-    "report_sha256": {
-      "control": "5e1b0a0f0b65c34d6b8b90decf55a888c7ba76296284046accc581a792c2812e",
-      "coordinate_readout": "bae2da894eb1c0759cfcda2af0a701cf201096e627294d8a9f076358f5beb333"
-    }
+    "gpu_work_allowed": false,
+    "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
+    "acceptance": "G0 codec/architecture tests, then recorded G1 full-size preflight, G2 actual fitting, G3 matched lambda comparison; only reviewed evidence permits G4.",
+    "code_parent_commit": "4508c5ac9c109f1a1157ddd6d9b41e053faa389d",
+    "local_artifacts": "D:/evoweave/server_ops/outputs/virtual_query_xyz_20261013"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",
@@ -5690,6 +5568,111 @@
       "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
       "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
       "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
+    },
+    {
+      "label": "full_data_readout_comparison_v1",
+      "operation": "train",
+      "mode": "train",
+      "status": "stopped_architecture_mismatch",
+      "accepted": false,
+      "complete": false,
+      "prepared_at": "2026-10-12T07:02:06+00:00",
+      "code_parent_commit": "8d79fe66739e56140a75b2095a14759fe3061848",
+      "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_readout_comparison_20261012.json",
+      "config_sha256": "99668dfb23e58f3f166c33a137cb00ee8aaa4e59a6ce36d69c5654e71d443922",
+      "checkpoints": [
+        {
+          "name": "both_arms",
+          "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
+          "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
+        }
+      ],
+      "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1",
+      "manifests": {
+        "status": "verified_published",
+        "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
+        "train_rows": 18018,
+        "valid_rows": 969,
+        "quarantined_rows": 81,
+        "target_mesh_padding": 1.1,
+        "all_frame_all_target_joint_abs_limit": 1,
+        "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
+        "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
+        "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
+        "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
+        "npz_files_changed": 0
+      },
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ]
+      },
+      "command": [
+        "bash",
+        "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_readout_comparison.sh"
+      ],
+      "authorization": "User requires substantive analysis and actual attempts to solve the training-quality problem, not more disconnected read-only audits. Bounded controlled full-data continuation tests one explicit coordinate-readout hypothesis against the unchanged new model.",
+      "acceptance": "Compare fixed32train64valid natural generation F1 (failures zero), GT-parent localization L1/F1 and all-frame F1 at10032 and20016, paired by asset. Report control learning versus the5040 starting point separately from treatment-minus-control. Promote the coordinate path only for a consistent localization/generation improvement, not solely lower training loss; otherwise reject it. Neither outcome establishes a unique root cause. Formal still starts fresh and uses80016 actual assets.",
+      "contract": "Full-data learning experiment, not another frozen-signal audit. Both arms strictly load the identical NEW sample5040 model and all existing Adam states, replay both original data-rank streams on one GPU per arm and perform one optimizer update per original global batch. Same accepted train18018/valid969, same actual assets/frames, original80016 OneCycle schedule/peak1e-4/beta1/BF16/L1/CE+0.5XYZ/clip1. Only intervention is a low-rank attention-weighted centered-coordinate residual in the localization readout. Zero key initialization preserves original outputs initially; existing absolute XYZ prediction remains unbounded. No old-method trained weights, label reordering, normalization, RT removal or clipping. These trial weights must not initialize formal training.",
+      "selected_settings": {
+        "arms": [
+          "control",
+          "coordinate_readout"
+        ],
+        "target_samples": 20016,
+        "evaluation_samples": [
+          10032,
+          20016
+        ],
+        "frame_budget": 320,
+        "batch_cap": 32,
+        "original_data_ranks": 2,
+        "independent_model_gpus": 2
+      },
+      "formal_training_allowed": false,
+      "old_method_trained_weights_loaded": false,
+      "execution_finished": true,
+      "finished_at": "2026-10-12T09:51:39+00:00",
+      "exit_code": 1,
+      "termination": "Primary deliberately sent SIGTERM only to the exact torchrun training controller PID2269103; workers2662214/2662215 exited; qlogin129547842 and its physical5/7 grant preserved.",
+      "stop_reason": "User clarified that the virtual query must retain the same1024 query-token slots as the former real query frame. This implementation wrongly substitutes96 virtual registers as the generator condition. The readout comparison does not implement the intended architecture and must not be continued or promoted.",
+      "last_completed_update": {
+        "samples": 16804,
+        "step": 353,
+        "input_frames": 189212
+      },
+      "preserved_checkpoint_samples": 10032,
+      "preserved_checkpoints": [
+        {
+          "arm": "control",
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/control/checkpoint_sample_010032.pt",
+          "bytes": 8379297078
+        },
+        {
+          "arm": "coordinate_readout",
+          "path": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/full_data_readout_comparison_v1/coordinate_readout/checkpoint_sample_010032.pt",
+          "bytes": 8382445846
+        }
+      ],
+      "result_at_10032": {
+        "control": {
+          "valid_edge_f1": 0.136421503144392,
+          "valid_xyz_l1": 0.18771334597840905
+        },
+        "coordinate_readout": {
+          "valid_edge_f1": 0.13443820920177374,
+          "valid_xyz_l1": 0.1940634084166959
+        },
+        "conclusion": "No validation benefit established for the added readout. These results describe the wrong96-register-prefix architecture, not the requested1024-token virtual-query model."
+      },
+      "local_artifacts": "D:/evoweave-artifacts/shared-virtual-frame-20261012/training/full_data_readout_comparison_v1",
+      "report_sha256": {
+        "control": "5e1b0a0f0b65c34d6b8b90decf55a888c7ba76296284046accc581a792c2812e",
+        "coordinate_readout": "bae2da894eb1c0759cfcda2af0a701cf201096e627294d8a9f076358f5beb333"
+      }
     }
   ],
   "localization_diagnosis_20261012": {
@@ -6965,5 +6948,67 @@
       "focus": "Why the parent-conditioned localization decoder has not learned useful joint-to-local-geometry correspondence across assets; assess architecture, representation/initialization compatibility and supervision. Do not promote the constructed branch-label ambiguity without actual-dataset evidence.",
       "scope_limit": "Single-asset algebraic readout fits and successful memorization do not establish generalization. Routing tests cover the measured cases and numerical noise, not all possible implementation defects."
     }
+  },
+  "historical_shared_parent_contract": {
+    "updated_by_user_at": "2026-10-12",
+    "relationship": "Independent peer methods, not transfer fine-tuning from the old method.",
+    "old_method_trained_checkpoint_initialization_allowed": false,
+    "old_method_descendant_checkpoint_initialization_allowed": false,
+    "excluded_descendants": [
+      "shared_structure_online_20261011_r1/probe/checkpoint_step_01024.pt",
+      "shared_structure_full_20261012_r3"
+    ],
+    "common_upstream_initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "new_motion_and_head_seed": 20261012,
+      "end_to_end": true,
+      "old_method_trained_weights": false
+    },
+    "matched_peak_learning_rate": 0.0001,
+    "precision": "Established BF16 autocast path; no unrequested FP32 neural forward.",
+    "historical_runs": "Preserve inherited-weight runs as diagnostics, not accepted independent-method comparisons; do not resume them as the new baseline.",
+    "required_localization_path": "Shared joint representation H plus EACH FRAME'S FINAL anchor tokens A_t_final after ALL spatial/temporal encoder blocks and the final norm, retaining the T dimension via return_all=True. Not initial surface tokens, intermediate-layer tokens, query-frame-only tokens, or separately re-encoded target tokens. Final-anchor spatial coordinates and joint supervision must follow an explicitly consistent common-reference coordinate contract.",
+    "localization_implementation_status": "virtual_frame_path_cpu_and_end_to_end_two_gpu_verified_all_frame_counts_2_to_24",
+    "historical_localization_implementation_deviation": "The former R3 code used independently normalized and surface-reencoded target tokens, not the required final motion anchors. The current virtual-frame path replaces that historical implementation and uses each real frame's final anchors with continuous common-coordinate targets.",
+    "historical_target_coordinate_interpretation": "The substituted target branch normalizes both per-frame mesh and GT and is used during both training and prediction. It is internally label-aligned, but it implements a different localization path. This does not remove source-branch global RT, prove learned feature alignment, or establish the cause of all low F1.",
+    "current_action": "User clarified that level1 replaces the old real query frame with a virtual query retaining the same1024 query-token slots. The current96-register generator prefix is an implementation deviation. Stop this branch, preserve checkpoints/allocation, and correct this architecture understanding before further model edits or GPU work.",
+    "virtual_query_architecture_status": "incorrect_96_register_prefix_instead_of_requested_1024_virtual_query_tokens",
+    "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
+  },
+  "architecture_contract": {
+    "id": "virtual_query_xyz_aux_ids_v1",
+    "virtual_query_tokens": 1024,
+    "anchor_correspondence": "same-index real and virtual slots through every temporal block",
+    "motion_depth": 12,
+    "conditioning": "final_virtual_queries_cross_attend_each_final_real_frame",
+    "per_frame_condition_tokens": 1024,
+    "main_decoder": "original_complete_UniRig_XYZ_AR",
+    "main_xyz_embedding_and_output_head": "official_upstream_loaded_and_trainable",
+    "auxiliary": "fixed_DFS_explicit_joint_IDs_and_BRANCH_only_loss",
+    "auxiliary_outputs_feed_main": false,
+    "continuous_xyz_head": false,
+    "lambda_candidates": [
+      0.0,
+      0.1,
+      0.3
+    ],
+    "lambda_status": "not_selected",
+    "formal_initialization": "fresh_official_upstream_not_diagnostic_weights",
+    "formal_asset_exposures": 80016
+  },
+  "comparison_contract": {
+    "relationship": "independent_new_route_from_common_official_upstream",
+    "old_method_trained_checkpoint_initialization_allowed": false,
+    "old_method_descendant_checkpoint_initialization_allowed": false,
+    "common_upstream_initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "new_motion_and_head_seed": 20261012,
+      "end_to_end": true,
+      "old_method_trained_weights": false
+    },
+    "precision": "bfloat16_autocast",
+    "required_contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md"
   }
 }

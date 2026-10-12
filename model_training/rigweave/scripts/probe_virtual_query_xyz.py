@@ -18,6 +18,7 @@ import torch
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'model_training/rigweave/src'))
 from virtual_query_xyz_runtime import build_model, read_entries, fixed_dataset, prepare_batch, sha256, write_json
+from fit_cohort_selection import choose_fit_rows
 
 
 def verify_operation(args):
@@ -46,6 +47,7 @@ def verify_operation(args):
 
 
 def choose_rows(rows, config):
+    """Historical single-case selector, retained for exact diagnostic replay."""
     rng = np.random.default_rng(config['probe']['selection_seed'])
     def count(row):
         return row.get('canonical_metrics', {}).get('target_joint_count',
@@ -152,7 +154,9 @@ def run(args, config, source):
     device = torch.device('cuda:0')
     torch.cuda.set_device(device)
     torch.cuda.set_per_process_memory_fraction(.95, device)
-    rows = choose_rows(read_entries(config)['train'], config)
+    rows, selection = choose_fit_rows(read_entries(config)['train'], config, return_report=True)
+    selection.update(manifest=config['data']['manifests']['train'], config_sha256=sha256(args.config))
+    write_json(args.output/'cohort_selection.json', selection)
     write_json(args.output/'selected_assets.json', [{'asset_id': r['asset_id'], 'path': r['path']} for r in rows])
     model, tokenizer, codec, initial = build_model(config, device)
     initial.update(code_commit=source, config_sha256=sha256(args.config), device=torch.cuda.get_device_name(),
@@ -203,9 +207,12 @@ def run(args, config, source):
         return {'stage': 'preflight', 'accepted': True, 'formal_training_allowed': False}
     dataset = fixed_dataset(rows, config, config['probe']['frames'])
     items = [prepare_batch(dataset[i], config, tokenizer, codec, device) for i in range(len(dataset))]
+    if any(int(x[1]['main_attention_mask'].sum(-1).max()) > config['probe']['max_new_tokens'] + 2 for x in items):
+        raise ValueError('fixed target exceeds declared free-generation budget; review config before fitting')
     write_json(args.output/'fixed_frames.json', [{'asset_id': x[2]['asset_id'][0],
         'selected_frames': x[2]['selected_frames'].cpu().tolist(),
-        'heldout_raw_ids': x[2]['heldout_raw_ids']} for x in items])
+        'heldout_raw_ids': x[2]['heldout_raw_ids'],
+        'main_token_lengths': x[1]['main_attention_mask'].sum(-1).cpu().tolist()} for x in items])
     last = evaluate(model, items, tokenizer, config, args.output, 0)
     started = time.monotonic()
     for step in range(1, config['probe']['max_updates']+1):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -21,6 +22,21 @@ from virtual_query_xyz_runtime import build_model, read_entries, fixed_dataset, 
 from fit_cohort_selection import choose_fit_rows
 
 
+def declared_probe_run(operation, args, config_digest):
+    matches = [run for run in operation.get('runs', [operation])
+               if Path(run['config']).resolve() == args.config.resolve()]
+    if len(matches) != 1:
+        raise ValueError('probe configuration is not uniquely declared')
+    run = matches[0]
+    if operation['mode'] != args.mode or run['mode'] != args.mode:
+        raise ValueError('CLI does not match the recorded stage')
+    if run['config_sha256'] != config_digest:
+        raise ValueError('config differs from the published operation')
+    if Path(run['output']).resolve() != args.output.resolve():
+        raise ValueError('output differs from the published operation')
+    return run
+
+
 def verify_operation(args):
     state = json.loads((ROOT/'model_training/state/current.json').read_text())
     operation = state['active_operation']
@@ -28,12 +44,7 @@ def verify_operation(args):
         raise ValueError('active state is not this model route')
     if not operation.get('gpu_work_allowed') or operation.get('formal_training_allowed'):
         raise ValueError('no bounded GPU operation has been published for this route')
-    if operation['mode'] != args.mode or Path(operation['config']).resolve() != args.config.resolve():
-        raise ValueError('CLI does not match the exact recorded stage/config')
-    if operation['config_sha256'] != sha256(args.config):
-        raise ValueError('config differs from the published operation')
-    if Path(operation['output']).resolve() != args.output.resolve():
-        raise ValueError('output differs from the published operation')
+    declared_probe_run(operation, args, sha256(args.config))
     subprocess.run([sys.executable, str(ROOT/'model_training/tools/agent_work_guard.py'),
                     'check', '--operation', 'train', '--entrypoint', str(Path(__file__).resolve())], check=True)
     dirty = subprocess.check_output(['git', '-C', str(ROOT), 'status', '--porcelain'], text=True).strip()
@@ -82,6 +93,75 @@ def require_gradients(model, norms, auxiliary_weight):
             raise RuntimeError(f'missing/nonfinite learning signal for {name}')
 
 
+def fitting_plan(config, asset_count):
+    plan = config['probe']
+    updates = plan['max_updates']
+    batch = plan.get('assets_per_update', 1)
+    if any(isinstance(value, bool) or not isinstance(value, int) or value < 1
+           for value in (updates, batch, asset_count)) or batch > asset_count:
+        raise ValueError('fit update count and assets per update must be positive, without duplicate assets')
+    optimization = config['optimization']
+    schedule = optimization.get('schedule', 'constant')
+    if schedule not in ('constant', 'onecycle'):
+        raise ValueError('unsupported fitting schedule')
+    exposures = updates * batch
+    if schedule == 'onecycle':
+        if optimization['schedule_samples'] != exposures:
+            raise ValueError('OneCycle schedule must match actual declared asset exposures')
+        for key in ('peak_lr', 'div_factor', 'final_div_factor'):
+            if not math.isfinite(optimization[key]) or optimization[key] <= 0:
+                raise ValueError('invalid positive fitting schedule parameter')
+        if not 0 < optimization['warmup_fraction'] < 1:
+            raise ValueError('invalid fitting warmup fraction')
+    elif not math.isfinite(optimization['lr']) or optimization['lr'] <= 0:
+        raise ValueError('invalid constant fitting learning rate')
+    if not math.isfinite(optimization['weight_decay']) or optimization['weight_decay'] < 0:
+        raise ValueError('invalid fitting weight decay')
+    return {'schedule': schedule, 'assets_per_update': batch, 'max_updates': updates,
+            'max_asset_exposures': exposures, 'order': 'fixed_cyclic', 'gradient_reduction': 'asset_mean'}
+
+
+def fitting_update(model, optimizer, items, config, plan, step):
+    batch = plan['assets_per_update']
+    seen = (step - 1) * batch
+    if plan['schedule'] == 'onecycle':
+        from virtual_frame_runtime import set_exposure_lr
+        lr, beta1 = set_exposure_lr(optimizer, seen, config)
+    else:
+        lr, beta1 = optimizer.param_groups[0]['lr'], optimizer.param_groups[0]['betas'][0]
+    optimizer.zero_grad(set_to_none=True)
+    keys = ('loss', 'main_loss', 'auxiliary_loss', 'main_accuracy')
+    metrics = {key: 0. for key in keys}
+    indices = [(seen + offset) % len(items) for offset in range(batch)]
+    for index in indices:
+        surface, target, _ = items[index]
+        with torch.autocast('cuda', dtype=torch.bfloat16):
+            out = model(surface, target, auxiliary_weight=config['probe']['auxiliary_weight'])
+        if not bool(torch.isfinite(out['loss'])):
+            raise RuntimeError('nonfinite fitting loss; further training stopped')
+        # Every item is one asset; retain the established per-frame/token mean.
+        (out['loss'] / batch).backward()
+        for key in keys:
+            metrics[key] += float(out[key].detach()) / batch
+        del out
+    norms = grad_norms(model)
+    require_gradients(model, norms, config['probe']['auxiliary_weight'])
+    clipped = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
+    optimizer.step()
+    return {**metrics, 'gradient_norm': clipped, 'groups': norms, 'lr': lr, 'beta1': beta1,
+            'asset_indices': indices, 'asset_exposures': seen + batch,
+            'supervised_frame_exposures': (seen + batch) * config['probe']['frames']}
+
+
+def fit_view_passes(row):
+    # Nearest-neighbor edge F1 is not reflexive at coincident joint positions.
+    # Exact canonical target tokens are stronger evidence than that metric.
+    exact = bool(row.get('target_tokens')) and row.get('generated_tokens') == row['target_tokens']
+    return (row['success'] and row['exact_count']
+            and row['quantized_j2j'] is not None and row['quantized_j2j'] <= 4 / 256
+            and (row['quantized_edge_f1'] >= .95 or exact))
+
+
 @torch.no_grad()
 def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=None):
     from rigweave.dynamic_rig.virtual_query_xyz import original_xyz_vocabulary_processor
@@ -113,8 +193,11 @@ def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=Non
                       'main_ce': float(teacher['main_loss_per_frame'][0, frame]),
                       'main_accuracy': float(teacher['main_accuracy_per_frame'][0, frame]),
                       'generated_tokens': predicted['tokens'], 'target_tokens': ids.tolist(),
+                      'exact_target_tokens': predicted['tokens'] == ids.tolist(),
                       'target_quantized_joints': truth.joints.tolist(), 'target_quantized_parents': truth_parents,
                       'quantized_j2j': None}
+            record['target_self_edge_f1'] = _topology_metrics(truth.joints, truth_parents,
+                truth.joints, truth_parents)['edge_f1']
             size = int(geometry['joint_count'][0])
             original = geometry['frame_target_joints'][0, frame, :size].cpu().numpy()
             original_parents = geometry['target_parents'][0, :size].cpu().tolist()
@@ -138,12 +221,12 @@ def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=Non
     summary = {key: float(np.mean([r[key] for r in records])) for key in
                ('success', 'quantized_edge_f1', 'original_edge_f1', 'exact_count', 'main_ce', 'main_accuracy')}
     fit_acceptance = (summary['main_accuracy'] >= .99 and all(r['success'] for r in records)
-        and np.mean([r['exact_count'] and r['quantized_edge_f1'] >= .95
-                     and r['quantized_j2j'] is not None and r['quantized_j2j'] <= 4/256 for r in records]) >= .9)
+        and np.mean([fit_view_passes(r) for r in records]) >= .9)
     distances = [r['quantized_j2j'] for r in records if r['quantized_j2j'] is not None]
     summary['quantized_j2j_successful_views'] = float(np.mean(distances)) if distances else None
     summary['geometry_scored_views'] = len(distances)
     report = {'step': step, 'views': len(records), 'summary': summary, 'fit_acceptance': bool(fit_acceptance),
+              'fit_gate': 'exact_tokens_or_raw_f1_v2', 'passing_fit_views': sum(fit_view_passes(r) for r in records),
               'rows': records, 'failed_generations_scored_zero': True, 'teacher_metrics_scope': 'per_frame'}
     write_json(output/f'evaluation_{step:04d}.json', report)
     print('EVALUATION '+json.dumps({k:v for k,v in report.items() if k!='rows'}), flush=True)
@@ -164,11 +247,20 @@ def run(args, config, source):
     write_json(args.output/'cohort_selection.json', selection)
     write_json(args.output/'selected_assets.json', [{'asset_id': r['asset_id'], 'path': r['path']} for r in rows])
     model, tokenizer, codec, initial = build_model(config, device)
+    if config['probe'].get('fingerprint_initial_state', False):
+        from probe_virtual_query_lambda import parameter_fingerprint
+        initial['full_initial_state_sha256'] = parameter_fingerprint(model)
     initial.update(code_commit=source, config_sha256=sha256(args.config), device=torch.cuda.get_device_name(),
                    torch_version=torch.__version__)
     write_json(args.output/'initialization.json', initial)
+    plan = fitting_plan(config, len(rows)) if args.mode == 'fit' else None
+    if plan is not None:
+        write_json(args.output/'fitting_protocol.json', plan)
+    scheduled = plan is not None and plan['schedule'] == 'onecycle'
     optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
-        lr=config['optimization']['lr'], betas=(.9, .999), weight_decay=config['optimization']['weight_decay'])
+        lr=(config['optimization']['peak_lr'] / config['optimization']['div_factor']
+            if scheduled else config['optimization']['lr']),
+        betas=(.95 if scheduled else .9, .999), weight_decay=config['optimization']['weight_decay'])
     trace_path = args.output/'trace.jsonl'
     if args.mode == 'preflight':
         reports = []
@@ -212,6 +304,8 @@ def run(args, config, source):
         return {'stage': 'preflight', 'accepted': True, 'formal_training_allowed': False}
     dataset = fixed_dataset(rows, config, config['probe']['frames'])
     items = [prepare_batch(dataset[i], config, tokenizer, codec, device) for i in range(len(dataset))]
+    if any(len(item[2]['asset_id']) != 1 for item in items):
+        raise ValueError('fixed fitting items must each contain exactly one asset')
     if any(int(x[1]['main_attention_mask'].sum(-1).max()) > config['probe']['max_new_tokens'] + 2 for x in items):
         raise ValueError('fixed target exceeds declared free-generation budget; review config before fitting')
     write_json(args.output/'fixed_frames.json', [{'asset_id': x[2]['asset_id'][0],
@@ -221,21 +315,9 @@ def run(args, config, source):
     last = evaluate(model, items, tokenizer, config, args.output, 0)
     started = time.monotonic()
     for step in range(1, config['probe']['max_updates']+1):
-        surface, target, _ = items[(step-1) % len(items)]
-        optimizer.zero_grad(set_to_none=True)
-        with torch.autocast('cuda', dtype=torch.bfloat16):
-            out = model(surface, target, auxiliary_weight=config['probe']['auxiliary_weight'])
-        if not bool(torch.isfinite(out['loss'])):
-            raise RuntimeError('nonfinite fitting loss; further training stopped')
-        out['loss'].backward()
-        norms = grad_norms(model)
-        require_gradients(model, norms, config['probe']['auxiliary_weight'])
-        clipped = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1.))
-        optimizer.step()
+        metrics = fitting_update(model, optimizer, items, config, plan, step)
         torch.cuda.synchronize()
-        record = {'step': step, 'asset_exposures': step, 'supervised_frame_exposures': step*config['probe']['frames'],
-            'loss': float(out['loss']), 'main_loss': float(out['main_loss']), 'auxiliary_loss': float(out['auxiliary_loss']),
-            'main_accuracy': float(out['main_accuracy']), 'gradient_norm': clipped, 'groups': norms,
+        record = {'step': step, **metrics,
             'elapsed_seconds': time.monotonic()-started, 'peak_gib': torch.cuda.max_memory_allocated()/2**30}
         with trace_path.open('a') as f:
             f.write(json.dumps(record)+'\n')
@@ -251,6 +333,7 @@ def run(args, config, source):
         'config': config, 'step': step, 'initialization': initial, 'source': source,
         'diagnostic_only_not_formal_initialization': True}, args.output/'checkpoint_fit.pt')
     return {'stage': 'fit', 'completed_updates': step, 'accepted': last['fit_acceptance'],
+            'asset_exposures': step * plan['assets_per_update'], 'fitting_protocol': plan,
             'evaluation': last['summary'], 'formal_training_allowed': False,
             'next_action': 'primary_review_required_no_automatic_continuation'}
 

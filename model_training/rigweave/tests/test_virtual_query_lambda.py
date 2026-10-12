@@ -33,7 +33,7 @@ extract(SCRIPTS / 'virtual_query_xyz_runtime.py', ['sha256', 'write_json'])
 extract(SCRIPTS / 'probe_virtual_query_lambda.py',
         ['transfer', 'cache_contract', 'load_selection', 'load_cache', 'training_order',
          'parameter_fingerprint', 'shared_gradient_measurement'])
-extract(SCRIPTS / 'probe_virtual_query_xyz.py', ['evaluate'])
+extract(SCRIPTS / 'probe_virtual_query_xyz.py', ['evaluate', 'fit_view_passes'])
 
 
 def config():

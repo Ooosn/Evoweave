@@ -152,7 +152,9 @@ def main():
     args.output.mkdir(parents=True, exist_ok=False)
     args.mode = 'fit'
     def builder(cfg, device):
+        from probe_virtual_query_lambda import parameter_fingerprint
         model, tokenizer, codec, initial = build_model(cfg, device)
+        initial['full_base_initial_state_sha256'] = parameter_fingerprint(model)
         initial['reference_route'] = route
         initial['approved_virtual_route'] = False
         return ReferenceConditionRig(model, route), tokenizer, codec, initial

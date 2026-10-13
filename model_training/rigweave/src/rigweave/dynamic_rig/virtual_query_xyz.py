@@ -1,4 +1,4 @@
-"""1024 virtual anchors, per-frame original XYZ AR, auxiliary IDs only as loss."""
+"""Virtual anchors and per-frame XYZ AR with an independent auxiliary ID route."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
@@ -31,6 +31,7 @@ class VirtualQueryXYZConfig:
     motion_evidence_heads: int = 8
     gradient_checkpointing: bool = True
     temporal_chunk_size: int = 4096
+    fusion_mode: str = 'virtual_queries_real'
 
     def __post_init__(self):
         for key in ('dim', 'heads', 'query_tokens', 'motion_depth', 'fusion_depth',
@@ -44,6 +45,11 @@ class VirtualQueryXYZConfig:
             raise ValueError('invalid attention dimension/dropout')
         if isinstance(self.frame_residual_scale, bool) or not math.isfinite(self.frame_residual_scale) or self.frame_residual_scale < 0:
             raise ValueError('frame_residual_scale must be finite and nonnegative')
+        if not isinstance(self.fusion_mode, str) or self.fusion_mode not in {
+                'virtual_queries_real', 'real_queries_virtual', 'relative_position', 'token_film'}:
+            raise ValueError('unknown frame fusion mode')
+        if self.frame_residual_scale and self.fusion_mode != 'virtual_queries_real':
+            raise ValueError('frame_residual_scale is only supported by virtual_queries_real')
         if self.motion_evidence_fusion not in {'off', 'bias'}:
             raise ValueError('only established off/bias motion evidence is supported')
 
@@ -103,16 +109,43 @@ class VirtualQueryMotionEncoder(AnchorWiseAlternatingMotionEncoder):
 class FrameConditionLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
+        self.fusion_mode = config.fusion_mode
         self.query_norm = nn.LayerNorm(config.dim)
         self.memory_norm = nn.LayerNorm(config.dim)
         self.cross = nn.MultiheadAttention(config.dim, config.heads, dropout=config.dropout, batch_first=True)
         self.ffn_norm = nn.LayerNorm(config.dim)
         self.ffn = nn.Sequential(nn.Linear(config.dim, 4*config.dim), nn.GELU(),
                                  nn.Linear(4*config.dim, config.dim))
+        # Extra mode parameters must not advance initialization of common modules.
+        with torch.random.fork_rng(devices=[]):
+            if self.fusion_mode == 'relative_position':
+                self.relative_position_bias = nn.Sequential(nn.Linear(3, 64), nn.GELU(),
+                                                             nn.Linear(64, config.heads))
+                nn.init.zeros_(self.relative_position_bias[-1].weight)
+                nn.init.zeros_(self.relative_position_bias[-1].bias)
+            elif self.fusion_mode == 'token_film':
+                self.token_film = nn.Sequential(nn.Linear(config.dim, 256), nn.GELU(),
+                                               nn.Linear(256, 2*config.dim))
+                nn.init.normal_(self.token_film[-1].weight, std=1e-3 / math.sqrt(256))
+                nn.init.zeros_(self.token_film[-1].bias)
 
-    def forward(self, query, final_frame):
-        memory = self.memory_norm(final_frame)
-        query = query + self.cross(self.query_norm(query), memory, memory, need_weights=False)[0]
+    def forward(self, query, final_frame, query_points=None):
+        if self.fusion_mode == 'token_film':
+            gamma, beta = self.token_film(final_frame).chunk(2, dim=-1)
+            query = query + gamma * self.query_norm(query) + beta
+        else:
+            memory = self.memory_norm(final_frame)
+            if self.fusion_mode == 'relative_position':
+                # Virtual slot i retains the input anchor i correspondence in this frame.
+                points = query_points.to(dtype=self.relative_position_bias[0].weight.dtype)
+                delta = points[:, :, None] - points[:, None, :]
+                bias = self.relative_position_bias(delta).permute(0, 3, 1, 2)
+                bias = bias.reshape(-1, query.shape[1], memory.shape[1]).to(query.dtype)
+                update = self.cross(self.query_norm(query), memory, memory,
+                                    attn_mask=bias, need_weights=False)[0]
+            else:
+                update = self.cross(self.query_norm(query), memory, memory, need_weights=False)[0]
+            query = query + update
         return query + self.ffn(self.ffn_norm(query))
 
 
@@ -203,19 +236,33 @@ class VirtualQueryXYZRig(nn.Module):
             evidence = grouped_motion_evidence(surface['dense_points'].detach(), surface['query_indices'])
         return self.motion_encoder(torch.stack(tokens, dim=1), motion_evidence=evidence)
 
-    def conditions(self, final_frames, virtual):
-        if final_frames.ndim != 4 or virtual.shape != (final_frames.shape[0], self.config.query_tokens, self.config.dim):
+    def conditions(self, final_frames, virtual, *, query_points=None):
+        if (not isinstance(final_frames, torch.Tensor) or not isinstance(virtual, torch.Tensor)
+                or final_frames.ndim != 4
+                or virtual.shape != (final_frames.shape[0], self.config.query_tokens, self.config.dim)):
             raise ValueError('final frame/virtual shape violates the query contract')
         if final_frames.shape[2:] != virtual.shape[1:]:
             raise ValueError('per-frame conditions must retain all virtual anchor slots')
         batch, frames, queries, dim = final_frames.shape
+        if batch < 1 or not 1 <= frames <= self.config.max_frames:
+            raise ValueError('condition batch/frame count outside configured capacity')
         query = virtual[:, None].expand(-1, frames, -1, -1).reshape(batch*frames, queries, dim)
         memory = final_frames.reshape(batch*frames, queries, dim)
+        points = None
+        if self.config.fusion_mode == 'relative_position':
+            if (not isinstance(query_points, torch.Tensor) or query_points.shape != (batch, frames, queries, 3)
+                    or not query_points.is_floating_point() or query_points.device != final_frames.device
+                    or not bool(torch.isfinite(query_points).all())):
+                raise ValueError('relative_position requires finite input query_points [B,T,Q,3] on the frame device')
+            points = query_points.reshape(batch*frames, queries, 3)
+        elif self.config.fusion_mode in {'real_queries_virtual', 'token_film'}:
+            query, memory = memory, query
         for layer in self.frame_fusion:
+            args = (query, memory, points) if points is not None else (query, memory)
             if self.config.gradient_checkpointing and self.training and torch.is_grad_enabled():
-                query = checkpoint(layer, query, memory, use_reentrant=False)
+                query = checkpoint(layer, *args, use_reentrant=False)
             else:
-                query = layer(query, memory)
+                query = layer(*args)
         # Preserve aligned final-frame detail without replacing virtual queries.
         if self.config.frame_residual_scale:
             query = query + self.config.frame_residual_scale * memory
@@ -228,10 +275,12 @@ class VirtualQueryXYZRig(nn.Module):
         result = self.xyz_decoder(inputs_embeds=prefix, attention_mask=mask, use_cache=False, return_dict=True)
         return result.logits[:, condition.shape[1]:]
 
-    def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight):
+    def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight, query_points=None):
         if not math.isfinite(auxiliary_weight) or auxiliary_weight < 0:
             raise ValueError('auxiliary_weight must be finite and nonnegative')
-        condition = self.conditions(final_frames, virtual)
+        condition = (self.conditions(final_frames, virtual, query_points=query_points)
+                     if self.config.fusion_mode == 'relative_position' else
+                     self.conditions(final_frames, virtual))
         ids, mask = targets['main_input_ids'], targets['main_attention_mask']
         if ids.ndim != 3 or ids.shape != mask.shape or ids.shape[:2] != condition.shape[:2]:
             raise ValueError('each real frame needs its own full XYZ target sequence')
@@ -258,7 +307,37 @@ class VirtualQueryXYZRig(nn.Module):
 
     def forward(self, surface, targets, *, auxiliary_weight):
         final_frames, virtual = self.encode(surface)
+        if self.config.fusion_mode == 'relative_position':
+            return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=auxiliary_weight,
+                                        query_points=surface['query_points'])
         return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=auxiliary_weight)
+
+    @torch.no_grad()
+    def generate_auxiliary(self, virtual, *, bos_token, eos_token, max_new_tokens):
+        """Unmasked greedy IDs from BOS; success means natural EOS, not codec validity."""
+        if (self.training or self.auxiliary.training or not isinstance(virtual, torch.Tensor)
+                or virtual.shape != (1, self.config.query_tokens, self.config.dim)
+                or not virtual.is_floating_point() or not bool(torch.isfinite(virtual).all())
+                or virtual.device != self.auxiliary.embedding.weight.device):
+            raise ValueError('auxiliary generation requires eval mode and one finite virtual sequence [1,Q,D]')
+        vocab_size = self.auxiliary.embedding.num_embeddings
+        for name, token in (('bos_token', bos_token), ('eos_token', eos_token)):
+            if isinstance(token, bool) or not isinstance(token, int) or not 0 <= token < vocab_size:
+                raise ValueError(f'{name} must be an integer in the auxiliary vocabulary')
+        if bos_token == eos_token:
+            raise ValueError('auxiliary BOS and EOS must differ')
+        if (isinstance(max_new_tokens, bool) or not isinstance(max_new_tokens, int)
+                or not 1 <= max_new_tokens < self.config.auxiliary_max_tokens):
+            raise ValueError('auxiliary generation cap including BOS exceeds configured capacity')
+        ids = torch.full((1, 1), bos_token, dtype=torch.long, device=virtual.device)
+        memory = virtual.to(dtype=self.auxiliary.embedding.weight.dtype)
+        for _ in range(max_new_tokens):
+            logits = self.auxiliary(memory, ids, torch.ones_like(ids, dtype=torch.bool))
+            token = int(logits[:, -1].argmax(-1)[0])
+            ids = torch.cat((ids, ids.new_tensor([[token]])), dim=1)
+            if token == eos_token:
+                return {'success': True, 'status': 'eos', 'tokens': ids[0].cpu().tolist()}
+        return {'success': False, 'status': 'max_tokens', 'tokens': ids[0].cpu().tolist()}
 
     @torch.no_grad()
     def generate_condition(self, condition, start_tokens, *, eos_token, max_new_tokens, logits_processor=None):

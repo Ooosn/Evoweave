@@ -1,5 +1,9 @@
 # 模型历史记录与当前路线入口
 
+本隔离工作目录当前执行 [VIRTUAL_FUSION_20261013.md](VIRTUAL_FUSION_20261013.md)
+中的融合对照计划；分支为 `codex/virtual-fusion-20261013`。旧工作目录、训练输出和
+未提交修改保持不变。下方记录为继承的历史背景，不代表本轮已通过验收。
+
 当前路线已于 2026-10-13 确定，唯一有效的架构与实验约定见
 [VIRTUAL_QUERY_XYZ_20261013.md](VIRTUAL_QUERY_XYZ_20261013.md)。运行权限以
 `model_training/state/current.json` 为准。

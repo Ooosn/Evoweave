@@ -133,12 +133,21 @@ def fitting_update(model, optimizer, items, config, plan, step):
     keys = ('loss', 'main_loss', 'auxiliary_loss', 'main_accuracy')
     metrics = {key: 0. for key in keys}
     indices = [(seen + offset) % len(items) for offset in range(batch)]
+    shared_signal = None
     for index in indices:
         surface, target, _ = items[index]
         with torch.autocast('cuda', dtype=torch.bfloat16):
             out = model(surface, target, auxiliary_weight=config['probe']['auxiliary_weight'])
         if not bool(torch.isfinite(out['loss'])):
             raise RuntimeError('nonfinite fitting loss; further training stopped')
+        if step == 1 and shared_signal is None and config['probe'].get('verify_shared_gradients', False):
+            shared_signal = {}
+            for name in ('main_loss', 'auxiliary_loss'):
+                gradient = torch.autograd.grad(out[name], model.motion_encoder.virtual_slots, retain_graph=True)[0]
+                norm = float(gradient.float().norm())
+                if not bool(torch.isfinite(gradient).all()) or norm <= 0:
+                    raise RuntimeError(f'{name} has no finite learning signal into virtual slots')
+                shared_signal[name] = norm
         # Every item is one asset; retain the established per-frame/token mean.
         (out['loss'] / batch).backward()
         for key in keys:
@@ -149,6 +158,7 @@ def fitting_update(model, optimizer, items, config, plan, step):
     clipped = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
     optimizer.step()
     return {**metrics, 'gradient_norm': clipped, 'groups': norms, 'lr': lr, 'beta1': beta1,
+            'first_update_separate_virtual_gradients': shared_signal,
             'asset_indices': indices, 'asset_exposures': seen + batch,
             'supervised_frame_exposures': (seen + batch) * config['probe']['frames']}
 
@@ -168,11 +178,26 @@ def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=Non
     from eval_dynamic_rig_generation import _topology_metrics, _parents_from_output
     model.eval()
     records = []
+    auxiliary_rows = []
+    check_auxiliary = config['probe'].get('evaluate_auxiliary', False)
+    if check_auxiliary:
+        from rigweave.dynamic_rig.aux_skeleton_tokens import AuxSkeletonTokens
+        from fusion_evaluation import auxiliary_record, auxiliary_summary
+        codec = AuxSkeletonTokens(**config['auxiliary_codec'])
     for asset_index, (surface, targets, geometry) in enumerate(items):
         with torch.autocast('cuda', dtype=torch.bfloat16):
             real, virtual = model.encode(surface)
-            conditions = model.conditions(real, virtual)
-            teacher = model.forward_encoded(real, virtual, targets, auxiliary_weight=config['probe']['auxiliary_weight'])
+            position_args = ({'query_points': surface['query_points']} if
+                getattr(getattr(model, 'config', None), 'fusion_mode', None) == 'relative_position' else {})
+            conditions = model.conditions(real, virtual, **position_args)
+            teacher = model.forward_encoded(real, virtual, targets,
+                auxiliary_weight=config['probe']['auxiliary_weight'], **position_args)
+            if check_auxiliary:
+                prediction = model.generate_auxiliary(virtual, bos_token=codec.bos,
+                    eos_token=codec.eos, max_new_tokens=codec.max_tokens-1)
+                size = int(geometry['joint_count'][0])
+                auxiliary_rows.append(auxiliary_record(prediction, codec,
+                    geometry['target_parents'][0, :size].cpu().tolist(), asset_id=geometry['asset_id'][0]))
         selected = list(range(conditions.shape[1])) if frame_indices is None else list(frame_indices)
         if not selected or len(set(selected)) != len(selected) or any(
                 isinstance(frame, bool) or not isinstance(frame, int) or frame < 0 or frame >= conditions.shape[1]
@@ -228,8 +253,14 @@ def evaluate(model, items, tokenizer, config, output, step, *, frame_indices=Non
     report = {'step': step, 'views': len(records), 'summary': summary, 'fit_acceptance': bool(fit_acceptance),
               'fit_gate': 'exact_tokens_or_raw_f1_v2', 'passing_fit_views': sum(fit_view_passes(r) for r in records),
               'rows': records, 'failed_generations_scored_zero': True, 'teacher_metrics_scope': 'per_frame'}
+    if check_auxiliary:
+        report['main_fit_acceptance'] = report['fit_acceptance']
+        report['auxiliary_summary'] = auxiliary_summary(auxiliary_rows)
+        report['auxiliary_rows'] = auxiliary_rows
+        report['auxiliary_fit_acceptance'] = all(r['success'] and r['exact_parents'] for r in auxiliary_rows)
+        report['fit_acceptance'] = report['main_fit_acceptance'] and report['auxiliary_fit_acceptance']
     write_json(output/f'evaluation_{step:04d}.json', report)
-    print('EVALUATION '+json.dumps({k:v for k,v in report.items() if k!='rows'}), flush=True)
+    print('EVALUATION '+json.dumps({k:v for k,v in report.items() if k not in ('rows', 'auxiliary_rows')}), flush=True)
     model.train()
     return report
 
@@ -312,7 +343,11 @@ def run(args, config, source):
         'selected_frames': x[2]['selected_frames'].cpu().tolist(),
         'heldout_raw_ids': x[2]['heldout_raw_ids'],
         'main_token_lengths': x[1]['main_attention_mask'].sum(-1).cpu().tolist()} for x in items])
+    if config['probe'].get('paired_output'):
+        from fusion_evaluation import pair_ready
+        pair_ready(args.output, config['probe']['paired_output'], initial, items, config)
     last = evaluate(model, items, tokenizer, config, args.output, 0)
+    first_accepted_step = None
     started = time.monotonic()
     for step in range(1, config['probe']['max_updates']+1):
         metrics = fitting_update(model, optimizer, items, config, plan, step)
@@ -326,15 +361,24 @@ def run(args, config, source):
         if step in config['probe']['evaluation_updates'] or step == config['probe']['max_updates']:
             last = evaluate(model, items, tokenizer, config, args.output, step)
             write_json(args.output/'progress.json', {'step': step, 'evaluation': last['summary'],
+                       'auxiliary_summary': last.get('auxiliary_summary'),
                        'fit_acceptance': last['fit_acceptance'], 'formal_training_allowed': False})
             if last['fit_acceptance']:
-                break
+                if first_accepted_step is None:
+                    first_accepted_step = step
+                    torch.save({'schema': 'virtual_query_xyz_aux_ids_v1', 'model': model.state_dict(),
+                        'config': config, 'step': step, 'initialization': initial, 'source': source,
+                        'diagnostic_only_not_formal_initialization': True}, args.output/'checkpoint_first_pass.pt')
+                if config['probe'].get('early_stop', True):
+                    break
     torch.save({'schema': 'virtual_query_xyz_aux_ids_v1', 'model': model.state_dict(), 'optimizer': optimizer.state_dict(),
         'config': config, 'step': step, 'initialization': initial, 'source': source,
         'diagnostic_only_not_formal_initialization': True}, args.output/'checkpoint_fit.pt')
-    return {'stage': 'fit', 'completed_updates': step, 'accepted': last['fit_acceptance'],
+    return {'stage': 'fit', 'completed_updates': step, 'accepted': first_accepted_step is not None,
+            'first_accepted_step': first_accepted_step, 'final_fit_acceptance': last['fit_acceptance'],
             'asset_exposures': step * plan['assets_per_update'], 'fitting_protocol': plan,
-            'evaluation': last['summary'], 'formal_training_allowed': False,
+            'evaluation': last['summary'], 'auxiliary_summary': last.get('auxiliary_summary'),
+            'formal_training_allowed': False,
             'next_action': 'primary_review_required_no_automatic_continuation'}
 
 

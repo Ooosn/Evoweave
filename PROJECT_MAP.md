@@ -11,6 +11,13 @@ RT-aware data consumers require commit `6ea3be2` or later and the complete
 manifest row, including `root_rt`. This revision changes data preprocessing,
 not model architecture, and does not authorize or start a training run.
 
+This checkout is the isolated fusion experiment workspace on branch
+`codex/virtual-fusion-20261013`, based on committed source `19d81ba`.
+The active experiment contract is
+`model_training/docs/VIRTUAL_FUSION_20261013.md`; stage permissions remain in
+`model_training/state/current.json`. Other code/training directories are not
+execution destinations and must remain unchanged.
+
 This workspace is organized by module. Each module owns its own code, runbook,
 contracts, and validation notes. New work should be added inside the appropriate
 module instead of creating temporary scripts in the workspace root.

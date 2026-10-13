@@ -1,0 +1,250 @@
+{
+  "stage": "paired_fusion_G2_review",
+  "accepted": true,
+  "selected_arm": "a",
+  "scope": "fixed8/T4 fitting only; not heldout/generalization/capacity acceptance",
+  "arms": {
+    "a": {
+      "first_accepted_step": 256,
+      "final_accepted": true,
+      "evaluations": [
+        {
+          "step": 0,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 17,
+          "main_teacher_accuracy": 0.05717640832881443,
+          "passing_main_views": 0,
+          "auxiliary_valid_eos": 0,
+          "auxiliary_exact_parent_trees": 0,
+          "unique_main_predictions": 15,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 32,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 24,
+          "main_teacher_accuracy": 0.7811016645282507,
+          "passing_main_views": 5,
+          "auxiliary_valid_eos": 7,
+          "auxiliary_exact_parent_trees": 2,
+          "unique_main_predictions": 24,
+          "unique_auxiliary_predictions": 3
+        },
+        {
+          "step": 64,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 28,
+          "main_teacher_accuracy": 0.9452020656317472,
+          "passing_main_views": 7,
+          "auxiliary_valid_eos": 5,
+          "auxiliary_exact_parent_trees": 4,
+          "unique_main_predictions": 18,
+          "unique_auxiliary_predictions": 7
+        },
+        {
+          "step": 128,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 0.9924529865384102,
+          "passing_main_views": 13,
+          "auxiliary_valid_eos": 7,
+          "auxiliary_exact_parent_trees": 7,
+          "unique_main_predictions": 16,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 256,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 0.9987583048641682,
+          "passing_main_views": 31,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 29,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 512,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 0.9999683070927858,
+          "passing_main_views": 31,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 31,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 1024,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 1,
+          "passing_main_views": 32,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        }
+      ]
+    },
+    "b": {
+      "first_accepted_step": 128,
+      "final_accepted": true,
+      "evaluations": [
+        {
+          "step": 0,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 0.31562714371830225,
+          "passing_main_views": 0,
+          "auxiliary_valid_eos": 0,
+          "auxiliary_exact_parent_trees": 0,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 32,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 29,
+          "main_teacher_accuracy": 0.9319186322391033,
+          "passing_main_views": 24,
+          "auxiliary_valid_eos": 5,
+          "auxiliary_exact_parent_trees": 2,
+          "unique_main_predictions": 31,
+          "unique_auxiliary_predictions": 5
+        },
+        {
+          "step": 64,
+          "accepted": false,
+          "main_passed": false,
+          "auxiliary_passed": false,
+          "main_valid_eos": 28,
+          "main_teacher_accuracy": 0.9558993224054575,
+          "passing_main_views": 23,
+          "auxiliary_valid_eos": 5,
+          "auxiliary_exact_parent_trees": 3,
+          "unique_main_predictions": 29,
+          "unique_auxiliary_predictions": 6
+        },
+        {
+          "step": 128,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 0.9999683070927858,
+          "passing_main_views": 31,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 256,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 1,
+          "passing_main_views": 32,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 512,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 1,
+          "passing_main_views": 32,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        },
+        {
+          "step": 1024,
+          "accepted": true,
+          "main_passed": true,
+          "auxiliary_passed": true,
+          "main_valid_eos": 32,
+          "main_teacher_accuracy": 1,
+          "passing_main_views": 32,
+          "auxiliary_valid_eos": 8,
+          "auxiliary_exact_parent_trees": 8,
+          "unique_main_predictions": 32,
+          "unique_auxiliary_predictions": 8
+        }
+      ]
+    }
+  },
+  "formal_training_allowed": false,
+  "source_artifact_sha256": {
+    "a_fit8_v1_result.json": "92ce6db837609273d9a8b732567f60acf595ba97368af84dcdc26d29ced56939",
+    "a_fit8_v1_pair_verified.json": "b979efe7b64fd38fe64dd615901caece18c8b305e630ef0113568e4e5559fb8d",
+    "a_fit8_v1_evaluation_0000.json": "fd7ad83f242199e31a703fd55f983aa8c0288e4ff507aeefd186330ecfd88ea6",
+    "a_fit8_v1_evaluation_0032.json": "c0e68578c819c68178bad2f35113e56bd9ed34989c8c65fafab35a6acb1c235f",
+    "a_fit8_v1_evaluation_0064.json": "e6d8bcdb0ccedfd34ce57d72d8a14ad6abaf8ceae9b5a0e339c632dd12d6a520",
+    "a_fit8_v1_evaluation_0128.json": "03ae0eec8fadd13bf83e07a218041a3e35a57341d47adde8d1db928f23712928",
+    "a_fit8_v1_evaluation_0256.json": "d00cc3a6151d7dc9b0a4d2e7103a4f3dcf13b6873690640a9ba7ac4701e21013",
+    "a_fit8_v1_evaluation_0512.json": "da3ff79bf47b26915d6883662d84329194ce8583da81aeb5fc47d04c5b89abf4",
+    "a_fit8_v1_evaluation_1024.json": "2db4dcd60f873e15edbc157f92cdc42f115d27349d54ca90e19490dd999d95e7",
+    "b_fit8_v1_result.json": "607f1cc2e2ff0916e6fa4962b5db2c916a55d37d10a7d973e72e1cf8d294548c",
+    "b_fit8_v1_pair_verified.json": "b24728dc6c3e3fad9f97dbc79aa90c3a23950357f9c058d80025315323c4b88b",
+    "b_fit8_v1_evaluation_0000.json": "5293d3524dce296e72c80d6dc6435ec3b78ecea5c5d6b355c2fdc7d48a5464bd",
+    "b_fit8_v1_evaluation_0032.json": "6af075f730c4e99a961cb83195c06e7a5bc6e124ad3a34bfca963f3f306312dd",
+    "b_fit8_v1_evaluation_0064.json": "1f771a76599ddf981190d5d9e6cc6dd278b860e5d80d07c7fa55ceeb697eacea",
+    "b_fit8_v1_evaluation_0128.json": "ce2cdd20eaf82339880d7dbb3017dd10a3515c25f28da42655f8e654518ae93e",
+    "b_fit8_v1_evaluation_0256.json": "cd9d5a0e7211e7733ae1066b87ade96b377baace9c9ec000e746eca0b7366140",
+    "b_fit8_v1_evaluation_0512.json": "98f16bf856f08d26a9004dfa3cce9edc1a98ef85f37896b858441442432c420a",
+    "b_fit8_v1_evaluation_1024.json": "661d223c03404d3bf2d76d561885bc0a6abdc84c7d548245da60785f24734116"
+  },
+  "full_initial_state_sha256": "a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635",
+  "inputs_sha256": "1880cf6fb5523611160371f1137f75fb1b8c754ce0bc1f0703d13382abf5d9b4",
+  "comparison_contract_sha256": "4e8b540f5971dddacd77821f6535789da403a002228e8fee0c177584daa12215",
+  "code_commit": "0e168204ed083541acb6415627ca102d2b46deba",
+  "review_helper_sha256": "a1f567e4ea209d3a7906c1fba7170f55b02445856d70fbe77b84bf32e964c14a",
+  "selection_meaning": "A prioritized after fixed-data fit; medium generalization and capacity still unverified",
+  "unneeded_variants_not_run": [
+    "relative_position",
+    "token_film"
+  ],
+  "final_generation": {
+    "a": {
+      "exact_main_token_sequences": 32,
+      "mean_quantized_J2J": 0,
+      "mean_raw_quantized_F1": 0.9534810898288553,
+      "mean_original_GT_F1": 0.9525527609363801,
+      "exact_auxiliary_parent_trees": 8
+    },
+    "b": {
+      "exact_main_token_sequences": 32,
+      "mean_quantized_J2J": 0,
+      "mean_raw_quantized_F1": 0.9534810898288553,
+      "mean_original_GT_F1": 0.9525527609363801,
+      "exact_auxiliary_parent_trees": 8
+    }
+  },
+  "checkpoint_initialization": "fresh_official_only_for_following_training"
+}

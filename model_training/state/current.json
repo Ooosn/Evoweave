@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T07:37:45+00:00",
+  "updated_at": "2026-10-13T09:34:59+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -324,15 +324,15 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run and review only the paired fresh fusion_ab_fit8_v1 experiment. Both candidates retain auxiliary weight.1 and complete the same1024-update budget; primary must review main AND auxiliary generation before recording any next stage. Formal training is blocked pending G2/G3/capacity acceptance.",
+  "next_required_result": "Both A/B fixed8/T4 fits passed with complete main+auxiliary generation. Preserve A as the preferred architecture; do not expand to C/D. Prepare the isolated raw64/heldout/valid cache and medium comparison before any formal capacity/release. No new GPU operation until its exact code/config/state is published.",
   "active_operation": {
     "label": "fusion_ab_fit8_v1",
     "mode": "fit",
     "operation": "train",
-    "status": "prepared",
-    "complete": false,
-    "accepted": false,
-    "gpu_work_allowed": true,
+    "status": "completed_G2_accepted_pending_G3",
+    "complete": true,
+    "accepted": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "authorization": "User explicitly requested isolated dual-H100 A/B fusion experiments with auxiliary supervision and implementation of the approved plan.",
     "prepared_utc": "2026-10-13T07:37:45+00:00",
@@ -424,7 +424,21 @@
       "config/source/initialization/input mismatch",
       "each run maximum1024 updates"
     ],
-    "model_quality_accepted_before_run": false
+    "model_quality_accepted_before_run": false,
+    "execution_finished": true,
+    "exit_code": 0,
+    "finished_utc": "2026-10-13T09:31:13.179618+00:00",
+    "completed_updates_per_run": 1024,
+    "actual_asset_exposures_per_run": 8192,
+    "first_passing_updates": {
+      "a": 256,
+      "b": 128
+    },
+    "selected_priority": "a",
+    "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/ab_fit8_v1_result.json",
+    "result_sha256": "d2ea8410703d39e93c17454768db88949bd4c4496e66864f9f41994ccf8a51e3",
+    "primary_review_sha256": "3e6605ec7b19ced32534598594f637f980527ceb1387382f4ca40eb9d75df19f",
+    "conclusion": "Both A and B pass complete fixed8/T4 main+aux fitting, first A256/B128, final both32/32 exact XYZ token sequences and8/8 exact auxiliary trees, J2J0. A firstpasses after2048actualassetexposures, equal to old failedB1constantLRtotal: new effectivebatch8/OneCycle recipe removes the old fitting failure without requiring architecture change, but their individual causal contributions are not separated. Prefer A pending fixed64/heldout/valid comparison; do not run C/D. Formal training remains blocked until G3 and capacity."
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

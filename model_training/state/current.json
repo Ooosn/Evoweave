@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T09:49:44+00:00",
+  "updated_at": "2026-10-13T09:54:50+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,17 +135,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "submit"
+    "report"
   ],
   "blocked_operations": [
     "train",
     "preflight",
-    "matched_eval"
+    "matched_eval",
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "previous_grant_expired_new_request_prepared",
+    "status": "replacement_queued_no_current_H100_grant",
     "qlogin_job_id": null,
     "previous_job_id": 129547842,
     "previous_host": "pcg01i",
@@ -157,6 +157,7 @@
     "end_reason": "scheduler96h_h_rt_not_agent_release",
     "authorized_current_physical_gpus": [],
     "pending_request": "virtual_fusion_2h_1013_v1",
+    "pending_job_id": 129839822,
     "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
     "decision": "No suitable authorizedH100grant remains. Requeue same count under existing experiment authorization; never compute on the expired grant."
   },
@@ -336,7 +337,7 @@
     "label": "fusion_h100_reallocation_v1",
     "mode": "allocation_only",
     "operation": "submit",
-    "status": "prepared",
+    "status": "queued",
     "complete": false,
     "accepted": false,
     "gpu_work_allowed": false,
@@ -397,7 +398,13 @@
       "duplicate reservation request",
       "grant verified",
       "scheduler rejection"
-    ]
+    ],
+    "job_id": 129839822,
+    "submitted_utc": "2026-10-13T09:53:03+00:00",
+    "last_observed_utc": "2026-10-13T09:54:50+00:00",
+    "accepted_scheduler_resources": "h100=2,mem_req=64G; no s_vmem",
+    "scheduler_state": "qw",
+    "next_action": "wait_for_grant_then_verify_UUID_mapping_and_new_stage_permissions"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

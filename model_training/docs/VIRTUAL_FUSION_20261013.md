@@ -24,7 +24,11 @@ the main prediction path. Fresh trials load official checkpoint SHA
 - HGC source/cache/temp: `/work/wangyy/virtual_fusion_20261013/` on verified SSD.
 - HGC jobs: `/home/wangyy/jobs/virtual_fusion_20261013_v1`.
 - HGC outputs: `/home/wangyy/evorig/outputs/virtual_fusion_20261013/`.
-- Preserve qlogin 129547842, physical H100 GPUs 5 and 7. No additional GPUs.
+- Initial qlogin129547842 (physicalH100s5/7) completed both fitting runs,
+  then expired at the scheduler96h hard limit on2026-10-13 18:37JST.
+  Replacement job129839822 requests exactly twoH100s/mem64G and was queued
+  at18:53JST. Read current state and live grant before use; oldGPUindices
+  are no longer authorized. Verify SSD storage again if the host changes.
 - User authorized GitHub publication of code/config/result summaries only.
   No datasets, weights or credentials. Every output is exclusive-create.
 

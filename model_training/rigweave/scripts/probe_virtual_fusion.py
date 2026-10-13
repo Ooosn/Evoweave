@@ -29,8 +29,10 @@ def verify_operation(args):
     if not operation.get('gpu_work_allowed') or operation.get('formal_training_allowed') or operation.get('complete'):
         raise ValueError('only explicitly published bounded fusion operations are allowed')
     run = declared_probe_run(operation, args, sha256(args.config))
-    if args.output.resolve().parent != Path('/home/wangyy/evorig/outputs/virtual_fusion_20261013').resolve():
-        raise ValueError('fusion outputs must use the isolated output root')
+    expected_parent = (Path('/work/wangyy/virtual_fusion_20261013/cache') if args.mode == 'cache'
+                       else Path('/home/wangyy/evorig/outputs/virtual_fusion_20261013'))
+    if args.output.resolve().parent != expected_parent.resolve():
+        raise ValueError('fusion outputs/cache must use their isolated roots')
     subprocess.run([sys.executable, str(ROOT / 'model_training/tools/agent_work_guard.py'),
         'check', '--operation', 'train', '--entrypoint', str(Path(__file__).resolve())], check=True)
     if subprocess.check_output(['git', '-C', str(ROOT), 'status', '--porcelain'], text=True).strip():
@@ -51,6 +53,8 @@ def validate_config(config, mode):
         raise ValueError('these comparisons require auxiliary weight .1 and no extra frame residual')
     if not config['probe'].get('evaluate_auxiliary'):
         raise ValueError('full auxiliary generation evaluation is mandatory')
+    if mode not in {'aux_audit', 'fit', 'cache', 'compare'}:
+        raise ValueError('unsupported bounded fusion stage')
     if mode == 'fit':
         probe = config['probe']
         if (probe['assets'], probe['frames'], probe['assets_per_update'], probe['max_updates']) != (8, 4, 8, 1024):
@@ -61,6 +65,20 @@ def validate_config(config, mode):
             raise ValueError('paired trial must also use the isolated output root')
         if config['optimization']['schedule'] != 'onecycle' or config['optimization']['schedule_samples'] != 8192:
             raise ValueError('fitting schedule must span 8192 actual asset exposures')
+    if mode in {'cache', 'compare'}:
+        comparison = config['comparison']
+        if (comparison['frames'], comparison['assets_per_update'], comparison['max_updates']) != (4, 48, 512):
+            raise ValueError('medium comparison requires T4/effective48/512updates')
+        if config['optimization']['schedule'] != 'onecycle' or config['optimization']['schedule_samples'] != 24576:
+            raise ValueError('medium comparison schedule must span 24576 actual asset exposures')
+        if comparison['generation_frame_indices'] != [0, 1, 2, 3]:
+            raise ValueError('medium fusion evaluation must cover every input frame')
+        if not comparison.get('initial_evaluation', True):
+            raise ValueError('different fusion modes require their own initial-generation evaluation')
+        if mode == 'compare':
+            cache = Path(comparison['cache']['index'])
+            if not cache.resolve().is_relative_to(Path('/work/wangyy/virtual_fusion_20261013/cache').resolve()):
+                raise ValueError('raw geometry cache must remain inside the verified isolated SSD root')
 
 
 @torch.no_grad()
@@ -128,7 +146,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=['aux_audit', 'fit'], required=True)
+    parser.add_argument('--mode', choices=['aux_audit', 'fit', 'cache', 'compare'], required=True)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     validate_config(config, args.mode)
@@ -143,8 +161,18 @@ def main():
     torch.cuda.set_per_process_memory_fraction(.95, 0)
     args.output.mkdir(parents=True, exist_ok=False)
     try:
-        result = (run_aux_audit(config, args.output, torch.device('cuda:0'), source)
-                  if args.mode == 'aux_audit' else run_fit(args, config, source))
+        if args.mode == 'aux_audit':
+            result = run_aux_audit(config, args.output, torch.device('cuda:0'), source)
+        elif args.mode == 'fit':
+            result = run_fit(args, config, source)
+        else:
+            from probe_virtual_query_lambda import prepare_cache, run_comparison
+            config['_path'] = str(args.config)
+            function = prepare_cache if args.mode == 'cache' else run_comparison
+            result = function(config, args.output, torch.device('cuda:0'), source)
+            if args.mode == 'compare':
+                result.update(stage='fusion_comparison',
+                    accepted_meaning='fusion_quality_requires_primary_matched_review; auxiliary_weight_fixed_at_.1')
         write_json(args.output / 'result.json', {**result, 'execution_complete': True,
                    'finished_utc': datetime.now(timezone.utc).isoformat(), 'code_commit': source})
     except Exception:

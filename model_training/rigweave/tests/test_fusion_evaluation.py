@@ -65,6 +65,8 @@ class EvaluationTests(unittest.TestCase):
         a = json.loads((root / 'fusion_a_fit8_v1.json').read_text())
         b = json.loads((root / 'fusion_b_fit8_v1.json').read_text())
         self.assertEqual(comparison_contract(a), comparison_contract(b))
+        a['_path'], b['_path'] = '/config_a.json', '/config_b.json'
+        self.assertEqual(comparison_contract(a), comparison_contract(b))
         b['optimization']['peak_lr'] *= 2
         self.assertNotEqual(comparison_contract(a), comparison_contract(b))
 
@@ -106,6 +108,21 @@ class EvaluationTests(unittest.TestCase):
             changed[section][key] = value
             with self.subTest(section=section, key=key), self.assertRaises(ValueError):
                 validation['validate_config'](changed, 'fit')
+
+    def test_medium_stage_pins_all_frames_exposures_and_SSD_cache(self):
+        cfg = json.loads((ROOT.parent / 'experiments/fusion_a_fit8_v1.json').read_text())
+        cfg['comparison'] = {'frames': 4, 'assets_per_update': 48, 'max_updates': 512,
+                             'generation_frame_indices': [0, 1, 2, 3], 'initial_evaluation': True,
+                             'cache': {'index': '/work/wangyy/virtual_fusion_20261013/cache/raw_v1/cache_index.json'}}
+        cfg['optimization']['schedule_samples'] = 24576
+        validation['validate_config'](cfg, 'compare')
+        for key, value in [('assets_per_update', 1), ('max_updates', 1024),
+                           ('generation_frame_indices', [0, 2]), ('initial_evaluation', False),
+                           ('cache', {'index': '/work/wangyy/virtual_fusion_20261013/cache/../../old/cache_index.json'})]:
+            changed = json.loads(json.dumps(cfg))
+            changed['comparison'][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validation['validate_config'](changed, 'compare')
 
 
 if __name__ == '__main__':

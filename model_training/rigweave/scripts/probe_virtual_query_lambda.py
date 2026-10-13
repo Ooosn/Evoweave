@@ -185,6 +185,28 @@ def training_order(count, updates, seed):
     return order[:updates]
 
 
+def comparison_plan(config, asset_count):
+    plan = config['comparison']
+    updates = plan['max_updates']
+    batch = plan.get('assets_per_update', 1)
+    if (isinstance(updates, bool) or not isinstance(updates, int) or updates < 1
+            or isinstance(batch, bool) or not isinstance(batch, int) or batch < 1
+            or batch > asset_count):
+        raise ValueError('comparison updates and assets_per_update must be positive integers within the fixed cohort')
+    schedule_samples = config['optimization']['schedule_samples']
+    if (isinstance(schedule_samples, bool) or not isinstance(schedule_samples, int)
+            or schedule_samples != updates * batch):
+        raise ValueError('comparison schedule_samples must equal updates * assets_per_update')
+    frame_count = plan['frames']
+    if (isinstance(frame_count, bool) or not isinstance(frame_count, int) or frame_count < 1):
+        raise ValueError('comparison frames must be a positive integer')
+    actual_exposures = updates * batch
+    return {'updates': updates, 'assets_per_update': batch,
+            'actual_asset_exposures': actual_exposures,
+            'frame_exposures': actual_exposures * frame_count,
+            'frames_per_asset': frame_count}
+
+
 def parameter_fingerprint(model):
     digest = hashlib.sha256()
     for name, tensor in sorted(model.state_dict().items()):
@@ -221,7 +243,13 @@ def evaluate_groups(model, tokenizer, groups, index, config, output, step, devic
         directory.mkdir(parents=True)
         result = evaluate(model, (transfer(item, device) for item in items), tokenizer, config, directory, step,
                           frame_indices=config['comparison']['generation_frame_indices'])
-        report['groups'][group] = result['summary']
+        summary = dict(result['summary'])
+        for key in ('auxiliary_summary', 'auxiliary_rows'):
+            if key in result:
+                report.setdefault(key, {})[group] = result[key]
+        if 'auxiliary_summary' in result:
+            summary['auxiliary_summary'] = result['auxiliary_summary']
+        report['groups'][group] = summary
         for row in result['rows']:
             row.update(group=group, **{k: metadata[row['asset_id']][k] for k in
                 ('integration_source', 'target_joint_count', 'topology_sha256',
@@ -233,19 +261,27 @@ def evaluate_groups(model, tokenizer, groups, index, config, output, step, devic
 
 def run_comparison(config, output, device, source):
     groups, index = load_cache(config)
+    if len(groups['train']) != 64:
+        raise ValueError('comparison requires the fixed 64-asset training cohort')
+    budget = comparison_plan(config, len(groups['train']))
     model, tokenizer, _, initial = build_model(config, device)
     initial.update(code_commit=source, config_sha256=sha256(config['_path']),
                    common_cache_index_sha256=config['comparison']['cache']['sha256'],
                    full_initial_state_sha256=parameter_fingerprint(model))
     write_json(output / 'initialization.json', initial)
     plan = config['comparison']
-    updates, weight = plan['max_updates'], config['probe']['auxiliary_weight']
-    if config['optimization']['schedule_samples'] != updates or len(groups['train']) != 64:
-        raise ValueError('comparison schedule must match the declared 64-asset bounded budget')
-    order = training_order(len(groups['train']), updates, plan['order_seed'])
+    updates, batch = budget['updates'], budget['assets_per_update']
+    weight = config['probe']['auxiliary_weight']
+    cohort_asset_ids = [item[2]['asset_id'][0] for item in groups['train']]
+    order = training_order(len(groups['train']), budget['actual_asset_exposures'], plan['order_seed'])
     order_bytes = json.dumps(order, separators=(',', ':')).encode()
     write_json(output / 'training_order.json', {'indices': order, 'sha256': hashlib.sha256(order_bytes).hexdigest(),
-               'assets': [item[2]['asset_id'][0] for item in groups['train']]})
+               'assets': cohort_asset_ids, 'asset_ids': cohort_asset_ids,
+               'updates': updates, 'assets_per_update': batch, 'budget': budget})
+    if config['probe'].get('paired_output'):
+        from fusion_evaluation import pair_ready
+        pair_ready(output, config['probe']['paired_output'], initial,
+                   groups['train'] + groups['train_heldout'] + groups['valid'], config)
     optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
         lr=config['optimization']['peak_lr'] / config['optimization']['div_factor'],
         betas=(.95, .999), weight_decay=config['optimization']['weight_decay'])
@@ -253,43 +289,75 @@ def run_comparison(config, output, device, source):
         evaluate_groups(model, tokenizer, groups, index, config, output, 0, device)
     started = time.monotonic()
     with (output / 'trace.jsonl').open('x', buffering=1) as trace:
-        for step, item_index in enumerate(order, 1):
-            surface, targets, geometry = transfer(groups['train'][item_index], device)
+        for step in range(1, updates + 1):
+            start = (step - 1) * batch
+            item_indices = order[start:start + batch]
+            if len(item_indices) != batch:
+                raise RuntimeError('comparison training order ended before the declared budget')
             optimizer.zero_grad(set_to_none=True)
-            lr, beta1 = set_exposure_lr(optimizer, step - 1, config)
-            with torch.autocast('cuda', dtype=torch.bfloat16):
-                losses = model(surface, targets, auxiliary_weight=weight)
-            if not bool(torch.isfinite(losses['loss'])):
-                raise RuntimeError('nonfinite comparison loss')
-            balance = (shared_gradient_measurement(model, losses, weight)
-                       if step in plan['gradient_measurement_updates'] else None)
-            losses['loss'].backward()
+            seen = start
+            lr, beta1 = set_exposure_lr(optimizer, seen, config)
+            metrics = {key: 0. for key in
+                       ('loss', 'main_loss', 'auxiliary_loss', 'main_accuracy', 'auxiliary_accuracy')}
+            asset_ids = []
+            balance = None
+            balance_scope = None
+            for microbatch_index, item_index in enumerate(item_indices):
+                surface, targets, geometry = transfer(groups['train'][item_index], device)
+                with torch.autocast('cuda', dtype=torch.bfloat16):
+                    losses = model(surface, targets, auxiliary_weight=weight)
+                if not bool(torch.isfinite(losses['loss'])):
+                    raise RuntimeError('nonfinite comparison loss')
+                asset_ids.append(geometry['asset_id'][0])
+                if microbatch_index == 0 and step in plan['gradient_measurement_updates']:
+                    balance = shared_gradient_measurement(model, losses, weight)
+                    balance_scope = 'first_microbatch_unscaled_loss'
+                (losses['loss'] / batch).backward()
+                for key in metrics:
+                    metrics[key] += float(losses[key].detach()) / batch
+                del losses, surface, targets, geometry
             norms = grad_norms(model)
             require_gradients(model, norms, weight)
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
             optimizer.step()
-            row = {'step': step, 'asset_exposures': step, 'supervised_frame_exposures': step * plan['frames'],
-                   'asset_id': geometry['asset_id'][0], 'loss': float(losses['loss']),
-                   'main_loss': float(losses['main_loss']), 'auxiliary_loss': float(losses['auxiliary_loss']),
-                   'main_accuracy': float(losses['main_accuracy']), 'auxiliary_accuracy': float(losses['auxiliary_accuracy']),
+            asset_exposures = seen + batch
+            frame_exposures = asset_exposures * plan['frames']
+            row = {'step': step, 'asset_ids': asset_ids, 'asset_exposures': asset_exposures,
+                   'frame_exposures': frame_exposures, 'supervised_frame_exposures': frame_exposures,
+                   'loss': metrics['loss'], 'main_loss': metrics['main_loss'],
+                   'auxiliary_loss': metrics['auxiliary_loss'], 'main_ce': metrics['main_loss'],
+                   'auxiliary_ce': metrics['auxiliary_loss'], 'main_accuracy': metrics['main_accuracy'],
+                   'auxiliary_accuracy': metrics['auxiliary_accuracy'], 'aux_accuracy': metrics['auxiliary_accuracy'],
                    'lr': lr, 'beta1': beta1, 'gradient_norm': float(norm), 'groups': norms,
-                   'shared_gradient_measurement': balance, 'elapsed_seconds': time.monotonic() - started,
+                   'shared_gradient_measurement': balance,
+                   'shared_gradient_measurement_scope': balance_scope,
+                   'elapsed_seconds': time.monotonic() - started,
                    'peak_allocated_gib': torch.cuda.max_memory_allocated() / 2**30}
+            if batch == 1:
+                row['asset_id'] = asset_ids[0]
             trace.write(json.dumps(row) + '\n')
             if step % 32 == 0:
                 print('COMPARE ' + json.dumps(row), flush=True)
-            del losses, surface, targets, geometry
             if step in plan['evaluation_updates'] or step == updates:
                 last = evaluate_groups(model, tokenizer, groups, index, config, output, step, device)
                 write_json(output / 'progress.json', {'step': step, 'groups': last['groups'],
-                           'formal_training_allowed': False})
+                           'formal_training_allowed': False, 'budget': budget})
     torch.save({'schema': 'virtual_query_xyz_aux_ids_v1', 'model': model.state_dict(),
         'optimizer': optimizer.state_dict(), 'config': config, 'step': updates,
-        'initialization': initial, 'source': source, 'diagnostic_only_not_formal_initialization': True},
+        'initialization': initial, 'source': source, 'asset_ids': cohort_asset_ids,
+        'asset_exposures': budget['actual_asset_exposures'], 'frame_exposures': budget['frame_exposures'],
+        'supervised_frame_exposures': budget['frame_exposures'], 'budget': budget,
+        'training_order_sha256': hashlib.sha256(order_bytes).hexdigest(),
+        'diagnostic_only_not_formal_initialization': True},
         output / 'checkpoint_comparison.pt')
     return {'stage': 'lambda_comparison', 'execution_complete': True, 'accepted': False,
             'accepted_meaning': 'quality_and_lambda_selection_require_primary_paired_review',
-            'completed_updates': updates, 'asset_exposures': updates, 'auxiliary_weight': weight,
+            'completed_updates': updates, 'assets_per_update': batch, 'asset_ids': cohort_asset_ids,
+            'asset_exposures': budget['actual_asset_exposures'],
+            'actual_asset_exposures': budget['actual_asset_exposures'],
+            'frame_exposures': budget['frame_exposures'],
+            'supervised_frame_exposures': budget['frame_exposures'], 'budget': budget,
+            'auxiliary_weight': weight,
             'initial_evaluation_performed': plan.get('initial_evaluation', True),
             'evaluation': last['groups'], 'training_order_sha256': hashlib.sha256(order_bytes).hexdigest(),
             'common_cache_index_sha256': config['comparison']['cache']['sha256']}
@@ -325,7 +393,8 @@ def run_smoke(config, output, device, source):
     directory = output / 'evaluation'
     directory.mkdir()
     evaluation = evaluate(model, (transfer(groups['train'][i], device) for i in (order[0], order[-1])),
-        tokenizer, config, directory, 2, frame_indices=[0, 1])
+        tokenizer, config, directory, 2,
+        frame_indices=config['comparison']['generation_frame_indices'])
     return {'stage': 'comparison_execution_smoke', 'accepted': True, 'execution_complete': True,
             'model_fit_accepted': False, 'cases': reports, 'free_generation': evaluation['summary'],
             'initialization': initial, 'code_commit': source, 'weights_discarded': True}

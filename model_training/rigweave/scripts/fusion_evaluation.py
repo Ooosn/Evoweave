@@ -66,6 +66,8 @@ def auxiliary_summary(rows):
 
 def comparison_contract(config):
     contract = json.loads(json.dumps(config))
+    # The comparison runner annotates the source filename after loading JSON.
+    contract.pop('_path', None)
     contract['architecture'].pop('fusion_mode', None)
     contract['runtime'].pop('physical_gpu', None)
     contract['probe'].pop('paired_output', None)

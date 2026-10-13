@@ -61,8 +61,14 @@ DFS parent trees. Both must pass at the same checkpoint; CE alone is insufficien
 
 Passing candidates enter fixed64 train / heldout poses / fixed32 valid,
 effective batch48, 512 updates =24576 actual asset exposures, same schedule
-and data across comparisons. Success rate and failure-as-zero F1 must not
+and data across comparisons. Evaluate all four input poses per asset at
+0/128/256/512, including the eight training/heldout-pose assets and32validation
+assets (192main generations per checkpoint). Initial generation is separate
+for each fusion mode even when initial parameter tensors are identical.
+Success rate and failure-as-zero F1 against continuous originalGT must not
 decrease versus A; paired common-success mean J2J may worsen by at most1/256.
+J2J uses the quantizedGT, with exactly the same common-success pose set on
+both sides; missing common-success evidence does not automatically pass.
 This is one-seed bounded validation, not a statistical/generalization claim.
 
 Prefer A when sufficient, otherwise B,C,D in order; stop expanding once a
@@ -71,3 +77,15 @@ frame-information loss before any new hypothesis. Full training stays blocked
 until primary review, hash-bound real capacity checks across T2..24 and the
 existing formal release gates. Formal training uses fresh official weights,
 not these fitting checkpoints, and retains the prior80016-exposure budget.
+
+## Completed first round
+
+A and B both completed1024updates/8192actualassetexposures. First complete
+main+aux passing checks were A256 andB128; final both reproduce32/32main GT
+token sequences and8/8auxiliary parent trees. A already passed at2048actual
+exposures, the total exposure count of the older failedB1 constantLR run.
+This establishes that the original fusion can learn this fixed task under
+the new effectivebatch/OneCycle recipe; it does not isolate the contributions
+of batch averaging and schedule, or establish heldout generalization.
+Do not run C/D. A remains the preferred architecture pending medium review;
+B is the already-tested matched comparator, not a commitment to replacement.

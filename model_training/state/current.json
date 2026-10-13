@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -324,59 +324,44 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Publish isolated fusion implementation and exact read-only auxiliary audit operation, evaluate the old lambda.1 checkpoint, then record completion before publishing matched fresh A/B fits. All candidates use auxiliary supervision; no new GPU work until the exact stage is activated. Formal training remains blocked pending primary acceptance and capacity receipts.",
+  "next_required_result": "Execute only the published read-only fusion_aux_audit_v1, record its eight-asset auxiliary free-generation/swap results, then close this operation before publishing fresh matched A/B fits. Formal training remains blocked pending primary acceptance and capacity receipts.",
   "active_operation": {
-    "label": "vquery_reference_pair8_v1_20261013",
-    "mode": "reference_fit",
+    "label": "fusion_aux_audit_v1",
+    "mode": "aux_audit",
     "operation": "train",
-    "status": "completed_not_accepted",
-    "complete": true,
+    "status": "prepared",
+    "complete": false,
     "accepted": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "reference_control_only": true,
-    "approved_virtual_route": false,
-    "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_reference.py",
-    "runs": [
-      {
-        "label": "vquery_reference_legacy8_v1_20261013",
-        "mode": "reference_fit",
-        "reference_route": "legacy_query_first",
-        "config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_legacy8_v1_20261013.json",
-        "config_sha256": "db11ac91cc94274ca2cba50301f08560cdce0734889e59698b09d87de1aff378",
-        "output": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_legacy8_v1_20261013",
-        "physical_gpu": 5,
-        "max_updates": 2048,
-        "command": [
-          "/home/wangyy/miniconda3/envs/mygs/bin/python",
-          "/work/wangyy/virtual_query_xyz_20261013/code/model_training/rigweave/scripts/probe_virtual_query_reference.py",
-          "--config",
-          "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_legacy8_v1_20261013.json",
-          "--output",
-          "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_legacy8_v1_20261013"
-        ]
-      },
-      {
-        "label": "vquery_reference_finalreal8_v1_20261013",
-        "mode": "reference_fit",
-        "reference_route": "virtual_final_real",
-        "config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_finalreal8_v1_20261013.json",
-        "config_sha256": "7e73e3c02b520ed7ee4124784ab208875020a1f691d5943debe00173536320a3",
-        "output": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_finalreal8_v1_20261013",
-        "physical_gpu": 7,
-        "max_updates": 2048,
-        "command": [
-          "/home/wangyy/miniconda3/envs/mygs/bin/python",
-          "/work/wangyy/virtual_query_xyz_20261013/code/model_training/rigweave/scripts/probe_virtual_query_reference.py",
-          "--config",
-          "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_finalreal8_v1_20261013.json",
-          "--output",
-          "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_finalreal8_v1_20261013"
-        ]
-      }
-    ],
-    "code_commit": "21968be3e11c48ec850970022216d413142e4a91",
-    "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
+    "read_only_checkpoint_audit": true,
+    "optimizer_updates_allowed": 0,
+    "authorization": "User explicitly approved publishing the isolated fusion plan and requested its implementation.",
+    "prepared_utc": "2026-10-13T07:24:18+00:00",
+    "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
+    "code_commit": "384cb656571150965c7577e2011e72221da5e40d",
+    "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_fusion.py",
+    "resources": {
+      "allocation": 129547842,
+      "host": "pcg01i",
+      "physical_gpus": [
+        5
+      ],
+      "repo": "/work/wangyy/virtual_fusion_20261013/code"
+    },
+    "initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "model_config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+      "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+      "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+      "seed": 20261013
+    },
+    "audit_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_xyz_fit_diverse8_l01_v1_20261013/checkpoint_fit.pt",
+      "sha256": "82eeaaa7c9c5373b8f850c77c82fd9322384a9cf11806dc6b2a308c90445157e"
+    },
     "manifests": {
       "train": {
         "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
@@ -389,42 +374,37 @@
         "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
       }
     },
-    "initialization": {
-      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-      "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
-      "model_config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
-      "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
-      "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
-      "seed": 20261013
-    },
-    "resources": {
-      "host": "pcg01i",
-      "allocation": 129547842,
-      "physical_gpus": [
-        5,
-        7
-      ],
-      "one_independent_process_per_gpu": true,
-      "repo": "/work/wangyy/virtual_query_xyz_20261013/code"
-    },
-    "authorization": "User authorized thorough autonomous diagnosis before formal training; primary isolates the new encoder and frame fusion after recording the failed approved-route fits.",
-    "acceptance": "Both controls retain the exact fixed8/T4 data, original complete XYZ decoder/loss, fresh official initialization, LR and maximum2048 updates. Legacy query-first validates the established path on this cohort; final-real bypasses only virtual-to-frame fusion while retaining virtual participation in the encoder. Fit gates unchanged; reference success is not candidate/formal acceptance.",
-    "stop_conditions": [
-      "nonfinite loss/gradient",
-      "OOM",
-      "config/source mismatch",
-      "per-control acceptance reached",
-      "per-control maximum2048 updates"
+    "runs": [
+      {
+        "label": "fusion_aux_audit_v1",
+        "mode": "aux_audit",
+        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
+        "config_sha256": "85312b98e059a1891f14bd5ed500f9a77ba244e6c629ada68ce6f876905f604c",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+        "physical_gpu": 5,
+        "command": [
+          "/home/wangyy/miniconda3/envs/mygs/bin/python",
+          "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
+          "--config",
+          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
+          "--output",
+          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+          "--mode",
+          "aux_audit"
+        ]
+      }
     ],
-    "prepared_utc": "2026-10-12T22:29:51.207034+00:00",
-    "execution_finished": true,
-    "exit_code": 0,
-    "completed_updates": 4096,
-    "result_receipt": "reference_pair8_v1_result.json",
-    "result_sha256": "d43c07b8edb0b53ce51e5d082b215188e4774e8bb233d9aacb96c3c9f3d27631",
-    "conclusion": "Both reference controls fit: legacy exact32/32, virtual-final-real exact31/32 and all32 pass corrected gate; raw F1 self-matching defect audited separately. Original fusion fits still rejected. Test fresh aligned-final-real residual candidate at single512/diverse2048 before G3; formal remains blocked.",
-    "finished_utc": "2026-10-12T23:40:16.147835+00:00"
+    "acceptance": "Execution only: exact hash-bound old lambda.1 checkpoint, complete eight-asset free auxiliary generation and cross-asset swaps, strict DFS-parent/count/EOS scoring, unchanged parameter fingerprint, zero optimizer updates. Record quality without promoting candidate or starting next operation.",
+    "cpu_validation": {
+      "passed_tests": 70,
+      "scope": "23 new fusion/aux generation plus47 core/codec/data/legacy/fitting/evaluation tests; no real CUDA inference yet"
+    },
+    "stop_conditions": [
+      "nonfinite/invalid model computation",
+      "checkpoint/config/source mismatch",
+      "OOM",
+      "audit complete"
+    ]
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",
@@ -600,6 +580,107 @@
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
+    {
+      "label": "vquery_reference_pair8_v1_20261013",
+      "mode": "reference_fit",
+      "operation": "train",
+      "status": "completed_not_accepted",
+      "complete": true,
+      "accepted": false,
+      "gpu_work_allowed": false,
+      "formal_training_allowed": false,
+      "reference_control_only": true,
+      "approved_virtual_route": false,
+      "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_query_reference.py",
+      "runs": [
+        {
+          "label": "vquery_reference_legacy8_v1_20261013",
+          "mode": "reference_fit",
+          "reference_route": "legacy_query_first",
+          "config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_legacy8_v1_20261013.json",
+          "config_sha256": "db11ac91cc94274ca2cba50301f08560cdce0734889e59698b09d87de1aff378",
+          "output": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_legacy8_v1_20261013",
+          "physical_gpu": 5,
+          "max_updates": 2048,
+          "command": [
+            "/home/wangyy/miniconda3/envs/mygs/bin/python",
+            "/work/wangyy/virtual_query_xyz_20261013/code/model_training/rigweave/scripts/probe_virtual_query_reference.py",
+            "--config",
+            "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_legacy8_v1_20261013.json",
+            "--output",
+            "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_legacy8_v1_20261013"
+          ]
+        },
+        {
+          "label": "vquery_reference_finalreal8_v1_20261013",
+          "mode": "reference_fit",
+          "reference_route": "virtual_final_real",
+          "config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_finalreal8_v1_20261013.json",
+          "config_sha256": "7e73e3c02b520ed7ee4124784ab208875020a1f691d5943debe00173536320a3",
+          "output": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_finalreal8_v1_20261013",
+          "physical_gpu": 7,
+          "max_updates": 2048,
+          "command": [
+            "/home/wangyy/miniconda3/envs/mygs/bin/python",
+            "/work/wangyy/virtual_query_xyz_20261013/code/model_training/rigweave/scripts/probe_virtual_query_reference.py",
+            "--config",
+            "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/vquery_reference_finalreal8_v1_20261013.json",
+            "--output",
+            "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_reference_finalreal8_v1_20261013"
+          ]
+        }
+      ],
+      "code_commit": "21968be3e11c48ec850970022216d413142e4a91",
+      "contract": "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
+      "manifests": {
+        "train": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "rows": 18002,
+          "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+        },
+        "valid": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "rows": 967,
+          "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+        }
+      },
+      "initialization": {
+        "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+        "model_config": "/work/wangyy/virtual_query_xyz_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+        "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+        "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+        "seed": 20261013
+      },
+      "resources": {
+        "host": "pcg01i",
+        "allocation": 129547842,
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "one_independent_process_per_gpu": true,
+        "repo": "/work/wangyy/virtual_query_xyz_20261013/code"
+      },
+      "authorization": "User authorized thorough autonomous diagnosis before formal training; primary isolates the new encoder and frame fusion after recording the failed approved-route fits.",
+      "acceptance": "Both controls retain the exact fixed8/T4 data, original complete XYZ decoder/loss, fresh official initialization, LR and maximum2048 updates. Legacy query-first validates the established path on this cohort; final-real bypasses only virtual-to-frame fusion while retaining virtual participation in the encoder. Fit gates unchanged; reference success is not candidate/formal acceptance.",
+      "stop_conditions": [
+        "nonfinite loss/gradient",
+        "OOM",
+        "config/source mismatch",
+        "per-control acceptance reached",
+        "per-control maximum2048 updates"
+      ],
+      "prepared_utc": "2026-10-12T22:29:51.207034+00:00",
+      "execution_finished": true,
+      "exit_code": 0,
+      "completed_updates": 4096,
+      "result_receipt": "reference_pair8_v1_result.json",
+      "result_sha256": "d43c07b8edb0b53ce51e5d082b215188e4774e8bb233d9aacb96c3c9f3d27631",
+      "conclusion": "Both reference controls fit: legacy exact32/32, virtual-final-real exact31/32 and all32 pass corrected gate; raw F1 self-matching defect audited separately. Original fusion fits still rejected. Test fresh aligned-final-real residual candidate at single512/diverse2048 before G3; formal remains blocked.",
+      "finished_utc": "2026-10-12T23:40:16.147835+00:00"
+    },
     {
       "name": "flat_unirig_hgc2h100_matched80k_20260717_and_matched_heldout52",
       "status": "completed",

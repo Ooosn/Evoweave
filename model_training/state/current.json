@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T22:01:00+00:00",
+  "updated_at": "2026-10-13T22:04:40.369969+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -344,10 +344,19 @@
     "label": "fusion_medium_cache_v1",
     "mode": "cache",
     "operation": "train",
-    "status": "prepared",
-    "complete": false,
-    "accepted": false,
-    "gpu_work_allowed": true,
+    "status": "completed_accepted",
+    "complete": true,
+    "accepted": true,
+    "gpu_work_allowed": false,
+    "exit_code": 0,
+    "finished_utc": "2026-10-13T22:03:56.958799+00:00",
+    "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/medium_cache_v1_result.json",
+    "result_sha256": "948da3fc43ca208f5c7b31e961e61fe82db3ef4327b0b34a6375c65207c6a2f9",
+    "index_sha256": "c5eff87ac2b5de08980d68dc515af0a49c5dcb4e7b89b0835c3dd666a36c10ed",
+    "cache_entries": 104,
+    "unique_assets": 96,
+    "learned_features_cached": false,
+    "validation": "All104 files present with matching hashes on pcg02 SSD; 8/8 heldout poses disjoint from train; train/valid asset IDs and paths disjoint; 667687968 raw-cache bytes. Primary accepted preprocessing only, not model quality.",
     "formal_training_allowed": false,
     "authorization": "User-approved isolated A/B plan: after both G2 fits pass, prepare fixed raw geometry/targets for the matched64-asset comparison. No model training, no learned feature cache, no C/D.",
     "prepared_utc": "2026-10-13T22:01:00+00:00",

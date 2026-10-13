@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T07:17:35+00:00",
+  "updated_at": "2026-10-13T07:37:45+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -324,20 +324,18 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Execute only the published read-only fusion_aux_audit_v1, record its eight-asset auxiliary free-generation/swap results, then close this operation before publishing fresh matched A/B fits. Formal training remains blocked pending primary acceptance and capacity receipts.",
+  "next_required_result": "Run and review only the paired fresh fusion_ab_fit8_v1 experiment. Both candidates retain auxiliary weight.1 and complete the same1024-update budget; primary must review main AND auxiliary generation before recording any next stage. Formal training is blocked pending G2/G3/capacity acceptance.",
   "active_operation": {
-    "label": "fusion_aux_audit_v1",
-    "mode": "aux_audit",
+    "label": "fusion_ab_fit8_v1",
+    "mode": "fit",
     "operation": "train",
-    "status": "completed_diagnostic_not_model_accepted",
-    "complete": true,
+    "status": "prepared",
+    "complete": false,
     "accepted": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "read_only_checkpoint_audit": true,
-    "optimizer_updates_allowed": 0,
-    "authorization": "User explicitly approved publishing the isolated fusion plan and requested its implementation.",
-    "prepared_utc": "2026-10-13T07:24:18+00:00",
+    "authorization": "User explicitly requested isolated dual-H100 A/B fusion experiments with auxiliary supervision and implementation of the approved plan.",
+    "prepared_utc": "2026-10-13T07:37:45+00:00",
     "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
     "code_commit": "384cb656571150965c7577e2011e72221da5e40d",
     "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_fusion.py",
@@ -345,8 +343,10 @@
       "allocation": 129547842,
       "host": "pcg01i",
       "physical_gpus": [
-        5
+        5,
+        7
       ],
+      "one_independent_process_per_gpu": true,
       "repo": "/work/wangyy/virtual_fusion_20261013/code"
     },
     "initialization": {
@@ -357,10 +357,6 @@
       "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
       "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
       "seed": 20261013
-    },
-    "audit_checkpoint": {
-      "path": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_xyz_fit_diverse8_l01_v1_20261013/checkpoint_fit.pt",
-      "sha256": "82eeaaa7c9c5373b8f850c77c82fd9322384a9cf11806dc6b2a308c90445157e"
     },
     "manifests": {
       "train": {
@@ -376,42 +372,59 @@
     },
     "runs": [
       {
-        "label": "fusion_aux_audit_v1",
-        "mode": "aux_audit",
-        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
-        "config_sha256": "85312b98e059a1891f14bd5ed500f9a77ba244e6c629ada68ce6f876905f604c",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+        "label": "fusion_a_fit8_v1",
+        "mode": "fit",
+        "fusion_mode": "virtual_queries_real",
+        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
+        "config_sha256": "d5670fd1d9d1e9ca55f59911599effb1e663f26ad4b8eca0feba94e5d727c2f0",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
         "physical_gpu": 5,
+        "max_updates": 1024,
+        "effective_assets_per_update": 8,
+        "actual_asset_exposures": 8192,
         "command": [
           "/home/wangyy/miniconda3/envs/mygs/bin/python",
           "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
           "--config",
-          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
+          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
           "--output",
-          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
           "--mode",
-          "aux_audit"
+          "fit"
+        ]
+      },
+      {
+        "label": "fusion_b_fit8_v1",
+        "mode": "fit",
+        "fusion_mode": "real_queries_virtual",
+        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
+        "config_sha256": "120f7ec0d28eaf9db6fab655f7da69fe5177855d0cbfcffb8806d0ad312006f3",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
+        "physical_gpu": 7,
+        "max_updates": 1024,
+        "effective_assets_per_update": 8,
+        "actual_asset_exposures": 8192,
+        "command": [
+          "/home/wangyy/miniconda3/envs/mygs/bin/python",
+          "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
+          "--config",
+          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
+          "--output",
+          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
+          "--mode",
+          "fit"
         ]
       }
     ],
-    "acceptance": "Execution only: exact hash-bound old lambda.1 checkpoint, complete eight-asset free auxiliary generation and cross-asset swaps, strict DFS-parent/count/EOS scoring, unchanged parameter fingerprint, zero optimizer updates. Record quality without promoting candidate or starting next operation.",
-    "cpu_validation": {
-      "passed_tests": 70,
-      "scope": "23 new fusion/aux generation plus47 core/codec/data/legacy/fitting/evaluation tests; no real CUDA inference yet"
-    },
+    "acceptance": "Same fixed8/T4, full initial weights AND actual input tensors AND nonvariant config hash must match before any optimizer update. Each fresh candidate gets1024 updates/effective8/8192assets, OneCycle peak1e-4 warmup.1 div5 final10 and lambda.1. Evaluate0/32/64/128/256/512/1024; keep first passing checkpoint but do not shorten either baseline. Main:32/32 valid naturalEOS,mean teacher accuracy>=.99,>=29/32 exactcount+J2J<=4/256+(rawquantizedF1>=.95 OR exact targettokens). Auxiliary:8/8 validEOS+exactDFStree at the SAME checkpoint. Primary selects only after both runs complete; no automatic next stage.",
+    "previous_audit_result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
     "stop_conditions": [
-      "nonfinite/invalid model computation",
-      "checkpoint/config/source mismatch",
+      "nonfinite loss/gradient",
       "OOM",
-      "audit complete"
+      "config/source/initialization/input mismatch",
+      "each run maximum1024 updates"
     ],
-    "execution_finished": true,
-    "exit_code": 0,
-    "finished_utc": "2026-10-13T07:31:48.689003+00:00",
-    "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/aux_audit_v1_result.json",
-    "result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
-    "audit_sha256": "7c38e2f6686a90768c7e1d078b8f5179be58a609a79b8485ca38877cfff62d11",
-    "conclusion": "Old lambda.1 checkpoint emits one identical five-joint auxiliary tree for all8 assets: validEOS8/8 but exactparents/count1/8, swapped predictions unchanged8/8. Mean auxiliary teacherCE .06473752, swap .06509500. Parameter state unchanged; zero optimizer updates. Low auxiliary loss is not successful asset-conditioned free generation. Proceed only to the approved fresh paired A/B experiment, not formal training."
+    "model_quality_accepted_before_run": false
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",
@@ -587,6 +600,94 @@
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
+    {
+      "label": "fusion_aux_audit_v1",
+      "mode": "aux_audit",
+      "operation": "train",
+      "status": "completed_diagnostic_not_model_accepted",
+      "complete": true,
+      "accepted": false,
+      "gpu_work_allowed": false,
+      "formal_training_allowed": false,
+      "read_only_checkpoint_audit": true,
+      "optimizer_updates_allowed": 0,
+      "authorization": "User explicitly approved publishing the isolated fusion plan and requested its implementation.",
+      "prepared_utc": "2026-10-13T07:24:18+00:00",
+      "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
+      "code_commit": "384cb656571150965c7577e2011e72221da5e40d",
+      "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_fusion.py",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5
+        ],
+        "repo": "/work/wangyy/virtual_fusion_20261013/code"
+      },
+      "initialization": {
+        "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+        "model_config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+        "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+        "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+        "seed": 20261013
+      },
+      "audit_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_query_xyz_20261013/vquery_xyz_fit_diverse8_l01_v1_20261013/checkpoint_fit.pt",
+        "sha256": "82eeaaa7c9c5373b8f850c77c82fd9322384a9cf11806dc6b2a308c90445157e"
+      },
+      "manifests": {
+        "train": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "rows": 18002,
+          "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+        },
+        "valid": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "rows": 967,
+          "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+        }
+      },
+      "runs": [
+        {
+          "label": "fusion_aux_audit_v1",
+          "mode": "aux_audit",
+          "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
+          "config_sha256": "85312b98e059a1891f14bd5ed500f9a77ba244e6c629ada68ce6f876905f604c",
+          "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+          "physical_gpu": 5,
+          "command": [
+            "/home/wangyy/miniconda3/envs/mygs/bin/python",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
+            "--config",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_aux_audit_v1.json",
+            "--output",
+            "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_aux_audit_v1",
+            "--mode",
+            "aux_audit"
+          ]
+        }
+      ],
+      "acceptance": "Execution only: exact hash-bound old lambda.1 checkpoint, complete eight-asset free auxiliary generation and cross-asset swaps, strict DFS-parent/count/EOS scoring, unchanged parameter fingerprint, zero optimizer updates. Record quality without promoting candidate or starting next operation.",
+      "cpu_validation": {
+        "passed_tests": 70,
+        "scope": "23 new fusion/aux generation plus47 core/codec/data/legacy/fitting/evaluation tests; no real CUDA inference yet"
+      },
+      "stop_conditions": [
+        "nonfinite/invalid model computation",
+        "checkpoint/config/source mismatch",
+        "OOM",
+        "audit complete"
+      ],
+      "execution_finished": true,
+      "exit_code": 0,
+      "finished_utc": "2026-10-13T07:31:48.689003+00:00",
+      "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/aux_audit_v1_result.json",
+      "result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
+      "audit_sha256": "7c38e2f6686a90768c7e1d078b8f5179be58a609a79b8485ca38877cfff62d11",
+      "conclusion": "Old lambda.1 checkpoint emits one identical five-joint auxiliary tree for all8 assets: validEOS8/8 but exactparents/count1/8, swapped predictions unchanged8/8. Mean auxiliary teacherCE .06473752, swap .06509500. Parameter state unchanged; zero optimizer updates. Low auxiliary loss is not successful asset-conditioned free generation. Proceed only to the approved fresh paired A/B experiment, not formal training."
+    },
     {
       "label": "vquery_reference_pair8_v1_20261013",
       "mode": "reference_fit",
@@ -7966,6 +8067,9 @@
   },
   "architecture_contract": {
     "id": "virtual_query_xyz_aux_ids_v1",
+    "bounded_fusion_modes": ["virtual_queries_real", "real_queries_virtual", "relative_position", "token_film"],
+    "bounded_fusion_auxiliary_weight": 0.1,
+    "conditioning_scope": "Default route below; exact experimental fusion modes are declared in active_operation.runs. No alternative has formal acceptance yet.",
     "virtual_query_tokens": 1024,
     "anchor_correspondence": "same-index real and virtual slots through every temporal block",
     "motion_depth": 12,

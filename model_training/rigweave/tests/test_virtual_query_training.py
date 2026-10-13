@@ -34,7 +34,8 @@ def namespace():
               'datetime': datetime, 'timezone': timezone, 'nullcontext': nullcontext}
     functions('train_virtual_query_xyz.py', ['validate_plan', 'update_asset_target', 'run_training',
                                            'evaluation_summary', 'load_capacity_selection', 'capacity_contract',
-                                           'validate_capacity_receipt', 'run_profile'], result)
+                                           'validate_capacity_receipt', 'run_profile', 'run_evaluation'], result)
+    functions('fusion_evaluation.py', ['auxiliary_summary'], result)
     functions('virtual_query_xyz_runtime.py', ['write_json', 'sha256'], result)
     functions('virtual_frame_runtime.py', ['normalize_asset_gradients'], result)
     return result
@@ -54,6 +55,49 @@ def config():
 
 
 class TrainingAccountingTests(unittest.TestCase):
+    def test_formal_evaluation_generates_and_combines_all_auxiliary_assets(self):
+        for final in (False, True):
+            with self.subTest(final=final), tempfile.TemporaryDirectory() as directory:
+                ns, plan, calls = namespace(), config(), []
+                plan['evaluation'] = {'frames': 4, 'max_new_tokens': 2048, 'generated_frame_indices': [0, 1, 2, 3]}
+                heldout = [{'asset_id': 'h0'}, {'asset_id': 'h1'}]
+                valid = [{'asset_id': 'v0'}, {'asset_id': 'v1'}, {'asset_id': 'v2'}]
+                def evaluate(model, items, tokenizer, eval_config, output, step, frame_indices):
+                    model.eval()
+                    self.assertTrue(eval_config['probe']['evaluate_auxiliary'])
+                    self.assertEqual(eval_config['probe']['auxiliary_weight'], .1)
+                    self.assertEqual(eval_config['probe']['max_new_tokens'], 2048)
+                    self.assertEqual(frame_indices, [0, 1, 2, 3])
+                    assets = list(items)
+                    calls.extend(assets)
+                    rows = [{'asset_id': asset, 'success': True, 'quantized_edge_f1': 1.,
+                             'original_edge_f1': 1., 'exact_count': True, 'main_ce': .1,
+                             'main_accuracy': .99, 'quantized_j2j': 0.}
+                            for asset in assets for _ in frame_indices]
+                    auxiliary = [{'asset_id': asset, 'natural_eos': True, 'success': True,
+                                  'exact_count': asset.endswith('0'), 'exact_parents': asset.endswith('0'),
+                                  'exact_tokens': asset.endswith('0')} for asset in assets]
+                    return {'rows': rows, 'auxiliary_rows': auxiliary}
+                ns.update(selected_evaluation_rows=lambda *a: {'train_heldout': heldout, 'valid': valid[:2]},
+                          fixed_dataset=lambda rows, *a, **k: rows,
+                          prepare=lambda dataset, requests, *a: dataset[requests[0]]['asset_id'],
+                          evaluate=evaluate, dist=SimpleNamespace(barrier=lambda: None))
+                samples = 80016 if final else 48
+                model = nn.Linear(1, 1)
+                args = SimpleNamespace(output=Path(directory))
+                for rank in (1, 0):
+                    ns['run_evaluation'](model, None, None, {'valid': valid}, plan, args,
+                                         torch.device('cpu'), samples, rank, 2)
+                    self.assertTrue(model.training)
+                report = json.loads((args.output / f'evaluation_{samples:06d}' / 'summary.json').read_text())
+                expected_valid = 3 if final else 2
+                self.assertEqual(report['auxiliary_summary']['valid']['assets'], expected_valid)
+                self.assertEqual(report['summary']['valid']['views'], expected_valid * 4)
+                self.assertAlmostEqual(report['auxiliary_summary']['valid']['exact_parents'], 1 / expected_valid)
+                self.assertEqual(report['auxiliary_summary']['train_heldout']['assets'], 2)
+                self.assertEqual(report['full_validation'], final)
+                self.assertEqual(len(calls), 2 + expected_valid)
+
     def test_profile_exercises_accumulation_with_resident_gradients_and_token_check(self):
         ns, plan = namespace(), config()
         plan['capacity'].update(allocated_fraction_limit=.9,

@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / 'model_training/rigweave/src'))
 from virtual_query_xyz_runtime import build_model, fixed_dataset, read_entries, sha256, write_json
 from virtual_frame_runtime import FrameBudgetStream, normalize_asset_gradients, set_exposure_lr
 from probe_virtual_query_xyz import evaluate, grad_norms, require_gradients
+from fusion_evaluation import auxiliary_summary
 from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
 from rigweave.dynamic_rig.virtual_frame_data import prepare_virtual_surface
 from rigweave.dynamic_rig.virtual_query_xyz_data import build_xyz_aux_targets
@@ -299,7 +300,8 @@ def run_evaluation(model, tokenizer, codec, entries, config, args, device, sampl
         directory = root / f'{group}_rank_{rank}'
         directory.mkdir(exist_ok=False)
         eval_config = {**config, 'probe': {'auxiliary_weight': config['optimization']['auxiliary_weight'],
-                                         'max_new_tokens': config['evaluation']['max_new_tokens']}}
+                                         'max_new_tokens': config['evaluation']['max_new_tokens'],
+                                         'evaluate_auxiliary': True}}
         result = evaluate(model, items(), tokenizer, eval_config, directory, samples,
                           frame_indices=config['evaluation']['generated_frame_indices'])
         report['groups'][group] = result
@@ -312,8 +314,15 @@ def run_evaluation(model, tokenizer, codec, entries, config, args, device, sampl
         ranks = [json.loads((root / f'rank_{r}.json').read_text()) for r in range(world)]
         combined = {group: [row for result in ranks for row in result['groups'][group]['rows']]
                     for group in chosen}
+        auxiliary = {group: [row for result in ranks for row in result['groups'][group]['auxiliary_rows']]
+                     for group in chosen}
+        for group, rows in auxiliary.items():
+            if sorted(row['asset_id'] for row in rows) != sorted(row['asset_id'] for row in chosen[group]):
+                raise ValueError('auxiliary evaluation must contain every selected asset exactly once')
         write_json(root / 'summary.json', {'complete': True, 'samples': samples,
                    'summary': {group: evaluation_summary(rows) for group, rows in combined.items()},
+                   'auxiliary_summary': {group: {'assets': len(rows), **auxiliary_summary(rows)}
+                                         for group, rows in auxiliary.items()},
                    'failed_generations_scored_zero': True, 'data_used_for_optimization': False,
                    'generated_frame_indices': config['evaluation']['generated_frame_indices'],
                    'full_validation': samples == config['training']['target_assets']})

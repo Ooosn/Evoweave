@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T09:34:59+00:00",
+  "updated_at": "2026-10-13T09:49:44+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,23 +135,30 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "submit"
   ],
   "blocked_operations": [
     "train",
     "preflight",
-    "matched_eval",
-    "submit"
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "qlogin_job_id": 129547842,
-    "status": "active_at_last_check",
-    "detected_at": "2026-10-10T01:59:20+09:00",
-    "current_host": "pcg01",
-    "resources": "2xH100 80GB, physical devices 5 and 7, mem_req=64G, unlimited virtual memory",
-    "gpu_processes": 0,
-    "decision": "User authorized this motion comparison and full training on this existing allocation. Refresh live state before launching; preserve the qlogin keepalive and unrelated jobs."
+    "status": "previous_grant_expired_new_request_prepared",
+    "qlogin_job_id": null,
+    "previous_job_id": 129547842,
+    "previous_host": "pcg01i",
+    "previous_physical_gpus": [
+      5,
+      7
+    ],
+    "previous_end_utc": "2026-10-13T09:37:52.601+00:00",
+    "end_reason": "scheduler96h_h_rt_not_agent_release",
+    "authorized_current_physical_gpus": [],
+    "pending_request": "virtual_fusion_2h_1013_v1",
+    "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
+    "decision": "No suitable authorizedH100grant remains. Requeue same count under existing experiment authorization; never compute on the expired grant."
   },
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
@@ -324,121 +331,73 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Both A/B fixed8/T4 fits passed with complete main+auxiliary generation. Preserve A as the preferred architecture; do not expand to C/D. Prepare the isolated raw64/heldout/valid cache and medium comparison before any formal capacity/release. No new GPU operation until its exact code/config/state is published.",
+  "next_required_result": "The oldH100grant ended at the scheduler96h hard limit after both fits completed. Publish/request only a replacement twoH100 reservation, verify the new allocation and record it before publishing the medium rawcache/model stage. A remains preferred; noC/D expansion and no model work on the expired grant.",
   "active_operation": {
-    "label": "fusion_ab_fit8_v1",
-    "mode": "fit",
-    "operation": "train",
-    "status": "completed_G2_accepted_pending_G3",
-    "complete": true,
-    "accepted": true,
+    "label": "fusion_h100_reallocation_v1",
+    "mode": "allocation_only",
+    "operation": "submit",
+    "status": "prepared",
+    "complete": false,
+    "accepted": false,
     "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "authorization": "User explicitly requested isolated dual-H100 A/B fusion experiments with auxiliary supervision and implementation of the approved plan.",
-    "prepared_utc": "2026-10-13T07:37:45+00:00",
-    "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
-    "code_commit": "384cb656571150965c7577e2011e72221da5e40d",
-    "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_fusion.py",
+    "model_execution_allowed": false,
+    "authorization": "Continue the user-approved isolated two-H100 experiment plan after the old grant reached the scheduler's96h hard wall limit; request exactly the same twoH100/64G resources, with no additional GPU count.",
+    "prepared_utc": "2026-10-13T09:49:44+00:00",
+    "code_commit": "e46ec687cbdb4542d1637088702402e92c2e2402",
+    "required_entrypoint": "server_ops/hgc/fusion_allocation.sh",
     "resources": {
-      "allocation": 129547842,
-      "host": "pcg01i",
-      "physical_gpus": [
-        5,
-        7
+      "queue": "gpuh.q",
+      "h100": 2,
+      "mem_req": "64G",
+      "virtual_memory": "unlimited",
+      "queue_h_rt_seconds": 345600,
+      "physical_devices": "unknown_until_scheduler_grant_and_UUID_mapping",
+      "host": "unknown_until_scheduler_grant"
+    },
+    "request": {
+      "job_name": "virtual_fusion_2h_1013_v1",
+      "tmux_session_on_pcl03": "vfusion13_h100_v1",
+      "script": "/home/wangyy/jobs/virtual_fusion_20261013_v1/fusion_allocation_v1.sh",
+      "script_sha256": "6b766829484f079abba76522607f26b65e1b0d009c545a47d588301367e1e15f",
+      "command": [
+        "qrsh",
+        "-clear",
+        "-now",
+        "n",
+        "-pty",
+        "y",
+        "-jsv",
+        "/geadmin/N1GE/util/resources/jsv/jsv_docker.pl",
+        "-l",
+        "h100=2",
+        "-l",
+        "mem_req=64G",
+        "-N",
+        "virtual_fusion_2h_1013_v1",
+        "/bin/bash",
+        "/home/wangyy/jobs/virtual_fusion_20261013_v1/fusion_allocation_v1.sh",
+        "hold"
       ],
-      "one_independent_process_per_gpu": true,
-      "repo": "/work/wangyy/virtual_fusion_20261013/code"
+      "output_root": "/home/wangyy/jobs/virtual_fusion_20261013_v1",
+      "site_instruction_sha256": "bfe3d5b9b54a39fa903590d5694211630a4f5310d944b212fd134d8cbfb28730"
     },
-    "initialization": {
-      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-      "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
-      "model_config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
-      "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
-      "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
-      "seed": 20261013
+    "previous_allocation": {
+      "job_id": 129547842,
+      "end_time_utc": "2026-10-13T09:37:52.601+00:00",
+      "accounting_failed": 44,
+      "exit_status": 129,
+      "ru_wallclock_seconds": 345600.688,
+      "reason": "execd enforced h_rt limit",
+      "agent_released": false
     },
-    "manifests": {
-      "train": {
-        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-        "rows": 18002,
-        "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
-      },
-      "valid": {
-        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
-        "rows": 967,
-        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
-      }
-    },
-    "runs": [
-      {
-        "label": "fusion_a_fit8_v1",
-        "mode": "fit",
-        "fusion_mode": "virtual_queries_real",
-        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
-        "config_sha256": "d5670fd1d9d1e9ca55f59911599effb1e663f26ad4b8eca0feba94e5d727c2f0",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
-        "physical_gpu": 5,
-        "max_updates": 1024,
-        "effective_assets_per_update": 8,
-        "actual_asset_exposures": 8192,
-        "command": [
-          "/home/wangyy/miniconda3/envs/mygs/bin/python",
-          "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
-          "--config",
-          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
-          "--output",
-          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
-          "--mode",
-          "fit"
-        ]
-      },
-      {
-        "label": "fusion_b_fit8_v1",
-        "mode": "fit",
-        "fusion_mode": "real_queries_virtual",
-        "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
-        "config_sha256": "120f7ec0d28eaf9db6fab655f7da69fe5177855d0cbfcffb8806d0ad312006f3",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
-        "physical_gpu": 7,
-        "max_updates": 1024,
-        "effective_assets_per_update": 8,
-        "actual_asset_exposures": 8192,
-        "command": [
-          "/home/wangyy/miniconda3/envs/mygs/bin/python",
-          "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
-          "--config",
-          "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
-          "--output",
-          "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
-          "--mode",
-          "fit"
-        ]
-      }
-    ],
-    "acceptance": "Same fixed8/T4, full initial weights AND actual input tensors AND nonvariant config hash must match before any optimizer update. Each fresh candidate gets1024 updates/effective8/8192assets, OneCycle peak1e-4 warmup.1 div5 final10 and lambda.1. Evaluate0/32/64/128/256/512/1024; keep first passing checkpoint but do not shorten either baseline. Main:32/32 valid naturalEOS,mean teacher accuracy>=.99,>=29/32 exactcount+J2J<=4/256+(rawquantizedF1>=.95 OR exact targettokens). Auxiliary:8/8 validEOS+exactDFStree at the SAME checkpoint. Primary selects only after both runs complete; no automatic next stage.",
-    "previous_audit_result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
+    "acceptance": "Reservation only. Verify queued request resources and then granted host/deviceUUIDs, memory limits andSSDstorage. Do not execute any model/cache work before a NEW exact stage/config/resource record is published. Preserve the new keepalive and unrelated jobs.",
     "stop_conditions": [
-      "nonfinite loss/gradient",
-      "OOM",
-      "config/source/initialization/input mismatch",
-      "each run maximum1024 updates"
-    ],
-    "model_quality_accepted_before_run": false,
-    "execution_finished": true,
-    "exit_code": 0,
-    "finished_utc": "2026-10-13T09:31:13.179618+00:00",
-    "completed_updates_per_run": 1024,
-    "actual_asset_exposures_per_run": 8192,
-    "first_passing_updates": {
-      "a": 256,
-      "b": 128
-    },
-    "selected_priority": "a",
-    "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/ab_fit8_v1_result.json",
-    "result_sha256": "d2ea8410703d39e93c17454768db88949bd4c4496e66864f9f41994ccf8a51e3",
-    "primary_review_sha256": "3e6605ec7b19ced32534598594f637f980527ceb1387382f4ca40eb9d75df19f",
-    "conclusion": "Both A and B pass complete fixed8/T4 main+aux fitting, first A256/B128, final both32/32 exact XYZ token sequences and8/8 exact auxiliary trees, J2J0. A firstpasses after2048actualassetexposures, equal to old failedB1constantLRtotal: new effectivebatch8/OneCycle recipe removes the old fitting failure without requiring architecture change, but their individual causal contributions are not separated. Prefer A pending fixed64/heldout/valid comparison; do not run C/D. Formal training remains blocked until G3 and capacity."
+      "unexpected accepted resource count/type or s_vmem",
+      "duplicate reservation request",
+      "grant verified",
+      "scheduler rejection"
+    ]
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",
@@ -614,6 +573,121 @@
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
+    {
+      "label": "fusion_ab_fit8_v1",
+      "mode": "fit",
+      "operation": "train",
+      "status": "completed_G2_accepted_pending_G3",
+      "complete": true,
+      "accepted": true,
+      "gpu_work_allowed": false,
+      "formal_training_allowed": false,
+      "authorization": "User explicitly requested isolated dual-H100 A/B fusion experiments with auxiliary supervision and implementation of the approved plan.",
+      "prepared_utc": "2026-10-13T07:37:45+00:00",
+      "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
+      "code_commit": "384cb656571150965c7577e2011e72221da5e40d",
+      "required_entrypoint": "model_training/rigweave/scripts/probe_virtual_fusion.py",
+      "resources": {
+        "allocation": 129547842,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "one_independent_process_per_gpu": true,
+        "repo": "/work/wangyy/virtual_fusion_20261013/code"
+      },
+      "initialization": {
+        "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+        "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+        "model_config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+        "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+        "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+        "seed": 20261013
+      },
+      "manifests": {
+        "train": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+          "rows": 18002,
+          "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+        },
+        "valid": {
+          "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+          "rows": 967,
+          "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+        }
+      },
+      "runs": [
+        {
+          "label": "fusion_a_fit8_v1",
+          "mode": "fit",
+          "fusion_mode": "virtual_queries_real",
+          "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
+          "config_sha256": "d5670fd1d9d1e9ca55f59911599effb1e663f26ad4b8eca0feba94e5d727c2f0",
+          "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
+          "physical_gpu": 5,
+          "max_updates": 1024,
+          "effective_assets_per_update": 8,
+          "actual_asset_exposures": 8192,
+          "command": [
+            "/home/wangyy/miniconda3/envs/mygs/bin/python",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
+            "--config",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_a_fit8_v1.json",
+            "--output",
+            "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_a_fit8_v1",
+            "--mode",
+            "fit"
+          ]
+        },
+        {
+          "label": "fusion_b_fit8_v1",
+          "mode": "fit",
+          "fusion_mode": "real_queries_virtual",
+          "config": "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
+          "config_sha256": "120f7ec0d28eaf9db6fab655f7da69fe5177855d0cbfcffb8806d0ad312006f3",
+          "output": "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
+          "physical_gpu": 7,
+          "max_updates": 1024,
+          "effective_assets_per_update": 8,
+          "actual_asset_exposures": 8192,
+          "command": [
+            "/home/wangyy/miniconda3/envs/mygs/bin/python",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/rigweave/scripts/probe_virtual_fusion.py",
+            "--config",
+            "/work/wangyy/virtual_fusion_20261013/code/model_training/experiments/fusion_b_fit8_v1.json",
+            "--output",
+            "/home/wangyy/evorig/outputs/virtual_fusion_20261013/fusion_b_fit8_v1",
+            "--mode",
+            "fit"
+          ]
+        }
+      ],
+      "acceptance": "Same fixed8/T4, full initial weights AND actual input tensors AND nonvariant config hash must match before any optimizer update. Each fresh candidate gets1024 updates/effective8/8192assets, OneCycle peak1e-4 warmup.1 div5 final10 and lambda.1. Evaluate0/32/64/128/256/512/1024; keep first passing checkpoint but do not shorten either baseline. Main:32/32 valid naturalEOS,mean teacher accuracy>=.99,>=29/32 exactcount+J2J<=4/256+(rawquantizedF1>=.95 OR exact targettokens). Auxiliary:8/8 validEOS+exactDFStree at the SAME checkpoint. Primary selects only after both runs complete; no automatic next stage.",
+      "previous_audit_result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
+      "stop_conditions": [
+        "nonfinite loss/gradient",
+        "OOM",
+        "config/source/initialization/input mismatch",
+        "each run maximum1024 updates"
+      ],
+      "model_quality_accepted_before_run": false,
+      "execution_finished": true,
+      "exit_code": 0,
+      "finished_utc": "2026-10-13T09:31:13.179618+00:00",
+      "completed_updates_per_run": 1024,
+      "actual_asset_exposures_per_run": 8192,
+      "first_passing_updates": {
+        "a": 256,
+        "b": 128
+      },
+      "selected_priority": "a",
+      "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/ab_fit8_v1_result.json",
+      "result_sha256": "d2ea8410703d39e93c17454768db88949bd4c4496e66864f9f41994ccf8a51e3",
+      "primary_review_sha256": "3e6605ec7b19ced32534598594f637f980527ceb1387382f4ca40eb9d75df19f",
+      "conclusion": "Both A and B pass complete fixed8/T4 main+aux fitting, first A256/B128, final both32/32 exact XYZ token sequences and8/8 exact auxiliary trees, J2J0. A firstpasses after2048actualassetexposures, equal to old failedB1constantLRtotal: new effectivebatch8/OneCycle recipe removes the old fitting failure without requiring architecture change, but their individual causal contributions are not separated. Prefer A pending fixed64/heldout/valid comparison; do not run C/D. Formal training remains blocked until G3 and capacity."
+    },
     {
       "label": "fusion_aux_audit_v1",
       "mode": "aux_audit",

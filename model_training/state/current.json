@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -329,10 +329,10 @@
     "label": "fusion_aux_audit_v1",
     "mode": "aux_audit",
     "operation": "train",
-    "status": "prepared",
-    "complete": false,
+    "status": "completed_diagnostic_not_model_accepted",
+    "complete": true,
     "accepted": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "read_only_checkpoint_audit": true,
     "optimizer_updates_allowed": 0,
@@ -404,7 +404,14 @@
       "checkpoint/config/source mismatch",
       "OOM",
       "audit complete"
-    ]
+    ],
+    "execution_finished": true,
+    "exit_code": 0,
+    "finished_utc": "2026-10-13T07:31:48.689003+00:00",
+    "result_receipt": "/home/wangyy/jobs/virtual_fusion_20261013_v1/aux_audit_v1_result.json",
+    "result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
+    "audit_sha256": "7c38e2f6686a90768c7e1d078b8f5179be58a609a79b8485ca38877cfff62d11",
+    "conclusion": "Old lambda.1 checkpoint emits one identical five-joint auxiliary tree for all8 assets: validEOS8/8 but exactparents/count1/8, swapped predictions unchanged8/8. Mean auxiliary teacherCE .06473752, swap .06509500. Parameter state unchanged; zero optimizer updates. Low auxiliary loss is not successful asset-conditioned free generation. Proceed only to the approved fresh paired A/B experiment, not formal training."
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

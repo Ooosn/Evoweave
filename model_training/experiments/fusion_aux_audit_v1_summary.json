@@ -1,0 +1,21 @@
+{
+  "stage": "read_only_auxiliary_checkpoint_audit",
+  "execution_complete": true,
+  "optimizer_updates": 0,
+  "source_commit": "e7f4a457bb460d2598da6e100f1ee79a42247bee",
+  "checkpoint_sha256": "82eeaaa7c9c5373b8f850c77c82fd9322384a9cf11806dc6b2a308c90445157e",
+  "checkpoint_step": 2048,
+  "assets": 8,
+  "valid_eos": 8,
+  "exact_parent_trees": 1,
+  "exact_joint_count": 1,
+  "unique_predictions": 1,
+  "predicted_joint_count": 5,
+  "changed_after_cross_asset_swap": 0,
+  "mean_teacher_ce": 0.0647375185508281,
+  "mean_swapped_teacher_ce": 0.06509499996900558,
+  "parameter_state_unchanged": true,
+  "result_sha256": "b57104242bbed1132edd0ad8f8e68b6f27dba52714dfa2f1f1c742670d6744ae",
+  "audit_sha256": "7c38e2f6686a90768c7e1d078b8f5179be58a609a79b8485ca38877cfff62d11",
+  "accepted_as_candidate": false
+}

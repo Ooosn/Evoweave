@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T09:54:50+00:00",
+  "updated_at": "2026-10-13T21:54:08.336282+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -145,8 +145,15 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_queued_no_current_H100_grant",
-    "qlogin_job_id": null,
+    "status": "replacement_granted_verified",
+    "qlogin_job_id": 129839822,
+    "host": "pcg02i",
+    "physical_gpus": [5, 7],
+    "gpu_uuids": ["GPU-15b237a2-cd50-5c84-2112-ded36d4eccaf", "GPU-f2bce487-f097-756f-7c82-1d5c4f97c824"],
+    "start_utc": "2026-10-13T21:52:02.966000+00:00",
+    "expiry_utc": "2026-10-17T21:52:02.966000+00:00",
+    "h_rt_seconds": 345600,
+    "ssd_verified": "/work XFS /dev/md0 RAID0 NVMe ROTA=0 on pcg02",
     "previous_job_id": 129547842,
     "previous_host": "pcg01i",
     "previous_physical_gpus": [
@@ -155,11 +162,11 @@
     ],
     "previous_end_utc": "2026-10-13T09:37:52.601+00:00",
     "end_reason": "scheduler96h_h_rt_not_agent_release",
-    "authorized_current_physical_gpus": [],
-    "pending_request": "virtual_fusion_2h_1013_v1",
-    "pending_job_id": 129839822,
+    "authorized_current_physical_gpus": [5, 7],
+    "pending_request": null,
+    "pending_job_id": null,
     "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
-    "decision": "No suitable authorizedH100grant remains. Requeue same count under existing experiment authorization; never compute on the expired grant."
+    "decision": "Replacement grant verified on NEW node pcg02i; preserve keepalive. Publish exact next stage before GPU work and recheck live remaining walltime plus safety margin before every long launch."
   },
   "active_probe": {
     "name": "puppeteer_topology_alpha075_sequence_mean_ft300",
@@ -332,14 +339,14 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "The oldH100grant ended at the scheduler96h hard limit after both fits completed. Publish/request only a replacement twoH100 reservation, verify the new allocation and record it before publishing the medium rawcache/model stage. A remains preferred; noC/D expansion and no model work on the expired grant.",
+  "next_required_result": "Replacement twoH100 grant verified on pcg02i. Prepare isolated fresh code and fixed104 raw geometry/target cache, then publish the matched64-asset A/B stage. NoC/D expansion; A remains preferred; formal requires medium and capacity review.",
   "active_operation": {
     "label": "fusion_h100_reallocation_v1",
     "mode": "allocation_only",
     "operation": "submit",
-    "status": "queued",
-    "complete": false,
-    "accepted": false,
+    "status": "completed_grant_verified",
+    "complete": true,
+    "accepted": true,
     "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "model_execution_allowed": false,
@@ -353,8 +360,8 @@
       "mem_req": "64G",
       "virtual_memory": "unlimited",
       "queue_h_rt_seconds": 345600,
-      "physical_devices": "unknown_until_scheduler_grant_and_UUID_mapping",
-      "host": "unknown_until_scheduler_grant"
+      "physical_devices": [5, 7],
+      "host": "pcg02i"
     },
     "request": {
       "job_name": "virtual_fusion_2h_1013_v1",
@@ -401,10 +408,12 @@
     ],
     "job_id": 129839822,
     "submitted_utc": "2026-10-13T09:53:03+00:00",
-    "last_observed_utc": "2026-10-13T09:54:50+00:00",
+    "last_observed_utc": "2026-10-13T21:54:08.336282+00:00",
     "accepted_scheduler_resources": "h100=2,mem_req=64G; no s_vmem",
-    "scheduler_state": "qw",
-    "next_action": "wait_for_grant_then_verify_UUID_mapping_and_new_stage_permissions"
+    "scheduler_state": "r",
+    "grant_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/allocation_monitor/grant_inspection.json",
+    "lifetime_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/allocation_monitor/grant_lifetime.json",
+    "next_action": "publish_exact_medium_cache_stage_then_prepare_new_node"
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

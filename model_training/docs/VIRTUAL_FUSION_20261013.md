@@ -26,9 +26,12 @@ the main prediction path. Fresh trials load official checkpoint SHA
 - HGC outputs: `/home/wangyy/evorig/outputs/virtual_fusion_20261013/`.
 - Initial qlogin129547842 (physicalH100s5/7) completed both fitting runs,
   then expired at the scheduler96h hard limit on2026-10-13 18:37JST.
-  Replacement job129839822 requests exactly twoH100s/mem64G and was queued
-  at18:53JST. Read current state and live grant before use; oldGPUindices
-  are no longer authorized. Verify SSD storage again if the host changes.
+  Replacement job129839822 was granted on pcg02i at2026-10-14 06:52:02.966JST,
+  exactly twoH100s/mem64G, physical5/7 verified by UUID on this NEW node.
+  The new /work is verified NVMe RAID0/XFS. Preserve its keepalive; the96h
+  limit expires at2026-10-18 06:52:02.966JST. Before every long launch,
+  refresh live remaining walltime and require full duration plus safety margin.
+  The expired pcg01i grant is never an execution destination.
 - User authorized GitHub publication of code/config/result summaries only.
   No datasets, weights or credentials. Every output is exclusive-create.
 

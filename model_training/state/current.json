@@ -341,7 +341,7 @@
   },
   "next_required_result": "User correction: normal online training on the same5000 assets for legacy/A/B, eight reserved frames and fresh T2..24 poses each visit, exactly20000 asset exposures per route with evaluations0/10000/20000. Finish CPU selection and actual physical-batch measurements, then run two-rank comparisons after legacy64 completes. Existing legacy64 continues unchanged in its frozen checkout; no new fixed-small-cohort fitting gate or automatic80016/full-data/C-D run.",
   "active_operation": {
-    "label": "normal_capacity_a_single_v1",
+    "label": "normal_capacity_a_single_v2",
     "mode": "normal5000",
     "operation": "train",
     "status": "profile_published_not_yet_launched",
@@ -354,12 +354,12 @@
     "code_commit": "0804a754d4b20a9a6ac922bae4a68734b031f1a3",
     "runs": [
       {
-        "name": "normal_capacity_a_single_v1",
+        "name": "normal_capacity_a_single_v2",
         "mode": "profile",
         "approved": true,
-        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_capacity_single_v1.json",
-        "config_sha256": "7aee6d07c4b585897fac23e360e40b60484bffca19e457019825fbefab737550",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_capacity_a_single_v1",
+        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_capacity_single_v2.json",
+        "config_sha256": "89b7ca97bba8ab98be6ae6b350f06f93487dba424ce24da6b98b1e2c6fe15962",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_capacity_a_single_v2",
         "physical_gpus": [7],
         "allocation": 129839822,
         "host": "pcg02i",
@@ -369,6 +369,15 @@
         "stop_conditions": ["capacity budget complete", "allocated memory above85percent", "OOM", "nonfinite loss or required gradients", "identity or source drift"]
       }
     ],
+    "previous_attempt": {
+      "label": "normal_capacity_a_single_v1",
+      "exit_code": 1,
+      "optimizer_updates": 0,
+      "model_initialization_completed": false,
+      "reason": "Strict subset declaration equality rejected the logical /home manifest path against the CPU receipt's canonical /hshare1 path. File hashes/content matched; v2 uses the exact receipt-derived manifest without weakening validation.",
+      "source_commit": "0a0691613253729d0e8375c0939464d4cefe5fea",
+      "evidence": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_capacity_monitor/fetch_receipt.json"
+    },
     "routes": ["legacy", "a", "b"],
     "target_assets_per_route": 20000,
     "evaluation_assets": [0, 10000, 20000],

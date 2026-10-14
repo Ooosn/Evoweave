@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-14T04:15:10Z",
+  "updated_at": "2026-10-14T04:35:35.857850+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -344,7 +344,12 @@
     "label": "fusion_legacy_medium_v1",
     "mode": "reference_compare",
     "operation": "train",
-    "status": "prepared",
+    "status": "running",
+    "execution_source_commit": "2658d6cd979933175c66d1c1ac06d22b958be090",
+    "first_update_verified_utc": "2026-10-14T04:30:29.791406+00:00",
+    "first_update_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/legacy_monitor/first_update_receipt.json",
+    "first_update_receipt_sha256": "6e170bf2a3bd640f0e61f0c6f572a923766fa5f000e6028fe4410bbb6a84c38f",
+    "startup_verification": "Before optimizer updates, actual inputs/shared base initial tensors/order exactly matched A/B. Actual first update completed on pcg02 physicalGPU5 PID2616479 with finite positive legacy surface/motion/XYZ gradients. Fusion and auxiliary branches unused as intended; their zero trace fields are not quality scores. Node source remains frozen until reference completion.",
     "complete": false,
     "accepted": false,
     "gpu_work_allowed": true,

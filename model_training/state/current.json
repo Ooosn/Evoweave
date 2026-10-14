@@ -341,10 +341,10 @@
   },
   "next_required_result": "User approved starting normal5000 training: legacy->A->B->C->D sequentially, both H100s on one model. Keep accepted data/RT/loading unchanged; fresh T2..24 and eight heldout frames,20000 asset exposures with eval0/5000/10000/15000/20000. Legacy64 completed512/512 exit0. Measure physical-batch capacity and launch the legacy normal run first; no repeat data screening, new data interface, small-fit gate or80016 full-data run.",
   "active_operation": {
-    "label": "normal_capacity_legacy_dual_v3",
+    "label": "normal_legacy_v1",
     "mode": "normal5000",
     "operation": "train",
-    "status": "capacity_checks_authorized",
+    "status": "normal_training_authorized",
     "complete": false,
     "accepted": false,
     "gpu_work_allowed": true,
@@ -354,19 +354,25 @@
     "code_commit": "3cff28baf0682632603db879fead1d77b57c7e53",
     "runs": [
       {
-        "name": "normal_capacity_legacy_dual_v3",
-        "mode": "profile",
+        "name": "normal_legacy_v1",
+        "mode": "train",
         "approved": true,
         "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_legacy_v2.json",
         "config_sha256": "d0db6871431b14871158ce60b4b6994941fc135dc689ebade9333b47859c424f",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_capacity_legacy_dual_v3",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_legacy_v1",
         "physical_gpus": [5, 7],
         "allocation": 129839822,
         "host": "pcg02i",
-        "remaining_walltime_minimum_seconds": 14400,
+        "remaining_walltime_minimum_seconds": 198000,
         "single_rank_capacity_only": false,
-        "training_allowed": false,
-        "stop_conditions": ["capacity budget complete", "allocated memory above85percent", "OOM", "nonfinite loss or required gradients", "identity or source drift"]
+        "training_allowed": true,
+        "capacity_receipt": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_legacy_v1.json",
+          "sha256": "f4fa804296449b3474c07711b33787d9c7009fc1171de5e397ab7cdecb3cd23c"
+        },
+        "physical_batch_per_rank": {"T2-6": 12, "T7-8": 8, "T9-12": 4, "T13-18": 2, "T19-24": 1},
+        "walltime_reserve_basis": "55h: stress-bucket upper estimate40.66h plus25percent and4h initialization/evaluation/checkpoint margin. Not observed normal-data throughput.",
+        "stop_conditions": ["20000 asset exposures and final evaluation complete", "OOM", "nonfinite loss or gradients", "identity or source drift"]
       }
     ],
     "last_capacity_attempt": {
@@ -401,7 +407,7 @@
     "effective_assets_per_update": 48,
     "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
     "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
-    "preparation_constraint": "Run only the named two-rank legacy capacity exploration now. Publish each normal training run after reviewing measured physical-batch capacity. Never modify the preserved2658d6c legacy64 checkout or release allocation129839822. No repeat data screening or new data interface."
+    "preparation_constraint": "Start only normal_legacy_v1 now, from fresh official weights, with the reviewed14-case two-rank capacity receipt. Do not reuse profile weights. Run the full20000-exposure budget without quality early stopping; then primary continues A/B/C/D one at a time. Never modify preserved legacy64 outputs or release allocation129839822. No repeat data screening or new data interface."
   },
   "preserved_legacy_operation": {
     "label": "fusion_legacy_medium_v1",

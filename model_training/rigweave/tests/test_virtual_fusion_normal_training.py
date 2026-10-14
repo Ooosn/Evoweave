@@ -2,6 +2,7 @@
 from contextlib import nullcontext, redirect_stdout
 from copy import deepcopy
 import io
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -23,12 +24,16 @@ def namespace():
     result = {'deepcopy': deepcopy, 'np': np, 'Path': Path, 'json': json, 'torch': torch,
               'core': core, 'MatchedFrameStream': MatchedFrameStream,
               'PURPOSE': 'normal5000_trend', 'ENTRYPOINT': 'model_training/rigweave/scripts/train_virtual_fusion_normal.py',
-              'ROUTES': {'legacy': 'virtual_queries_real', 'a': 'virtual_queries_real', 'b': 'real_queries_virtual'},
+              'ROUTES': {'legacy': 'virtual_queries_real', 'a': 'virtual_queries_real', 'b': 'real_queries_virtual',
+                         'c': 'relative_position', 'd': 'token_film'},
+              'MILESTONES': [5000, 10000, 15000, 20000], 'hashlib': hashlib,
               'BASE_INITIAL_SHA256': 'a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635',
               'SOURCE_HASHES': {'train': '653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27',
                                 'valid': 'fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a'},
               'sha256': core.sha256, 'write_json': core.write_json, 'auxiliary_summary': core.auxiliary_summary}
+    functions('probe_virtual_query_lambda.py', ['parameter_fingerprint'], result)
     functions('train_virtual_fusion_normal.py', ['validate_config', 'make_stream', 'comparison_contract',
+        'initialization_fingerprints',
         'verify_selection', 'selected_evaluation_rows', 'record_samples', 'validate_evaluation_rows',
         'run_evaluation', 'validate_capacity', 'declared_operation', 'capacity_result'], result)
     return result
@@ -48,7 +53,7 @@ def config(route='a'):
     value['data']['manifests']['train'] = {'path': '/subset.jsonl', 'rows': 5000, 'sha256': '0' * 64}
     value['optimization'].update(schedule_samples=20000, clip_grad_norm=1, auxiliary_weight=0 if route == 'legacy' else .1)
     value['training'] = {'target_assets': 20000, 'effective_assets_per_update': 48,
-        'checkpoint_assets': [10000, 20000], 'evaluation_assets': [10000, 20000],
+        'checkpoint_assets': [5000, 10000, 15000, 20000], 'evaluation_assets': [5000, 10000, 15000, 20000],
         'frame_policy': {str(t): 4 for t in range(2, 25)}}
     value['normal_match'] = {'base_initial_state_sha256': ns['BASE_INITIAL_SHA256'],
                              'selection': {'path': '/selection.json', 'sha256': '1' * 64}}
@@ -62,23 +67,37 @@ class NormalTrainingTests(unittest.TestCase):
     def test_exact_budget_and_route_contracts(self):
         ns = namespace()
         contracts, plans = [], []
-        for route in ('legacy', 'a', 'b'):
+        for route in ('legacy', 'a', 'b', 'c', 'd'):
             plan = config(route)
-            self.assertEqual(ns['validate_config'](plan, 'train', 2), [10000, 20000])
+            self.assertEqual(ns['validate_config'](plan, 'train', 2), [5000, 10000, 15000, 20000])
             contracts.append(ns['comparison_contract'](plan))
             plans.append(ns['make_stream'](plan, 0, 2).plan_sha256)
             ns['validate_config'](plan, 'profile', 1)
-        self.assertEqual(contracts[0], contracts[1])
-        self.assertEqual(contracts[1], contracts[2])
+        self.assertTrue(all(contract == contracts[0] for contract in contracts))
         self.assertEqual(len(set(plans)), 1)
         counts = []
         position = 0
         while position < 20000:
-            size = ns['core'].update_asset_target(position, 20000, 48, [10000, 20000], 2) * 2
+            size = ns['core'].update_asset_target(position, 20000, 48, [5000, 10000, 15000, 20000], 2) * 2
             counts.append(size)
             position += size
         self.assertEqual(counts, ns['make_stream'](config(), 0, 2).update_sizes.tolist())
-        self.assertEqual(len(counts), 418)
+        self.assertEqual(len(counts), 420)
+
+    def test_five_routes_keep_identical_common_initial_tensors(self):
+        from test_virtual_query_fusion import make_model
+        ns = namespace()
+        expected = ns['initialization_fingerprints'](make_model(), 'a')
+        for route, mode in ns['ROUTES'].items():
+            model = make_model(mode)
+            actual = ns['initialization_fingerprints'](model, route)
+            self.assertEqual(actual['shared_initial_state_sha256'], expected['shared_initial_state_sha256'])
+            if route in {'c', 'd'}:
+                self.assertNotEqual(actual['full_base_initial_state_sha256'], expected['full_base_initial_state_sha256'])
+            with torch.no_grad():
+                model.motion_encoder.norm.weight.add_(1)
+            changed = ns['initialization_fingerprints'](model, route)
+            self.assertNotEqual(changed['shared_initial_state_sha256'], expected['shared_initial_state_sha256'])
 
     def test_rejects_old_budget_fixed_frames_cache_and_unmatched_settings(self):
         ns = namespace()
@@ -143,7 +162,7 @@ class NormalTrainingTests(unittest.TestCase):
 
     def test_capacity_needs_both_ranks_and_every_route_specific_stress_case(self):
         ns = namespace()
-        for route in ('legacy', 'a', 'b'):
+        for route in ('legacy', 'a', 'b', 'c', 'd'):
             plan = config(route)
             receipt = {'accepted': True, 'world_size': 2, 'capacity_contract': ns['core'].capacity_contract(plan),
                 'approved_cases': [{'frames': t, 'batch_per_rank': 4, 'stress_group': group,

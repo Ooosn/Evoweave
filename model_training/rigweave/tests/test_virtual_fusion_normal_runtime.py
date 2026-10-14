@@ -13,7 +13,7 @@ from virtual_fusion_normal_runtime import MatchedFrameStream
 
 def stream(rank=0, world=2, batch=7, state=None, **changes):
     args = dict(rank=rank, world_size=world, seed=20261013, target_assets=20000, effective_assets=48,
-                update_boundaries=[10000, 20000],
+                update_boundaries=[5000, 10000, 15000, 20000],
                 frame_policy={str(t): batch for t in range(2, 25)}, manifest_sha256='0' * 64, state=state)
     args.update(changes)
     return MatchedFrameStream(range(5000), **args)
@@ -54,9 +54,10 @@ class MatchedScheduleTests(unittest.TestCase):
         for size in left.update_sizes:
             self.assertEqual(len({request.frames for request in global_requests[start:start+int(size)]}), 1)
             start += int(size)
-        self.assertEqual(Counter(left.update_sizes), {48: 416, 16: 2})
+        self.assertEqual(Counter(left.update_sizes), {48: 416, 8: 4})
+        self.assertEqual(Counter(row.item_index for row in global_requests[:5000]), {i: 1 for i in range(5000)})
         self.assertEqual(Counter(row.item_index for row in global_requests[:10000]), {i: 2 for i in range(5000)})
-        self.assertEqual(left.global_ends[208], 10000)
+        self.assertEqual(left.global_ends[104::105].tolist(), [5000, 10000, 15000, 20000])
         self.assertEqual(left.global_ends[-1], 20000)
 
     def test_different_visits_to_an_asset_use_different_sampling_seeds(self):

@@ -31,7 +31,9 @@ CODE_ROOT = Path('/work/wangyy/virtual_fusion_20261013/normal_code')
 OUTPUT_ROOT = Path('/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014')
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_fusion_normal.py'
 PURPOSE = 'normal5000_trend'
-ROUTES = {'legacy': 'virtual_queries_real', 'a': 'virtual_queries_real', 'b': 'real_queries_virtual'}
+ROUTES = {'legacy': 'virtual_queries_real', 'a': 'virtual_queries_real', 'b': 'real_queries_virtual',
+          'c': 'relative_position', 'd': 'token_film'}
+MILESTONES = [5000, 10000, 15000, 20000]
 SOURCE_HASHES = {
     'train': '653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27',
     'valid': 'fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a',
@@ -47,7 +49,7 @@ class LegacyRig(ReferenceConditionRig):
 def validate_config(config, mode, world):
     route = config.get('route')
     if config.get('purpose') != PURPOSE or route not in ROUTES:
-        raise ValueError('the normal comparison needs its explicit purpose and legacy/a/b route')
+        raise ValueError('the normal comparison needs its explicit purpose and legacy/a/b/c/d route')
     if mode not in {'profile', 'train'} or world not in {1, 2} or (mode == 'train' and world != 2):
         raise ValueError('normal training requires two ranks; only profiling may use one')
     data, plan, optim = config['data'], config['training'], config['optimization']
@@ -62,8 +64,8 @@ def validate_config(config, mode, world):
         raise ValueError('validation data version changed')
     if (plan['target_assets'], plan['effective_assets_per_update'], optim['schedule_samples']) != (20000, 48, 20000):
         raise ValueError('normal comparison requires exactly 20000 asset exposures and effective batch48')
-    if plan['checkpoint_assets'] != [10000, 20000] or plan['evaluation_assets'] != [10000, 20000]:
-        raise ValueError('normal trend checkpoints must be exactly 10000 and 20000 asset exposures')
+    if plan['checkpoint_assets'] != MILESTONES or plan['evaluation_assets'] != MILESTONES:
+        raise ValueError('normal trend checkpoints must be at each 5000 asset exposures')
     expected_optim = {'schedule': 'onecycle', 'peak_lr': 1e-4, 'warmup_fraction': .1,
                       'div_factor': 5, 'final_div_factor': 10, 'weight_decay': 0, 'clip_grad_norm': 1,
                       'schedule_samples': 20000, 'auxiliary_weight': 0 if route == 'legacy' else .1}
@@ -84,7 +86,7 @@ def validate_config(config, mode, world):
         raise ValueError('normal online training must not inherit a fixed-pose cache or formal release')
     # Construction validates every physical-batch entry and exact milestone boundary.
     make_stream(config, rank=0, world=world)
-    return [10000, 20000]
+    return list(MILESTONES)
 
 
 def make_stream(config, rank, world):
@@ -92,7 +94,15 @@ def make_stream(config, rank, world):
         seed=config['data']['stream_seed'], target_assets=config['training']['target_assets'],
         effective_assets=config['training']['effective_assets_per_update'],
         frame_policy=config['training']['frame_policy'], manifest_sha256=config['data']['manifests']['train']['sha256'],
-        update_boundaries=[10000, 20000])
+        update_boundaries=MILESTONES)
+
+
+def initialization_fingerprints(model, route):
+    full = parameter_fingerprint(model)
+    # C/D add fusion-only parameters; all pre-existing tensors must still match A/B.
+    shared = (parameter_fingerprint(model, exclude_parts=('.relative_position_bias.', '.token_film.'))
+              if route in {'c', 'd'} else full)
+    return {'full_base_initial_state_sha256': full, 'shared_initial_state_sha256': shared}
 
 
 def comparison_contract(config):
@@ -317,12 +327,12 @@ def main():
         verify_selection(config, entries)
         stream = make_stream(config, rank, world)
         model, tokenizer, codec, initial = build_model(config, device)
-        initial.update(full_base_initial_state_sha256=parameter_fingerprint(model),
+        initial.update(**initialization_fingerprints(model, config['route']),
                        comparison_contract_sha256=tree_fingerprint(comparison_contract(config)),
                        exposure_plan_sha256=stream.plan_sha256, source=source, config_sha256=sha256(args.config),
                        route=config['route'], auxiliary_applicable=config['route'] != 'legacy',
                        old_method_trained_weights_loaded=False, optimizer_updates=0)
-        if initial['full_base_initial_state_sha256'] != BASE_INITIAL_SHA256:
+        if initial['shared_initial_state_sha256'] != BASE_INITIAL_SHA256:
             raise ValueError('actual shared initialization differs before optimizer creation')
         write_json(args.output / f'initialization_rank_{rank}.json', initial)
         write_json(args.output / f'exposure_plan_rank_{rank}.json', stream.plan_report())

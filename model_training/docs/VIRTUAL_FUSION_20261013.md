@@ -11,17 +11,17 @@ read-only references, not execution destinations. GPU authority remains in
 The user's2026-10-14 correction supersedes the fixed-small-cohort promotion
 sequence below. Fixed8/fixed64 runs are diagnostic history, not a substitute
 for normal online training and not an additional prerequisite for this stage.
-The already-running legacy64/T4 job must finish its original512 updates;
-do not stop, shorten, modify or release its allocation.
+The legacy64/T4 reference completed all512 updates and its final evaluation
+at2026-10-14T12:46:58Z with exit0. Preserve its outputs and allocation129839822.
+The user explicitly approved starting the normal sequence at2026-10-14T13:16Z:
+legacy -> A -> B -> C -> D, using both physical GPUs5/7 for ONE route at a time.
 
-Prepare one immutable5000-asset subset of the current18002 training rows,
-seed20261013, source quotas base4397/addition603, proportional joint-count
-bins and original manifest row order/bytes/root_rt preserved. No validation
-asset may enter training. Confirm actual stored frame counts from NPZ headers:
-each selected asset must retain at least24 frames after reserving eight.
-The user expects sequences above40 frames; this expectation is not a substitute
-for measuring the stored-frame distribution. Do not silently drop/resample
-an asset that fails validation.
+Use the ALREADY PREPARED immutable5000-row subset, SHA256
+`a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88`.
+Its original rows and root_rt metadata are preserved, with4397 base/603 addition
+assets and no validation overlap. Data selection/screening is complete: do not
+repeat NPZ censuses, rebuild RT, or introduce another data adapter. The focused
+RT consumer review and12 existing CPU tests passed on2026-10-14.
 
 Every training visit selects a fresh input count T uniformly from2..24 and
 resamples poses from ALL non-heldout frames. T is shared within each global
@@ -32,13 +32,13 @@ all-input-frame main supervision remain unchanged. There is no fixed-pose or
 learned-feature cache. Exposure-index seeds make asset order and pose/surface
 draws independent of the physical microbatch policy.
 
-Compare legacy query-first, A and B from the same official initial shared
+Compare legacy query-first, A, B, C and D from the same official initial shared
 tensors. Preserve effective batch48, BF16, OneCycle peak1e-4/warmup.1/div5/
-final10, weight_decay0, clip1. A/B retain auxiliary weight.1; legacy has no
+final10, weight_decay0, clip1. A/B/C/D retain auxiliary weight.1; legacy has no
 auxiliary task. Every route receives EXACTLY20000 asset exposures: four
-shuffled visits to each of5000 assets. Evaluate at0/10000/20000; 10000 is
-exactly two visits per asset. Each10000 segment has208 updates of48 plus
-one update of16, for418 updates total. The old80016 full-dataset budget does
+shuffled visits to each of5000 assets. Evaluate at0/5000/10000/15000/20000.
+Each5000 segment is one visit per asset:104 updates of48 plus one update of8,
+for420 updates total. The old80016 full-dataset budget does
 not apply to this trend comparison. No fit-to-perfect stopping criterion.
 
 Use a deterministic random panel of32 training assets and128 independent
@@ -47,16 +47,17 @@ asset; these are not necessarily the exact input sets seen during optimization.
 Heldout evaluation uses ALL eight reserved poses for the SAME32 assets. Each
 validation asset contributes eight poses. Thus every checkpoint has1536 main
 generations (256/256/1024); auxiliary evaluation is once per asset/group only
-for A/B. Failure-as-zero F1 includes every generation; conditional J2J reports
+for A/B/C/D. Failure-as-zero F1 includes every generation; conditional J2J reports
 its denominator. This panel monitors trends; it is not the full967 validation
 set or a statistical generalization guarantee.
 
-Measure actual physical batch capacity on the idle physicalGPU7 in an isolated
-checkout. Before training, require two-rank coverage of every selected T/B
+The completed A single-GPU profile measured T24/B6 at55.48GiB and T24/B8
+at70.03GiB (above the85-percent limit). It is not a legacy/DDP capacity receipt.
+Before training, require two-rank coverage of every selected T/B
 combination against long-main-token and geometry extremes, plus longest
-auxiliary targets for A/B; include resident gradients and optimizer state.
+auxiliary targets for A/B/C/D; include resident gradients and optimizer state.
 Report physical batch, accumulation, memory and time, not just effective48.
-After legacy64 exits, run each route on physical5/7 with DDP. Profiles never
+Run each route on physical5/7 with DDP. Profiles never
 supply trained weights. Preserve allocation129839822 and check full runtime
 plus safety margin before every launch.
 
@@ -66,7 +67,9 @@ New outputs: `/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014`.
 The legacy64 source remains frozen at2658d6c in its existing `code` directory.
 `train_virtual_fusion_normal.py` reuses the established training/loss loop;
 its bounded normal5000 authority is separate from full-data formal release.
-Do not launch another full-data80016 run or C/D automatically from old gates.
+Do not launch another full-data80016 run or use historical small-fit gates.
+Only fusion-specific C/D parameter additions are excluded from the common
+initialization fingerprint; record the actual full fingerprint separately.
 
 ## Preserved model and data
 

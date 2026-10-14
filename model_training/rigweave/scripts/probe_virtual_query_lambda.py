@@ -207,9 +207,11 @@ def comparison_plan(config, asset_count):
             'frames_per_asset': frame_count}
 
 
-def parameter_fingerprint(model):
+def parameter_fingerprint(model, *, exclude_parts=()):
     digest = hashlib.sha256()
     for name, tensor in sorted(model.state_dict().items()):
+        if any(part in name for part in exclude_parts):
+            continue
         digest.update(json.dumps([name, str(tensor.dtype), list(tensor.shape)], separators=(',', ':')).encode())
         digest.update(tensor.detach().contiguous().reshape(-1).view(torch.uint8).cpu().numpy().tobytes())
     return digest.hexdigest()

@@ -6,6 +6,68 @@ The older checkout, unpublished working changes and training outputs are
 read-only references, not execution destinations. GPU authority remains in
 `model_training/state/current.json`; this document is not launch permission.
 
+## Current direction: normal 5000-asset trend comparison
+
+The user's2026-10-14 correction supersedes the fixed-small-cohort promotion
+sequence below. Fixed8/fixed64 runs are diagnostic history, not a substitute
+for normal online training and not an additional prerequisite for this stage.
+The already-running legacy64/T4 job must finish its original512 updates;
+do not stop, shorten, modify or release its allocation.
+
+Prepare one immutable5000-asset subset of the current18002 training rows,
+seed20261013, source quotas base4397/addition603, proportional joint-count
+bins and original manifest row order/bytes/root_rt preserved. No validation
+asset may enter training. Confirm actual stored frame counts from NPZ headers:
+each selected asset must retain at least24 frames after reserving eight.
+The user expects sequences above40 frames; this expectation is not a substitute
+for measuring the stored-frame distribution. Do not silently drop/resample
+an asset that fails validation.
+
+Every training visit selects a fresh input count T uniformly from2..24 and
+resamples poses from ALL non-heldout frames. T is shared within each global
+optimizer update so both DDP ranks and every route use the same shape schedule.
+The existing mesh-only motion-FPS/random pose selector, root-RT removal,
+selected-input mesh-union normalization, trackable surface sampling and
+all-input-frame main supervision remain unchanged. There is no fixed-pose or
+learned-feature cache. Exposure-index seeds make asset order and pose/surface
+draws independent of the physical microbatch policy.
+
+Compare legacy query-first, A and B from the same official initial shared
+tensors. Preserve effective batch48, BF16, OneCycle peak1e-4/warmup.1/div5/
+final10, weight_decay0, clip1. A/B retain auxiliary weight.1; legacy has no
+auxiliary task. Every route receives EXACTLY20000 asset exposures: four
+shuffled visits to each of5000 assets. Evaluate at0/10000/20000; 10000 is
+exactly two visits per asset. Each10000 segment has208 updates of48 plus
+one update of16, for418 updates total. The old80016 full-dataset budget does
+not apply to this trend comparison. No fit-to-perfect stopping criterion.
+
+Use a deterministic random panel of32 training assets and128 independent
+validation assets. Training-pool evaluation uses eight non-heldout poses per
+asset; these are not necessarily the exact input sets seen during optimization.
+Heldout evaluation uses ALL eight reserved poses for the SAME32 assets. Each
+validation asset contributes eight poses. Thus every checkpoint has1536 main
+generations (256/256/1024); auxiliary evaluation is once per asset/group only
+for A/B. Failure-as-zero F1 includes every generation; conditional J2J reports
+its denominator. This panel monitors trends; it is not the full967 validation
+set or a statistical generalization guarantee.
+
+Measure actual physical batch capacity on the idle physicalGPU7 in an isolated
+checkout. Before training, require two-rank coverage of every selected T/B
+combination against long-main-token and geometry extremes, plus longest
+auxiliary targets for A/B; include resident gradients and optimizer state.
+Report physical batch, accumulation, memory and time, not just effective48.
+After legacy64 exits, run each route on physical5/7 with DDP. Profiles never
+supply trained weights. Preserve allocation129839822 and check full runtime
+plus safety margin before every launch.
+
+New source: `/work/wangyy/virtual_fusion_20261013/normal_code`.
+New jobs: `/home/wangyy/jobs/virtual_fusion_normal_20261014_v1`.
+New outputs: `/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014`.
+The legacy64 source remains frozen at2658d6c in its existing `code` directory.
+`train_virtual_fusion_normal.py` reuses the established training/loss loop;
+its bounded normal5000 authority is separate from full-data formal release.
+Do not launch another full-data80016 run or C/D automatically from old gates.
+
 ## Preserved model and data
 
 Keep the retained-root RT manifests (18002 train / 967 valid), selected-input

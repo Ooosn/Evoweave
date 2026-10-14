@@ -148,19 +148,21 @@ def load_capacity_selection(config, rows):
         groups[group] = indices
     required = {'longest_main', 'largest_vertices', 'largest_faces', 'largest_geometry'} | {
         f'geometry_t{frames}' for frames in range(2, 25)}
-    if set(groups) != required or len(groups['longest_main']) != 3:
+    if (not required <= set(groups) or set(groups) - required - {'largest_auxiliary'}
+            or len(groups['longest_main']) != 3):
         raise ValueError('capacity selection does not cover all required token/geometry extremes')
     return groups, lengths
 
 
 def capacity_contract(config):
     return {'architecture': config['architecture'], 'initialization': config['initialization'],
+            'execution_route': config.get('reference_route', config['architecture'].get('fusion_mode', 'virtual_queries_real')),
             'auxiliary_codec': config['auxiliary_codec'], 'surface_sampling': config['surface_sampling'],
             'data': {key: config['data'][key] for key in
                      ('manifests', 'max_main_tokens', 'frame_seed', 'surface_seed', 'heldout_frames')},
             'auxiliary_weight': config['optimization']['auxiliary_weight'],
             'physical_gpus': config['runtime']['physical_gpus'], 'precision': 'bfloat16_autocast',
-            'optimizer': 'AdamW', 'allocator_fraction': .95, 'world_size': 2,
+            'optimizer': 'AdamW', 'allocator_fraction': .95, 'world_size': len(config['runtime']['physical_gpus']),
             'stress_selection_sha256': config['capacity']['selection']['sha256']}
 
 
@@ -178,7 +180,9 @@ def validate_capacity_receipt(config, receipt):
                 raise ValueError('formal T/B schedule lacks measured token and geometry capacity coverage')
 
 
-def run_profile(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source):
+def run_profile(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source,
+                *, gradient_check=None):
+    gradient_check = require_gradients if gradient_check is None else gradient_check
     plan = config['capacity']
     if not plan['cases'] or not 0 < plan['allocated_fraction_limit'] <= .90:
         raise ValueError('capacity measurement requires cases and at least ten percent allocated headroom')
@@ -224,10 +228,11 @@ def run_profile(model, tokenizer, codec, initial, entries, config, args, device,
                 losses.append(float(out['loss'].detach()))
                 selected_assets = geometry['asset_id']
                 maximum_tokens = int(target['main_attention_mask'].sum(-1).max())
+                maximum_auxiliary_tokens = int(target['aux_lengths'].max()) if 'aux_lengths' in target else None
                 maximum_joints = int(geometry['joint_count'].max())
                 del surface, target, geometry, out
             norms = grad_norms(model)
-            require_gradients(model, norms, config['optimization']['auxiliary_weight'])
+            gradient_check(model, norms, config['optimization']['auxiliary_weight'])
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), config['optimization']['clip_grad_norm'],
                                                  error_if_nonfinite=True)
             optimizer.step()
@@ -238,6 +243,7 @@ def run_profile(model, tokenizer, codec, initial, entries, config, args, device,
                                  'peak_allocated_bytes': torch.cuda.max_memory_allocated(device),
                                  'peak_reserved_bytes': torch.cuda.max_memory_reserved(device),
                                  'maximum_main_tokens': maximum_tokens,
+                                 'maximum_auxiliary_tokens': maximum_auxiliary_tokens,
                                  'maximum_joints': maximum_joints, 'assets': selected_assets})
         accepted = all(x['peak_allocated_bytes'] <= config['capacity']['allocated_fraction_limit'] *
                        report['gpu_total_bytes'] for x in measurements)
@@ -347,7 +353,8 @@ def save_checkpoint(model, optimizer, stream, config, args, samples, frames, ste
                     'optimizer': optimizer.state_dict(), 'config': config, 'architecture': model.configuration(),
                     'asset_exposures': samples, 'supervised_frame_exposures': frames, 'step': step,
                     'rank_states': ranks, 'initialization': initial, 'source': source,
-                    'diagnostic_only_not_formal_initialization': False}, temporary)
+                    'purpose': config.get('purpose', 'formal_full'),
+                    'diagnostic_only_not_formal_initialization': config.get('purpose', 'formal_full') != 'formal_full'}, temporary)
         temporary.replace(path)
         write_json(args.output / 'latest_checkpoint.json', {'path': str(path), 'bytes': path.stat().st_size,
                                                           'asset_exposures': samples, 'step': step})
@@ -355,14 +362,19 @@ def save_checkpoint(model, optimizer, stream, config, args, samples, frames, ste
         dist.barrier()
 
 
-def run_training(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source):
-    milestones = validate_plan(config, world)
+def run_training(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source,
+                 *, stream=None, milestones=None, evaluation_callback=None, gradient_check=None,
+                 sample_recorder=None):
+    milestones = validate_plan(config, world) if milestones is None else milestones
+    evaluation_callback = run_evaluation if evaluation_callback is None else evaluation_callback
+    gradient_check = require_gradients if gradient_check is None else gradient_check
     plan = config['training']
     dataset = fixed_dataset(entries['train'], config, 2, mode='train')
     optimizer = optimizer_for(model, config)
-    stream = FrameBudgetStream(dataset, rank=rank, world_size=world, seed=config['data']['stream_seed'],
-                               frame_budget=plan['frame_budget'], batch_cap=plan['batch_cap'],
-                               min_frames=config['data']['frames_min'], max_frames=config['data']['frames_max'])
+    if stream is None:
+        stream = FrameBudgetStream(dataset, rank=rank, world_size=world, seed=config['data']['stream_seed'],
+                                   frame_budget=plan['frame_budget'], batch_cap=plan['batch_cap'],
+                                   min_frames=config['data']['frames_min'], max_frames=config['data']['frames_max'])
     wrapped = wrap_model(model, device, world)
     report = {'complete': False, 'rank': rank, 'world_size': world, 'source': source,
               'initialization': initial, 'asset_exposures': 0, 'supervised_frame_exposures': 0,
@@ -397,7 +409,10 @@ def run_training(model, tokenizer, codec, initial, entries, config, args, device
                                        out['auxiliary_loss'].detach() * size, out['main_accuracy'].detach() * size,
                                        totals.new_tensor(size), totals.new_tensor(size * frames)))
                 local_assets += size
-                schedule.append({'assets_per_rank': size, 'frames_per_asset': frames})
+                record = {'assets_per_rank': size, 'frames_per_asset': frames}
+                if sample_recorder is not None:
+                    record.update(sample_recorder(geometry, requests))
+                schedule.append(record)
                 del surface, target, geometry, out
             if world > 1:
                 dist.all_reduce(totals)
@@ -407,7 +422,7 @@ def run_training(model, tokenizer, codec, initial, entries, config, args, device
             normalize_asset_gradients(model.parameters(), global_assets=update_assets, world_size=world)
             if step == 0:
                 norms = grad_norms(model)
-                require_gradients(model, norms, config['optimization']['auxiliary_weight'])
+                gradient_check(model, norms, config['optimization']['auxiliary_weight'])
                 report['first_gradient_groups'] = norms
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), config['optimization']['clip_grad_norm'],
                                                  error_if_nonfinite=True)
@@ -432,7 +447,7 @@ def run_training(model, tokenizer, codec, initial, entries, config, args, device
                 save_checkpoint(model, optimizer, stream, config, args, samples, frames_seen, step,
                                 initial, source, rank, world)
             if samples in plan['evaluation_assets'] or samples == plan['target_assets']:
-                run_evaluation(model, tokenizer, codec, entries, config, args, device, samples, rank, world)
+                evaluation_callback(model, tokenizer, codec, entries, config, args, device, samples, rank, world)
                 report['evaluations'].append(samples)
     report.update(complete=True, finished_utc=datetime.now(timezone.utc).isoformat())
     write_json(args.output / f'rank_{rank}.json', report)

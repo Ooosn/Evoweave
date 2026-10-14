@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-14T04:35:35.857850+00:00",
+  "updated_at": "2026-10-14T07:24:00+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -339,8 +339,28 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A/B medium fully completed with matched512updates; B passes relative main validation but unseen auxiliary exact trees remain0/32. User now requests an actual matched legacy_query_first baseline on same64train/32valid, fullcurves andsamebudget to assess common pipeline andsmallcohort effects. Prepare/publish that boundedreference; formal andC/Dwait.",
+  "next_required_result": "User correction: normal online training on the same5000 assets for legacy/A/B, eight reserved frames and fresh T2..24 poses each visit, exactly20000 asset exposures per route with evaluations0/10000/20000. Finish CPU selection and actual physical-batch measurements, then run two-rank comparisons after legacy64 completes. Existing legacy64 continues unchanged in its frozen checkout; no new fixed-small-cohort fitting gate or automatic80016/full-data/C-D run.",
   "active_operation": {
+    "label": "fusion_normal5000_preparation_v1",
+    "mode": "normal5000",
+    "operation": "inspect",
+    "status": "preparing_cpu_inputs_and_runner",
+    "complete": false,
+    "accepted": false,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_fusion_normal.py",
+    "authorization": "2026-10-14 user explicitly requested normal5000-asset online2..24-frame training with eight heldout frames and larger actual batches; latest budget is10000-20000 asset exposures for trends. Preserve the already-running legacy64 job unchanged.",
+    "runs": [],
+    "routes": ["legacy", "a", "b"],
+    "target_assets_per_route": 20000,
+    "evaluation_assets": [0, 10000, 20000],
+    "effective_assets_per_update": 48,
+    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+    "preparation_constraint": "No GPU launch until exact capacity config/output/device/source is published. IdleGPU7 may profile only after live resource checks and supervisor coordination. Two-rank training waits for legacy64 exit; never modify its2658d6c checkout or release allocation129839822."
+  },
+  "preserved_legacy_operation": {
     "label": "fusion_legacy_medium_v1",
     "mode": "reference_compare",
     "operation": "train",

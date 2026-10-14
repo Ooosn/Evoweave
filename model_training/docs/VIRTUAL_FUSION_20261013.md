@@ -53,9 +53,13 @@ set or a statistical generalization guarantee.
 
 The completed A single-GPU profile measured T24/B6 at55.48GiB and T24/B8
 at70.03GiB (above the85-percent limit). It is not a legacy/DDP capacity receipt.
-Before training, require two-rank coverage of every selected T/B
-combination against long-main-token and geometry extremes, plus longest
-auxiliary targets for A/B/C/D; include resident gradients and optimizer state.
+Before training, require two-rank coverage against long-main-token and geometry
+extremes, plus longest auxiliary targets for A/B/C/D; include resident gradients
+and optimizer state. Use a few physical-batch buckets: profile the maximum T
+in each bucket at its actual B. Shorter T is covered only at the SAME B and for
+identical stress-asset membership from the existing pinned selection. This
+avoids retesting every shorter tensor shape without changing any training input.
+Keep at least15 percent measured allocated-memory headroom.
 Report physical batch, accumulation, memory and time, not just effective48.
 Run each route on physical5/7 with DDP. Profiles never
 supply trained weights. Preserve allocation129839822 and check full runtime

@@ -195,6 +195,50 @@ class NormalTrainingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ns['validate_evaluation_rows'](rows, chosen['train_heldout'], 8)
 
+    def test_capacity_buckets_require_same_batch_and_identical_stress_assets(self):
+        ns, plan = namespace(), config()
+        plan['training']['frame_policy'] = {str(t): 24 if t <= 4 else 8 if t <= 12 else 4
+                                            for t in range(2, 25)}
+        cases = []
+        for frames, batch in ((4, 24), (12, 8), (24, 4)):
+            for group in ('longest_main', f'geometry_t{frames}', 'largest_auxiliary'):
+                aliases = [f'geometry_t{t}' for t in range(2, 25)] if group.startswith('geometry_t') else [group]
+                cases.append({'frames': frames, 'batch_per_rank': batch, 'stress_group': group,
+                    'covered_stress_groups': aliases, 'ranks_approved': [0, 1], 'accumulation_microbatches': 2})
+        receipt = {'accepted': True, 'world_size': 2, 'capacity_contract': ns['core'].capacity_contract(plan),
+                   'approved_cases': cases}
+        ns['validate_capacity'](plan, receipt)
+        for change in ('frame', 'batch', 'membership'):
+            altered = deepcopy(receipt)
+            if change == 'frame':
+                altered['approved_cases'][0]['frames'] = 3
+            elif change == 'batch':
+                altered['approved_cases'][0]['batch_per_rank'] = 23
+            else:
+                altered['approved_cases'][1]['covered_stress_groups'] = ['geometry_t4']
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, 'unmeasured'):
+                ns['validate_capacity'](plan, altered)
+
+    def test_capacity_aliases_are_derived_from_the_pinned_selection(self):
+        ns, plan = namespace(), config()
+        a, b = {'asset_id': 'a', 'path': '/a.npz'}, {'asset_id': 'b', 'path': '/b.npz'}
+        selection = {'groups': {'longest_main': [a], 'largest_auxiliary': [b]},
+                     'geometry_by_frames': {'2': a, '3': b, '24': a}}
+        case = {'frames': 24, 'batch_per_rank': 4, 'stress_group': 'geometry_t24', 'accepted': True,
+                'measurements': [{'peak_allocated_bytes': 10}]}
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'selection.json'
+            path.write_text(json.dumps(selection))
+            plan['capacity']['selection'] = {'path': str(path), 'sha256': ns['sha256'](path)}
+            for rank in (0, 1):
+                (Path(folder) / f'capacity_rank_{rank}.json').write_text(json.dumps({'accepted': True, 'cases': [case]}))
+            result = ns['capacity_result'](SimpleNamespace(output=Path(folder)), plan, 2)
+            self.assertEqual(result['approved_cases'][0]['covered_stress_groups'],
+                             ['longest_main', 'geometry_t2', 'geometry_t24'])
+            path.write_text('{}')
+            with self.assertRaisesRegex(ValueError, 'selection changed'):
+                ns['capacity_result'](SimpleNamespace(output=Path(folder)), plan, 2)
+
     def test_actual_evaluation_callback_keeps_legacy_auxiliary_not_applicable(self):
         for route in ('legacy', 'a'):
             ns, plan = namespace(), config(route)

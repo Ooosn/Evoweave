@@ -229,15 +229,18 @@ def validate_capacity(config, receipt):
     if (not receipt.get('accepted') or receipt.get('world_size') != 2
             or receipt.get('capacity_contract') != core.capacity_contract(config)):
         raise ValueError('training requires a matching accepted two-rank capacity receipt')
-    covered = {(case['frames'], case['batch_per_rank'], case['stress_group'])
-               for case in receipt['approved_cases'] if case.get('ranks_approved') == [0, 1]
-               and case.get('accumulation_microbatches') == 2}
+    covered = [case for case in receipt['approved_cases'] if case.get('ranks_approved') == [0, 1]
+               and case.get('accumulation_microbatches') == 2]
     for frames in range(2, 25):
         batch = config['training']['frame_policy'][str(frames)]
         groups = ['longest_main', f'geometry_t{frames}']
         if config['route'] != 'legacy':
             groups.append('largest_auxiliary')
-        if any((frames, batch, group) not in covered for group in groups):
+        # A bucket's longest sequence covers shorter sequences at the SAME batch.
+        # Geometry aliases are recorded only for identical stress-asset membership.
+        if any(not any(case['frames'] >= frames and case['batch_per_rank'] == batch
+                       and group in case.get('covered_stress_groups', [case['stress_group']])
+                       for case in covered) for group in groups):
             raise ValueError(f'unmeasured normal-training capacity at T={frames}, B={batch}')
 
 
@@ -283,6 +286,13 @@ def verify_operation(args, config, rank):
 
 def capacity_result(args, config, world):
     ranks = [json.loads((args.output / f'capacity_rank_{r}.json').read_text()) for r in range(world)]
+    spec = config['capacity']['selection']
+    if sha256(spec['path']) != spec['sha256']:
+        raise ValueError('capacity stress selection changed during profiling')
+    selection = json.loads(Path(spec['path']).read_text())
+    groups = dict(selection['groups'])
+    groups.update({f'geometry_t{frames}': [row] for frames, row in selection['geometry_by_frames'].items()})
+    members = {name: [(row['asset_id'], row['path']) for row in values] for name, values in groups.items()}
     approved = []
     for case in ranks[0]['cases']:
         identity = {key: case[key] for key in ('frames', 'batch_per_rank', 'stress_group')}
@@ -290,10 +300,13 @@ def capacity_result(args, config, world):
                    for report in ranks]
         if all(len(values) == 1 and values[0]['accepted'] for values in matches):
             approved.append({**identity, 'ranks_approved': list(range(world)), 'accumulation_microbatches': 2,
+                             'covered_stress_groups': [name for name, values in members.items()
+                                                       if values == members[case['stress_group']]],
                              'peak_allocated_bytes': max(m['peak_allocated_bytes'] for values in matches
                                                          for m in values[0]['measurements'])})
     return {'accepted': all(report['accepted'] for report in ranks), 'world_size': world,
             'capacity_contract': core.capacity_contract(config), 'approved_cases': approved,
+            'shorter_frame_coverage': 'same physical batch, identical stress assets, at least15percent memory headroom',
             'capacity_only_no_weights_reused': True, 'single_rank_exploration': world == 1}
 
 

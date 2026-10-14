@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-14T13:35:26+00:00",
+  "updated_at": "2026-10-14T14:02:10+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -341,10 +341,10 @@
   },
   "next_required_result": "User approved starting normal5000 training: legacy->A->B->C->D sequentially, both H100s on one model. Keep accepted data/RT/loading unchanged; fresh T2..24 and eight heldout frames,20000 asset exposures with eval0/5000/10000/15000/20000. Legacy64 completed512/512 exit0. Measure physical-batch capacity and launch the legacy normal run first; no repeat data screening, new data interface, small-fit gate or80016 full-data run.",
   "active_operation": {
-    "label": "normal_capacity_legacy_dual_v2",
+    "label": "normal_capacity_legacy_dual_v3",
     "mode": "normal5000",
     "operation": "train",
-    "status": "profile_published_not_yet_launched",
+    "status": "capacity_checks_authorized",
     "complete": false,
     "accepted": false,
     "gpu_work_allowed": true,
@@ -354,12 +354,12 @@
     "code_commit": "3cff28baf0682632603db879fead1d77b57c7e53",
     "runs": [
       {
-        "name": "normal_capacity_legacy_dual_v2",
+        "name": "normal_capacity_legacy_dual_v3",
         "mode": "profile",
         "approved": true,
-        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_legacy_v1.json",
-        "config_sha256": "7f1f025fec7557590b043150f145f4d91472f6859c5646af942395e7c6b278b8",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_capacity_legacy_dual_v2",
+        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_legacy_v2.json",
+        "config_sha256": "d0db6871431b14871158ce60b4b6994941fc135dc689ebade9333b47859c424f",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_capacity_legacy_dual_v3",
         "physical_gpus": [5, 7],
         "allocation": 129839822,
         "host": "pcg02i",
@@ -369,6 +369,15 @@
         "stop_conditions": ["capacity budget complete", "allocated memory above85percent", "OOM", "nonfinite loss or required gradients", "identity or source drift"]
       }
     ],
+    "last_capacity_attempt": {
+      "label": "normal_capacity_legacy_dual_v2",
+      "exit_code": 1,
+      "completed_accepted_cases": 10,
+      "accepted_buckets": [[24, 1], [18, 2], [12, 4], [8, 8], [6, 12]],
+      "reason": "T3/B24 failed with nonfinite surface-tokenizer gradients after20 successful stress optimizer updates. Earlier bucket losses decreased and all10 completed cases passed. Exclude B24; confirm T3/T2 at B12 from fresh official weights. Do not repeat passed long-frame tests or change data.",
+      "source_commit": "7f68ca9edf50797db2f385dee846ca83b90f99f9",
+      "evidence": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_capacity_monitor/normal_capacity_legacy_dual_v2/fetch_receipt.json"
+    },
     "previous_capacity_attempt": {
       "label": "normal_capacity_legacy_dual_v1",
       "exit_code": 1,

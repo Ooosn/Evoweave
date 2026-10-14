@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-13T22:36:32.404764+00:00",
+  "updated_at": "2026-10-14T04:01:11Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -339,12 +339,12 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Complete the published A/B matched64-asset comparison using verified common raw cache and512updates/effective48; review full main+aux generation and heldout/valid nondegradation. Prefer A if sufficient, no C/D. Formal remains blocked pending G3 and real dual-rank capacity.",
+  "next_required_result": "A/B medium fully completed with matched512updates; B passes relative main validation but unseen auxiliary exact trees remain0/32. User now requests an actual matched legacy_query_first baseline on same64train/32valid, fullcurves andsamebudget to assess common pipeline andsmallcohort effects. Prepare/publish that boundedreference; formal andC/Dwait.",
   "active_operation": {
     "label": "fusion_ab_medium_v1",
     "mode": "compare",
     "operation": "train",
-    "status": "running",
+    "status": "completed_pending_legacy_reference",
     "execution_source_commit": "d466ecc60f13df7b807a4e9bec389c8652f94f1c",
     "first_updates_verified_utc": "2026-10-13T22:20:45.379238+00:00",
     "first_update_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/medium_monitor/first_update_receipt.json",
@@ -353,9 +353,9 @@
     "matched_actual_inputs_sha256": "2b37990348c01a77986369e655276acad1953509f32f563a2e9221eb95bee0fa",
     "matched_training_order_sha256": "bcf38c1e159180b0ead429af15bae55f7ced52df5594f9eb39eb1e0833327f4a",
     "runtime_verification": "Both actual optimizer updates confirmed, official strict389/194/2 tensors loaded with no unused upstream keys and no old experiment weights. Finite losses/gradients and nonzero shared main+aux gradients. Source stays frozen on node until both complete; local future formal-evaluation changes are not deployed.",
-    "complete": false,
+    "complete": true,
     "accepted": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "authorization": "User-approved isolated A/B fusion plan: both G2 fits passed; now matched64 train/8 heldout/32 valid comparison. Fixed512updates/effective48, both full budgets, no C/D, fresh official initialization only.",
     "contract": "model_training/docs/VIRTUAL_FUSION_20261013.md",
@@ -464,7 +464,17 @@
       "OOM",
       "contract/config or paired fingerprint mismatch",
       "fixed512updates complete"
-    ]
+    ],
+    "execution_complete": true,
+    "exit_code": 0,
+    "finished_utc": "2026-10-14T03:27:31.294543+00:00",
+    "result_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/ab_medium_v1_primary_analysis.json",
+    "result_sha256": "8901fd46c9a1f19205ca9de2cab63ca4273ebfa6630cd5c845b43795a75ad1c3",
+    "primary_review": "model_training/experiments/fusion_ab_medium_v1_review.json",
+    "completed_updates_each": 512,
+    "actual_asset_exposures_each": 24576,
+    "relative_B_validation_gate_passed": true,
+    "selection_deferred_for": "User requested actual old-training/query-first matched baseline. Strong train/valid gap and almost no exact auxiliary validation trees mean no broad generalization claim; no formal start or furthercandidate expansion before the requested baseline."
   },
   "last_operation": {
     "label": "structure_cohort_audit_v1",

@@ -1,0 +1,596 @@
+{
+  "stage": "paired_fusion_medium_primary_review",
+  "accepted": false,
+  "selection_status": "pending_user_requested_legacy_reference",
+  "execution_complete": true,
+  "formal_training_allowed": false,
+  "reviewed_utc": "2026-10-14T04:01:11Z",
+  "code_commit": "d466ecc60f13df7b807a4e9bec389c8652f94f1c",
+  "analysis_sha256": "8901fd46c9a1f19205ca9de2cab63ca4273ebfa6630cd5c845b43795a75ad1c3",
+  "matched_execution_verified": true,
+  "train_assets": 64,
+  "validation_assets": 32,
+  "fixed_frames": 4,
+  "completed_updates_each": 512,
+  "effective_assets_per_update": 48,
+  "asset_exposures_each": 24576,
+  "visits_per_train_asset": 384,
+  "training_evaluation_scope": "Only8 selected training assets/32poses are evaluated, not all64 training assets.",
+  "arms": {
+    "a": {
+      "evaluations": [
+        {
+          "step": 0,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 24,
+              "valid_natural_eos": 24,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.049015609329217114,
+              "original_F1_failure_as_zero": 0,
+              "quantized_J2J_successful_views": 0.3037383407354355,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 11,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 3
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 23,
+              "valid_natural_eos": 23,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.027911987905099522,
+              "original_F1_failure_as_zero": 0,
+              "quantized_J2J_successful_views": 0.30780845103056537,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 10,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 3
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 83,
+              "valid_natural_eos": 83,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.04865949212035048,
+              "original_F1_failure_as_zero": 0.00462962962962963,
+              "quantized_J2J_successful_views": 0.3430228931717126,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 37,
+              "unique_auxiliary_predictions": 32,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 11
+            }
+          }
+        },
+        {
+          "step": 128,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 1,
+              "passing_geometry_count_views": 2,
+              "main_teacher_accuracy": 0.9657618757337332,
+              "original_F1_failure_as_zero": 0.2128257444544032,
+              "quantized_J2J_successful_views": 0.21813544368706062,
+              "auxiliary_valid_eos": 4,
+              "auxiliary_exact_parent_trees": 1,
+              "unique_main_predictions": 17,
+              "unique_auxiliary_predictions": 6,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 5
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 1,
+              "main_teacher_accuracy": 0.5268800165504217,
+              "original_F1_failure_as_zero": 0.24566574832426843,
+              "quantized_J2J_successful_views": 0.21362391658476554,
+              "auxiliary_valid_eos": 3,
+              "auxiliary_exact_parent_trees": 1,
+              "unique_main_predictions": 20,
+              "unique_auxiliary_predictions": 7,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 6
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 125,
+              "valid_natural_eos": 125,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.34680438245413825,
+              "original_F1_failure_as_zero": 0.10395083676773226,
+              "quantized_J2J_successful_views": 0.29676159942150115,
+              "auxiliary_valid_eos": 17,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 53,
+              "unique_auxiliary_predictions": 14,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 17
+            }
+          }
+        },
+        {
+          "step": 256,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 15,
+              "passing_geometry_count_views": 17,
+              "main_teacher_accuracy": 0.9945011083036661,
+              "original_F1_failure_as_zero": 0.774537924996956,
+              "quantized_J2J_successful_views": 0.06163840985391289,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 5,
+              "unique_main_predictions": 17,
+              "unique_auxiliary_predictions": 6,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 6
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 30,
+              "valid_natural_eos": 30,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 1,
+              "main_teacher_accuracy": 0.5439369603991508,
+              "original_F1_failure_as_zero": 0.4568173222592434,
+              "quantized_J2J_successful_views": 0.1417414884393414,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 5,
+              "unique_main_predictions": 13,
+              "unique_auxiliary_predictions": 6,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 3
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 127,
+              "valid_natural_eos": 127,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.346179440501146,
+              "original_F1_failure_as_zero": 0.08322122746759411,
+              "quantized_J2J_successful_views": 0.31176853719658737,
+              "auxiliary_valid_eos": 30,
+              "auxiliary_exact_parent_trees": 2,
+              "unique_main_predictions": 49,
+              "unique_auxiliary_predictions": 13,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 15
+            }
+          }
+        },
+        {
+          "step": 512,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 32,
+              "passing_geometry_count_views": 32,
+              "main_teacher_accuracy": 1,
+              "original_F1_failure_as_zero": 0.9524614079969359,
+              "quantized_J2J_successful_views": 0,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 7,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 2,
+              "main_teacher_accuracy": 0.5374602191150188,
+              "original_F1_failure_as_zero": 0.47560124068049997,
+              "quantized_J2J_successful_views": 0.13870317130931653,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 7,
+              "unique_main_predictions": 21,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 126,
+              "valid_natural_eos": 126,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.3440302084200084,
+              "original_F1_failure_as_zero": 0.09007517706333433,
+              "quantized_J2J_successful_views": 0.30860875665195403,
+              "auxiliary_valid_eos": 29,
+              "auxiliary_exact_parent_trees": 1,
+              "unique_main_predictions": 65,
+              "unique_auxiliary_predictions": 20,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 26
+            }
+          }
+        }
+      ],
+      "finished_utc": "2026-10-14T03:27:31.294543+00:00",
+      "cost": {
+        "trace_elapsed_seconds": 18151.81076218933,
+        "median_update_seconds_excluding_evaluation": 33.120483776554465,
+        "peak_allocated_gib": 13.155796527862549,
+        "scope": "trace excludes initialization, initial/final evaluation and final checkpoint saving; not formal capacity"
+      }
+    },
+    "b": {
+      "evaluations": [
+        {
+          "step": 0,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.3169564697891474,
+              "original_F1_failure_as_zero": 0.3820199202763306,
+              "quantized_J2J_successful_views": 0.10285118041792884,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.318220139015466,
+              "original_F1_failure_as_zero": 0.42106039703964265,
+              "quantized_J2J_successful_views": 0.10705193411558867,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 128,
+              "valid_natural_eos": 128,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.301030756207183,
+              "original_F1_failure_as_zero": 0.2824256973874033,
+              "quantized_J2J_successful_views": 0.15478663390967995,
+              "auxiliary_valid_eos": 0,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 125,
+              "unique_auxiliary_predictions": 32,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 32
+            }
+          }
+        },
+        {
+          "step": 128,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 16,
+              "passing_geometry_count_views": 31,
+              "main_teacher_accuracy": 0.9923457205295563,
+              "original_F1_failure_as_zero": 0.9510399146519015,
+              "quantized_J2J_successful_views": 0.0007790045447109151,
+              "auxiliary_valid_eos": 7,
+              "auxiliary_exact_parent_trees": 1,
+              "unique_main_predictions": 31,
+              "unique_auxiliary_predictions": 3,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 8,
+              "main_teacher_accuracy": 0.6452383147552609,
+              "original_F1_failure_as_zero": 0.8428636823611603,
+              "quantized_J2J_successful_views": 0.01855127970338799,
+              "auxiliary_valid_eos": 7,
+              "auxiliary_exact_parent_trees": 1,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 3,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 128,
+              "valid_natural_eos": 128,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.4362804183620028,
+              "original_F1_failure_as_zero": 0.34845917072590077,
+              "quantized_J2J_successful_views": 0.14257866660773288,
+              "auxiliary_valid_eos": 29,
+              "auxiliary_exact_parent_trees": 2,
+              "unique_main_predictions": 123,
+              "unique_auxiliary_predictions": 7,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 32
+            }
+          }
+        },
+        {
+          "step": 256,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 32,
+              "passing_geometry_count_views": 32,
+              "main_teacher_accuracy": 1,
+              "original_F1_failure_as_zero": 0.9524614079969359,
+              "quantized_J2J_successful_views": 0,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 8,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 6,
+              "main_teacher_accuracy": 0.6460134731605649,
+              "original_F1_failure_as_zero": 0.8499495937317844,
+              "quantized_J2J_successful_views": 0.020781550061656162,
+              "auxiliary_valid_eos": 7,
+              "auxiliary_exact_parent_trees": 7,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 127,
+              "valid_natural_eos": 127,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.42759349662810564,
+              "original_F1_failure_as_zero": 0.3511850328008723,
+              "quantized_J2J_successful_views": 0.12220705942962114,
+              "auxiliary_valid_eos": 29,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 127,
+              "unique_auxiliary_predictions": 16,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 32
+            }
+          }
+        },
+        {
+          "step": 512,
+          "groups": {
+            "train_seen": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 32,
+              "passing_geometry_count_views": 32,
+              "main_teacher_accuracy": 1,
+              "original_F1_failure_as_zero": 0.9524614079969359,
+              "quantized_J2J_successful_views": 0,
+              "auxiliary_valid_eos": 8,
+              "auxiliary_exact_parent_trees": 8,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "train_heldout": {
+              "assets": 8,
+              "views": 32,
+              "successful_generations": 32,
+              "valid_natural_eos": 32,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 6,
+              "main_teacher_accuracy": 0.6476644277572632,
+              "original_F1_failure_as_zero": 0.8414702918785629,
+              "quantized_J2J_successful_views": 0.02020436219754629,
+              "auxiliary_valid_eos": 7,
+              "auxiliary_exact_parent_trees": 6,
+              "unique_main_predictions": 32,
+              "unique_auxiliary_predictions": 8,
+              "assets_with_varying_GT_poses": 8,
+              "varying_GT_assets_with_varying_predictions": 8
+            },
+            "valid": {
+              "assets": 32,
+              "views": 128,
+              "successful_generations": 127,
+              "valid_natural_eos": 127,
+              "exact_main_token_sequences": 0,
+              "passing_geometry_count_views": 0,
+              "main_teacher_accuracy": 0.42808616161346436,
+              "original_F1_failure_as_zero": 0.3610600112355232,
+              "quantized_J2J_successful_views": 0.12634031732720652,
+              "auxiliary_valid_eos": 29,
+              "auxiliary_exact_parent_trees": 0,
+              "unique_main_predictions": 126,
+              "unique_auxiliary_predictions": 17,
+              "assets_with_varying_GT_poses": 32,
+              "varying_GT_assets_with_varying_predictions": 32
+            }
+          }
+        }
+      ],
+      "finished_utc": "2026-10-14T03:25:08.569517+00:00",
+      "cost": {
+        "trace_elapsed_seconds": 18199.729155818,
+        "median_update_seconds_excluding_evaluation": 33.22902561724186,
+        "peak_allocated_gib": 13.155796527862549,
+        "scope": "trace excludes initialization, initial/final evaluation and final checkpoint saving; not formal capacity"
+      }
+    }
+  },
+  "B_relative_to_A": {
+    "train_seen": {
+      "group": "train_seen",
+      "views": 32,
+      "baseline": {
+        "success_rate": 1,
+        "original_edge_f1_failed_as_zero": 0.9524614079969359
+      },
+      "candidate": {
+        "success_rate": 1,
+        "original_edge_f1_failed_as_zero": 0.9524614079969359
+      },
+      "common_success_views": 32,
+      "paired_J2J_delta": 0,
+      "J2J_tolerance": 0.00390625,
+      "gates": {
+        "generation_success_not_lower": true,
+        "failure_as_zero_F1_not_lower": true,
+        "paired_J2J_within_one_bin": true
+      },
+      "accepted": true,
+      "f1_reference": "continuous_original_GT",
+      "J2J_reference": "quantized_GT_on_identical_common_success_views",
+      "statistical_superiority_claim": false
+    },
+    "train_heldout": {
+      "group": "train_heldout",
+      "views": 32,
+      "baseline": {
+        "success_rate": 1,
+        "original_edge_f1_failed_as_zero": 0.47560124068049997
+      },
+      "candidate": {
+        "success_rate": 1,
+        "original_edge_f1_failed_as_zero": 0.8414702918785629
+      },
+      "common_success_views": 32,
+      "paired_J2J_delta": -0.11849880911177024,
+      "J2J_tolerance": 0.00390625,
+      "gates": {
+        "generation_success_not_lower": true,
+        "failure_as_zero_F1_not_lower": true,
+        "paired_J2J_within_one_bin": true
+      },
+      "accepted": true,
+      "f1_reference": "continuous_original_GT",
+      "J2J_reference": "quantized_GT_on_identical_common_success_views",
+      "statistical_superiority_claim": false
+    },
+    "valid": {
+      "group": "valid",
+      "views": 128,
+      "baseline": {
+        "success_rate": 0.984375,
+        "original_edge_f1_failed_as_zero": 0.09007517706333433
+      },
+      "candidate": {
+        "success_rate": 0.9921875,
+        "original_edge_f1_failed_as_zero": 0.3610600112355232
+      },
+      "common_success_views": 125,
+      "paired_J2J_delta": -0.18041197063028813,
+      "J2J_tolerance": 0.00390625,
+      "gates": {
+        "generation_success_not_lower": true,
+        "failure_as_zero_F1_not_lower": true,
+        "paired_J2J_within_one_bin": true
+      },
+      "accepted": true,
+      "f1_reference": "continuous_original_GT",
+      "J2J_reference": "quantized_GT_on_identical_common_success_views",
+      "statistical_superiority_claim": false
+    }
+  },
+  "matched_initial_state_sha256": "a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635",
+  "matched_actual_inputs_sha256": "2b37990348c01a77986369e655276acad1953509f32f563a2e9221eb95bee0fa",
+  "training_order_sha256": "bcf38c1e159180b0ead429af15bae55f7ced52df5594f9eb39eb1e0833327f4a",
+  "cache_index_sha256": "c5eff87ac2b5de08980d68dc515af0a49c5dcb4e7b89b0835c3dd666a36c10ed",
+  "conclusion": "B passes the prespecified relative-to-A main validation gates and preserves heldout pose detail better, but neither establishes useful unseen-asset auxiliary topology generation. User requested an actual matched old query-first reference before any formal decision; do not attribute the generalization gap uniquely to new fusion or excessive updates.",
+  "candidate_execution": "OnlyAandBtrained inthisfusionround (8assetfitand64assetcomparison each); CandDimplemented/testedbutNOTtrained.",
+  "next_action": "Fresh official old legacy_query_first on exactly the same raw inputs/order/T4/effective48/512updates/evaluations. No auxiliary branch in the old route. Keep full curves to distinguish fit, heldout pose transfer and unseen-asset generalization; formal and additional variants wait for this evidence.",
+  "source_artifact_sha256": {
+    "ab_medium_v1_result.json": "f928864797ced30c2334cc1fbebc06b00b0405f3ce4a227156f24aab146efef0",
+    "ab_medium_v1.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "a_medium_v1_result.json": "1d179b1cdf8187106cd06ede9bb8dd016cc68738ad11d89c9a403c1779b902a2",
+    "a_medium_v1.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "a_medium_v1_pair_verified.json": "8143a8ebf60a41c0c6dd7c5486dbbc09ddbea3536adc9947aabd8f94f7769a97",
+    "a_medium_v1_initialization.json": "8adc5bfff974447cb3a4fe65a04407084c0b37aad56400c7fdc51a65341a5960",
+    "a_medium_v1_training_order.json": "4a9a069e0430083ec33d45bd107d53e6e6a5d0666c0c192d4790aa487d1669e3",
+    "a_medium_v1_trace.jsonl": "414a8776767d174adb95417775a8bdcb1795d25acfedb1fbd584b99bca85e0dd",
+    "a_medium_v1_evaluation_0000.json": "b4e389230ba8c396ea9edadd4b022cb7ae1be0ec7e9adb531e9136d48062f296",
+    "a_medium_v1_evaluation_0128.json": "db086a1577c268e136d2b8eb5a7a9e6cd005f5ca862eebfb1acb8de4b3cb6df3",
+    "a_medium_v1_evaluation_0256.json": "5a0fbdfe3db2f01a9464a6e5e78e711dfe6d47632088f2de26d643111aaae66c",
+    "a_medium_v1_evaluation_0512.json": "086e5742697e7aa276fbb2814c9754c588f15b6c86a40b8b67223f0f67fb6913",
+    "b_medium_v1_result.json": "b220f02904e7a5076c10b838427e9d31210e9dbb21f8eb647ceb293f74de4fd2",
+    "b_medium_v1.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "b_medium_v1_pair_verified.json": "ffb955b908ac7b3b2a6e607b96cf95fd6bdfe58cbf28d64905893699e9ff6afd",
+    "b_medium_v1_initialization.json": "b4f6944a64dc68edc1bede5018f3b2f37add2cc24f77c35745b725e2ab454743",
+    "b_medium_v1_training_order.json": "4a9a069e0430083ec33d45bd107d53e6e6a5d0666c0c192d4790aa487d1669e3",
+    "b_medium_v1_trace.jsonl": "739046c02fb61c2006e009892a23002bf26ffc73207a2412955de29d6e6b8eb5",
+    "b_medium_v1_evaluation_0000.json": "023c4ba928391d42e984db52a87ba305354fdc6bc81f83218dc89eec042bcb82",
+    "b_medium_v1_evaluation_0128.json": "9357be37b80d0b820d5522d91bfd04bb16c8ea5236ce8ffba812ffa6aae857ab",
+    "b_medium_v1_evaluation_0256.json": "a92ad62c23aa642414dd3eab34dd61c719a0326b9b19b140a44a9b6c02d600bb",
+    "b_medium_v1_evaluation_0512.json": "74e509ca1a6eb8bcc42027bd496b393608350eb01005375cca119a4b95ea6ecd"
+  }
+}

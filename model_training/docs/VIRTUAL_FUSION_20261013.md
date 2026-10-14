@@ -96,3 +96,37 @@ the new effectivebatch/OneCycle recipe; it does not isolate the contributions
 of batch averaging and schedule, or establish heldout generalization.
 Do not run C/D. A remains the preferred architecture pending medium review;
 B is the already-tested matched comparator, not a commitment to replacement.
+
+## Completed medium comparison and new reference request
+
+Both A and B completed512 updates, effectivebatch48, or24576 asset exposures
+on the same64 training assets and four fixed poses. Each asset therefore had
+384 visits. The monitored training-generation subset is8 of64 assets, not
+the complete training cohort. Validation uses32 different assets/four poses.
+The complete matched receipt is
+`../experiments/fusion_ab_medium_v1_review.json`.
+
+At512, both reproduce all32 monitored training-pose GT token streams. Exact
+auxiliary training trees are A7/8 andB8/8. Heldout-pose main F1 is
+A0.475601/B0.841470; unseen-asset validation F1 is A0.090075/B0.361060,
+with failed generation counted zero against continuous originalGT. Valid
+generation counts are126/128 and127/128. Exact auxiliary validation trees
+remain A1/32 andB0/32. B passes the predeclared relative main-task gates,
+but this is not evidence that unseen-asset structure generalization is solved.
+
+On2026-10-14 the user requested an actual old-training comparison before
+formal release, to investigate the shared data/training pipeline and small
+cohort coverage or overfitting. Next run the proven legacy query-first route
+on the SAME raw cache, official initial shared weights,64/32 split,T4,
+effective48,512updates and0/128/256/512 full main generation checkpoints.
+Each target pose is processed separately by the original query-first encoder.
+This matches target exposure across architectures; it is not a historical
+single-target sampling-run reproduction. The old route has no virtual/auxiliary
+structure branch, so its auxiliary metrics are not applicable rather than zero.
+Inspect complete learning curves, not only the final loss. A poor old-reference
+result alone does not uniquely identify data, optimization or cohort size.
+
+Formal release and further variants wait for this requested reference.
+Only A/B were trained in this fusion round, each at8 and64 assets; C/D have
+implementation/tests but no training runs. Earlier8-asset legacy/final-real
+controls do not substitute for this matched64-asset reference.

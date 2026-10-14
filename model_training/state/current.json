@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-14T13:16:24+00:00",
+  "updated_at": "2026-10-14T13:23:51+00:00",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -339,7 +339,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "User correction: normal online training on the same5000 assets for legacy/A/B, eight reserved frames and fresh T2..24 poses each visit, exactly20000 asset exposures per route with evaluations0/10000/20000. Finish CPU selection and actual physical-batch measurements, then run two-rank comparisons after legacy64 completes. Existing legacy64 continues unchanged in its frozen checkout; no new fixed-small-cohort fitting gate or automatic80016/full-data/C-D run.",
+  "next_required_result": "User approved starting normal5000 training: legacy->A->B->C->D sequentially, both H100s on one model. Keep accepted data/RT/loading unchanged; fresh T2..24 and eight heldout frames,20000 asset exposures with eval0/5000/10000/15000/20000. Legacy64 completed512/512 exit0. Measure physical-batch capacity and launch the legacy normal run first; no repeat data screening, new data interface, small-fit gate or80016 full-data run.",
   "active_operation": {
     "label": "normal_capacity_legacy_dual_v1",
     "mode": "normal5000",

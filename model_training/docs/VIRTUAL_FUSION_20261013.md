@@ -18,8 +18,14 @@ accepted, not architecture quality. Legacy has no15000/20000 comparator;
 at the matched10000 node A validation F1 was0.192411 versus legacy0.690604.
 Preserve A's final checkpoint and complete terminal receipt. B is next, using
 real queries / virtual memory / real residual with otherwise identical runtime.
-Only its independent two-rank9-case capacity profile is released now; review
-that profile and remaining grant time before publishing fresh B training.
+Its independent two-rank9-case capacity profile completed with exit0; both
+ranks passed finite execution and the85-percent allocated-memory limit.
+Maximum allocated memory was60.5701GiB. Primary review accepts the capacity
+receipt `reviewed_capacity_b_v1.json`; B training is now released with the
+same24/12/6 per-rank microbatch buckets and1/2/4 accumulation counts as A.
+The minimum remaining-time check is89890seconds, based on stress-case timing,
+25percent training margin and8hours for evaluation/checkpoints, not an ETA.
+Always refresh the grant allowance immediately before the B launch.
 Do not apply the discussed residual removal, fusion-depth changes or new
 frame-budget pairing to this comparison. Report original-GT F1 as the primary
 metric; label experiment size, exposure milestone and panel on every table.

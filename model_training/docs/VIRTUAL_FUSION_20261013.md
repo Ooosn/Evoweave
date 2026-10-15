@@ -8,6 +8,18 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-15 update: the user stopped the legacy run after10864 exposures
+(228 updates); its complete10000 checkpoint and evaluation are preserved.
+The latest instruction explicitly defers new frame-budget/batch-pairing
+features to a separate later study. This comparison keeps random2..24 inputs
+and effective48 assets, not a fixed1152-frame update budget. A starts fresh
+from the same official tensors, with the same exposure plan as legacy.
+Its completed two-rank9-case capacity confirmation passed with exit0 and
+peak allocated memory60.57GiB. Per-rank microbatches are24/12/6 for
+T2-6/T7-12/T13-24, accumulated1/2/4 times to keep global effective48.
+The reviewed receipt is `reviewed_capacity_a_v1.json` in the normal job
+directory. Later B/C/D still need route-specific capacity approval.
+
 The user's2026-10-14 correction supersedes the fixed-small-cohort promotion
 sequence below. Fixed8/fixed64 runs are diagnostic history, not a substitute
 for normal online training and not an additional prerequisite for this stage.

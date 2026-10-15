@@ -8,6 +8,22 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-16 update: A completed all20000 exposures,420 updates and263608
+supervised-frame exposures with exit0. Both complete traces are finite,
+initialization/exposure identities match, and all five evaluations are saved.
+Its original-GT F1 at20000 is0.324185 train-pool /0.304345 heldout poses /
+0.282056 unseen validation. These are the same32/32/128-asset panels, eight
+frames each, with generation failures scored zero. Execution integrity is
+accepted, not architecture quality. Legacy has no15000/20000 comparator;
+at the matched10000 node A validation F1 was0.192411 versus legacy0.690604.
+Preserve A's final checkpoint and complete terminal receipt. B is next, using
+real queries / virtual memory / real residual with otherwise identical runtime.
+Only its independent two-rank9-case capacity profile is released now; review
+that profile and remaining grant time before publishing fresh B training.
+Do not apply the discussed residual removal, fusion-depth changes or new
+frame-budget pairing to this comparison. Report original-GT F1 as the primary
+metric; label experiment size, exposure milestone and panel on every table.
+
 2026-10-15 update: the user stopped the legacy run after10864 exposures
 (228 updates); its complete10000 checkpoint and evaluation are preserved.
 The latest instruction explicitly defers new frame-budget/batch-pairing

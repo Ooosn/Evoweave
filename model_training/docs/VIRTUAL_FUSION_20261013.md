@@ -8,6 +8,24 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-16 user revision: finish the current C20000 run, then SKIP D.
+Resume the preserved A20000 full checkpoint to TOTAL40000 exposures, adding
+20000 with constant learning rate1e-4, no new warmup or decay. Restore AdamW
+moments/betas and rank sampling/RNG state; do not initialize from B/C/profile
+weights or restart A from official weights. The model/data/physical batch
+policy are unchanged. Keep the original20000 exposure prefix exactly and add
+evaluation/checkpoints at25000/30000/35000/40000 on the same1536-view panel.
+The resulting plan has840updates and528296supervised-frame exposures, with
+264688 new frame exposures. This is a continuation with an explicitly changed
+learning rate, not a matched-budget comparison against B/C20000.
+Preparation lives separately on codex/normal-a-resume-40000-20261016 while C
+continues on frozen cf1c1ae. The new resume entrypoint is blocked by current C
+state; publish a separate continuation operation only after reviewing C's
+complete terminal evidence and the remaining allocation walltime.
+The checkpoint was saved before its20k evaluation; restore that saved RNG
+state without replaying the old evaluation. No bitwise GPU equivalence to a
+hypothetical uninterrupted40k run after that evaluation is claimed.
+
 2026-10-16 C transition: B completed20000 exposures/420 updates/263608
 supervised-frame exposures with exit0 and five complete1536-view evaluations.
 Its final original-GT F1 is0.766583 train-pool /0.786313 heldout poses /

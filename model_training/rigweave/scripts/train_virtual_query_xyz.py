@@ -364,23 +364,38 @@ def save_checkpoint(model, optimizer, stream, config, args, samples, frames, ste
 
 def run_training(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source,
                  *, stream=None, milestones=None, evaluation_callback=None, gradient_check=None,
-                 sample_recorder=None):
+                 sample_recorder=None, resume_state=None):
     milestones = validate_plan(config, world) if milestones is None else milestones
     evaluation_callback = run_evaluation if evaluation_callback is None else evaluation_callback
     gradient_check = require_gradients if gradient_check is None else gradient_check
     plan = config['training']
     dataset = fixed_dataset(entries['train'], config, 2, mode='train')
     optimizer = optimizer_for(model, config)
+    if resume_state is not None and stream is None:
+        raise ValueError('continuation requires an explicitly restored exposure stream')
     if stream is None:
         stream = FrameBudgetStream(dataset, rank=rank, world_size=world, seed=config['data']['stream_seed'],
                                    frame_budget=plan['frame_budget'], batch_cap=plan['batch_cap'],
                                    min_frames=config['data']['frames_min'], max_frames=config['data']['frames_max'])
     wrapped = wrap_model(model, device, world)
-    report = {'complete': False, 'rank': rank, 'world_size': world, 'source': source,
-              'initialization': initial, 'asset_exposures': 0, 'supervised_frame_exposures': 0,
-              'fresh_official_initialization': True, 'evaluations': []}
-    write_json(args.output / f'rank_{rank}.json', report)
     samples = frames_seen = step = 0
+    if resume_state is not None:
+        from virtual_fusion_continuation import restore_training_state, set_continuation_lr
+        samples, frames_seen, step = restore_training_state(
+            optimizer, stream, resume_state, device=device, rank=rank, world=world,
+            target_assets=plan['target_assets'])
+    starting_step = step
+    report = {'complete': False, 'rank': rank, 'world_size': world, 'source': source,
+              'initialization': initial, 'asset_exposures': samples, 'supervised_frame_exposures': frames_seen,
+              'step': step, 'fresh_official_initialization': resume_state is None, 'evaluations': []}
+    if resume_state is not None:
+        report['continuation'] = resume_state['provenance']
+        report['optimizer_state_restored'] = True
+        report['restored_optimizer'] = {
+            'state_entries': len(optimizer.state),
+            'param_groups': [{'lr': group['lr'], 'betas': list(group['betas'])}
+                             for group in optimizer.param_groups]}
+    write_json(args.output / f'rank_{rank}.json', report)
     started = time.monotonic()
     model.train()
     with (args.output / f'trace_rank_{rank}.jsonl').open('x', buffering=1) as trace:
@@ -389,7 +404,8 @@ def run_training(model, tokenizer, codec, initial, entries, config, args, device
                                              milestones, world)
             optimizer.zero_grad(set_to_none=True)
             torch.cuda.reset_peak_memory_stats(device)
-            lr, beta1 = set_exposure_lr(optimizer, samples, config)
+            lr, beta1 = (set_exposure_lr(optimizer, samples, config) if resume_state is None else
+                         set_continuation_lr(optimizer, resume_state['learning_rate']))
             totals = torch.zeros(6, dtype=torch.float64, device=device)
             local_assets, schedule = 0, []
             tick = time.monotonic()
@@ -420,7 +436,7 @@ def run_training(model, tokenizer, codec, initial, entries, config, args, device
             if update_assets != local_goal * world:
                 raise RuntimeError('distributed actual asset count differs from the requested update')
             normalize_asset_gradients(model.parameters(), global_assets=update_assets, world_size=world)
-            if step == 0:
+            if step == starting_step:
                 norms = grad_norms(model)
                 gradient_check(model, norms, config['optimization']['auxiliary_weight'])
                 report['first_gradient_groups'] = norms

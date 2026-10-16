@@ -78,6 +78,88 @@ class MatchedFrameStream:
                 raise ValueError('invalid saved exposure cursor')
             self.cursor = cursor
 
+    @classmethod
+    def extend_completed(cls, dataset, state, *, target_assets, update_boundaries):
+        """Extend a fully consumed stream while preserving its generated prefix."""
+        if not isinstance(state, dict):
+            raise ValueError('completed sampler state must be a mapping')
+        old_contract = state.get('contract')
+        if not isinstance(old_contract, dict):
+            raise ValueError('completed sampler state needs a contract mapping')
+        expected_contract = {
+            'rank', 'world_size', 'seed', 'target_assets', 'effective_assets',
+            'update_boundaries', 'dataset_rows', 'manifest_sha256', 'min_frames',
+            'max_frames', 'frame_policy',
+        }
+        if set(old_contract) != expected_contract:
+            raise ValueError('completed sampler state contract fields differ')
+
+        # Reconstruct through the normal constructor so the saved plan SHA and
+        # every existing contract check remain authoritative for old resumes.
+        try:
+            old = cls(
+                dataset,
+                rank=old_contract['rank'],
+                world_size=old_contract['world_size'],
+                seed=old_contract['seed'],
+                target_assets=old_contract['target_assets'],
+                effective_assets=old_contract['effective_assets'],
+                frame_policy=deepcopy(old_contract['frame_policy']),
+                manifest_sha256=old_contract['manifest_sha256'],
+                min_frames=old_contract['min_frames'],
+                max_frames=old_contract['max_frames'],
+                state=state,
+                update_boundaries=old_contract['update_boundaries'],
+            )
+        except (KeyError, TypeError, AttributeError) as exc:
+            raise ValueError('invalid completed sampler state') from exc
+
+        if old.cursor != old.local_total:
+            raise ValueError('sampler extension requires a completed old exposure budget')
+        if type(target_assets) is not int:
+            raise ValueError('the extended target asset count must be an integer')
+        if target_assets <= old.target_assets:
+            raise ValueError('the extended target asset count must be larger than the old target')
+        if target_assets % old.world_size:
+            raise ValueError('the extended target asset count must be rank-divisible')
+        try:
+            new_boundaries = list(update_boundaries)
+        except (TypeError, ValueError) as exc:
+            raise ValueError('extended update boundaries must be an ordered sequence') from exc
+        old_boundaries = old.contract['update_boundaries']
+        if len(new_boundaries) <= len(old_boundaries):
+            raise ValueError('extended update boundaries must add a suffix')
+        if new_boundaries[:len(old_boundaries)] != old_boundaries:
+            raise ValueError('extended update boundaries must preserve the old prefix')
+        if (any(type(value) is not int or value <= old.target_assets
+                for value in new_boundaries[len(old_boundaries):])
+                or new_boundaries[-1] != target_assets):
+            raise ValueError('extended update boundaries must end at the new target')
+
+        new = cls(
+            dataset,
+            rank=old.contract['rank'],
+            world_size=old.contract['world_size'],
+            seed=old.contract['seed'],
+            target_assets=target_assets,
+            effective_assets=old.contract['effective_assets'],
+            frame_policy=deepcopy(old.contract['frame_policy']),
+            manifest_sha256=old.contract['manifest_sha256'],
+            min_frames=old.contract['min_frames'],
+            max_frames=old.contract['max_frames'],
+            update_boundaries=new_boundaries,
+        )
+        for key in expected_contract - {'target_assets', 'update_boundaries'}:
+            if new.contract[key] != old.contract[key]:
+                raise ValueError('sampler extension changed an existing contract field')
+        old_updates = len(old.update_sizes)
+        if (not np.array_equal(old.order, new.order[:old.target_assets])
+                or not np.array_equal(old.frame_counts, new.frame_counts[:old_updates])
+                or not np.array_equal(old.update_sizes, new.update_sizes[:old_updates])):
+            raise ValueError('sampler extension does not preserve the old generated prefix')
+        new.cursor = old.local_total
+        return new
+
     def take(self, max_assets=None):
         if max_assets is not None and (type(max_assets) is not int or max_assets < 1):
             raise ValueError('a microbatch request needs a positive asset count')

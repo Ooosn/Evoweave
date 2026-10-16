@@ -1,6 +1,7 @@
 """CPU proofs for batch-independent online pose/exposure schedules."""
 from collections import Counter
 from copy import deepcopy
+import json
 from pathlib import Path
 import sys
 import unittest
@@ -9,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/src'))
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/scripts'))
 from virtual_fusion_normal_runtime import MatchedFrameStream
+
+
+CONFIG = json.loads((ROOT / 'model_training/experiments/fusion_normal_a_v1.json').read_text())
 
 
 def stream(rank=0, world=2, batch=7, state=None, **changes):
@@ -24,6 +28,25 @@ def drain(value):
     while value.cursor < value.local_total:
         result.extend(value.take())
     return result
+
+
+def configured_stream(rank, *, state=None):
+    manifest = CONFIG['data']['manifests']['train']
+    training = CONFIG['training']
+    return MatchedFrameStream(
+        range(manifest['rows']),
+        rank=rank,
+        world_size=2,
+        seed=CONFIG['data']['stream_seed'],
+        target_assets=training['target_assets'],
+        effective_assets=training['effective_assets_per_update'],
+        update_boundaries=training['checkpoint_assets'],
+        frame_policy=training['frame_policy'],
+        manifest_sha256=manifest['sha256'],
+        min_frames=CONFIG['data']['frames_min'],
+        max_frames=CONFIG['data']['frames_max'],
+        state=state,
+    )
 
 
 class MatchedScheduleTests(unittest.TestCase):
@@ -82,6 +105,96 @@ class MatchedScheduleTests(unittest.TestCase):
             stream(batch=7, state=changed)
         with self.assertRaises(ValueError):
             stream(batch=8, state=state)
+
+    def test_completed_a_stream_extends_exact_prefix_and_consumes_40k(self):
+        old_boundaries = CONFIG['training']['checkpoint_assets']
+        new_boundaries = list(range(5000, 40001, 5000))
+        extended = []
+        old_plan_shas = []
+        for rank in (0, 1):
+            old = configured_stream(rank)
+            old_requests = drain(old)
+            state = old.state_dict()
+            self.assertEqual(state['cursor'], 10000)
+            old_plan_shas.append(state['plan_sha256'])
+            new = MatchedFrameStream.extend_completed(
+                range(CONFIG['data']['manifests']['train']['rows']),
+                state,
+                target_assets=40000,
+                update_boundaries=new_boundaries,
+            )
+            self.assertEqual(new.cursor, 10000)
+            self.assertEqual(old_boundaries, [5000, 10000, 15000, 20000])
+            self.assertEqual(old.order.tolist(), new.order[:20000].tolist())
+            self.assertEqual(old.frame_counts.tolist(), new.frame_counts[:len(old.update_sizes)].tolist())
+            self.assertEqual(old.update_sizes.tolist(), new.update_sizes[:len(old.update_sizes)].tolist())
+
+            global_position = 20000 + rank * 24
+            first = new.take(1)[0]
+            self.assertEqual(first.item_index, int(new.order[global_position]))
+            self.assertEqual(first.frames, int(new.frame_counts[len(old.update_sizes)]))
+            self.assertEqual(first.sampling_seed, (new.seed << 32) + global_position)
+            self.assertNotIn(first.sampling_seed, {request.sampling_seed for request in old_requests})
+            extended.append((old_requests, [first] + drain(new), new))
+
+        new = extended[0][2]
+        self.assertTrue(all(old_plan_sha != new.plan_sha256 for old_plan_sha in old_plan_shas))
+        self.assertEqual(len(new.update_sizes), 840)
+        self.assertEqual(Counter(new.update_sizes.tolist()), {48: 832, 8: 8})
+        self.assertEqual(new.global_ends[104::105].tolist(), list(range(5000, 40001, 5000)))
+        self.assertEqual(new.plan_report()['supervised_frame_exposures'],
+                         int(sum(int(size) * int(frames)
+                                 for size, frames in zip(new.update_sizes, new.frame_counts))))
+        self.assertEqual(sum(len(old_requests) + len(new_requests)
+                             for old_requests, new_requests, _ in extended), 40000)
+
+    def test_completed_extension_rejects_bad_state_target_and_boundaries(self):
+        old = configured_stream(0)
+        drain(old)
+        state = old.state_dict()
+        valid_boundaries = list(range(5000, 40001, 5000))
+
+        for mutate in (
+                lambda value: value.update(plan_sha256='0' * 64),
+                lambda value: value['contract'].update(seed=value['contract']['seed'] + 1),
+                lambda value: value.update(cursor=9999),
+                lambda value: value.update(cursor=True),
+        ):
+            changed = deepcopy(state)
+            mutate(changed)
+            with self.assertRaises(ValueError):
+                MatchedFrameStream.extend_completed(
+                    range(CONFIG['data']['manifests']['train']['rows']), changed,
+                    target_assets=40000, update_boundaries=valid_boundaries)
+
+        for target in (20000, 19999, True, '40000'):
+            with self.assertRaises(ValueError):
+                MatchedFrameStream.extend_completed(
+                    range(CONFIG['data']['manifests']['train']['rows']), state,
+                    target_assets=target, update_boundaries=valid_boundaries)
+
+        old_boundaries = CONFIG['training']['checkpoint_assets']
+        for boundaries in (
+                old_boundaries,
+                [5000, 10000, 15000, 25000, 30000, 35000, 40000],
+                old_boundaries + [20000, 25000, 30000, 35000, 40000],
+                old_boundaries + [25000, 30000, 35000],
+                old_boundaries + [25000, 25000, 30000, 35000, 40000],
+                old_boundaries + [25001, 30000, 35000, 40000],
+                old_boundaries + [30000, 25000, 35000, 40000],
+                None,
+        ):
+            with self.assertRaises(ValueError):
+                MatchedFrameStream.extend_completed(
+                    range(CONFIG['data']['manifests']['train']['rows']), state,
+                    target_assets=40000, update_boundaries=boundaries)
+
+        extended = MatchedFrameStream.extend_completed(
+            range(CONFIG['data']['manifests']['train']['rows']), state,
+            target_assets=40000, update_boundaries=valid_boundaries)
+        drain(extended)
+        with self.assertRaises(StopIteration):
+            extended.take()
 
     def test_request_truncation_does_not_drop_or_resample_pending_assets(self):
         original, split = stream(batch=24), stream(batch=24)

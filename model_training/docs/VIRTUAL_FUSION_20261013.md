@@ -8,6 +8,24 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-16 C transition: B completed20000 exposures/420 updates/263608
+supervised-frame exposures with exit0 and five complete1536-view evaluations.
+Its final original-GT F1 is0.766583 train-pool /0.786313 heldout poses /
+0.729074 unseen validation, with generation failures scored zero. B's full
+terminal evidence and checkpoint are preserved; execution integrity is accepted,
+not formal quality. Legacy has no15000/20000 node for a matched comparison.
+Only the independent C capacity profile is released next. C uses the existing
+relative_position mode: A's virtual-query fusion plus per-head relative input
+anchor-coordinate bias, not a new residual/depth intervention. Its explicit
+pairwise bias intermediates motivate conservative per-rank12/6/3 batches for
+T2-6/T7-12/T13-24, with prospective2/4/8 accumulation to retain effective48.
+The full exposure/frame plan, supervision and evaluation remain identical.
+The nine capacity cases still cover all three longest-main assets, the pinned
+geometry maximum and longest auxiliary target at each bucket maximum.
+C's full initial fingerprint includes its added bias parameters; only the
+shared fingerprint must equal A/B, and full fingerprints must match across ranks.
+Do not publish C training until its capacity and remaining time are reviewed.
+
 2026-10-16 update: A completed all20000 exposures,420 updates and263608
 supervised-frame exposures with exit0. Both complete traces are finite,
 initialization/exposure identities match, and all five evaluations are saved.

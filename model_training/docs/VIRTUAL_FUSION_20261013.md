@@ -18,10 +18,23 @@ evaluation/checkpoints at25000/30000/35000/40000 on the same1536-view panel.
 The resulting plan has840updates and528296supervised-frame exposures, with
 264688 new frame exposures. This is a continuation with an explicitly changed
 learning rate, not a matched-budget comparison against B/C20000.
-Preparation lives separately on codex/normal-a-resume-40000-20261016 while C
-continues on frozen cf1c1ae. The new resume entrypoint is blocked by current C
-state; publish a separate continuation operation only after reviewing C's
-complete terminal evidence and the remaining allocation walltime.
+C completed on frozen cf1c1ae with exit0,20000exposures/420updates/263608frames.
+All five1536-view evaluations, full two-rank traces, actual source identity and
+final checkpoint SHA were reviewed. Final original-GT F1 is0.337525 train-pool /
+0.295678 heldout poses /0.279036 validation. This accepts execution integrity,
+not model quality. The final C checkpoint SHA is
+c502729b683e5696d4f64f5be3d464a5d2c899a3afef357538af45c5b42e810c.
+Prepared continuation commit455793a has now been merged into this authorized
+branch. State releases only the A continuation entrypoint, bound to C's exit0
+result, the original A full checkpoint and the accepted A capacity receipt.
+Admission requires at least96978seconds remaining: accepted A worst-case
+microbatch timings over the exact new420-update plan,25percent training margin
+and10h for four evaluations/checkpoints/full-state restore. This26.94h threshold
+is conservative admission accounting, not an ETA. Both granted GPUs must be idle.
+The first new update must be421/20048exposures at1e-4. Verify actual model and
+optimizer/RNG restoration plus the dedicated continuation first8 monitor before
+routine supervision; the historical official-initialization hash is not the
+resumed model's weight hash. No D/E/F or additional experiment is authorized.
 The checkpoint was saved before its20k evaluation; restore that saved RNG
 state without replaying the old evaluation. No bitwise GPU equivalence to a
 hypothetical uninterrupted40k run after that evaluation is claimed.

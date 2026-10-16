@@ -8,6 +8,44 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-17 completion: A continuation finished with exit0 at06:09JST, exactly
+40000 asset exposures,840 global updates and528296 supervised-frame exposures.
+The420 additional updates all used1e-4; the original model, AdamW moments/betas,
+sampler/RNG state and20k prefix were restored and verified. No initial evaluation
+was replayed. All four new fixed1536-view evaluations were preserved and
+recomputed from per-view records; panel selection exactly matches original A.
+
+| Asset exposures | Global updates | Train-pool F1 | Heldout-pose F1 | Validation F1 |
+| --- | --- | --- | --- | --- |
+| 20000 | 420 | 0.324185 | 0.304345 | 0.282056 |
+| 25000 | 525 | 0.304480 | 0.309754 | 0.282285 |
+| 30000 | 630 | 0.333847 | 0.319775 | 0.285100 |
+| 35000 | 735 | 0.343242 | 0.348920 | 0.299811 |
+| 40000 | 840 | 0.482980 | 0.481394 | 0.421903 |
+
+These are original continuous-GT topology F1 scores with failed generations
+scored zero. Training uses the same5000 assets; the fixed evaluation panel has
+32/32/128 assets with8 views each, not the entire validation dataset. Final
+generation success is238/256,244/256,955/1024. Validation improved by0.139847
+from20k (49.58percent relative), mostly in35k->40k. The25k near-plateau did not
+establish saturation. This continuation changes both training exposure and the
+learning-rate policy, so it does not isolate either cause. Execution integrity
+is accepted; formal model quality and a matched-budget A40k-vs-B/C20k claim are not.
+
+Final checkpoint:8438108528bytes, SHA256
+`8725e36d17733d56dbb76242f5a5ab5a657ee51a4f4be1ed8392e190579d6f13`.
+Final evaluation summary SHA256:
+`be535d882c0b84a2d7caf6802a923f4153e5b91bc6e926bd861b571a7e3bcf24`.
+Primary completion review is
+`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_continuation_completion_v1.json`
+(SHA256 `4c454f1da947b5e94129aa1974fa94d8d9cfc5210b506961d5e3821a85adb7c5`).
+The completed HGC runtime remains frozen at6715a2b. Fresh checks confirmed both
+training ranks and launcher gone, GPUs5/7 idle and allocation129839822 retained.
+This continuation is finished: only inspect/report remain allowed. No further
+training, D/E/F, architecture/data/loss changes or80016 promotion is authorized.
+
+### Historical continuation authorization
+
 2026-10-16 user revision: finish the current C20000 run, then SKIP D.
 Resume the preserved A20000 full checkpoint to TOTAL40000 exposures, adding
 20000 with constant learning rate1e-4, no new warmup or decay. Restore AdamW
@@ -24,8 +62,8 @@ final checkpoint SHA were reviewed. Final original-GT F1 is0.337525 train-pool /
 0.295678 heldout poses /0.279036 validation. This accepts execution integrity,
 not model quality. The final C checkpoint SHA is
 c502729b683e5696d4f64f5be3d464a5d2c899a3afef357538af45c5b42e810c.
-Prepared continuation commit455793a has now been merged into this authorized
-branch. State releases only the A continuation entrypoint, bound to C's exit0
+Prepared continuation commit455793a was merged into this authorized
+branch. At launch, state released only the A continuation entrypoint, bound to C's exit0
 result, the original A full checkpoint and the accepted A capacity receipt.
 Admission requires at least96978seconds remaining: accepted A worst-case
 microbatch timings over the exact new420-update plan,25percent training margin

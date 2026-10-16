@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-16T13:39:59.741Z",
+  "updated_at": "2026-10-16T21:43:31Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -339,15 +339,15 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Resume original A20000 full checkpoint to TOTAL40000 with constant1e-4 and restored AdamW moments/betas and rank RNG/sampler. Verify actual model/optimizer/plan restoration and new updates421..428, then evaluate25000/30000/35000/40000 on the unchanged1536-view panel. C completed20000 and is preserved. No D/E/F, architecture/data/RT/decoding changes or formal80016 run.",
+  "next_required_result": "A continuation completed exactly40000 exposures/840 updates/528296 supervised frames with exit0. All four new1536-view evaluations, both420-row continuation traces and full final-checkpoint SHA are preserved and reviewed. Stop this continuation and report the20k->40k curve; no further GPU work, D/E/F, architecture/data/loss/RT/decoding change or formal80016 run is authorized. Preserve allocation129839822 and wait for a new user decision.",
   "active_operation": {
     "label": "normal_a_extend40000_v1",
     "mode": "normal5000_continuation",
-    "operation": "train",
-    "status": "a_continuation_authorized_after_completed_c_review",
-    "complete": false,
-    "accepted": false,
-    "gpu_work_allowed": true,
+    "operation": "report",
+    "status": "a_continuation_completed_execution_integrity_accepted",
+    "complete": true,
+    "accepted": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "authorization": "User explicitly requested finishing C, skipping D and extending A from20000 to TOTAL40000; selected restoring the original peak learning rate1e-4 and holding it constant for the additional20000. Preserve optimizer moments/betas, model, data and sampling progress. This is not a fresh run or a new architecture.",
@@ -367,7 +367,7 @@
         "name": "normal_a_extend40000_v1",
         "mode": "resume",
         "approved": true,
-        "training_allowed": true,
+        "training_allowed": false,
         "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend40000_v1.json",
         "config_sha256": "41faf9572d214bbe50e7378b6ab03eed83575fd7ea1895bec4061bda0b725b5a",
         "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend40000_v1",
@@ -439,7 +439,32 @@
     "batch_protocol": "Same5000 assets, random2..24 frames, effective48assets except exact5000-boundary remainder8. Strictly preserve original20000 exposure/asset/frame prefix; consume new epochs without replaying historical training.",
     "initialization_comparison": "Load the original trained A20000 model strictly and require actual restored model-state fingerprint equal to the pinned checkpoint model tensors on both ranks. Historical shared initialization fingerprint is provenance only, not the resumed weight fingerprint. Restore AdamW state and rank RNG/sampler; no initial evaluation replay.",
     "preparation_constraint": "C terminal reviewed including all five full1536-view evaluations, both420-update traces and full checkpoint SHA; GPUs5/7 verified idle. Require fresh remaining allowance>=96978seconds before launch, then dedicated continuation first8 review. Do not change architecture/data/normalization/supervision/decoding, start D/E/F, or compare A40000 to B/C20000 as matched-budget causal evidence.",
-    "after_completion": "Preserve final artifacts, summarize A20000->40000 curves and stop this continuation; no automatic further experiment."
+    "after_completion": "Preserve final artifacts, summarize A20000->40000 curves and stop this continuation; no automatic further experiment.",
+    "quality_acceptance": false,
+    "source_commit": "6715a2b880537ed73348d7a8320974765962af15",
+    "wrapper_exit_code": 0,
+    "asset_exposures": 40000,
+    "updates": 840,
+    "supervised_frame_exposures": 528296,
+    "completion_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_continuation_completion_v1.json",
+      "sha256": "4c454f1da947b5e94129aa1974fa94d8d9cfc5210b506961d5e3821a85adb7c5"
+    },
+    "result_sha256": "00b17313edbe257f867169c19043f9cd971cae57510fd3e8b48a0cfd741bcf4e",
+    "terminal_receipt_sha256": "6d7366a2cd74c82b4e6b91248645203ebe8d9e554f6d4f0c336d466616b8c955",
+    "final_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend40000_v1/checkpoint_asset_040000.pt",
+      "bytes": 8438108528,
+      "sha256": "8725e36d17733d56dbb76242f5a5ab5a657ee51a4f4be1ed8392e190579d6f13"
+    },
+    "final_original_edge_f1": {
+      "train_seen": 0.482979822027932,
+      "train_heldout": 0.48139365645982923,
+      "valid": 0.4219034513355359
+    },
+    "final_evaluation_summary_sha256": "be535d882c0b84a2d7caf6802a923f4153e5b91bc6e926bd861b571a7e3bcf24",
+    "interpretation": "On the unchanged fixed1536-view panel, validation original-GT F1 increased from0.282056 at20k to0.421903 at40k, an absolute0.139847 gain and49.58percent relative gain, mostly in35k->40k. This does not isolate additional training from the simultaneous learning-rate change or establish formal model quality. B/C20k are not matched-budget controls for A40k.",
+    "runtime_checkout_preserved": "The completed HGC runtime remains frozen at6715a2b; this completion-only state update does not alter its source or artifacts."
   },
   "preserved_normal_c_operation": {
     "label": "normal_c_v1",

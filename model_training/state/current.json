@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-16T01:37:45Z",
+  "updated_at": "2026-10-16T02:04:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -339,15 +339,89 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "B completed20000/420updates with all five evaluations and preserved SHA-bound checkpoint. Execute only normal_capacity_c_dual_v1 nine-case dual-rank profile at conservative physical12/6/3 buckets; shared48asset exposure/frame plan remains unchanged. Primary-review both capacity ranks, common initialization and remaining grant before publishing fresh C training. Then D sequentially after its capacity. No prior/profile weights, residual/depth or newframe-budget interventions.",
+  "next_required_result": "C independent dual-rank9-case capacity passed primary review: max46.5353GiB, shared initialization matched A/B and C full fingerprint matched both ranks. Execute fresh C normal20000/420updates on the same exposure/frame plan with physical12/6/3 and accumulation2/4/8; audit initial evaluation and first8 trace before routine supervision. Preserve all milestones, then D sequentially after independent reviewed capacity. No prior/profile weights or new interventions.",
   "active_operation": {
-    "label": "normal_capacity_c_dual_v1",
+    "label": "normal_c_v1",
     "mode": "normal5000",
     "operation": "train",
-    "status": "two_rank_capacity_confirmation_authorized",
+    "status": "normal_c_training_authorized_after_reviewed_dual_capacity",
     "complete": false,
     "accepted": false,
     "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_fusion_normal.py",
+    "authorization": "Existing user-authorized sequential normal5000 A/B/C/D comparison. A/B completed20000 and are preserved; C independent9-case dual-rank capacity passed primary review. Start C from fresh official initialization with the identical asset/seed/frame plan. No new residual/depth or frame-budget interventions.",
+    "code_commit": "0252746dedbd2e60ec1d7885a71ee65315dec5c6",
+    "runs": [
+      {
+        "name": "normal_c_v1",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_c_v1.json",
+        "config_sha256": "3e9af7f412be7c9f51327280c8a10e14a9f5588534821e43a8847381c4de415e",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_c_v1",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "allocation": 129839822,
+        "host": "pcg02i",
+        "remaining_walltime_minimum_seconds": 113348,
+        "training_allowed": true,
+        "stop_conditions": [
+          "20000asset exposures and final evaluation complete",
+          "OOM",
+          "nonfinite loss or gradients",
+          "identity or source drift",
+          "explicit user stop"
+        ],
+        "physical_batch_per_rank": {
+          "T2-6": 12,
+          "T7-12": 6,
+          "T13-24": 3
+        },
+        "accumulation_microbatches_per_rank": {
+          "T2-6": 2,
+          "T7-12": 4,
+          "T13-24": 8
+        },
+        "capacity_receipt": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_c_v1.json",
+          "sha256": "5e31b951ebf7c38597834c2b19315df94bc48b55d379901e525a0864c3ccbb98"
+        }
+      }
+    ],
+    "routes": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ],
+    "target_assets_per_route": 20000,
+    "evaluation_assets": [
+      0,
+      5000,
+      10000,
+      15000,
+      20000
+    ],
+    "effective_assets_per_update": 48,
+    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+    "preparation_constraint": "Launch only C now from fresh identical official initialization after reviewed C capacity and fresh remaining-allocation check. A/B completed20000; legacy remains stopped10864 with10000 checkpoint. Freeze running source; no data/RT rescreen, new interfaces, residual/depth changes, frame-budget pairing, supervision or decoding changes. D requires independent reviewed capacity and published operation after C.",
+    "batch_protocol": "Existing matched_asset_exposure_v1; random2..24frames shared per update, effective48assets except exact5000-boundary remainder8. No fixed1152-frame budget or new frame/batch pairing in this comparison.",
+    "deferred_research": "VGGT-inspired variable-input robustness and improved frame/batch pairing; evaluate separately later, not during A/B/C/D.",
+    "exposure_plan_sha256": "a7bdf57c23a9edb0bcac5a79a4603003e8387d613cd0dbac7928255f612dca7b",
+    "initialization_comparison": "Require shared_initial_state_sha256=a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635 and full_base_initial_state_sha256=e1bf55a0f8b97b4b1603dc2b2fae1bb33fb8894fba779c6549a131e3b5851ff8 on both ranks, matching fresh C capacity initialization, never its trained weights."
+  },
+  "preserved_normal_capacity_c_dual_operation": {
+    "label": "normal_capacity_c_dual_v1",
+    "mode": "normal5000",
+    "operation": "train",
+    "status": "normal_c_capacity_completed",
+    "complete": true,
+    "accepted": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_fusion_normal.py",
     "authorization": "Existing user-authorized sequential normal5000 A/B/C/D comparison. B completed exactly20000 exposures with exit0 and preserved evidence. Proceed to C independent capacity only before primary review and fresh official-initialized C training. No new residual/depth or frame-budget interventions.",
@@ -409,7 +483,22 @@
     "batch_protocol": "Existing matched_asset_exposure_v1; random2..24frames shared per update, effective48assets except exact5000-boundary remainder8. No fixed1152-frame budget or new frame/batch pairing in this comparison.",
     "deferred_research": "VGGT-inspired variable-input robustness and improved frame/batch pairing; evaluate separately later, not during A/B/C/D.",
     "exposure_plan_sha256": "a7bdf57c23a9edb0bcac5a79a4603003e8387d613cd0dbac7928255f612dca7b",
-    "initialization_comparison": "Shared initial parameters must retain a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635. C adds only declared relative_position_bias parameters; record actual full fingerprint and require it equal across ranks, not equal to A/B full fingerprint."
+    "initialization_comparison": "Shared initial parameters must retain a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635. C adds only declared relative_position_bias parameters; record actual full fingerprint and require it equal across ranks, not equal to A/B full fingerprint.",
+    "accepted_meaning": "measured_capacity_and_finite_optimizer_execution_NOT_model_quality",
+    "runtime_code_commit": "0252746dedbd2e60ec1d7885a71ee65315dec5c6",
+    "wrapper_exit_code": 0,
+    "terminal_receipt": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_capacity_monitor/normal_capacity_c_dual_v1/terminal_receipt_v4.json",
+      "sha256": "4afeed25098a5af05186f107aa5b739e314d27568d1541250d57d41790fad1ea"
+    },
+    "reviewed_capacity": {
+      "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_c_v1.json",
+      "sha256": "5e31b951ebf7c38597834c2b19315df94bc48b55d379901e525a0864c3ccbb98"
+    },
+    "max_peak_allocated_gib": 46.53533458709717,
+    "full_base_initial_state_sha256": "e1bf55a0f8b97b4b1603dc2b2fae1bb33fb8894fba779c6549a131e3b5851ff8",
+    "shared_initial_state_sha256": "a89b29c903abffe2eead47b5411edb8588b599fe874ce490c990ce07225d3635",
+    "reinitialization_constraint": "Capacity weights are discarded; C training must load the same fresh official initialization."
   },
   "preserved_normal_b_operation": {
     "label": "normal_b_v1",

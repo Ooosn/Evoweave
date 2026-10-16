@@ -14,17 +14,26 @@ Its final original-GT F1 is0.766583 train-pool /0.786313 heldout poses /
 0.729074 unseen validation, with generation failures scored zero. B's full
 terminal evidence and checkpoint are preserved; execution integrity is accepted,
 not formal quality. Legacy has no15000/20000 node for a matched comparison.
-Only the independent C capacity profile is released next. C uses the existing
+C's independent dual-rank capacity profile completed with all9cases accepted,
+exit0, finite gradients/losses and a maximum46.5353GiB allocated,58.77percent
+of device memory below the85percent cap. Primary review is SHA-bound in
+reviewed_capacity_c_v1.json (5e31b951...); training is now released only after
+a fresh remaining-grant check against113348seconds. This conservative allowance
+uses worst stress timing plus25percent and8h evaluation/checkpoint overhead,
+not an observed normal-data ETA. C uses the existing
 relative_position mode: A's virtual-query fusion plus per-head relative input
 anchor-coordinate bias, not a new residual/depth intervention. Its explicit
 pairwise bias intermediates motivate conservative per-rank12/6/3 batches for
-T2-6/T7-12/T13-24, with prospective2/4/8 accumulation to retain effective48.
+T2-6/T7-12/T13-24, with2/4/8 accumulation to retain effective48.
 The full exposure/frame plan, supervision and evaluation remain identical.
 The nine capacity cases still cover all three longest-main assets, the pinned
 geometry maximum and longest auxiliary target at each bucket maximum.
 C's full initial fingerprint includes its added bias parameters; only the
 shared fingerprint must equal A/B, and full fingerprints must match across ranks.
-Do not publish C training until its capacity and remaining time are reviewed.
+Fresh C training must match full initial fingerprint e1bf55a0... on both ranks
+and shared a89b29c9..., without loading profile or prior-route trained weights.
+The initial1536-view evaluation precedes all updates; audit the first8updates
+against the same asset/seed/frame plan before routine milestone supervision.
 
 2026-10-16 update: A completed all20000 exposures,420 updates and263608
 supervised-frame exposures with exit0. Both complete traces are finite,

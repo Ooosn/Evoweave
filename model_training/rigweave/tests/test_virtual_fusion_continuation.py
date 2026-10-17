@@ -18,7 +18,8 @@ from test_virtual_query_training import ROOT, namespace
 from test_virtual_fusion_normal_training import namespace as normal_namespace
 from virtual_fusion_continuation import (
     BASE_SHA256, BOUNDARIES, CHECKPOINT, OLD_PLAN_SHA256, SOURCE_CONFIG,
-    CHAINED_CHECKPOINT, CHAINED_SOURCE_CONFIG, CHAINED_PLAN_SHA256, PURPOSE, continuation_contract,
+    CHAINED_CHECKPOINT, CHAINED_SOURCE_CONFIG, CHAINED_PLAN_SHA256,
+    EXTENDED_CHECKPOINT, EXTENDED_SOURCE_CONFIG, EXTENDED_PLAN_SHA256, PURPOSE, continuation_contract,
     extend_checkpoint_stream, restore_training_state, set_continuation_lr,
     validate_checkpoint_payload, validate_continuation_config,
 )
@@ -86,6 +87,62 @@ def chained_payload_fixture():
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_a120k_preserves_a80k_prefix_history_optimizer_and_replacement_grant(self):
+        original, _ = configs()
+        folder = ROOT / 'model_training/experiments'
+        source = json.loads((folder / 'fusion_normal_a_extend80000_v1.json').read_text())
+        extended = json.loads((folder / 'fusion_normal_a_extend120000_v1.json').read_text())
+        self.assertEqual(validate_continuation_config(extended, original, 2), list(range(85000, 120001, 5000)))
+        payload = chained_payload_fixture()
+        payload.update(source=EXTENDED_CHECKPOINT['source'], config=source,
+                       asset_exposures=80000, step=1680, supervised_frame_exposures=1041832)
+        for value in payload['optimizer']['state'].values():
+            value['step'].fill_(1680)
+        initial = payload['initialization']
+        initial['training_continuation_history'] = [deepcopy(initial['training_continuation'])]
+        initial['training_continuation'].update(
+            checkpoint=deepcopy(CHAINED_CHECKPOINT), source_config=deepcopy(CHAINED_SOURCE_CONFIG),
+            source=EXTENDED_CHECKPOINT['source'], config_sha256=EXTENDED_SOURCE_CONFIG['sha256'],
+            start_asset_exposures=40000, target_asset_exposures=80000, start_updates=840, target_updates=1680,
+            start_supervised_frame_exposures=528296, target_supervised_frame_exposures=1041832,
+            original_exposure_plan_sha256=CHAINED_PLAN_SHA256,
+            extended_exposure_plan_sha256=EXTENDED_PLAN_SHA256, saved_prefix_asset_exposures_verified=40000)
+        for rank in (0, 1):
+            old = extend_checkpoint_stream(payload, rank, target_assets=80000)
+            old.cursor = old.local_total
+            payload['rank_states'][rank]['stream'] = old.state_dict()
+            stream = extend_checkpoint_stream(payload, rank, target_assets=120000)
+            self.assertEqual(stream.cursor, 40000)
+            self.assertEqual(len(stream.update_sizes), 2520)
+            self.assertEqual(stream.plan_report()['supervised_frame_exposures'], 1555504)
+            self.assertEqual(stream.plan_sha256, '26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70')
+            self.assertEqual(stream.global_ends[1680], 80048)
+            np.testing.assert_array_equal(stream.order[:80000], old.order)
+            np.testing.assert_array_equal(stream.frame_counts[:1680], old.frame_counts)
+            np.testing.assert_array_equal(stream.update_sizes[:1680], old.update_sizes)
+            self.assertEqual(stream.frame_counts[1680:1688].tolist(), [23, 11, 4, 14, 4, 14, 12, 23])
+        validate_checkpoint_payload(payload, original, 2, config=extended, source_config=source)
+        for section, key, value in [('runtime', 'allocation', 129839822), ('runtime', 'host', 'pcg01i'),
+                                    ('runtime', 'physical_gpus', [0, 1]), ('optimization', 'peak_lr', 2e-4),
+                                    ('continuation', 'checkpoint', CHAINED_CHECKPOINT)]:
+            changed = deepcopy(extended)
+            changed[section][key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validate_continuation_config(changed, original, 2)
+        for mutate in (
+            lambda data: data['initialization'].pop('training_continuation_history'),
+            lambda data: data['initialization']['training_continuation_history'][0].__setitem__('source', 'wrong'),
+            lambda data: data['initialization']['training_continuation'].__setitem__('checkpoint', CHECKPOINT),
+            lambda data: data['optimizer']['state'][0]['step'].fill_(1681),
+            lambda data: data['optimizer']['param_groups'][0].__setitem__('lr', 2e-6),
+            lambda data: data['rank_states'][1]['stream'].__setitem__('cursor', 20000),
+            lambda data: data['rank_states'][0].pop('cuda_rng'),
+        ):
+            changed = deepcopy(payload)
+            mutate(changed)
+            with self.assertRaises(ValueError):
+                validate_checkpoint_payload(changed, original, 2, config=extended, source_config=source)
+
     def test_chained_config_preserves_original_policy_and_adds_only_new_milestones(self):
         original, source = configs()
         extended = json.loads((ROOT / 'model_training/experiments/fusion_normal_a_extend80000_v1.json').read_text())

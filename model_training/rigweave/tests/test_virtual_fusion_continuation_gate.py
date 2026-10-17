@@ -54,7 +54,9 @@ def write_json(path, value):
 
 def make_fixture(root, target_assets=40000):
     root = Path(root)
-    config = {'runtime': {'physical_gpus': [5, 7]}, 'training': {'target_assets': target_assets}}
+    config = {'runtime': {'physical_gpus': [5, 7], 'host': 'pcg02i',
+                         'allocation': 130258195 if target_assets == 120000 else 129839822},
+              'training': {'target_assets': target_assets}}
     contract = continuation_contract(config)
     label = contract['label']
     config_path = root / f'model_training/experiments/fusion_{label}.json'
@@ -92,6 +94,7 @@ def make_fixture(root, target_assets=40000):
         'training_allowed': True, 'config': str(config_path),
         'config_sha256': file_sha256(config_path), 'output': str(output),
         'physical_gpus': [5, 7], 'resume_checkpoint': deepcopy(contract['checkpoint']),
+        'allocation': config['runtime']['allocation'], 'host': config['runtime']['host'],
         'capacity_receipt': {'path': str(capacity_path), 'sha256': file_sha256(capacity_path)},
     }
     predecessor = {
@@ -156,6 +159,29 @@ def clean_subprocess():
 
 
 class ContinuationGateTests(unittest.TestCase):
+    def test_a120k_gate_requires_completed_a80k_on_the_replacement_allocation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = make_fixture(directory, 120000)
+            args = SimpleNamespace(config=fixture.config_path, output=fixture.output)
+            subprocess, _ = clean_subprocess()
+            fixture.namespace['subprocess'] = subprocess
+            with remote_exit_text('0', 'normal_a_extend80000_v1'):
+                self.assertEqual(fixture.namespace['verify_operation'](args, fixture.config, 0), 'test-head')
+                for mutate in (
+                    lambda state: state['active_operation']['runs'][0].__setitem__('allocation', 129839822),
+                    lambda state: state['active_operation']['runs'][0].__setitem__('host', 'pcg01i'),
+                    lambda state: state['active_operation']['completed_predecessor'].__setitem__(
+                        'exit', str(REMOTE_C_EXIT.parent / 'normal_a_extend40000_v1.exit')),
+                ):
+                    state = deepcopy(fixture.state)
+                    mutate(state)
+                    with self.assertRaises(ValueError):
+                        fixture.namespace['declared_operation'](state, args, fixture.config)
+                state = deepcopy(fixture.state)
+                replace_c_result(fixture, state, asset_exposures=40000, updates=840)
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+
     def test_a80k_gate_requires_completed_a40k_and_its_checkpoint(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = make_fixture(directory, 80000)

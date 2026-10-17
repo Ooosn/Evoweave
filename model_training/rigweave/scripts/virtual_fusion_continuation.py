@@ -1,4 +1,4 @@
-"""Pinned A20k-to40k and A40k-to80k continuation contracts, without GPU startup."""
+"""Pinned A20k-to40k, A40k-to80k and A80k-to120k continuation contracts."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -41,6 +41,17 @@ CHAINED_SOURCE_CONFIG = {
     'sha256': '41faf9572d214bbe50e7378b6ab03eed83575fd7ea1895bec4061bda0b725b5a',
 }
 CHAINED_PLAN_SHA256 = '3321e85cb3608f51620b45ea9c54359b3b0043074ef9f4d645643d1e10a6ba09'
+EXTENDED_CHECKPOINT = {
+    'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_080000.pt',
+    'sha256': 'e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600',
+    'bytes': 8438111024,
+    'source': '21f3a2eba2b9b162756b6ab1684913f587c853ee',
+}
+EXTENDED_SOURCE_CONFIG = {
+    'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend80000_v1.json',
+    'sha256': '2057ebec5370d780de393edfe026cba25b01a29335eab577f8652cc3bafc679a',
+}
+EXTENDED_PLAN_SHA256 = 'f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2'
 
 
 def continuation_contract(config):
@@ -68,8 +79,21 @@ def continuation_contract(config):
                 'asset_exposures': 40000, 'updates': 840, 'supervised_frame_exposures': 528296,
                 'additional_asset_exposures': 20000, 'additional_updates': 420},
         }
+    elif target == 120000:
+        result = {
+            'label': 'normal_a_extend120000_v1', 'start_assets': 80000,
+            'start_updates': 1680, 'start_frames': 1041832,
+            'checkpoint': EXTENDED_CHECKPOINT, 'source_config': EXTENDED_SOURCE_CONFIG,
+            'old_plan_sha256': EXTENDED_PLAN_SHA256, 'source_purpose': PURPOSE,
+            'replacement_allocation': 130258195,
+            'predecessor_label': 'normal_a_extend80000_v1',
+            'predecessor_result': {'execution_complete': True, 'mode': 'resume', 'route': 'a',
+                'purpose': PURPOSE, 'code_commit': EXTENDED_CHECKPOINT['source'],
+                'asset_exposures': 80000, 'updates': 1680, 'supervised_frame_exposures': 1041832,
+                'additional_asset_exposures': 40000, 'additional_updates': 840},
+        }
     else:
-        raise ValueError('only the pinned A20k-to40k and A40k-to80k continuations are implemented')
+        raise ValueError('only the pinned A20k-to40k, A40k-to80k and A80k-to120k continuations are implemented')
     result = deepcopy(result)
     result['target_assets'] = target
     result['boundaries'] = list(range(5000, target + 1, 5000))
@@ -97,6 +121,10 @@ def validate_continuation_config(config, original, world):
     baseline['training'].update(target_assets=START_ASSETS, checkpoint_assets=BOUNDARIES[:4],
                                 evaluation_assets=BOUNDARIES[:4])
     baseline['evaluation']['initial'] = True
+    if 'replacement_allocation' in contract:
+        if baseline['runtime']['allocation'] != contract['replacement_allocation']:
+            raise ValueError('continuation requires its explicitly granted replacement allocation')
+        baseline['runtime']['allocation'] = original['runtime']['allocation']
     if baseline != original:
         raise ValueError('continuation changed the original architecture, data, optimizer or physical policy')
     return list(contract['milestones'])
@@ -110,7 +138,7 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             raise ValueError('original A source configuration differs')
     else:
         if source_config is None or source_config['training']['target_assets'] != contract['start_assets']:
-            raise ValueError('the chained continuation requires its completed40k source configuration')
+            raise ValueError('the chained continuation requires its completed source configuration')
         validate_continuation_config(source_config, original, world)
         expected_config = source_config
     if not isinstance(payload, dict):
@@ -131,9 +159,8 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             or initial.get('shared_initial_state_sha256') != BASE_SHA256
             or initial.get('exposure_plan_sha256') != OLD_PLAN_SHA256):
         raise ValueError('checkpoint original initialization provenance changed')
-    if contract['start_assets'] == 40000:
-        prior = initial.get('training_continuation', {})
-        expected_prior = {
+    if contract['start_assets'] >= 40000:
+        expected_40k = {
             'checkpoint': CHECKPOINT, 'source_config': SOURCE_CONFIG, 'route': 'a',
             'source': CHAINED_CHECKPOINT['source'], 'config_sha256': CHAINED_SOURCE_CONFIG['sha256'],
             'start_asset_exposures': START_ASSETS, 'target_asset_exposures': 40000,
@@ -144,7 +171,29 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             'optimizer_state_restore_required': True, 'fresh_official_initialization': False,
             'resumed_trained_weights_loaded': True, 'original_20000_prefix_verified': True,
         }
-        if any(prior.get(key) != value for key, value in expected_prior.items()):
+        prior = initial.get('training_continuation', {})
+        old_prior = prior
+        if contract['start_assets'] == 80000:
+            expected_80k = {
+                'checkpoint': CHAINED_CHECKPOINT, 'source_config': CHAINED_SOURCE_CONFIG, 'route': 'a',
+                'source': EXTENDED_CHECKPOINT['source'], 'config_sha256': EXTENDED_SOURCE_CONFIG['sha256'],
+                'start_asset_exposures': 40000, 'target_asset_exposures': 80000,
+                'start_updates': 840, 'target_updates': 1680,
+                'start_supervised_frame_exposures': 528296, 'target_supervised_frame_exposures': 1041832,
+                'original_exposure_plan_sha256': CHAINED_PLAN_SHA256,
+                'extended_exposure_plan_sha256': EXTENDED_PLAN_SHA256,
+                'constant_learning_rate': 1e-4, 'optimizer_betas': 'restore_checkpoint',
+                'optimizer_state_restore_required': True, 'fresh_official_initialization': False,
+                'resumed_trained_weights_loaded': True, 'original_20000_prefix_verified': True,
+                'saved_prefix_asset_exposures_verified': 40000,
+            }
+            if any(prior.get(key) != value for key, value in expected_80k.items()):
+                raise ValueError('completed80k checkpoint does not retain its A40k continuation provenance')
+            history = initial.get('training_continuation_history', [])
+            if len(history) != 1:
+                raise ValueError('completed80k checkpoint must retain the original A20k continuation history')
+            old_prior = history[0]
+        if any(old_prior.get(key) != value for key, value in expected_40k.items()):
             raise ValueError('completed40k checkpoint does not retain its original A20k continuation provenance')
     states = payload['rank_states']
     if world != 2 or not isinstance(states, list) or len(states) != world:
@@ -162,10 +211,10 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
         steps.append(count)
     if max(steps) != contract['start_updates']:
         raise ValueError('checkpoint optimizer did not reach the saved source update boundary')
-    if contract['start_assets'] == 40000:
+    if contract['start_assets'] >= 40000:
         group = optimizer['param_groups'][0]
         if group.get('lr') != 1e-4 or tuple(group.get('betas', ())) != (.9499999512612207, .999):
-            raise ValueError('completed40k optimizer must retain its constant learning rate and restored betas')
+            raise ValueError('completed continuation optimizer must retain its constant learning rate and restored betas')
     for rank, state in enumerate(states):
         if not {'stream', 'torch_rng', 'cuda_rng', 'numpy_rng', 'python_rng'} <= state.keys():
             raise ValueError('checkpoint is missing rank sampling or RNG state')

@@ -45,6 +45,8 @@ def declared_operation(state, args, config):
             or run['config_sha256'] != normal.sha256(args.config)
             or Path(run['output']).resolve() != args.output.resolve()
             or run['physical_gpus'] != config['runtime']['physical_gpus']
+            or run.get('allocation') != config['runtime']['allocation']
+            or run.get('host') != config['runtime']['host']
             or run.get('resume_checkpoint') != contract['checkpoint']):
         raise ValueError('continuation config/output/devices/checkpoint differ from the approved run')
     capacity = run['capacity_receipt']

@@ -9,6 +9,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+from virtual_fusion_continuation import continuation_contract
+
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / 'model_training/rigweave/scripts'
@@ -25,7 +27,7 @@ def functions(filename, names, namespace):
 
 
 def gate_namespace():
-    namespace = {'Path': Path, 'json': json}
+    namespace = {'Path': Path, 'json': json, 'continuation_contract': continuation_contract}
     entrypoint = ast.parse((SCRIPTS / 'resume_virtual_fusion_normal.py').read_text())
     helper = ast.parse((SCRIPTS / 'virtual_fusion_continuation.py').read_text())
     assignments = [node for node in entrypoint.body if isinstance(node, ast.Assign)
@@ -50,11 +52,14 @@ def write_json(path, value):
     Path(path).write_text(json.dumps(value, sort_keys=True))
 
 
-def make_fixture(root):
+def make_fixture(root, target_assets=40000):
     root = Path(root)
-    config_path = root / 'model_training/experiments/fusion_normal_a_extend40000_v1.json'
+    config = {'runtime': {'physical_gpus': [5, 7]}, 'training': {'target_assets': target_assets}}
+    contract = continuation_contract(config)
+    label = contract['label']
+    config_path = root / f'model_training/experiments/fusion_{label}.json'
     output_root = root / 'outputs'
-    output = output_root / 'normal_a_extend40000_v1'
+    output = output_root / label
     capacity_path = root / 'reviewed_a_capacity.json'
     state_path = root / 'model_training/state/current.json'
     config_path.parent.mkdir(parents=True)
@@ -62,15 +67,12 @@ def make_fixture(root):
     capacity_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.parent.mkdir(parents=True, exist_ok=True)
 
-    config = {'runtime': {'physical_gpus': [5, 7]}}
     capacity = {'accepted': True, 'world_size': 2, 'capacity_contract': {'fixture': 'reviewed-a'},
                 'approved_cases': [{'frames': 24, 'batch_per_rank': 6}]}
-    c_result = {'execution_complete': True, 'mode': 'train', 'route': 'c',
-                'code_commit': 'cf1c1ae54cdcaef002b9c4d665f1133903e76a5d',
-                'asset_exposures': 20000, 'updates': 420, 'supervised_frame_exposures': 263608}
+    c_result = deepcopy(contract['predecessor_result'])
     write_json(config_path, config)
     write_json(capacity_path, capacity)
-    result_path = output_root / 'normal_c_v1/result.json'
+    result_path = output_root / contract['predecessor_label'] / 'result.json'
     result_path.parent.mkdir(parents=True)
     write_json(result_path, c_result)
 
@@ -86,14 +88,15 @@ def make_fixture(root):
                              sha256=file_sha256, validate_capacity=validate_capacity)
     namespace.update(ROOT=root, normal=normal)
     run = {
-        'name': 'normal_a_extend40000_v1', 'mode': 'resume', 'approved': True,
+        'name': label, 'mode': 'resume', 'approved': True,
         'training_allowed': True, 'config': str(config_path),
         'config_sha256': file_sha256(config_path), 'output': str(output),
-        'physical_gpus': [5, 7], 'resume_checkpoint': deepcopy(namespace['CHECKPOINT']),
+        'physical_gpus': [5, 7], 'resume_checkpoint': deepcopy(contract['checkpoint']),
         'capacity_receipt': {'path': str(capacity_path), 'sha256': file_sha256(capacity_path)},
     }
     predecessor = {
-        'result': str(result_path), 'exit': str(REMOTE_C_EXIT),
+        'result': str(result_path),
+        'exit': str(REMOTE_C_EXIT.parent / (contract['predecessor_label'] + '.exit')),
         'result_sha256': file_sha256(result_path),
     }
     operation = {
@@ -122,11 +125,12 @@ def replace_c_result(fixture, state, **changes):
     state['active_operation']['completed_predecessor']['result_sha256'] = file_sha256(fixture.result_path)
 
 
-def remote_exit_text(value):
+def remote_exit_text(value, label='normal_c_v1'):
     original = Path.read_text
 
     def read_text(path, *args, **kwargs):
-        if str(path).replace('\\', '/') == str(REMOTE_C_EXIT).replace('\\', '/'):
+        expected = REMOTE_C_EXIT.parent / (label + '.exit')
+        if str(path).replace('\\', '/') == str(expected).replace('\\', '/'):
             return value
         return original(path, *args, **kwargs)
 
@@ -152,6 +156,30 @@ def clean_subprocess():
 
 
 class ContinuationGateTests(unittest.TestCase):
+    def test_a80k_gate_requires_completed_a40k_and_its_checkpoint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = make_fixture(directory, 80000)
+            args = SimpleNamespace(config=fixture.config_path, output=fixture.output)
+            subprocess, _ = clean_subprocess()
+            fixture.namespace['subprocess'] = subprocess
+            with remote_exit_text('0', 'normal_a_extend40000_v1'):
+                self.assertEqual(fixture.namespace['verify_operation'](args, fixture.config, 0), 'test-head')
+                for mutate in (
+                    lambda state: state['active_operation'].__setitem__('complete', True),
+                    lambda state: state['active_operation']['runs'][0].__setitem__(
+                        'resume_checkpoint', deepcopy(fixture.namespace['CHECKPOINT'])),
+                    lambda state: state['active_operation']['completed_predecessor'].__setitem__(
+                        'exit', str(REMOTE_C_EXIT)),
+                ):
+                    state = deepcopy(fixture.state)
+                    mutate(state)
+                    with self.assertRaises(ValueError):
+                        fixture.namespace['declared_operation'](state, args, fixture.config)
+                state = deepcopy(fixture.state)
+                replace_c_result(fixture, state, asset_exposures=20000, updates=420)
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+
     def test_current_c_active_operation_cannot_authorize_a_resume(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = make_fixture(Path(directory))

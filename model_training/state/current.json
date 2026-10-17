@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-17T04:39:00Z",
+  "updated_at": "2026-10-17T17:29:44Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -339,20 +339,20 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Resume the verified A40000 full checkpoint toTOTAL80000 on existing allocation129839822 with user-accepted expiry risk. First verify actual model/AdamW/RNG/sampler restoration and newupdates841..848, then supervise840 additional updates and eight fixed1536-view evaluations at45k..80k. Preserve all checkpoints and qlogin. Accept completion only at80000exposures/1680updates/1041832frames with terminalexit0 and final evaluation. No D/E/F, architecture/data/loss/RT/decoding changes or formal80016 promotion.",
+  "next_required_result": "A continuation completed80000 exposures/1680 updates/1041832 supervised frames with exit0. All840 new updates, eight fixed1536-view evaluations and full75k/80k checkpoint hashes are verified. Best validation F1 is0.6805177 at75k; final80k is0.6457406. Both are below B20k0.7290737, so conditional B continuation was not triggered. Preserve allocation129839822 and artifacts; only inspect/report are allowed. No new training, architecture/head reset or formal80016 run without a new user decision.",
   "active_operation": {
     "label": "normal_a_extend80000_v1",
     "mode": "normal5000_continuation",
-    "status": "a_40000_to_80000_authorized_pending_startup_review",
-    "operation": "train",
+    "status": "a_80000_completed_execution_integrity_accepted",
+    "operation": "report",
     "authorization": "User explicitly requested A own40000 checkpoint to TOTAL80000 and accepted on2026-10-17T04:36Z that current allocation may expire before completion; preserve checkpoints and continue later on a new authorized allocation if needed. Preserve model/AdamW moments and betas/sampling progress, keep existing1e-4; no restart.",
     "code_commit": "2c0e1824c6a6219ab4f8de1d383e230bfb8279fc",
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
     "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "complete": false,
+    "complete": true,
     "routes": [
       "a"
     ],
@@ -405,7 +405,8 @@
       "fresh_observation_utc": "2026-10-17T04:37:11.462281+00:00",
       "remaining_seconds_at_observation": 62091.50373,
       "allocation_expiry_utc": "2026-10-17T21:52:02.966000+00:00",
-      "partial_resume_policy": "Preserve checkpoints; same-target partial-budget restart must be explicitly prepared/verified against the actual saved checkpoint if allocation expires. It is not yet automatic. No allocation release/replacement authorized by this operation."
+      "partial_resume_policy": "Preserve checkpoints; same-target partial-budget restart must be explicitly prepared/verified against the actual saved checkpoint if allocation expires. It is not yet automatic. No allocation release/replacement authorized by this operation.",
+      "actual_outcome": "Completed80000 and final evaluation within the original allocation; no cross-allocation continuation required."
     },
     "preparation_constraint": "Require clean source6715a2b before deployment, published prepared code and state, both physical GPUs5/7idle, unchanged source checkpoint/config/predecessor/capacity, freshremaining>=51553sec (point estimate only, user explicitly accepted slow-case risk). Primary review actual restoration and dedicated first8 monitor before full supervision.",
     "runs": [
@@ -413,7 +414,7 @@
         "name": "normal_a_extend80000_v1",
         "mode": "resume",
         "approved": true,
-        "training_allowed": true,
+        "training_allowed": false,
         "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend80000_v1.json",
         "config_sha256": "2057ebec5370d780de393edfe026cba25b01a29335eab577f8652cc3bafc679a",
         "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1",
@@ -454,8 +455,47 @@
         ]
       }
     ],
-    "after_completion": "Preserve final artifacts and summarize A20k/40k/80k trajectory; stop this continuation. No automatic other experiments, D/E/F, architecture/data changes or formal80016 promotion.",
-    "quality_acceptance": false
+    "after_completion": "Preserve final and best75k checkpoints, completed reports and allocation129839822. No new GPU work: conditional B extension was not triggered. Wait for a new user decision.",
+    "quality_acceptance": false,
+    "accepted": true,
+    "source_commit": "21f3a2eba2b9b162756b6ab1684913f587c853ee",
+    "asset_exposures": 80000,
+    "updates": 1680,
+    "supervised_frame_exposures": 1041832,
+    "wrapper_exit_code": 0,
+    "result_sha256": "538113b0ed48a51c1a52da4d2650d75e2d47d3ff5aaf023a58c34369db7cecdd",
+    "terminal_receipt_sha256": "a27dc4332d61c829b62bb2f98c989c54b2d40747275d8c4655a32c0b978c62d6",
+    "completion_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_extension80000_completion_v1.json",
+      "sha256": "a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8"
+    },
+    "final_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_080000.pt",
+      "bytes": 8438111024,
+      "sha256": "e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600"
+    },
+    "best_validation_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_075000.pt",
+      "bytes": 8438111024,
+      "sha256": "7aac9118eef587e4aad313bb35d69319977fe6d98973c748c8f70fab4c61ac12",
+      "samples": 75000,
+      "valid_original_edge_f1": 0.6805177152363059
+    },
+    "final_original_edge_f1": {
+      "train_seen": 0.7254416078605583,
+      "train_heldout": 0.7337579960314435,
+      "valid": 0.6457406388901882
+    },
+    "final_evaluation_summary_sha256": "e70ce40b1c2241b36d7ceb1fd710c4cc1226ab407866c4ef8fea77cf54826661",
+    "runtime_checkout_preserved": "Completed HGC runtime remains frozen at21f3a2e; this completion-only metadata publication does not change its source or artifacts.",
+    "interpretation": "All840 additional updates and eight fixed1536-view evaluations passed. Best validation F1 at75k is0.6805177; final80k falls to0.6457406. Neither exceeded B20k0.7290737. No matched-budget superiority or absolute architecture ceiling is established.",
+    "conditional_b_continuation": {
+      "trigger": "A exceeds B20k validation original-GT F1 on the same panel",
+      "threshold": 0.7290737472439043,
+      "best_a": 0.6805177152363059,
+      "triggered": false,
+      "launched": false
+    }
   },
   "preserved_normal_a_extend40000_operation": {
     "label": "normal_a_extend40000_v1",

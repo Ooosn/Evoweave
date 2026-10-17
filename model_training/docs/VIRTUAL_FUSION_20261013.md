@@ -8,6 +8,50 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+### A80000 completed; report-only
+
+2026-10-18 completion: A reached80000 exposures/1680 global updates/1041832
+supervised frames and terminal exit0, verified at01:13JST. All840 additional
+updates retained1e-4. Both full traces,22 terminal artifact hashes and all eight
+new1536-view evaluations passed review. Per-view F1/success were recomputed;
+the evaluation selection exactly matches original A. This accepts execution
+integrity, not formal model quality or a matched-budget comparison with B20k.
+
+| Asset exposures | Train-pool F1 | Heldout-pose F1 | Validation F1 |
+| --- | --- | --- | --- |
+| 40000 | 0.482980 | 0.481394 | 0.421903 |
+| 45000 | 0.561562 | 0.557844 | 0.498740 |
+| 50000 | 0.656981 | 0.626412 | 0.588187 |
+| 55000 | 0.683880 | 0.665054 | 0.625416 |
+| 60000 | 0.704813 | 0.673164 | 0.644832 |
+| 65000 | 0.720171 | 0.680320 | 0.641813 |
+| 70000 | 0.758991 | 0.749522 | 0.661098 |
+| 75000 | 0.751346 | 0.742180 | 0.680518 |
+| 80000 | 0.725442 | 0.733758 | 0.645741 |
+
+Scores are original continuous-GT edge F1, failed generations scored zero,
+on the fixed1536-view panel, not the full validation dataset. Best validation
+is75k,0.048556 below B20k0.729074; final80k is0.083333 below B. Validation
+generation success/count exactness decline from96.78/40.43percent at75k to
+93.95/36.62percent at80k. This does not identify an overfitting mechanism or
+an absolute architecture ceiling. The user's conditional B extension required
+A to surpass B; that condition was not met, so no B continuation was launched.
+
+Both75k and80k checkpoints are8438111024bytes and remain preserved. Full SHA256:
+- 75k: `7aac9118eef587e4aad313bb35d69319977fe6d98973c748c8f70fab4c61ac12`
+- 80k: `e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600`
+
+Primary completion review:
+`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_extension80000_completion_v1.json`
+SHA256 `a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8`.
+At02:25JST fresh checks confirmed clean frozen runtime21f3a2e, launcher and both
+ranks gone, GPUs5/7 idle, and allocation129839822 preserved. This local/GitHub
+completion metadata is not deployed over the completed runtime. Only inspect
+and report remain allowed; no new GPU work, architecture/head initialization
+changes, or allocation release without a new user decision.
+
+### Historical A40000-to80000 authorization
+
 2026-10-17 13:36JST user authorization: continue A's own40000 full checkpoint
 to TOTAL80000, adding40000 exposures at the existing constant1e-4. Restore
 AdamW moments/betas and rank sampler/RNG; no new warmup, decay, model/data
@@ -29,7 +73,7 @@ guaranteed. Preserve every checkpoint and qlogin. A same-target partial restart
 after expiry needs a separately verified saved-checkpoint binding and is not
 automatic. No replacement allocation is requested now.
 
-The active operation supersedes the completed/report-only40k operation below,
+At launch this operation superseded the completed/report-only40k operation below,
 which is retained as historical evidence. Actual40k restored tensor identity,
 optimizer state and dedicated first8 checks must pass before full supervision.
 No D/E/F, dataset expansion or formal80016 promotion is authorized.

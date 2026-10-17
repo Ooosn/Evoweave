@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-17T17:29:44Z",
+  "updated_at": "2026-10-17T18:34:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,15 +135,33 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
+    "server": "HGC",
+    "status": "replacement_granted_verified",
+    "qlogin_job_id": 130258195,
+    "host": "pcg02i",
+    "physical_gpus": [5, 7],
+    "gpu_uuids": ["GPU-15b237a2-cd50-5c84-2112-ded36d4eccaf", "GPU-f2bce487-f097-756f-7c82-1d5c4f97c824"],
+    "start_utc": "2026-10-17T18:26:02.534000+00:00",
+    "expiry_utc": "2026-10-21T18:26:02.534000+00:00",
+    "h_rt_seconds": 345600,
+    "keepalive_root": "/home/wangyy/jobs/virtual_fusion_allocation_20261018_v2",
+    "ssd_verified": "/work XFS /dev/md0 RAID0 NVMe ROTA=0 onpcg02; same existing cache paths",
+    "pending_job_id": null,
+    "previous_job_id": 129839822,
+    "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
+    "authorization": "User on2026-10-17T18:22Z explicitly requested release, replacement two-H100 qlogin, automatic A80k-to120k continuation, then retain allocation.",
+    "decision": "Old129839822 released after fresh idle check. New130258195 verified on same physical5/7. Preserve new keepalive after A120k completion; no other release or submission authorized."
+  },
+  "preserved_compute_allocation_129839822": {
     "server": "HGC",
     "status": "replacement_granted_verified",
     "qlogin_job_id": 129839822,
@@ -339,8 +357,126 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A continuation completed80000 exposures/1680 updates/1041832 supervised frames with exit0. All840 new updates, eight fixed1536-view evaluations and full75k/80k checkpoint hashes are verified. Best validation F1 is0.6805177 at75k; final80k is0.6457406. Both are below B20k0.7290737, so conditional B continuation was not triggered. Preserve allocation129839822 and artifacts; only inspect/report are allowed. No new training, architecture/head reset or formal80016 run without a new user decision.",
+  "next_required_result": "Run only the pinned A80k-to120k continuation on replacement130258195. Verify actual restored model/optimizer and first8 updates, then supervise to120000/2520/1555504 and all eight fixed1536-view evaluations. Preserve allocation after completion; no automatic B, reset or architecture changes.",
   "active_operation": {
+  "label": "normal_a_extend120000_v1",
+    "mode": "normal5000_continuation",
+    "status": "prepared_for_first8_review",
+    "operation": "train",
+    "authorization": "User explicitly requested release129839822, replacement two-H100 qlogin, automatic continuation of A from final80000 to TOTAL120000, then retain the new cards. This is40000 additional exposures, not a restart or best75k rollback.",
+    "code_commit": "129f7137941708274b5d981a3d5d0d68f92916f8",
+    "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "routes": [
+      "a"
+    ],
+    "start_asset_exposures": 80000,
+    "target_asset_exposures": 120000,
+    "additional_asset_exposures": 40000,
+    "start_updates": 1680,
+    "target_updates": 2520,
+    "start_supervised_frame_exposures": 1041832,
+    "target_supervised_frame_exposures": 1555504,
+    "evaluation_assets": [
+      85000,
+      90000,
+      95000,
+      100000,
+      105000,
+      110000,
+      115000,
+      120000
+    ],
+    "effective_assets_per_update": 48,
+    "exposure_plan_sha256": "26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70",
+    "original_exposure_plan_sha256": "f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2",
+    "learning_rate": {
+      "mode": "constant_after_resume",
+      "value": 0.0001,
+      "warmup": false,
+      "decay": false,
+      "restart_onecycle": false,
+      "optimizer_betas": "restore_checkpoint"
+    },
+    "batch_protocol": "Same5000 assets, random2..24 frames, effective48 except exact5000-boundary remainder8. Preserve full80000 exposure/asset/frame prefix and both RNG states; continue new epochs without replay.",
+    "completed_predecessor": {
+      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/result.json",
+      "result_sha256": "538113b0ed48a51c1a52da4d2650d75e2d47d3ff5aaf023a58c34369db7cecdd",
+      "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_extend80000_v1.exit",
+      "source_commit": "21f3a2eba2b9b162756b6ab1684913f587c853ee",
+      "completion_review": {
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_extension80000_completion_v1.json",
+        "sha256": "a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8"
+      }
+    },
+    "initialization_comparison": "Strict load finalA80000; require checkpoint model tensor fingerprint equal actual loaded fingerprint on BOTH ranks. Do not reuse historical40k model fingerprint. Restore947 AdamW states/maxstep1680 and betas. Preserve20k->40k->80k provenance; no initial80k evaluation replay.",
+    "preparation_constraint": "34 focused CPU tests passed. Newgrant130258195/pcg02i/physical5,7 and UUIDs verified; sameNVMe /work cache/clean21f3 runtime. Publish viaGit, verify exact script/config/checkpoint/capacity/predecessor/environment and freshremaining>=86400. Dedicated first8 monitor plus primary restoration review required.",
+    "after_completion": "Stop training at120000 plus final evaluation. Preserve all checkpoints/reports and qlogin130258195 keepalive until explicit user release or scheduler96h expiry. No automatic B launch or architecture experiment in this operation.",
+    "runs": [
+      {
+        "name": "normal_a_extend120000_v1",
+        "mode": "resume",
+        "approved": true,
+        "training_allowed": true,
+        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend120000_v1.json",
+        "config_sha256": "7bec5e0c377ab3b893a54021c32506a07a8c1a61a40bb043fed5761cb4f25726",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1",
+        "allocation": 130258195,
+        "host": "pcg02i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "remaining_walltime_minimum_seconds": 86400,
+        "resume_checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_080000.pt",
+          "sha256": "e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600",
+          "bytes": 8438111024,
+          "source": "21f3a2eba2b9b162756b6ab1684913f587c853ee"
+        },
+        "capacity_receipt": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_a_v1.json",
+          "sha256": "bb9898beee94123c740f24d5b40356b51ed125b1b01229f482ad0e85bd973e45"
+        },
+        "physical_batch_per_rank": {
+          "T2-6": 24,
+          "T7-12": 12,
+          "T13-24": 6
+        },
+        "accumulation_microbatches_per_rank": {
+          "T2-6": 1,
+          "T7-12": 2,
+          "T13-24": 4
+        },
+        "stop_conditions": [
+          "120000total exposures and final evaluation complete",
+          "OOM",
+          "nonfinite loss or gradients",
+          "identity/source/checkpoint/restore drift",
+          "allocation expiry",
+          "explicit user stop"
+        ]
+      }
+    ]
+  },
+  "preserved_h100_reallocation_20261018_operation": {
+    "label": "h100_reallocation_20261018_v1",
+    "operation": "submit",
+    "status": "prepared",
+    "authorization": "Explicit user request2026-10-17T18:22Z: release old, request two loginH100, automatically continue A to120k and retain cards.",
+    "required_entrypoint": "server_ops/outputs/virtual_fusion_20261013/allocation_20261018/fusion_allocation_v2.sh",
+    "old_job_id": 129839822,
+    "request_name": "virtual_fusion_2h_1018_v2",
+    "resources": "qrsh -clear -now n -pty y; h100=2 mem_req=64G; no s_vmem",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "acceptance": "Fresh old grant idle, released only by user request; exactly one replacement request. Verify accepted resources, actual host/device UUIDs, unlimited virtual memory and SSD before exact A120k stage publication. Keepalive persists independently of training."
+  },
+  "preserved_normal_a_extend80000_operation": {
     "label": "normal_a_extend80000_v1",
     "mode": "normal5000_continuation",
     "status": "a_80000_completed_execution_integrity_accepted",

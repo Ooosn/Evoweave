@@ -8,7 +8,31 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
-### A80000 completed; report-only
+### A80000-to120000 continuation authorized
+
+2026-10-18 03:22JST user explicitly requested release of the old two-H100
+qlogin, a replacement two-H100 qlogin, automatic continuation of A toTOTAL120000,
+and retention of the replacement allocation after completion. Old129839822
+was verified idle and released. New130258195 was granted03:26:02JST on the same
+pcg02i physical GPUs5/7, with a fresh96h limit. Only the allocation identity
+changes; the source is final80000, not best75000. Preserve full model/AdamW,
+RNG and sampling state, constant1e-4, fixed5000-asset pool and1536-view panel.
+Prepare and validate the exact continuation before training; do not restart,
+reset heads or change the learning-rate schedule. Retain the keepalive after
+the120000 checkpoint and final evaluation, within the scheduler's96h limit.
+
+The pinned continuation adds840 updates and513672 supervised-frame exposures,
+ending at2520 updates/1555504 frames. New plan SHA256:
+`26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70`.
+Its full80000 prefix is unchanged; first new update is1681/80048assets.
+Code129f713 passed34 continuation/gate/stream/training CPU tests. Reuse the
+accepted A capacity receipt because architecture, batch/precision policy,
+node and physical devices are unchanged. Require at least24h remaining at
+launch; the fresh allocation provides96h. Independently verify first8 updates
+and restored80k model/AdamW state before full supervision. This does not
+authorize automatic B continuation if A later exceeds B; report that result.
+
+### Historical A80000 completion
 
 2026-10-18 completion: A reached80000 exposures/1680 global updates/1041832
 supervised frames and terminal exit0, verified at01:13JST. All840 additional

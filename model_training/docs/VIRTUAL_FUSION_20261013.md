@@ -8,6 +8,34 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+2026-10-17 13:36JST user authorization: continue A's own40000 full checkpoint
+to TOTAL80000, adding40000 exposures at the existing constant1e-4. Restore
+AdamW moments/betas and rank sampler/RNG; no new warmup, decay, model/data
+change or initial evaluation replay. Plan SHA256
+`f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2`
+has1680 total updates and1041832 supervised frames (840 updates/513536 frames
+additional). Save/evaluate at45000 through80000 every5000, using the same
+fixed1536-view panel. Prepared code2c0e182 passed42 CPU tests, including two
+successive checkpoint restores, plus6 exact-plan continuation checks.
+
+The user explicitly accepted possible allocation expiry before completion.
+At13:37JST the existing twoH100 grant had62091.5seconds remaining. Observed
+timings imply51552.9seconds at average speed, versus68289.3seconds under a
+conservative per-update-tail/evaluation allowance; the latter is not a95percent
+confidence bound for total runtime. Launch requires freshremaining>=51553seconds,
+idle GPUs5/7 and all pinned source/checkpoint gates. This admission uses the
+point estimate only under the explicit user risk decision; completion is not
+guaranteed. Preserve every checkpoint and qlogin. A same-target partial restart
+after expiry needs a separately verified saved-checkpoint binding and is not
+automatic. No replacement allocation is requested now.
+
+The active operation supersedes the completed/report-only40k operation below,
+which is retained as historical evidence. Actual40k restored tensor identity,
+optimizer state and dedicated first8 checks must pass before full supervision.
+No D/E/F, dataset expansion or formal80016 promotion is authorized.
+
+### Completed A40000 evidence
+
 2026-10-17 completion: A continuation finished with exit0 at06:09JST, exactly
 40000 asset exposures,840 global updates and528296 supervised-frame exposures.
 The420 additional updates all used1e-4; the original model, AdamW moments/betas,
@@ -39,10 +67,10 @@ Final evaluation summary SHA256:
 Primary completion review is
 `D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_continuation_completion_v1.json`
 (SHA256 `4c454f1da947b5e94129aa1974fa94d8d9cfc5210b506961d5e3821a85adb7c5`).
-The completed HGC runtime remains frozen at6715a2b. Fresh checks confirmed both
+At completion the HGC runtime was frozen at6715a2b. Fresh checks confirmed both
 training ranks and launcher gone, GPUs5/7 idle and allocation129839822 retained.
-This continuation is finished: only inspect/report remain allowed. No further
-training, D/E/F, architecture/data/loss changes or80016 promotion is authorized.
+That continuation is finished. Its completed/report-only operation is preserved;
+the separate80000 operation above is the only new training authorization.
 
 ### Historical continuation authorization
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-16T21:43:31Z",
+  "updated_at": "2026-10-17T04:39:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -339,8 +339,125 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A continuation completed exactly40000 exposures/840 updates/528296 supervised frames with exit0. All four new1536-view evaluations, both420-row continuation traces and full final-checkpoint SHA are preserved and reviewed. Stop this continuation and report the20k->40k curve; no further GPU work, D/E/F, architecture/data/loss/RT/decoding change or formal80016 run is authorized. Preserve allocation129839822 and wait for a new user decision.",
+  "next_required_result": "Resume the verified A40000 full checkpoint toTOTAL80000 on existing allocation129839822 with user-accepted expiry risk. First verify actual model/AdamW/RNG/sampler restoration and newupdates841..848, then supervise840 additional updates and eight fixed1536-view evaluations at45k..80k. Preserve all checkpoints and qlogin. Accept completion only at80000exposures/1680updates/1041832frames with terminalexit0 and final evaluation. No D/E/F, architecture/data/loss/RT/decoding changes or formal80016 promotion.",
   "active_operation": {
+    "label": "normal_a_extend80000_v1",
+    "mode": "normal5000_continuation",
+    "status": "a_40000_to_80000_authorized_pending_startup_review",
+    "operation": "train",
+    "authorization": "User explicitly requested A own40000 checkpoint to TOTAL80000 and accepted on2026-10-17T04:36Z that current allocation may expire before completion; preserve checkpoints and continue later on a new authorized allocation if needed. Preserve model/AdamW moments and betas/sampling progress, keep existing1e-4; no restart.",
+    "code_commit": "2c0e1824c6a6219ab4f8de1d383e230bfb8279fc",
+    "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "routes": [
+      "a"
+    ],
+    "start_asset_exposures": 40000,
+    "target_asset_exposures": 80000,
+    "additional_asset_exposures": 40000,
+    "start_updates": 840,
+    "target_updates": 1680,
+    "start_supervised_frame_exposures": 528296,
+    "target_supervised_frame_exposures": 1041832,
+    "evaluation_assets": [
+      45000,
+      50000,
+      55000,
+      60000,
+      65000,
+      70000,
+      75000,
+      80000
+    ],
+    "effective_assets_per_update": 48,
+    "exposure_plan_sha256": "f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2",
+    "original_exposure_plan_sha256": "3321e85cb3608f51620b45ea9c54359b3b0043074ef9f4d645643d1e10a6ba09",
+    "learning_rate": {
+      "mode": "constant_after_resume",
+      "value": 0.0001,
+      "warmup": false,
+      "decay": false,
+      "restart_onecycle": false,
+      "optimizer_betas": "restore_checkpoint"
+    },
+    "batch_protocol": "Same5000 assets, random2..24 frames, effective48 except exact5000-boundary remainder8. Preserve full40000 exposure/asset/frame prefix; continue new epochs without replay.",
+    "initialization_comparison": "Strict load original A40000 model; require checkpoint model tensor fingerprint equal actual restored fingerprint on both ranks. Historical official/20k initialization hashes are provenance only. Restore947 AdamW states with maxstep840, rankRNG/sampler. Do not replay40k evaluation.",
+    "completed_predecessor": {
+      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend40000_v1/result.json",
+      "result_sha256": "00b17313edbe257f867169c19043f9cd971cae57510fd3e8b48a0cfd741bcf4e",
+      "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_extend40000_v1.exit",
+      "source_commit": "6715a2b880537ed73348d7a8320974765962af15",
+      "completion_review": {
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_continuation_completion_v1.json",
+        "sha256": "4c454f1da947b5e94129aa1974fa94d8d9cfc5210b506961d5e3821a85adb7c5"
+      }
+    },
+    "time_risk": {
+      "user_accepted_cross_allocation": true,
+      "point_seconds": 51552.94676036453,
+      "conservative_seconds": 68289.25158304907,
+      "conservative_is_not_probability_bound": true,
+      "audit_sha256": "899e7b09b3db066bbc9afa89bf1e77a36e59267cd6fc7e52a633119cb6538211",
+      "fresh_observation_utc": "2026-10-17T04:37:11.462281+00:00",
+      "remaining_seconds_at_observation": 62091.50373,
+      "allocation_expiry_utc": "2026-10-17T21:52:02.966000+00:00",
+      "partial_resume_policy": "Preserve checkpoints; same-target partial-budget restart must be explicitly prepared/verified against the actual saved checkpoint if allocation expires. It is not yet automatic. No allocation release/replacement authorized by this operation."
+    },
+    "preparation_constraint": "Require clean source6715a2b before deployment, published prepared code and state, both physical GPUs5/7idle, unchanged source checkpoint/config/predecessor/capacity, freshremaining>=51553sec (point estimate only, user explicitly accepted slow-case risk). Primary review actual restoration and dedicated first8 monitor before full supervision.",
+    "runs": [
+      {
+        "name": "normal_a_extend80000_v1",
+        "mode": "resume",
+        "approved": true,
+        "training_allowed": true,
+        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend80000_v1.json",
+        "config_sha256": "2057ebec5370d780de393edfe026cba25b01a29335eab577f8652cc3bafc679a",
+        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1",
+        "allocation": 129839822,
+        "host": "pcg02i",
+        "physical_gpus": [
+          5,
+          7
+        ],
+        "remaining_walltime_minimum_seconds": 51553,
+        "resume_checkpoint": {
+          "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend40000_v1/checkpoint_asset_040000.pt",
+          "bytes": 8438108528,
+          "sha256": "8725e36d17733d56dbb76242f5a5ab5a657ee51a4f4be1ed8392e190579d6f13",
+          "source": "6715a2b880537ed73348d7a8320974765962af15"
+        },
+        "capacity_receipt": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_a_v1.json",
+          "sha256": "bb9898beee94123c740f24d5b40356b51ed125b1b01229f482ad0e85bd973e45"
+        },
+        "physical_batch_per_rank": {
+          "T2-6": 24,
+          "T7-12": 12,
+          "T13-24": 6
+        },
+        "accumulation_microbatches_per_rank": {
+          "T2-6": 1,
+          "T7-12": 2,
+          "T13-24": 4
+        },
+        "stop_conditions": [
+          "80000total exposures and final evaluation complete",
+          "OOM",
+          "nonfinite loss or gradients",
+          "identity/source/checkpoint/restore drift",
+          "allocation expiry",
+          "explicit user stop"
+        ]
+      }
+    ],
+    "after_completion": "Preserve final artifacts and summarize A20k/40k/80k trajectory; stop this continuation. No automatic other experiments, D/E/F, architecture/data changes or formal80016 promotion.",
+    "quality_acceptance": false
+  },
+  "preserved_normal_a_extend40000_operation": {
     "label": "normal_a_extend40000_v1",
     "mode": "normal5000_continuation",
     "operation": "report",

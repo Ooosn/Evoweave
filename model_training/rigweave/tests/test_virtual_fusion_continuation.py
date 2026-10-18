@@ -122,6 +122,48 @@ def completed_a120_payload_fixture():
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_b60k_extends_final_b40k_at_unchanged_high_rate(self):
+        folder = ROOT / 'model_training/experiments'
+        original = json.loads((folder / 'fusion_normal_b_v1.json').read_text())
+        source = json.loads((folder / 'fusion_normal_b_extend40000_v1.json').read_text())
+        config = json.loads((folder / 'fusion_normal_b_extend60000_v1.json').read_text())
+        self.assertEqual(validate_continuation_config(config, original, 2), [45000, 50000, 55000, 60000])
+        self.assertEqual(continuation_contract(config)['learning_rate'], 1e-4)
+        self.assertEqual(continuation_contract(config)['label'], 'normal_b_extend60000_v1')
+        payload = chained_payload_fixture()
+        payload.update(source=B40_CHECKPOINT['source'], config=source)
+        payload['initialization'].update(route='b', source=B_CHECKPOINT['source'], config_sha256=B_SOURCE_CONFIG['sha256'])
+        payload['initialization']['training_continuation'].update(
+            route='b', checkpoint=deepcopy(B_CHECKPOINT), source_config=deepcopy(B_SOURCE_CONFIG),
+            source=B40_CHECKPOINT['source'], config_sha256=B40_SOURCE_CONFIG['sha256'],
+            saved_prefix_asset_exposures_verified=20000)
+        validate_checkpoint_payload(payload, original, 2, config=config, source_config=source)
+        for rank in (0, 1):
+            previous = payload['rank_states'][rank]['stream']
+            old = MatchedFrameStream(range(5000), **{
+                key: value for key, value in previous['contract'].items() if key != 'dataset_rows'})
+            stream = extend_checkpoint_stream(payload, rank, target_assets=60000, route='b')
+            self.assertEqual(stream.cursor, 20000)
+            self.assertEqual(len(stream.update_sizes), 1260)
+            self.assertEqual(stream.plan_report()['supervised_frame_exposures'], 788304)
+            self.assertEqual(stream.plan_sha256, '4fb7e07e7cc64ec0c17e78016b6899a192d320e9626a4ff8078d747843feb4bf')
+            np.testing.assert_array_equal(stream.order[:40000], old.order)
+            np.testing.assert_array_equal(stream.frame_counts[:840], old.frame_counts)
+            np.testing.assert_array_equal(stream.update_sizes[:840], old.update_sizes)
+            self.assertEqual(stream.global_ends[840], 40048)
+            self.assertEqual(stream.frame_counts[840:848].tolist(), [4, 19, 15, 8, 4, 19, 8, 13])
+        for section, key, value in [('continuation', 'learning_rate', 3e-5),
+                                    ('continuation', 'checkpoint', CHAINED_CHECKPOINT),
+                                    ('training', 'target_assets', 70000)]:
+            changed = deepcopy(config)
+            changed[section][key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validate_continuation_config(changed, original, 2)
+        changed = deepcopy(payload)
+        changed['optimizer']['param_groups'][0]['lr'] = 3e-5
+        with self.assertRaises(ValueError):
+            validate_checkpoint_payload(changed, original, 2, config=config, source_config=source)
+
     def test_a150k_preserves_a130k_low_rate_optimizer_and_entire_history(self):
         original, _ = configs()
         folder = ROOT / 'model_training/experiments'

@@ -120,13 +120,14 @@ def continuation_contract(config):
                 'purpose': 'normal5000_trend', 'code_commit': B_CHECKPOINT['source'],
                 'asset_exposures': 20000, 'updates': 420, 'supervised_frame_exposures': 263608},
         }
-    elif route == 'b' and target == 50000:
+    elif route == 'b' and target in (50000, 60000):
         result = {
-            'label': 'normal_b_lr3e5_50000_v1', 'start_assets': 40000,
+            'label': 'normal_b_lr3e5_50000_v1' if target == 50000 else 'normal_b_extend60000_v1',
+            'start_assets': 40000,
             'start_updates': 840, 'start_frames': 528296,
             'checkpoint': B40_CHECKPOINT, 'source_config': B40_SOURCE_CONFIG,
             'old_plan_sha256': CHAINED_PLAN_SHA256, 'source_purpose': PURPOSE,
-            'learning_rate': 3e-5, 'replacement_allocation': 130258195,
+            'learning_rate': 3e-5 if target == 50000 else 1e-4, 'replacement_allocation': 130258195,
             'predecessor_label': 'normal_b_extend40000_v1',
             'predecessor_result': {'execution_complete': True, 'mode': 'resume', 'route': 'b',
                 'purpose': PURPOSE, 'code_commit': B40_CHECKPOINT['source'],
@@ -134,7 +135,7 @@ def continuation_contract(config):
                 'additional_asset_exposures': 20000, 'additional_updates': 420},
         }
     elif route != 'a':
-        raise ValueError('only the pinned B20k-to40k and B40k-to50k continuations are implemented for B')
+        raise ValueError('only the explicitly pinned B continuation targets are implemented')
     elif target == TARGET_ASSETS:
         result = {
             'label': 'normal_a_extend40000_v1', 'start_assets': START_ASSETS,

@@ -40,6 +40,28 @@ about2e-6; the explicitly selected continuation protocol raises LR to1e-4,
 as A20k-to40k did, while preserving optimizer moments/betas. This intentional
 LR change is not an optimizer reset. All later low-LR stages use3e-5.
 
+B40 launched16:52JST on2026-10-18 with frozen remote source5703f2c. At17:01JST,
+both ranks passed the first8 updates421..428, reaching20384 assets/267592
+supervised frames. Actual restored model fingerprint is
+`ecaf772173cd255e7e56011967915fd76baa95a3bd27deee8ba4818b13014c76`,
+identical to incoming B20 tensors on both ranks;947 AdamW state entries and
+betas(0.9499999512612207,0.999) were retained. Full B40 supervision is approved;
+this accepts startup integrity, not completed training or model quality.
+Primary review `normal_ops/reviewed_normal_b_extension40000_startup_v1.json`
+has SHA256 `f1ad62b786f291bc440cd9def3c47307830f19677ad91514a45dde0caf3b10cf`.
+
+A120-to130 at3e-5 is prepared locally in codee1d2f9a, with49 CPU tests passed,
+config SHA256 `584f9b709f7c9b993a5f78f38a1318bca5871883dc16add911073aa26dcdd325`.
+It preserves the full120k sampling prefix and adds210updates/130088frames,
+ending2730updates/1685592frames; evaluate125k and130k. It is NOT active or
+deployed. Publish exact state/launcher only after B40 completion review.
+B50 still needs the actual future B40 checkpoint/result hashes and its own
+preparation. Expanded-validation execution remains to be implemented.
+The30-minute heartbeat `a-b` follows the approved sequence, stays quiet on
+unchanged healthy progress, and must never duplicate the active supervisor.
+Current execution tracker is
+`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json`.
+
 ### Historical A80000-to120000 authorization
 
 2026-10-18 03:22JST user explicitly requested release of the old two-H100

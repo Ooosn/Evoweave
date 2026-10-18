@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T07:50:00Z",
+  "updated_at": "2026-10-18T08:05:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,11 +357,24 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A120k completed and execution-integrity accepted. Start only the pinned B20k-to40k continuation now, preserving full AdamW/RNG and using fixed1e-4. Then prepare the explicitly authorized A120k-to130k and B40k-to50k phases at3e-5, and finally expanded held-out validation. Each stage needs exact checkpoint/config/resource checks and completed predecessor review. Retain allocation130258195 throughout and after all work.",
+  "next_required_result": "B20k-to40k is running on frozenremote5703f2c with first8 startupintegrity accepted; do not relaunch or deploy local changes while it runs. Supervise through40000 and primary terminal/per-view review. A120k-to130k at3e-5 is CPU-prepared at e1d2f9a with49passingtests but not active/published. Promote only after B40 accepted, then prepare B40k-to50k at3e-5 and expanded held-out validation. Preserve full AdamW/RNG and allocation130258195 throughout and after all work. Execution tracker and heartbeat a-b prevent stage gaps and duplicate launches.",
   "active_operation": {
       "label": "normal_b_extend40000_v1",
       "mode": "normal5000_continuation",
-      "status": "prepared_for_first8_review",
+      "status": "running_first8_primary_accepted",
+      "runtime_source_commit": "5703f2c320841c11f0f8276570340f26dc8f11c5",
+      "launched_utc": "2026-10-18T07:52:04.857722+00:00",
+      "startup_review": {
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_b_extension40000_startup_v1.json",
+        "sha256": "f1ad62b786f291bc440cd9def3c47307830f19677ad91514a45dde0caf3b10cf",
+        "accepted": true,
+        "quality_acceptance": false,
+        "restored_model_sha256": "ecaf772173cd255e7e56011967915fd76baa95a3bd27deee8ba4818b13014c76",
+        "optimizer_entries_each_rank": 947,
+        "first8_end_assets": 20384,
+        "first8_end_updates": 428
+      },
+      "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
       "operation": "train",
       "authorization": "User2026-10-18T07:34Z approved A120complete->B20to40 at1e-4, thenA120to130/B40to50 at3e-5 with fulloptimizer/RNG, expandedvalidation and retainedGPUs. OnlyB20to40 is executable in this stage.",
       "code_commit": "3dfbdace3c80de57bf6734f65026e72f9977cfa1",
@@ -467,6 +480,13 @@
   "authorized_followthrough": {
       "authorization": "Explicit user2026-10-18T07:34Z fullsequence approved",
       "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_plan_v1.json",
+      "heartbeat_id": "a-b",
+      "next_stage_preparation": {
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_a_lr3e5_130000_v1.json",
+        "sha256": "4843a41656b2158341b335f9fd9d75fd21bad4b66f02fff93aa8264c17300636",
+        "status": "cpu_prepared_not_active",
+        "code_commit": "e1d2f9a9563bf083feca3b3da7562b2c516894d0"
+      },
       "order": [
         "normal_b_extend40000_v1",
         "normal_a_lr3e5_130000_v1",

@@ -63,6 +63,17 @@ A120_SOURCE_CONFIG = {
     'sha256': '7bec5e0c377ab3b893a54021c32506a07a8c1a61a40bb043fed5761cb4f25726',
 }
 A120_PLAN_SHA256 = '26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70'
+A130_CHECKPOINT = {
+    'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_lr3e5_130000_v1/checkpoint_asset_130000.pt',
+    'sha256': 'd1c041e055e8be507137d0851fb137b29244a5f0bf604bc0bddc2f4f309b8676',
+    'bytes': 8438115760,
+    'source': 'a189013cb14efed31a534a8e801a97bb5e162edb',
+}
+A130_SOURCE_CONFIG = {
+    'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_lr3e5_130000_v1.json',
+    'sha256': '584f9b709f7c9b993a5f78f38a1318bca5871883dc16add911073aa26dcdd325',
+}
+A130_PLAN_SHA256 = '29b3527f644f76d996ccfb3e7286d6eac43b29895d4c777ebb48d89a98a4dc41'
 B_CHECKPOINT = {
     'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_v1/checkpoint_asset_020000.pt',
     'sha256': '4c8b677f825b1f9f2ac162afa34cf45ca51a0f506a2b63f4b781c8532c23f50b',
@@ -173,6 +184,19 @@ def continuation_contract(config):
                 'asset_exposures': 120000, 'updates': 2520, 'supervised_frame_exposures': 1555504,
                 'additional_asset_exposures': 40000, 'additional_updates': 840},
         }
+    elif target == 150000:
+        result = {
+            'label': 'normal_a_lr3e5_150000_v1', 'start_assets': 130000,
+            'start_updates': 2730, 'start_frames': 1685592,
+            'checkpoint': A130_CHECKPOINT, 'source_config': A130_SOURCE_CONFIG,
+            'old_plan_sha256': A130_PLAN_SHA256, 'source_purpose': PURPOSE,
+            'learning_rate': 3e-5, 'replacement_allocation': 130258195,
+            'predecessor_label': 'normal_a_lr3e5_130000_v1',
+            'predecessor_result': {'execution_complete': True, 'mode': 'resume', 'route': 'a',
+                'purpose': PURPOSE, 'code_commit': A130_CHECKPOINT['source'],
+                'asset_exposures': 130000, 'updates': 2730, 'supervised_frame_exposures': 1685592,
+                'additional_asset_exposures': 10000, 'additional_updates': 210},
+        }
     else:
         raise ValueError('only the explicitly pinned A and B continuation targets are implemented')
     result = deepcopy(result)
@@ -258,7 +282,25 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
         prior = initial.get('training_continuation', {})
         old_prior = prior
         history = initial.get('training_continuation_history', [])
-        if contract['start_assets'] == 120000:
+        if contract['start_assets'] == 130000:
+            expected_130k = {
+                'checkpoint': A120_CHECKPOINT, 'source_config': A120_SOURCE_CONFIG, 'route': 'a',
+                'source': A130_CHECKPOINT['source'], 'config_sha256': A130_SOURCE_CONFIG['sha256'],
+                'start_asset_exposures': 120000, 'target_asset_exposures': 130000,
+                'start_updates': 2520, 'target_updates': 2730,
+                'start_supervised_frame_exposures': 1555504, 'target_supervised_frame_exposures': 1685592,
+                'original_exposure_plan_sha256': A120_PLAN_SHA256,
+                'extended_exposure_plan_sha256': A130_PLAN_SHA256,
+                'constant_learning_rate': 3e-5, 'optimizer_betas': 'restore_checkpoint',
+                'optimizer_state_restore_required': True, 'fresh_official_initialization': False,
+                'resumed_trained_weights_loaded': True, 'original_20000_prefix_verified': True,
+                'saved_prefix_asset_exposures_verified': 120000,
+            }
+            if any(prior.get(key) != value for key, value in expected_130k.items()) or len(history) != 3:
+                raise ValueError('completed130k checkpoint must retain its low-rate A120k continuation and full history')
+            prior = history[2]
+            history = history[:2]
+        if contract['start_assets'] >= 120000:
             expected_120k = {
                 'checkpoint': EXTENDED_CHECKPOINT, 'source_config': EXTENDED_SOURCE_CONFIG, 'route': 'a',
                 'source': A120_CHECKPOINT['source'], 'config_sha256': A120_SOURCE_CONFIG['sha256'],
@@ -332,7 +374,8 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
         raise ValueError('checkpoint optimizer did not reach the saved source update boundary')
     if contract['start_assets'] >= 40000:
         group = optimizer['param_groups'][0]
-        if group.get('lr') != 1e-4 or tuple(group.get('betas', ())) != (.9499999512612207, .999):
+        source_lr = continuation_contract(source_config)['learning_rate']
+        if group.get('lr') != source_lr or tuple(group.get('betas', ())) != (.9499999512612207, .999):
             raise ValueError('completed continuation optimizer must retain its constant learning rate and restored betas')
     for rank, state in enumerate(states):
         if not {'stream', 'torch_rng', 'cuda_rng', 'numpy_rng', 'python_rng'} <= state.keys():

@@ -23,8 +23,9 @@ Preserve AdamW moments/betas and rank RNG/sampling state at every transition.
 No model, loss, tokenizer, training membership, RT/normalization, decoding,
 warmup or scheduler restart changes are authorized. A/B cumulative budgets
 remain different; this is not a matched-budget architecture-superiority proof.
-Future stages are authorized but require exact prepared and reviewed configs;
-only B20000-to40000 is executable in the current state.
+Future stages are authorized but require exact prepared and reviewed configs.
+B40000 has completed and been accepted; only A120000-to130000 at3e-5 is
+executable in the current state. Preserve both final and best checkpoints.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's
@@ -50,17 +51,28 @@ this accepts startup integrity, not completed training or model quality.
 Primary review `normal_ops/reviewed_normal_b_extension40000_startup_v1.json`
 has SHA256 `f1ad62b786f291bc440cd9def3c47307830f19677ad91514a45dde0caf3b10cf`.
 
-A120-to130 at3e-5 is prepared locally in codee1d2f9a, with49 CPU tests passed,
+A120-to130 at3e-5 is prepared in codee1d2f9a, with49 CPU tests passed,
 config SHA256 `584f9b709f7c9b993a5f78f38a1318bca5871883dc16add911073aa26dcdd325`.
 It preserves the full120k sampling prefix and adds210updates/130088frames,
-ending2730updates/1685592frames; evaluate125k and130k. It is NOT active or
-deployed. Publish exact state/launcher only after B40 completion review.
-B50 still needs the actual future B40 checkpoint/result hashes and its own
-preparation. Expanded-validation execution remains to be implemented.
+ending2730updates/1685592frames; evaluate125k and130k. It is now the active
+prepared operation, requiring exact launch/restore/first8 verification.
+B50 still needs its own configuration and gate preparation using the final
+B40 checkpoint below. Expanded-validation execution remains to be implemented.
 The30-minute heartbeat `a-b` follows the approved sequence, stays quiet on
 unchanged healthy progress, and must never duplicate the active supervisor.
 Current execution tracker is
 `D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json`.
+
+B40 terminal22:52JST on2026-10-18: exit0, both ranks840updates/40000assets/
+528296frames,420suffix trace rows each,18 local terminal artifact hashes and
+all four1536-view evaluations verified. Primary recomputed per-view F1/success
+and confirmed original B panel equality. Valid F1 at25/30/35/40k is
+0.712425/0.728128/0.734596/0.722256. Best35k improves over20k0.729074 by0.005522;
+final40k is lower, with success0.919922 and exactcount0.500977. Continue from
+FINAL40k after A130, not best35k. Final full checkpoint8438108720bytes,
+SHA256 `4e48925a44b0ec78d0b88a3a4169823d70d6bce9068e0385cef9e4d3447c0928`,
+source5703f2c. Completion review SHA256
+`2e852bcbf18ca37981567dd52015565ea447ebf91009388ea11dbd9404c0f09e`.
 
 ### Historical A80000-to120000 authorization
 

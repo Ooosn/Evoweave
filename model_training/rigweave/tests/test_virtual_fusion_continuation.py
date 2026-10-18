@@ -22,6 +22,7 @@ from virtual_fusion_continuation import (
     EXTENDED_CHECKPOINT, EXTENDED_SOURCE_CONFIG, EXTENDED_PLAN_SHA256, PURPOSE, continuation_contract,
     B_CHECKPOINT, B_SOURCE_CONFIG,
     A120_CHECKPOINT, A120_SOURCE_CONFIG, A120_PLAN_SHA256,
+    B40_CHECKPOINT, B40_SOURCE_CONFIG,
     extend_checkpoint_stream, restore_training_state, set_continuation_lr,
     validate_checkpoint_payload, validate_continuation_config,
 )
@@ -120,6 +121,63 @@ def completed_a120_payload_fixture():
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_b50k_preserves_final_b40k_and_lowers_only_continuation_rate(self):
+        folder = ROOT / 'model_training/experiments'
+        original = json.loads((folder / 'fusion_normal_b_v1.json').read_text())
+        source = json.loads((folder / 'fusion_normal_b_extend40000_v1.json').read_text())
+        config = json.loads((folder / 'fusion_normal_b_lr3e5_50000_v1.json').read_text())
+        self.assertEqual(validate_continuation_config(config, original, 2), [45000, 50000])
+        self.assertEqual(continuation_contract(config)['learning_rate'], 3e-5)
+        self.assertEqual(config['continuation']['checkpoint'], B40_CHECKPOINT)
+        payload = chained_payload_fixture()
+        payload.update(source=B40_CHECKPOINT['source'], config=source)
+        payload['initialization'].update(route='b', source=B_CHECKPOINT['source'], config_sha256=B_SOURCE_CONFIG['sha256'])
+        payload['initialization']['training_continuation'].update(
+            route='b', checkpoint=deepcopy(B_CHECKPOINT), source_config=deepcopy(B_SOURCE_CONFIG),
+            source=B40_CHECKPOINT['source'], config_sha256=B40_SOURCE_CONFIG['sha256'],
+            saved_prefix_asset_exposures_verified=20000)
+        validate_checkpoint_payload(payload, original, 2, config=config, source_config=source)
+        for rank in (0, 1):
+            previous = payload['rank_states'][rank]['stream']
+            old = MatchedFrameStream(range(5000), **{
+                key: value for key, value in previous['contract'].items() if key != 'dataset_rows'})
+            stream = extend_checkpoint_stream(payload, rank, target_assets=50000, route='b')
+            self.assertEqual(stream.cursor, 20000)
+            self.assertEqual(len(stream.update_sizes), 1050)
+            self.assertEqual(stream.plan_report()['supervised_frame_exposures'], 657056)
+            self.assertEqual(stream.plan_sha256, 'ac6769aa2b403076e888aff6aad8a764402c199f857b10116885f668b97eb7ba')
+            np.testing.assert_array_equal(stream.order[:40000], old.order)
+            np.testing.assert_array_equal(stream.frame_counts[:840], old.frame_counts)
+            np.testing.assert_array_equal(stream.update_sizes[:840], old.update_sizes)
+            self.assertEqual(stream.global_ends[840], 40048)
+            self.assertEqual(stream.frame_counts[840:848].tolist(), [4, 19, 15, 8, 4, 19, 8, 13])
+        for section, key, value in [('continuation', 'learning_rate', 1e-4),
+                                    ('continuation', 'checkpoint', B_CHECKPOINT),
+                                    ('continuation', 'checkpoint', CHAINED_CHECKPOINT),
+                                    ('architecture', 'fusion_mode', 'virtual_queries_real'),
+                                    ('optimization', 'schedule_samples', 50000),
+                                    ('runtime', 'allocation', 129839822),
+                                    ('evaluation', 'initial', True)]:
+            changed = deepcopy(config)
+            changed[section][key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validate_continuation_config(changed, original, 2)
+        for mutate in (
+            lambda data: data.__setitem__('asset_exposures', 35000),
+            lambda data: data['initialization'].__setitem__('route', 'a'),
+            lambda data: data['initialization'].__setitem__('training_continuation_history', [{}]),
+            lambda data: data['initialization']['training_continuation'].__setitem__('checkpoint', CHECKPOINT),
+            lambda data: data['initialization']['training_continuation'].__setitem__('config_sha256', 'wrong'),
+            lambda data: data['initialization']['training_continuation'].__setitem__('constant_learning_rate', 3e-5),
+            lambda data: data['optimizer']['param_groups'][0].__setitem__('lr', 3e-5),
+            lambda data: data['optimizer']['state'][0]['step'].fill_(841),
+            lambda data: data['rank_states'][1]['stream'].__setitem__('cursor', 0),
+        ):
+            changed = deepcopy(payload)
+            mutate(changed)
+            with self.assertRaises(ValueError):
+                validate_checkpoint_payload(changed, original, 2, config=config, source_config=source)
+
     def test_a130k_uses_final_a120_and_only_lowers_continuation_rate(self):
         original, _ = configs()
         folder = ROOT / 'model_training/experiments'

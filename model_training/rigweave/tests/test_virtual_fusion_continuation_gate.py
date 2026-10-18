@@ -159,6 +159,23 @@ def clean_subprocess():
 
 
 class ContinuationGateTests(unittest.TestCase):
+    def test_b50k_gate_requires_own_completed_final_b40k(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = make_fixture(directory, 50000, 'b')
+            args = SimpleNamespace(config=fixture.config_path, output=fixture.output)
+            subprocess, _ = clean_subprocess()
+            fixture.namespace['subprocess'] = subprocess
+            with remote_exit_text('0', 'normal_b_extend40000_v1'):
+                self.assertEqual(fixture.namespace['verify_operation'](args, fixture.config, 0), 'test-head')
+                state = deepcopy(fixture.state)
+                state['active_operation']['runs'][0]['resume_checkpoint'] = deepcopy(fixture.namespace['CHECKPOINT'])
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+                state = deepcopy(fixture.state)
+                replace_c_result(fixture, state, asset_exposures=35000, updates=735)
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+
     def test_a130k_gate_requires_completed_final_a120k(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = make_fixture(directory, 130000)

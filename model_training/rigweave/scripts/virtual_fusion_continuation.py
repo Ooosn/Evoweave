@@ -73,6 +73,16 @@ B_SOURCE_CONFIG = {
     'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_v1.json',
     'sha256': 'bf66f37d722d29a18a6113fd31d86cef0f402d4cf53b1d06ad5e0aa727809068',
 }
+B40_CHECKPOINT = {
+    'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend40000_v1/checkpoint_asset_040000.pt',
+    'sha256': '4e48925a44b0ec78d0b88a3a4169823d70d6bce9068e0385cef9e4d3447c0928',
+    'bytes': 8438108720,
+    'source': '5703f2c320841c11f0f8276570340f26dc8f11c5',
+}
+B40_SOURCE_CONFIG = {
+    'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_extend40000_v1.json',
+    'sha256': '1923429a8e2974f2a06a45ed588ec034e3b21ecd9b6354e98c335376b32e18e1',
+}
 
 
 def original_references(route):
@@ -99,8 +109,21 @@ def continuation_contract(config):
                 'purpose': 'normal5000_trend', 'code_commit': B_CHECKPOINT['source'],
                 'asset_exposures': 20000, 'updates': 420, 'supervised_frame_exposures': 263608},
         }
+    elif route == 'b' and target == 50000:
+        result = {
+            'label': 'normal_b_lr3e5_50000_v1', 'start_assets': 40000,
+            'start_updates': 840, 'start_frames': 528296,
+            'checkpoint': B40_CHECKPOINT, 'source_config': B40_SOURCE_CONFIG,
+            'old_plan_sha256': CHAINED_PLAN_SHA256, 'source_purpose': PURPOSE,
+            'learning_rate': 3e-5, 'replacement_allocation': 130258195,
+            'predecessor_label': 'normal_b_extend40000_v1',
+            'predecessor_result': {'execution_complete': True, 'mode': 'resume', 'route': 'b',
+                'purpose': PURPOSE, 'code_commit': B40_CHECKPOINT['source'],
+                'asset_exposures': 40000, 'updates': 840, 'supervised_frame_exposures': 528296,
+                'additional_asset_exposures': 20000, 'additional_updates': 420},
+        }
     elif route != 'a':
-        raise ValueError('only the pinned B20k-to40k continuation is implemented for B')
+        raise ValueError('only the pinned B20k-to40k and B40k-to50k continuations are implemented for B')
     elif target == TARGET_ASSETS:
         result = {
             'label': 'normal_a_extend40000_v1', 'start_assets': START_ASSETS,
@@ -274,6 +297,23 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             old_prior = history[0]
         if any(old_prior.get(key) != value for key, value in expected_40k.items()):
             raise ValueError('completed40k checkpoint does not retain its original A20k continuation provenance')
+    if contract['route'] == 'b' and contract['start_assets'] == 40000:
+        expected_b40k = {
+            'checkpoint': B_CHECKPOINT, 'source_config': B_SOURCE_CONFIG, 'route': 'b',
+            'source': B40_CHECKPOINT['source'], 'config_sha256': B40_SOURCE_CONFIG['sha256'],
+            'start_asset_exposures': 20000, 'target_asset_exposures': 40000,
+            'start_updates': 420, 'target_updates': 840,
+            'start_supervised_frame_exposures': 263608, 'target_supervised_frame_exposures': 528296,
+            'original_exposure_plan_sha256': OLD_PLAN_SHA256, 'extended_exposure_plan_sha256': CHAINED_PLAN_SHA256,
+            'constant_learning_rate': 1e-4, 'optimizer_betas': 'restore_checkpoint',
+            'optimizer_state_restore_required': True, 'fresh_official_initialization': False,
+            'resumed_trained_weights_loaded': True, 'original_20000_prefix_verified': True,
+            'saved_prefix_asset_exposures_verified': 20000,
+        }
+        prior = initial.get('training_continuation', {})
+        if (any(prior.get(key) != value for key, value in expected_b40k.items())
+                or initial.get('training_continuation_history', [])):
+            raise ValueError('completed B40k checkpoint must retain only its own B20k continuation provenance')
     states = payload['rank_states']
     if world != 2 or not isinstance(states, list) or len(states) != world:
         raise ValueError('checkpoint must contain both rank states')

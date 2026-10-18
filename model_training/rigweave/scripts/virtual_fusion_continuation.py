@@ -1,4 +1,4 @@
-"""Pinned A20k-to40k, A40k-to80k and A80k-to120k continuation contracts."""
+"""Pinned normal5000 continuation contracts with full optimizer and RNG restoration."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -52,11 +52,45 @@ EXTENDED_SOURCE_CONFIG = {
     'sha256': '2057ebec5370d780de393edfe026cba25b01a29335eab577f8652cc3bafc679a',
 }
 EXTENDED_PLAN_SHA256 = 'f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2'
+B_CHECKPOINT = {
+    'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_v1/checkpoint_asset_020000.pt',
+    'sha256': '4c8b677f825b1f9f2ac162afa34cf45ca51a0f506a2b63f4b781c8532c23f50b',
+    'bytes': 8438105328,
+    'source': '2430e75d714a0e16bfa0490216e70d67409fab0d',
+}
+B_SOURCE_CONFIG = {
+    'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_v1.json',
+    'sha256': 'bf66f37d722d29a18a6113fd31d86cef0f402d4cf53b1d06ad5e0aa727809068',
+}
+
+
+def original_references(route):
+    if route == 'a':
+        return CHECKPOINT, SOURCE_CONFIG
+    if route == 'b':
+        return B_CHECKPOINT, B_SOURCE_CONFIG
+    raise ValueError('continuation route must be an explicitly approved A or B run')
 
 
 def continuation_contract(config):
     target = config['training']['target_assets']
-    if target == TARGET_ASSETS:
+    route = config.get('route', 'a')
+    original_references(route)
+    if route == 'b' and target == 40000:
+        result = {
+            'label': 'normal_b_extend40000_v1', 'start_assets': 20000,
+            'start_updates': 420, 'start_frames': 263608,
+            'checkpoint': B_CHECKPOINT, 'source_config': B_SOURCE_CONFIG,
+            'old_plan_sha256': OLD_PLAN_SHA256, 'source_purpose': 'normal5000_trend',
+            'replacement_allocation': 130258195,
+            'predecessor_label': 'normal_b_v1',
+            'predecessor_result': {'execution_complete': True, 'mode': 'train', 'route': 'b',
+                'purpose': 'normal5000_trend', 'code_commit': B_CHECKPOINT['source'],
+                'asset_exposures': 20000, 'updates': 420, 'supervised_frame_exposures': 263608},
+        }
+    elif route != 'a':
+        raise ValueError('only the pinned B20k-to40k continuation is implemented for B')
+    elif target == TARGET_ASSETS:
         result = {
             'label': 'normal_a_extend40000_v1', 'start_assets': START_ASSETS,
             'start_updates': START_UPDATES, 'start_frames': START_FRAMES,
@@ -95,6 +129,8 @@ def continuation_contract(config):
     else:
         raise ValueError('only the pinned A20k-to40k, A40k-to80k and A80k-to120k continuations are implemented')
     result = deepcopy(result)
+    result['route'] = route
+    result['learning_rate'] = 1e-4
     result['target_assets'] = target
     result['boundaries'] = list(range(5000, target + 1, 5000))
     result['source_boundaries'] = list(range(5000, result['start_assets'] + 1, 5000))
@@ -105,10 +141,10 @@ def continuation_contract(config):
 def validate_continuation_config(config, original, world):
     contract = continuation_contract(config)
     expected = {'checkpoint': contract['checkpoint'], 'source_config': contract['source_config'],
-                'learning_rate': 1e-4, 'optimizer_betas': 'restore_checkpoint',
+                'learning_rate': contract['learning_rate'], 'optimizer_betas': 'restore_checkpoint',
                 'rng_policy': 'restore_saved_checkpoint_before_milestone_evaluation'}
-    if world != 2 or config.get('purpose') != PURPOSE or config.get('route') != 'a':
-        raise ValueError('continuation is only the approved two-rank A run')
+    if world != 2 or config.get('purpose') != PURPOSE or config.get('route') != contract['route']:
+        raise ValueError('continuation is only the explicitly approved two-rank route')
     if config.get('continuation') != expected:
         raise ValueError('continuation checkpoint, constant learning rate or restore policy changed')
     plan = config['training']
@@ -132,10 +168,11 @@ def validate_continuation_config(config, original, world):
 
 def validate_checkpoint_payload(payload, original, world, *, config=None, source_config=None):
     contract = continuation_contract(config or {'training': {'target_assets': TARGET_ASSETS}})
+    initial_checkpoint, initial_config = original_references(contract['route'])
     if contract['start_assets'] == START_ASSETS:
         expected_config = original
         if source_config is not None and source_config != original:
-            raise ValueError('original A source configuration differs')
+            raise ValueError('original route source configuration differs')
     else:
         if source_config is None or source_config['training']['target_assets'] != contract['start_assets']:
             raise ValueError('the chained continuation requires its completed source configuration')
@@ -151,15 +188,15 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             or payload.get('source') != contract['checkpoint']['source']
             or (payload.get('asset_exposures'), payload.get('step'), payload.get('supervised_frame_exposures'))
             != (contract['start_assets'], contract['start_updates'], contract['start_frames'])):
-        raise ValueError('checkpoint is not the pinned completed source A run')
+        raise ValueError('checkpoint is not the pinned completed source run')
     initial = payload['initialization']
-    if (initial.get('route') != 'a' or initial.get('config_sha256') != SOURCE_CONFIG['sha256']
-            or initial.get('source') != CHECKPOINT['source']
+    if (initial.get('route') != contract['route'] or initial.get('config_sha256') != initial_config['sha256']
+            or initial.get('source') != initial_checkpoint['source']
             or initial.get('full_base_initial_state_sha256') != BASE_SHA256
             or initial.get('shared_initial_state_sha256') != BASE_SHA256
             or initial.get('exposure_plan_sha256') != OLD_PLAN_SHA256):
         raise ValueError('checkpoint original initialization provenance changed')
-    if contract['start_assets'] >= 40000:
+    if contract['route'] == 'a' and contract['start_assets'] >= 40000:
         expected_40k = {
             'checkpoint': CHECKPOINT, 'source_config': SOURCE_CONFIG, 'route': 'a',
             'source': CHAINED_CHECKPOINT['source'], 'config_sha256': CHAINED_SOURCE_CONFIG['sha256'],
@@ -231,8 +268,8 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             raise ValueError('checkpoint rank sampling contract differs from original A')
 
 
-def extend_checkpoint_stream(payload, rank, *, target_assets=TARGET_ASSETS):
-    contract = continuation_contract({'training': {'target_assets': target_assets}})
+def extend_checkpoint_stream(payload, rank, *, target_assets=TARGET_ASSETS, route='a'):
+    contract = continuation_contract({'route': route, 'training': {'target_assets': target_assets}})
     return MatchedFrameStream.extend_completed(
         range(5000), payload['rank_states'][rank]['stream'],
         target_assets=target_assets, update_boundaries=contract['boundaries'])
@@ -256,7 +293,7 @@ def restore_training_state(optimizer, stream, state, *, device, rank, world, tar
     if step >= len(stream.update_sizes) or int(stream.global_ends[step - 1]) != samples:
         raise ValueError('restored step does not land on the saved exposure boundary')
     expected_frames = int(np.dot(stream.update_sizes[:step].astype(np.int64), stream.frame_counts[:step]))
-    if frames != expected_frames or state.get('learning_rate') != 1e-4:
+    if frames != expected_frames or state.get('learning_rate') not in (1e-4, 3e-5):
         raise ValueError('restored supervised-frame counter or continuation learning rate differs')
     optimizer.load_state_dict(state['optimizer_state_dict'])
     if not optimizer.state:
@@ -266,8 +303,8 @@ def restore_training_state(optimizer, stream, state, *, device, rank, world, tar
 
 
 def set_continuation_lr(optimizer, learning_rate):
-    if not math.isfinite(learning_rate) or learning_rate != 1e-4:
-        raise ValueError('approved continuation uses fixed1e-4 without warmup/decay')
+    if not math.isfinite(learning_rate) or learning_rate not in (1e-4, 3e-5):
+        raise ValueError('approved continuation uses only fixed1e-4 or fixed3e-5 without scheduler restart')
     betas = [group['betas'] for group in optimizer.param_groups]
     if not betas or any(value != betas[0] for value in betas):
         raise ValueError('continuation expects the original common AdamW betas')

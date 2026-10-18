@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resume a pinned completed A checkpoint under an explicit continuation gate."""
+"""Resume a pinned completed route checkpoint under an explicit continuation gate."""
 from __future__ import annotations
 
 import argparse
@@ -19,7 +19,7 @@ import torch.distributed as dist
 
 import train_virtual_fusion_normal as normal
 from virtual_fusion_continuation import (
-    BASE_SHA256, CHECKPOINT, PURPOSE, SOURCE_CONFIG, continuation_contract,
+    BASE_SHA256, CHECKPOINT, PURPOSE, SOURCE_CONFIG, continuation_contract, original_references,
     extend_checkpoint_stream, validate_checkpoint_payload, validate_continuation_config,
 )
 
@@ -35,7 +35,7 @@ def declared_operation(state, args, config):
             or operation.get('mode') != PURPOSE or operation.get('gpu_work_allowed') is not True
             or operation.get('formal_training_allowed') is not False or operation.get('complete') is not False
             or operation.get('required_entrypoint') != ENTRYPOINT):
-        raise ValueError('the explicit A continuation operation is not published')
+        raise ValueError('the explicit continuation operation is not published')
     matches = [run for run in operation['runs'] if Path(run['config']).resolve() == args.config.resolve()]
     if len(matches) != 1:
         raise ValueError('continuation configuration is not uniquely published')
@@ -51,7 +51,7 @@ def declared_operation(state, args, config):
         raise ValueError('continuation config/output/devices/checkpoint differ from the approved run')
     capacity = run['capacity_receipt']
     if normal.sha256(capacity['path']) != capacity['sha256']:
-        raise ValueError('reviewed A capacity receipt changed')
+        raise ValueError('reviewed route capacity receipt changed')
     normal.validate_capacity(config, json.loads(Path(capacity['path']).read_text()))
     predecessor = operation['completed_predecessor']
     predecessor_label = contract['predecessor_label']
@@ -96,12 +96,13 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     contract = continuation_contract(config)
-    if normal.sha256(SOURCE_CONFIG['path']) != SOURCE_CONFIG['sha256']:
-        raise ValueError('original A configuration changed')
-    original = json.loads(Path(SOURCE_CONFIG['path']).read_text())
+    original_checkpoint, original_config_ref = original_references(contract['route'])
+    if normal.sha256(original_config_ref['path']) != original_config_ref['sha256']:
+        raise ValueError('original route configuration changed')
+    original = json.loads(Path(original_config_ref['path']).read_text())
     source_config_ref = contract['source_config']
     if normal.sha256(source_config_ref['path']) != source_config_ref['sha256']:
-        raise ValueError('completed source A configuration changed')
+        raise ValueError('completed source configuration changed')
     source_config = json.loads(Path(source_config_ref['path']).read_text())
     rank, world, local = (int(os.environ.get(key, default)) for key, default in
                           [('RANK', 0), ('WORLD_SIZE', 1), ('LOCAL_RANK', 0)])
@@ -112,7 +113,7 @@ def main():
     checkpoint_path = Path(checkpoint_spec['path'])
     if (checkpoint_path.stat().st_size != checkpoint_spec['bytes']
             or normal.sha256(checkpoint_path) != checkpoint_spec['sha256']):
-        raise ValueError('the pinned completed A full checkpoint changed')
+        raise ValueError('the pinned completed full checkpoint changed')
     if (socket.gethostname().split('.')[0] != 'pcg02' or config['runtime']['physical_gpus'] != [5, 7]
             or os.environ.get('CUDA_VISIBLE_DEVICES') != '5,7' or not torch.cuda.is_available()
             or torch.cuda.device_count() != world or local != rank):
@@ -131,7 +132,7 @@ def main():
             normal.write_json(args.output / 'evaluation_selection.json', normal.selected_evaluation_rows(entries, config))
         payload = torch.load(checkpoint_path, map_location='cpu', mmap=True, weights_only=False)
         validate_checkpoint_payload(payload, original, world, config=config, source_config=source_config)
-        stream = extend_checkpoint_stream(payload, rank, target_assets=contract['target_assets'])
+        stream = extend_checkpoint_stream(payload, rank, target_assets=contract['target_assets'], route=contract['route'])
         model, tokenizer, codec, _ = normal.build_model(config, device)
         if model.configuration() != payload['architecture']:
             raise ValueError('restored model architecture differs from the saved checkpoint')
@@ -139,9 +140,9 @@ def main():
         expected_weights = normal.parameter_fingerprint(SimpleNamespace(state_dict=lambda: payload['model']))
         restored_weights = normal.parameter_fingerprint(model)
         if expected_weights != restored_weights:
-            raise ValueError('loaded model tensors differ from the pinned completed A checkpoint')
+            raise ValueError('loaded model tensors differ from the pinned completed checkpoint')
         provenance = {
-            'checkpoint': dict(checkpoint_spec), 'source_config': dict(source_config_ref), 'route': 'a',
+            'checkpoint': dict(checkpoint_spec), 'source_config': dict(source_config_ref), 'route': contract['route'],
             'source': source, 'config_sha256': normal.sha256(args.config),
             'start_asset_exposures': contract['start_assets'], 'target_asset_exposures': contract['target_assets'],
             'start_updates': contract['start_updates'], 'target_updates': len(stream.update_sizes),
@@ -154,7 +155,7 @@ def main():
             'constant_learning_rate': config['continuation']['learning_rate'],
             'optimizer_betas': 'restore_checkpoint', 'optimizer_state_restore_required': True,
             'rng_policy': config['continuation']['rng_policy'], 'replayed_initial_evaluation': False,
-            'historical_20000_evaluation_preserved': str(Path(CHECKPOINT['path']).parent / 'evaluation_020000/summary.json'),
+            'historical_20000_evaluation_preserved': str(Path(original_checkpoint['path']).parent / 'evaluation_020000/summary.json'),
             'source_evaluation_preserved': str(checkpoint_path.parent / f"evaluation_{contract['start_assets']:06d}/summary.json"),
             'saved_prefix_asset_exposures_verified': contract['start_assets'],
             'fresh_official_initialization': False, 'resumed_trained_weights_loaded': True,
@@ -177,7 +178,7 @@ def main():
         dist.barrier()
         if rank == 0:
             normal.write_json(args.output / 'result.json', {
-                'execution_complete': True, 'mode': 'resume', 'purpose': PURPOSE, 'route': 'a', 'code_commit': source,
+                'execution_complete': True, 'mode': 'resume', 'purpose': PURPOSE, 'route': contract['route'], 'code_commit': source,
                 'asset_exposures': contract['target_assets'],
                 'additional_asset_exposures': contract['target_assets'] - contract['start_assets'],
                 'updates': len(stream.update_sizes),

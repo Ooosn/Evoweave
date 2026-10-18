@@ -20,6 +20,7 @@ from virtual_fusion_continuation import (
     BASE_SHA256, BOUNDARIES, CHECKPOINT, OLD_PLAN_SHA256, SOURCE_CONFIG,
     CHAINED_CHECKPOINT, CHAINED_SOURCE_CONFIG, CHAINED_PLAN_SHA256,
     EXTENDED_CHECKPOINT, EXTENDED_SOURCE_CONFIG, EXTENDED_PLAN_SHA256, PURPOSE, continuation_contract,
+    B_CHECKPOINT, B_SOURCE_CONFIG,
     extend_checkpoint_stream, restore_training_state, set_continuation_lr,
     validate_checkpoint_payload, validate_continuation_config,
 )
@@ -87,6 +88,44 @@ def chained_payload_fixture():
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_b20k_to40k_preserves_b_route_and_exact_shared_stream(self):
+        folder = ROOT / 'model_training/experiments'
+        original = json.loads((folder / 'fusion_normal_b_v1.json').read_text())
+        extended = json.loads((folder / 'fusion_normal_b_extend40000_v1.json').read_text())
+        self.assertEqual(validate_continuation_config(extended, original, 2), [25000, 30000, 35000, 40000])
+        payload = payload_fixture()
+        payload.update(source=B_CHECKPOINT['source'], config=original)
+        payload['initialization'].update(route='b', source=B_CHECKPOINT['source'], config_sha256=B_SOURCE_CONFIG['sha256'])
+        validate_checkpoint_payload(payload, original, 2, config=extended, source_config=original)
+        for rank in (0, 1):
+            stream = extend_checkpoint_stream(payload, rank, target_assets=40000, route='b')
+            self.assertEqual(stream.cursor, 10000)
+            self.assertEqual(stream.plan_sha256, CHAINED_PLAN_SHA256)
+            self.assertEqual(len(stream.update_sizes), 840)
+            self.assertEqual(stream.plan_report()['supervised_frame_exposures'], 528296)
+            self.assertEqual(stream.take()[0].sampling_seed, (original['data']['stream_seed'] << 32) + 20000 + rank * 24)
+        for section, key, value in [('runtime', 'allocation', 129839822),
+                                    ('architecture', 'fusion_mode', 'virtual_queries_real'),
+                                    ('continuation', 'checkpoint', CHECKPOINT),
+                                    ('continuation', 'learning_rate', 3e-5),
+                                    ('training', 'target_assets', 80000)]:
+            changed = deepcopy(extended)
+            changed[section][key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validate_continuation_config(changed, original, 2)
+        for mutate in (
+            lambda data: data['initialization'].__setitem__('route', 'a'),
+            lambda data: data['initialization'].__setitem__('source', CHECKPOINT['source']),
+            lambda data: data.__setitem__('source', CHECKPOINT['source']),
+            lambda data: data['rank_states'][1]['stream'].__setitem__('cursor', 0),
+        ):
+            changed = deepcopy(payload)
+            mutate(changed)
+            with self.assertRaises(ValueError):
+                validate_checkpoint_payload(changed, original, 2, config=extended, source_config=original)
+        with self.assertRaises(ValueError):
+            validate_checkpoint_payload(payload_fixture(), original, 2, config=extended, source_config=original)
+
     def test_a120k_preserves_a80k_prefix_history_optimizer_and_replacement_grant(self):
         original, _ = configs()
         folder = ROOT / 'model_training/experiments'
@@ -250,6 +289,10 @@ class ContinuationTests(unittest.TestCase):
             for key in ('step', 'exp_avg', 'exp_avg_sq'):
                 self.assertTrue(torch.equal(before[key], after[key]))
         self.assertEqual(optimizer.param_groups[0]['betas'], old['param_groups'][0]['betas'])
+        self.assertEqual(set_continuation_lr(optimizer, 3e-5), (3e-5, .9499999512612207))
+        for before, after in zip(old['state'].values(), optimizer.state_dict()['state'].values()):
+            for key in ('step', 'exp_avg', 'exp_avg_sq'):
+                self.assertTrue(torch.equal(before[key], after[key]))
         for bad in (0, 2e-6, float('nan')):
             with self.assertRaises(ValueError):
                 set_continuation_lr(optimizer, bad)

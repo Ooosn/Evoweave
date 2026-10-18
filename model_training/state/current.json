@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T22:28:00Z",
+  "updated_at": "2026-10-18T22:43:19.982564Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A150 completed3150updates/150000assets/1949864frames; primary18terminalhashes,4perviewevaluations andfinalcheckpointaccepted. BFINAL40k-to60k at1e-4 is nowpublished locally with55CPUtests; verifyfreshidle/resources, publishpinnedlauncher/runtime, actualrestore+first8thenfullsupervision. Next BFINAL60k-to80k at3e-5, then frozen-choice expanded839validation. OldB50superseded; preservefullAdamW/rankRNG andgrant130258195.",
+  "next_required_result": "A150completedandprimaryaccepted. B60launched07:32JST, first8primaryaccepted07:40JST; supervise through1260updates/60000assets/788304frames and4evaluations. Afterprimaryterminal/perview/hashreview implement BFINAL60k-to80k at3e-5 usingactualfinalB60checkpoint, then frozen-choice expanded839validation. OldB50superseded; preservefullAdamW/rankRNG, frozenremoteC643 andgrant130258195.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -749,7 +749,30 @@
   "active_operation": {
     "label": "normal_b_extend60000_v1",
     "mode": "normal5000_continuation",
-    "status": "prepared_for_first8_review",
+    "status": "running_first8_primary_accepted_full_monitor_active",
+    "full_supervisor": {
+      "runner_directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_training_monitor/normal_b_extend60000_v1/runner_full_b_extend60000_v1",
+      "pid": 138928,
+      "observed_utc": "2026-10-18T22:43:19.982564Z",
+      "status": "running",
+      "rank_steps": [854, 854],
+      "asset_exposures": 40672,
+      "errors": []
+    },
+    "launched_utc": "2026-10-18T22:32:08.646942+00:00",
+    "runtime_source_commit": "c643fc700da82eb66ad2307b97e973be6e9eae77",
+    "startup_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_b_extension60000_startup_v1.json",
+      "sha256": "59d9e279fb8b6487fd22300cd1c080efdd9e7130fc707e52b5342218f8e74aa8",
+      "first8_receipt_sha256": "6600824f0943745e479cbe6ced1bcd165832c13f3b51978c55b6b4b985dc0aad",
+      "successful_monitor_runner": "runner_first8_b_extend60000_v1_v3",
+      "execution_integrity_accepted": true,
+      "quality_acceptance": false,
+      "end_updates": 848,
+      "end_assets": 40384,
+      "end_supervised_frame_exposures": 532616,
+      "restored_model_tensor_sha256": "ed11cc2db24940d6f2c6a3900ae3f1ace30d43f99ba85f42230f9d8c9373661e"
+    },
     "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
     "operation": "train",
     "authorization": "Latest human2026-10-18T16:11:42.629228Z confirmed A3e-5to150k, B1e-4to60kthen3e-5to80k. A150completed and primaryaccepted. Only B FINAL40k-to60k is executable now, preserving all optimizer/RNG/sampling state.",
@@ -802,7 +825,7 @@
     },
     "batch_protocol": "Same5000/trainmanifest/frame2..24/effective48 and8boundary; preserve full40000 sampling prefix, no replay or architecture/data/normalization changes.",
     "initialization_comparison": "Strict full FINAL B40 load with matching actual checkpoint/restored tensor hashes on bothranks; restore947AdamW moments/betas/step and saved rankRNG. SourceLR and continuationLR both1e-4, no reset.",
-    "preparation_constraint": "55CPUtests passed. A150terminal18artifacthashes/all4per-view evaluations/finalcheckpoint accepted. Requireclean c5f0216 remote predecessor, exactB40checkpoint/config/capacity, GPUs5/7idle under130258195, >=86400remaining. Verifyactualrestore+first8 beforefullsupervision.",
+    "preparation_constraint": "55CPUtests passed; exactB40checkpoint/config/capacity andidleGPUs5/7 verifiedbeforelaunch with244433seconds remaining. Bothrank actualrestore andfirst8passed,10artifacthashes reverifiedbyprimary. Localmonitorlauncher/sourcebindingerrors corrected,15monitortests andrunner_v1_v3passed, noGPUrestart. KeepremoteC643frozen andonefullsupervisor.",
     "after_completion": "Preserve B60final+best, reviewterminal/evaluations, thenprepare/run B FINAL60k-to80k at3e-5, expandedvalidationlast. OldB50superseded. Do not releaseallocation or rollbacktrainingtobest.",
     "runs": [{
       "name": "normal_b_extend60000_v1",
@@ -856,13 +879,14 @@
       "pending_next_stage": "normal_b_lr3e5_80000_v1_needs_actual_finalB60_checkpoint_and_exact_preparation",
       "current_preparation": {
         "label": "normal_b_extend60000_v1",
-        "status": "cpu_prepared_55_tests_passed_local_state_published_not_launched",
+        "status": "launched_first8_primary_accepted",
         "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_extend60000_v1.json",
         "sha256": "381d3904b949bdb6147d3f50b9b2c035cff189772560a869339ba0a39471b352",
         "code_commit": "50df272828e05ea13751a9cbeb26fc513a3edbf5",
         "config_sha256": "92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3",
-        "remote_deployed": false,
-        "launch_requires": "A150terminalandperviewreviewaccepted, exactB40finalcheckpoint/config/capacity, freshidleGPUandallocationchecks, stage-specificpublishandfirst8review."
+        "remote_deployed": true,
+        "runtime_source_commit": "c643fc700da82eb66ad2307b97e973be6e9eae77",
+        "launch_requirements_satisfied": "A150terminalandperviewreviewaccepted, exactB40finalcheckpoint/config/capacity, freshidleGPUandallocationchecks, stage-specificpublishandfirst8review."
       }
     },
   "preserved_normal_a_extend120000_operation": {

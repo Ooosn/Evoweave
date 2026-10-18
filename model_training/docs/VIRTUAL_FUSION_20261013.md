@@ -80,9 +80,20 @@ Final full checkpoint8438118128bytes SHA256
 `04645eb6eaa29ac32aac9f76938ef701a263f4a17da08e9b52867b08760caba6`,
 sourcec5f0216. Primary completion review SHA256
 `e7fd0754d10182cc04e772ebf6afa2dd3177293c5343b878136879f90b06e28b`.
-B60 is now locally published as the sole executable stage, from FINALB40,
-with A150 as a separately checked sequential prerequisite. No B60 launch has
-yet occurred. Frozen-choice expanded evaluation remains after B80 completion.
+B60 is the sole executable stage, from FINALB40, with A150 as a separately
+checked sequential prerequisite. It launched07:32:08JST with244433seconds
+remaining on the retained grant and frozen runtimec643fc7. First8 primary
+accepted07:40JST:841..848/40384assets/532616frames. Bothranks restored947AdamW
+entries/betas and LR1e-4; actual incoming B40 tensor fingerprint is
+`ed11cc2db24940d6f2c6a3900ae3f1ace30d43f99ba85f42230f9d8c9373661e`.
+Primary rehashed10startup artifacts and accepted28strict checks. Startupreview
+SHA256 `59d9e279fb8b6487fd22300cd1c080efdd9e7130fc707e52b5342218f8e74aa8`.
+Successful local first8 runner is `runner_first8_b_extend60000_v1_v3`, receiptv2.
+Two prior local monitor attempts failed closed on stale launcher/source bindings;
+15monitor tests passed after correction. No GPU restart or remote mutation.
+Full supervisorPID138928 is active; at07:43:19JST bothranks854/40672assets/
+536552frames, noerrors. This is not completed training or quality acceptance.
+Frozen-choice expanded evaluation remains after B80 completion.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's

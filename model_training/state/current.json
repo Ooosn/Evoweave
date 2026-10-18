@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T14:12:00Z",
+  "updated_at": "2026-10-18T16:11:42.629228Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A FINAL120k-to130k at3e-5 is RUNNING on frozenremotea189013; actualrestore andfirst8 primaryaccepted. Do not relaunch/deploy while it runs. Supervise to130k and verifyboth125k/130kevaluations, then publish B FINAL40k-to50k at3e-5 (CPU-prepared2888186/configacc9b1/51testspassed). B35k is currently best but do not roll back for training. AfterB50 freeze bestcheckpointchoices on128panel and implement/run expandedremaining839validation. Preservegrant130258195; heartbeat a-b and executiontracker coordinate withoutduplicates.",
+  "next_required_result": "Latest human2026-10-18T16:11:42Z confirmed revised sequence and lifted hold: finish currentA130 unchanged on frozenremotea189, verifyterminal and125/130k evaluations; then A FINAL130k-to150k at3e-5; then B FINAL40k-to60k at1e-4; then B FINAL60k-to80k at3e-5; expanded839validation last after frozen128-panel checkpoint selection. OldunlaunchedB50 is superseded and must NOTlaunch. Preserve fullAdamW/rankRNG and grant130258195. Implement/test/publish each new exactstage only after required sourcecheckpoint/result verified; nochangesrunningremote or discussedarchitecture modifications.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -553,7 +553,7 @@
     "batch_protocol": "Same5000/trainmanifest/frame2..24/effective48 and8boundary; preserve full120k sampling prefix, no replay or architecture/data/normalization changes.",
     "initialization_comparison": "Strict full FINAL A120 model load, verify actual incoming/restored tensor hashes on both ranks; restore947AdamW moments/betas and rank RNG, only then lower LR from1e-4 to3e-5.",
     "preparation_constraint": "49CPUtests passed; A120 and B40 terminal/per-view/hash reviews accepted. Require clean frozen5703 remote predecessor, exact A120 checkpoint/config/capacity, GPUs5/7idle under130258195, >=86400 remaining; actualrestore+first8 review beforefullsupervision.",
-    "after_completion": "Preserve A130final+best, review terminal/evaluations, thenprepareandrun B FINAL40k-to50k at3e-5 and expandedheld-outvalidation. Do not releaseallocation or roll back training tobest.",
+    "after_completion": "Latesthumanrevision: preserve A130final+best, reviewterminal/evaluations, thenprepareandrun A FINAL130k-to150k at3e-5; BFINAL40k-to60k at1e-4 then B60k-to80k at3e-5; expandedvalidation last. OldB50superseded. Do notreleaseallocation or rollbacktrainingtobest.",
     "runs": [
       {
         "name": "normal_a_lr3e5_130000_v1",
@@ -601,19 +601,22 @@
     ]
   },
   "authorized_followthrough": {
-      "authorization": "Explicit user2026-10-18T07:34Z fullsequence approved",
-      "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_plan_v1.json",
+      "authorization": "Explicit latesthuman2026-10-18T16:11:42.629228Z: A3e-5to150k, B1e-4to60k then3e-5to80k, fulloptimizerpreserved, expandedvalidationlast, GPUsretained; no waiting.",
+      "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261019_plan_v2.json",
+      "plan_sha256": "c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc",
+      "stage_promotion_hold": false,
       "heartbeat_id": "a-b",
-      "next_stage_preparation": {
+      "superseded_unlaunched_B50_preparation": {
         "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_lr3e5_50000_v1.json",
         "sha256": "f33d57788d3766c503601d59c4444087467d2ca3046b1f162a7539ac6fa876ce",
-        "status": "cpu_prepared_not_active",
+        "status": "superseded_do_not_launch",
         "code_commit": "28881861f588b1f26ebb28b69ec6e7158509da0f"
       },
       "order": [
-        "normal_b_extend40000_v1",
         "normal_a_lr3e5_130000_v1",
-        "normal_b_lr3e5_50000_v1",
+        "normal_a_lr3e5_150000_v1",
+        "normal_b_extend60000_v1",
+        "normal_b_lr3e5_80000_v1",
         "normal_ab_expanded_validation_v1"
       ],
       "preserve_optimizer": true,

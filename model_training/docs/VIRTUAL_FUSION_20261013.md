@@ -8,12 +8,13 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
-### Approved sequence after A120000 completion
+### Revised approved sequence: A150000, B80000
 
-2026-10-18 16:34JST user explicitly approved the full sequence:
-1. Finish A120000; this completed14:16JST with exit0.
-2. Resume B's own20000 full checkpoint toTOTAL40000 at fixed1e-4.
-3. Resume finalA120000 to130000 and finalB40000 to50000, each at fixed3e-5.
+2026-10-19 01:11JST user explicitly confirmed revised budgets and lifted the
+temporary promotion hold. This supersedes the earlier unlaunched B50k plan:
+1. Finish the already running A120000-to130000 stage at3e-5 and review it.
+2. Resume FINAL A130000 to150000, keeping3e-5 and full optimizer/RNG state.
+3. Resume FINAL B40000 to60000 at1e-4, then FINAL B60000 to80000 at3e-5.
 4. Freeze each route's best checkpoint selected on the unchanged128-asset
    validation panel, then compare them on the remaining validation assets
    not used to select checkpoints (expected839 of967), eight views each.
@@ -26,6 +27,10 @@ remain different; this is not a matched-budget architecture-superiority proof.
 Future stages are authorized but require exact prepared and reviewed configs.
 B40000 has completed and been accepted; only A120000-to130000 at3e-5 is
 executable in the current state. Preserve both final and best checkpoints.
+The immutable revised plan is `normal_ops/sequence_20261019_plan_v2.json`,
+SHA256 `c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc`.
+New A150/B60/B80 stages need exact pinned configs/checkpoints and tests; do not
+extend a running process in place or deploy local changes while it runs.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's
@@ -64,12 +69,11 @@ Startup review SHA256
 The successful local monitor runner is first8_v2, not failed preflight_v1;
 no GPU training restart occurred. A130 full supervision is authorized.
 
-B40-to50 at3e-5 is CPU-prepared in localcode2888186, with51tests passed and
+B40-to50 at3e-5 was CPU-prepared in localcode2888186, with51tests passed and
 config SHA256 `acc9b1ccdb85d47ef380bc092e07e903189d6fcf8f7f65324025acd085d0c92b`.
 It adds210updates/128760frames, ending1050updates/657056frames; evaluate45/50k.
-No best35k rollback. It is NOT active or deployed; wait for A130 terminal
-acceptance, then publish its exact state/launcher/monitors. Expanded-validation
-execution remains to be implemented.
+It was never launched and is now SUPERSEDED by the B40-to60-to80 sequence.
+Do not activate its config. Expanded-validation execution remains to be implemented.
 The30-minute heartbeat `a-b` follows the approved sequence, stays quiet on
 unchanged healthy progress, and must never duplicate the active supervisor.
 Current execution tracker is

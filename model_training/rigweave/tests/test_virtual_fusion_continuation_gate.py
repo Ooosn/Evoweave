@@ -55,7 +55,7 @@ def write_json(path, value):
 def make_fixture(root, target_assets=40000, route='a'):
     root = Path(root)
     config = {'runtime': {'physical_gpus': [5, 7], 'host': 'pcg02i',
-                         'allocation': 130258195 if target_assets == 120000 or route == 'b' else 129839822},
+                         'allocation': 130258195 if target_assets >= 120000 or route == 'b' else 129839822},
               'route': route, 'training': {'target_assets': target_assets}}
     contract = continuation_contract(config)
     label = contract['label']
@@ -159,6 +159,23 @@ def clean_subprocess():
 
 
 class ContinuationGateTests(unittest.TestCase):
+    def test_a130k_gate_requires_completed_final_a120k(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = make_fixture(directory, 130000)
+            args = SimpleNamespace(config=fixture.config_path, output=fixture.output)
+            subprocess, _ = clean_subprocess()
+            fixture.namespace['subprocess'] = subprocess
+            with remote_exit_text('0', 'normal_a_extend120000_v1'):
+                self.assertEqual(fixture.namespace['verify_operation'](args, fixture.config, 0), 'test-head')
+                state = deepcopy(fixture.state)
+                state['active_operation']['runs'][0]['resume_checkpoint'] = deepcopy(fixture.namespace['CHECKPOINT'])
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+                state = deepcopy(fixture.state)
+                replace_c_result(fixture, state, asset_exposures=80000, updates=1680)
+                with self.assertRaises(ValueError):
+                    fixture.namespace['declared_operation'](state, args, fixture.config)
+
     def test_b40k_gate_requires_own_completed_b20k_and_checkpoint(self):
         with tempfile.TemporaryDirectory() as directory:
             fixture = make_fixture(directory, 40000, 'b')

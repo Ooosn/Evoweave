@@ -21,6 +21,7 @@ from virtual_fusion_continuation import (
     CHAINED_CHECKPOINT, CHAINED_SOURCE_CONFIG, CHAINED_PLAN_SHA256,
     EXTENDED_CHECKPOINT, EXTENDED_SOURCE_CONFIG, EXTENDED_PLAN_SHA256, PURPOSE, continuation_contract,
     B_CHECKPOINT, B_SOURCE_CONFIG,
+    A120_CHECKPOINT, A120_SOURCE_CONFIG, A120_PLAN_SHA256,
     extend_checkpoint_stream, restore_training_state, set_continuation_lr,
     validate_checkpoint_payload, validate_continuation_config,
 )
@@ -87,7 +88,109 @@ def chained_payload_fixture():
     return payload
 
 
+def completed_a120_payload_fixture():
+    payload = chained_payload_fixture()
+    folder = ROOT / 'model_training/experiments'
+    for target, checkpoint, source_ref in ((80000, EXTENDED_CHECKPOINT, EXTENDED_SOURCE_CONFIG),
+                                            (120000, A120_CHECKPOINT, A120_SOURCE_CONFIG)):
+        source = json.loads((folder / f'fusion_normal_a_extend{target}_v1.json').read_text())
+        contract = continuation_contract(source)
+        for rank in (0, 1):
+            stream = extend_checkpoint_stream(payload, rank, target_assets=target)
+            stream.cursor = stream.local_total
+            payload['rank_states'][rank]['stream'] = stream.state_dict()
+        updates = len(stream.update_sizes)
+        frames = stream.plan_report()['supervised_frame_exposures']
+        initial = payload['initialization']
+        initial.setdefault('training_continuation_history', []).append(deepcopy(initial['training_continuation']))
+        initial['training_continuation'].update(
+            checkpoint=deepcopy(contract['checkpoint']), source_config=deepcopy(contract['source_config']),
+            source=checkpoint['source'], config_sha256=source_ref['sha256'],
+            start_asset_exposures=contract['start_assets'], target_asset_exposures=target,
+            start_updates=contract['start_updates'], target_updates=updates,
+            start_supervised_frame_exposures=contract['start_frames'], target_supervised_frame_exposures=frames,
+            original_exposure_plan_sha256=contract['old_plan_sha256'],
+            extended_exposure_plan_sha256=stream.plan_sha256,
+            saved_prefix_asset_exposures_verified=contract['start_assets'])
+        payload.update(source=checkpoint['source'], config=source, asset_exposures=target,
+                       step=updates, supervised_frame_exposures=frames)
+        for value in payload['optimizer']['state'].values():
+            value['step'].fill_(updates)
+    return payload
+
+
 class ContinuationTests(unittest.TestCase):
+    def test_a130k_uses_final_a120_and_only_lowers_continuation_rate(self):
+        original, _ = configs()
+        folder = ROOT / 'model_training/experiments'
+        source = json.loads((folder / 'fusion_normal_a_extend120000_v1.json').read_text())
+        config = json.loads((folder / 'fusion_normal_a_lr3e5_130000_v1.json').read_text())
+        self.assertEqual(validate_continuation_config(config, original, 2), [125000, 130000])
+        self.assertEqual(continuation_contract(config)['learning_rate'], 3e-5)
+        self.assertEqual(config['continuation']['checkpoint'], A120_CHECKPOINT)
+        payload = completed_a120_payload_fixture()
+        validate_checkpoint_payload(payload, original, 2, config=config, source_config=source)
+        for rank in (0, 1):
+            previous = payload['rank_states'][rank]['stream']
+            self.assertEqual(previous['plan_sha256'], A120_PLAN_SHA256)
+            old = MatchedFrameStream(range(5000), **{
+                key: value for key, value in previous['contract'].items() if key != 'dataset_rows'})
+            stream = extend_checkpoint_stream(payload, rank, target_assets=130000)
+            self.assertEqual(stream.cursor, 60000)
+            self.assertEqual(len(stream.update_sizes), 2730)
+            self.assertEqual(stream.plan_report()['supervised_frame_exposures'], 1685592)
+            self.assertEqual(stream.plan_sha256, '29b3527f644f76d996ccfb3e7286d6eac43b29895d4c777ebb48d89a98a4dc41')
+            np.testing.assert_array_equal(stream.order[:120000], old.order)
+            np.testing.assert_array_equal(stream.frame_counts[:2520], old.frame_counts)
+            np.testing.assert_array_equal(stream.update_sizes[:2520], old.update_sizes)
+            self.assertEqual(stream.global_ends[2520], 120048)
+            self.assertEqual(stream.frame_counts[2520:2528].tolist(), [20, 21, 4, 23, 10, 24, 6, 12])
+        for section, key, value in [('continuation', 'learning_rate', 1e-4),
+                                    ('continuation', 'checkpoint', EXTENDED_CHECKPOINT),
+                                    ('optimization', 'schedule_samples', 130000),
+                                    ('runtime', 'allocation', 129839822),
+                                    ('evaluation', 'initial', True)]:
+            changed = deepcopy(config)
+            changed[section][key] = value
+            with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                validate_continuation_config(changed, original, 2)
+        for mutate in (
+            lambda data: data['initialization']['training_continuation_history'].pop(),
+            lambda data: data['initialization']['training_continuation_history'][1].__setitem__('checkpoint', CHECKPOINT),
+            lambda data: data['initialization']['training_continuation_history'][0].__setitem__('source', 'wrong'),
+            lambda data: data['initialization']['training_continuation'].__setitem__('constant_learning_rate', 3e-5),
+            lambda data: data['optimizer']['param_groups'][0].__setitem__('lr', 3e-5),
+            lambda data: data['optimizer']['state'][0]['step'].fill_(2521),
+            lambda data: data['rank_states'][1]['stream'].__setitem__('cursor', 40000),
+        ):
+            changed = deepcopy(payload)
+            mutate(changed)
+            with self.assertRaises(ValueError):
+                validate_checkpoint_payload(changed, original, 2, config=config, source_config=source)
+
+    def test_low_rate_restore_preserves_full_optimizer_and_rank_rng(self):
+        payload = completed_a120_payload_fixture()
+        for rank in (0, 1):
+            stream = extend_checkpoint_stream(payload, rank, target_assets=130000)
+            model = nn.Linear(1, 1)
+            optimizer = torch.optim.AdamW(model.parameters(), lr=.01, betas=(.5, .8))
+            state = dict(asset_exposures=120000, supervised_frame_exposures=1555504, step=2520,
+                         optimizer_state_dict=payload['optimizer'], rank_rng_state=payload['rank_states'][rank],
+                         learning_rate=3e-5)
+            counters = restore_training_state(optimizer, stream, state, device='cpu', rank=rank,
+                                              world=2, target_assets=130000)
+            self.assertEqual(counters, (120000, 1555504, 2520))
+            self.assertTrue(torch.equal(torch.get_rng_state(), payload['rank_states'][rank]['torch_rng']))
+            self.assertEqual(random.getstate(), payload['rank_states'][rank]['python_rng'])
+            np.testing.assert_array_equal(np.random.get_state()[1], payload['rank_states'][rank]['numpy_rng'][1])
+            self.assertEqual(set_continuation_lr(optimizer, 3e-5), (3e-5, .9499999512612207))
+            self.assertEqual(optimizer.param_groups[0]['lr'], 3e-5)
+            self.assertEqual(optimizer.param_groups[0]['betas'], (.9499999512612207, .999))
+            restored = optimizer.state_dict()['state']
+            for key, value in payload['optimizer']['state'].items():
+                for name in ('step', 'exp_avg', 'exp_avg_sq'):
+                    self.assertTrue(torch.equal(restored[key][name], value[name]))
+
     def test_b20k_to40k_preserves_b_route_and_exact_shared_stream(self):
         folder = ROOT / 'model_training/experiments'
         original = json.loads((folder / 'fusion_normal_b_v1.json').read_text())

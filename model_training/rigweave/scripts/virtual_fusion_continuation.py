@@ -52,6 +52,17 @@ EXTENDED_SOURCE_CONFIG = {
     'sha256': '2057ebec5370d780de393edfe026cba25b01a29335eab577f8652cc3bafc679a',
 }
 EXTENDED_PLAN_SHA256 = 'f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2'
+A120_CHECKPOINT = {
+    'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1/checkpoint_asset_120000.pt',
+    'sha256': 'e3e8a8569641005c5798d9974ecf011f388987c0bfb72d47b2f6ebd736437628',
+    'bytes': 8438113456,
+    'source': 'ac1b0ca2abb890175a9f149ca483cc7a538dccf0',
+}
+A120_SOURCE_CONFIG = {
+    'path': '/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend120000_v1.json',
+    'sha256': '7bec5e0c377ab3b893a54021c32506a07a8c1a61a40bb043fed5761cb4f25726',
+}
+A120_PLAN_SHA256 = '26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70'
 B_CHECKPOINT = {
     'path': '/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_v1/checkpoint_asset_020000.pt',
     'sha256': '4c8b677f825b1f9f2ac162afa34cf45ca51a0f506a2b63f4b781c8532c23f50b',
@@ -126,11 +137,24 @@ def continuation_contract(config):
                 'asset_exposures': 80000, 'updates': 1680, 'supervised_frame_exposures': 1041832,
                 'additional_asset_exposures': 40000, 'additional_updates': 840},
         }
+    elif target == 130000:
+        result = {
+            'label': 'normal_a_lr3e5_130000_v1', 'start_assets': 120000,
+            'start_updates': 2520, 'start_frames': 1555504,
+            'checkpoint': A120_CHECKPOINT, 'source_config': A120_SOURCE_CONFIG,
+            'old_plan_sha256': A120_PLAN_SHA256, 'source_purpose': PURPOSE,
+            'learning_rate': 3e-5, 'replacement_allocation': 130258195,
+            'predecessor_label': 'normal_a_extend120000_v1',
+            'predecessor_result': {'execution_complete': True, 'mode': 'resume', 'route': 'a',
+                'purpose': PURPOSE, 'code_commit': A120_CHECKPOINT['source'],
+                'asset_exposures': 120000, 'updates': 2520, 'supervised_frame_exposures': 1555504,
+                'additional_asset_exposures': 40000, 'additional_updates': 840},
+        }
     else:
-        raise ValueError('only the pinned A20k-to40k, A40k-to80k and A80k-to120k continuations are implemented')
+        raise ValueError('only the explicitly pinned A and B continuation targets are implemented')
     result = deepcopy(result)
     result['route'] = route
-    result['learning_rate'] = 1e-4
+    result.setdefault('learning_rate', 1e-4)
     result['target_assets'] = target
     result['boundaries'] = list(range(5000, target + 1, 5000))
     result['source_boundaries'] = list(range(5000, result['start_assets'] + 1, 5000))
@@ -210,7 +234,26 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
         }
         prior = initial.get('training_continuation', {})
         old_prior = prior
-        if contract['start_assets'] == 80000:
+        history = initial.get('training_continuation_history', [])
+        if contract['start_assets'] == 120000:
+            expected_120k = {
+                'checkpoint': EXTENDED_CHECKPOINT, 'source_config': EXTENDED_SOURCE_CONFIG, 'route': 'a',
+                'source': A120_CHECKPOINT['source'], 'config_sha256': A120_SOURCE_CONFIG['sha256'],
+                'start_asset_exposures': 80000, 'target_asset_exposures': 120000,
+                'start_updates': 1680, 'target_updates': 2520,
+                'start_supervised_frame_exposures': 1041832, 'target_supervised_frame_exposures': 1555504,
+                'original_exposure_plan_sha256': EXTENDED_PLAN_SHA256,
+                'extended_exposure_plan_sha256': A120_PLAN_SHA256,
+                'constant_learning_rate': 1e-4, 'optimizer_betas': 'restore_checkpoint',
+                'optimizer_state_restore_required': True, 'fresh_official_initialization': False,
+                'resumed_trained_weights_loaded': True, 'original_20000_prefix_verified': True,
+                'saved_prefix_asset_exposures_verified': 80000,
+            }
+            if any(prior.get(key) != value for key, value in expected_120k.items()) or len(history) != 2:
+                raise ValueError('completed120k checkpoint must retain its A80k continuation and full history')
+            prior = history[1]
+            history = history[:1]
+        if contract['start_assets'] >= 80000:
             expected_80k = {
                 'checkpoint': CHAINED_CHECKPOINT, 'source_config': CHAINED_SOURCE_CONFIG, 'route': 'a',
                 'source': EXTENDED_CHECKPOINT['source'], 'config_sha256': EXTENDED_SOURCE_CONFIG['sha256'],
@@ -226,7 +269,6 @@ def validate_checkpoint_payload(payload, original, world, *, config=None, source
             }
             if any(prior.get(key) != value for key, value in expected_80k.items()):
                 raise ValueError('completed80k checkpoint does not retain its A40k continuation provenance')
-            history = initial.get('training_continuation_history', [])
             if len(history) != 1:
                 raise ValueError('completed80k checkpoint must retain the original A20k continuation history')
             old_prior = history[0]

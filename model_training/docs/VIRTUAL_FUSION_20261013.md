@@ -48,6 +48,28 @@ full optimizer and40/80/120/130 history; adds420updates/264272frames, ending
 3150updates/1949864frames. Evaluate135/140/145/150k. New plan SHA256
 `70ac110617d1d84b935c6aeaaa4ed95776533159638591a673c5f048aa0021e1`.
 
+A150 launched02:05:04JST2026-10-19 with frozen runtimec5f0216. First8
+primaryaccepted02:14JST:2731..2738/130384assets/1690344frames. Both ranks
+restored947AdamW states/betas and sourceLR3e-5; actual A130 tensor fingerprint
+`0c0acb49fcecc8e95b2b5ec10c792aaf7094f1cbc72f2172489e56b4f2eac305`.
+Primary rehashed10startup artifacts and accepted28strict checks. Startupreview
+SHA256 `3f2c19fec1fada464a58abba6c1afee78fcf88715ecd685e856b359c91e51ba0`.
+The successful first8 runner is v2. V1 used an obsolete in-memory1e-4 restore
+expectation; a monitor-only correction and41CPUtests passed before v2.
+No GPU restart or remote code mutation occurred. Full supervisor PID119932 is
+active: at02:16:47JST bothranks2745/130720assets/1694328frames, noerrors.
+Startup acceptance does not imply training completion or model-quality acceptance.
+
+B40-to60 at1e-4 is CPU-prepared in localcode50df272,55tests passed, configSHA
+`92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3`.
+It preserves FINAL40k optimizer/RNG and the full sampling prefix, then adds
+420updates/260008frames to1260updates/788304frames; evaluate45/50/55/60k.
+Preparation receipt SHA256
+`381d3904b949bdb6147d3f50b9b2c035cff189772560a869339ba0a39471b352`.
+This is local preparation only: do not deploy while A150 runs. B60 requires
+A150 terminal review, fresh idle/resource checks and a pinned stage launcher.
+B60-to80 and expanded-validation execution remain to be implemented.
+
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's
 unchanged panel. Final120k is also best: train0.856699,heldout0.822426,
@@ -101,7 +123,7 @@ all four1536-view evaluations verified. Primary recomputed per-view F1/success
 and confirmed original B panel equality. Valid F1 at25/30/35/40k is
 0.712425/0.728128/0.734596/0.722256. Best35k improves over20k0.729074 by0.005522;
 final40k is lower, with success0.919922 and exactcount0.500977. Continue from
-FINAL40k after A130, not best35k. Final full checkpoint8438108720bytes,
+FINAL40k after A150 under the revised sequence, not best35k. Final full checkpoint8438108720bytes,
 SHA256 `4e48925a44b0ec78d0b88a3a4169823d70d6bce9068e0385cef9e4d3447c0928`,
 source5703f2c. Completion review SHA256
 `2e852bcbf18ca37981567dd52015565ea447ebf91009388ea11dbd9404c0f09e`.

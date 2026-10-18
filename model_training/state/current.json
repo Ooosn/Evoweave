@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T16:11:42.629228Z",
+  "updated_at": "2026-10-18T17:14:19.901770Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A130 completed and primary terminal/per-view/hashreviewaccepted. A FINAL130k-to150k at3e-5 is pinned and53CPUtests passed; publishlauncher, freshidle/resource checks, actualrestore+first8 review thenfullsupervision. Afterwards BFINAL40k-to60k at1e-4, BFINAL60k-to80k at3e-5, expanded839validationlast afterfrozen128-panelcheckpointselection. OldB50superseded, noarchitecturechanges, preservefullAdamW/rankRNG andgrant130258195.",
+  "next_required_result": "A150 launched02:05JST; first8primaryaccepted02:14JST, fullsupervisionauthorized through3150updates/150000assets/1949864frames and4evaluations. BFINAL40k-to60k at1e-4 is CPUprepared with55tests but must waitforA150terminalreview. Then BFINAL60k-to80k at3e-5, expanded839validationlast afterfrozen128-panelcheckpointselection. OldB50superseded; preservefullAdamW/rankRNG, frozenremote c5f0216 andgrant130258195.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -609,7 +609,30 @@
   "active_operation": {
     "label": "normal_a_lr3e5_150000_v1",
     "mode": "normal5000_continuation",
-    "status": "prepared_for_first8_review",
+    "status": "running_first8_primary_accepted_full_monitor_active",
+    "full_supervisor": {
+      "runner_directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_training_monitor/normal_a_lr3e5_150000_v1/runner_full_a_lr3e5_150000_v1",
+      "pid": 119932,
+      "observed_utc": "2026-10-18T17:16:47.260409Z",
+      "status": "running",
+      "rank_steps": [2745, 2745],
+      "asset_exposures": 130720,
+      "errors": []
+    },
+    "launched_utc": "2026-10-18T17:05:04.032231+00:00",
+    "runtime_source_commit": "c5f021680c358a7dd23ef121c8b0aed032b4b5f5",
+    "startup_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_lr3e5_150000_startup_v1.json",
+      "sha256": "3f2c19fec1fada464a58abba6c1afee78fcf88715ecd685e856b359c91e51ba0",
+      "first8_receipt_sha256": "25317597334ad42fe8689438a6e1e210cbd4d440e402295c69ace08428e1e9f5",
+      "successful_monitor_runner": "runner_first8_a_lr3e5_150000_v2",
+      "execution_integrity_accepted": true,
+      "quality_acceptance": false,
+      "end_updates": 2738,
+      "end_assets": 130384,
+      "end_supervised_frame_exposures": 1690344,
+      "restored_model_tensor_sha256": "0c0acb49fcecc8e95b2b5ec10c792aaf7094f1cbc72f2172489e56b4f2eac305"
+    },
     "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
     "operation": "train",
     "authorization": "Latest human2026-10-18T16:11:42.629228Z confirmed A3e-5to150k, B1e-4to60kthen3e-5to80k. A130completed and primaryaccepted. Only A FINAL130k-to150k is executable now, preserving all optimizer/RNG/sampling state.",
@@ -659,7 +682,7 @@
     },
     "batch_protocol": "Same5000/trainmanifest/frame2..24/effective48 and8boundary; preserve full130k sampling prefix, no replay or architecture/data/normalization changes.",
     "initialization_comparison": "Strict full FINAL A130 load with matching actual checkpoint/restored tensor hashes on bothranks; restore947AdamW moments/betas/step and saved rankRNG. SourceLR and continuationLR both3e-5, no reset.",
-    "preparation_constraint": "53CPUtests passed. A130terminal16artifacthashes and bothper-view evaluations accepted. Requireclean a189 remote predecessor, exactA130checkpoint/config/capacity, GPUs5/7idle under130258195, >=86400remaining. Verifyactualrestore+first8 beforefullsupervision.",
+    "preparation_constraint": "53CPUtests passed; exactA130checkpoint/config/capacity andidleGPUs5/7 wereverifiedbeforelaunch with264058seconds remaining. Bothrank actualrestore andfirst8passed,10artifacthashes reverifiedbyprimary. Monitor_v1 obsoleteLR1e-4expectation correctedto3e-5;41monitortests andrunner_v2passed, noGPUrestart. Keepremote c5f0216frozen andonefullsupervisor.",
     "after_completion": "Preserve A150final+best, reviewterminal/evaluations, thenprepare/run B FINAL40k-to60k at1e-4, then B FINAL60k-to80k at3e-5, expandedvalidationlast. OldB50superseded. Do not releaseallocation or rollbacktrainingtobest.",
     "runs": [
       {
@@ -728,7 +751,17 @@
       ],
       "preserve_optimizer": true,
       "preserve_qlogin": true,
-      "current_executable_stage": "normal_a_lr3e5_150000_v1"
+      "current_executable_stage": "normal_a_lr3e5_150000_v1",
+      "next_preparation": {
+        "label": "normal_b_extend60000_v1",
+        "status": "cpu_prepared_55_tests_passed_not_published_or_launched",
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_extend60000_v1.json",
+        "sha256": "381d3904b949bdb6147d3f50b9b2c035cff189772560a869339ba0a39471b352",
+        "code_commit": "50df272828e05ea13751a9cbeb26fc513a3edbf5",
+        "config_sha256": "92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3",
+        "remote_deployed": false,
+        "launch_requires": "A150terminalandperviewreviewaccepted, exactB40finalcheckpoint/config/capacity, freshidleGPUandallocationchecks, stage-specificpublishandfirst8review."
+      }
     },
   "preserved_normal_a_extend120000_operation": {
       "label": "normal_a_extend120000_v1",

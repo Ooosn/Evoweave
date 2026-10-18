@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T14:00:00Z",
+  "updated_at": "2026-10-18T14:12:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "B40 completed and primary integrity/per-view review accepted. Launch only the pinned A FINAL120k-to130k at fixed3e-5 now with full optimizer/rankRNG restoration; exact config and49CPUtests passed. Review actualrestore+first8 then supervise to130k before preparing B FINAL40k-to50k at3e-5. B35k currently best but no rollback for training. Then freeze best checkpoint choices on fixed128 and evaluate remaining839 assets. Preserve allocation130258195 throughout and after all work; heartbeat a-b follows execution tracker and prevents duplicate launches.",
+  "next_required_result": "A FINAL120k-to130k at3e-5 is RUNNING on frozenremotea189013; actualrestore andfirst8 primaryaccepted. Do not relaunch/deploy while it runs. Supervise to130k and verifyboth125k/130kevaluations, then publish B FINAL40k-to50k at3e-5 (CPU-prepared2888186/configacc9b1/51testspassed). B35k is currently best but do not roll back for training. AfterB50 freeze bestcheckpointchoices on128panel and implement/run expandedremaining839validation. Preservegrant130258195; heartbeat a-b and executiontracker coordinate withoutduplicates.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -486,7 +486,19 @@
   "active_operation": {
     "label": "normal_a_lr3e5_130000_v1",
     "mode": "normal5000_continuation",
-    "status": "prepared_for_first8_review",
+    "status": "running_first8_primary_accepted",
+    "runtime_source_commit": "a189013cb14efed31a534a8e801a97bb5e162edb",
+    "launched_utc": "2026-10-18T14:00:36.282266+00:00",
+    "startup_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_lr3e5_130000_startup_v1.json",
+      "sha256": "93b257f34a8764673e2bcfef9adec342eb8cc8463d281dc129c5d7be721427ba",
+      "accepted": true,
+      "quality_acceptance": false,
+      "restored_model_sha256": "f5314b59215aca744803f1046302fab4323041815c3f4e6130d3928b733247b1",
+      "optimizer_entries_each_rank": 947,
+      "first8_end_assets": 120384,
+      "first8_end_updates": 2528
+    },
     "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
     "operation": "train",
     "authorization": "User2026-10-18 approved fullsequence; A120 and B40 nowcompleted/accepted. Only A FINAL120k-to130k at3e-5 is executable now; preserve full optimizer/rankRNG and sampling prefix.",
@@ -593,10 +605,10 @@
       "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_plan_v1.json",
       "heartbeat_id": "a-b",
       "next_stage_preparation": {
-        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_a_lr3e5_130000_v1.json",
-        "sha256": "4843a41656b2158341b335f9fd9d75fd21bad4b66f02fff93aa8264c17300636",
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_lr3e5_50000_v1.json",
+        "sha256": "f33d57788d3766c503601d59c4444087467d2ca3046b1f162a7539ac6fa876ce",
         "status": "cpu_prepared_not_active",
-        "code_commit": "e1d2f9a9563bf083feca3b3da7562b2c516894d0"
+        "code_commit": "28881861f588b1f26ebb28b69ec6e7158509da0f"
       },
       "order": [
         "normal_b_extend40000_v1",

@@ -54,10 +54,22 @@ has SHA256 `f1ad62b786f291bc440cd9def3c47307830f19677ad91514a45dde0caf3b10cf`.
 A120-to130 at3e-5 is prepared in codee1d2f9a, with49 CPU tests passed,
 config SHA256 `584f9b709f7c9b993a5f78f38a1318bca5871883dc16add911073aa26dcdd325`.
 It preserves the full120k sampling prefix and adds210updates/130088frames,
-ending2730updates/1685592frames; evaluate125k and130k. It is now the active
-prepared operation, requiring exact launch/restore/first8 verification.
-B50 still needs its own configuration and gate preparation using the final
-B40 checkpoint below. Expanded-validation execution remains to be implemented.
+ending2730updates/1685592frames; evaluate125k and130k. It launched23:00:36JST,
+with frozen remote sourcea189013. Primary accepted first8 at23:09JST:
+2521..2528/120384assets/1561264frames,947AdamW states/betas restored, LR3e-5,
+actual A120 tensor fingerprint
+`f5314b59215aca744803f1046302fab4323041815c3f4e6130d3928b733247b1`.
+Startup review SHA256
+`93b257f34a8764673e2bcfef9adec342eb8cc8463d281dc129c5d7be721427ba`.
+The successful local monitor runner is first8_v2, not failed preflight_v1;
+no GPU training restart occurred. A130 full supervision is authorized.
+
+B40-to50 at3e-5 is CPU-prepared in localcode2888186, with51tests passed and
+config SHA256 `acc9b1ccdb85d47ef380bc092e07e903189d6fcf8f7f65324025acd085d0c92b`.
+It adds210updates/128760frames, ending1050updates/657056frames; evaluate45/50k.
+No best35k rollback. It is NOT active or deployed; wait for A130 terminal
+acceptance, then publish its exact state/launcher/monitors. Expanded-validation
+execution remains to be implemented.
 The30-minute heartbeat `a-b` follows the approved sequence, stays quiet on
 unchanged healthy progress, and must never duplicate the active supervisor.
 Current execution tracker is

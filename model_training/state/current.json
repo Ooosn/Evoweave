@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T17:14:19.901770Z",
+  "updated_at": "2026-10-18T22:28:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A150 launched02:05JST; first8primaryaccepted02:14JST, fullsupervisionauthorized through3150updates/150000assets/1949864frames and4evaluations. BFINAL40k-to60k at1e-4 is CPUprepared with55tests but must waitforA150terminalreview. Then BFINAL60k-to80k at3e-5, expanded839validationlast afterfrozen128-panelcheckpointselection. OldB50superseded; preservefullAdamW/rankRNG, frozenremote c5f0216 andgrant130258195.",
+  "next_required_result": "A150 completed3150updates/150000assets/1949864frames; primary18terminalhashes,4perviewevaluations andfinalcheckpointaccepted. BFINAL40k-to60k at1e-4 is nowpublished locally with55CPUtests; verifyfreshidle/resources, publishpinnedlauncher/runtime, actualrestore+first8thenfullsupervision. Next BFINAL60k-to80k at3e-5, then frozen-choice expanded839validation. OldB50superseded; preservefullAdamW/rankRNG andgrant130258195.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -606,17 +606,18 @@
       "quality_acceptance": false
     }
   },
-  "active_operation": {
+  "preserved_normal_a_lr3e5_150000_operation": {
     "label": "normal_a_lr3e5_150000_v1",
     "mode": "normal5000_continuation",
-    "status": "running_first8_primary_accepted_full_monitor_active",
+    "status": "completed_execution_integrity_accepted",
     "full_supervisor": {
       "runner_directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_training_monitor/normal_a_lr3e5_150000_v1/runner_full_a_lr3e5_150000_v1",
       "pid": 119932,
-      "observed_utc": "2026-10-18T17:16:47.260409Z",
-      "status": "running",
-      "rank_steps": [2745, 2745],
-      "asset_exposures": 130720,
+      "observed_utc": "2026-10-18T22:11:32.765818Z",
+      "status": "complete",
+      "exit_code": 0,
+      "rank_steps": [3150, 3150],
+      "asset_exposures": 150000,
       "errors": []
     },
     "launched_utc": "2026-10-18T17:05:04.032231+00:00",
@@ -634,15 +635,30 @@
       "restored_model_tensor_sha256": "0c0acb49fcecc8e95b2b5ec10c792aaf7094f1cbc72f2172489e56b4f2eac305"
     },
     "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
-    "operation": "train",
+    "operation": "report",
     "authorization": "Latest human2026-10-18T16:11:42.629228Z confirmed A3e-5to150k, B1e-4to60kthen3e-5to80k. A130completed and primaryaccepted. Only A FINAL130k-to150k is executable now, preserving all optimizer/RNG/sampling state.",
     "code_commit": "5e3874243ed73bdd7e20e668cf9cefefa8042764",
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
     "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "complete": false,
+    "complete": true,
+    "completion_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_lr3e5_150000_completion_v1.json",
+      "sha256": "e7fd0754d10182cc04e772ebf6afa2dd3177293c5343b878136879f90b06e28b",
+      "execution_integrity_accepted": true,
+      "quality_acceptance": false
+    },
+    "final_checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_lr3e5_150000_v1/checkpoint_asset_150000.pt",
+      "bytes": 8438118128,
+      "sha256": "04645eb6eaa29ac32aac9f76938ef701a263f4a17da08e9b52867b08760caba6",
+      "source": "c5f021680c358a7dd23ef121c8b0aed032b4b5f5"
+    },
+    "best_checkpoint_assets_this_stage": 140000,
+    "best_valid_original_edge_f1_this_stage": 0.7388475705883883,
+    "final_valid_original_edge_f1": 0.7371595707890752,
     "routes": [
       "a"
     ],
@@ -730,6 +746,91 @@
       }
     ]
   },
+  "active_operation": {
+    "label": "normal_b_extend60000_v1",
+    "mode": "normal5000_continuation",
+    "status": "prepared_for_first8_review",
+    "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
+    "operation": "train",
+    "authorization": "Latest human2026-10-18T16:11:42.629228Z confirmed A3e-5to150k, B1e-4to60kthen3e-5to80k. A150completed and primaryaccepted. Only B FINAL40k-to60k is executable now, preserving all optimizer/RNG/sampling state.",
+    "code_commit": "50df272828e05ea13751a9cbeb26fc513a3edbf5",
+    "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "routes": ["b"],
+    "start_asset_exposures": 40000,
+    "target_asset_exposures": 60000,
+    "additional_asset_exposures": 20000,
+    "start_updates": 840,
+    "target_updates": 1260,
+    "start_supervised_frame_exposures": 528296,
+    "target_supervised_frame_exposures": 788304,
+    "evaluation_assets": [45000, 50000, 55000, 60000],
+    "effective_assets_per_update": 48,
+    "exposure_plan_sha256": "4fb7e07e7cc64ec0c17e78016b6899a192d320e9626a4ff8078d747843feb4bf",
+    "original_exposure_plan_sha256": "3321e85cb3608f51620b45ea9c54359b3b0043074ef9f4d645643d1e10a6ba09",
+    "learning_rate": {
+      "mode": "constant_after_resume",
+      "value": 0.0001,
+      "warmup": false,
+      "decay": false,
+      "restart_onecycle": false,
+      "optimizer_betas": "restore_checkpoint"
+    },
+    "completed_predecessor": {
+      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend40000_v1/result.json",
+      "result_sha256": "3c3f4c069e3c5b514f35abc2dc4c0365636d02b6ddc4e48adef0305c935966e5",
+      "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_b_extend40000_v1.exit",
+      "source_commit": "5703f2c320841c11f0f8276570340f26dc8f11c5",
+      "completion_review": {
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_b_extension40000_completion_v1.json",
+        "sha256": "2e852bcbf18ca37981567dd52015565ea447ebf91009388ea11dbd9404c0f09e"
+      }
+    },
+    "sequential_prerequisite": {
+      "label": "normal_a_lr3e5_150000_v1",
+      "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_lr3e5_150000_v1.exit",
+      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_lr3e5_150000_v1/result.json",
+      "result_sha256": "3b182157625184a3f6f941f77c7c52edea16fbd795ed739b9a7418bffbc45e3e",
+      "completion_review": {
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_lr3e5_150000_completion_v1.json",
+        "sha256": "e7fd0754d10182cc04e772ebf6afa2dd3177293c5343b878136879f90b06e28b"
+      }
+    },
+    "batch_protocol": "Same5000/trainmanifest/frame2..24/effective48 and8boundary; preserve full40000 sampling prefix, no replay or architecture/data/normalization changes.",
+    "initialization_comparison": "Strict full FINAL B40 load with matching actual checkpoint/restored tensor hashes on bothranks; restore947AdamW moments/betas/step and saved rankRNG. SourceLR and continuationLR both1e-4, no reset.",
+    "preparation_constraint": "55CPUtests passed. A150terminal18artifacthashes/all4per-view evaluations/finalcheckpoint accepted. Requireclean c5f0216 remote predecessor, exactB40checkpoint/config/capacity, GPUs5/7idle under130258195, >=86400remaining. Verifyactualrestore+first8 beforefullsupervision.",
+    "after_completion": "Preserve B60final+best, reviewterminal/evaluations, thenprepare/run B FINAL60k-to80k at3e-5, expandedvalidationlast. OldB50superseded. Do not releaseallocation or rollbacktrainingtobest.",
+    "runs": [{
+      "name": "normal_b_extend60000_v1",
+      "mode": "resume",
+      "approved": true,
+      "training_allowed": true,
+      "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_extend60000_v1.json",
+      "config_sha256": "92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3",
+      "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend60000_v1",
+      "allocation": 130258195,
+      "host": "pcg02i",
+      "physical_gpus": [5, 7],
+      "remaining_walltime_minimum_seconds": 86400,
+      "resume_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend40000_v1/checkpoint_asset_040000.pt",
+        "sha256": "4e48925a44b0ec78d0b88a3a4169823d70d6bce9068e0385cef9e4d3447c0928",
+        "bytes": 8438108720,
+        "source": "5703f2c320841c11f0f8276570340f26dc8f11c5"
+      },
+      "capacity_receipt": {
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_b_v1.json",
+        "sha256": "43d2f82de61478e214290db86e545fa85227d889300bfac5d2b4365a5cd7d0bf"
+      },
+      "physical_batch_per_rank": {"T2-6": 24, "T7-12": 12, "T13-24": 6},
+      "accumulation_microbatches_per_rank": {"T2-6": 1, "T7-12": 2, "T13-24": 4},
+      "stop_conditions": ["60000 plus final evaluation complete", "OOM/nonfinite", "source/identity/restore drift", "allocation expiry", "explicit user stop"]
+    }]
+  },
   "authorized_followthrough": {
       "authorization": "Explicit latesthuman2026-10-18T16:11:42.629228Z: A3e-5to150k, B1e-4to60k then3e-5to80k, fulloptimizerpreserved, expandedvalidationlast, GPUsretained; no waiting.",
       "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261019_plan_v2.json",
@@ -751,10 +852,11 @@
       ],
       "preserve_optimizer": true,
       "preserve_qlogin": true,
-      "current_executable_stage": "normal_a_lr3e5_150000_v1",
-      "next_preparation": {
+      "current_executable_stage": "normal_b_extend60000_v1",
+      "pending_next_stage": "normal_b_lr3e5_80000_v1_needs_actual_finalB60_checkpoint_and_exact_preparation",
+      "current_preparation": {
         "label": "normal_b_extend60000_v1",
-        "status": "cpu_prepared_55_tests_passed_not_published_or_launched",
+        "status": "cpu_prepared_55_tests_passed_local_state_published_not_launched",
         "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_extend60000_v1.json",
         "sha256": "381d3904b949bdb6147d3f50b9b2c035cff189772560a869339ba0a39471b352",
         "code_commit": "50df272828e05ea13751a9cbeb26fc513a3edbf5",

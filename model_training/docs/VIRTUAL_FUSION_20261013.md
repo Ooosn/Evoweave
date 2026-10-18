@@ -25,8 +25,8 @@ No model, loss, tokenizer, training membership, RT/normalization, decoding,
 warmup or scheduler restart changes are authorized. A/B cumulative budgets
 remain different; this is not a matched-budget architecture-superiority proof.
 Future stages are authorized but require exact prepared and reviewed configs.
-B40000 and A130000 have completed and been accepted; only A130000-to150000
-at3e-5 is executable in the current state. Preserve both final and best checkpoints.
+B40000 and A150000 have completed and been accepted; only B40000-to60000
+at1e-4 is executable in the current state. Preserve both final and best checkpoints.
 The immutable revised plan is `normal_ops/sequence_20261019_plan_v2.json`,
 SHA256 `c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc`.
 New A150/B60/B80 stages need exact pinned configs/checkpoints and tests; do not
@@ -69,6 +69,20 @@ Preparation receipt SHA256
 This is local preparation only: do not deploy while A150 runs. B60 requires
 A150 terminal review, fresh idle/resource checks and a pinned stage launcher.
 B60-to80 and expanded-validation execution remain to be implemented.
+
+A150 terminal07:11JST2026-10-19: exit0, bothranks3150updates/150000assets/
+1949864frames,420suffixupdates. Primary rehashed18terminal artifacts and
+recomputed all four1536-view panels, including exact originalA asset membership
+and eight distinct raw poses. ValidF1 at135/140/145/150k is
+0.737083/0.738848/0.735886/0.737160. Best140k has success0.996094 and
+exactcount0.484375; final150k has success0.989258 and exactcount0.436523.
+Final full checkpoint8438118128bytes SHA256
+`04645eb6eaa29ac32aac9f76938ef701a263f4a17da08e9b52867b08760caba6`,
+sourcec5f0216. Primary completion review SHA256
+`e7fd0754d10182cc04e772ebf6afa2dd3177293c5343b878136879f90b06e28b`.
+B60 is now locally published as the sole executable stage, from FINALB40,
+with A150 as a separately checked sequential prerequisite. No B60 launch has
+yet occurred. Frozen-choice expanded evaluation remains after B80 completion.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's

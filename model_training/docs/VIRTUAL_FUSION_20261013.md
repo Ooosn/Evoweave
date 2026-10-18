@@ -25,12 +25,28 @@ No model, loss, tokenizer, training membership, RT/normalization, decoding,
 warmup or scheduler restart changes are authorized. A/B cumulative budgets
 remain different; this is not a matched-budget architecture-superiority proof.
 Future stages are authorized but require exact prepared and reviewed configs.
-B40000 has completed and been accepted; only A120000-to130000 at3e-5 is
-executable in the current state. Preserve both final and best checkpoints.
+B40000 and A130000 have completed and been accepted; only A130000-to150000
+at3e-5 is executable in the current state. Preserve both final and best checkpoints.
 The immutable revised plan is `normal_ops/sequence_20261019_plan_v2.json`,
 SHA256 `c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc`.
 New A150/B60/B80 stages need exact pinned configs/checkpoints and tests; do not
 extend a running process in place or deploy local changes while it runs.
+
+A130 terminal01:36JST2026-10-19: exit0,2730updates/130000assets/1685592frames,
+210suffixrows eachrank. Primary verified16 terminalhashes and both1536-view
+125/130k panels, same originalAselection. Valid F1 at130k0.733665703 is A's
+best so far, success0.989257813, exactcount0.452148438. Final fullcheckpoint
+8438115760bytes, SHA256
+`d1c041e055e8be507137d0851fb137b29244a5f0bf604bc0bddc2f4f309b8676`,
+sourcea189013. Completion review SHA256
+`49dd74b60ea429bd090e4a2b243982a660e6492291a4b42fbff369f134440bbd`.
+
+A130-to150 configuration SHA256
+`17b99060f97158009091f1c47f447c6af5ac5fee14a62241e64c74d92e7ac1a3`,
+core5e38742,53 CPU tests passed. It preserves source AND continuation LR3e-5,
+full optimizer and40/80/120/130 history; adds420updates/264272frames, ending
+3150updates/1949864frames. Evaluate135/140/145/150k. New plan SHA256
+`70ac110617d1d84b935c6aeaaa4ed95776533159638591a673c5f048aa0021e1`.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's

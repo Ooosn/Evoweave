@@ -8,7 +8,39 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
-### A80000-to120000 continuation authorized
+### Approved sequence after A120000 completion
+
+2026-10-18 16:34JST user explicitly approved the full sequence:
+1. Finish A120000; this completed14:16JST with exit0.
+2. Resume B's own20000 full checkpoint toTOTAL40000 at fixed1e-4.
+3. Resume finalA120000 to130000 and finalB40000 to50000, each at fixed3e-5.
+4. Freeze each route's best checkpoint selected on the unchanged128-asset
+   validation panel, then compare them on the remaining validation assets
+   not used to select checkpoints (expected839 of967), eight views each.
+5. Preserve qlogin130258195 after training and evaluation.
+
+Preserve AdamW moments/betas and rank RNG/sampling state at every transition.
+No model, loss, tokenizer, training membership, RT/normalization, decoding,
+warmup or scheduler restart changes are authorized. A/B cumulative budgets
+remain different; this is not a matched-budget architecture-superiority proof.
+Future stages are authorized but require exact prepared and reviewed configs;
+only B20000-to40000 is executable in the current state.
+
+A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
+evaluations verified, with per-view F1/success recomputed against original A's
+unchanged panel. Final120k is also best: train0.856699,heldout0.822426,
+valid0.713389, still below B20k0.729074. Final full checkpoint8438113456bytes,
+SHA256 `e3e8a8569641005c5798d9974ecf011f388987c0bfb72d47b2f6ebd736437628`.
+Primary acceptance receipt:
+`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_extension120000_completion_v1.json`
+SHA256 `2193f3dc8fdb693db994a5b0cff5e0146717ac3ba002726df1872b22f0b06d66`.
+
+B40k preparation passed36 focused CPU tests. B's original OneCycle tail was
+about2e-6; the explicitly selected continuation protocol raises LR to1e-4,
+as A20k-to40k did, while preserving optimizer moments/betas. This intentional
+LR change is not an optimizer reset. All later low-LR stages use3e-5.
+
+### Historical A80000-to120000 authorization
 
 2026-10-18 03:22JST user explicitly requested release of the old two-H100
 qlogin, a replacement two-H100 qlogin, automatic continuation of A toTOTAL120000,

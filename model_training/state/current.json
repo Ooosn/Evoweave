@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-17T18:34:00Z",
+  "updated_at": "2026-10-18T07:50:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,112 +357,252 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run only the pinned A80k-to120k continuation on replacement130258195. Verify actual restored model/optimizer and first8 updates, then supervise to120000/2520/1555504 and all eight fixed1536-view evaluations. Preserve allocation after completion; no automatic B, reset or architecture changes.",
+  "next_required_result": "A120k completed and execution-integrity accepted. Start only the pinned B20k-to40k continuation now, preserving full AdamW/RNG and using fixed1e-4. Then prepare the explicitly authorized A120k-to130k and B40k-to50k phases at3e-5, and finally expanded held-out validation. Each stage needs exact checkpoint/config/resource checks and completed predecessor review. Retain allocation130258195 throughout and after all work.",
   "active_operation": {
-  "label": "normal_a_extend120000_v1",
-    "mode": "normal5000_continuation",
-    "status": "prepared_for_first8_review",
-    "operation": "train",
-    "authorization": "User explicitly requested release129839822, replacement two-H100 qlogin, automatic continuation of A from final80000 to TOTAL120000, then retain the new cards. This is40000 additional exposures, not a restart or best75k rollback.",
-    "code_commit": "129f7137941708274b5d981a3d5d0d68f92916f8",
-    "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
-    "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
-    "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": false,
-    "complete": false,
-    "routes": [
-      "a"
-    ],
-    "start_asset_exposures": 80000,
-    "target_asset_exposures": 120000,
-    "additional_asset_exposures": 40000,
-    "start_updates": 1680,
-    "target_updates": 2520,
-    "start_supervised_frame_exposures": 1041832,
-    "target_supervised_frame_exposures": 1555504,
-    "evaluation_assets": [
-      85000,
-      90000,
-      95000,
-      100000,
-      105000,
-      110000,
-      115000,
-      120000
-    ],
-    "effective_assets_per_update": 48,
-    "exposure_plan_sha256": "26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70",
-    "original_exposure_plan_sha256": "f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2",
-    "learning_rate": {
-      "mode": "constant_after_resume",
-      "value": 0.0001,
-      "warmup": false,
-      "decay": false,
-      "restart_onecycle": false,
-      "optimizer_betas": "restore_checkpoint"
+      "label": "normal_b_extend40000_v1",
+      "mode": "normal5000_continuation",
+      "status": "prepared_for_first8_review",
+      "operation": "train",
+      "authorization": "User2026-10-18T07:34Z approved A120complete->B20to40 at1e-4, thenA120to130/B40to50 at3e-5 with fulloptimizer/RNG, expandedvalidation and retainedGPUs. OnlyB20to40 is executable in this stage.",
+      "code_commit": "3dfbdace3c80de57bf6734f65026e72f9977cfa1",
+      "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+      "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+      "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+      "gpu_work_allowed": true,
+      "formal_training_allowed": false,
+      "complete": false,
+      "routes": [
+        "b"
+      ],
+      "start_asset_exposures": 20000,
+      "target_asset_exposures": 40000,
+      "additional_asset_exposures": 20000,
+      "start_updates": 420,
+      "target_updates": 840,
+      "start_supervised_frame_exposures": 263608,
+      "target_supervised_frame_exposures": 528296,
+      "evaluation_assets": [
+        25000,
+        30000,
+        35000,
+        40000
+      ],
+      "effective_assets_per_update": 48,
+      "exposure_plan_sha256": "3321e85cb3608f51620b45ea9c54359b3b0043074ef9f4d645643d1e10a6ba09",
+      "original_exposure_plan_sha256": "a7bdf57c23a9edb0bcac5a79a4603003e8387d613cd0dbac7928255f612dca7b",
+      "learning_rate": {
+        "mode": "constant_after_resume",
+        "value": 0.0001,
+        "warmup": false,
+        "decay": false,
+        "restart_onecycle": false,
+        "optimizer_betas": "restore_checkpoint"
+      },
+      "completed_predecessor": {
+        "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_v1/result.json",
+        "result_sha256": "3acfe902fb7655406b2ec55aea439edd8f580fdd7be04f91788d659ea8bbfc52",
+        "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_b_v1.exit",
+        "source_commit": "2430e75d714a0e16bfa0490216e70d67409fab0d"
+      },
+      "sequential_prerequisite": {
+        "label": "normal_a_extend120000_v1",
+        "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1/result.json",
+        "result_sha256": "6e318f3a3610e2382ac63f2302f79dc998683115dbcefe4d727e339b93ac29b0",
+        "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_extend120000_v1.exit",
+        "completion_review": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_extension120000_completion_v1.json",
+          "sha256": "2193f3dc8fdb693db994a5b0cff5e0146717ac3ba002726df1872b22f0b06d66"
+        }
+      },
+      "batch_protocol": "Same5000/trainmanifest/frame2..24/48effective and8boundary; exact20k prefix preserved, no replay, no model/loss/data/normalization changes.",
+      "initialization_comparison": "Strict loadB20model with matching actualcheckpoint/loaded tensorfingerprints on bothranks; restore947AdamWmoments and originalbetas/rankRNG. OriginalB20tailLRabout2e-6 is intentionally raised to fixed1e-4 as forA20to40; not optimizer reinitialization.",
+      "preparation_constraint": "36focusedCPUtests passed. A120terminal/per-view/hashreviewaccepted. Requirecleanac1predecessor runtime, exactBconfig/checkpoint/result/capacity, GPUs5/7idle, newgrant130258195 live, remaining>=86400. Verifyactualrestore+first8 beforefullsupervision.",
+      "after_completion": "PreserveB40final+best,reviewexecution andthenprepareA120to130 at3e-5, followedbyB40to50at3e-5, thenexpandedheld-outvalidation. Allfuturephasesneedexactpublishedconfigs andpreflight; noarchitecturechanges/noGPUrelease.",
+      "runs": [
+        {
+          "name": "normal_b_extend40000_v1",
+          "mode": "resume",
+          "approved": true,
+          "training_allowed": true,
+          "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_extend40000_v1.json",
+          "config_sha256": "1923429a8e2974f2a06a45ed588ec034e3b21ecd9b6354e98c335376b32e18e1",
+          "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend40000_v1",
+          "allocation": 130258195,
+          "host": "pcg02i",
+          "physical_gpus": [
+            5,
+            7
+          ],
+          "remaining_walltime_minimum_seconds": 86400,
+          "resume_checkpoint": {
+            "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_v1/checkpoint_asset_020000.pt",
+            "sha256": "4c8b677f825b1f9f2ac162afa34cf45ca51a0f506a2b63f4b781c8532c23f50b",
+            "bytes": 8438105328,
+            "source": "2430e75d714a0e16bfa0490216e70d67409fab0d"
+          },
+          "capacity_receipt": {
+            "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_b_v1.json",
+            "sha256": "43d2f82de61478e214290db86e545fa85227d889300bfac5d2b4365a5cd7d0bf"
+          },
+          "physical_batch_per_rank": {
+            "T2-6": 24,
+            "T7-12": 12,
+            "T13-24": 6
+          },
+          "accumulation_microbatches_per_rank": {
+            "T2-6": 1,
+            "T7-12": 2,
+            "T13-24": 4
+          },
+          "stop_conditions": [
+            "40000 plus final evaluation complete",
+            "OOM/nonfinite",
+            "source/identity/restore drift",
+            "allocation expiry",
+            "explicit user stop"
+          ]
+        }
+      ]
     },
-    "batch_protocol": "Same5000 assets, random2..24 frames, effective48 except exact5000-boundary remainder8. Preserve full80000 exposure/asset/frame prefix and both RNG states; continue new epochs without replay.",
-    "completed_predecessor": {
-      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/result.json",
-      "result_sha256": "538113b0ed48a51c1a52da4d2650d75e2d47d3ff5aaf023a58c34369db7cecdd",
-      "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_extend80000_v1.exit",
-      "source_commit": "21f3a2eba2b9b162756b6ab1684913f587c853ee",
+  "authorized_followthrough": {
+      "authorization": "Explicit user2026-10-18T07:34Z fullsequence approved",
+      "plan": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_plan_v1.json",
+      "order": [
+        "normal_b_extend40000_v1",
+        "normal_a_lr3e5_130000_v1",
+        "normal_b_lr3e5_50000_v1",
+        "normal_ab_expanded_validation_v1"
+      ],
+      "preserve_optimizer": true,
+      "preserve_qlogin": true,
+      "current_executable_stage": "normal_b_extend40000_v1"
+    },
+  "preserved_normal_a_extend120000_operation": {
+      "label": "normal_a_extend120000_v1",
+      "mode": "normal5000_continuation",
+      "status": "a_120000_completed_execution_integrity_accepted",
+      "operation": "report",
+      "authorization": "User explicitly requested release129839822, replacement two-H100 qlogin, automatic continuation of A from final80000 to TOTAL120000, then retain the new cards. This is40000 additional exposures, not a restart or best75k rollback.",
+      "code_commit": "129f7137941708274b5d981a3d5d0d68f92916f8",
+      "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+      "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
+      "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
+      "gpu_work_allowed": false,
+      "formal_training_allowed": false,
+      "complete": true,
+      "routes": [
+        "a"
+      ],
+      "start_asset_exposures": 80000,
+      "target_asset_exposures": 120000,
+      "additional_asset_exposures": 40000,
+      "start_updates": 1680,
+      "target_updates": 2520,
+      "start_supervised_frame_exposures": 1041832,
+      "target_supervised_frame_exposures": 1555504,
+      "evaluation_assets": [
+        85000,
+        90000,
+        95000,
+        100000,
+        105000,
+        110000,
+        115000,
+        120000
+      ],
+      "effective_assets_per_update": 48,
+      "exposure_plan_sha256": "26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70",
+      "original_exposure_plan_sha256": "f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2",
+      "learning_rate": {
+        "mode": "constant_after_resume",
+        "value": 0.0001,
+        "warmup": false,
+        "decay": false,
+        "restart_onecycle": false,
+        "optimizer_betas": "restore_checkpoint"
+      },
+      "batch_protocol": "Same5000 assets, random2..24 frames, effective48 except exact5000-boundary remainder8. Preserve full80000 exposure/asset/frame prefix and both RNG states; continue new epochs without replay.",
+      "completed_predecessor": {
+        "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/result.json",
+        "result_sha256": "538113b0ed48a51c1a52da4d2650d75e2d47d3ff5aaf023a58c34369db7cecdd",
+        "exit": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/normal_a_extend80000_v1.exit",
+        "source_commit": "21f3a2eba2b9b162756b6ab1684913f587c853ee",
+        "completion_review": {
+          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_extension80000_completion_v1.json",
+          "sha256": "a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8"
+        }
+      },
+      "initialization_comparison": "Strict load finalA80000; require checkpoint model tensor fingerprint equal actual loaded fingerprint on BOTH ranks. Do not reuse historical40k model fingerprint. Restore947 AdamW states/maxstep1680 and betas. Preserve20k->40k->80k provenance; no initial80k evaluation replay.",
+      "preparation_constraint": "34 focused CPU tests passed. Newgrant130258195/pcg02i/physical5,7 and UUIDs verified; sameNVMe /work cache/clean21f3 runtime. Publish viaGit, verify exact script/config/checkpoint/capacity/predecessor/environment and freshremaining>=86400. Dedicated first8 monitor plus primary restoration review required.",
+      "after_completion": "Completed and verified. User now authorized B40k, thenA130k/B50k at3e-5 and expandedvalidation; retain130258195.",
+      "runs": [
+        {
+          "name": "normal_a_extend120000_v1",
+          "mode": "resume",
+          "approved": true,
+          "training_allowed": false,
+          "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend120000_v1.json",
+          "config_sha256": "7bec5e0c377ab3b893a54021c32506a07a8c1a61a40bb043fed5761cb4f25726",
+          "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1",
+          "allocation": 130258195,
+          "host": "pcg02i",
+          "physical_gpus": [
+            5,
+            7
+          ],
+          "remaining_walltime_minimum_seconds": 86400,
+          "resume_checkpoint": {
+            "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_080000.pt",
+            "sha256": "e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600",
+            "bytes": 8438111024,
+            "source": "21f3a2eba2b9b162756b6ab1684913f587c853ee"
+          },
+          "capacity_receipt": {
+            "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_a_v1.json",
+            "sha256": "bb9898beee94123c740f24d5b40356b51ed125b1b01229f482ad0e85bd973e45"
+          },
+          "physical_batch_per_rank": {
+            "T2-6": 24,
+            "T7-12": 12,
+            "T13-24": 6
+          },
+          "accumulation_microbatches_per_rank": {
+            "T2-6": 1,
+            "T7-12": 2,
+            "T13-24": 4
+          },
+          "stop_conditions": [
+            "120000total exposures and final evaluation complete",
+            "OOM",
+            "nonfinite loss or gradients",
+            "identity/source/checkpoint/restore drift",
+            "allocation expiry",
+            "explicit user stop"
+          ]
+        }
+      ],
+      "accepted": true,
+      "source_commit": "ac1b0ca2abb890175a9f149ca483cc7a538dccf0",
+      "quality_acceptance": false,
+      "asset_exposures": 120000,
+      "updates": 2520,
+      "supervised_frame_exposures": 1555504,
+      "wrapper_exit_code": 0,
+      "result_sha256": "6e318f3a3610e2382ac63f2302f79dc998683115dbcefe4d727e339b93ac29b0",
       "completion_review": {
-        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_extension80000_completion_v1.json",
-        "sha256": "a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8"
+        "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_normal_a_extension120000_completion_v1.json",
+        "sha256": "2193f3dc8fdb693db994a5b0cff5e0146717ac3ba002726df1872b22f0b06d66"
+      },
+      "final_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1/checkpoint_asset_120000.pt",
+        "sha256": "e3e8a8569641005c5798d9974ecf011f388987c0bfb72d47b2f6ebd736437628",
+        "bytes": 8438113456
+      },
+      "best_validation": {
+        "samples": 120000,
+        "original_edge_f1": 0.7133889596676807
       }
     },
-    "initialization_comparison": "Strict load finalA80000; require checkpoint model tensor fingerprint equal actual loaded fingerprint on BOTH ranks. Do not reuse historical40k model fingerprint. Restore947 AdamW states/maxstep1680 and betas. Preserve20k->40k->80k provenance; no initial80k evaluation replay.",
-    "preparation_constraint": "34 focused CPU tests passed. Newgrant130258195/pcg02i/physical5,7 and UUIDs verified; sameNVMe /work cache/clean21f3 runtime. Publish viaGit, verify exact script/config/checkpoint/capacity/predecessor/environment and freshremaining>=86400. Dedicated first8 monitor plus primary restoration review required.",
-    "after_completion": "Stop training at120000 plus final evaluation. Preserve all checkpoints/reports and qlogin130258195 keepalive until explicit user release or scheduler96h expiry. No automatic B launch or architecture experiment in this operation.",
-    "runs": [
-      {
-        "name": "normal_a_extend120000_v1",
-        "mode": "resume",
-        "approved": true,
-        "training_allowed": true,
-        "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_a_extend120000_v1.json",
-        "config_sha256": "7bec5e0c377ab3b893a54021c32506a07a8c1a61a40bb043fed5761cb4f25726",
-        "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend120000_v1",
-        "allocation": 130258195,
-        "host": "pcg02i",
-        "physical_gpus": [
-          5,
-          7
-        ],
-        "remaining_walltime_minimum_seconds": 86400,
-        "resume_checkpoint": {
-          "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_a_extend80000_v1/checkpoint_asset_080000.pt",
-          "sha256": "e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600",
-          "bytes": 8438111024,
-          "source": "21f3a2eba2b9b162756b6ab1684913f587c853ee"
-        },
-        "capacity_receipt": {
-          "path": "/home/wangyy/jobs/virtual_fusion_normal_20261014_v1/reviewed_capacity_a_v1.json",
-          "sha256": "bb9898beee94123c740f24d5b40356b51ed125b1b01229f482ad0e85bd973e45"
-        },
-        "physical_batch_per_rank": {
-          "T2-6": 24,
-          "T7-12": 12,
-          "T13-24": 6
-        },
-        "accumulation_microbatches_per_rank": {
-          "T2-6": 1,
-          "T7-12": 2,
-          "T13-24": 4
-        },
-        "stop_conditions": [
-          "120000total exposures and final evaluation complete",
-          "OOM",
-          "nonfinite loss or gradients",
-          "identity/source/checkpoint/restore drift",
-          "allocation expiry",
-          "explicit user stop"
-        ]
-      }
-    ]
-  },
   "preserved_h100_reallocation_20261018_operation": {
     "label": "h100_reallocation_20261018_v1",
     "operation": "submit",

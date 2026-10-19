@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-19T00:29:30Z",
+  "updated_at": "2026-10-19T01:58:28Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "B60supervisortransportfailed09:06JST; primary09:26-09:29JST cannotTCPconnecttoHGCgateway. Trainingstatecurrentlyunverified, notknownfailed. Recheckliveconnectivity/grant/originalPIDs/sourceC643, thenprimaryauthorizepreparedv2supervisor; noGPUrestart/deployment/release. ContinueB60through60000 andterminalreview, thenB60to80at3e-5 andexpandedvalidation. Heartbeatremainsactive.",
+  "next_required_result": "OfficialHGCsystemmaintenanceconfirmedOct19 09:00toOct22 18:00JST; AGEjobswillbedeleted. B60individualjob/checkpointstateunverified; originalgrant130258195cannotbeassumedretainedanditsoriginalexpiryisbeforemaintenanceend. Keepread-onlyfollowupactive; afterrestorationinspectjobs/latestfullcheckpoint. Replacement2H100authorizationrequestedbutNOTyetgranted. NoGPUlaunch/reapplyuntilappropriateauthorizationandfreshvalidation. OriginalB60/B80/expandedbudgetsunchanged.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -749,7 +749,17 @@
   "active_operation": {
     "label": "normal_b_extend60000_v1",
     "mode": "normal5000_continuation",
-    "status": "remote_training_unverified_supervisor_transport_failed",
+    "status": "blocked_by_confirmed_hgc_maintenance_job_state_unverified",
+    "maintenance": {
+      "evidence": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/hgc_maintenance_20261019_evidence_v1.json",
+      "official_status_url": "https://gc.hgc.jp/2026/10/shirokane-inspection-2026b-2/",
+      "official_job_deletion_notice_url": "https://gc.hgc.jp/2026/09/shirokane-inspection-2026b/",
+      "start_utc": "2026-10-19T00:00:00Z",
+      "planned_end_utc": "2026-10-22T09:00:00Z",
+      "original_grant_survival_confirmed": false,
+      "replacement_allocation_authorized": false,
+      "user_authorization_question_pending": true
+    },
     "full_supervisor": {
       "runner_directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_training_monitor/normal_b_extend60000_v1/runner_full_b_extend60000_v1",
       "pid": 138928,
@@ -766,7 +776,7 @@
       "status": "prepared_20_CPU_tests_passed_not_started",
       "new_gpu_launch_allowed": false,
       "primary_live_check": "TCPconnectiontoHGCgatewayfailedbeforeauthentication; bothresolvedgatewayIPv4port22checksalsotimedout. No new live training state obtained.",
-      "policy": "Preserve existing training and grant. Once connectivity recovers, verify original process/source identities or reconcile exact terminal evidence, then start only one authorized v2 supervisor."
+      "policy": "OfficialmaintenancewilldeleteAGEjobs. Onaccessreturnfirstinspectactualjobsandlatestfullcheckpoint; v2onlyappliesiforiginaljobtrulysurvives. Otherwiseexactinterrupted-runcontinuationandnewallocationauthorizationarerequired. No blind monitor or GPU restart."
     },
     "launched_utc": "2026-10-18T22:32:08.646942+00:00",
     "runtime_source_commit": "c643fc700da82eb66ad2307b97e973be6e9eae77",
@@ -783,13 +793,13 @@
       "restored_model_tensor_sha256": "ed11cc2db24940d6f2c6a3900ae3f1ace30d43f99ba85f42230f9d8c9373661e"
     },
     "execution_tracker": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json",
-    "operation": "train",
-    "authorization": "Latest human2026-10-18T16:11:42.629228Z confirmed A3e-5to150k, B1e-4to60kthen3e-5to80k. A150completed and primaryaccepted. Only B FINAL40k-to60k is executable now, preserving all optimizer/RNG/sampling state.",
+    "operation": "report",
+    "authorization": "Originalsequence remainsauthorized, but newGPUwork isblockedpendingmaintenancecompletion/livecheckpointreview and explicitreplacementallocationpermissionifoldgrantislost. UserhasNOTyetansweredthereplacement2H100question. Preserveexistingartifacts; do notresetoptimizerorassumeoriginalPIDscontinue.",
     "code_commit": "50df272828e05ea13751a9cbeb26fc513a3edbf5",
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "normal_source": "/work/wangyy/virtual_fusion_20261013/normal_code",
     "output_root": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "complete": false,
     "routes": ["b"],
@@ -886,6 +896,7 @@
       "preserve_qlogin": true,
       "current_executable_stage": "normal_b_extend60000_v1",
       "pending_next_stage": "normal_b_lr3e5_80000_v1_needs_actual_finalB60_checkpoint_and_exact_preparation",
+      "environment_execution_block": "ConfirmedHGCmaintenanceOct19to22; inspectsurvivingjob/checkpointafterreturn. Newallocationrequirespendingexplicituserapproval.",
       "current_preparation": {
         "label": "normal_b_extend60000_v1",
         "status": "launched_first8_primary_accepted",

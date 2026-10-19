@@ -25,8 +25,9 @@ No model, loss, tokenizer, training membership, RT/normalization, decoding,
 warmup or scheduler restart changes are authorized. A/B cumulative budgets
 remain different; this is not a matched-budget architecture-superiority proof.
 Future stages are authorized but require exact prepared and reviewed configs.
-B40000 and A150000 have completed and been accepted; only B40000-to60000
-at1e-4 is executable in the current state. Preserve both final and best checkpoints.
+B40000 and A150000 have completed and been accepted; B40000-to60000 at1e-4
+is the unfinished stage. New GPU work is currently blocked by the confirmed HGC
+maintenance described below. Preserve both final and best checkpoints.
 The immutable revised plan is `normal_ops/sequence_20261019_plan_v2.json`,
 SHA256 `c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc`.
 New A150/B60/B80 stages need exact pinned configs/checkpoints and tests; do not
@@ -104,6 +105,23 @@ No GPU restart, stop, remote edit or release occurred. Local v2 recovery entrypo
 passed20CPUtests and preserves v1 artifacts, revalidating cached45k against
 remote bytes and retaining the original process/model identities. It is NOT
 started until fresh live checks and primary approval. The heartbeat remains active.
+
+Official maintenance confirmed10:58JST2026-10-19, correcting the earlier
+transport-only diagnosis: HGC is unavailable fromOct19 09:00 toOct22 18:00JST.
+The official notice says AGE jobs will be deleted. Individual job/checkpoint
+state remains unverified; original grant130258195 cannot be assumed to survive,
+and its original expiryOct22 03:26JST is before the planned maintenance end.
+Sources: https://gc.hgc.jp/2026/09/shirokane-inspection-2026b/ and
+https://gc.hgc.jp/2026/10/shirokane-inspection-2026b-2/ .
+No new GPU work is currently permitted. A conditional replacement-two-H100
+authorization question has been sent to the user; no answer has yet been received.
+After access returns, inspect scheduler state and latest surviving full checkpoint
+before choosing recovery. The prepared v2 supervisor applies only if original
+processes actually survive. Otherwise an exact interrupted-run continuation must
+preserve full model/AdamW/rankRNG/stream state from the latest verified checkpoint,
+with the same total60k/80k targets and learning rates. Keep the heartbeat active;
+do not treat maintenance as completed training or release/reapply GPUs automatically.
+Future launch preflight must check planned maintenance as well as grant walltime.
 
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's

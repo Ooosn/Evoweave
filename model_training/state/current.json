@@ -135,17 +135,18 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "preflight",
     "matched_eval",
-    "submit"
+    "submit",
+    "train"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_granted_verified",
+    "status": "historical_grant_unverified_during_confirmed_maintenance",
+    "verification_required": "OfficialmaintenancewilldeleteAGEjobs; do notassumethisgrantstilllives. Inspectafteraccessreturn; replacementallocationnotauthorizedyet.",
     "qlogin_job_id": 130258195,
     "host": "pcg02i",
     "physical_gpus": [5, 7],
@@ -850,7 +851,7 @@
       "name": "normal_b_extend60000_v1",
       "mode": "resume",
       "approved": true,
-      "training_allowed": true,
+      "training_allowed": false,
       "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_extend60000_v1.json",
       "config_sha256": "92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3",
       "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend60000_v1",

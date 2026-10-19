@@ -95,6 +95,16 @@ Full supervisorPID138928 is active; at07:43:19JST bothranks854/40672assets/
 536552frames, noerrors. This is not completed training or quality acceptance.
 Frozen-choice expanded evaluation remains after B80 completion.
 
+B60 supervision interruption09:06JST2026-10-19: local monitorPID138928 exited2
+after bounded SSH transport retries. Last successful observation09:01:35JST
+had113suffix rows perrank and45k evaluation complete, without application errors.
+Primary09:26-09:29JST TCP checks cannot reach either HGC gateway address on22;
+current training/allocation state is unverified, not established as failed.
+No GPU restart, stop, remote edit or release occurred. Local v2 recovery entrypoint
+passed20CPUtests and preserves v1 artifacts, revalidating cached45k against
+remote bytes and retaining the original process/model identities. It is NOT
+started until fresh live checks and primary approval. The heartbeat remains active.
+
 A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
 evaluations verified, with per-view F1/success recomputed against original A's
 unchanged panel. Final120k is also best: train0.856699,heldout0.822426,

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-18T22:43:19.982564Z",
+  "updated_at": "2026-10-19T00:29:30Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -357,7 +357,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A150completedandprimaryaccepted. B60launched07:32JST, first8primaryaccepted07:40JST; supervise through1260updates/60000assets/788304frames and4evaluations. Afterprimaryterminal/perview/hashreview implement BFINAL60k-to80k at3e-5 usingactualfinalB60checkpoint, then frozen-choice expanded839validation. OldB50superseded; preservefullAdamW/rankRNG, frozenremoteC643 andgrant130258195.",
+  "next_required_result": "B60supervisortransportfailed09:06JST; primary09:26-09:29JST cannotTCPconnecttoHGCgateway. Trainingstatecurrentlyunverified, notknownfailed. Recheckliveconnectivity/grant/originalPIDs/sourceC643, thenprimaryauthorizepreparedv2supervisor; noGPUrestart/deployment/release. ContinueB60through60000 andterminalreview, thenB60to80at3e-5 andexpandedvalidation. Heartbeatremainsactive.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -749,15 +749,24 @@
   "active_operation": {
     "label": "normal_b_extend60000_v1",
     "mode": "normal5000_continuation",
-    "status": "running_first8_primary_accepted_full_monitor_active",
+    "status": "remote_training_unverified_supervisor_transport_failed",
     "full_supervisor": {
       "runner_directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_training_monitor/normal_b_extend60000_v1/runner_full_b_extend60000_v1",
       "pid": 138928,
-      "observed_utc": "2026-10-18T22:43:19.982564Z",
-      "status": "running",
-      "rank_steps": [854, 854],
-      "asset_exposures": 40672,
-      "errors": []
+      "observed_utc": "2026-10-19T00:06:05.908754Z",
+      "status": "failed",
+      "exit_code": 2,
+      "last_successful_progress_utc": "2026-10-19T00:01:35.124264Z",
+      "last_successful_suffix_trace_rows": [113, 113],
+      "last_successful_completed_evaluations": [45000],
+      "errors": ["bounded transport retries exhausted", "timed out"]
+    },
+    "monitor_recovery": {
+      "preparation": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_extend60000_monitor_recovery_v2.json",
+      "status": "prepared_20_CPU_tests_passed_not_started",
+      "new_gpu_launch_allowed": false,
+      "primary_live_check": "TCPconnectiontoHGCgatewayfailedbeforeauthentication; bothresolvedgatewayIPv4port22checksalsotimedout. No new live training state obtained.",
+      "policy": "Preserve existing training and grant. Once connectivity recovers, verify original process/source identities or reconcile exact terminal evidence, then start only one authorized v2 supervisor."
     },
     "launched_utc": "2026-10-18T22:32:08.646942+00:00",
     "runtime_source_commit": "c643fc700da82eb66ad2307b97e973be6e9eae77",

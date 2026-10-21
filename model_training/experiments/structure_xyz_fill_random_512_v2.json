@@ -278,6 +278,11 @@
     "preflight": null,
     "capacity": null,
     "preflight_primary_accepted": false,
-    "initialization": null
+    "initialization": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/initialize_random_v2/initialization_audit.json",
+      "sha256": "9b941d103c9e0b8264d40720d6f4a06db91036f15c971b16e61744ccf5d69ea7",
+      "code_commit": "76ba4ac37ec68a12719ed7aa18d4d8f509747cdb",
+      "config_sha256": "c8876605fb9ca644dc0998f430eaaba73a18921cbf68b984a46d0985132fdac8"
+    }
   }
 }

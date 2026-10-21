@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_official_initialization_audit_v2",
-  "updated_at": "2026-10-21T19:44:06Z",
+  "state_id": "structure_xyz_fill_20261022_preflight_pair_v2",
+  "updated_at": "2026-10-21T19:49:31Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -136,17 +136,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train",
+    "preflight"
   ],
   "blocked_operations": [
-    "train",
-    "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_missing_optional_B65_initialization",
+    "status": "retained_for_independent_official_only_XYZ_fill_bounded_preflights",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -375,7 +375,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Implement and validate the authorized structure-AR plus BERT-style XYZ token-fill system on the same immutable5000-row dataset. XYZ receives discrete skeleton tokens and final mesh anchors, NEVER structure-decoder hidden states. Full structure CE and XYZ token CE both train shared upstream features through their separate paths; do not detach mesh memory. Validate exact GT mapping/quantization, bidirectional updates, dynamic leaf pruning and gradient routing before publishing a bounded real-data/GPU operation. Early trials need frequent SMALL fixed evaluation panels and matched exposure checkpoints; stop and diagnose bad data/interfaces rather than blindly continuing. Longer20k/40k budgets require reviewed short-run evidence. OldAB/B80/expanded839 remain stopped.",
+  "next_required_result": "Complete the user-authorized independent XYZ-fill implementation, testing and validation toward formal training on the same immutable5000-row dataset. NO old A/B experiment weights may initialize the new model: official surface only, fresh motion/structure/fill, optional official position rows. CPU data/reference and paired actual initialization audits passed. Next verify real GPU gradient routes and bounded fit, measure capacity, compare matched small-eval trials, diagnose failures, and publish20k/40k formal stages only after reviewed evidence. XYZ uses discrete structure tokens and final mesh anchors, never structure hidden states; both losses train shared upstream. OldAB/B80/expanded839 remain stopped.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -867,18 +867,28 @@
     ],
     "stop_conditions": ["nonfinite_loss_or_gradients", "data_or_source_drift", "wrong_GT_mapping", "unexpected_truncation", "GPU_resource_drift", "out_of_memory"]
   },
-  "active_operation": {
+  "preserved_structure_xyz_fill_official_initialization_v2": {
     "label": "structure_xyz_fill_official_initialization_20261022_v2",
     "mode": "initialize",
     "operation": "inspect",
-    "status": "CPU_official_only_initialization_audits_published",
+    "status": "both_CPU_initialization_audits_passed_and_reviewed",
     "authorization": "User explicitly rejected inheriting old A/B experiment weights and instructed continuing implementation, testing and validation until the new5k method can justifiably enter formal training.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
     "code_commit": "36f4e632c82b19d3e604496d08dfcc2ba2957272",
     "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "complete": false,
+    "complete": true,
+    "passed": true,
+    "result": {
+      "common_parameters_sha256": "e0ff263a651da4ec82b7fac50bbb1833ed0aeab6a4a0eb0a4684355a58de0917",
+      "fresh_fill_attention_ffn_head_sha256": "cbe5a972b7b34d0cd2f7779cd7016bbabe35ff42ebf5eb32f058f1372cc8b03f",
+      "random_initialization_audit_sha256": "9b941d103c9e0b8264d40720d6f4a06db91036f15c971b16e61744ccf5d69ea7",
+      "positions_initialization_audit_sha256": "98bc983f437af03e8d4b5264d44a75eb57f3e9b799f49e439738e36b9cea5eee",
+      "inherited_training_counters": 0,
+      "old_experiment_weights_loaded": false,
+      "old_AR_constructed": false
+    },
     "trained_experiment_initialization_allowed": false,
     "runs": [
       {
@@ -906,6 +916,54 @@
       "Both candidates have identical common and fresh attention/FFN/head fingerprints; only declared XYZ position initialization differs",
       "Preserve reviewed CPU data and reference-panel audits; publish exact GPU stages only after primary review"
     ]
+  },
+  "active_operation": {
+    "label": "structure_xyz_fill_preflight_pair_20261022_v2",
+    "mode": "preflight",
+    "operation": "preflight",
+    "status": "bounded_paired_preflights_published",
+    "authorization": "User explicitly authorized completing the new independent system and tests toward formal5k training, without inheriting old A/B experiment weights.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "36f4e632c82b19d3e604496d08dfcc2ba2957272",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "sequential_execution_only": true,
+    "runs": [
+      {
+        "name": "preflight_random_v2",
+        "mode": "preflight",
+        "approved": true,
+        "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
+        "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v2",
+        "physical_gpus": [5, 6],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      },
+      {
+        "name": "preflight_positions_v2",
+        "mode": "preflight",
+        "approved": true,
+        "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_positions_512_v2.json",
+        "config_sha256": "500fb1a7d8bb1976dbffe64a018d747689a81d71ea25c81d12060636e4f4e345",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_positions_v2",
+        "physical_gpus": [5, 6],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      }
+    ],
+    "fit_contract": {"assets": 2, "frames_per_asset": 4, "optimizer_updates": 32, "evaluations": [0, 8, 16, 32], "diagnostic_weights_only": true},
+    "acceptance": [
+      "Initialization matches reviewed CPU fingerprints and ranks; exact official surface loading only",
+      "T2 longest-target and T24 geometry cases have finite forward/backward; both losses train shared mesh/query features and XYZ does not train structure decoder through a hidden bridge",
+      "Review both fixed assets: aim for at least25percent XYZ CE and20percent XYZ L1 improvement from0to32, plus nondegenerate geometry and structure behavior; failure means diagnose or bounded retest, never automatic formal promotion",
+      "Execution pass is not quality acceptance; review GT-conditioned versus free predictions and saved plots before capacity and matched training"
+    ],
+    "stop_conditions": ["nonfinite_loss_or_gradients", "wrong_GT_mapping", "source_or_data_drift", "unexpected_truncation", "out_of_memory", "GPU_resource_drift"]
   },
   "preserved_normal_b_stopped70000_operation_20261021": {
     "label": "normal_b_lr3e5_80000_v1",

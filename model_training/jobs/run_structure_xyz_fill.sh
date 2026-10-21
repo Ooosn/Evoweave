@@ -12,6 +12,9 @@ mkdir -p "$jobs"
 test ! -e "$output"
 test ! -e "$jobs/$label.log"
 test -z "$(git -C "$repo" status --porcelain)"
+expected=$("$py" -B -c 'import json,sys; print(json.load(open(sys.argv[1]))["active_operation"]["code_commit"])' "$repo/model_training/state/current.json")
+git -C "$repo" merge-base --is-ancestor "$expected" HEAD
+git -C "$repo" diff --quiet "$expected" HEAD -- model_training/rigweave model_training/tools
 
 source "$HOME/1.sh"
 export PATH="/home/wangyy/miniconda3/envs/mygs/bin:$PATH"

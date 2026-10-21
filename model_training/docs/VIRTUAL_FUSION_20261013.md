@@ -10,6 +10,17 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+B80 preparation accepted21:31JST: exactconfig0468a7fe, implementation862479c.
+The actual FINALrecovered60k payload passed CPU checks for all947finiteAdamW
+moments atstep1260/LR1e-4, bothrankRNG structures, completed60kstream and full
+B20/B40/B60/recovery provenance. Primary33regression tests passed, including
+both ranks' first8suffix updates and unchanged legacy continuation gates.
+The existing new-node capacity receipt matches the unchanged B80 capacity
+contract. Continue at3e-5 to1680updates/80000assets/1041832frames, planf561a7d8;
+evaluate65/70/75/80k. Expectedfirst8 is1268/60384/793968. GPU work is authorized
+only for this stage after fresh idle/resource checks; all model/data rules remain
+unchanged. Startup and full-stage acceptance are still required.
+
 Recovered B60 completed exit0 by21:16JST. Primary accepted both ranks at
 1260updates/60000assets/788304frames, all210resumed updates against the exact
 sampling plan,20immutable artifact hashes and both55k/60k1536-view panels.

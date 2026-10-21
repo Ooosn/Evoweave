@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T12:18:23Z",
+  "updated_at": "2026-10-21T12:31:32Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,17 +135,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_retained_recovery_complete_idle",
+    "status": "replacement_retained_B80_prepared_idle",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Recovered B60 is COMPLETE and primaryaccepted at1260updates/60000assets/788304frames; reviewed55k/60k rawpanels andCP hashes. Prepare/test/publish FINAL recovered60k-to80k at3e-5 withfulloptimizer/rankRNG andsame samplingprefix; no bestrollback. FinalCP8bdf349e, completionreview20cd60a6. Newstage stillblocked pendingexactimplementation andrealpayloadvalidation. Preserveoriginal45k/50kpanels. Expandedvalidationlast. Hourlya-bheartbeatACTIVE perhumanOct21confirmation. Retain130309880 pcg01i5,6 andkeepalive.",
+  "next_required_result": "B80 exactpreparation andactualFINAL60k CPU payload audit accepted. LaunchONLY normal_b_lr3e5_80000_v1 fromCP8bdf349e at3e-5 onretained130309880 pcg01i5,6 afterfreshidle/remainingtime checks. Verifyfirst8at1268updates/60384assets/793968frames, modeltensorfingerprint, all947optimizerstates, restored1e-4 thenfixed3e-5, bothrankRNG/stream. Thenonefullsupervisor to1680updates/80000assets/1041832frames and65/70/75/80kpanels. No bestrollback. Expandedfrozen-choicevalidationlast. Hourlya-bACTIVE;retaincards.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -764,6 +764,60 @@
     ]
   },
   "active_operation": {
+    "label": "normal_b_lr3e5_80000_v1",
+    "mode": "normal5000_continuation",
+    "operation": "train",
+    "status": "prepared_exact_config_and_actual_checkpoint_accepted",
+    "authorization": "HumanOct19 approved B60at1e-4 thenFINAL60-to80at3e-5 andexpandedvalidation; HumanOct21 approved currentnew2H100 andhourlyfollowthrough. RecoveredB60 primaryaccepted; no model/data/optimizerreset orbestrollback authorized.",
+    "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
+    "code_commit": "862479c02e7ed46e85718ae39e4b6582b940b9b6",
+    "complete": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "start_asset_exposures": 60000,
+    "target_asset_exposures": 80000,
+    "start_updates": 1260,
+    "target_updates": 1680,
+    "start_supervised_frame_exposures": 788304,
+    "target_supervised_frame_exposures": 1041832,
+    "exposure_plan_sha256": "f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2",
+    "learning_rate": {"mode": "constant_after_resume", "value": 0.00003, "warmup": false, "restart_onecycle": false, "optimizer_betas": "restore_checkpoint"},
+    "preparation": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/prepared_b80_v1.json",
+      "actual_checkpoint_cpu_audit_passed": true,
+      "full_optimizer_entries": 947,
+      "expected_first8_sha256": "619a914c513d353c89015e859a95b01813eb8addafcf543d0dbc85b8042248dd",
+      "primary_regression_tests_passed": 33,
+      "capacity_contract_rechecked": true
+    },
+    "completed_predecessor": {
+      "label": "normal_b_recover60000_20261021_v1",
+      "result": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recover60000_20261021_v1/result.json",
+      "result_sha256": "01168fb9c9a3e5b3e3124aa4e42b2e57a8e9d16e4584c6a6bbeff200ac05a82a",
+      "exit": "/home/wangyy/jobs/virtual_fusion_recovery_20261021_v1/normal_b_recover60000_20261021_v1.exit",
+      "review": "/home/wangyy/jobs/virtual_fusion_b80_20261021_v1/reviewed_recovery_completion_v1.json",
+      "review_sha256": "20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b",
+      "execution_integrity_accepted": true, "quality_acceptance": false
+    },
+    "runs": [{
+      "name": "normal_b_lr3e5_80000_v1", "mode": "resume", "approved": true,
+      "execution_allowed": true, "training_allowed": true,
+      "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_lr3e5_80000_v1.json",
+      "config_sha256": "0468a7fe410ad0c471b209b4a33e6332750880bb1b86403701836bb9e97b771a",
+      "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1",
+      "allocation": 130309880, "host": "pcg01i", "physical_gpus": [5, 6],
+      "resume_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recover60000_20261021_v1/checkpoint_asset_060000.pt",
+        "bytes": 8438113904,
+        "sha256": "8bdf349eb0c808871dd13a9fda4ff84a9ae8ac1e815f855f6cb50c52f4608d76",
+        "source": "da2ee8878a271efc87d1c219d88463ea574eee07"
+      },
+      "capacity_receipt": {"path": "/home/wangyy/jobs/virtual_fusion_recovery_20261021_v1/reviewed_recovery_capacity_v1.json", "sha256": "c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f"}
+    }],
+    "stop_conditions": ["80000 plus final evaluation complete", "OOM/nonfinite", "source/config/checkpoint/restore/grant drift", "allocation expiry", "explicit user stop"],
+    "after_completion": "Primaryreviewexact80kterminal and65/70/75/80krawpanels; freezeeachroutehighest original-GT edgeF1checkpoint onoriginal128panel, tieearlierexposure; expandedvalidationremaining839assets times8views; retainallocation. No architecture changes."
+  },
+  "preserved_recovered_b60_operation_20261021": {
     "label": "normal_b_recover60000_20261021_v1",
     "mode": "normal5000_interrupted_recovery",
     "operation": "train",
@@ -1060,19 +1114,17 @@
       ],
       "preserve_optimizer": true,
       "preserve_qlogin": true,
-      "current_executable_stage": null,
-      "pending_next_stage": "normal_b_lr3e5_80000_v1_FINAL_recovered60k_reviewed_local_implementation_in_progress",
+      "current_executable_stage": "normal_b_lr3e5_80000_v1",
+      "pending_next_stage": "normal_ab_expanded_validation_v1_after_B80_acceptance_and_checkpoint_choice_freeze",
       "environment_execution_block": null,
       "current_preparation": {
-        "label": "normal_b_recover60000_20261021_v1",
-        "status": "completed_integrity_accepted",
-        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_completion_v1.json",
-        "sha256": "20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b",
-        "code_commit": "01592f405d7beeedd105cd723f6f61a57840e3fa",
-        "runtime_source_commit": "da2ee8878a271efc87d1c219d88463ea574eee07",
-        "config_sha256": "810af5796f7f150a7588af676b3a17173c2ab18b02ece271d47440b1cd0156d2",
+        "label": "normal_b_lr3e5_80000_v1",
+        "status": "prepared_exact_config_and_actual_checkpoint_accepted",
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/prepared_b80_v1.json",
+        "code_commit": "862479c02e7ed46e85718ae39e4b6582b940b9b6",
+        "config_sha256": "0468a7fe410ad0c471b209b4a33e6332750880bb1b86403701836bb9e97b771a",
         "remote_deployed": true,
-        "launch_requirements_satisfied": "New2H100 verified; exact B50fullpayload/rankRNG/stream accepted;32CPUtests and9case dual-rank capacity passed; bothranks actualM0restore andfirst8 accepted."
+        "launch_requirements_satisfied": "ActualfinalB60fileSHA andfullCPU payload accepted;all947AdamWentries/bothRNG/60kstream/pastcontinuationhistory preserved;33primaryCPUregressiontests passed;exactnewnodecapacityrechecked. Publishnewstate andfreshidlecheckbeforelaunch."
       },
       "preserved_premaintenance_preparation": {
         "label": "normal_b_extend60000_v1",

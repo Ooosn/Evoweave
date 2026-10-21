@@ -1,0 +1,124 @@
+{
+  "schema": "structure_xyz_condition8192_primary_review_v1",
+  "diagnostic_execution_accepted": true,
+  "baseline_generation_replayed": 32,
+  "original_GT_and_scored_raw_frames_exact": true,
+  "quality_accepted": false,
+  "first_formal20000_stage_allowed": true,
+  "automatic40000_extension_allowed": false,
+  "source_commit": "59380dc55aa95b5377ce45a7e52dd06877cac870",
+  "diagnostic_result": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/condition_audit_8192_v1/result.json",
+    "sha256": "f216bbc760592bd67f9b5609aa6608e2aa17ccf1e2c009ba827cc2cc90fe61c0"
+  },
+  "model_sha256_before_and_after": "3ac4d6293b7a956154f1d3c62492f2b3c60377588b84bf70fe880247102b15e4",
+  "optimizer_created": false,
+  "optimizer_updates": 0,
+  "logits_arrays_verified": 192,
+  "teacher_choice_legal_CE": {
+    "definition": "Natural-log CE on positions with multiple grammar-legal choices; equal-weight mean over cases.",
+    "train_seen": {
+      "cases": 8,
+      "correct": 0.3151150840521789,
+      "swap": 0.3272009962335978,
+      "zero": 0.39885433656938807,
+      "correct_better_cases": 5
+    },
+    "train_heldout": {
+      "cases": 8,
+      "correct": 0.3141249684803988,
+      "swap": 0.3275004790794599,
+      "zero": 0.39885433656938807,
+      "correct_better_cases": 6
+    },
+    "valid": {
+      "cases": 16,
+      "correct": 0.6059902431693169,
+      "swap": 0.5959410888604266,
+      "zero": 0.645701800846078,
+      "correct_better_cases": 9,
+      "median_swap_minus_correct": 0.0012017505945718168
+    },
+    "valid_non52": {
+      "cases": 11,
+      "correct": 0.8687371370469784,
+      "swap": 0.8526213530682599,
+      "correct_better_cases": 5,
+      "correct_EOS_legal_CE": 3.2245720185992437,
+      "correct_EOS_legal_accuracy": 0.18181818181818182
+    }
+  },
+  "condition_sensitivity": {
+    "valid_choice_legal_JS": 0.008103798016107326,
+    "valid_choice_argmax_changed_fraction": 0.05508299765048687,
+    "interpretation": "The structure path responds to real conditions, but helpful geometric conditioning is weak and has no consistent validation benefit. Memory sensitivity is not proof of semantic accuracy. Zero memory is an OOD control, not an alternative inference mode."
+  },
+  "anchor_replay": {
+    "all32_exact": false,
+    "exact_contexts": 29,
+    "changed_training_contexts": 3,
+    "all_validation_contexts_exact": true,
+    "max_indexwise_coordinate_difference": 1.7982705235481262,
+    "GT_and_scored_frames_unchanged": true,
+    "current_diagnostic_anchors_saved": false,
+    "historical_audit": {
+      "comparisons": [
+        4096,
+        6144,
+        8192
+      ],
+      "matched_views_each_pair": 128,
+      "nonexact_views_4096_vs6144": 16,
+      "nonexact_views_4096_vs8192": 12,
+      "nonexact_views_6144_vs8192": 12,
+      "maximum_symmetric_nearest_neighbor_distance": 0.054759,
+      "sets_not_only_reordered": true,
+      "historical_same_three_contexts_4096_vs8192": true,
+      "additional_6144_validation_asset": "ea64c5dbdb024225bf1bc2b469a43c6c",
+      "operator_cause_identified": false
+    },
+    "interpretation": "The historical comparisons document non-bitwise geometry sampling, not data/GT drift. They do not establish the current diagnostic's exact point-set differences or operator cause. Paired interventions share one encoding, and the entire current validation cohort matches saved anchors."
+  },
+  "decision_rationale": [
+    "Independent initialization, target/data/reference checks, real gradient paths, two-asset DDP fit, measured capacity and exact own-checkpoint continuation have passed. OldAB experiment weights are never used.",
+    "8192 exposures are175 updates and1.6384 nominal data passes. GT-conditioned localization and complete-output F1 continue improving; input-conditioned structure learning exists but remains weak and template-dominated.",
+    "No definite interface, GT mapping or weight-loading defect was found. This does not prove insufficient training is the sole cause or that the architecture will reach the desired quality.",
+    "Continue the unchanged system as its first controlled formal20k stage, not as a quality-approved model. Holding all factors fixed tests the longer learning trajectory; no automatic40k promotion.",
+    "Continue reporting raw model quality and non52 failures. Do not infer quality from EOS, lowerL1, zero-memory ablations or two output templates alone."
+  ],
+  "continuation_plan": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan20000_v1/result.json",
+    "sha256": "2b90b9adff0a41d0f36bb663560fa23c07f048f823797f4ebbd536ab5b007c35",
+    "plan_sha256": "422e1750cb6e7dafa54133a3ee74aff6369391354903ca35d2ea83e5fb6ff0b8",
+    "total_updates": 423,
+    "new_updates": 248,
+    "total_supervised_frames": 263808,
+    "all5000_exactly_four_planned_visits": true,
+    "milestones": [
+      {
+        "asset_exposures": 12288,
+        "step": 261,
+        "supervised_frame_exposures": 160384
+      },
+      {
+        "asset_exposures": 16384,
+        "step": 347,
+        "supervised_frame_exposures": 213088
+      },
+      {
+        "asset_exposures": 20000,
+        "step": 423,
+        "supervised_frame_exposures": 263808
+      }
+    ],
+    "first_resumed_update": {
+      "asset_exposures": 8240,
+      "frames": 21,
+      "global_update_assets": 48,
+      "step": 176,
+      "supervised_frame_exposures": 109056
+    },
+    "old8192_prefix_exact": true
+  },
+  "next_acceptance": "Review12,288/16,384/20,000 fixed-panel generation, localization, non52 structure behavior and finite execution. The stage ends at20,000 regardless of trend;40,000 requires a separate primary review and published operation."
+}

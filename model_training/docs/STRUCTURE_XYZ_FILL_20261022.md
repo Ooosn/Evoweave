@@ -140,6 +140,38 @@ or failed supervision. Diagnose the saved failing batch before resuming.
 
 ## Current Implementation Stage
 
+### First Controlled Formal20k Stage
+
+The8192 trial has now completed175 updates and108048 supervised frames, with
+actual coverage of every immutable5k asset. Exact own-checkpoint continuation,
+original-GT/reference identity, gradient routes, two-asset DDP trainability and
+resource capacity passed. Small-panel validation F1 rose from0.10714 at4096
+to0.15203 at6144 and0.17719 at8192, while GT-conditioned localization improved.
+
+The read-only condition audit in `STRUCTURE_XYZ_CONDITION_8192_20261022.md`
+confirmed unchanged model state and32 baseline structure replays. It found
+weak, not absent, condition sensitivity, with no consistent validation benefit
+from correct versus different-asset conditions. Free structure remains strongly
+template-dominated. Three training contexts did not reproduce saved anchors
+bitwise; current validation anchors did. Historical comparisons also show
+point-set variation without GT/frame changes. No specific sampler operator
+cause or sole explanation for weak structure learning has been established.
+
+The primary accepts operational and preliminary trainability readiness for
+the first controlled formal stage, not model quality or proven generalization.
+Continue the unchanged model/data/loss/LR from its own8192 model, named Adam
+states and RNG/sampling state to cumulative20000 asset exposures. This is a
+controlled longer-learning experiment, not a demonstrated remedy for template
+bias. No old A/B experiment weights may be loaded.
+
+Evaluate the same128-view panel at12288,16384 and20000. The audited plan ends
+at423 total updates and263808 supervised-frame exposures, with exactly four
+planned visits to each of5000 assets. The first resumed update is176, ending
+at8240 assets/109056 frames, withT21/B3 per rank. Do not reset warmup or Adam.
+The stage stops at20000;40000 requires a new primary review and published
+operation. The detailed decision is recorded in
+`model_training/analysis/structure_xyz_fill_condition8192_review_v1.json`.
+
 Local implementation passed160 related CPU tests and54 subtests, including
 legacy metric/data/sampling regressions and both saved visualization formats.
 The CPU audit completed with exit0: all5000train/967valid parent-to-token

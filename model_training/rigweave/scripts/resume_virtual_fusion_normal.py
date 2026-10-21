@@ -56,7 +56,7 @@ def declared_operation(state, args, config):
     predecessor = operation['completed_predecessor']
     predecessor_label = contract['predecessor_label']
     expected_result = normal.OUTPUT_ROOT / predecessor_label / 'result.json'
-    expected_exit = Path('/home/wangyy/jobs/virtual_fusion_normal_20261014_v1') / (predecessor_label + '.exit')
+    expected_exit = Path(contract.get('predecessor_jobdir', '/home/wangyy/jobs/virtual_fusion_normal_20261014_v1')) / (predecessor_label + '.exit')
     if (Path(predecessor['result']).resolve() != expected_result.resolve()
             or Path(predecessor['exit']).resolve() != expected_exit.resolve()
             or expected_exit.read_text().strip() != '0'
@@ -114,8 +114,11 @@ def main():
     if (checkpoint_path.stat().st_size != checkpoint_spec['bytes']
             or normal.sha256(checkpoint_path) != checkpoint_spec['sha256']):
         raise ValueError('the pinned completed full checkpoint changed')
-    if (socket.gethostname().split('.')[0] != 'pcg02' or config['runtime']['physical_gpus'] != [5, 7]
-            or os.environ.get('CUDA_VISIBLE_DEVICES') != '5,7' or not torch.cuda.is_available()
+    physical_host = config['runtime']['host'][:-1] if config['runtime']['host'].endswith('i') else config['runtime']['host'].split('.')[0]
+    physical_gpus = config['runtime']['physical_gpus']
+    if (socket.gethostname().split('.')[0] != physical_host
+            or os.environ.get('CUDA_VISIBLE_DEVICES') != ','.join(map(str, physical_gpus))
+            or not torch.cuda.is_available()
             or torch.cuda.device_count() != world or local != rank):
         raise ValueError('continuation requires the approved two physical H100 devices')
     torch.cuda.set_device(local)

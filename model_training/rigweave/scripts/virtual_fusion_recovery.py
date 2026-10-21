@@ -201,7 +201,7 @@ def _validate_rng_state(state, rank):
         raise ValueError(f'rank {rank} Python RNG state is invalid')
 
 
-def _validate_optimizer(optimizer):
+def _validate_optimizer(optimizer, *, expected_step=START_UPDATES):
     _require_mapping(optimizer, 'optimizer')
     state = optimizer.get('state')
     groups = optimizer.get('param_groups')
@@ -228,11 +228,11 @@ def _validate_optimizer(optimizer):
             value = float(step.item())
         else:
             value = float(step)
-        if not math.isfinite(value) or not value.is_integer() or value != START_UPDATES:
+        if not math.isfinite(value) or not value.is_integer() or value != expected_step:
             raise ValueError(f'optimizer entry {parameter_id!r} has an invalid step')
         steps.append(int(value))
-    if len(steps) != 947 or min(steps) != START_UPDATES or max(steps) != START_UPDATES:
-        raise ValueError('optimizer steps do not all equal the 50k boundary')
+    if len(steps) != 947 or min(steps) != expected_step or max(steps) != expected_step:
+        raise ValueError('optimizer steps do not all equal the expected recovery boundary')
 
 
 def _validate_continuation_metadata(initialization):

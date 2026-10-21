@@ -1,0 +1,181 @@
+{
+  "schema": "structure_xyz_fill_selected8192_review_v4",
+  "execution_accepted": true,
+  "quality_accepted": false,
+  "formal_training_allowed": false,
+  "source_commit": "7731f60a1ad4e9221e582864a76a0f7c01230727",
+  "assets": 8192,
+  "updates": 175,
+  "supervised_frames": 108048,
+  "actual_plan_check": {
+    "rank_trace_rows": 172,
+    "microbatches": 932,
+    "all_requests_and_pruning_match_cpu_plan": true
+  },
+  "evaluations": [
+    6144,
+    8192
+  ],
+  "views_per_evaluation": 128,
+  "summary_sha256": "d5a7c38fe4aa649ea6a209f18ba041da2fae2d01382914df688740002b37064d",
+  "final_groups": {
+    "train_heldout": {
+      "assets": 8,
+      "views": 32,
+      "original_edge_f1": 0.18661129187906766,
+      "gt_structure_xyz_ce": 4.492865569889545,
+      "gt_structure_xyz_accuracy": 0.0215566226397641,
+      "gt_structure_xyz_l1": 0.15506855072453618,
+      "gt_structure_edge_f1": 0.16758990875648533,
+      "success": 1,
+      "exact_count": 0.375,
+      "successful_mean_abs_joint_count_error": 15.5,
+      "reference_B65_F1": 0.8455084740011609,
+      "localization_diagnostics": {
+        "views": 32,
+        "origin_constant_l1": 0.26515093544891927,
+        "center_bin_constant_l1": 0.26486216741121865,
+        "relative_l1_reduction_vs_center_bin": 0.4145311341356285,
+        "predicted_bbox_diagonal": 1.5290583203048609,
+        "target_bbox_diagonal": 1.8754882371222334,
+        "mean_distinct_predicted_xyz": 45.9375,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 8,
+        "pose_pairs": 48,
+        "mean_predicted_coordinate_change": 0.034980102347437744,
+        "mean_GT_coordinate_change": 0.08682819588551244,
+        "predicted_to_GT_change_ratio": 0.40286570497860924,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    },
+    "train_seen": {
+      "assets": 8,
+      "views": 32,
+      "original_edge_f1": 0.1715950767787185,
+      "gt_structure_xyz_ce": 4.486656792461872,
+      "gt_structure_xyz_accuracy": 0.023990275716641918,
+      "gt_structure_xyz_l1": 0.15606952225789428,
+      "gt_structure_edge_f1": 0.1541668831896363,
+      "success": 1,
+      "exact_count": 0.375,
+      "successful_mean_abs_joint_count_error": 15.5,
+      "reference_B65_F1": 0.8737631417893817,
+      "localization_diagnostics": {
+        "views": 32,
+        "origin_constant_l1": 0.26582139179903286,
+        "center_bin_constant_l1": 0.2654632344465634,
+        "relative_l1_reduction_vs_center_bin": 0.41208610145434876,
+        "predicted_bbox_diagonal": 1.5340051580710017,
+        "target_bbox_diagonal": 1.8679311039993622,
+        "mean_distinct_predicted_xyz": 45.5,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 8,
+        "pose_pairs": 48,
+        "mean_predicted_coordinate_change": 0.04229115780766636,
+        "mean_GT_coordinate_change": 0.09111708262327141,
+        "predicted_to_GT_change_ratio": 0.4641408239827155,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    },
+    "valid": {
+      "assets": 16,
+      "views": 64,
+      "original_edge_f1": 0.17718894922964645,
+      "gt_structure_xyz_ce": 4.479278717190027,
+      "gt_structure_xyz_accuracy": 0.063144114377792,
+      "gt_structure_xyz_l1": 0.17346078663831577,
+      "gt_structure_edge_f1": 0.12458663559464284,
+      "success": 1,
+      "exact_count": 0.3125,
+      "successful_mean_abs_joint_count_error": 10.75,
+      "reference_B65_F1": 0.681973081534069,
+      "localization_diagnostics": {
+        "views": 64,
+        "origin_constant_l1": 0.23461152109366173,
+        "center_bin_constant_l1": 0.23471753426131112,
+        "relative_l1_reduction_vs_center_bin": 0.26098070177694377,
+        "predicted_bbox_diagonal": 1.2681810370186304,
+        "target_bbox_diagonal": 1.7887973722554937,
+        "mean_distinct_predicted_xyz": 37.140625,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 16,
+        "pose_pairs": 96,
+        "mean_predicted_coordinate_change": 0.04029061661226911,
+        "mean_GT_coordinate_change": 0.07886130000903871,
+        "predicted_to_GT_change_ratio": 0.5109047987752064,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    }
+  },
+  "free_structure": {
+    "instances": 32,
+    "independent_assets": 24,
+    "distinct_templates": 2,
+    "joint_count_histogram": {
+      "28": 4,
+      "52": 28
+    },
+    "natural_EOS_all": true,
+    "interpretation": "Both templates are humanoid-like; the added28-joint predictions are not correct non52 target structures."
+  },
+  "validation_F1_6144": 0.15203213403894864,
+  "paired_8192_minus6144_valid": {
+    "assets": 16,
+    "mean": 0.025156815190697818,
+    "median": 0.02327418787764733,
+    "wins_over_001": 10,
+    "losses_over_001": 4,
+    "within_001": 2
+  },
+  "coverage": {
+    "first5000_requests_all5000_unique": true,
+    "first_completed_update_with_full_coverage": 108,
+    "asset_exposures_at_that_update": 5008,
+    "at6144": {
+      "unique_assets": 5000,
+      "visited_once": 3856,
+      "visited_twice": 1144
+    },
+    "at8192": {
+      "unique_assets": 5000,
+      "visited_once": 1808,
+      "visited_twice": 3192
+    },
+    "all8_small_training_panel_assets_visited": true,
+    "train_seen_means": "Training-eligible pose panel, not proof that every scored pose was sampled during training."
+  },
+  "checkpoint": {
+    "sha256": "8b91087fb52cd282daa0e66e2589d78da4d41ab11658ab650eaa1a04a406d77d",
+    "model_sha256": "3ac4d6293b7a956154f1d3c62492f2b3c60377588b84bf70fe880247102b15e4",
+    "header_and_named_optimizer_states_verified": true,
+    "optimizer_state_counts": [
+      196,
+      305,
+      42,
+      83
+    ],
+    "optimizer_steps": 175,
+    "rank_stream_cursors": [
+      4096,
+      4096
+    ]
+  },
+  "archive": {
+    "path": "/home/wangyy/evorig/outputs/structure_xyz_fill_20261022_archives/trial_random_8192_v4_asset_008192_evidence_v1.tar",
+    "sha256": "536b0428309298ed24aec4f004e67ae1f3a0821707eb2d0aaed79ec2e3f41f79",
+    "bytes": 5523210240,
+    "verified_members": 24,
+    "SSD_originals_preserved": true
+  },
+  "visual_review": {
+    "same_fixed21_and52_assets_and_raw_frames": true,
+    "interpretation": "The52-joint example responds to pose but remains inaccurate. The21-joint nonhumanoid example has collapsed GT-conditioned placement and a humanoid-like free structure; two templates alone do not establish adequate structure conditioning."
+  },
+  "decision": "Execution and preliminary learning are accepted, not model quality or formal promotion. Run one paired read-only structure-conditioning audit at the exact own8192 checkpoint before deciding on20k. Keep model, losses, LR, immutable5k data and original GT unchanged; no oldAB weights."
+}

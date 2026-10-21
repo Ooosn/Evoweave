@@ -67,10 +67,14 @@ cd "$repo"
 date -Is
 printf 'MODE=%s HOST=%s CUDA_VISIBLE_DEVICES=%s ULIMIT_V=%s\n' "$mode" "$(hostname)" "${CUDA_VISIBLE_DEVICES:-none}" "$(ulimit -v)"
 "$py" -B model_training/tools/agent_work_guard.py begin > "$jobs/${label}_begin.log"
+entrypoint=model_training/rigweave/scripts/train_structure_xyz_fill.py
+if [[ "$mode" == condition_audit ]]; then
+    entrypoint=model_training/analysis/probe_structure_xyz_condition.py
+fi
 if [[ "$mode" == audit || "$mode" == initialize ]]; then
-    "$py" -B model_training/rigweave/scripts/train_structure_xyz_fill.py --mode "$mode" --config "$config" --output "$output"
+    "$py" -B "$entrypoint" --mode "$mode" --config "$config" --output "$output"
 else
     "$py" -B -m torch.distributed.run --standalone --nproc_per_node="$world" \
-        model_training/rigweave/scripts/train_structure_xyz_fill.py --mode "$mode" --config "$config" --output "$output"
+        "$entrypoint" --mode "$mode" --config "$config" --output "$output"
 fi
 date -Is

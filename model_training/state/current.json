@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_selected8192_v4",
-  "updated_at": "2026-10-21T22:17:00Z",
+  "state_id": "structure_xyz_condition8192_20261022_v1",
+  "updated_at": "2026-10-21T23:15:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -35,7 +35,8 @@
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "model_training/docs/VIRTUAL_FUSION_20261013.md",
-    "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
+    "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "model_training/docs/STRUCTURE_XYZ_CONDITION_8192_20261022.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -131,22 +132,22 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "SelectedR4096 is execution-valid and localization improves, but every structure is still the same52-joint template and valid F1 declined from3072. Formal20k/40k remains blocked; bounded8192 covers all5000 assets. If collapse persists at8192, stop adding training and inspect structure conditioning.",
+    "SelectedR8192 is execution-valid and covers all5000 assets. Small-panel validation F1 improves to0.17719, but32 structures remain only28x52-joint and4x28-joint humanoid-like templates. Formal20k/40k stays blocked while a paired read-only structure-conditioning audit distinguishes conditional use from prefix/template priors.",
     "Direct DFS IDs preserve parent identity. Original coordinate quantization can still reduce spatial-matching F1; retain original GT and report quantized-GT references without relabeling or claiming a mathematical upper bound."
   ],
   "allowed_operations": [
     "inspect",
     "report",
-    "train",
     "preflight"
   ],
   "blocked_operations": [
+    "train",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_independent_official_only_XYZ_fill_matched512_trials",
+    "status": "retained_for_read_only_structure_condition_audit8192",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -375,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Complete the user-authorized independent XYZ-fill implementation, testing and validation toward formal training on the same immutable5000-row dataset. NO old A/B experiment weights may initialize the new model: official surface only, fresh motion/structure/fill, optional official position rows. CPU data/reference and paired actual initialization audits passed. Next verify real GPU gradient routes and bounded fit, measure capacity, compare matched small-eval trials, diagnose failures, and publish20k/40k formal stages only after reviewed evidence. XYZ uses discrete structure tokens and final mesh anchors, never structure hidden states; both losses train shared upstream. OldAB/B80/expanded839 remain stopped.",
+  "next_required_result": "Complete the user-authorized independent XYZ-fill implementation, testing and validation toward formal training on the same immutable5000-row dataset. Official-only initialization, GT/data checks, gradients, bounded fit, capacity, matched trials, exact continuation and8192 coverage passed. Primary must now interpret the paired read-only8192 structure-conditioning audit before publishing any20k/40k formal stage; two humanoid templates and lowerL1 alone are not quality acceptance. Never inherit oldAB experiment weights. XYZ uses only discrete structure tokens plus final mesh anchors, not A hidden states; both training losses update shared upstream. OldAB/B80/expanded839 stay stopped.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -918,11 +919,89 @@
     ]
   },
   "active_operation": {
+    "label": "structure_xyz_condition8192_20261022_v1",
+    "mode": "read_only_structure_condition_audit",
+    "operation": "preflight",
+    "status": "prepared_condition_audit8192_v1",
+    "authorization": "User authorized completing independent-new-model implementation, testing and validation toward formal5k training. Primary8192review requests paired read-only condition checks before promotion; no oldAB weights.",
+    "required_entrypoint": "model_training/analysis/probe_structure_xyz_condition.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_CONDITION_8192_20261022.md",
+    "code_commit": "d8ef47a7a3cb623e1a6709a72efc5c50be7c42c4",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "sequential_execution_only": true,
+    "reviewed8192": "model_training/analysis/structure_xyz_fill_selected8192_v4_review.json",
+    "runs": [
+      {
+        "name": "condition_audit_8192_v1",
+        "mode": "condition_audit",
+        "approved": true,
+        "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_condition_8192_v1.json",
+        "config_sha256": "12dc267ee1fe91b3560695320be7f573f9a773bfb8eae7783ca9ccfc1c8b14b7",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/condition_audit_8192_v1",
+        "physical_gpus": [
+          5,
+          6
+        ],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      }
+    ],
+    "diagnostic_contract": {
+      "source_exposures": 8192,
+      "source_updates": 175,
+      "asset_frame_contexts": 32,
+      "distinct_assets": 24,
+      "input_frames": 8,
+      "optimizer_updates": 0,
+      "paired_same_encoded_conditions": true,
+      "model_state_before_after_exact": true,
+      "modes": [
+        "correct",
+        "different_asset",
+        "zero"
+      ],
+      "prefixes": [
+        "teacher",
+        "self"
+      ],
+      "baseline_generation_replay_required": 32,
+      "original_GT_unchanged": true
+    },
+    "acceptance": [
+      "Exact own8192checkpoint/config/source/model-tensor fingerprints and all32 correct-condition generations replayed; no oldAB weights.",
+      "All32 fixed contexts have unchanged original GT and raw frames; every real counterfactual uses a different exact parent topology from the same group/rank.",
+      "Separate new IDs, BRANCH, parent references and EOS; report raw and grammar-legal metrics, excluding forced positions in choice summaries; retain paired logits.",
+      "No optimizer, backward or parameter/buffer changes; exact state fingerprint before/after on both ranks; retain allocation and all SSD artifacts.",
+      "Primary interprets paired real-condition swaps and early-learning evidence before20k. Zero-memory ablation and two output templates alone do not approve formal training."
+    ],
+    "stop_conditions": [
+      "provenance_or_GT_frame_drift",
+      "failed_correct_condition_baseline_replay",
+      "nonfinite_values",
+      "resource_drift",
+      "model_state_changed",
+      "peak_allocated_fraction_at_or_above_0.85"
+    ]
+  },
+  "preserved_structure_xyz_fill_selected8192_v4": {
     "label": "structure_xyz_fill_selected8192_20261022_v4",
     "mode": "bounded_selected_learning_trial",
     "operation": "train",
-    "status": "selected8192_after4096_learning_review",
-    "failed_startup_v3": {"exit": 1, "failed_utc": "2026-10-21T21:26:54Z", "reason": "Published analysis regression test differed from outdated operation code_commit; full subtree guard correctly refused startup", "changed_subtree_file": "model_training/rigweave/tests/test_compare_structure_xyz_trials.py", "actual_optimizer_updates": 0, "model_constructed": false, "output_directory_created": false, "neural_data_trainer_evaluator_hashes_match_reviewed_preflight": true, "logs_preserved": true},
+    "status": "completed8192_execution_accepted_quality_notaccepted",
+    "failed_startup_v3": {
+      "exit": 1,
+      "failed_utc": "2026-10-21T21:26:54Z",
+      "reason": "Published analysis regression test differed from outdated operation code_commit; full subtree guard correctly refused startup",
+      "changed_subtree_file": "model_training/rigweave/tests/test_compare_structure_xyz_trials.py",
+      "actual_optimizer_updates": 0,
+      "model_constructed": false,
+      "output_directory_created": false,
+      "neural_data_trainer_evaluator_hashes_match_reviewed_preflight": true,
+      "logs_preserved": true
+    },
     "reviewed512": "model_training/analysis/structure_xyz_fill_matched512_v3_review.json",
     "reviewed2048": "model_training/analysis/structure_xyz_fill_matched2048_v3_review.json",
     "reviewed4096": "model_training/analysis/structure_xyz_fill_selected4096_v4_review.json",
@@ -931,9 +1010,9 @@
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
     "code_commit": "d8ef47a7a3cb623e1a6709a72efc5c50be7c42c4",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "complete": false,
+    "complete": true,
     "sequential_execution_only": true,
     "reviewed_v2_fit": "model_training/analysis/structure_xyz_fill_preflight_v2_review.json",
     "v2_fit_primary_accepted": true,
@@ -954,16 +1033,35 @@
         "name": "trial_random_8192_v4",
         "mode": "train",
         "approved": true,
-        "execution_allowed": true,
+        "execution_allowed": false,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_8192_v4.json",
         "config_sha256": "ccd1bae26b90524c75f62bb8236229811ded89d24d90fb76c0abfad6bd5e13ca",
         "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/trial_random_8192_v4",
-        "physical_gpus": [5, 6],
+        "physical_gpus": [
+          5,
+          6
+        ],
         "allocation": 130309880,
         "host": "pcg01i"
       }
     ],
-    "trial_contract": {"target_asset_exposures": 8192, "start_asset_exposures": 4096, "start_optimizer_updates": 89, "optimizer_updates": 175, "supervised_frame_exposures": 108048, "effective_assets_per_update": 48, "evaluations": [6144, 8192], "small_panel_views": 128, "sampling_plan_sha256": "0d9989101601110b8cf8ae4833ab98554cdf819a190c6c5b38acfc17028b876c", "diagnostic_weights_reused": false, "old_AB_weights_loaded": false, "resume_own_new_checkpoint_with_adam_rng": true},
+    "trial_contract": {
+      "target_asset_exposures": 8192,
+      "start_asset_exposures": 4096,
+      "start_optimizer_updates": 89,
+      "optimizer_updates": 175,
+      "supervised_frame_exposures": 108048,
+      "effective_assets_per_update": 48,
+      "evaluations": [
+        6144,
+        8192
+      ],
+      "small_panel_views": 128,
+      "sampling_plan_sha256": "0d9989101601110b8cf8ae4833ab98554cdf819a190c6c5b38acfc17028b876c",
+      "diagnostic_weights_reused": false,
+      "old_AB_weights_loaded": false,
+      "resume_own_new_checkpoint_with_adam_rng": true
+    },
     "acceptance": [
       "Own new-model checkpoint SHA, exact model and Adam moments, RNG handoff and extended sampling prefix verified; never inherit old AB weights",
       "Selected random initializer continues its exact own checkpoint and4096 sampling prefix; no architecture/loss/LR/data changes",
@@ -972,7 +1070,16 @@
       "Verify new checkpoint, optimizer and RNG continuation before extension; archive final checkpoint plus evidence without deleting SSD sources",
       "No automatic extension beyond8192 or formal20k/40k promotion. If single52-template collapse persists at8192, stop adding training and inspect structure conditioning; do not mistake L1 improvement for whole-model quality."
     ],
-    "stop_conditions": ["nonfinite_loss_or_gradients", "wrong_GT_mapping", "source_or_data_drift", "unexpected_truncation", "out_of_memory", "GPU_resource_drift"]
+    "stop_conditions": [
+      "nonfinite_loss_or_gradients",
+      "wrong_GT_mapping",
+      "source_or_data_drift",
+      "unexpected_truncation",
+      "out_of_memory",
+      "GPU_resource_drift"
+    ],
+    "completion_review": "model_training/analysis/structure_xyz_fill_selected8192_v4_review.json",
+    "result_sha256": "cac9c18b88f17b8ff1ad31dcd7428ef3e2eaa4f24740de9c90ff77861b4f6749"
   },
   "preserved_normal_b_stopped70000_operation_20261021": {
     "label": "normal_b_lr3e5_80000_v1",

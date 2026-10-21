@@ -1,0 +1,318 @@
+{
+  "schema": "structure_xyz_fill_matched2048_review_v3",
+  "execution_accepted": true,
+  "quality_accepted": false,
+  "formal_training_allowed": false,
+  "source_commit": "064f3b8fca06d3ae15c5c0bace4e3ec7a352f00f",
+  "asset_exposures": 2048,
+  "optimizer_updates": 45,
+  "supervised_frame_exposures": 29104,
+  "matched_input_check": {
+    "rank_updates_per_arm": 66,
+    "microbatches_per_arm": 376,
+    "asset_frame_pruning_lr_target_identity_equal": true
+  },
+  "evaluations": [
+    1024,
+    2048
+  ],
+  "views_per_evaluation": 128,
+  "final_summary_sha256": {
+    "random": "aa7b385ba6acbb2f58d1bb3596b767e96836710d3fc74ba924f8bfd8d69ef891",
+    "positions": "01bf8652977238be228962552adc363f3a3927e64c1b0a665cba20f4ee519338"
+  },
+  "final_groups": {
+    "random": {
+      "train_heldout": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0.052582460136322964,
+        "gt_structure_xyz_ce": 5.012783855199814,
+        "gt_structure_xyz_accuracy": 0.009792293480131775,
+        "gt_structure_xyz_l1": 0.24030563584528863,
+        "gt_structure_edge_f1": 0.04895185715956994,
+        "success": 1,
+        "exact_count": 0.375,
+        "successful_mean_abs_joint_count_error": 13.75,
+        "reference_B65_F1": 0.8455084740011609,
+        "localization_diagnostics": {
+          "views": 32,
+          "origin_constant_l1": 0.26515093544891927,
+          "center_bin_constant_l1": 0.26486216741121865,
+          "relative_l1_reduction_vs_center_bin": 0.09271438688884936,
+          "predicted_bbox_diagonal": 1.446063434768131,
+          "target_bbox_diagonal": 1.8754882371222334,
+          "mean_distinct_predicted_xyz": 36,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 8,
+          "pose_pairs": 48,
+          "mean_predicted_coordinate_change": 0.0019201370076529817,
+          "mean_GT_coordinate_change": 0.08682819588551244,
+          "predicted_to_GT_change_ratio": 0.022114210574924114,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      },
+      "train_seen": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0.04624419316789338,
+        "gt_structure_xyz_ce": 5.018775716423988,
+        "gt_structure_xyz_accuracy": 0.008462052646791562,
+        "gt_structure_xyz_l1": 0.24222120735794306,
+        "gt_structure_edge_f1": 0.04365432517343047,
+        "success": 1,
+        "exact_count": 0.375,
+        "successful_mean_abs_joint_count_error": 13.75,
+        "reference_B65_F1": 0.8737631417893817,
+        "localization_diagnostics": {
+          "views": 32,
+          "origin_constant_l1": 0.26582139179903286,
+          "center_bin_constant_l1": 0.2654632344465634,
+          "relative_l1_reduction_vs_center_bin": 0.08755271233883155,
+          "predicted_bbox_diagonal": 1.4458124827641172,
+          "target_bbox_diagonal": 1.8679311039993622,
+          "mean_distinct_predicted_xyz": 36.65625,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 8,
+          "pose_pairs": 48,
+          "mean_predicted_coordinate_change": 0.001680229724637945,
+          "mean_GT_coordinate_change": 0.09111708262327141,
+          "predicted_to_GT_change_ratio": 0.018440337160320938,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      },
+      "valid": {
+        "assets": 16,
+        "views": 64,
+        "original_edge_f1": 0.039342764764255966,
+        "gt_structure_xyz_ce": 4.892948634922504,
+        "gt_structure_xyz_accuracy": 0.06263487479736796,
+        "gt_structure_xyz_l1": 0.2199390415335074,
+        "gt_structure_edge_f1": 0.03471046662450276,
+        "success": 1,
+        "exact_count": 0.3125,
+        "successful_mean_abs_joint_count_error": 13.75,
+        "reference_B65_F1": 0.681973081534069,
+        "localization_diagnostics": {
+          "views": 64,
+          "origin_constant_l1": 0.23461152109366173,
+          "center_bin_constant_l1": 0.23471753426131112,
+          "relative_l1_reduction_vs_center_bin": 0.06296287690111713,
+          "predicted_bbox_diagonal": 1.3010830043175496,
+          "target_bbox_diagonal": 1.7887973722554937,
+          "mean_distinct_predicted_xyz": 31.25,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 16,
+          "pose_pairs": 96,
+          "mean_predicted_coordinate_change": 0.0018417002989097517,
+          "mean_GT_coordinate_change": 0.07886130000903871,
+          "predicted_to_GT_change_ratio": 0.023353663947952477,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      }
+    },
+    "positions": {
+      "train_heldout": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0.040949760012450515,
+        "gt_structure_xyz_ce": 5.044173836708069,
+        "gt_structure_xyz_accuracy": 0.008480197939206846,
+        "gt_structure_xyz_l1": 0.2523551471531391,
+        "gt_structure_edge_f1": 0.03969233018123654,
+        "success": 1,
+        "exact_count": 0.375,
+        "successful_mean_abs_joint_count_error": 13.75,
+        "reference_B65_F1": 0.8455084740011609,
+        "localization_diagnostics": {
+          "views": 32,
+          "origin_constant_l1": 0.26515093544891927,
+          "center_bin_constant_l1": 0.26486216741121865,
+          "relative_l1_reduction_vs_center_bin": 0.047220866008627294,
+          "predicted_bbox_diagonal": 1.1897278075178637,
+          "target_bbox_diagonal": 1.8754882371222334,
+          "mean_distinct_predicted_xyz": 15.6875,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 8,
+          "pose_pairs": 48,
+          "mean_predicted_coordinate_change": 0.0016115782876616543,
+          "mean_GT_coordinate_change": 0.08682819588551244,
+          "predicted_to_GT_change_ratio": 0.018560540976650088,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      },
+      "train_seen": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0.044820925495028245,
+        "gt_structure_xyz_ce": 5.0508295595645905,
+        "gt_structure_xyz_accuracy": 0.007097555833752267,
+        "gt_structure_xyz_l1": 0.2528691366314888,
+        "gt_structure_edge_f1": 0.036146329161035044,
+        "success": 1,
+        "exact_count": 0.375,
+        "successful_mean_abs_joint_count_error": 13.75,
+        "reference_B65_F1": 0.8737631417893817,
+        "localization_diagnostics": {
+          "views": 32,
+          "origin_constant_l1": 0.26582139179903286,
+          "center_bin_constant_l1": 0.2654632344465634,
+          "relative_l1_reduction_vs_center_bin": 0.04744197017489926,
+          "predicted_bbox_diagonal": 1.192961363713449,
+          "target_bbox_diagonal": 1.8679311039993622,
+          "mean_distinct_predicted_xyz": 15.78125,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 8,
+          "pose_pairs": 48,
+          "mean_predicted_coordinate_change": 0.0012545176419793008,
+          "mean_GT_coordinate_change": 0.09111708262327141,
+          "predicted_to_GT_change_ratio": 0.01376819368949918,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      },
+      "valid": {
+        "assets": 16,
+        "views": 64,
+        "original_edge_f1": 0.04766580898516111,
+        "gt_structure_xyz_ce": 4.903097450733185,
+        "gt_structure_xyz_accuracy": 0.06203666920919204,
+        "gt_structure_xyz_l1": 0.23072651866823435,
+        "gt_structure_edge_f1": 0.040752440458804245,
+        "success": 1,
+        "exact_count": 0.3125,
+        "successful_mean_abs_joint_count_error": 12.25,
+        "reference_B65_F1": 0.681973081534069,
+        "localization_diagnostics": {
+          "views": 64,
+          "origin_constant_l1": 0.23461152109366173,
+          "center_bin_constant_l1": 0.23471753426131112,
+          "relative_l1_reduction_vs_center_bin": 0.017003480908114765,
+          "predicted_bbox_diagonal": 1.1362948819122396,
+          "target_bbox_diagonal": 1.7887973722554937,
+          "mean_distinct_predicted_xyz": 15.09375,
+          "single_point_prediction_views": 0
+        },
+        "pose_response_diagnostics": {
+          "assets_with_pose_pairs": 16,
+          "pose_pairs": 96,
+          "mean_predicted_coordinate_change": 0.002170480680415151,
+          "mean_GT_coordinate_change": 0.07886130000903871,
+          "predicted_to_GT_change_ratio": 0.027522760595708934,
+          "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+        }
+      }
+    }
+  },
+  "paired_F1": {
+    "train_heldout": {
+      "assets": 8,
+      "mean_F1_left_minus_right": 0.011632700123872457,
+      "median_F1_left_minus_right": 0.010836012378311038,
+      "left_better_by_over_001": 4,
+      "right_better_by_over_001": 2,
+      "within_001": 2
+    },
+    "train_seen": {
+      "assets": 8,
+      "mean_F1_left_minus_right": 0.0014232676728651392,
+      "median_F1_left_minus_right": -0.003431372549019608,
+      "left_better_by_over_001": 3,
+      "right_better_by_over_001": 3,
+      "within_001": 2
+    },
+    "valid": {
+      "assets": 16,
+      "mean_F1_left_minus_right": -0.008323044220905143,
+      "median_F1_left_minus_right": 0.0004368420413196532,
+      "left_better_by_over_001": 3,
+      "right_better_by_over_001": 5,
+      "within_001": 8
+    }
+  },
+  "structure_diversity": {
+    "random": {
+      "instances": 32,
+      "distinct_templates": 1,
+      "counts": {
+        "52": 32
+      }
+    },
+    "positions": {
+      "instances": 32,
+      "distinct_templates": 2,
+      "counts": {
+        "28": 1,
+        "52": 31
+      },
+      "exception_target_joints": 21
+    }
+  },
+  "selected_initialization": "random",
+  "selection_reason": "No consistent benefit from copying official positions: P has higher small-panel validF1, R has lower GT-conditioned L1 in all three groups and better train-heldoutF1. Choose the simpler initializer, not a statistical superiority claim.",
+  "remaining_failure": "Both still mainly emit the52-joint template; predicted pose-change amplitude is only2-3percent ofGT. Localization has begun to improve beyond the center baseline but is insufficient for formal promotion.",
+  "continuation": {
+    "checkpoint_sha256": "879b6e50b12b8b7ab99b669220654a5ec95d4fd1afb9e6cfa0a10d0fe750846a",
+    "header_and_named_optimizer_states_verified": true,
+    "optimizer_state_counts": [
+      196,
+      305,
+      42,
+      83
+    ],
+    "optimizer_steps": 45,
+    "rank_stream_cursors": [
+      1024,
+      1024
+    ],
+    "target_assets": 4096,
+    "evaluation_boundaries": [
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      3072,
+      4096
+    ],
+    "future_plan_sha256": "a1d5a02131ac700c1cb0051da016372a77a914c11a0300551c9a0e7e1a801260",
+    "future_total_updates": 89,
+    "future_supervised_frames": 55456,
+    "original_stream_prefix_exact": true,
+    "next_first_three_microbatch_indices": [
+      [
+        4581,
+        1255,
+        393,
+        1805,
+        3324,
+        420,
+        3794,
+        2491,
+        1545
+      ],
+      [
+        2667,
+        2600,
+        1809,
+        1582,
+        3420,
+        2794,
+        1662,
+        2548,
+        1107
+      ]
+    ],
+    "first_resumed_frames": 14
+  },
+  "decision": "Authorize only selectedR to4096, with3072 early review. No architecture/loss/LR/data changes, no formal20k/40k authorization and no automatic extension past4096."
+}

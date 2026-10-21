@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import json
 from pathlib import Path
 
@@ -48,6 +49,40 @@ def localization_diagnostics(rows):
             'single_point_prediction_views': int(np.sum(np.asarray(distinct) == 1))}
 
 
+def pose_response_diagnostics(rows):
+    assets = {}
+    for row in rows:
+        assets.setdefault(row['asset_id'], []).append(row)
+    predicted, actual, pairs = [], [], 0
+    for frames in assets.values():
+        if len(frames) < 2:
+            continue
+        frame_ids = [row['frame_index'] for row in frames]
+        if len(set(frame_ids)) != len(frame_ids):
+            raise ValueError('duplicate pose slot within one asset')
+        pred_pairs, gt_pairs = [], []
+        for left, right in itertools.combinations(frames, 2):
+            ids = [np.asarray(row['fill_source_indices'], dtype=np.int64) for row in (left, right)]
+            if not np.array_equal(np.sort(ids[0]), np.sort(ids[1])):
+                raise ValueError('pose comparison requires the same joint identities')
+            prediction = [np.asarray(row['gt_structure_predicted_joints'])[np.argsort(index)]
+                          for row, index in zip((left, right), ids)]
+            target = [np.asarray(row['original_target_joints'])[np.sort(index)]
+                      for row, index in zip((left, right), ids)]
+            pred_pairs.append(float(np.abs(prediction[0] - prediction[1]).mean()))
+            gt_pairs.append(float(np.abs(target[0] - target[1]).mean()))
+        predicted.append(float(np.mean(pred_pairs)))
+        actual.append(float(np.mean(gt_pairs)))
+        pairs += len(pred_pairs)
+    if not actual:
+        return {'assets_with_pose_pairs': 0, 'pose_pairs': 0}
+    pred_mean, gt_mean = float(np.mean(predicted)), float(np.mean(actual))
+    return {'assets_with_pose_pairs': len(actual), 'pose_pairs': pairs,
+            'mean_predicted_coordinate_change': pred_mean, 'mean_GT_coordinate_change': gt_mean,
+            'predicted_to_GT_change_ratio': pred_mean / gt_mean if gt_mean else None,
+            'interpretation': 'Output motion amplitude only; not accuracy or explained variance.'}
+
+
 def summarize(rows):
     assets = sorted({row['asset_id'] for row in rows})
     if not rows:
@@ -62,6 +97,7 @@ def summarize(rows):
         if successful else None)
     result['reference_B65_F1'] = float(np.mean([row['reference_original_edge_f1'] for row in rows]))
     result['localization_diagnostics'] = localization_diagnostics(rows)
+    result['pose_response_diagnostics'] = pose_response_diagnostics(rows)
     return result
 
 
@@ -132,7 +168,10 @@ def main():
         if args.output.exists():
             raise FileExistsError('preserve existing comparison artifacts')
         args.output.write_text(text, encoding='utf-8')
-    print(text, end='')
+        print(json.dumps({'output': str(args.output), 'asset_exposures': left['asset_exposures'],
+                          'sha256': hashlib.sha256(args.output.read_bytes()).hexdigest()}))
+    else:
+        print(text, end='')
 
 
 if __name__ == '__main__':

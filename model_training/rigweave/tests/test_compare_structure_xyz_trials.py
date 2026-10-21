@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'analysis'))
-from compare_structure_xyz_trials import localization_diagnostics
+from compare_structure_xyz_trials import localization_diagnostics, pose_response_diagnostics
 
 
 def row(prediction, indices=(0, 1)):
@@ -54,3 +54,26 @@ def test_inconsistent_saved_evidence_is_rejected(change):
 
 def test_empty_diagnostics():
     assert localization_diagnostics([]) == {'views': 0}
+
+
+def test_pose_response_matches_joint_identities_and_distinguishes_static_prediction():
+    first = dict(row([[-.5, 0, 0], [.5, 0, 0]]), asset_id='a', frame_index=0)
+    second = dict(row([[.5, 0, 0], [-.5, 0, 0]], (1, 0)), asset_id='a', frame_index=2)
+    second['original_target_joints'] = (np.asarray(second['original_target_joints']) + .1).tolist()
+    static = pose_response_diagnostics([first, second])
+    assert static['predicted_to_GT_change_ratio'] == 0
+    assert static['mean_GT_coordinate_change'] == pytest.approx(.1)
+    second['gt_structure_predicted_joints'] = (np.asarray(second['gt_structure_predicted_joints']) + .1).tolist()
+    moving = pose_response_diagnostics([first, second])
+    assert moving['predicted_to_GT_change_ratio'] == pytest.approx(1)
+    assert moving['pose_pairs'] == 1
+    second['frame_index'] = 0
+    with pytest.raises(ValueError):
+        pose_response_diagnostics([first, second])
+
+
+def test_no_pose_pairs_or_motion_does_not_invent_a_ratio():
+    first = dict(row([[-.5, 0, 0], [.5, 0, 0]]), asset_id='a', frame_index=0)
+    assert pose_response_diagnostics([first])['pose_pairs'] == 0
+    second = dict(first, frame_index=2)
+    assert pose_response_diagnostics([first, second])['predicted_to_GT_change_ratio'] is None

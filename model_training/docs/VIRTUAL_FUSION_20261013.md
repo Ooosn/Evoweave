@@ -8,6 +8,36 @@ read-only references, not execution destinations. GPU authority remains in
 
 ## Current direction: normal 5000-asset trend comparison
 
+### Post-maintenance recovery preparation, October21
+
+The user explicitly authorized a new two-H100 qlogin and preparation for
+training recovery. Live SSH/scheduler access returned before the historical
+website's planned end. Old allocation130258195 is absent. New allocation
+130309880 started2026-10-21 17:35:28JST onpcg01i, physicalH100s5/6, mem_req64G,
+with a96-hour limit endingOctober25 17:35:28JST. Keep its explicit keepalive;
+no further allocation or release is authorized. The unrelated A100 job was
+not modified. Both80GB devices were idle; PyTorch2.5.1+cu121 sees exactlytwo
+CUDA devices with unlimited virtual memory. /work is verifiedNVMe RAID0/XFS.
+
+The latest surviving full B checkpoint is checkpoint_asset_050000.pt under
+normal_b_extend60000_v1:8438111152bytes, SHA256
+`dc1d598cb3179694f367a4d9cc9a069e26dceb2236b6dc235a0ed4891e36ebcf`.
+Its CPU payload reports50000asset exposures/1050updates/657056supervisedframes,
+947AdamW entries at1e-4, and two rank states. Logs reached54080assets before
+maintenance, so4080unsaved exposures must be replayed from the durable50k
+boundary. The target remainsTOTAL60k at1e-4, thenTOTAL80k at3e-5, followed by
+the already approved expanded validation. This does not add logical budget.
+
+Frozen sourcec643fc7 was restored through GitHub to the same normal_code path
+on the new node's SSD. The historical B60 bundle is incremental, not a complete
+repository backup. Existing job scripts and outputs remain untouched. Training
+has NOT restarted: the old entry requires a completed predecessor and binds
+pcg02/5,7. A separately reviewed interrupted-run adapter, checkpoint RNG/stream
+validation and fresh new-device capacity checks are required before training.
+Evidence is under allocation_20261021 and recovery_20261021/audit in local
+server_ops outputs. This section supersedes the historical pending-allocation
+authorization paragraphs below, but not their fixed training budgets.
+
 ### Revised approved sequence: A150000, B80000
 
 2026-10-19 01:11JST user explicitly confirmed revised budgets and lifted the

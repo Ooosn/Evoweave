@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-19T01:58:28Z",
+  "updated_at": "2026-10-21T08:44:54Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -144,6 +144,22 @@
     "train"
   ],
   "compute_allocation": {
+    "server": "HGC",
+    "status": "replacement_granted_verified_recovery_preparation",
+    "qlogin_job_id": 130309880,
+    "host": "pcg01i",
+    "physical_gpus": [5, 6],
+    "gpu_uuids": ["GPU-6cdbda3c-ca49-504e-c970-aba4fd30eef1", "GPU-5a6b25a5-6863-8604-090c-acec391973ff"],
+    "start_utc": "2026-10-21T08:35:28.104000+00:00",
+    "expiry_utc": "2026-10-25T08:35:28.104000+00:00",
+    "h_rt_seconds": 345600,
+    "ssd_verified": "/work XFS /dev/md0 RAID0 of nvme0n1/nvme1n1, both ROTA=0 on pcg01; 3.5TiB free",
+    "cuda_verified": "torch2.5.1+cu121, CUDA available, exactlytwo visible H10080GB on5,6, unlimited virtual memory, no training processes",
+    "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
+    "keepalive_root": "/home/wangyy/jobs/virtual_fusion_allocation_20261021_v3",
+    "authorization": "Human2026-10-21 explicitly requested qlogin two H100 and prepare training recovery. Live pcl03 bootstrap and empty account queue confirmed. No release or extra cards authorized."
+  },
+  "preserved_compute_allocation_130258195": {
     "server": "HGC",
     "status": "historical_grant_unverified_during_confirmed_maintenance",
     "verification_required": "OfficialmaintenancewilldeleteAGEjobs; do notassumethisgrantstilllives. Inspectafteraccessreturn; replacementallocationnotauthorizedyet.",
@@ -358,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "OfficialHGCsystemmaintenanceconfirmedOct19 09:00toOct22 18:00JST; AGEjobswillbedeleted. B60individualjob/checkpointstateunverified; originalgrant130258195cannotbeassumedretainedanditsoriginalexpiryisbeforemaintenanceend. Keepread-onlyfollowupactive; afterrestorationinspectjobs/latestfullcheckpoint. Replacement2H100authorizationrequestedbutNOTyetgranted. NoGPUlaunch/reapplyuntilappropriateauthorizationandfreshvalidation. OriginalB60/B80/expandedbudgetsunchanged.",
+  "next_required_result": "New2H100 grant130309880 onpcg01i physical5,6 is verified and retained. Latest surviving FULLcheckpointB50000 read successfully,1050updates/657056frames; premaintenance logs reached54080 so4080unsaved exposures must replay. Frozen c643fc7source restored clean to newnodeNVMe. Prepare/test interrupted-run resume using exact saved model/AdamW/rankRNG/sampling plan and new node/device/capacity binding. Do not launch old B40-to60 entry or old supervisor. LogicalTOTAL60k at1e-4 then80k at3e-5 and expandedvalidation unchanged; no extra allocation/release authorized.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -748,6 +764,40 @@
     ]
   },
   "active_operation": {
+    "label": "maintenance_recovery_preparation_20261021",
+    "operation": "report",
+    "mode": "interrupted_run_recovery_preparation",
+    "status": "allocation_and_checkpoint_available_resume_adapter_pending",
+    "required_entrypoint": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/allocation_20261021/fusion_allocation_v3.sh",
+    "authorization": "HumanOct21 explicitly requests qlogin2H100 and preparation for training recovery. Prior B60/B80 plan remains; this operation only reserves cards.",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "replacement_allocation_authorized": true,
+    "user_authorization_question_pending": false,
+    "requested_resources": {"h100": 2, "mem_req": "64G", "s_vmem": null},
+    "live_evidence": "Grant130309880 running onpcg01i physical5,6; H10080GB idle; CUDA2 devicesavailable; frozen c643fc7source clean onNVMe. Otherproject A100 grant130309672 left untouched.",
+    "maintenance_status": "SSH and scheduler available early; historical website still shows original maintenance window. Verify actual grant/compute health before any training.",
+    "checkpoint": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend60000_v1/checkpoint_asset_050000.pt",
+      "bytes": 8438111152,
+      "sha256": "dc1d598cb3179694f367a4d9cc9a069e26dceb2236b6dc235a0ed4891e36ebcf",
+      "asset_exposures": 50000,
+      "updates": 1050,
+      "supervised_frame_exposures": 657056,
+      "optimizer_entries": 947,
+      "learning_rate": 0.0001,
+      "rank_states": 2
+    },
+    "source_recovery": {"path": "/work/wangyy/virtual_fusion_20261013/normal_code", "commit": "c643fc700da82eb66ad2307b97e973be6e9eae77", "clean": true, "node": "pcg01i"},
+    "last_logged_asset_exposures": 54080,
+    "unsaved_asset_exposures_to_replay": 4080,
+    "remaining_logical_asset_exposures_to60000": 10000,
+    "remaining_updates_to60000": 210,
+    "remaining_supervised_frames_to60000": 131248,
+    "evidence_root": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/audit",
+    "after_completion": "Preserve new qlogin. Existing entry only supports completed predecessor and hardcodes oldpcg02/5,7; implement/test separate interrupted recovery, verify fullsampling/RNG and freshcapacity before any GPU training. No architecture, optimizer reset, LR schedule, split or normalization change."
+  },
+  "preserved_interrupted_b60_operation_20261019": {
     "label": "normal_b_extend60000_v1",
     "mode": "normal5000_continuation",
     "status": "blocked_by_confirmed_hgc_maintenance_job_state_unverified",

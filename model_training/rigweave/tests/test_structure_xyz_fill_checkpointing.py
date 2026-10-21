@@ -35,7 +35,7 @@ DATASET = range(5000)
 
 
 def _config() -> dict:
-    path = Path(__file__).resolve().parents[2] / "experiments/structure_xyz_fill_random_512_v1.json"
+    path = Path(__file__).resolve().parents[2] / "experiments/structure_xyz_fill_random_512_v2.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

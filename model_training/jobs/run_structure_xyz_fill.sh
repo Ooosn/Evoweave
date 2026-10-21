@@ -31,7 +31,7 @@ devices=${settings[2]}
 world=${settings[3]}
 case "$(hostname)" in "$host"|"${host%i}") ;; *) exit 2 ;; esac
 
-if [[ "$mode" == audit ]]; then
+if [[ "$mode" == audit || "$mode" == initialize ]]; then
     export CUDA_VISIBLE_DEVICES=
 else
     exec 9> "$jobs/.gpu_work.lock"
@@ -64,7 +64,7 @@ cd "$repo"
 date -Is
 printf 'MODE=%s HOST=%s CUDA_VISIBLE_DEVICES=%s ULIMIT_V=%s\n' "$mode" "$(hostname)" "${CUDA_VISIBLE_DEVICES:-none}" "$(ulimit -v)"
 "$py" -B model_training/tools/agent_work_guard.py begin > "$jobs/${label}_begin.log"
-if [[ "$mode" == audit ]]; then
+if [[ "$mode" == audit || "$mode" == initialize ]]; then
     "$py" -B model_training/rigweave/scripts/train_structure_xyz_fill.py --mode "$mode" --config "$config" --output "$output"
 else
     "$py" -B -m torch.distributed.run --standalone --nproc_per_node="$world" \

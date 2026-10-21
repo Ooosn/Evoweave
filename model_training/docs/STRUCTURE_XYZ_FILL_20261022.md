@@ -46,34 +46,38 @@ Keep retained-root RT and the selected-input mesh-union bbox with padding1.1.
 No GT-derived normalization, label clipping, mesh substitution or source-joint
 deletion is permitted. The original complete GT remains the evaluation target.
 
-Initialization is selective, not all-or-nothing. Attention, FFN and output head
-are fresh by default. Compatible structure/position embeddings are explicit
-initialization candidates with recorded source rows and offsets, never silently
-shared parameter objects. New joint/axis token meanings must not be confused
-with known coordinate-value embeddings. Publish the exact common upstream
-checkpoint and its fingerprint before GPU work; do not pretend a warm-start
-comparison is a from-scratch comparison. Preserve the accepted old B65 model as
-an independently measured reference rather than rerunning old A/B training.
+The user explicitly requires NO inheritance from old A/B experiment weights.
+The sole pretrained checkpoint is the pinned official UniRig release. Load
+only its compatible mesh_encoder and output_proj groups with strict key/shape
+and finite-value checks. Construct the virtual/query motion network and the
+structure ID decoder afresh with seed20261013. Construct the entire XYZ fill
+network with seed20261022. Do not construct an old full AR model to harvest
+weights, load old experiment state, or restore an old optimizer. All counters
+start at zero. The deleted B65 model is NOT a dependency; only its preserved
+evaluation JSON is used as a matched historical reference.
 
-The first paired trials warm-start the common surface/motion network and ID
-decoder from accepted B65:65000 prior asset exposures,856432 supervised-frame
-exposures,1365 optimizer updates; checkpoint SHA256
-`1555619a677f13bcb2e044c2b7e72cf623483490ab0edc0eac24cb24b8ead7f9`.
-Its shared/structure tensors passed the CPU finite/shape audit. Do not restore
-its old optimizer or load its old coordinate backend into the fill network.
-The random-fill control and selective-embedding candidate have the same fresh
-attention/FFN/head tensors. The candidate independently copies the ID embedding
-and original text-position rows after OPT's actual offset and1024 mesh-prefix
-positions. Any remaining position rows and new X/Y/Z masks stay fresh.
+Two v2 candidates differ ONLY in XYZ sequence position initialization. R uses
+fresh positions; P independently copies the official OPT text-position rows
+1026:3078 into its first2052 rows (OPT offset2 plus former mesh prefix1024).
+Remaining position rows stay fresh. Both candidates use fresh structure-ID and
+X/Y/Z-mask embeddings, attention, FFN, geometric-position MLP, norms and output
+head. No trained ID embeddings exist in the official coordinate vocabulary.
+Record exact source tensors and row offsets; copying positions is a hypothesis
+to test, not an assertion that old AR pretraining transfers to the new task.
+CPU initialization audits must show identical common parameters and identical
+fresh attention/FFN/head parameters between candidates. GPU initialization
+must exactly match its reviewed CPU parameter fingerprint.
 
 Both arms run sequentially on the retained two-H100 allocation, not concurrently
 with another route. Use the same seed, data order and effective48-asset batch;
 initial bounded budget512 new asset exposures with128/256/512 checkpoints and
 an initial evaluation. Preserve both optimizer-step and exposure counters.
-Common/structure LR is3e-5, fill LR1e-4, fresh AdamW betas(.9,.999), no weight
+Pretrained surface LR is3e-5; fresh motion, structure and fill LRs are1e-4.
+Use fresh AdamW betas(.9,.999), no weight
 decay, clip1, and a192-asset linear warmup from20% followed by constant LR.
 Loss is mean coordinate CE plus mean structure CE, each normalized per asset.
-This is a warm-start backend comparison, not a fresh full-model comparison.
+This is an independent new-model comparison from a common official surface
+initialization, not a continuation of old A/B training.
 
 ## Random Terminal Pruning
 
@@ -151,12 +155,14 @@ frames each,32 optimizer updates, evaluated at0/8/16/32. Its fitted weights are
 diagnostic only. Capacity profiling and normal training remain unpublished;
 execution success alone does not establish learning or quality acceptance.
 
-That preflight exited1 before model construction: the optional B65 checkpoint
+The superseded v1 preflight exited1 before model construction: the optional B65 checkpoint
 had been deleted. The user confirmed deleting the old checkpoints. No model
 computation or optimizer update occurred. The official UniRig checkpoint still
 exists. B65 was a primary-selected warm start, not required by the architecture;
-do not silently replace it. GPU execution is blocked until the common starting
-point and consequent initialization comparison are reconsidered and published.
+do not silently replace it. The user then explicitly rejected old experiment
+inheritance and authorized completing validation through readiness for formal
+5k training. The v2 initialization above supersedes v1. CPU initialization
+checks precede the next exact bounded GPU stage; no automatic quality approval.
 
 Checkpoint tests cover mid-budget restart, completed-budget extension, final
 evaluation recovery, AdamW parameter identities/moments/step counts and RNG

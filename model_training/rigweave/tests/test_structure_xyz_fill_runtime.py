@@ -15,18 +15,18 @@ from structure_xyz_fill_runtime import (
     make_stream, matched_trial_fingerprint, optimizer_for, pruning_choices,
     set_learning_rate, validate_config,
 )
-from train_structure_xyz_fill import published_run, optimizer_parameter_names
+from train_structure_xyz_fill import published_run, optimizer_parameter_names, training_contract, initialization_contract
 
 
 class RuntimeTests(unittest.TestCase):
     def setUp(self):
-        path = Path(__file__).resolve().parents[2] / 'experiments/structure_xyz_fill_random_512_v1.json'
+        path = Path(__file__).resolve().parents[2] / 'experiments/structure_xyz_fill_random_512_v2.json'
         self.config = json.loads(path.read_text())
 
     def test_declared_baseline_and_embedding_trial_are_matched(self):
         self.assertEqual(validate_config(self.config), [128, 256, 512])
         other = deepcopy(self.config)
-        other['fill_initialization']['kind'] = 'structure_and_position'
+        other['fill_initialization']['kind'] = 'official_text_positions'
         validate_config(other)
         self.assertEqual(matched_trial_fingerprint(self.config), matched_trial_fingerprint(other))
         other['data']['stream_seed'] += 1
@@ -44,6 +44,14 @@ class RuntimeTests(unittest.TestCase):
             change(value)
             with self.assertRaises(ValueError):
                 validate_config(value)
+
+    def test_official_source_and_new_seed_are_bound_to_reuse_and_continuation(self):
+        for name, replacement in (('sha256', 'changed'), ('seed', 20261023)):
+            other = deepcopy(self.config)
+            other['initialization'][name] = replacement
+            self.assertNotEqual(training_contract(self.config), training_contract(other))
+            self.assertNotEqual(initialization_contract(self.config), initialization_contract(other))
+            self.assertNotEqual(matched_trial_fingerprint(self.config), matched_trial_fingerprint(other))
 
     def test_pruning_gate_is_global_and_visits_ignore_microbatch_partition(self):
         requests = [FrameSampleRequest(index, 8, (20261013 << 32) + index) for index in range(8)]
@@ -93,7 +101,7 @@ class RuntimeTests(unittest.TestCase):
             setattr(model, name, nn.Linear(2, 2))
         optimizer = optimizer_for(model, self.config)
         names = optimizer_parameter_names(model, optimizer)
-        self.assertEqual([row['group'] for row in names], ['shared', 'structure', 'fill'])
+        self.assertEqual([row['group'] for row in names], ['surface', 'motion', 'structure', 'fill'])
         self.assertEqual(len({name for group in names for name in group['parameters']}), 8)
         first = set_learning_rate(optimizer, 0, self.config)
         self.assertAlmostEqual(first['fill'], 2e-5)

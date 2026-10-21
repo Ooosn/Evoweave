@@ -57,7 +57,7 @@ def verify_operation(args, config):
     if state['architecture_contract']['id'] != FAMILY:
         raise ValueError('active architecture authority is not the XYZ token-fill model')
     run = published_run(operation, args.config, args.output, args.mode, sha256(args.config))
-    gpu = args.mode != 'audit'
+    gpu = args.mode not in {'audit', 'initialize'}
     if gpu and (operation.get('gpu_work_allowed') is not True or run.get('execution_allowed') is not True):
         raise ValueError('this exact GPU experiment is not released')
     subprocess.run([sys.executable, str(ROOT / 'model_training/tools/agent_work_guard.py'),
@@ -91,17 +91,23 @@ def read_reviewed(spec, *, name):
 def training_contract(config):
     contract = {key: config[key] for key in (
         'purpose', 'data', 'surface_sampling', 'auxiliary_codec', 'architecture', 'fill_architecture',
-        'quantization', 'common_initialization', 'fill_initialization', 'optimization', 'pruning',
+        'quantization', 'initialization', 'common_initialization', 'fill_initialization', 'optimization', 'pruning',
         'evaluation', 'reference_evaluation',
     )}
     contract['execution'] = {'world_size': config['runtime']['world_size'], 'precision': 'bfloat16_autocast'}
     return contract
 
 
+def initialization_contract(config):
+    return {key: config[key] for key in ('initialization', 'common_initialization', 'architecture',
+                                        'fill_architecture', 'fill_initialization', 'auxiliary_codec')}
+
+
 def capacity_contract(config):
     return {'model': {key: config[key] for key in ('architecture', 'fill_architecture', 'auxiliary_codec')},
             'surface_sampling': config['surface_sampling'], 'quantization': config['quantization'],
-            'manifests': config['data']['manifests'], 'common_initialization': config['common_initialization'],
+            'manifests': config['data']['manifests'], 'initialization': config['initialization'],
+            'common_initialization': config['common_initialization'],
             'precision': 'bfloat16_autocast', 'world_size': config['runtime']['world_size'],
             'physical_gpus': config['runtime']['physical_gpus'],
             'optimizer': {'kind': 'AdamW', 'betas': config['optimization']['betas']},
@@ -618,7 +624,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=('audit', 'preflight', 'profile', 'train'), required=True)
+    parser.add_argument('--mode', choices=('audit', 'initialize', 'preflight', 'profile', 'train'), required=True)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     rank, world = int(os.environ.get('RANK', 0)), int(os.environ.get('WORLD_SIZE', 1))
@@ -626,12 +632,27 @@ def main():
     try:
         validate_config(config)
         source = verify_operation(args, config)
-        if args.mode == 'audit':
+        if args.mode in {'audit', 'initialize'}:
             if world != 1:
-                raise ValueError('the CPU data audit must run once, without distributed workers')
+                raise ValueError('CPU audits must run once, without distributed workers')
+            if os.environ.get('CUDA_VISIBLE_DEVICES'):
+                raise ValueError('CPU audits require explicitly hidden CUDA devices')
             args.output.mkdir(parents=True, exist_ok=False)
             claimed = True
-            result = audit(args, config, source)
+            if args.mode == 'audit':
+                result = audit(args, config, source)
+            else:
+                reset_random(config['initialization']['seed'])
+                model, tokenizer, codec, initial = build_fill_model(config, torch.device('cpu'))
+                if any(parameter.device.type != 'cpu' for parameter in model.parameters()):
+                    raise RuntimeError('initialization audit unexpectedly created GPU parameters')
+                if initial['trained_experiment_weights_loaded'] or any(initial['inherited_training'].values()):
+                    raise RuntimeError('fresh independent initialization inherited experiment state')
+                result = {'passed': True, 'mode': 'initialize', 'no_gpu_or_training': True,
+                          'initialization': initial, 'initialization_contract': initialization_contract(config),
+                          'source_sha256': model_source_hashes(), 'code_commit': source,
+                          'config_sha256': sha256(args.config)}
+                write_json(args.output / 'initialization_audit.json', result)
         else:
             visible = ','.join(map(str, config['runtime']['physical_gpus']))
             if (os.environ.get('CUDA_VISIBLE_DEVICES') != visible or world != config['runtime']['world_size']
@@ -659,8 +680,15 @@ def main():
                 raise ValueError('matched-panel audit does not cover the current target implementation')
             entries = read_entries(config)
             verify_data_selection(config, entries)
+            initialization_audit = read_reviewed(config['safety']['initialization'], name='official-only initialization audit')
+            if (initialization_audit['initialization_contract'] != initialization_contract(config)
+                    or initialization_audit['source_sha256'] != model_source_hashes()):
+                raise ValueError('initialization audit does not cover the exact current model and source')
             reset_random(config['initialization']['seed'])
             model, tokenizer, codec, initial = build_fill_model(config, device)
+            if (initial['full_initial_state_sha256'] !=
+                    initialization_audit['initialization']['full_initial_state_sha256']):
+                raise RuntimeError('GPU starting parameters differ from the reviewed CPU initialization')
             initial.update(code_commit=source, config_sha256=sha256(args.config),
                            device=torch.cuda.get_device_name(device), torch_version=torch.__version__,
                            matched_trial_contract_sha256=matched_trial_fingerprint(config))

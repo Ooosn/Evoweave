@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
@@ -14,6 +13,8 @@ import torch
 
 from rigweave.dynamic_rig.aux_skeleton_tokens import AuxSkeletonTokens
 from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
+from rigweave.dynamic_rig.surface_tokenizer import FixedQuerySurfaceTokenizer
+from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZConfig, VirtualQueryMotionEncoder, AuxiliaryIDDecoder
 from rigweave.dynamic_rig.structure_xyz_fill import (
     StructureXYZFillConfig, StructureXYZFillRig, initialize_fill_embeddings,
 )
@@ -23,7 +24,10 @@ from rigweave.dynamic_rig.virtual_query_xyz_data import build_xyz_aux_targets
 from fusion_evaluation import tree_fingerprint
 from probe_virtual_query_lambda import parameter_fingerprint
 from virtual_fusion_normal_runtime import MatchedFrameStream
-from virtual_query_xyz_runtime import build_model as build_old_model, fixed_dataset, read_entries, sha256
+from virtual_query_xyz_runtime import fixed_dataset, read_entries, sha256
+from structure_xyz_fill_initialization import (
+    load_official_surface_parameters, official_text_positions, validate_initialization_policy,
+)
 
 
 TRAIN5000_SHA = 'a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88'
@@ -44,7 +48,8 @@ def model_source_hashes():
              ('structure_xyz_fill.py', 'virtual_query_xyz.py', 'motion_encoder.py',
               'surface_tokenizer.py', 'motion_evidence.py', 'skeleton_topology_metrics.py')]
     paths += [f'model_training/rigweave/scripts/{name}' for name in
-              ('structure_xyz_fill_runtime.py', 'train_structure_xyz_fill.py', 'structure_xyz_fill_evaluation.py')]
+              ('structure_xyz_fill_runtime.py', 'train_structure_xyz_fill.py', 'structure_xyz_fill_evaluation.py',
+               'structure_xyz_fill_initialization.py')]
     return {'data': data_source_hashes(), 'model': {path: sha256(SOURCE_ROOT / path) for path in paths}}
 
 
@@ -80,15 +85,12 @@ def validate_config(config):
         raise ValueError('shared upstream or structure decoder differs from the declared architecture')
     if config['pruning']['batch_probability'] != .2 or config['pruning']['max_fraction'] != .2:
         raise ValueError('first-version pruning must use an 80/20 gate and 0..20% leaf deletion')
-    if config['fill_initialization']['kind'] not in {'random', 'structure_and_position'}:
-        raise ValueError('unknown selective fill initialization')
-    if type(config['fill_initialization']['seed']) is not int:
-        raise ValueError('fill initialization requires an integer seed')
+    validate_initialization_policy(config)
     evaluation = config['evaluation']
     if (evaluation['input_frames'] != 8 or evaluation['frame_indices'] != [0, 2, 4, 6]
             or evaluation['train_assets'] != 8 or evaluation['valid_assets'] != 16):
         raise ValueError('early evaluation must use the fixed small matched panel')
-    for key in ('shared_lr', 'structure_lr', 'fill_lr', 'structure_weight', 'clip_grad_norm'):
+    for key in ('surface_lr', 'motion_lr', 'structure_lr', 'fill_lr', 'structure_weight', 'clip_grad_norm'):
         value = config['optimization'][key]
         if isinstance(value, bool) or not np.isfinite(value) or value <= 0:
             raise ValueError(f'invalid optimization field {key}')
@@ -131,40 +133,66 @@ def load_tokenizer(config):
 
 
 def build_fill_model(config, device):
-    """Warm-start only declared common modules; construct an independent new XYZ backend."""
-    warm = config['common_initialization']
-    if warm['kind'] != 'accepted_b65_shared_and_structure':
-        raise ValueError('first trials require their declared common B65 starting point')
-    if sha256(warm['checkpoint']) != warm['sha256']:
-        raise ValueError('accepted common B65 checkpoint fingerprint changed')
-    base, tokenizer, codec, official = build_old_model(config, torch.device('cpu'))
-    payload = torch.load(warm['checkpoint'], map_location='cpu', mmap=True, weights_only=False)
-    if (payload['schema'] != 'virtual_query_xyz_aux_ids_v1' or payload['asset_exposures'] != 65000
-            or payload['architecture'] != asdict(base.config)):
-        raise ValueError('common checkpoint does not match the declared B65 architecture and exposure')
-    base.load_state_dict(payload['model'], strict=True)
-    inherited = {'asset_exposures': payload['asset_exposures'], 'updates': payload['step'],
-                 'supervised_frame_exposures': payload['supervised_frame_exposures'], 'source': payload['source']}
-    del payload
-    position = base.xyz_decoder.model.decoder.embed_positions
-    # OPT has an internal row offset; its former mesh prefix occupied real positions too.
-    text_position_offset = int(position.offset) + base.config.query_tokens
+    """Load only official surface weights; never construct or load an old experiment model."""
+    import yaml
+    from src.model.michelangelo.get_model import get_encoder_simplified
+
+    validate_initialization_policy(config)
+    initial = config['initialization']
+    if sha256(initial['checkpoint']) != initial['sha256']:
+        raise ValueError('official UniRig checkpoint fingerprint changed')
+    if sha256(initial['model_config']) != initial['model_config_sha256']:
+        raise ValueError('official model configuration fingerprint changed')
+    tokenizer = load_tokenizer(config)
+    upstream = VirtualQueryXYZConfig(**config['architecture'])
+    codec = AuxSkeletonTokens(**config['auxiliary_codec'])
+    upstream_config = yaml.safe_load(Path(initial['model_config']).read_text())
+    if (upstream_config['llm']['hidden_size'] != upstream.dim
+            or upstream_config['llm']['max_position_embeddings'] != 3076):
+        raise ValueError('official dimensions differ from the declared compatible initialization')
+    payload = torch.load(initial['checkpoint'], map_location='cpu', mmap=True, weights_only=False)
+    state = {key.removeprefix('model.'): value for key, value in payload['state_dict'].items()}
+    surface_args = dict(upstream_config['mesh_encoder'])
+    if surface_args.pop('__target__') != 'michelangelo_encoder' or surface_args['pretrained_path'] is not None:
+        raise ValueError('surface construction must not load an undeclared second checkpoint')
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(initial['seed'])
+        surface = get_encoder_simplified(**surface_args)
+        projection = torch.nn.Linear(surface.width, upstream.dim)
+    loaded = load_official_surface_parameters(surface, projection, state)
+    position, text_position_offset = official_text_positions(
+        state, dim=upstream.dim, query_tokens=upstream.query_tokens,
+        position_capacity=upstream_config['llm']['max_position_embeddings'])
+    position = position.detach().clone()
+    del payload, state
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(initial['seed'])
+        motion = VirtualQueryMotionEncoder(upstream)
+        structure = AuxiliaryIDDecoder(upstream, codec.vocab_size, codec.pad)
     with torch.random.fork_rng(devices=[]):
         torch.manual_seed(config['fill_initialization']['seed'])
         model = StructureXYZFillRig(
-            base.surface_tokenizer, StructureXYZFillConfig(upstream=base.config, **config['fill_architecture']),
-            codec, motion_encoder=base.motion_encoder, structure_decoder=base.auxiliary,
+            FixedQuerySurfaceTokenizer(surface, projection),
+            StructureXYZFillConfig(upstream=upstream, **config['fill_architecture']),
+            codec, motion_encoder=motion, structure_decoder=structure,
         )
     kind = config['fill_initialization']['kind']
     copied = initialize_fill_embeddings(
-        model, structure_embedding=base.auxiliary.embedding.weight if kind == 'structure_and_position' else None,
-        position_embedding=position.weight if kind == 'structure_and_position' else None,
-        position_row_offset=text_position_offset if kind == 'structure_and_position' else 0,
-        source_name=f'B65_{kind}',
+        model, position_embedding=position if kind == 'official_text_positions' else None,
+        position_row_offset=text_position_offset if kind == 'official_text_positions' else 0,
+        source_name=kind,
     )
-    report = {'common_checkpoint': warm, 'inherited_training': inherited,
+    model.requires_grad_(True)
+    official = {'checkpoint': initial['checkpoint'], 'checkpoint_sha256': initial['sha256'],
+                'source_commit': initial['upstream_source_commit'], 'model_config_sha256': initial['model_config_sha256'],
+                'surface_load_report': loaded, 'old_AR_model_constructed': False,
+                'old_AR_attention_ffn_head_loaded': False,
+                'copied_position_source_key': 'model.transformer.model.decoder.embed_positions.weight' if kind != 'random' else None}
+    report = {'common_initialization': config['common_initialization'],
+              'inherited_training': {'asset_exposures': 0, 'updates': 0, 'supervised_frame_exposures': 0},
+              'trained_experiment_weights_loaded': False,
               'optimizer_restored': False, 'new_training_counters_start_at_zero': True,
-              'not_a_from_scratch_comparison': True, 'fill_initialization': copied,
+              'common_new_module_seed': initial['seed'], 'fill_initialization': copied,
               'fill_seed': config['fill_initialization']['seed'], 'official_loading': official,
               'architecture': model.configuration(),
               'common_parameters_sha256': parameter_fingerprint(model, exclude_parts=('fill_decoder.',)),
@@ -173,7 +201,7 @@ def build_fill_model(config, device):
               'full_initial_state_sha256': parameter_fingerprint(model),
               'parameter_groups': {name: sum(p.numel() for p in getattr(model, name).parameters())
                                    for name in ('surface_tokenizer', 'motion_encoder', 'structure_decoder', 'fill_decoder')}}
-    del base, position
+    del position
     model.to(device)
     return model, tokenizer, codec, report
 
@@ -415,8 +443,10 @@ def audit_new_target_contract(config, entries, codec, tokenizer):
 def optimizer_for(model, config):
     plan = config['optimization']
     groups = [
-        {'params': list(model.surface_tokenizer.parameters()) + list(model.motion_encoder.parameters()),
-         'name': 'shared', 'lr': plan['shared_lr'], 'peak_lr': plan['shared_lr']},
+        {'params': list(model.surface_tokenizer.parameters()),
+         'name': 'surface', 'lr': plan['surface_lr'], 'peak_lr': plan['surface_lr']},
+        {'params': list(model.motion_encoder.parameters()),
+         'name': 'motion', 'lr': plan['motion_lr'], 'peak_lr': plan['motion_lr']},
         {'params': list(model.structure_decoder.parameters()), 'name': 'structure',
          'lr': plan['structure_lr'], 'peak_lr': plan['structure_lr']},
         {'params': list(model.fill_decoder.parameters()), 'name': 'fill',
@@ -461,7 +491,7 @@ def reset_random(seed):
 def matched_trial_fingerprint(config):
     contract = {key: config[key] for key in (
         'purpose', 'data', 'surface_sampling', 'auxiliary_codec', 'architecture', 'fill_architecture',
-        'quantization', 'common_initialization', 'optimization', 'pruning', 'evaluation', 'reference_evaluation')}
+        'quantization', 'initialization', 'common_initialization', 'optimization', 'pruning', 'evaluation', 'reference_evaluation')}
     contract['fill_seed'] = config['fill_initialization']['seed']
     contract['budget'] = {key: config['training'][key] for key in (
         'target_assets', 'effective_assets_per_update', 'evaluation_assets', 'checkpoint_assets', 'frame_policy')}

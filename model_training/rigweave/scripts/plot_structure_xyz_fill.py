@@ -27,11 +27,24 @@ def skeleton(ax, joints, parents, color):
         ax.plot(bone[:, 0], bone[:, 1], bone[:, 2], color=color, linewidth=1.4)
 
 
-def render(evaluation, destination, *, group='valid', assets=2):
-    reports = [json.loads(path.read_text()) for path in sorted(Path(evaluation).glob('rank_*.json'))]
+def load_rows(evaluation, group, fit_step=None):
+    evaluation = Path(evaluation)
+    if fit_step is not None:
+        if fit_step < 0:
+            raise ValueError('fit step must be nonnegative')
+        paths = sorted(evaluation.glob(f'fit_eval_{fit_step:04d}_rank_*.json'))
+        if not paths:
+            raise ValueError('no saved fixed-fit evidence for the requested step')
+        reports = [json.loads(path.read_text()) for path in paths]
+        return [row for report in reports for row in report['rows']], 'fixed_fit'
+    reports = [json.loads(path.read_text()) for path in sorted(evaluation.glob('rank_*.json'))]
     if not reports or not all(report.get('complete') for report in reports):
         raise ValueError('visualization requires complete saved evaluation ranks')
-    rows = [row for report in reports for row in report['groups'][group]['rows']]
+    return [row for report in reports for row in report['groups'][group]['rows']], group
+
+
+def render(evaluation, destination, *, group='valid', assets=2, fit_step=None):
+    rows, group = load_rows(evaluation, group, fit_step)
     counts = {row['asset_id']: len(row['original_target_joints']) for row in rows}
     keys = sorted(counts)
     if not keys:
@@ -75,13 +88,14 @@ def render(evaluation, destination, *, group='valid', assets=2):
             if column == 0:
                 ax.text2D(.01, .01, f'{row["asset_id"]}\nraw frame {row["raw_frame_index"]}',
                           transform=ax.transAxes, fontsize=8)
-    figure.suptitle(f'{group}: fixed geometry examples', fontsize=13)
+    suffix = '' if fit_step is None else f' | update {fit_step}'
+    figure.suptitle(f'{group}: fixed geometry examples{suffix}', fontsize=13)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(destination, dpi=150, facecolor='white')
     plt.close(figure)
     destination.with_suffix('.json').write_text(json.dumps({
-        'evaluation': str(evaluation), 'group': group,
+        'evaluation': str(evaluation), 'group': group, 'fit_step': fit_step,
         'selection_rule': 'fixed non-52/common-template examples, first and last scored frames',
         'rows': [{key: row[key] for key in ('asset_id', 'frame_index', 'raw_frame_index', 'original_edge_f1',
                                           'gt_structure_xyz_l1', 'status')} for row in selected]}, indent=2) + '\n')
@@ -94,7 +108,11 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--group', default='valid')
     parser.add_argument('--assets', type=int, default=2)
+    parser.add_argument('--fit-step', type=int)
     arguments = parser.parse_args()
     if arguments.assets < 1:
         parser.error('--assets must be positive')
-    print(render(arguments.evaluation, arguments.output, group=arguments.group, assets=arguments.assets))
+    if arguments.fit_step is not None and arguments.fit_step < 0:
+        parser.error('--fit-step must be nonnegative')
+    print(render(arguments.evaluation, arguments.output, group=arguments.group,
+                 assets=arguments.assets, fit_step=arguments.fit_step))

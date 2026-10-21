@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_selected4096_v4",
-  "updated_at": "2026-10-21T21:44:00Z",
+  "state_id": "structure_xyz_fill_20261022_selected8192_v4",
+  "updated_at": "2026-10-21T22:17:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -131,7 +131,7 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "Both2048 trials are execution-valid and naturally terminate, but mostly emit one52-joint template with weak pose adaptation. Random positions selected for simpler initialization/no consistent P benefit, not proven superior. Formal20k/40k remains blocked; bounded selectedR4096 next.",
+    "SelectedR4096 is execution-valid and localization improves, but every structure is still the same52-joint template and valid F1 declined from3072. Formal20k/40k remains blocked; bounded8192 covers all5000 assets. If collapse persists at8192, stop adding training and inspect structure conditioning.",
     "Direct DFS IDs preserve parent identity. Original coordinate quantization can still reduce spatial-matching F1; retain original GT and report quantized-GT references without relabeling or claiming a mathematical upper bound."
   ],
   "allowed_operations": [
@@ -918,13 +918,14 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_selected4096_20261022_v4",
+    "label": "structure_xyz_fill_selected8192_20261022_v4",
     "mode": "bounded_selected_learning_trial",
     "operation": "train",
-    "status": "retry_after_test_only_publication_anchor_mismatch",
+    "status": "selected8192_after4096_learning_review",
     "failed_startup_v3": {"exit": 1, "failed_utc": "2026-10-21T21:26:54Z", "reason": "Published analysis regression test differed from outdated operation code_commit; full subtree guard correctly refused startup", "changed_subtree_file": "model_training/rigweave/tests/test_compare_structure_xyz_trials.py", "actual_optimizer_updates": 0, "model_constructed": false, "output_directory_created": false, "neural_data_trainer_evaluator_hashes_match_reviewed_preflight": true, "logs_preserved": true},
     "reviewed512": "model_training/analysis/structure_xyz_fill_matched512_v3_review.json",
     "reviewed2048": "model_training/analysis/structure_xyz_fill_matched2048_v3_review.json",
+    "reviewed4096": "model_training/analysis/structure_xyz_fill_selected4096_v4_review.json",
     "selected_initialization": "random",
     "authorization": "User explicitly authorized completing the new independent system and tests toward formal5k training, without inheriting old A/B experiment weights.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
@@ -950,26 +951,26 @@
     },
     "runs": [
       {
-        "name": "trial_random_4096_v4",
+        "name": "trial_random_8192_v4",
         "mode": "train",
         "approved": true,
         "execution_allowed": true,
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_4096_v3.json",
-        "config_sha256": "e7a2328e1a667d6d4ab7d84fd2517f3c870d9f26414875516444ed93302bd1b1",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/trial_random_4096_v4",
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_8192_v4.json",
+        "config_sha256": "ccd1bae26b90524c75f62bb8236229811ded89d24d90fb76c0abfad6bd5e13ca",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/trial_random_8192_v4",
         "physical_gpus": [5, 6],
         "allocation": 130309880,
         "host": "pcg01i"
       }
     ],
-    "trial_contract": {"target_asset_exposures": 4096, "start_asset_exposures": 2048, "start_optimizer_updates": 45, "optimizer_updates": 89, "supervised_frame_exposures": 55456, "effective_assets_per_update": 48, "evaluations": [3072, 4096], "small_panel_views": 128, "sampling_plan_sha256": "a1d5a02131ac700c1cb0051da016372a77a914c11a0300551c9a0e7e1a801260", "diagnostic_weights_reused": false, "old_AB_weights_loaded": false, "resume_own_new_checkpoint_with_adam_rng": true},
+    "trial_contract": {"target_asset_exposures": 8192, "start_asset_exposures": 4096, "start_optimizer_updates": 89, "optimizer_updates": 175, "supervised_frame_exposures": 108048, "effective_assets_per_update": 48, "evaluations": [6144, 8192], "small_panel_views": 128, "sampling_plan_sha256": "0d9989101601110b8cf8ae4833ab98554cdf819a190c6c5b38acfc17028b876c", "diagnostic_weights_reused": false, "old_AB_weights_loaded": false, "resume_own_new_checkpoint_with_adam_rng": true},
     "acceptance": [
       "Own new-model checkpoint SHA, exact model and Adam moments, RNG handoff and extended sampling prefix verified; never inherit old AB weights",
-      "Selected random initializer continues its exact own checkpoint and matched2048 sampling prefix; no architecture/loss/LR/data changes",
-      "All4096 actual exposures and89totalupdates,128-view evaluations at3072/4096, no missing or duplicated views, unchanged original GT and historical reference; first resumed batch must match audited next requests",
+      "Selected random initializer continues its exact own checkpoint and4096 sampling prefix; no architecture/loss/LR/data changes",
+      "All8192 actual exposures and175totalupdates,128-view evaluations at6144/8192, no missing or duplicated views, unchanged original GT and historical reference; first resumed batch must match audited next requests",
       "Compare original spatial F1 with failures zero, success/joint counts, GT-structure XYZ CE/accuracy/L1 and DFS-ID diagnostics; do not select from tiny fixed-fit differences alone",
       "Verify new checkpoint, optimizer and RNG continuation before extension; archive final checkpoint plus evidence without deleting SSD sources",
-      "No automatic extension beyond4096 or formal20k/40k promotion; inspect natural EOS, count diversity, center-baseline gain and pose adaptation, not only CE"
+      "No automatic extension beyond8192 or formal20k/40k promotion. If single52-template collapse persists at8192, stop adding training and inspect structure conditioning; do not mistake L1 improvement for whole-model quality."
     ],
     "stop_conditions": ["nonfinite_loss_or_gradients", "wrong_GT_mapping", "source_or_data_drift", "unexpected_truncation", "out_of_memory", "GPU_resource_drift"]
   },

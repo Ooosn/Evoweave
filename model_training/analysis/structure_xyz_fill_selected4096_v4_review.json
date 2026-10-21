@@ -1,0 +1,207 @@
+{
+  "schema": "structure_xyz_fill_selected4096_review_v4",
+  "execution_accepted": true,
+  "quality_accepted": false,
+  "formal_training_allowed": false,
+  "source_commit": "febd42d4e61773c753c3ad5a8bc067ff3e85afe0",
+  "assets": 4096,
+  "updates": 89,
+  "supervised_frames": 55456,
+  "actual_plan_check": {
+    "rank_trace_rows": 88,
+    "microbatches": 464,
+    "all_requests_and_pruning_match_cpu_plan": true
+  },
+  "evaluations": [
+    3072,
+    4096
+  ],
+  "views_per_evaluation": 128,
+  "summary_sha256": "d7681efe30a2edfd8fcd33b776534d93795db490eb8183e18e0c9ac0a33a108d",
+  "final_groups": {
+    "train_heldout": {
+      "assets": 8,
+      "views": 32,
+      "original_edge_f1": 0.13027703241487285,
+      "gt_structure_xyz_ce": 4.760373309254646,
+      "gt_structure_xyz_accuracy": 0.01494131087383721,
+      "gt_structure_xyz_l1": 0.1862091168295592,
+      "gt_structure_edge_f1": 0.11636577070172476,
+      "success": 1,
+      "exact_count": 0.375,
+      "successful_mean_abs_joint_count_error": 13.75,
+      "reference_B65_F1": 0.8455084740011609,
+      "localization_diagnostics": {
+        "views": 32,
+        "origin_constant_l1": 0.26515093544891927,
+        "center_bin_constant_l1": 0.26486216741121865,
+        "relative_l1_reduction_vs_center_bin": 0.2969584245796255,
+        "predicted_bbox_diagonal": 1.5900542517923344,
+        "target_bbox_diagonal": 1.8754882371222334,
+        "mean_distinct_predicted_xyz": 45.4375,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 8,
+        "pose_pairs": 48,
+        "mean_predicted_coordinate_change": 0.01649037800383594,
+        "mean_GT_coordinate_change": 0.08682819588551244,
+        "predicted_to_GT_change_ratio": 0.18991962041431074,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    },
+    "train_seen": {
+      "assets": 8,
+      "views": 32,
+      "original_edge_f1": 0.1251453381108778,
+      "gt_structure_xyz_ce": 4.754562601447105,
+      "gt_structure_xyz_accuracy": 0.020523659317404963,
+      "gt_structure_xyz_l1": 0.1893208040855825,
+      "gt_structure_edge_f1": 0.12399181903395252,
+      "success": 1,
+      "exact_count": 0.375,
+      "successful_mean_abs_joint_count_error": 13.75,
+      "reference_B65_F1": 0.8737631417893817,
+      "localization_diagnostics": {
+        "views": 32,
+        "origin_constant_l1": 0.26582139179903286,
+        "center_bin_constant_l1": 0.2654632344465634,
+        "relative_l1_reduction_vs_center_bin": 0.2868285332725914,
+        "predicted_bbox_diagonal": 1.609755376888665,
+        "target_bbox_diagonal": 1.8679311039993622,
+        "mean_distinct_predicted_xyz": 45.1875,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 8,
+        "pose_pairs": 48,
+        "mean_predicted_coordinate_change": 0.013931626794696382,
+        "mean_GT_coordinate_change": 0.09111708262327141,
+        "predicted_to_GT_change_ratio": 0.15289807787522633,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    },
+    "valid": {
+      "assets": 16,
+      "views": 64,
+      "original_edge_f1": 0.10714157325908333,
+      "gt_structure_xyz_ce": 4.734697848558426,
+      "gt_structure_xyz_accuracy": 0.04143796630523866,
+      "gt_structure_xyz_l1": 0.18912010290659964,
+      "gt_structure_edge_f1": 0.08516716311199443,
+      "success": 1,
+      "exact_count": 0.3125,
+      "successful_mean_abs_joint_count_error": 13.75,
+      "reference_B65_F1": 0.681973081534069,
+      "localization_diagnostics": {
+        "views": 64,
+        "origin_constant_l1": 0.23461152109366173,
+        "center_bin_constant_l1": 0.23471753426131112,
+        "relative_l1_reduction_vs_center_bin": 0.19426512975853016,
+        "predicted_bbox_diagonal": 1.411021625119622,
+        "target_bbox_diagonal": 1.7887973722554937,
+        "mean_distinct_predicted_xyz": 37.84375,
+        "single_point_prediction_views": 0
+      },
+      "pose_response_diagnostics": {
+        "assets_with_pose_pairs": 16,
+        "pose_pairs": 96,
+        "mean_predicted_coordinate_change": 0.015834328390914018,
+        "mean_GT_coordinate_change": 0.07886130000903871,
+        "predicted_to_GT_change_ratio": 0.20078705764550117,
+        "interpretation": "Output motion amplitude only; not accuracy or explained variance."
+      }
+    }
+  },
+  "free_structure": {
+    "instances": 32,
+    "distinct_templates": 1,
+    "joint_count": 52,
+    "natural_EOS_all": true
+  },
+  "validation_F1_3072": 0.11711246408038177,
+  "interpretation": "GT-conditioned localization and pose response improve, but validation free-generation F1 declined from3072 and every structure remains the same52-joint template. Improvements in L1 are not whole-model quality acceptance.",
+  "training_population": {
+    "rows": 5000,
+    "joints52": 1570,
+    "dominant_source_parent_array_count": 1517,
+    "unique_source_parent_arrays": 1223,
+    "source": "unchanged cpu_audit_v1/data_audit.json"
+  },
+  "continuation": {
+    "checkpoint_sha256": "36a2b4fecbb0498632bef73211a578c4b0265973dc031d382c8515c78a432817",
+    "header_and_named_optimizer_states_verified": true,
+    "optimizer_state_counts": [
+      196,
+      305,
+      42,
+      83
+    ],
+    "optimizer_steps": 89,
+    "rank_stream_cursors": [
+      2048,
+      2048
+    ],
+    "target_assets": 8192,
+    "evaluation_boundaries": [
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      3072,
+      4096,
+      6144,
+      8192
+    ],
+    "future_plan_sha256": "0d9989101601110b8cf8ae4833ab98554cdf819a190c6c5b38acfc17028b876c",
+    "future_total_updates": 175,
+    "future_supervised_frames": 108048,
+    "first5000_exposures_cover_all5000_assets": true,
+    "original_stream_prefix_exact": true,
+    "first_resumed_frames": 11,
+    "next_first_three_microbatch_indices": [
+      [
+        2391,
+        431,
+        2063,
+        3485,
+        949,
+        447,
+        3340,
+        1445,
+        4840,
+        3483,
+        648,
+        2206,
+        1518,
+        4341,
+        1053,
+        2136,
+        575,
+        3312
+      ],
+      [
+        946,
+        668,
+        2578,
+        2638,
+        3779,
+        2340,
+        715,
+        2756,
+        3500,
+        1406,
+        4274,
+        1853,
+        4177,
+        499,
+        4013,
+        285,
+        4858,
+        4237
+      ]
+    ]
+  },
+  "decision": "One additional boundedR8192 stage with6144/8192 evaluations and unchanged model/data/LR/loss. If the same52-template collapse persists at8192, do not add more training; inspect structure conditioning before any formal20k promotion."
+}

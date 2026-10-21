@@ -204,7 +204,26 @@ def test_failed_free_generation_scores_zero_without_swallowing_gt_metrics() -> N
     assert all(row["gt_structure_xyz_accuracy"] == 1.0 for row in report["rows"])
     assert report["summary"]["failure_count"] == 4
     assert report["summary"]["mean_original_edge_f1"] == 0.0
-    assert report["summary"]["mean_j2j"] == 0.0
+    assert report["summary"]["mean_j2j"] is None
+    assert report["summary"]["mean_j2j_successful"] is None
+    assert report["summary"]["j2j_coverage"] == 0.0
+
+
+def test_partial_failure_does_not_improve_reported_distance() -> None:
+    codec = AuxSkeletonTokens(max_joints=8, max_sequence_tokens=64)
+    surface, targets, geometry, tokens = _item(codec)
+    report = evaluate_fill_items(
+        FakeFillModel(codec, targets['xyz_labels'], tokens),
+        [(surface, targets, geometry)], codec, frame_indices=[0, 2], group='g', bins=16,
+    )
+    rows = report['rows']
+    rows[0].update(success=False, j2j=None, original_edge_f1=0.0, exact_count=False)
+    rows[1]['j2j'] = 0.8
+    summary = summarize_fill_rows(rows, report['structure_rows'])
+    assert summary['mean_j2j'] is None
+    assert summary['mean_j2j_successful'] == 0.8
+    assert summary['j2j_coverage'] == 0.5
+    assert summary['failure_count'] == 1
 
 
 @pytest.mark.parametrize("frame_indices", ([], [0, 0], [8], [True]))

@@ -208,6 +208,15 @@ class FillModelTests(unittest.TestCase):
                                         allow_unused=True)
         self.assertTrue(all(value is None for value in gradients))
 
+    def test_nonfinite_structure_generation_aborts_instead_of_scoring_failure(self):
+        self.model.eval()
+        _, virtual = self.model.encode(self.surface)
+        def nonfinite(memory, ids, mask):
+            return torch.full((1, ids.shape[1], self.codec.vocab_size), float('nan'))
+        with patch.object(self.model.structure_decoder, 'forward', side_effect=nonfinite):
+            with self.assertRaises(FloatingPointError):
+                self.model.generate_structure(virtual[:1])
+
     def test_tiny_synthetic_fit_is_trainable(self):
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=.015, weight_decay=0)
         losses = []

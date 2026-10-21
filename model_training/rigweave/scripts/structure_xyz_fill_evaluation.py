@@ -406,7 +406,6 @@ def _summary(rows: list[dict[str, Any]], structure_rows: list[dict[str, Any]]) -
         raise ValueError("evaluation produced no rows")
     failures = sum(not bool(row["success"]) for row in rows)
     success_j2j = [float(row["j2j"]) for row in rows if row["j2j"] is not None]
-    j2j_failure_zero = [0.0 if row["j2j"] is None else float(row["j2j"]) for row in rows]
 
     def mean(name: str) -> float:
         values = [float(row[name]) for row in rows]
@@ -426,8 +425,9 @@ def _summary(rows: list[dict[str, Any]], structure_rows: list[dict[str, Any]]) -
         "mean_gt_structure_xyz_accuracy": mean("gt_structure_xyz_accuracy"),
         "mean_gt_structure_xyz_l1": mean("gt_structure_xyz_l1"),
         "mean_gt_structure_edge_f1": mean("gt_structure_edge_f1"),
-        "mean_j2j": float(np.mean(j2j_failure_zero)),
+        "mean_j2j": float(np.mean(success_j2j)) if len(success_j2j) == len(rows) else None,
         "mean_j2j_successful": float(np.mean(success_j2j)) if success_j2j else None,
+        "j2j_coverage": len(success_j2j) / len(rows),
         "mean_structure_dfs_edge_f1": float(np.mean([row["dfs_edge_f1"] for row in structure_rows])),
         "exact_count": float(np.mean([bool(row["exact_count"]) for row in rows])),
         "counts": {

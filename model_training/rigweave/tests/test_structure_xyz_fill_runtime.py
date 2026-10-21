@@ -14,8 +14,10 @@ from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
 from structure_xyz_fill_runtime import (
     make_stream, matched_trial_fingerprint, optimizer_for, pruning_choices,
     set_learning_rate, validate_config,
+    model_source_hashes,
 )
-from train_structure_xyz_fill import published_run, optimizer_parameter_names, training_contract, initialization_contract
+from train_structure_xyz_fill import (published_run, optimizer_parameter_names, training_contract,
+                                     initialization_contract, validate_initialization_audit)
 
 
 class RuntimeTests(unittest.TestCase):
@@ -52,6 +54,22 @@ class RuntimeTests(unittest.TestCase):
             self.assertNotEqual(training_contract(self.config), training_contract(other))
             self.assertNotEqual(initialization_contract(self.config), initialization_contract(other))
             self.assertNotEqual(matched_trial_fingerprint(self.config), matched_trial_fingerprint(other))
+
+    def test_initialization_receipt_binds_loader_not_unrelated_reporting(self):
+        receipt = {'initialization_contract': initialization_contract(self.config),
+                   'source_sha256': model_source_hashes()}
+        validate_initialization_audit(self.config, receipt)
+        receipt['source_sha256']['model']['model_training/rigweave/scripts/structure_xyz_fill_evaluation.py'] = 'older-reporting'
+        validate_initialization_audit(self.config, receipt)
+        for name in ('structure_xyz_fill_runtime.py', 'structure_xyz_fill_initialization.py'):
+            changed = deepcopy(receipt)
+            changed['source_sha256']['model'][f'model_training/rigweave/scripts/{name}'] = 'changed-loader'
+            with self.assertRaises(ValueError):
+                validate_initialization_audit(self.config, changed)
+        changed = deepcopy(receipt)
+        changed['initialization_contract']['initialization']['seed'] += 1
+        with self.assertRaises(ValueError):
+            validate_initialization_audit(self.config, changed)
 
     def test_pruning_gate_is_global_and_visits_ignore_microbatch_partition(self):
         requests = [FrameSampleRequest(index, 8, (20261013 << 32) + index) for index in range(8)]

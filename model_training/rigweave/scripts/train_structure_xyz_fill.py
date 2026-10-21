@@ -103,6 +103,18 @@ def initialization_contract(config):
                                         'fill_architecture', 'fill_initialization', 'auxiliary_codec')}
 
 
+def validate_initialization_audit(config, receipt):
+    if receipt['initialization_contract'] != initialization_contract(config):
+        raise ValueError('initialization audit does not cover the current initialization contract')
+    current = model_source_hashes()['model']
+    # Bind the loader itself here; forward/evaluation changes are covered by the
+    # new GPU preflight. The actual complete parameter fingerprint is checked below.
+    for name in ('structure_xyz_fill_runtime.py', 'structure_xyz_fill_initialization.py'):
+        path = f'model_training/rigweave/scripts/{name}'
+        if receipt['source_sha256']['model'][path] != current[path]:
+            raise ValueError('initialization loader changed since its CPU audit')
+
+
 def capacity_contract(config):
     return {'model': {key: config[key] for key in ('architecture', 'fill_architecture', 'auxiliary_codec')},
             'surface_sampling': config['surface_sampling'], 'quantization': config['quantization'],
@@ -681,9 +693,7 @@ def main():
             entries = read_entries(config)
             verify_data_selection(config, entries)
             initialization_audit = read_reviewed(config['safety']['initialization'], name='official-only initialization audit')
-            if (initialization_audit['initialization_contract'] != initialization_contract(config)
-                    or initialization_audit['source_sha256'] != model_source_hashes()):
-                raise ValueError('initialization audit does not cover the exact current model and source')
+            validate_initialization_audit(config, initialization_audit)
             reset_random(config['initialization']['seed'])
             model, tokenizer, codec, initial = build_fill_model(config, device)
             if (initial['full_initial_state_sha256'] !=

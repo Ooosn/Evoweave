@@ -284,7 +284,7 @@ class StructureXYZFillRig(nn.Module):
             ids = torch.tensor([tokens], dtype=torch.long, device=virtual.device)
             logits = self.structure_decoder(virtual, ids, torch.ones_like(ids, dtype=torch.bool))[0, -1]
             if not bool(torch.isfinite(logits).all()):
-                return {'success': False, 'status': 'nonfinite_logits', 'tokens': tokens}
+                raise FloatingPointError('nonfinite structure-generation logits')
             allowed = allowed_structure_tokens(tokens, codec)
             raw = int(logits.argmax())
             if allowed == [codec.eos] and raw != codec.eos:

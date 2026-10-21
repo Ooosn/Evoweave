@@ -1,6 +1,16 @@
 # Evoweave Model Training
 
-## Active Route: Virtual Query XYZ
+## Active Route: Structure XYZ Token Filling
+
+The user authorized implementation of
+[Structure XYZ token filling](docs/STRUCTURE_XYZ_FILL_20261022.md): one AR
+explicit-ID structure plus a mesh-conditioned bidirectional coordinate-token
+filler. Structure tokens, not structure hidden states, condition XYZ. Both
+losses train the shared upstream. The same immutable5000-row data subset is
+retained, with frequent small early evaluations before longer budgets.
+Exact GPU release remains in `state/current.json`; old A/B runs stay stopped.
+
+## Historical Route: Virtual Query XYZ
 
 The current approved route is specified in
 [Virtual Query XYZ](docs/VIRTUAL_QUERY_XYZ_20261013.md). It uses 1024 virtual

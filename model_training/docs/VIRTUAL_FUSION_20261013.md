@@ -1,5 +1,11 @@
 # Isolated virtual-frame fusion experiments
 
+The current October22 implementation is now governed by
+[STRUCTURE_XYZ_FILL_20261022.md](STRUCTURE_XYZ_FILL_20261022.md). It supersedes
+the earlier localization proposals below: bidirectional XYZ token filling,
+discrete structure inputs only, no structure-hidden-state bridge, both losses
+training shared upstream features. This file preserves the stopped A/B history.
+
 This is the active experimental contract on branch
 `codex/virtual-fusion-20261013`, based on committed source `19d81ba`.
 The older checkout, unpublished working changes and training outputs are

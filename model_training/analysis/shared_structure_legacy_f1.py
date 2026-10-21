@@ -12,7 +12,7 @@ import numpy as np
 
 
 TRAINING = Path(__file__).resolve().parents[1]
-LEGACY = TRAINING / "rigweave/scripts/eval_dynamic_rig_generation.py"
+LEGACY = TRAINING / "rigweave/src/rigweave/dynamic_rig/skeleton_topology_metrics.py"
 
 
 def file_hash(path):

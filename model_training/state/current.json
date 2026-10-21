@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T15:21:08Z",
+  "state_id": "structure_xyz_fill_20261022_preparation",
+  "updated_at": "2026-10-21T18:09:12Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -29,12 +29,13 @@
     "npz_files_changed": 0
   },
   "module": "model_training",
-  "human_context": "model_training/docs/VIRTUAL_FUSION_20261013.md",
+  "human_context": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
-    "model_training/docs/VIRTUAL_FUSION_20261013.md"
+    "model_training/docs/VIRTUAL_FUSION_20261013.md",
+    "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -135,10 +136,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
@@ -374,7 +375,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "A/B comparison is stopped by user; preserve70k checkpoint with incomplete evaluation and accepted B65k F1=.7705062590. a-b PAUSED, retain130309880 pcg01i5,6/keepalive, no oldB80/expanded839 autopromotion. Correct latest user intent: query yields ONE complete generated skeleton sequence; a downstream XYZ localization head reads that complete structure and each frame's final mesh features to predict joint coordinates. It does NOT generate a second skeleton. Cross-branch alignment loss is completely removed and must not be repeatedly re-proposed. Do NOT impose a separate bidirectional structural re-encoding stage: downstream XYZ queries can directly attend to all cached structure states and mesh memory. If XYZ tokens are placed after the full structure prefix, ordinary causal visibility already includes every structure token. Causal generation of the structure is not a restriction requiring its later XYZ reader to ignore parts of the completed structure. Coordinate readout details remain a design discussion; no new model code or GPU experiment has been launched.",
+  "next_required_result": "Implement and validate the authorized structure-AR plus BERT-style XYZ token-fill system on the same immutable5000-row dataset. XYZ receives discrete skeleton tokens and final mesh anchors, NEVER structure-decoder hidden states. Full structure CE and XYZ token CE both train shared upstream features through their separate paths; do not detach mesh memory. Validate exact GT mapping/quantization, bidirectional updates, dynamic leaf pruning and gradient routing before publishing a bounded real-data/GPU operation. Early trials need frequent SMALL fixed evaluation panels and matched exposure checkpoints; stop and diagnose bad data/interfaces rather than blindly continuing. Longer20k/40k budgets require reviewed short-run evidence. OldAB/B80/expanded839 remain stopped.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -764,6 +765,45 @@
     ]
   },
   "active_operation": {
+    "label": "structure_xyz_fill_preparation_20261022_v1",
+    "mode": "audit",
+    "operation": "inspect",
+    "status": "cpu_audit_prepared_pending_source_publication",
+    "authorization": "User explicitly requested building the new structure/XYZ-fill system on the same5k dataset, with autonomous testing, frequent small early evaluations, matched steps and timely diagnosis before extending to20k/40k.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "implementation_allowed": true,
+    "code_commit": "pending_publication",
+    "runs": [
+      {
+        "name": "cpu_audit_v1",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v1.json",
+        "config_sha256": "642788aa4d320ad5e153d5cea32effb2321f888803da859210a98cf4f8ce2489",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_audit_v1",
+        "gpu_work_allowed": false
+      }
+    ],
+    "complete": false,
+    "preserve_old_runs": true,
+    "initialization": {
+      "kind": "accepted_b65_shared_and_structure",
+      "checkpoint": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/checkpoint_asset_065000.pt",
+      "sha256": "1555619a677f13bcb2e044c2b7e72cf623483490ab0edc0eac24cb24b8ead7f9",
+      "inherited_asset_exposures": 65000,
+      "old_optimizer_restored": false,
+      "cpu_reference_audit": "/home/wangyy/jobs/structure_xyz_fill_20261022_preparation_v1/reference65_cpu_audit.json"
+    },
+    "acceptance": [
+      "CPU token/GT/quantization/pruning/attention/gradient tests pass",
+      "new real-data and resource checks reviewed before any GPU trial",
+      "publish bounded matched evaluations and stop conditions before launch"
+    ]
+  },
+  "preserved_normal_b_stopped70000_operation_20261021": {
     "label": "normal_b_lr3e5_80000_v1",
     "mode": "normal5000_continuation",
     "operation": "train",
@@ -10375,6 +10415,26 @@
     "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
   },
   "architecture_contract": {
+    "id": "structure_xyz_token_fill_v1",
+    "virtual_query_tokens": 1024,
+    "motion_depth": 12,
+    "structure_decoder": "two_layer_autoregressive_explicit_DFS_ID_BRANCH_EOS",
+    "xyz_decoder": "four_layer_bidirectional_structure_and_XYZ_masks_cross_final_mesh_anchors",
+    "fill_position_capacity": 3076,
+    "fill_width": 1024,
+    "fill_heads": 8,
+    "fill_ffn_dim": 4096,
+    "coordinate_classes": 256,
+    "coordinate_loss": "exact_UniRig_quantized_token_CE",
+    "structure_hidden_state_passed_to_xyz": false,
+    "mesh_memory_detached": false,
+    "shared_upstream_trained_by_both_losses": true,
+    "cross_branch_loss_allowed": false,
+    "pruning": "batch80percent_intact;else_per_asset_uniform0to20percent_current_nonroot_leaf_deletions",
+    "initialization": "selective_embedding_candidates;attention_FFN_output_head_not_silently_copied",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
+  },
+  "preserved_virtual_query_architecture_contract_20261013": {
     "id": "virtual_query_xyz_aux_ids_v1",
     "bounded_fusion_modes": ["virtual_queries_real", "real_queries_virtual", "relative_position", "token_film"],
     "bounded_fusion_auxiliary_weight": 0.1,
@@ -10399,6 +10459,14 @@
     "formal_asset_exposures": 80016
   },
   "comparison_contract": {
+    "relationship": "new_structure_XYZ_fill_trials_with_explicit_common_initialization",
+    "dataset": "unchanged_immutable_normal5000",
+    "trial_matching": ["shared_initial_tensors", "asset_order", "frame_choices", "sampling_seeds", "exposure_milestones", "small_evaluation_panel"],
+    "initialization_pending_publication": true,
+    "precision": "bfloat16_autocast",
+    "required_contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
+  },
+  "preserved_virtual_query_comparison_contract_20261013": {
     "relationship": "independent_new_route_from_common_official_upstream",
     "old_method_trained_checkpoint_initialization_allowed": false,
     "old_method_descendant_checkpoint_initialization_allowed": false,

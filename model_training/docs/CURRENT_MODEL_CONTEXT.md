@@ -1,5 +1,10 @@
 # 模型历史记录与当前路线入口
 
+2026-10-22 当前入口：[STRUCTURE_XYZ_FILL_20261022.md](STRUCTURE_XYZ_FILL_20261022.md)。
+用户已授权搭建新体系：结构自回归，XYZ 基于离散结构和 mesh anchors 做双向 token
+填空；不传结构 decoder 的 hidden state，两种 loss 分别更新共享上游。沿用固定 5k
+数据，先检查数据和短程小面板趋势。旧 A/B 已停止，下文均保留为历史记录，不授权续跑。
+
 本隔离工作目录当前执行 [VIRTUAL_FUSION_20261013.md](VIRTUAL_FUSION_20261013.md)
 中的融合对照计划；分支为 `codex/virtual-fusion-20261013`。旧工作目录、训练输出和
 未提交修改保持不变。下方记录为继承的历史背景，不代表本轮已通过验收。

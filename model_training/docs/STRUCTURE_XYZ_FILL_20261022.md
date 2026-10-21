@@ -164,6 +164,22 @@ inheritance and authorized completing validation through readiness for formal
 5k training. The v2 initialization above supersedes v1. CPU initialization
 checks precede the next exact bounded GPU stage; no automatic quality approval.
 
+The v2 paired GPU fits subsequently passed real gradient checks and32-update
+fits on the same21-joint and54-joint assets, four frames each. XYZ CE declined
+77.8%--97.8%, L1 declined96.0%--99.2%, and both generated the exact target
+structure by32updates. Plots confirm pose-specific geometry. The21-joint
+quantized-GT reference F1 is0.70 under the unchanged coordinate protocol;
+its original continuous GT self-F1 is1.0. The54-joint sample remains imperfect.
+This demonstrates bounded trainability, not5k generalization. Full reviewed
+figures and provenance are in `analysis/structure_xyz_fill_preflight_v2_review.json`.
+
+Before longer trials, v3 revalidates failure-distance summaries and nonfinite
+generation aborts, then measures the nine declared capacity cases. Initialization
+receipts bind the official loading implementation/contract and the complete
+actual parameter fingerprint; forward/evaluation source changes require fresh
+GPU preflight evidence rather than pretending weights were reinitialized from
+a different source. Old initialization tensors must remain byte-identical.
+
 Checkpoint tests cover mid-budget restart, completed-budget extension, final
 evaluation recovery, AdamW parameter identities/moments/step counts and RNG
 replay. Reviewed artifacts are bound to their producer code/config identities

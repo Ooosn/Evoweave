@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_preflight_pair_v2",
-  "updated_at": "2026-10-21T19:49:31Z",
+  "state_id": "structure_xyz_fill_20261022_validation_v3",
+  "updated_at": "2026-10-21T20:02:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -918,39 +918,54 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_preflight_pair_20261022_v2",
-    "mode": "preflight",
+    "label": "structure_xyz_fill_validation_20261022_v3",
+    "mode": "preflight_then_profile",
     "operation": "preflight",
-    "status": "bounded_paired_preflights_published",
+    "status": "paired_revalidation_and_capacity_published_after_v2_fit_review",
     "authorization": "User explicitly authorized completing the new independent system and tests toward formal5k training, without inheriting old A/B experiment weights.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
-    "code_commit": "36f4e632c82b19d3e604496d08dfcc2ba2957272",
+    "code_commit": "17d00cdeeb78e3e57723e01ba7d9bcbef4673f28",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "complete": false,
     "sequential_execution_only": true,
+    "reviewed_v2_fit": "model_training/analysis/structure_xyz_fill_preflight_v2_review.json",
+    "v2_fit_primary_accepted": true,
+    "revalidation_reason": "Distance-summary failure handling and nonfinite-structure abort corrected. Repeat bounded checks under current source; actual initial parameter hashes must remain unchanged. Capacity may run only after both current-source preflights exit0.",
     "runs": [
       {
-        "name": "preflight_random_v2",
+        "name": "preflight_random_v3",
         "mode": "preflight",
         "approved": true,
         "execution_allowed": true,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
         "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v2",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v3",
         "physical_gpus": [5, 6],
         "allocation": 130309880,
         "host": "pcg01i"
       },
       {
-        "name": "preflight_positions_v2",
+        "name": "preflight_positions_v3",
         "mode": "preflight",
         "approved": true,
         "execution_allowed": true,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_positions_512_v2.json",
         "config_sha256": "500fb1a7d8bb1976dbffe64a018d747689a81d71ea25c81d12060636e4f4e345",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_positions_v2",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_positions_v3",
+        "physical_gpus": [5, 6],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      },
+      {
+        "name": "capacity_random_v3",
+        "mode": "profile",
+        "approved": true,
+        "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
+        "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_random_v3",
         "physical_gpus": [5, 6],
         "allocation": 130309880,
         "host": "pcg01i"
@@ -961,7 +976,9 @@
       "Initialization matches reviewed CPU fingerprints and ranks; exact official surface loading only",
       "T2 longest-target and T24 geometry cases have finite forward/backward; both losses train shared mesh/query features and XYZ does not train structure decoder through a hidden bridge",
       "Review both fixed assets: aim for at least25percent XYZ CE and20percent XYZ L1 improvement from0to32, plus nondegenerate geometry and structure behavior; failure means diagnose or bounded retest, never automatic formal promotion",
-      "Execution pass is not quality acceptance; review GT-conditioned versus free predictions and saved plots before capacity and matched training"
+      "Execution pass is not quality acceptance; review current-source fixed fit against accepted v2 observations",
+      "Nine capacity cases cover T24/B3, T12/B6 and T6/B12 per rank, longest fill/structure and geometry stress, two updates with two accumulating microbatches each, peak allocated below85percent of device memory",
+      "No matched or formal training is released by this operation"
     ],
     "stop_conditions": ["nonfinite_loss_or_gradients", "wrong_GT_mapping", "source_or_data_drift", "unexpected_truncation", "out_of_memory", "GPU_resource_drift"]
   },

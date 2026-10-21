@@ -13,6 +13,41 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
+def localization_diagnostics(rows):
+    measured, origin, center, predicted_spans, target_spans, distinct = [], [], [], [], [], []
+    for row in rows:
+        original = np.asarray(row['original_target_joints'], dtype=np.float64)
+        indices = np.asarray(row['fill_source_indices'], dtype=np.int64)
+        prediction = np.asarray(row['gt_structure_predicted_joints'], dtype=np.float64)
+        if (original.ndim != 2 or original.shape[1] != 3 or indices.ndim != 1 or not len(indices)
+                or np.any(indices < 0) or np.any(indices >= len(original))
+                or len(np.unique(indices)) != len(indices)):
+            raise ValueError('invalid original-to-fill joint mapping')
+        target = original[indices]
+        if prediction.shape != target.shape or not np.isfinite(prediction).all() or not np.isfinite(target).all():
+            raise ValueError('invalid saved localization coordinates')
+        error = float(np.abs(prediction - target).mean())
+        if not np.isclose(error, row['gt_structure_xyz_l1'], rtol=1e-6, atol=1e-7):
+            raise ValueError('saved localization L1 disagrees with mapped original coordinates')
+        measured.append(error)
+        origin.append(float(np.abs(target).mean()))
+        # Bin128 decodes to +1/256 under the unchanged [-1,1],256-bin chart.
+        center.append(float(np.abs(target - 1 / 256).mean()))
+        predicted_spans.append(float(np.linalg.norm(np.ptp(prediction, axis=0))))
+        target_spans.append(float(np.linalg.norm(np.ptp(target, axis=0))))
+        distinct.append(len(np.unique(prediction, axis=0)))
+    if not rows:
+        return {'views': 0}
+    central = float(np.mean(center))
+    return {'views': len(rows), 'origin_constant_l1': float(np.mean(origin)),
+            'center_bin_constant_l1': central,
+            'relative_l1_reduction_vs_center_bin': 1 - float(np.mean(measured)) / central if central else None,
+            'predicted_bbox_diagonal': float(np.mean(predicted_spans)),
+            'target_bbox_diagonal': float(np.mean(target_spans)),
+            'mean_distinct_predicted_xyz': float(np.mean(distinct)),
+            'single_point_prediction_views': int(np.sum(np.asarray(distinct) == 1))}
+
+
 def summarize(rows):
     assets = sorted({row['asset_id'] for row in rows})
     if not rows:
@@ -26,6 +61,7 @@ def summarize(rows):
         abs(len(row['predicted_parents']) - len(row['original_target_parents'])) for row in successful]))
         if successful else None)
     result['reference_B65_F1'] = float(np.mean([row['reference_original_edge_f1'] for row in rows]))
+    result['localization_diagnostics'] = localization_diagnostics(rows)
     return result
 
 

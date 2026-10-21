@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T09:00:14Z",
+  "updated_at": "2026-10-21T09:28:56Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -136,12 +136,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
+    "preflight",
     "matched_eval",
-    "submit",
-    "train"
+    "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "HumanOct21 explicitly said start. New interruptedB50-to60 adapter passed32focusedCPUtests and preserves the full60000samplingplan. Run newpcg01i/5,6 two-rank nine-case capacity profile; primary review before training release. Then restore fullB50 model/947AdamW/rankRNG/stream at1e-4, verifyfirst8updates1051..1058, supervise to60k, then3e-5to80k and expandedvalidation. No oldlauncher or oldsupervisor reuse; preserve qlogin130309880.",
+  "next_required_result": "New-node capacity passed9cases onbothranks, max60.570GiB, primaryreceiptc697dc18. Launch pinned interrupted B50000-to60000 recovery at1e-4 with full model/947AdamW/rankRNG/stream; first8updates1051..1058 must match original samplingplan and actualcheckpointtensorfingerprints. Then supervise to60k and review terminal/checkpoint/evaluations55k/60k alongside preserved45k/50k. ContinueFINAL60kto80k at3e-5 afterward, expandedvalidationlast. Preserve qlogin130309880 and frozenruntime while healthy.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -764,6 +764,45 @@
     ]
   },
   "active_operation": {
+    "label": "normal_b_recover60000_20261021_v1",
+    "mode": "normal5000_interrupted_recovery",
+    "operation": "train",
+    "status": "capacity_accepted_training_prepared",
+    "authorization": "HumanOct21 explicitly said start after new2H100 preparation. Primary accepted the exact new-node nine-case dual-rank capacity. Recover B50 to originalTOTAL60k at1e-4, then FINAL60k-to80k at3e-5 and expandedvalidation, with stage review and unchangedmodel/data/optimizer contracts.",
+    "required_entrypoint": "model_training/rigweave/scripts/recover_virtual_fusion_normal.py",
+    "code_commit": "01592f405d7beeedd105cd723f6f61a57840e3fa",
+    "complete": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "start_asset_exposures": 50000,
+    "target_asset_exposures": 60000,
+    "start_updates": 1050,
+    "target_updates": 1260,
+    "start_supervised_frame_exposures": 657056,
+    "target_supervised_frame_exposures": 788304,
+    "unsaved_asset_exposures_replayed": 4080,
+    "exposure_plan_sha256": "4fb7e07e7cc64ec0c17e78016b6899a192d320e9626a4ff8078d747843feb4bf",
+    "learning_rate": {"mode": "constant_after_resume", "value": 0.0001, "warmup": false, "restart_onecycle": false, "optimizer_betas": "restore_checkpoint"},
+    "capacity_review": {"path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_capacity_v1.json", "sha256": "c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f", "max_peak_gib": 60.570101261138916, "cases_per_rank": 9},
+    "runs": [{
+      "mode": "train", "approved": true, "execution_allowed": true,
+      "training_allowed": true,
+      "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_recover60000_20261021_v1.json",
+      "config_sha256": "810af5796f7f150a7588af676b3a17173c2ab18b02ece271d47440b1cd0156d2",
+      "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recover60000_20261021_v1",
+      "allocation": 130309880, "host": "pcg01i", "physical_gpus": [5, 6],
+      "checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend60000_v1/checkpoint_asset_050000.pt",
+        "bytes": 8438111152,
+        "sha256": "dc1d598cb3179694f367a4d9cc9a069e26dceb2236b6dc235a0ed4891e36ebcf",
+        "source": "c643fc700da82eb66ad2307b97e973be6e9eae77"
+      },
+      "capacity_receipt": {"path": "/home/wangyy/jobs/virtual_fusion_recovery_20261021_v1/reviewed_recovery_capacity_v1.json", "sha256": "c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f"}
+    }],
+    "stop_conditions": ["60000 plus final evaluation complete", "OOM/nonfinite", "source/config/checkpoint/restore/grant drift", "allocation expiry", "explicit user stop"],
+    "after_completion": "Primary review recovered60kFINAL and55k/60k panels, preserving original45k/50k. Prepare/test/review BFINAL60kto80k at3e-5 with complete optimizer/rankRNG and same sampling prefix. Expanded frozen-choice validation last. Do not release allocation, rollback to best, or use old B60 supervisor."
+  },
+  "preserved_recovery_capacity_operation_20261021": {
     "label": "normal_b_recovery_capacity_20261021_v1",
     "mode": "normal5000_interrupted_recovery",
     "operation": "preflight",

@@ -10,6 +10,18 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+At18:28JST the new-node capacity run completed exit0. Both ranks passed all
+nine cases; peak allocated memory was60.570GiB, within the85percent limit.
+Primary review SHA256
+`c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f`.
+The actual B50 payload also passed the new CPU validator, including all947
+AdamW entries, both RNG/stream records and full continuation history. Training
+is now released only for the new exclusive recovery output
+`normal_b_recover60000_20261021_v1`, with checkpoints/evaluations55k/60k.
+Validate the first eight updates1051..1058 against the saved60k stream before
+accepting startup. Old45k/50k evaluations remain preserved in the interrupted
+output. Profile weights are discarded; all training weights restore fromB50.
+
 The user subsequently said to start. A dedicated interrupted recovery entry
 `recover_virtual_fusion_normal.py` and pinned B50-to60 config passed32CPUtests,
 including actual training-loop optimizer/RNG continuity regression and matching

@@ -10,6 +10,22 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+Recovered B60 completed exit0 by21:16JST. Primary accepted both ranks at
+1260updates/60000assets/788304frames, all210resumed updates against the exact
+sampling plan,20immutable artifact hashes and both55k/60k1536-view panels.
+Raw frame identities and target tokens also match the accepted A150 reference.
+Completion review SHA256
+`20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b`.
+Valid original-GT F1 at55k/60k is0.765294/0.750580; success0.980469/0.976563,
+exact joint count0.531250/0.549805. This is execution acceptance, not model
+quality acceptance. FINAL60k is8438113904bytes, SHA256
+`8bdf349eb0c808871dd13a9fda4ff84a9ae8ac1e815f855f6cb50c52f4608d76`,
+frozen runtimeda2ee88. The authorized next stage remains FINAL60k-to80k at3e-5
+without best rollback. Its recovered-checkpoint adapter is being implemented
+locally; GPU work is blocked until exact publication and real payload checks.
+Both H100s and keepalive are retained. The user confirmed hourly automatic
+followthrough; a-b is ACTIVE, superseding the earlier paused/pending note.
+
 Recovery training launched18:31:29JST with frozen runtimeda2ee88. Primary
 accepted the first8updates1051..1058/50384assets/660752frames; both ranks
 restored all947AdamW states at1e-4 and the original sampling seeds/order.

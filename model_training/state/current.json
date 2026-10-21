@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T09:54:04Z",
+  "updated_at": "2026-10-21T12:18:23Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,17 +135,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_granted_verified_recovery_training_active",
+    "status": "replacement_retained_recovery_complete_idle",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Recovered B50-to60 is RUNNING on130309880 pcg01i5,6, frozenruntimeda2ee88; first8primaryaccepted and fullsupervisorv3PID146072 active. Do not launchduplicate or editremote code. At60k requireexit0,both1260updates/60000assets/788304frames,55k/60kpanels andfullCP hashes; primaryreviewbeforeimplementing FINAL60k-to80k at3e-5. Preserve45k/50k historicalpanels andunchanged128selection. Expandedvalidationlast. Existinga-bheartbeatPAUSED; userreactivationquestionpending, currentdedicatedsupervisioncontinues independently. Retaincards.",
+  "next_required_result": "Recovered B60 is COMPLETE and primaryaccepted at1260updates/60000assets/788304frames; reviewed55k/60k rawpanels andCP hashes. Prepare/test/publish FINAL recovered60k-to80k at3e-5 withfulloptimizer/rankRNG andsame samplingprefix; no bestrollback. FinalCP8bdf349e, completionreview20cd60a6. Newstage stillblocked pendingexactimplementation andrealpayloadvalidation. Preserveoriginal45k/50kpanels. Expandedvalidationlast. Hourlya-bheartbeatACTIVE perhumanOct21confirmation. Retain130309880 pcg01i5,6 andkeepalive.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -767,7 +767,25 @@
     "label": "normal_b_recover60000_20261021_v1",
     "mode": "normal5000_interrupted_recovery",
     "operation": "train",
-    "status": "training_active_first8_primary_accepted",
+    "status": "completed_integrity_accepted",
+    "completion_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_completion_v1.json",
+      "sha256": "20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b",
+      "reviewed_utc": "2026-10-21T12:17:55.622908+00:00",
+      "exit_code": 0, "execution_integrity_accepted": true, "quality_acceptance": false,
+      "updates": 1260, "asset_exposures": 60000, "supervised_frame_exposures": 788304,
+      "result_sha256": "01168fb9c9a3e5b3e3124aa4e42b2e57a8e9d16e4584c6a6bbeff200ac05a82a",
+      "valid_results": [
+        {"assets": 55000, "original_edge_f1": 0.765293880785773, "success": 0.98046875, "exact_count": 0.53125},
+        {"assets": 60000, "original_edge_f1": 0.7505803419303456, "success": 0.9765625, "exact_count": 0.5498046875}
+      ],
+      "final_checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recover60000_20261021_v1/checkpoint_asset_060000.pt",
+        "bytes": 8438113904,
+        "sha256": "8bdf349eb0c808871dd13a9fda4ff84a9ae8ac1e815f855f6cb50c52f4608d76",
+        "source": "da2ee8878a271efc87d1c219d88463ea574eee07"
+      }
+    },
     "runtime_source_commit": "da2ee8878a271efc87d1c219d88463ea574eee07",
     "launched_utc": "2026-10-21T09:31:29.653101+00:00",
     "training_launcher_pid": 2191050,
@@ -783,22 +801,22 @@
     "supervision": {
       "worker_id": "01a15d97-4f31-7592-8f2e-aed140a7d6bd",
       "directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/monitor_full_v1",
-      "status": "active_verified_v3",
+      "status": "completed_terminal_evidence_primary_accepted",
       "pid": 146072,
       "receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/monitor_full_v1/runner_receipt_v3.json",
       "started_utc": "2026-10-21T09:51:20.9946956Z",
-      "last_verified_utc": "2026-10-21T09:53:27.6320842Z",
-      "last_verified_steps": [1088, 1088],
-      "last_verified_asset_exposures": [51824, 51824],
-      "last_verified_supervised_frames": [680000, 680000],
+      "last_verified_utc": "2026-10-21T12:16:04.3776796Z",
+      "last_verified_steps": [1260, 1260],
+      "last_verified_asset_exposures": [60000, 60000],
+      "last_verified_supervised_frames": [788304, 788304],
       "training_rank_pids": [2192214, 2192215],
       "monitor_only_revisions": "Startup identity transport fixes, live one-update snapshot skew handling, exact per-step plan checks and actual integer evaluation schema tested. Superseded localmonitorPIDs121784/169776 stopped; GPU work and keepalive never restarted."
     },
     "authorization": "HumanOct21 explicitly said start after new2H100 preparation. Primary accepted the exact new-node nine-case dual-rank capacity. Recover B50 to originalTOTAL60k at1e-4, then FINAL60k-to80k at3e-5 and expandedvalidation, with stage review and unchangedmodel/data/optimizer contracts.",
     "required_entrypoint": "model_training/rigweave/scripts/recover_virtual_fusion_normal.py",
     "code_commit": "01592f405d7beeedd105cd723f6f61a57840e3fa",
-    "complete": false,
-    "gpu_work_allowed": true,
+    "complete": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "start_asset_exposures": 50000,
     "target_asset_exposures": 60000,
@@ -811,8 +829,8 @@
     "learning_rate": {"mode": "constant_after_resume", "value": 0.0001, "warmup": false, "restart_onecycle": false, "optimizer_betas": "restore_checkpoint"},
     "capacity_review": {"path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_capacity_v1.json", "sha256": "c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f", "max_peak_gib": 60.570101261138916, "cases_per_rank": 9},
     "runs": [{
-      "mode": "train", "approved": true, "execution_allowed": true,
-      "training_allowed": true,
+      "mode": "train", "approved": true, "execution_allowed": false,
+      "training_allowed": false,
       "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_recover60000_20261021_v1.json",
       "config_sha256": "810af5796f7f150a7588af676b3a17173c2ab18b02ece271d47440b1cd0156d2",
       "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recover60000_20261021_v1",
@@ -1024,8 +1042,9 @@
       "plan_sha256": "c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc",
       "stage_promotion_hold": false,
       "heartbeat_id": "a-b",
-      "heartbeat_observed_status": "PAUSED",
-      "heartbeat_resume_question_pending": true,
+      "heartbeat_observed_status": "ACTIVE",
+      "heartbeat_interval_minutes": 60,
+      "heartbeat_resume_question_pending": false,
       "superseded_unlaunched_B50_preparation": {
         "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/prepared_normal_b_lr3e5_50000_v1.json",
         "sha256": "f33d57788d3766c503601d59c4444087467d2ca3046b1f162a7539ac6fa876ce",
@@ -1041,14 +1060,14 @@
       ],
       "preserve_optimizer": true,
       "preserve_qlogin": true,
-      "current_executable_stage": "normal_b_recover60000_20261021_v1",
-      "pending_next_stage": "normal_b_lr3e5_80000_v1_needs_actual_finalB60_checkpoint_and_exact_preparation",
+      "current_executable_stage": null,
+      "pending_next_stage": "normal_b_lr3e5_80000_v1_FINAL_recovered60k_reviewed_local_implementation_in_progress",
       "environment_execution_block": null,
       "current_preparation": {
         "label": "normal_b_recover60000_20261021_v1",
-        "status": "training_active_first8_primary_accepted",
-        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_first8_v1.json",
-        "sha256": "b2e419f5daaa75b6b6ca28d3802883cf1292ea9c84d2a7af9c4721d13ea3554e",
+        "status": "completed_integrity_accepted",
+        "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/recovery_20261021/reviewed_recovery_completion_v1.json",
+        "sha256": "20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b",
         "code_commit": "01592f405d7beeedd105cd723f6f61a57840e3fa",
         "runtime_source_commit": "da2ee8878a271efc87d1c219d88463ea574eee07",
         "config_sha256": "810af5796f7f150a7588af676b3a17173c2ab18b02ece271d47440b1cd0156d2",

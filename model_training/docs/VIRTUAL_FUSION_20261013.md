@@ -10,6 +10,31 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+Recovery training launched18:31:29JST with frozen runtimeda2ee88. Primary
+accepted the first8updates1051..1058/50384assets/660752frames; both ranks
+restored all947AdamW states at1e-4 and the original sampling seeds/order.
+Actual incoming checkpoint and restored model tensor fingerprint on both ranks:
+`5b73652cf5940e29bc8a236a27f65b0c7a6fd40d3a36a1563fc2c7ab8b8cdf4e`.
+Startup review SHA256
+`b2e419f5daaa75b6b6ca28d3802883cf1292ea9c84d2a7af9c4721d13ea3554e`.
+The evaluation panel hash9f7ffbf4 remains exactly the original A/B panel.
+Training remains active; this is execution acceptance, not completion or model
+quality acceptance. The local first8 monitor initially required terminal files
+too early; its logic was corrected and checked without restarting GPU work.
+Keep the running remote source frozen. The existing30-minute heartbeat was
+observed PAUSED; a user question about reactivation is pending. The dedicated
+worker is authorized to supervise this recovered60k stage to its terminal gate.
+
+Full supervisorv3PID146072 is verified active. At18:53:27JST both ranks were
+1088updates/51824assets/680000frames. Actual rankPIDs2192214/2192215 remain on
+physical5/6 under torchrun2191050 and frozenDA2source. Local monitor revisions
+added exact per-step plan checks, tolerated one-update non-atomic snapshot
+skew and tested the actual integer evaluation-list schema. All logic tests
+passed; no GPU process or keepalive restart occurred. Terminal evidence must
+include55k/60k raw panels, full checkpoint hashes and exact60k counters before
+primary acceptance and B80 preparation. Do not deploy these status-only edits
+over the healthy running remote checkout.
+
 At18:28JST the new-node capacity run completed exit0. Both ranks passed all
 nine cases; peak allocated memory was60.570GiB, within the85percent limit.
 Primary review SHA256

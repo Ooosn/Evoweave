@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T12:49:00Z",
+  "updated_at": "2026-10-21T14:50:01Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -145,7 +145,7 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_retained_B80_training_active",
+    "status": "retained_idle_after_user_stopped_AB_comparison",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "B80 RUNNING fromFINAL60k at3e-5; first8primaryaccepted1268/60384/793968 withM0f3409672 andall947AdamWstates/rankRNG/stream. Frozenruntimea9f2455 torchrun3649983 ranks3650002/3650003 onretained130309880 pcg01i5,6. Onefullsupervisorv1PID137340/Jason active; doNOTrelaunchor mutateremotecode. Requireexit0,both1680updates/80000assets/1041832frames andall65/70/75/80krawpanels+CP hashes beforeprimaryreview. Thenfreezeeachroutebest original-GT edgeF1checkpoint onoriginal128panel,tieearlierexposure,andexpanded839x8validation. No bestrollbackduringtraining. Hourlya-bACTIVE;retaincards.",
+  "next_required_result": "HumanOct21 ended this A/B training comparison and redirected work to query contribution validation and decoder joint-ID/embedding/CE alignment discussion. B80 was intentionally stopped at1470updates/70000assets/918232frames; checkpoint70k is atomically saved, its evaluation is incomplete. Latest primary-accepted B65k F1=.7705062590; A140k best=.7388475706. a-b heartbeatPAUSED; retain130309880 pcg01i5,6 andkeepalive. DoNOTresume B80, promote the former expanded839 plan, or launch replacementtraining automatically. Explain the actual current UniRig XYZ/BRANCH reconstruction; resolve joint-ID versus token-position semantics and CE alignment targets before publishing a new bounded implementation/validation operation.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -767,7 +767,23 @@
     "label": "normal_b_lr3e5_80000_v1",
     "mode": "normal5000_continuation",
     "operation": "train",
-    "status": "training_active_first8_primary_accepted",
+    "status": "stopped_by_user_direction_change_at70000",
+    "user_stop": {
+      "stopped_utc": "2026-10-21T14:50:01.474687+00:00",
+      "reason": "User ended the current A/B comparison and redirected to query utility validation and decoder identity/embedding alignment.",
+      "receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json",
+      "receipt_sha256": "f7672302f5e7e73bd9a0d81244d3a1f9dc587a31c7c80b1c26da98efdf0b5a97",
+      "updates": 1470, "asset_exposures": 70000, "supervised_frame_exposures": 918232,
+      "signal": "SIGTERM to verified torchrun3649983 only", "wrapper_exit": 1,
+      "unexpected_training_failure": false, "full_B80_completed": false,
+      "latest_committed_checkpoint": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/checkpoint_asset_070000.pt",
+      "checkpoint_bytes": 8438115504, "checkpoint_payload_audit_pending": true,
+      "evaluation_70000_complete": false, "last_accepted_evaluation": 65000,
+      "last_accepted_original_edge_f1": 0.7705062590378752,
+      "allocation_retained": true, "keepalive_pid": 1090013, "keepalive_alive": true,
+      "gpu_compute_processes_after_stop": 0, "automatic_resume_allowed": false,
+      "heartbeat_status": "PAUSED", "former_expanded_validation_autopromotion_allowed": false
+    },
     "runtime_source_commit": "a9f2455523a31009b3bd77639da19e4ce202d7bd",
     "launched_utc": "2026-10-21T12:34:39.150172+00:00",
     "training_launcher_pid": 3649983,
@@ -782,7 +798,9 @@
       "evaluation_selection_sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
     },
     "supervision": {
-      "worker_id": "01a15d97-4f31-7592-8f2e-aed140a7d6bd", "status": "active_verified_v1",
+      "worker_id": "01a15d97-4f31-7592-8f2e-aed140a7d6bd", "status": "ended_by_user_redirect",
+      "ended_utc": "2026-10-21T14:47:19.2402572Z",
+      "stop_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/monitor_full_v1/monitor_stop_receipt_v1.json",
       "directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/monitor_full_v1",
       "pid": 137340,
       "receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/monitor_full_v1/runner_receipt_v1.json",
@@ -792,11 +810,11 @@
       "last_verified_supervised_frames": [804192, 804192], "training_rank_pids": [3650002, 3650003],
       "monitor_review": "Exactstepmap,one-stepasynchrony,strictinteger milestones,result/checkpoint/source guards passed; parentcaughtandfixedlegacy--modeCLIbeforemonitorstart. NoGPUrestart."
     },
-    "authorization": "HumanOct19 approved B60at1e-4 thenFINAL60-to80at3e-5 andexpandedvalidation; HumanOct21 approved currentnew2H100 andhourlyfollowthrough. RecoveredB60 primaryaccepted; no model/data/optimizerreset orbestrollback authorized.",
+    "authorization": "Former Oct19 B60-to80/expandedvalidation and Oct21 hourlyfollowthrough authorization is superseded by explicit humanOct21 direction change. This A/B training comparison is stopped; no automatic continuation or expandedvalidation promotion. Retain current allocation and artifacts. New query/decoder work requires its own resolved implementation and validation contract.",
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "code_commit": "862479c02e7ed46e85718ae39e4b6582b940b9b6",
     "complete": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "start_asset_exposures": 60000,
     "target_asset_exposures": 80000,
@@ -825,7 +843,7 @@
     },
     "runs": [{
       "name": "normal_b_lr3e5_80000_v1", "mode": "resume", "approved": true,
-      "execution_allowed": true, "training_allowed": true,
+      "execution_allowed": false, "training_allowed": false,
       "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_lr3e5_80000_v1.json",
       "config_sha256": "0468a7fe410ad0c471b209b4a33e6332750880bb1b86403701836bb9e97b771a",
       "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1",
@@ -839,7 +857,7 @@
       "capacity_receipt": {"path": "/home/wangyy/jobs/virtual_fusion_recovery_20261021_v1/reviewed_recovery_capacity_v1.json", "sha256": "c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f"}
     }],
     "stop_conditions": ["80000 plus final evaluation complete", "OOM/nonfinite", "source/config/checkpoint/restore/grant drift", "allocation expiry", "explicit user stop"],
-    "after_completion": "Primaryreviewexact80kterminal and65/70/75/80krawpanels; freezeeachroutehighest original-GT edgeF1checkpoint onoriginal128panel, tieearlierexposure; expandedvalidationremaining839assets times8views; retainallocation. No architecture changes."
+    "after_completion": "Superseded by human stop/direction change. Preserve the saved70k checkpoint and accepted65k evaluation. Do not resume oldABtraining or automatically run expanded839validation. Retain allocation for the next separately defined query/decoder investigation."
   },
   "preserved_recovered_b60_operation_20261021": {
     "label": "normal_b_recover60000_20261021_v1",

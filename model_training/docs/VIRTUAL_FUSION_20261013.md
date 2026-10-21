@@ -6,7 +6,30 @@ The older checkout, unpublished working changes and training outputs are
 read-only references, not execution destinations. GPU authority remains in
 `model_training/state/current.json`; this document is not launch permission.
 
-## Current direction: normal 5000-asset trend comparison
+## Current direction: query contribution and decoder alignment
+
+On October21 the user ended the current A/B training comparison and redirected
+work to query contribution, decoder joint identities/embeddings, and later CE
+alignment. The A/B heartbeat is PAUSED. Do not resume B80 or automatically
+promote the former expanded839-asset validation plan.
+
+The primary stopped only verified torchrun3649983 at14:50:01UTC. Both ranks
+3650002/3650003 exited, and physical GPUs5/6 have no compute processes. The
+qlogin allocation130309880 and keepalive1090013 remain alive. This is an
+intentional user stop, not an unexpected training failure or full80k completion.
+The saved70k checkpoint has1470updates/918232supervisedframes and8438115504bytes;
+its atomic save completed, but its evaluation and full payload audit did not.
+The latest accepted B65k original-GT F1 is0.7705062590, compared with A140k best
+0.7388475706. Preserve all checkpoints and evaluation records.
+
+Stop evidence: `b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json`, SHA256
+`f7672302f5e7e73bd9a0d81244d3a1f9dc587a31c7c80b1c26da98efdf0b5a97`.
+Explain the actual UniRig XYZ/BRANCH reconstruction and resolve shared joint-ID
+versus token-position embeddings and the CE targets before defining the next
+bounded implementation or GPU validation. Partial structural regularities,
+not exact whole-tree equality, are the relevant auxiliary learning criterion.
+
+## Historical normal 5000-asset trend comparison
 
 ### Post-maintenance recovery preparation, October21
 

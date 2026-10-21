@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_initialization_reconsideration",
-  "updated_at": "2026-10-21T19:33:11Z",
+  "state_id": "structure_xyz_fill_20261022_official_initialization_audit_v2",
+  "updated_at": "2026-10-21T19:44:06Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -818,7 +818,7 @@
       "publish bounded matched evaluations and stop conditions before launch"
     ]
   },
-  "active_operation": {
+  "preserved_structure_xyz_fill_preflight_deleted_init_v1": {
     "label": "structure_xyz_fill_preflight_random_20261022_v1",
     "mode": "preflight",
     "operation": "preflight",
@@ -866,6 +866,46 @@
       "No automatic promotion to capacity or normal training; publish each following stage after primary review"
     ],
     "stop_conditions": ["nonfinite_loss_or_gradients", "data_or_source_drift", "wrong_GT_mapping", "unexpected_truncation", "GPU_resource_drift", "out_of_memory"]
+  },
+  "active_operation": {
+    "label": "structure_xyz_fill_official_initialization_20261022_v2",
+    "mode": "initialize",
+    "operation": "inspect",
+    "status": "CPU_official_only_initialization_audits_published",
+    "authorization": "User explicitly rejected inheriting old A/B experiment weights and instructed continuing implementation, testing and validation until the new5k method can justifiably enter formal training.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "36f4e632c82b19d3e604496d08dfcc2ba2957272",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "complete": false,
+    "trained_experiment_initialization_allowed": false,
+    "runs": [
+      {
+        "name": "initialize_random_v2",
+        "mode": "initialize",
+        "approved": true,
+        "gpu_work_allowed": false,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
+        "config_sha256": "c8876605fb9ca644dc0998f430eaaba73a18921cbf68b984a46d0985132fdac8",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/initialize_random_v2"
+      },
+      {
+        "name": "initialize_positions_v2",
+        "mode": "initialize",
+        "approved": true,
+        "gpu_work_allowed": false,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_positions_512_v2.json",
+        "config_sha256": "5c562c1ce90bdbac78a02473010238ad8541b2434cc93dca7885453120b91ded",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/initialize_positions_v2"
+      }
+    ],
+    "acceptance": [
+      "Strict official surface/projection load, no old experiment checkpoint or old full AR model",
+      "Fresh motion, structure and XYZ modules; zero inherited exposures and no inherited optimizer",
+      "Both candidates have identical common and fresh attention/FFN/head fingerprints; only declared XYZ position initialization differs",
+      "Preserve reviewed CPU data and reference-panel audits; publish exact GPU stages only after primary review"
+    ]
   },
   "preserved_normal_b_stopped70000_operation_20261021": {
     "label": "normal_b_lr3e5_80000_v1",
@@ -10495,7 +10535,7 @@
     "shared_upstream_trained_by_both_losses": true,
     "cross_branch_loss_allowed": false,
     "pruning": "batch80percent_intact;else_per_asset_uniform0to20percent_current_nonroot_leaf_deletions",
-    "initialization": "selective_embedding_candidates;attention_FFN_output_head_not_silently_copied",
+    "initialization": "official_surface_only;fresh_motion_structure_XYZ;optional_official_position_rows;NO_old_AB_weights",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
   },
   "preserved_virtual_query_architecture_contract_20261013": {
@@ -10523,7 +10563,8 @@
     "formal_asset_exposures": 80016
   },
   "comparison_contract": {
-    "relationship": "new_structure_XYZ_fill_trials_with_explicit_common_initialization",
+    "relationship": "independent_new_structure_XYZ_fill_from_official_surface_and_fresh_modules",
+    "old_method_trained_checkpoint_initialization_allowed": false,
     "dataset": "unchanged_immutable_normal5000",
     "trial_matching": ["shared_initial_tensors", "asset_order", "frame_choices", "sampling_seeds", "exposure_milestones", "small_evaluation_panel"],
     "initialization_pending_publication": false,

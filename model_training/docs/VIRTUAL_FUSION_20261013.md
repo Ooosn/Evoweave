@@ -29,11 +29,17 @@ The previously discussed ID+XYZ two-stream format is not the current default.
 The current proposal emits one explicit-ID structure, such as
 `J0 J1 J2 BRANCH J0 J3 EOS`, then localizes its joints in each frame. Branch
 parents use ID references rather than regenerated parent coordinates. The
-structure generator is autoregressive. Once the full structure is available,
-the XYZ localization module can use noncausal structural self-attention and
-cross-attention to each frame's final mesh features, predicting all valid
-joints in parallel. Simply cross-attending causal joint states to mesh does
-not by itself add future structural context.
+structure generator is autoregressive. Once the complete structure exists,
+the downstream XYZ localization head reads that complete structure and each
+frame's final mesh features; it does not predict a second skeleton.
+
+Do not require a separate bidirectional structural re-encoding stage. XYZ
+queries can directly attend to all cached structure states and frame geometry
+memory. For example, a joint state can query the combined full-structure and
+mesh memory before a coordinate head. If XYZ tokens follow the entire
+structure prefix, even ordinary causal attention already sees all structure
+tokens. The earlier insistence on an extra unmasked structural self-attention
+stage was an overconstraint and is withdrawn.
 
 Do not add cross-branch CE, representation alignment, or consistency loss as a
 later stage. Ordinary structure-generation and coordinate supervision are

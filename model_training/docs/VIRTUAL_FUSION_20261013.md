@@ -24,10 +24,17 @@ The latest accepted B65k original-GT F1 is0.7705062590, compared with A140k best
 
 Stop evidence: `b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json`, SHA256
 `f7672302f5e7e73bd9a0d81244d3a1f9dc587a31c7c80b1c26da98efdf0b5a97`.
-Explain the actual UniRig XYZ/BRANCH reconstruction and resolve shared joint-ID
-versus token-position embeddings and the CE targets before defining the next
-bounded implementation or GPU validation. Partial structural regularities,
-not exact whole-tree equality, are the relevant auxiliary learning criterion.
+The intended scheme was already discussed: emit explicit joint IDs, not another
+ordinary token positional encoding. The query structure is
+`J0 J1 J2 BRANCH J0 J3 EOS`; the main stream becomes
+`J0 XYZ0 J1 XYZ1 J2 XYZ2 BRANCH J0 J3 XYZ3 EOS`. Removing XYZ yields the same
+structural events. Branch parents use ID references instead of regenerating
+parent coordinates. Extend the needed ID embeddings and output capacity,
+first verify ordinary supervised training, and only then add corresponding
+joint/structural-event alignment. Do not align raw token indices or merely
+equalize scalar CE losses. No new decoder implementation or GPU diagnostic has
+been launched. Partial structural regularities, not exact whole-tree equality,
+are the relevant auxiliary learning criterion.
 
 ## Historical normal 5000-asset trend comparison
 

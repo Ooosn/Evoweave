@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T08:44:54Z",
+  "updated_at": "2026-10-21T09:00:14Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -135,10 +135,10 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "matched_eval",
     "submit",
     "train"
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "New2H100 grant130309880 onpcg01i physical5,6 is verified and retained. Latest surviving FULLcheckpointB50000 read successfully,1050updates/657056frames; premaintenance logs reached54080 so4080unsaved exposures must replay. Frozen c643fc7source restored clean to newnodeNVMe. Prepare/test interrupted-run resume using exact saved model/AdamW/rankRNG/sampling plan and new node/device/capacity binding. Do not launch old B40-to60 entry or old supervisor. LogicalTOTAL60k at1e-4 then80k at3e-5 and expandedvalidation unchanged; no extra allocation/release authorized.",
+  "next_required_result": "HumanOct21 explicitly said start. New interruptedB50-to60 adapter passed32focusedCPUtests and preserves the full60000samplingplan. Run newpcg01i/5,6 two-rank nine-case capacity profile; primary review before training release. Then restore fullB50 model/947AdamW/rankRNG/stream at1e-4, verifyfirst8updates1051..1058, supervise to60k, then3e-5to80k and expandedvalidation. No oldlauncher or oldsupervisor reuse; preserve qlogin130309880.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -764,6 +764,35 @@
     ]
   },
   "active_operation": {
+    "label": "normal_b_recovery_capacity_20261021_v1",
+    "mode": "normal5000_interrupted_recovery",
+    "operation": "preflight",
+    "status": "prepared_new_allocation_capacity",
+    "authorization": "HumanOct21 requested new2H100 and then explicitly said start. Prior total60k/80k plan is unchanged; only new-device capacity executes before primary review.",
+    "required_entrypoint": "model_training/rigweave/scripts/recover_virtual_fusion_normal.py",
+    "code_commit": "01592f405d7beeedd105cd723f6f61a57840e3fa",
+    "complete": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "cpu_tests_passed": 32,
+    "runs": [{
+      "mode": "profile", "approved": true, "execution_allowed": true,
+      "training_allowed": false,
+      "config": "/work/wangyy/virtual_fusion_20261013/normal_code/model_training/experiments/fusion_normal_b_recover60000_20261021_v1.json",
+      "config_sha256": "810af5796f7f150a7588af676b3a17173c2ab18b02ece271d47440b1cd0156d2",
+      "output": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_recovery_capacity_20261021_v1",
+      "allocation": 130309880, "host": "pcg01i", "physical_gpus": [5, 6],
+      "checkpoint": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_extend60000_v1/checkpoint_asset_050000.pt",
+        "bytes": 8438111152,
+        "sha256": "dc1d598cb3179694f367a4d9cc9a069e26dceb2236b6dc235a0ed4891e36ebcf",
+        "source": "c643fc700da82eb66ad2307b97e973be6e9eae77"
+      }
+    }],
+    "stop_conditions": ["OOM/nonfinite", "source/config/data/grant drift", "any capacity case above85percent", "allocation expiry", "explicit user stop"],
+    "after_completion": "Primary review all9cases/tworanks and exact capacitycontract. Profile weights are discarded. Then publish separate training release, restore latestFULLB50 and validatefirst8; no architecture/normalization/optimizer reset."
+  },
+  "preserved_recovery_preparation_20261021": {
     "label": "maintenance_recovery_preparation_20261021",
     "operation": "report",
     "mode": "interrupted_run_recovery_preparation",

@@ -10,6 +10,17 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+The user subsequently said to start. A dedicated interrupted recovery entry
+`recover_virtual_fusion_normal.py` and pinned B50-to60 config passed32CPUtests,
+including actual training-loop optimizer/RNG continuity regression and matching
+both ranks' remaining sampling requests. Unlike completed-stage extension,
+this restores the saved60k plan at its50k cursor. It preserves the existing
+checkpoint-before-milestone-evaluation RNG policy and does not repeat initial
+evaluation; no bitwise future-trajectory claim is made. New-device capacity
+must pass the same nine dual-rank stress cases before training is released.
+Profile weights are never reused. The authorized recovery source is01592f4;
+the exact stage and source/config identities are in current.json.
+
 The user explicitly authorized a new two-H100 qlogin and preparation for
 training recovery. Live SSH/scheduler access returned before the historical
 website's planned end. Old allocation130258195 is absent. New allocation

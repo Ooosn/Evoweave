@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_validation_v3",
-  "updated_at": "2026-10-21T20:02:00Z",
+  "state_id": "structure_xyz_fill_20261022_matched512_v3",
+  "updated_at": "2026-10-21T20:18:40Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -131,8 +131,8 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "New route fit, free-generation quality, capacity and auxiliary lambda have not yet been measured.",
-    "Main original XYZ tokenization has known quantization parent-collision limitations; report label ceilings without silently changing it."
+    "New independent route passed fixed-asset fitting and nine real capacity cases. Generalization over the5k population and the position-initialization choice remain unmeasured.",
+    "Direct DFS IDs preserve parent identity. Original coordinate quantization can still reduce spatial-matching F1; retain original GT and report quantized-GT references without relabeling or claiming a mathematical upper bound."
   ],
   "allowed_operations": [
     "inspect",
@@ -146,7 +146,7 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_independent_official_only_XYZ_fill_bounded_preflights",
+    "status": "retained_for_independent_official_only_XYZ_fill_matched512_trials",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -918,10 +918,10 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_validation_20261022_v3",
-    "mode": "preflight_then_profile",
-    "operation": "preflight",
-    "status": "paired_revalidation_and_capacity_published_after_v2_fit_review",
+    "label": "structure_xyz_fill_matched512_20261022_v3",
+    "mode": "matched_training_trial",
+    "operation": "train",
+    "status": "matched512_trials_published_after_fit_and_capacity_acceptance",
     "authorization": "User explicitly authorized completing the new independent system and tests toward formal5k training, without inheriting old A/B experiment weights.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
@@ -932,53 +932,52 @@
     "sequential_execution_only": true,
     "reviewed_v2_fit": "model_training/analysis/structure_xyz_fill_preflight_v2_review.json",
     "v2_fit_primary_accepted": true,
-    "revalidation_reason": "Distance-summary failure handling and nonfinite-structure abort corrected. Repeat bounded checks under current source; actual initial parameter hashes must remain unchanged. Capacity may run only after both current-source preflights exit0.",
+    "reviewed_v3_validation": {
+      "passed": true,
+      "random_preflight_sha256": "883909037be18a4222d2e89d7f7800c35e4c87a5f6e6afc0592a8d41c90e81d3",
+      "positions_preflight_sha256": "265fa1bc35a5e1c4480f2360e5e8f4cbee8930a11ce93ed9e654c62180c8295f",
+      "capacity_sha256": "180fb121a53f79498bb6bb8fb4413cee26399e6d6c76a79f07a12edfcf92211d",
+      "capacity_cases": 9,
+      "max_allocated_GiB": 24.47,
+      "max_allocated_fraction": 0.3091,
+      "replay_GT_parents_rawframes_and_saved_anchors_exact": true,
+      "strict_bitwise_training_reproducibility_claimed": false,
+      "interpretation": "Small numerical replay differences despite identical initial parameters and saved inputs; no specific nondeterministic operator identified. Fixed-asset trainability and resource safety accepted, not generalization."
+    },
     "runs": [
       {
-        "name": "preflight_random_v3",
-        "mode": "preflight",
+        "name": "trial_random_512_v3",
+        "mode": "train",
         "approved": true,
         "execution_allowed": true,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
-        "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v3",
+        "config_sha256": "b37f9e4156ceaf2ad1f4fb187979ad21aa135ef68aadbecc8903d1351c5d8cae",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/trial_random_512_v3",
         "physical_gpus": [5, 6],
         "allocation": 130309880,
         "host": "pcg01i"
       },
       {
-        "name": "preflight_positions_v3",
-        "mode": "preflight",
+        "name": "trial_positions_512_v3",
+        "mode": "train",
         "approved": true,
         "execution_allowed": true,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_positions_512_v2.json",
-        "config_sha256": "500fb1a7d8bb1976dbffe64a018d747689a81d71ea25c81d12060636e4f4e345",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_positions_v3",
-        "physical_gpus": [5, 6],
-        "allocation": 130309880,
-        "host": "pcg01i"
-      },
-      {
-        "name": "capacity_random_v3",
-        "mode": "profile",
-        "approved": true,
-        "execution_allowed": true,
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v2.json",
-        "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_random_v3",
+        "config_sha256": "c87c1770d488eab760eaaa3e8242d628d21769b1795d7cbc8fd0e8bb4d38f981",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/trial_positions_512_v3",
         "physical_gpus": [5, 6],
         "allocation": 130309880,
         "host": "pcg01i"
       }
     ],
-    "fit_contract": {"assets": 2, "frames_per_asset": 4, "optimizer_updates": 32, "evaluations": [0, 8, 16, 32], "diagnostic_weights_only": true},
+    "trial_contract": {"target_asset_exposures": 512, "optimizer_updates": 12, "effective_assets_per_update": 48, "evaluations": [0, 128, 256, 512], "small_panel_views": 128, "sampling_plan_sha256": "73c6f78a8032184031d8a055dd9fd0daef29b7a4efb7072c1ff6c4fa246fb858", "diagnostic_weights_reused": false, "old_AB_weights_loaded": false},
     "acceptance": [
-      "Initialization matches reviewed CPU fingerprints and ranks; exact official surface loading only",
-      "T2 longest-target and T24 geometry cases have finite forward/backward; both losses train shared mesh/query features and XYZ does not train structure decoder through a hidden bridge",
-      "Review both fixed assets: aim for at least25percent XYZ CE and20percent XYZ L1 improvement from0to32, plus nondegenerate geometry and structure behavior; failure means diagnose or bounded retest, never automatic formal promotion",
-      "Execution pass is not quality acceptance; review current-source fixed fit against accepted v2 observations",
-      "Nine capacity cases cover T24/B3, T12/B6 and T6/B12 per rank, longest fill/structure and geometry stress, two updates with two accumulating microbatches each, peak allocated below85percent of device memory",
-      "No matched or formal training is released by this operation"
+      "Fresh independently verified initialization only; rank fingerprints and matched sampling plan agree",
+      "Both candidates use identical asset order, frame choices, sampling seeds, pruning decisions, actual exposure milestones and learning-rate schedule",
+      "All512 actual exposures and12updates,128-view evaluations at0/128/256/512, no missing or duplicated views, unchanged original GT and historical reference",
+      "Compare original spatial F1 with failures zero, success/joint counts, GT-structure XYZ CE/accuracy/L1 and DFS-ID diagnostics; do not select from tiny fixed-fit differences alone",
+      "Verify new checkpoint, optimizer and RNG continuation before extension; archive final checkpoint plus evidence without deleting SSD sources",
+      "No automatic extension beyond512 or formal20k/40k promotion; primary must inspect evidence"
     ],
     "stop_conditions": ["nonfinite_loss_or_gradients", "wrong_GT_mapping", "source_or_data_drift", "unexpected_truncation", "out_of_memory", "GPU_resource_drift"]
   },

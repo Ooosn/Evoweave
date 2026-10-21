@@ -275,9 +275,19 @@
       "code_commit": "392859d6a43b1ca980c459bbce86f04939d9f613",
       "config_sha256": "642788aa4d320ad5e153d5cea32effb2321f888803da859210a98cf4f8ce2489"
     },
-    "preflight": null,
-    "capacity": null,
-    "preflight_primary_accepted": false,
+    "preflight": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v3/preflight.json",
+      "sha256": "883909037be18a4222d2e89d7f7800c35e4c87a5f6e6afc0592a8d41c90e81d3",
+      "code_commit": "381545fb5d5fcb6e3086fa9541b812f3534715f3",
+      "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8"
+    },
+    "capacity": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_random_v3/capacity.json",
+      "sha256": "180fb121a53f79498bb6bb8fb4413cee26399e6d6c76a79f07a12edfcf92211d",
+      "code_commit": "381545fb5d5fcb6e3086fa9541b812f3534715f3",
+      "config_sha256": "d653e50ef7d5635e96f554e4b773544b4ee011a4942d097ea702e3371ebd35c8"
+    },
+    "preflight_primary_accepted": true,
     "initialization": {
       "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/initialize_random_v2/initialization_audit.json",
       "sha256": "9b941d103c9e0b8264d40720d6f4a06db91036f15c971b16e61744ccf5d69ea7",

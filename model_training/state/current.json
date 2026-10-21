@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T12:31:32Z",
+  "updated_at": "2026-10-21T12:49:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -145,7 +145,7 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "replacement_retained_B80_prepared_idle",
+    "status": "replacement_retained_B80_training_active",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "B80 exactpreparation andactualFINAL60k CPU payload audit accepted. LaunchONLY normal_b_lr3e5_80000_v1 fromCP8bdf349e at3e-5 onretained130309880 pcg01i5,6 afterfreshidle/remainingtime checks. Verifyfirst8at1268updates/60384assets/793968frames, modeltensorfingerprint, all947optimizerstates, restored1e-4 thenfixed3e-5, bothrankRNG/stream. Thenonefullsupervisor to1680updates/80000assets/1041832frames and65/70/75/80kpanels. No bestrollback. Expandedfrozen-choicevalidationlast. Hourlya-bACTIVE;retaincards.",
+  "next_required_result": "B80 RUNNING fromFINAL60k at3e-5; first8primaryaccepted1268/60384/793968 withM0f3409672 andall947AdamWstates/rankRNG/stream. Frozenruntimea9f2455 torchrun3649983 ranks3650002/3650003 onretained130309880 pcg01i5,6. Onefullsupervisorv1PID137340/Jason active; doNOTrelaunchor mutateremotecode. Requireexit0,both1680updates/80000assets/1041832frames andall65/70/75/80krawpanels+CP hashes beforeprimaryreview. Thenfreezeeachroutebest original-GT edgeF1checkpoint onoriginal128panel,tieearlierexposure,andexpanded839x8validation. No bestrollbackduringtraining. Hourlya-bACTIVE;retaincards.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -767,7 +767,31 @@
     "label": "normal_b_lr3e5_80000_v1",
     "mode": "normal5000_continuation",
     "operation": "train",
-    "status": "prepared_exact_config_and_actual_checkpoint_accepted",
+    "status": "training_active_first8_primary_accepted",
+    "runtime_source_commit": "a9f2455523a31009b3bd77639da19e4ce202d7bd",
+    "launched_utc": "2026-10-21T12:34:39.150172+00:00",
+    "training_launcher_pid": 3649983,
+    "launch_receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/launch_v1.json",
+    "startup_review": {
+      "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/reviewed_b80_first8_v1.json",
+      "sha256": "2015bca8c27e9d2dbd1b501058f8c4d39e17651b0c25f63900304d6a9ab0c9a1",
+      "execution_integrity_accepted": true, "quality_acceptance": false,
+      "end_updates": 1268, "end_assets": 60384, "end_supervised_frames": 793968,
+      "checkpoint_and_restored_model_sha256": "f34096726d9875e484298cdccda2f39a56d573a031b8a8833816d7c2becdab7c",
+      "optimizer_states_per_rank": 947, "restored_lr": 0.0001, "continuation_lr": 0.00003,
+      "evaluation_selection_sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
+    },
+    "supervision": {
+      "worker_id": "01a15d97-4f31-7592-8f2e-aed140a7d6bd", "status": "active_verified_v1",
+      "directory": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/monitor_full_v1",
+      "pid": 137340,
+      "receipt": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/monitor_full_v1/runner_receipt_v1.json",
+      "started_utc": "2026-10-21T12:48:01.4373601Z",
+      "last_verified_utc": "2026-10-21T12:48:20.9144002Z",
+      "last_verified_steps": [1279, 1279], "last_verified_asset_exposures": [60912, 60912],
+      "last_verified_supervised_frames": [804192, 804192], "training_rank_pids": [3650002, 3650003],
+      "monitor_review": "Exactstepmap,one-stepasynchrony,strictinteger milestones,result/checkpoint/source guards passed; parentcaughtandfixedlegacy--modeCLIbeforemonitorstart. NoGPUrestart."
+    },
     "authorization": "HumanOct19 approved B60at1e-4 thenFINAL60-to80at3e-5 andexpandedvalidation; HumanOct21 approved currentnew2H100 andhourlyfollowthrough. RecoveredB60 primaryaccepted; no model/data/optimizerreset orbestrollback authorized.",
     "required_entrypoint": "model_training/rigweave/scripts/resume_virtual_fusion_normal.py",
     "code_commit": "862479c02e7ed46e85718ae39e4b6582b940b9b6",
@@ -1119,12 +1143,13 @@
       "environment_execution_block": null,
       "current_preparation": {
         "label": "normal_b_lr3e5_80000_v1",
-        "status": "prepared_exact_config_and_actual_checkpoint_accepted",
+        "status": "training_active_first8_primary_accepted",
+        "runtime_source_commit": "a9f2455523a31009b3bd77639da19e4ce202d7bd",
         "path": "D:/evoweave/server_ops/outputs/virtual_fusion_20261013/b80_20261021/prepared_b80_v1.json",
         "code_commit": "862479c02e7ed46e85718ae39e4b6582b940b9b6",
         "config_sha256": "0468a7fe410ad0c471b209b4a33e6332750880bb1b86403701836bb9e97b771a",
         "remote_deployed": true,
-        "launch_requirements_satisfied": "ActualfinalB60fileSHA andfullCPU payload accepted;all947AdamWentries/bothRNG/60kstream/pastcontinuationhistory preserved;33primaryCPUregressiontests passed;exactnewnodecapacityrechecked. Publishnewstate andfreshidlecheckbeforelaunch."
+        "launch_requirements_satisfied": "ActualfinalB60fileSHA andfullCPU payload accepted;all947AdamWentries/bothRNG/60kstream/pastcontinuationhistory preserved;33primaryCPUregressiontests passed;exactnewnodecapacityrechecked;publishedandfreshidlelaunchpassed;first8primaryacceptedandfullsupervisorverified."
       },
       "preserved_premaintenance_preparation": {
         "label": "normal_b_extend60000_v1",

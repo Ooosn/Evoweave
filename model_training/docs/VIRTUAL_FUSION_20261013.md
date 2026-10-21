@@ -10,6 +10,22 @@ read-only references, not execution destinations. GPU authority remains in
 
 ### Post-maintenance recovery preparation, October21
 
+B80 launched21:34:39JST with frozen runtimea9f2455, torchrun3649983 and ranks
+3650002/3650003 on physical5/6. Primary accepted first8updates1261..1268,
+60384assets/793968frames: all947AdamWstates restored at1e-4, then only LR
+changed to3e-5; sampling indices/seeds and actual per-step frame counts match.
+Incoming FINAL60k and both restored M0 tensor hashes are
+`f34096726d9875e484298cdccda2f39a56d573a031b8a8833816d7c2becdab7c`.
+Startup review SHA256
+`2015bca8c27e9d2dbd1b501058f8c4d39e17651b0c25f63900304d6a9ab0c9a1`.
+Full supervisorv1PID137340 is verified active; at21:48:20JST both ranks were
+1279updates/60912assets/804192frames. Its action-only control CLI was corrected
+and tested before start; exactstep/asynchrony/source/terminal gates passed.
+No GPU restart occurred. This is startup acceptance, not completed training
+or quality acceptance. Keep remotea9f2455 frozen while training. After full80k
+acceptance, freeze each route's best original128-panel checkpoint and perform
+the authorized remaining839-asset/eight-view evaluation. Retain bothH100s.
+
 B80 preparation accepted21:31JST: exactconfig0468a7fe, implementation862479c.
 The actual FINALrecovered60k payload passed CPU checks for all947finiteAdamW
 moments atstep1260/LR1e-4, bothrankRNG structures, completed60kstream and full

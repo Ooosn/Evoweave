@@ -136,13 +136,20 @@ or failed supervision. Diagnose the saved failing batch before resuming.
 
 ## Current Implementation Stage
 
-Local implementation passed158 related CPU tests and54 subtests, including
-legacy metric/data/sampling regressions. The next operation is CPU-only:
-validate static parent-to-token mappings across the unchanged manifests and
-test real loaders/coordinate parity on boundary cases plus the small reference
-panel. This is a new-interface audit, not data reselection or quality screening.
-GPU work remains blocked until that evidence is reviewed and an exact bounded
-preflight operation is published. No training has started for this new model.
+Local implementation passed160 related CPU tests and54 subtests, including
+legacy metric/data/sampling regressions and both saved visualization formats.
+The CPU audit completed with exit0: all5000train/967valid parent-to-token
+mappings,10 real-loader checks at2/24frames, exact original coordinate-token
+parity, and128 matched old/new GT/frame identities passed. No data was reselected.
+Maximum expanded fill length is1210(train)/1012(valid), below capacity3076.
+The matched small-panel B65 reference F1 is0.873763(train seen),
+0.845508(train heldout poses),0.681973(valid); these are NOT full-panel scores.
+
+The next published operation is the bounded random-fill GPU preflight: two
+boundary forward/backward cases, then two fixed non52-joint assets with four
+frames each,32 optimizer updates, evaluated at0/8/16/32. Its fitted weights are
+diagnostic only. Capacity profiling and normal training remain unpublished;
+execution success alone does not establish learning or quality acceptance.
 
 Checkpoint tests cover mid-budget restart, completed-budget extension, final
 evaluation recovery, AdamW parameter identities/moments/step counts and RNG

@@ -266,8 +266,18 @@
     ]
   },
   "safety": {
-    "data_audit": null,
-    "reference_panel_audit": null,
+    "data_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_audit_v1/data_audit.json",
+      "sha256": "bf5661dae883305ba4c11b54c1ce63acb09d125187c2b3fb1536bb00728447c1",
+      "code_commit": "392859d6a43b1ca980c459bbce86f04939d9f613",
+      "config_sha256": "642788aa4d320ad5e153d5cea32effb2321f888803da859210a98cf4f8ce2489"
+    },
+    "reference_panel_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_audit_v1/reference_panel_audit.json",
+      "sha256": "d3e644a9cb91da22ffa83a93ab299129ec9bd52bedcd7d6077260f198406cc6c",
+      "code_commit": "392859d6a43b1ca980c459bbce86f04939d9f613",
+      "config_sha256": "642788aa4d320ad5e153d5cea32effb2321f888803da859210a98cf4f8ce2489"
+    },
     "preflight": null,
     "capacity": null,
     "preflight_primary_accepted": false

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_preparation",
-  "updated_at": "2026-10-21T19:15:21Z",
+  "state_id": "structure_xyz_fill_20261022_preflight_random_v1",
+  "updated_at": "2026-10-21T19:31:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -136,17 +136,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train",
+    "preflight"
   ],
   "blocked_operations": [
-    "train",
-    "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_user_stopped_AB_comparison",
+    "status": "retained_for_bounded_new_XYZ_fill_preflight",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -764,11 +764,11 @@
       }
     ]
   },
-  "active_operation": {
+  "preserved_structure_xyz_fill_cpu_audit_20261022_v1": {
     "label": "structure_xyz_fill_preparation_20261022_v1",
     "mode": "audit",
     "operation": "inspect",
-    "status": "cpu_audit_published",
+    "status": "cpu_audit_completed_reviewed",
     "authorization": "User explicitly requested building the new structure/XYZ-fill system on the same5k dataset, with autonomous testing, frequent small early evaluations, matched steps and timely diagnosis before extending to20k/40k.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
@@ -787,7 +787,22 @@
         "gpu_work_allowed": false
       }
     ],
-    "complete": false,
+    "complete": true,
+    "result": {
+      "passed": true,
+      "exit_code": 0,
+      "result_sha256": "76b9cd0d300ca232fb8fd9b75dcc7bc2dcb004715cafae9c80db7c5b6380dd5b",
+      "train_rows": 5000,
+      "valid_rows": 967,
+      "real_loader_checks": 10,
+      "matched_reference_views": 128,
+      "max_fill_tokens": {"train": 1210, "valid": 1012},
+      "max_structure_tokens": {"train": 520, "valid": 394},
+      "max_joints": {"train": 234, "valid": 206},
+      "panel_sha256": "da1b4eca4df249fa14f03af2b78d0b075b8fac23eec2b60141593be3f98fbe6f",
+      "reference_original_edge_f1": {"train_seen": 0.8737631417893817, "train_heldout": 0.8455084740011609, "valid": 0.6819730815340689},
+      "data_reselected": false
+    },
     "preserve_old_runs": true,
     "initialization": {
       "kind": "accepted_b65_shared_and_structure",
@@ -802,6 +817,44 @@
       "new real-data and resource checks reviewed before any GPU trial",
       "publish bounded matched evaluations and stop conditions before launch"
     ]
+  },
+  "active_operation": {
+    "label": "structure_xyz_fill_preflight_random_20261022_v1",
+    "mode": "preflight",
+    "operation": "preflight",
+    "status": "bounded_preflight_published",
+    "authorization": "User authorized autonomous new-system implementation and bounded testing on the same5k dataset, with early small evaluations and diagnosis before longer training.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "a456622736dd8d48a6238f0aecad682a4d30fbf5",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "complete": false,
+    "preserve_old_runs": true,
+    "runs": [{
+      "name": "preflight_random_v1",
+      "mode": "preflight",
+      "approved": true,
+      "execution_allowed": true,
+      "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v1.json",
+      "config_sha256": "85eb93917796fa0fd8805349c3ca954468abafa8f124b5be5475e457293b810b",
+      "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v1",
+      "physical_gpus": [5, 6],
+      "allocation": 130309880,
+      "host": "pcg01i",
+      "fit_optimizer_updates": 32,
+      "fit_assets": 2,
+      "fit_frames_per_asset": 4,
+      "fit_evaluation_updates": [0, 8, 16, 32],
+      "diagnostic_weights_only": true
+    }],
+    "acceptance": [
+      "Two real boundary cases per rank have finite forward/backward and correct independent loss gradient routes",
+      "No parameters change before fixed-fit optimization; initialization fingerprints match both ranks",
+      "Review fixed-fit CE, coordinate accuracy, geometric error, topology F1 and saved visualizations; execution pass alone is not quality acceptance",
+      "No automatic promotion to capacity or normal training; publish each following stage after primary review"
+    ],
+    "stop_conditions": ["nonfinite_loss_or_gradients", "data_or_source_drift", "wrong_GT_mapping", "unexpected_truncation", "GPU_resource_drift", "out_of_memory"]
   },
   "preserved_normal_b_stopped70000_operation_20261021": {
     "label": "normal_b_lr3e5_80000_v1",

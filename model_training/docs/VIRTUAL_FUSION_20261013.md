@@ -6,12 +6,13 @@ The older checkout, unpublished working changes and training outputs are
 read-only references, not execution destinations. GPU authority remains in
 `model_training/state/current.json`; this document is not launch permission.
 
-## Current direction: query contribution and decoder alignment
+## Current direction: query contribution and shared-structure localization
 
-On October21 the user ended the current A/B training comparison and redirected
-work to query contribution, decoder joint identities/embeddings, and later CE
-alignment. The A/B heartbeat is PAUSED. Do not resume B80 or automatically
-promote the former expanded839-asset validation plan.
+On October21 the user ended the current A/B training comparison. The latest
+direction (October22JST) explicitly drops cross-branch alignment loss entirely,
+not merely postpones it. Investigate query contribution and a single generated
+structure followed by per-frame XYZ localization. The A/B heartbeat is PAUSED.
+Do not resume B80 or automatically promote the former expanded839-asset plan.
 
 The primary stopped only verified torchrun3649983 at14:50:01UTC. Both ranks
 3650002/3650003 exited, and physical GPUs5/6 have no compute processes. The
@@ -24,17 +25,23 @@ The latest accepted B65k original-GT F1 is0.7705062590, compared with A140k best
 
 Stop evidence: `b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json`, SHA256
 `f7672302f5e7e73bd9a0d81244d3a1f9dc587a31c7c80b1c26da98efdf0b5a97`.
-The intended scheme was already discussed: emit explicit joint IDs, not another
-ordinary token positional encoding. The query structure is
-`J0 J1 J2 BRANCH J0 J3 EOS`; the main stream becomes
-`J0 XYZ0 J1 XYZ1 J2 XYZ2 BRANCH J0 J3 XYZ3 EOS`. Removing XYZ yields the same
-structural events. Branch parents use ID references instead of regenerating
-parent coordinates. Extend the needed ID embeddings and output capacity,
-first verify ordinary supervised training, and only then add corresponding
-joint/structural-event alignment. Do not align raw token indices or merely
-equalize scalar CE losses. No new decoder implementation or GPU diagnostic has
-been launched. Partial structural regularities, not exact whole-tree equality,
-are the relevant auxiliary learning criterion.
+The previously discussed ID+XYZ two-stream format is not the current default.
+The current proposal emits one explicit-ID structure, such as
+`J0 J1 J2 BRANCH J0 J3 EOS`, then localizes its joints in each frame. Branch
+parents use ID references rather than regenerated parent coordinates. The
+structure generator is autoregressive. Once the full structure is available,
+the XYZ localization module can use noncausal structural self-attention and
+cross-attention to each frame's final mesh features, predicting all valid
+joints in parallel. Simply cross-attending causal joint states to mesh does
+not by itself add future structural context.
+
+Do not add cross-branch CE, representation alignment, or consistency loss as a
+later stage. Ordinary structure-generation and coordinate supervision are
+separate questions; valid/padding masks remain, and GT XYZ must not leak into
+the localization inputs. Exact module choices and coordinate loss are not yet
+implemented or authorized as a GPU experiment. No new model change or GPU
+diagnostic has been launched. Partial structural regularities, not exact
+whole-tree equality, are the relevant structure-learning criterion.
 
 ## Historical normal 5000-asset trend comparison
 

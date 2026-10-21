@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "virtual_fusion_20261013",
-  "updated_at": "2026-10-21T14:50:01Z",
+  "updated_at": "2026-10-21T15:21:08Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -374,7 +374,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "HumanOct21 ended this A/B training comparison and redirected work to query contribution validation and the ALREADY DISCUSSED explicit joint-ID decoder scheme. B80 intentionally stopped1470updates/70000assets/918232frames; checkpoint70k atomically saved, evaluation incomplete. Latest accepted B65k F1=.7705062590; A140k best=.7388475706. a-b PAUSED; retain130309880 pcg01i5,6/keepalive. DoNOTresume B80 or automatically promote expanded839validation. User means emitted J-ID tokens, NOT another ordinary positional embedding: query structure J0 J1 J2 BRANCH J0 J3 EOS; main J0 XYZ0 J1 XYZ1 J2 XYZ2 BRANCH J0 J3 XYZ3 EOS. Add the needed ID embeddings/output capacity, retain existing XYZ backbone where compatible, first establish ordinary supervised training, then align corresponding joint/structural-event representations or predictions. Do not equate raw token indices, arbitrary embedding-table rows, or scalar CE values. First answer actual UniRig parsing/nearest-parent reconstruction and define a bounded frozen-B query contribution diagnostic; no new model modification or GPU run has been launched.",
+  "next_required_result": "Human ended the A/B comparison; B80 intentionally stopped1470updates/70000assets/918232frames, checkpoint70k saved but its evaluation incomplete. Latest accepted B65k F1=.7705062590; A140k best=.7388475706. a-b PAUSED; retain130309880 pcg01i5,6/keepalive. DoNOTresume B80 or automatically promote expanded839validation. Latest human direction (Oct22JST): COMPLETELY DROP cross-branch alignment loss, not merely defer it. Investigate query contribution, then the discussed single explicit-ID structure sequence with per-frame joint XYZ localization. Structure generation remains autoregressive; the proposed XYZ localization stage can read the complete structure bidirectionally using unmasked structural self-attention plus attention to each frame's final mesh features. Mesh cross-attention alone does not make causal joint states bidirectional. No second independently generated structure or cross-branch CE is planned. Keep valid/padding masks, do not leak GT XYZ, and distinguish ordinary structure/coordinate supervision from rejected cross-branch alignment. Exact architecture, coordinate loss and GPU experiment contract remain unimplemented; no new model modification or GPU run has been launched.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",

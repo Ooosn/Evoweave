@@ -1,0 +1,127 @@
+{
+  "schema": "structure_xyz_fill_matched512_review_v3",
+  "execution_accepted": true,
+  "quality_accepted": false,
+  "formal_training_allowed": false,
+  "source_commit": "f64b84a2111fc06bbc1f26bafbeef631ef59cb1b",
+  "actual_asset_exposures_per_arm": 512,
+  "optimizer_updates_per_arm": 12,
+  "supervised_frame_exposures_per_arm": 7584,
+  "matched_input_check": {
+    "rank_updates": 24,
+    "microbatches": 146,
+    "asset_frame_pruning_lr_target_identity_equal": true
+  },
+  "evaluations": [
+    0,
+    128,
+    256,
+    512
+  ],
+  "views_per_evaluation": 128,
+  "final_summary_sha256": {
+    "random": "935a0c073ccf190324acf2e28a852c5403d7221b7a7b6b0d1a062dacba8e8215",
+    "positions": "c3990ed54c1850f14f27cb7256d137bf0e0550d75c4709413064eaaaf6709fee"
+  },
+  "final_groups": {
+    "random": {
+      "train_heldout": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 5.169791474938393,
+        "gt_structure_xyz_accuracy": 0.0069486894790316,
+        "gt_structure_xyz_l1": 0.264682590495795,
+        "gt_structure_edge_f1": 0,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.8455084740011609
+      },
+      "train_seen": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 5.175087466835976,
+        "gt_structure_xyz_accuracy": 0.011272806383203715,
+        "gt_structure_xyz_l1": 0.26515044225379825,
+        "gt_structure_edge_f1": 0,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.8737631417893817
+      },
+      "valid": {
+        "assets": 16,
+        "views": 64,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 5.001287445425987,
+        "gt_structure_xyz_accuracy": 0.0676728932739934,
+        "gt_structure_xyz_l1": 0.23494517151266336,
+        "gt_structure_edge_f1": 0.0011979166666666668,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.681973081534069
+      }
+    },
+    "positions": {
+      "train_heldout": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 5.155072942376137,
+        "gt_structure_xyz_accuracy": 0.0069486894790316,
+        "gt_structure_xyz_l1": 0.2651793984696269,
+        "gt_structure_edge_f1": 0,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.8455084740011609
+      },
+      "train_seen": {
+        "assets": 8,
+        "views": 32,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 5.161194980144501,
+        "gt_structure_xyz_accuracy": 0.011562158237211406,
+        "gt_structure_xyz_l1": 0.26569533441215754,
+        "gt_structure_edge_f1": 0,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.8737631417893817
+      },
+      "valid": {
+        "assets": 16,
+        "views": 64,
+        "original_edge_f1": 0,
+        "gt_structure_xyz_ce": 4.980200536549091,
+        "gt_structure_xyz_accuracy": 0.06775827579258475,
+        "gt_structure_xyz_l1": 0.23504871153272688,
+        "gt_structure_edge_f1": 0,
+        "success": 0,
+        "exact_count": 0,
+        "successful_mean_abs_joint_count_error": null,
+        "reference_B65_F1": 0.681973081534069
+      }
+    }
+  },
+  "continuation_cpu_audit": {
+    "random": "5d926ee69ea8967555ffb6e9e6e7042b8f20109358a18f70cdc12deca97f22eb",
+    "positions": "552b6ce7a3d333f8406c0bdf232517b85dae3657b06ae750fecaf23cb8cdaee9",
+    "model_and_optimizer_exact": true,
+    "cpu_numpy_python_rng_exact": true,
+    "both_ranks_extended_sampling_plan_exact": true,
+    "cuda_rng_handoff_verified_not_executed_in_cpu_audit": true
+  },
+  "archives": {
+    "random": "1415975999d0898bcafa00c2405a4da23d55cf0dbe06a891b2da216b7b87997b",
+    "positions": "9d787a832b70ea743e73866828574037e5fcff98cbe5c8e118a0b1acd02e0c20",
+    "bytes_each": 5561292800,
+    "all_member_sha_verified": true,
+    "source_preserved": true
+  },
+  "interpretation": "Both arms remain severely underfit after12 updates: all free generations hit max_joints at128/256/512 and GT-conditioned coordinates cluster near a few central positions. Loss decreases do not establish useful localization or generalization.",
+  "decision": "Continue BOTH own new-model checkpoints to2048 exposures/45 total updates, preserving weights/moments/RNG/input prefix. Evaluate1024 and2048. No old AB weights, no architecture/loss/LR/data/generation changes, no formal promotion and no automatic extension beyond2048."
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_20261022_preflight_random_v1",
-  "updated_at": "2026-10-21T19:31:00Z",
+  "state_id": "structure_xyz_fill_20261022_initialization_reconsideration",
+  "updated_at": "2026-10-21T19:33:11Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -136,17 +136,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "train",
+    "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_bounded_new_XYZ_fill_preflight",
+    "status": "retained_idle_after_missing_optional_B65_initialization",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -822,20 +822,31 @@
     "label": "structure_xyz_fill_preflight_random_20261022_v1",
     "mode": "preflight",
     "operation": "preflight",
-    "status": "bounded_preflight_published",
+    "status": "failed_before_model_construction_optional_checkpoint_deleted",
     "authorization": "User authorized autonomous new-system implementation and bounded testing on the same5k dataset, with early small evaluations and diagnosis before longer training.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
     "code_commit": "a456622736dd8d48a6238f0aecad682a4d30fbf5",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "complete": false,
+    "complete": true,
+    "passed": false,
+    "failure": {
+      "exit_code": 1,
+      "failed_utc": "2026-10-21T19:29:11Z",
+      "cause": "Optional B65 warm-start checkpoint disappeared; user then confirmed deleting the old checkpoints.",
+      "model_constructed": false,
+      "optimizer_updates": 0,
+      "official_UniRig_checkpoint_exists": true,
+      "no_fallback_initialization_selected": true,
+      "next_action": "Explain that B65 was an optional primary-chosen warm start, not an architectural requirement. Settle new common initialization before publishing another GPU stage."
+    },
     "preserve_old_runs": true,
     "runs": [{
       "name": "preflight_random_v1",
       "mode": "preflight",
       "approved": true,
-      "execution_allowed": true,
+      "execution_allowed": false,
       "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_512_v1.json",
       "config_sha256": "85eb93917796fa0fd8805349c3ca954468abafa8f124b5be5475e457293b810b",
       "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_random_v1",

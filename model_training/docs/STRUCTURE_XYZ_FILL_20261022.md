@@ -145,11 +145,18 @@ Maximum expanded fill length is1210(train)/1012(valid), below capacity3076.
 The matched small-panel B65 reference F1 is0.873763(train seen),
 0.845508(train heldout poses),0.681973(valid); these are NOT full-panel scores.
 
-The next published operation is the bounded random-fill GPU preflight: two
+The bounded random-fill GPU preflight was published for two
 boundary forward/backward cases, then two fixed non52-joint assets with four
 frames each,32 optimizer updates, evaluated at0/8/16/32. Its fitted weights are
 diagnostic only. Capacity profiling and normal training remain unpublished;
 execution success alone does not establish learning or quality acceptance.
+
+That preflight exited1 before model construction: the optional B65 checkpoint
+had been deleted. The user confirmed deleting the old checkpoints. No model
+computation or optimizer update occurred. The official UniRig checkpoint still
+exists. B65 was a primary-selected warm start, not required by the architecture;
+do not silently replace it. GPU execution is blocked until the common starting
+point and consequent initialization comparison are reconsidered and published.
 
 Checkpoint tests cover mid-budget restart, completed-budget extension, final
 evaluation recovery, AdamW parameter identities/moments/step counts and RNG

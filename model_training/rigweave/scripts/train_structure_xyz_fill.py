@@ -23,6 +23,7 @@ from torch.nn.parallel import DistributedDataParallel
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/src'))
+sys.path.insert(0, str(ROOT / 'model_training/analysis'))
 
 from rigweave.dynamic_rig.aux_skeleton_tokens import AuxSkeletonTokens
 from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
@@ -367,6 +368,10 @@ def preflight(model, tokenizer, codec, initial, entries, config, args, device, r
 
 
 def run_evaluation(model, tokenizer, codec, config, args, device, rank, world, samples, panel, reference, panel_sha256):
+    if config.get('large_evaluation', {}).get('enabled'):
+        from structure_xyz_large_evaluation import run_large_evaluation
+        return run_large_evaluation(model, tokenizer, codec, config, args, device, rank, world,
+                                    samples, panel, reference, panel_sha256)
     root = args.output / f'evaluation_{samples:06d}'
     root.mkdir(parents=True, exist_ok=True)
     local = {'rank': rank, 'asset_exposures': samples, 'groups': {}, 'complete': False}
@@ -452,8 +457,19 @@ def restore_continuation(model, optimizer, dataset, config, rank, world, device)
         raise ValueError('new-model continuation checkpoint changed')
     saved = torch.load(spec['path'], map_location='cpu', mmap=True, weights_only=False)
     if (saved['schema'] != FAMILY or saved['mode'] != 'train' or saved['architecture'] != model.configuration()
-            or saved['training_contract'] != training_contract(config) or len(saved['rank_states']) != world):
+            or len(saved['rank_states']) != world):
         raise ValueError('continuation model/data/loss/evaluation/initialization contract differs')
+    transition = config['training'].get('loss_weight_transition')
+    if transition is None:
+        if saved['training_contract'] != training_contract(config):
+            raise ValueError('continuation model/data/loss/evaluation/initialization contract differs')
+    else:
+        implementation = ROOT / 'model_training/analysis/validate_structure_xyz_weight_transition.py'
+        if sha256(implementation) != config.get('stage', {}).get('weight_transition_implementation_sha256'):
+            raise ValueError('weight-transition validator differs from its published implementation')
+        from validate_structure_xyz_weight_transition import validate_resume_contract
+        validate_resume_contract(saved['training_contract'], training_contract(config), transition,
+                                 checkpoint_sha256=spec['sha256'])
     if saved['asset_exposures'] > config['training']['target_assets']:
         raise ValueError('a resume cannot move the asset exposure counter backwards')
     if saved['optimizer_parameter_names'] != optimizer_parameter_names(model, optimizer):

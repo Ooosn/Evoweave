@@ -82,6 +82,7 @@ def main():
     parser.add_argument('--terminal-receipt', type=Path, required=True)
     parser.add_argument('--terminal-receipt-sha256', required=True)
     parser.add_argument('--base-config', type=Path, required=True)
+    parser.add_argument('--target-config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     if os.environ.get('CUDA_VISIBLE_DEVICES') != '':
@@ -102,10 +103,18 @@ def main():
     assert saved['training_contract'] == training_contract(base)
     assert (saved['asset_exposures'], saved['supervised_frame_exposures'], saved['step']) == (80000, 1040352, 1683)
     assert len(saved['rank_states']) == 2
-    future = deepcopy(base)
+    future = json.loads(args.target_config.read_text())
     boundaries = base['training']['evaluation_assets'] + list(range(90000, 160001, 10000))
-    future['training'].update(target_assets=160000, evaluation_assets=boundaries, checkpoint_assets=boundaries)
+    assert future['training']['target_assets'] == 160000
+    assert future['training']['evaluation_assets'] == future['training']['checkpoint_assets'] == boundaries
+    resume = future['training']['resume_checkpoint']
+    assert Path(resume['path']) == args.checkpoint and resume['sha256'] == args.checkpoint_sha256
     validate_config(future)
+    implementation = ROOT / 'model_training/analysis/validate_structure_xyz_weight_transition.py'
+    assert sha256(implementation) == future['stage']['weight_transition_implementation_sha256']
+    from validate_structure_xyz_weight_transition import validate_resume_contract
+    validate_resume_contract(saved['training_contract'], training_contract(future),
+                             future['training']['loss_weight_transition'], checkpoint_sha256=args.checkpoint_sha256)
     entries = read_entries(base)
     verify_data_selection(base, entries)
     report = plan_handoff(base, future, entries['train'], saved['rank_states'])
@@ -129,6 +138,8 @@ def main():
                                      'bytes': stat.st_size, 'counts': [80000, 1040352, 1683]},
                   terminal_integrity_receipt={'path': str(args.terminal_receipt), 'sha256': args.terminal_receipt_sha256},
                   source_config={'path': str(args.base_config), 'sha256': sha256(args.base_config)},
+                  target_config={'path': str(args.target_config), 'sha256': sha256(args.target_config)},
+                  loss_weight_only_transition_verified=True,
                   boundaries=boundaries, initialized_adam_states=count,
                   optimizer_groups=[{key: group[key] for key in ('name', 'lr', 'peak_lr')} for group in groups],
                   optimizer_updates_executed=0, CUDA_initialized=False, checkpoint_modified=False,

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_weight4_continue160000_validation_20261023_v1",
-  "updated_at": "2026-10-22T18:00:05Z",
+  "state_id": "structure_xyz_fill_formal160000_active_20261023_v1",
+  "updated_at": "2026-10-22T18:28:56Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -138,10 +138,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight",
     "train"
   ],
   "blocked_operations": [
+    "preflight",
     "matched_eval",
     "submit"
   ],
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run actual-checkpoint CPU handoff audit, fresh32-step GPU preflight and9capacity cases for selected structure_weight4 with the larger evaluation implementation. Only the two named bounded GPU validation runs are approved; formal training is not released. Review receipts, then publish own80k-to160k continuation preserving Adam/RNG/sampling/LR and using larger evaluations every10000assets.",
+  "next_required_result": "Launch the exact user-authorized own80k-to160k continuation with structure_weight4, preserving Adam/RNG/sampling/LR. Accept startup only after the first5 actual updates match the pinned CPU plan and all resource/loss checks pass. Evaluate/save every10000 through160000 using the fixed large panel and original small projection. No automatic extension or quality acceptance; retain allocation.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -919,17 +919,19 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_weight4_continue160000_validation_20261023_v1",
-    "mode": "user_authorized_bounded_validation_before_continuation",
-    "operation": "preflight",
+    "label": "structure_xyz_fill_formal160000_20261023_v1",
+    "mode": "user_authorized_formal_continuation_with_weight4",
+    "operation": "train",
+    "status": "approved_startup_pending",
+    "authorization": "Human requested loss-balance diagnosis/adjustment, own80k continuation to cumulative160k, and larger evaluation. After being informed ordinary SSH is outside the scheduler resource group, human explicitly clarified to retain the existing allocation and use the previous direct SSH method. No release or new allocation.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
-    "code_commit": "7aefa7bfdc35f6afdde0732d405b2e0182690799",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "quality_accepted": false,
     "complete": false,
     "sequential_execution_only": true,
-    "authorization": "Human requested loss-balance diagnosis/adjustment, own80k continuation to cumulative160k, and larger evaluation. After being informed ordinary SSH is outside the scheduler resource group, human explicitly clarified to retain the existing allocation and use the previous direct SSH method. No release or new allocation.",
     "ssh_exception": {
       "explicit_human_authorized": true,
       "kernel_scheduler_membership": false,
@@ -947,57 +949,94 @@
       "authorization": "Direct current human instruction to use the previous direct SSH launch after disclosure of missing scheduler membership. This is a narrow exception, not inherited scheduler accounting.",
       "stop_policy": "Stop only the new child process group on allocation loss, CPU-affinity escape, aggregate RSS above64GiB, GPU memory above90percent or any contract failure; retain allocation keeper."
     },
+    "selected_initialization": "random",
     "source_checkpoint": {
       "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
       "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
       "asset_exposures": 80000,
       "step": 1683,
-      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a"
+      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a",
+      "bytes": 5480784524,
+      "counts": [
+        80000,
+        1040352,
+        1683
+      ]
     },
-    "prerequisite_loss_balance": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/result.json",
-      "sha256": "5b73b75c429dd7f60c66fb474410ccb2c030a43b23867ef90bf7bc6e3351573d"
+    "readiness_review": "model_training/analysis/structure_xyz_fill_formal160000_readiness_review_v1.json",
+    "weight_balance_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
+    "continuation_plan_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan160000_v1/result.json",
+      "sha256": "575528b7ddd42ba17b63133232c7e10695ddaba111b7c8e0524764ae4d143262"
     },
-    "primary_weight_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
-    "selected_structure_weight": 4,
+    "preflight": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1/preflight.json",
+      "sha256": "74afbcaf219b3b1668e46162b0a67ab9e65109dbfa707926fb1120fb51064681",
+      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+    },
+    "capacity": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1/capacity.json",
+      "sha256": "79ec0255cd225d7d38053d0d3a08e26755324ea247f5912be2e9faf33f254268",
+      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+    },
     "runs": [
       {
-        "name": "preflight_continue160000_v1",
-        "mode": "preflight",
+        "name": "formal_random_160000_v1",
+        "mode": "train",
         "approved": true,
         "execution_allowed": true,
-        "allocation": 130309880,
-        "host": "pcg01i",
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_160000_v1.json",
+        "config_sha256": "311be24a2a31993af61e52fb1409d927051a5b45bd0d806edd694ee2c1db189e",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1",
         "physical_gpus": [
           5,
           6
         ],
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_continue160000_preflight_v1.json",
-        "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1"
-      },
-      {
-        "name": "capacity_continue160000_v1",
-        "mode": "profile",
-        "approved": true,
-        "execution_allowed": true,
         "allocation": 130309880,
-        "host": "pcg01i",
-        "physical_gpus": [
-          5,
-          6
-        ],
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_continue160000_preflight_v1.json",
-        "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1"
+        "host": "pcg01i"
       }
     ],
+    "trial_contract": {
+      "target_assets": 160000,
+      "start_assets": 80000,
+      "start_updates": 1683,
+      "start_frames": 1040352,
+      "total_updates": 3355,
+      "total_frames": 2068624,
+      "new_updates": 1672,
+      "new_frames": 1028272,
+      "plan_sha256": "f12a885946f44b46a8fa84753812f4102e8c361d06563b3d426d23866ad726d3",
+      "all5000_assets_visits_at_target": 32,
+      "loss": {
+        "xyz_weight": 1,
+        "structure_weight_before": 1,
+        "structure_weight_after": 4
+      },
+      "model_data_pruning_normalization_LR_unchanged": true,
+      "Adam_RNG_and_sampling_preserved": true,
+      "warmup_restarted": false,
+      "evaluate_and_save": [
+        90000,
+        100000,
+        110000,
+        120000,
+        130000,
+        140000,
+        150000,
+        160000
+      ],
+      "large_views_per_evaluation": 1536,
+      "small_views_projected": 128
+    },
     "acceptance": [
-      "Read-only CPU check of actual own80k checkpoint,626namedAdamstates and both saved streams; preserve full80kprefix and planned firstfive updates.",
-      "Fresh-source bounded32-step fit and9capacity cases at weight4; all diagnostics start from the approved official-only initialization and their trained weights are discarded.",
-      "Finite losses/gradients, correct independent gradient routes and initial state, passing per-rank capacity at the declared microbatch schedule.",
-      "No formal continuation until primary reviews these new receipts. Retain own80k model/Adam/RNG for actual continuation, not diagnostic weights.",
-      "Retain allocation130309880 and5/6 only; enforce explicitly published SSH supervision."
+      "Start only from the exact own80k checkpoint with all named Adam states, rank RNGs and sampling continuation. Do not use diagnostic or oldAB weights.",
+      "Only optimization.structure_weight changes1->4 with pinned read-only gradient evidence. Keep all model/data/normalization/pruning/LR settings and warmup state.",
+      "Verify the first5 actual updates1684..1688 ending80240assets/1043568frames against saved-stream CPU plan, including64bit visit seeds, asset IDs, pruning and exact counters. Check finite gradients/loss and resource caps.",
+      "At90000 then every10000 through160000 save and score the fixed1536view large panel, projecting the original128small views from the same outputs. Preserve original GT/raw-frame identities.",
+      "The larger80k validationF1.640624 is a new-cohort baseline, not an improvement over old small-panelF1.559265. Evaluate each cohort against its own baseline.",
+      "Stop exactly160000 and retain outputs/allocation; no automatic later stage or model-quality promotion."
     ],
     "stop_conditions": [
       "nonfinite_loss_or_gradients",
@@ -1008,7 +1047,7 @@
       "out_of_memory",
       "resource_limit_or_allocation_drift"
     ],
-    "target_next_stage_assets": 160000
+    "end_policy": "Stop at exactly160000, retain all outputs and the allocation. No automatic later extension. Quality remains unaccepted pending larger-panel trajectory review."
   },
   "preserved_structure_xyz_fill_formal20000_v1": {
     "label": "structure_xyz_fill_formal20000_20261022_v1",

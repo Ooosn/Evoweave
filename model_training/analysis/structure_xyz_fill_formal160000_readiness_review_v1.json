@@ -1,0 +1,176 @@
+{
+  "schema": "structure_xyz_fill_formal160000_readiness_review_v1",
+  "reviewed_utc": "2026-10-22T18:28:56Z",
+  "decision": "Approve the user-authorized controlled continuation from own80000 to cumulative160000 exposures with structure_weight4. Operational/trainability readiness only; no model-quality or generalization acceptance.",
+  "quality_accepted": false,
+  "formal_continuation_approved": true,
+  "source_code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+  "weight_balance_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
+  "completed_diagnostic": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/result.json",
+    "sha256": "5b73b75c429dd7f60c66fb474410ccb2c030a43b23867ef90bf7bc6e3351573d"
+  },
+  "source_checkpoint": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
+    "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
+    "asset_exposures": 80000,
+    "step": 1683,
+    "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a",
+    "bytes": 5480784524,
+    "counts": [
+      80000,
+      1040352,
+      1683
+    ]
+  },
+  "preflight": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1/preflight.json",
+    "sha256": "74afbcaf219b3b1668e46162b0a67ab9e65109dbfa707926fb1120fb51064681",
+    "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+    "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+  },
+  "capacity": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1/capacity.json",
+    "sha256": "79ec0255cd225d7d38053d0d3a08e26755324ea247f5912be2e9faf33f254268",
+    "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+    "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+  },
+  "continuation_plan": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan160000_v1/result.json",
+    "sha256": "575528b7ddd42ba17b63133232c7e10695ddaba111b7c8e0524764ae4d143262"
+  },
+  "primary_checks": {
+    "training_contract_and_model_source_hashes_exact": true,
+    "nine_capacity_cases_passed": true,
+    "gradient_routes_passed": true,
+    "fresh_diagnostic_weights_discarded": true,
+    "real_saved_stream_prefix_and626_Adam_states_verified": true,
+    "seven_fixed_parameters_without_Adam_expected": true,
+    "weight_only_transition_bound_to_unchanged_model_diagnostic": true
+  },
+  "fixed_fit": [
+    {
+      "rank": 0,
+      "asset": "c753cd566fe54b7481c973dc173a804f",
+      "history": [
+        {
+          "step": 0,
+          "XYZ_CE": 5.713269829750061,
+          "XYZ_L1": 0.5966817289590836,
+          "free_original_edge_F1": 0,
+          "structure_DFS_edge_F1": 0.18181818181818182,
+          "success": 1
+        },
+        {
+          "step": 8,
+          "XYZ_CE": 2.0912114679813385,
+          "XYZ_L1": 0.12040091305971146,
+          "free_original_edge_F1": 0.17113986013986016,
+          "structure_DFS_edge_F1": 0.36363636363636365,
+          "success": 1
+        },
+        {
+          "step": 16,
+          "XYZ_CE": 0.9312199354171753,
+          "XYZ_L1": 0.029430078575387597,
+          "free_original_edge_F1": 0.6494967793880837,
+          "structure_DFS_edge_F1": 1,
+          "success": 1
+        },
+        {
+          "step": 32,
+          "XYZ_CE": 0.26058834977447987,
+          "XYZ_L1": 0.006946765584871173,
+          "free_original_edge_F1": 0.7,
+          "structure_DFS_edge_F1": 1,
+          "success": 1
+        }
+      ]
+    },
+    {
+      "rank": 1,
+      "asset": "oxl_025987e49ae9cc1008e6",
+      "history": [
+        {
+          "step": 0,
+          "XYZ_CE": 5.703171730041504,
+          "XYZ_L1": 0.5438900887966156,
+          "free_original_edge_F1": 0,
+          "structure_DFS_edge_F1": 0.07272727272727272,
+          "success": 1
+        },
+        {
+          "step": 8,
+          "XYZ_CE": 4.236938238143921,
+          "XYZ_L1": 0.3012588992714882,
+          "free_original_edge_F1": 0,
+          "structure_DFS_edge_F1": 0,
+          "success": 0
+        },
+        {
+          "step": 16,
+          "XYZ_CE": 3.018017530441284,
+          "XYZ_L1": 0.13978233188390732,
+          "free_original_edge_F1": 0.024252904141172295,
+          "structure_DFS_edge_F1": 0.4657534246575342,
+          "success": 1
+        },
+        {
+          "step": 32,
+          "XYZ_CE": 1.2866916954517365,
+          "XYZ_L1": 0.03821624256670475,
+          "free_original_edge_F1": 0.4214010289650451,
+          "structure_DFS_edge_F1": 1,
+          "success": 1
+        }
+      ]
+    }
+  ],
+  "fixed_fit_interpretation": "Both fixed non52 structures are correct at32updates and XYZ CE/L1 decrease substantially. Rank1 has a temporary generation failure at8updates and recovers; these diagnostic fits are not a generalization result.",
+  "capacity_peak_allocated_bytes": 26278520832,
+  "capacity_max_fraction_rounded4": 0.3091,
+  "capacity_limit_fraction": 0.85,
+  "large_baseline": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/evaluation_large_080000/summary.json",
+    "sha256": "bab0f558d594ef04e935727396e400397f5424275bfb47c0c3887c6a8c51b075"
+  },
+  "small_baseline": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/evaluation_080000/summary.json",
+    "sha256": "6df9627038a9e3b7ceff096845c93319a08cb018ce0c21d0c9610a315928ae0e"
+  },
+  "continuation": {
+    "target_assets": 160000,
+    "start_assets": 80000,
+    "start_updates": 1683,
+    "start_frames": 1040352,
+    "total_updates": 3355,
+    "total_frames": 2068624,
+    "new_updates": 1672,
+    "new_frames": 1028272,
+    "plan_sha256": "f12a885946f44b46a8fa84753812f4102e8c361d06563b3d426d23866ad726d3",
+    "all5000_assets_visits_at_target": 32,
+    "loss": {
+      "xyz_weight": 1,
+      "structure_weight_before": 1,
+      "structure_weight_after": 4
+    },
+    "model_data_pruning_normalization_LR_unchanged": true,
+    "Adam_RNG_and_sampling_preserved": true,
+    "warmup_restarted": false,
+    "evaluate_and_save": [
+      90000,
+      100000,
+      110000,
+      120000,
+      130000,
+      140000,
+      150000,
+      160000
+    ],
+    "large_views_per_evaluation": 1536,
+    "small_views_projected": 128
+  },
+  "ssh_exception": "Explicit current human instruction after disclosure; preserve allocation130309880/keeper1090013 and physical5/6. No kernel membership claim. CPUaffinity[0],64GiB process-tree RAM cap,90percent device-memory stop, live grant supervision. Do not release or request GPUs.",
+  "startup_acceptance": "Verify actual steps1684..1688 ending80240assets/1043568frames against the CPU plan, including exact asset IDs/64-bit visit seeds/pruning/counters; finite loss=XYZ+4structure, unchanged learning rates, resource limits and no failures.",
+  "end_policy": "Stop at exactly160000, retain all outputs and the allocation. No automatic later extension. Quality remains unaccepted pending larger-panel trajectory review."
+}

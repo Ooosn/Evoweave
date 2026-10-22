@@ -75,7 +75,10 @@ an initial evaluation. Preserve both optimizer-step and exposure counters.
 Pretrained surface LR is3e-5; fresh motion, structure and fill LRs are1e-4.
 Use fresh AdamW betas(.9,.999), no weight
 decay, clip1, and a192-asset linear warmup from20% followed by constant LR.
-Loss is mean coordinate CE plus mean structure CE, each normalized per asset.
+Through80k, loss is mean coordinate CE plus mean structure CE, each normalized
+per asset. The explicitly approved post80k continuation changes only the structure
+coefficient to4; normalization remains unchanged. The exact operation release
+is controlled by `state/current.json`, as described below.
 This is an independent new-model comparison from a common official surface
 initialization, not a continuation of old A/B training.
 
@@ -140,7 +143,48 @@ or failed supervision. Diagnose the saved failing batch before resuming.
 
 ## Current Implementation Stage
 
-### Completed80k: No Further GPU Work Released
+### Weight4 And Larger Evaluation For The160k Continuation
+
+The user requested checking the loss balance, permitting a justified change,
+then continuing this model from its own80k checkpoint to cumulative160k asset
+exposures. The new read-only diagnostic evaluated32 fixed training cases atT8
+without pruning:10 with52 joints and22 non52. Both rank model fingerprints were
+unchanged, and no optimizer was created or updated.
+
+The median per-asset structure/XYZ gradient-norm ratio on shared parameters was
+0.1314 overall and0.1683 on non52. The non52 motion-encoder ratio was0.2350.
+Primary selects structure_weight4: the corresponding raw ratios become0.5258,
+0.6734 and0.9400. These are not Adam-preconditioned update ratios or a claim
+that4 is optimal. This is a controlled change to shared-feature learning, not
+proof that loss balance alone explains the remaining generalization problem.
+Do not interpret the coefficient as a4x structure learning rate. The new total
+loss is not directly comparable with the old unweighted total; compare the
+unchanged raw structure and XYZ terms separately.
+
+The larger80k baseline covers32 train-seen,32 train-heldout and128 validation
+contexts, each with8 scored frames:1536 views in all,1024 of them validation.
+Its validation original-edge F1 is0.640624. The old small-panel membership is
+projected from those same outputs (128 views total), with validation F1
+0.558888. These are different cohorts, not an improvement caused by training.
+Neither panel is the full967-asset validation set.
+
+The actual checkpoint/stream audit verified the entire80k prefix and the names,
+steps and shapes of626 Adam states, excluding exactly the7 previously verified
+fixed motion parameters that do not have Adam state. Full checkpoint integrity
+is bound to its accepted terminal audit. The160k plan has3355 updates and2068624 supervised
+frames. Retain all old boundaries, then save/evaluate at90000,100000,...160000.
+No warmup, Adam, RNG or sampling restart, no old A/B weights and no architecture,
+data, normalization, pruning or LR changes are authorized by this adjustment.
+
+Fresh-source32-step trainability and all9 memory cases passed. Both fixed non52
+structures are correct at32updates, with substantially lower XYZ CE/L1; maximum
+allocated memory was30.91%, below the85% limit. Their weights are diagnostic only
+and are discarded. Primary approves the controlled own80k-to160k continuation,
+not model quality. Verify its first5 actual updates before accepting startup.
+See `analysis/structure_xyz_fill_loss_balance80000_review_v1.json` and
+`analysis/structure_xyz_fill_formal160000_readiness_review_v1.json`.
+
+### Historical80k Completion Review
 
 The authorized80k run finished on2026-10-22 at22:11 JST with both wrappers
 exiting0,1683 total optimizer updates and1040352 supervised-frame exposures.
@@ -162,8 +206,9 @@ improvement in free-generation F1 after55k. Structure instability remains an
 important limitation; its sole cause has not been established.
 
 Keep55k as a candidate rather than assuming the final checkpoint is best.
-Larger-panel evaluation and targeted diagnosis are proposals only; training,
-preflight and GPU evaluation are blocked pending a new published operation.
+At that completion review, larger-panel evaluation and targeted diagnosis were
+proposals only. The subsequent user-authorized operation above supersedes that
+stage's GPU-work block without changing its measured results.
 See `analysis/structure_xyz_fill_formal80000_completion_review_v1.json`.
 
 ### Released User-Authorized Continuation To80k

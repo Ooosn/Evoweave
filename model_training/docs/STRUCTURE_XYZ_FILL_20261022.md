@@ -140,7 +140,33 @@ or failed supervision. Diagnose the saved failing batch before resuming.
 
 ## Current Implementation Stage
 
-### User-Authorized Continuation To80k
+### Completed80k: No Further GPU Work Released
+
+The authorized80k run finished on2026-10-22 at22:11 JST with both wrappers
+exiting0,1683 total optimizer updates and1040352 supervised-frame exposures.
+All12 added checkpoint/evaluation milestones from25k to80k completed. All
+checkpoints remain on the verified SSD; the qlogin allocation is retained idle.
+
+On the same16-asset/64-view validation panel, free structure plus predicted
+XYZ F1 peaked at0.580167 at55k and ended at0.559265 at80k. Old A's best value
+through80k on this exact panel is0.579980 at65k; its80k score is0.538555. Earlier learning
+was faster for the new recipe, but the later results do not establish a higher
+quality ceiling or uniform superiority. At80k, paired asset differences give
+7 new wins,8 old wins and1 within0.01. This remains a small-panel whole-recipe
+comparison, not a full967-asset validation or architecture-only experiment.
+
+At80k every context terminates naturally, but only2/11 non52 validation assets
+have the correct joint count. Their F1 is0.411897, versus0.883476 for the five
+52-joint assets. GT-structure localization has improved without reliable
+improvement in free-generation F1 after55k. Structure instability remains an
+important limitation; its sole cause has not been established.
+
+Keep55k as a candidate rather than assuming the final checkpoint is best.
+Larger-panel evaluation and targeted diagnosis are proposals only; training,
+preflight and GPU evaluation are blocked pending a new published operation.
+See `analysis/structure_xyz_fill_formal80000_completion_review_v1.json`.
+
+### Released User-Authorized Continuation To80k
 
 The first formal stage completed20000 asset exposures,423 optimizer updates
 and263808 supervised-frame exposures with exit0. Its fixed16-asset/64-view

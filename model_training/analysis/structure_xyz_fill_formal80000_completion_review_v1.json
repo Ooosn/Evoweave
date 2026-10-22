@@ -1,0 +1,525 @@
+{
+  "schema": "structure_xyz_fill_formal80000_completion_review_v1",
+  "reviewed_utc": "2026-10-22 16:33:46 UTC",
+  "decision": "Completed the authorized80k operation. Accept verified execution completion, not model quality. No additional GPU work is authorized.",
+  "run": "formal_random_80000_v1",
+  "producer": {
+    "code_commit": "dd13d5e09f405d16cadb33f299068e8f3bd54589",
+    "config_sha256": "3112ceb3c3383313e41bf4dc11c76c007af7d82a7300271b0b205ae4303c0609",
+    "result_sha256": "583653498f4fe3232a331b7484bcad8e870658a210f8e2f4a33548b0ba4e6360"
+  },
+  "terminal": {
+    "finished_utc": "2026-10-22T13:11:39.369452+00:00",
+    "asset_exposures": 80000,
+    "optimizer_updates": 1683,
+    "supervised_frame_exposures": 1040352,
+    "outer_exit": 0,
+    "inner_exit": 0,
+    "processes_absent": true,
+    "allocation_retained": 130309880,
+    "physical_gpus": [
+      5,
+      6
+    ],
+    "observed_idle_utc": "2026-10-22T16:27:08.767238+00:00"
+  },
+  "checkpoint": {
+    "asset_exposures": 80000,
+    "bytes": 5480784524,
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
+    "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
+    "step": 1683,
+    "supervised_frame_exposures": 1040352,
+    "exists": true,
+    "actual_bytes": 5480784524,
+    "full_sha256_independently_checked": true,
+    "model_fingerprint_reported_by_both_ranks": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a"
+  },
+  "retention": {
+    "all12_checkpoints_present": true,
+    "inventory_observed_utc": "2026-10-22T16:32:08.286168+00:00",
+    "best_small_panel_candidate": {
+      "assets": 55000,
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_055000.pt",
+      "bytes": 5480784524
+    },
+    "source_files_removed": false,
+    "archival_performed": false
+  },
+  "terminal_integrity_audit": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/analysis_terminal80000_v1/receipt.json",
+    "sha256": "edcad6203a77f13a494c1adf6976f07f113c7d9ed877b823c45cabd672805135",
+    "passed": true,
+    "checks": {
+      "checkpoint_header_and_model_fingerprint": true,
+      "named_Adam_states": 626,
+      "Adam_step": 1683,
+      "trace_rows": 2520,
+      "finite_loss_and_gradients": true,
+      "constant_learning_rates": true,
+      "step_and_exposure_counter_sums": true,
+      "fixed_evaluations": 12,
+      "unique_views_each": 128,
+      "full_microbatch_or_NPZ_replay": false
+    },
+    "scope_note": [
+      "Historical GPU capacity/fraction not independently recovered unless memory_capacity_candidates supplies it; no GPU queries performed."
+    ]
+  },
+  "evaluation": {
+    "panel": {
+      "train_assets": 8,
+      "train_views": 32,
+      "train_heldout_assets": 8,
+      "train_heldout_views": 32,
+      "validation_assets": 16,
+      "validation_views": 64,
+      "total_views": 128,
+      "full967_validation": false
+    },
+    "main_metric": "original_edge_f1 of freely generated structure plus predicted XYZ; failed generation scored zero.",
+    "curve": [
+      {
+        "asset_exposures": 25000,
+        "summary_sha256": "586e46af38b2217aa0fd39bc88fbc6aa5f8a812161f26cc1a9a6bdab435ef782",
+        "train_F1": 0.452241963553059,
+        "heldout_F1": 0.4401949550229851,
+        "valid_F1": 0.36872441368141323,
+        "valid_gt_structure_xyz_L1": 0.12009768713323865,
+        "valid_52_F1": 0.5533451004999507,
+        "valid_non52_F1": 0.2848059196729871,
+        "valid_non52_exact_count": 0,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 30000,
+        "summary_sha256": "42dcc18958b2aad9dc902a4cb0b3cf2b221f39a7f029d5fcc4d86b77892d5b52",
+        "train_F1": 0.4901685781635854,
+        "heldout_F1": 0.46941696918425857,
+        "valid_F1": 0.4416799325877022,
+        "valid_gt_structure_xyz_L1": 0.110079506150214,
+        "valid_52_F1": 0.6538084155188649,
+        "valid_non52_F1": 0.34525789489171915,
+        "valid_non52_exact_count": 0,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 35000,
+        "summary_sha256": "84caf4ac4b9bacc67f3978ec0d3ce8b17304586fab1aa834c8450ebbb8fcfec7",
+        "train_F1": 0.551987941976086,
+        "heldout_F1": 0.506742098288936,
+        "valid_F1": 0.4901338778101292,
+        "valid_gt_structure_xyz_L1": 0.11723050495493226,
+        "valid_52_F1": 0.6940324698314162,
+        "valid_non52_F1": 0.39745269961863516,
+        "valid_non52_exact_count": 0,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 40000,
+        "summary_sha256": "981f9169ac1fcd251e5ae869cf316e956a15d4d8549d3eb4f57a55d2eddad631",
+        "train_F1": 0.6446149790436205,
+        "heldout_F1": 0.6096175565709283,
+        "valid_F1": 0.5217575414125968,
+        "valid_gt_structure_xyz_L1": 0.10473930344596738,
+        "valid_52_F1": 0.800134627505335,
+        "valid_non52_F1": 0.3952225022795339,
+        "valid_non52_exact_count": 0,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 45000,
+        "summary_sha256": "e4da26f8120d328a6d0168c6619708d98b00571173a25d9129ee48ec2c03c16c",
+        "train_F1": 0.6506997785219768,
+        "heldout_F1": 0.6268876216989383,
+        "valid_F1": 0.5313377867965876,
+        "valid_gt_structure_xyz_L1": 0.11547586745291483,
+        "valid_52_F1": 0.8082004887896209,
+        "valid_non52_F1": 0.40549110407248157,
+        "valid_non52_exact_count": 0.09090909090909091,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 50000,
+        "summary_sha256": "dc6a5d5572458ecd2017b77d26c524fb0a074a9755d467af6c6e11713a49130e",
+        "train_F1": 0.6129001126095683,
+        "heldout_F1": 0.6055548873426169,
+        "valid_F1": 0.5469702634761959,
+        "valid_gt_structure_xyz_L1": 0.10915591734374175,
+        "valid_52_F1": 0.870196713748786,
+        "valid_non52_F1": 0.4000491497159276,
+        "valid_non52_exact_count": 0.18181818181818182,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 55000,
+        "summary_sha256": "0fa0fa39d91c9ddd6d8647536d2aca0b63001020ce88bb4fe3fa0a776bbf73fd",
+        "train_F1": 0.7331559957349914,
+        "heldout_F1": 0.7348147384575994,
+        "valid_F1": 0.5801670009915167,
+        "valid_gt_structure_xyz_L1": 0.10489128795597935,
+        "valid_52_F1": 0.8747838448177598,
+        "valid_non52_F1": 0.44625025379777006,
+        "valid_non52_exact_count": 0.09090909090909091,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 60000,
+        "summary_sha256": "70d9c32636138104495f9ad8965c378f6b7628ea25d396f6f6e6f0ee7e64caa5",
+        "train_F1": 0.6978789065044873,
+        "heldout_F1": 0.650111945458411,
+        "valid_F1": 0.5739104137339376,
+        "valid_gt_structure_xyz_L1": 0.10267997976916377,
+        "valid_52_F1": 0.8811740933484495,
+        "valid_non52_F1": 0.43424510481825035,
+        "valid_non52_exact_count": 0.09090909090909091,
+        "valid_success": 0.9375
+      },
+      {
+        "asset_exposures": 65000,
+        "summary_sha256": "34577e25e8baee52ff1ce3cc4d808ab019544402730701377a7e2ed524fd3b22",
+        "train_F1": 0.7202345626582339,
+        "heldout_F1": 0.6540681798956912,
+        "valid_F1": 0.5291584194048035,
+        "valid_gt_structure_xyz_L1": 0.10161897370562656,
+        "valid_52_F1": 0.8502296190368017,
+        "valid_non52_F1": 0.3832169650266225,
+        "valid_non52_exact_count": 0.18181818181818182,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 70000,
+        "summary_sha256": "f8e283c433935b9b988856c57986d2a22bce73deb9ad50bc640a035f84147bc6",
+        "train_F1": 0.6672005643470627,
+        "heldout_F1": 0.6335380286377477,
+        "valid_F1": 0.5717001079470319,
+        "valid_gt_structure_xyz_L1": 0.09773305825365242,
+        "valid_52_F1": 0.8638330465514514,
+        "valid_non52_F1": 0.43891240858138664,
+        "valid_non52_exact_count": 0.09090909090909091,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 75000,
+        "summary_sha256": "08d02f58c69b1d26862ce88c01c5f2e4cac60d81b48fad42a3e115b7b4c019d3",
+        "train_F1": 0.6770018168097819,
+        "heldout_F1": 0.6374095455066687,
+        "valid_F1": 0.5209954264712503,
+        "valid_gt_structure_xyz_L1": 0.09300195892865304,
+        "valid_52_F1": 0.7886380080134645,
+        "valid_non52_F1": 0.39933970758842574,
+        "valid_non52_exact_count": 0.09090909090909091,
+        "valid_success": 1
+      },
+      {
+        "asset_exposures": 80000,
+        "summary_sha256": "8b613aec07d119270bfb54d4bd47dbc564fef2b56f3a43e039d9fb540eb0f72f",
+        "train_F1": 0.6978561531455234,
+        "heldout_F1": 0.6377241242072582,
+        "valid_F1": 0.5592654560806006,
+        "valid_gt_structure_xyz_L1": 0.09844773205259116,
+        "valid_52_F1": 0.8834762677197583,
+        "valid_non52_F1": 0.411896905335529,
+        "valid_non52_exact_count": 0.18181818181818182,
+        "valid_success": 1
+      }
+    ],
+    "final_structure": {
+      "valid_correct_joint_count_assets": 7,
+      "valid_assets": 16,
+      "non52_correct_joint_count_assets": 2,
+      "non52_assets": 11,
+      "all32_contexts_natural_EOS": true,
+      "distinct_structure_token_sequences": 13
+    },
+    "best_validation": {
+      "assets": 55000,
+      "F1": 0.5801670009915167
+    },
+    "final_validation": {
+      "assets": 80000,
+      "F1": 0.5592654560806006
+    }
+  },
+  "matched_oldA": {
+    "artifact": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/analysis_oldA_matched_20to80k_v1/comparison.json",
+      "sha256": "fe43f655fde4384234f4b640129ed5076eabfa96f677d08e254f7c955ff9dce9"
+    },
+    "validation_curve": {
+      "20000": {
+        "old_A": 0.21985929546513744,
+        "new": 0.3338166489105354
+      },
+      "25000": {
+        "old_A": 0.2076880973398542,
+        "new": 0.36872441368141323
+      },
+      "30000": {
+        "old_A": 0.24317140450295568,
+        "new": 0.4416799325877022
+      },
+      "35000": {
+        "old_A": 0.23634569636454378,
+        "new": 0.4901338778101292
+      },
+      "40000": {
+        "old_A": 0.37665201945762694,
+        "new": 0.5217575414125968
+      },
+      "45000": {
+        "old_A": 0.4612030449405794,
+        "new": 0.5313377867965876
+      },
+      "50000": {
+        "old_A": 0.5114891797528627,
+        "new": 0.5469702634761959
+      },
+      "55000": {
+        "old_A": 0.5535656626529597,
+        "new": 0.5801670009915167
+      },
+      "60000": {
+        "old_A": 0.5430663206287283,
+        "new": 0.5739104137339376
+      },
+      "65000": {
+        "old_A": 0.579980420862383,
+        "new": 0.5291584194048035
+      },
+      "70000": {
+        "old_A": 0.5714773985219014,
+        "new": 0.5717001079470319
+      },
+      "75000": {
+        "old_A": 0.5796942285530979,
+        "new": 0.5209954264712503
+      },
+      "80000": {
+        "old_A": 0.538555427225044,
+        "new": 0.5592654560806006
+      }
+    },
+    "final_groups": {
+      "train_seen": {
+        "old_A": {
+          "all": {
+            "assets": 8,
+            "views": 32,
+            "F1": 0.6708815095073943,
+            "success": 0.875,
+            "F1_success_only": 0.7667217251513078,
+            "exact_joint_count": 0.40625
+          },
+          "joints52": {
+            "assets": 3,
+            "views": 12,
+            "F1": 0.8097786095964686,
+            "success": 1,
+            "F1_success_only": 0.8097786095964686,
+            "exact_joint_count": 0.75
+          },
+          "non52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.5875432494539495,
+            "success": 0.8,
+            "F1_success_only": 0.734429061817437,
+            "exact_joint_count": 0.2
+          }
+        },
+        "new": {
+          "all": {
+            "assets": 8,
+            "views": 32,
+            "F1": 0.6978561531455234,
+            "success": 1,
+            "F1_success_only": 0.6978561531455234,
+            "exact_joint_count": 0.375
+          },
+          "joints52": {
+            "assets": 3,
+            "views": 12,
+            "F1": 0.7577743150821122,
+            "success": 1,
+            "F1_success_only": 0.7577743150821122,
+            "exact_joint_count": 0.6666666666666666
+          },
+          "non52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.6619052559835702,
+            "success": 1,
+            "F1_success_only": 0.6619052559835702,
+            "exact_joint_count": 0.2
+          }
+        }
+      },
+      "train_heldout": {
+        "old_A": {
+          "all": {
+            "assets": 8,
+            "views": 32,
+            "F1": 0.6791674444704796,
+            "success": 0.90625,
+            "F1_success_only": 0.7494261456225982,
+            "exact_joint_count": 0.375
+          },
+          "joints52": {
+            "assets": 3,
+            "views": 12,
+            "F1": 0.891347415246781,
+            "success": 1,
+            "F1_success_only": 0.891347415246781,
+            "exact_joint_count": 0.6666666666666666
+          },
+          "non52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.551859462004699,
+            "success": 0.85,
+            "F1_success_only": 0.6492464258878813,
+            "exact_joint_count": 0.2
+          }
+        },
+        "new": {
+          "all": {
+            "assets": 8,
+            "views": 32,
+            "F1": 0.6377241242072582,
+            "success": 1,
+            "F1_success_only": 0.6377241242072582,
+            "exact_joint_count": 0.375
+          },
+          "joints52": {
+            "assets": 3,
+            "views": 12,
+            "F1": 0.6528011389942285,
+            "success": 1,
+            "F1_success_only": 0.6528011389942285,
+            "exact_joint_count": 0.6666666666666666
+          },
+          "non52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.6286779153350761,
+            "success": 1,
+            "F1_success_only": 0.6286779153350761,
+            "exact_joint_count": 0.2
+          }
+        }
+      },
+      "valid": {
+        "old_A": {
+          "all": {
+            "assets": 16,
+            "views": 64,
+            "F1": 0.538555427225044,
+            "success": 0.921875,
+            "F1_success_only": 0.5841957176678444,
+            "exact_joint_count": 0.21875
+          },
+          "joints52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.8583851880259958,
+            "success": 1,
+            "F1_success_only": 0.8583851880259958,
+            "exact_joint_count": 0.55
+          },
+          "non52": {
+            "assets": 11,
+            "views": 44,
+            "F1": 0.3931782632246113,
+            "success": 0.8863636363636364,
+            "F1_success_only": 0.4435857328687922,
+            "exact_joint_count": 0.06818181818181818
+          }
+        },
+        "new": {
+          "all": {
+            "assets": 16,
+            "views": 64,
+            "F1": 0.5592654560806006,
+            "success": 1,
+            "F1_success_only": 0.5592654560806006,
+            "exact_joint_count": 0.4375
+          },
+          "joints52": {
+            "assets": 5,
+            "views": 20,
+            "F1": 0.8834762677197583,
+            "success": 1,
+            "F1_success_only": 0.8834762677197583,
+            "exact_joint_count": 1
+          },
+          "non52": {
+            "assets": 11,
+            "views": 44,
+            "F1": 0.411896905335529,
+            "success": 1,
+            "F1_success_only": 0.411896905335529,
+            "exact_joint_count": 0.18181818181818182
+          }
+        }
+      }
+    },
+    "paired80k": {
+      "train_seen": {
+        "mean_new_minus_old": 0.02697464363812911,
+        "median_new_minus_old": -0.008547933767302729,
+        "new_better_over_001": 2,
+        "old_better_over_001": 4,
+        "within_001": 2
+      },
+      "train_heldout": {
+        "mean_new_minus_old": -0.04144332026322145,
+        "median_new_minus_old": -0.005054216953998339,
+        "new_better_over_001": 3,
+        "old_better_over_001": 4,
+        "within_001": 1
+      },
+      "valid": {
+        "mean_new_minus_old": 0.020710028855556673,
+        "median_new_minus_old": -0.004697073099535943,
+        "new_better_over_001": 7,
+        "old_better_over_001": 8,
+        "within_001": 1
+      }
+    },
+    "best_oldA": {
+      "assets": 65000,
+      "F1": 0.579980420862383
+    },
+    "identity_check": "Same128 selected group/asset/raw-frame keys and originalAR target tokens; oldA continuous GT arrays were not saved, so no direct numeric old/new continuous-GT array comparison is claimed.",
+    "not_architecture_only": "Initialization, losses, Adam betas and earlier learning-rate schedules differ; all scores here use the same small panel and exposure milestones.",
+    "comparison_budget_scope": "20k through80k; not a statement about oldA later120k/150k runs."
+  },
+  "interpretation": [
+    "New recipe reached a validation F1 near0.580 at55k; oldA reached essentially the same best matched-panel value at65k. No meaningful higher final ceiling is established.",
+    "New final80k mean validation F1 exceeds oldA80k by0.020710, but paired assets give7 new wins,8 old wins,1 within0.01 and a negative median difference. This is not uniform superiority.",
+    "After55k, free-generation validation F1 fluctuates instead of improving reliably. GT-structure-conditioned localization generally improves, which does not guarantee the free structure/XYZ pipeline improves.",
+    "Non52 count accuracy remains2/11 at80k. Diverse generated token sequences and natural EOS are not model-quality acceptance.",
+    "Known non-bitwise anchor replay warnings remain; no new source/data/learning-rate changes or automatic extension were performed."
+  ],
+  "next_step_proposal_only": "Retain55k as a candidate, evaluate a larger matched panel and inspect unstable non52 structures before deciding on further training. Any GPU evaluation/training requires a newly published operation.",
+  "primary_memory_check": {
+    "capacity_source": "Retained allocation130309880 on pcg01i physical5,6;81559MiB per H100 observed at launch and2026-10-22T16:26:51UTC. This supplements the audit, which did not query GPU capacity.",
+    "ranks": [
+      {
+        "rank": 0,
+        "peak_allocated_bytes": 26278056960,
+        "capacity_bytes": 85520809984,
+        "fraction": 0.30727090827269216
+      },
+      {
+        "rank": 1,
+        "peak_allocated_bytes": 26278335488,
+        "capacity_bytes": 85520809984,
+        "fraction": 0.30727416511743033
+      }
+    ],
+    "limit": 0.85,
+    "passed": true
+  }
+}

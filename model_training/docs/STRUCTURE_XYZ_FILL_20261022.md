@@ -140,7 +140,33 @@ or failed supervision. Diagnose the saved failing batch before resuming.
 
 ## Current Implementation Stage
 
-### First Controlled Formal20k Stage
+### User-Authorized Continuation To80k
+
+The first formal stage completed20000 asset exposures,423 optimizer updates
+and263808 supervised-frame exposures with exit0. Its fixed16-asset/64-view
+validation F1 is0.333817, versus0.219859 for old A on those exact assets/frames
+at the same20k exposure budget. This is a whole-recipe comparison, not an
+architecture-only attribution. Non52 validation count accuracy is still0/11;
+structure remains template-biased and model quality is not accepted.
+
+The user explicitly requested continuation to cumulative80000 exposures.
+Resume the own20k checkpoint with model, named Adam moments, optimizer step,
+all rank RNGs and sampling state. Keep the architecture, immutable5k data,
+losses, pruning and learning rates unchanged: surface3e-5, others1e-4. Do not
+restart warmup, replay the completed prefix, or load any old A/B weights.
+
+Preserve all earlier sampling boundaries and add25000,30000,...80000 as both
+checkpoint and fixed128-view evaluation milestones. This is16 visits to every
+training asset, not80000 optimizer updates. Bind the actual checkpoint and
+CPU-only continuation audit before release; verify real resumed requests,
+64-bit seeds, counters and finite gradients at startup. At80000 the program
+stops and retains outputs and the qlogin allocation. No extension beyond80000
+or promotion to full-validation quality acceptance is implicit.
+
+See `analysis/structure_xyz_fill_formal20000_continuation_review_v1.json`
+and the exact released operation in `state/current.json`.
+
+### Completed First Controlled Formal20k Stage
 
 The8192 trial has now completed175 updates and108048 supervised frames, with
 actual coverage of every immutable5k asset. Exact own-checkpoint continuation,

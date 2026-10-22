@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_formal20000_20261022_v1",
-  "updated_at": "2026-10-21T23:35:13Z",
+  "state_id": "structure_xyz_fill_formal80000_20261022_v1",
+  "updated_at": "2026-10-22T04:29:02Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -147,7 +147,7 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_first_controlled_formal20000_XYZ_fill_stage",
+    "status": "retained_for_user_authorized_formal80000_XYZ_fill_continuation",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Enter the user-authorized new independent system into its first controlled formal5k stage and verify actual own8192-checkpoint continuation:20k cumulative asset exposures,423 total updates,263808 supervised frames, checkpoints/evaluations at12288/16384/20000. Model/data/loss/LR stay unchanged; no warmup reset or oldAB weights. First actual update must match the auditedT21/B3/64-bit seeds and8240assets/109056frames/step176. Operational readiness is accepted, model quality is not. Review final generation/localization evidence before any40k operation. OldAB/B80/expanded839 remain stopped.",
+  "next_required_result": "Continue the explicitly user-authorized new system from its own20k checkpoint to cumulative80k asset exposures,1683 updates and1040352 supervised frames, preserving model/Adam/RNG/sampler and unchanged model/data/loss/LR. Verify actual firstfive resumed updates, then the program evaluates/checkpoints every5k from25k and self-stops at80k. No oldAB restart, quality acceptance or extension beyond80k. Preserve the qlogin allocation.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -919,14 +919,14 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_formal20000_20261022_v1",
-    "mode": "first_controlled_formal_training",
+    "label": "structure_xyz_fill_formal80000_20261022_v1",
+    "mode": "user_authorized_formal_continuation",
     "operation": "train",
-    "status": "prepared_formal20000_after8192_and_condition_review",
-    "authorization": "User authorized autonomous completion of the independent new system and validation toward formal training on the immutable5k dataset. Primary reviewed8192 and the read-only condition audit; first controlled20k stage is approved, without oldAB weights or automatic40k extension.",
+    "status": "released_for_own20k_to80k_continuation",
+    "authorization": "Human explicitly requested continuing the new structureXYZ-fill system to cumulative80k asset exposures. Completed20k execution and CPU continuation plan are reviewed; model quality is not accepted. No oldAB restart or extension beyond80k.",
     "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
     "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
-    "code_commit": "59380dc55aa95b5377ce45a7e52dd06877cac870",
+    "code_commit": "62e18f835c9606d5f648601babaf3124204fb66d",
     "gpu_work_allowed": true,
     "formal_training_allowed": true,
     "quality_accepted": false,
@@ -937,10 +937,113 @@
     "selected_initialization": "random",
     "runs": [
       {
-        "name": "formal_random_20000_v1",
+        "name": "formal_random_80000_v1",
         "mode": "train",
         "approved": true,
         "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_80000_v1.json",
+        "config_sha256": "3112ceb3c3383313e41bf4dc11c76c007af7d82a7300271b0b205ae4303c0609",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1",
+        "physical_gpus": [
+          5,
+          6
+        ],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      }
+    ],
+    "trial_contract": {
+      "start_asset_exposures": 20000,
+      "start_optimizer_updates": 423,
+      "start_supervised_frames": 263808,
+      "target_asset_exposures": 80000,
+      "optimizer_updates": 1683,
+      "supervised_frame_exposures": 1040352,
+      "effective_assets_per_update": 48,
+      "evaluations": [
+        25000,
+        30000,
+        35000,
+        40000,
+        45000,
+        50000,
+        55000,
+        60000,
+        65000,
+        70000,
+        75000,
+        80000
+      ],
+      "small_panel_views": 128,
+      "plan_sha256": "4edfd2d77209ebb7bfcb438fd0e3a811cbe61219d01dddc80938e707ce037be1",
+      "resume_own_new_checkpoint_with_adam_rng": true,
+      "old_AB_weights_loaded": false,
+      "model_data_loss_LR_unchanged": true,
+      "learning_rate_warmup_restarted": false,
+      "new_optimizer_updates": 1260,
+      "new_supervised_frames": 776544,
+      "all5000_assets_exactly_sixteen_planned_visits": true
+    },
+    "continuation_plan_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan80000_v1/result.json",
+      "sha256": "e4a3630b639eeb5fdeadf5cda4512fb1d354370f84ba5e8060a247a206cf07c7"
+    },
+    "acceptance": [
+      "Start only from the exact own20k checkpoint with complete model, named Adam states and rank RNG/sampling continuation. Never load oldAB weights.",
+      "First actual resumed update424 must match auditedT16/B3 requests and64-bit seeds, ending at20048assets/264576frames. Verify the firstfive actual updates against the CPU plan. Keep neural/data/loss/pruning/LR unchanged: surface3e-5, othergroups1e-4; no warmup reset.",
+      "Observe finite loss/gradients, measured resource limits, correct actual requests/pruning/counters and128 fixed views with original GT/raw-frame identities.",
+      "Report raw complete-output F1 and52/non52 behavior, structure diversity, GT-conditioned localization and generation failures; EOS or lowerL1 alone is not quality acceptance.",
+      "Sampling is not claimed bitwise reproducible for every asset. Preserve known anchor-replay warning and do not confuse historical point-set changes with proven GT drift or an established operator cause.",
+      "Evaluate/save at25000 then every5000 through80000 and stop. Retain all outputs and qlogin allocation; no automatic later stage."
+    ],
+    "stop_conditions": [
+      "nonfinite_loss_or_gradients",
+      "wrong_GT_mapping",
+      "source_or_manifest_drift",
+      "unexpected_truncation",
+      "out_of_memory",
+      "GPU_resource_drift",
+      "missed_or_duplicated_evaluation_views"
+    ],
+    "end_policy": "End after cumulative80000 checkpoint/evaluation,1683 total updates and1040352 supervised frames. Final quality remains unaccepted pending generation/localization review.",
+    "readiness_review": "model_training/analysis/structure_xyz_fill_formal20000_continuation_review_v1.json",
+    "source_checkpoint": {
+      "bytes": 5480784332,
+      "counts": [
+        20000,
+        263808,
+        423
+      ],
+      "full_sha256_verified": true,
+      "model_sha256": "1355220a17d111462ccf8782683871e3de38db63dfe38bf8a57e3a963212db4d",
+      "model_state_fingerprint_recomputed": true,
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/checkpoint_asset_020000.pt",
+      "sha256": "3370ece4ee42510caa00f6a470d1104dfb243e8e84822c9bbdb95afd65ba1f96"
+    }
+  },
+  "preserved_structure_xyz_fill_formal20000_v1": {
+    "label": "structure_xyz_fill_formal20000_20261022_v1",
+    "mode": "first_controlled_formal_training",
+    "operation": "train",
+    "status": "completed_execution_integrity_accepted_quality_not_accepted",
+    "authorization": "User authorized autonomous completion of the independent new system and validation toward formal training on the immutable5k dataset. Primary reviewed8192 and the read-only condition audit; first controlled20k stage is approved, without oldAB weights or automatic40k extension.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "59380dc55aa95b5377ce45a7e52dd06877cac870",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "quality_accepted": false,
+    "complete": true,
+    "sequential_execution_only": true,
+    "reviewed8192": "model_training/analysis/structure_xyz_fill_selected8192_v4_review.json",
+    "reviewed_condition8192": "model_training/analysis/structure_xyz_fill_condition8192_review_v1.json",
+    "selected_initialization": "random",
+    "runs": [
+      {
+        "name": "formal_random_20000_v1",
+        "mode": "train",
+        "approved": true,
+        "execution_allowed": false,
         "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_20000_v1.json",
         "config_sha256": "6804f91eda49ef9fb25b0cd54cd4f76bdeb6ce672fbbc266dc00c4c4c5ba8bf9",
         "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1",
@@ -994,7 +1097,38 @@
       "GPU_resource_drift",
       "missed_or_duplicated_evaluation_views"
     ],
-    "end_policy": "End after20k checkpoint and evaluation. Formal entry means operational/trainability readiness, not accepted final model quality."
+    "end_policy": "End after20k checkpoint and evaluation. Formal entry means operational/trainability readiness, not accepted final model quality.",
+    "completion_evidence": {
+      "finished_utc": "2026-10-22T01:27:57.251752+00:00",
+      "result": {
+        "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/result.json",
+        "sha256": "8773476f10b732fc80086fd3b06e4e7d4faacbfb741e53ddb0ffba02f1afee42"
+      },
+      "checkpoint": {
+        "bytes": 5480784332,
+        "counts": [
+          20000,
+          263808,
+          423
+        ],
+        "full_sha256_verified": true,
+        "model_sha256": "1355220a17d111462ccf8782683871e3de38db63dfe38bf8a57e3a963212db4d",
+        "model_state_fingerprint_recomputed": true,
+        "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/checkpoint_asset_020000.pt",
+        "sha256": "3370ece4ee42510caa00f6a470d1104dfb243e8e84822c9bbdb95afd65ba1f96"
+      },
+      "terminal_exits": {
+        "formal20000_v1": "0",
+        "formal_random_20000_v1": "0"
+      },
+      "execution_integrity_accepted": true,
+      "quality_accepted": false,
+      "review": "model_training/analysis/structure_xyz_fill_formal20000_continuation_review_v1.json",
+      "full_trace_and_continuation_audit": {
+        "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan80000_v1/result.json",
+        "sha256": "e4a3630b639eeb5fdeadf5cda4512fb1d354370f84ba5e8060a247a206cf07c7"
+      }
+    }
   },
   "preserved_structure_xyz_condition8192_v1": {
     "label": "structure_xyz_condition8192_20261022_v1",

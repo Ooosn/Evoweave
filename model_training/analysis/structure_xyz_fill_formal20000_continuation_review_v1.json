@@ -1,0 +1,257 @@
+{
+  "schema": "structure_xyz_fill_continuation_review_v1",
+  "reviewed_utc": "2026-10-22 04:27:14 UTC",
+  "decision": "Accept completed20k execution integrity and user-authorized unchanged continuation to cumulative80000; no model quality acceptance.",
+  "human_authorization": "Continue training to80k, meaning cumulative80000 asset exposures, not80000 more and not optimizer updates.",
+  "completed_run": {
+    "name": "formal_random_20000_v1",
+    "asset_exposures": 20000,
+    "optimizer_updates": 423,
+    "supervised_frame_exposures": 263808,
+    "result": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/result.json",
+      "sha256": "8773476f10b732fc80086fd3b06e4e7d4faacbfb741e53ddb0ffba02f1afee42"
+    },
+    "checkpoint": {
+      "bytes": 5480784332,
+      "counts": [
+        20000,
+        263808,
+        423
+      ],
+      "full_sha256_verified": true,
+      "model_sha256": "1355220a17d111462ccf8782683871e3de38db63dfe38bf8a57e3a963212db4d",
+      "model_state_fingerprint_recomputed": true,
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/checkpoint_asset_020000.pt",
+      "sha256": "3370ece4ee42510caa00f6a470d1104dfb243e8e84822c9bbdb95afd65ba1f96"
+    },
+    "terminal_exits": {
+      "formal20000_v1": "0",
+      "formal_random_20000_v1": "0"
+    },
+    "trace_audit": {
+      "actual_new_asset_exposures": 11808,
+      "actual_new_supervised_frames": 155760,
+      "all_counter_sums_match": true,
+      "all_indices_asset_ids_64bit_seeds_frames_match_CPU_plan": true,
+      "all_loss_gradients_finite": true,
+      "all_pruning_gates_fractions_seeds_remove_counts_match": true,
+      "asset_visits_with_deletions": 2364,
+      "deleted_joints": 10945,
+      "microbatches": 2860,
+      "neural_QA_repeated": false,
+      "pruned_global_steps": [
+        177,
+        186,
+        187,
+        192,
+        194,
+        206,
+        211,
+        214,
+        217,
+        219,
+        227,
+        228,
+        232,
+        236,
+        239,
+        246,
+        247,
+        256,
+        258,
+        261,
+        270,
+        271,
+        274,
+        282,
+        284,
+        294,
+        302,
+        303,
+        304,
+        306,
+        308,
+        310,
+        311,
+        312,
+        314,
+        316,
+        323,
+        325,
+        331,
+        335,
+        348,
+        354,
+        361,
+        363,
+        370,
+        371,
+        373,
+        374,
+        381,
+        391,
+        397,
+        399,
+        400,
+        402,
+        403,
+        405,
+        410,
+        421,
+        423
+      ],
+      "rank_reports": [
+        {
+          "bytes": 1355673,
+          "first_loss": 5.035808980464935,
+          "first_step": 176,
+          "gradient_norm_max": 2.1767940521240234,
+          "gradient_norm_min": 0.7985476851463318,
+          "last_loss": 4.264157593250275,
+          "last_step": 423,
+          "loss_max": 5.397348801294962,
+          "loss_min": 3.6751250624656677,
+          "microbatches": 1430,
+          "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/trace_rank_0.jsonl",
+          "peak_allocated_bytes": 26278354944,
+          "rank": 0,
+          "rows": 248,
+          "sha256": "352f35fef92426bca20abb39c09b1610bd45ff6d973becb324df57534f70e76b"
+        },
+        {
+          "bytes": 1355278,
+          "first_loss": 5.035808980464935,
+          "first_step": 176,
+          "gradient_norm_max": 2.1767940521240234,
+          "gradient_norm_min": 0.7985476851463318,
+          "last_loss": 4.264157593250275,
+          "last_step": 423,
+          "loss_max": 5.397348801294962,
+          "loss_min": 3.6751250624656677,
+          "microbatches": 1430,
+          "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_20000_v1/trace_rank_1.jsonl",
+          "peak_allocated_bytes": 26277613568,
+          "rank": 1,
+          "rows": 248,
+          "sha256": "28e4db2af3321a453abcdc47858cf9575b55d239c882a5d62a108c8ad79a1f50"
+        }
+      ],
+      "raw_frame_count_and_uniqueness_checked": true,
+      "total_rank_rows": 496
+    }
+  },
+  "quality": {
+    "accepted": false,
+    "panel": {
+      "validation_assets": 16,
+      "validation_views": 64,
+      "total_views": 128
+    },
+    "validation_F1": 0.3338166489105354,
+    "validation_gt_structure_xyz_L1": 0.12966477507143281,
+    "non52_count_correct_assets": 0,
+    "non52_assets": 11,
+    "structure_templates_at16384": 6,
+    "structure_templates_at20000": 4,
+    "matched_oldA20k_F1": 0.21985929546513744,
+    "matched_comparison_sha256": "1a562e929624deb8f6b0b83bef2e2b18d48fd400a3abcf8009a82ae7dc0013c4",
+    "interpretation": "Early complete-output F1 and localization improved on the fixed small panel. Structure remains template-biased and non52 count performance is not stable. Whole-recipe comparison only; initialization, LR schedule and losses differ from oldA. Longer learning is a test, not a proven remedy."
+  },
+  "continuation": {
+    "config": "model_training/experiments/structure_xyz_fill_random_80000_v1.json",
+    "config_sha256": "3112ceb3c3383313e41bf4dc11c76c007af7d82a7300271b0b205ae4303c0609",
+    "cpu_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan80000_v1/result.json",
+      "sha256": "e4a3630b639eeb5fdeadf5cda4512fb1d354370f84ba5e8060a247a206cf07c7"
+    },
+    "plan_sha256": "4edfd2d77209ebb7bfcb438fd0e3a811cbe61219d01dddc80938e707ce037be1",
+    "model_data_loss_learning_rates_unchanged": true,
+    "preserve_named_Adam_rng_and_stream": true,
+    "restart_warmup": false,
+    "old_AB_weights_allowed": false,
+    "target_asset_exposures": 80000,
+    "optimizer_updates": 1683,
+    "supervised_frame_exposures": 1040352,
+    "new_updates": 1260,
+    "new_supervised_frames": 776544,
+    "milestones": [
+      {
+        "asset_exposures": 25000,
+        "step": 528,
+        "supervised_frame_exposures": 326640
+      },
+      {
+        "asset_exposures": 30000,
+        "step": 633,
+        "supervised_frame_exposures": 391968
+      },
+      {
+        "asset_exposures": 35000,
+        "step": 738,
+        "supervised_frame_exposures": 455936
+      },
+      {
+        "asset_exposures": 40000,
+        "step": 843,
+        "supervised_frame_exposures": 527096
+      },
+      {
+        "asset_exposures": 45000,
+        "step": 948,
+        "supervised_frame_exposures": 589904
+      },
+      {
+        "asset_exposures": 50000,
+        "step": 1053,
+        "supervised_frame_exposures": 656560
+      },
+      {
+        "asset_exposures": 55000,
+        "step": 1158,
+        "supervised_frame_exposures": 721864
+      },
+      {
+        "asset_exposures": 60000,
+        "step": 1263,
+        "supervised_frame_exposures": 788344
+      },
+      {
+        "asset_exposures": 65000,
+        "step": 1368,
+        "supervised_frame_exposures": 854672
+      },
+      {
+        "asset_exposures": 70000,
+        "step": 1473,
+        "supervised_frame_exposures": 916560
+      },
+      {
+        "asset_exposures": 75000,
+        "step": 1578,
+        "supervised_frame_exposures": 976720
+      },
+      {
+        "asset_exposures": 80000,
+        "step": 1683,
+        "supervised_frame_exposures": 1040352
+      }
+    ],
+    "first_resumed_update": {
+      "asset_exposures": 20048,
+      "batch_per_rank": 3,
+      "frames": 16,
+      "global_update_assets": 48,
+      "step": 424,
+      "supervised_frame_exposures": 264576
+    }
+  },
+  "validation": {
+    "local_checkpoint_runtime_tests_passed": 16,
+    "training_contract_unchanged": true,
+    "source_changes": "Configuration/state/review/documentation only; no neural/data/trainer/evaluator changes.",
+    "actual_startup_required": "Match first resumed update424 and firstfive updates against audited streams, seeds, pruning, counters and unchanged LR; check finite losses/gradients and resource grant.",
+    "sampling_caveat": "Historical anchor point-set replay was not bitwise exact for all contexts; no identified sampler operator cause. No claim of universal bitwise input reproducibility."
+  },
+  "end_policy": "Program stops after80000 checkpoint and fixed128-view evaluation; preserve all outputs and qlogin allocation. No automatic extension, oldAB restart or full-validation acceptance."
+}

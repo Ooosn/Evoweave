@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_loss_balance80000_active_20261023_v1",
-  "updated_at": "2026-10-22T17:43:00Z",
+  "state_id": "structure_xyz_fill_weight4_continue160000_validation_20261023_v1",
+  "updated_at": "2026-10-22T18:00:05Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -138,16 +138,16 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_formal80000_completion",
+    "status": "retained_for_explicit_ssh_weight4_continuation",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -155,8 +155,8 @@
     "start_utc": "2026-10-21T08:35:28.104000+00:00",
     "expiry_utc": "2026-10-25T08:35:28.104000+00:00",
     "h_rt_seconds": 345600,
-    "ssd_verified": "/work XFS /dev/md0 RAID0 of nvme0n1/nvme1n1, both ROTA=0 on pcg01; 3.5TiB free",
-    "cuda_verified": "torch2.5.1+cu121, CUDA available, exactlytwo visible H10080GB on5,6, unlimited virtual memory, no training processes",
+    "ssd_verified": "/work XFS /dev/md0 on two ROTA=0 NVMe devices;3.4TiB free at diagnostic launch",
+    "cuda_verified": "Completed own80k diagnostic verified both H100 devices5/6 and no parameter updates; per-run resource receipts record current observations.",
     "requested_resources": "exactly2xH100,mem_req64G,unlimitedvmem",
     "keepalive_root": "/home/wangyy/jobs/virtual_fusion_allocation_20261021_v3",
     "authorization": "Human2026-10-21 explicitly requested qlogin two H100 and prepare training recovery. Live pcl03 bootstrap and empty account queue confirmed. No release or extra cards authorized."
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Run the read-only32train gradient diagnostic and larger80k baseline under the explicitly human-authorized direct SSH exception with independent CPU/RAM/GPU supervision. Review measured gradients, choose structure_weight, then validate and publish own80k-to160k continuation. Formal training remains blocked until review; preserve current allocation.",
+  "next_required_result": "Run actual-checkpoint CPU handoff audit, fresh32-step GPU preflight and9capacity cases for selected structure_weight4 with the larger evaluation implementation. Only the two named bounded GPU validation runs are approved; formal training is not released. Review receipts, then publish own80k-to160k continuation preserving Adam/RNG/sampling/LR and using larger evaluations every10000assets.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -919,45 +919,17 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_loss_balance80000_20261023_v1",
-    "mode": "user_authorized_read_only_loss_balance_and_large_baseline",
+    "label": "structure_xyz_fill_weight4_continue160000_validation_20261023_v1",
+    "mode": "user_authorized_bounded_validation_before_continuation",
     "operation": "preflight",
-    "required_entrypoint": "model_training/analysis/probe_structure_xyz_loss_balance.py",
-    "code_commit": "f342e64f69c148af8b25c2d07b85782c9e51b9ab",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "code_commit": "7aefa7bfdc35f6afdde0732d405b2e0182690799",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "quality_accepted": false,
     "complete": false,
+    "sequential_execution_only": true,
     "authorization": "Human requested loss-balance diagnosis/adjustment, own80k continuation to cumulative160k, and larger evaluation. After being informed ordinary SSH is outside the scheduler resource group, human explicitly clarified to retain the existing allocation and use the previous direct SSH method. No release or new allocation.",
-    "source_checkpoint": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
-      "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
-      "asset_exposures": 80000,
-      "step": 1683,
-      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a"
-    },
-    "terminal_integrity_audit": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/analysis_terminal80000_v1/receipt.json",
-      "sha256": "edcad6203a77f13a494c1adf6976f07f113c7d9ed877b823c45cabd672805135",
-      "passed": true
-    },
-    "runs": [
-      {
-        "name": "loss_balance_80000_v1",
-        "mode": "loss_balance_audit",
-        "approved": true,
-        "execution_allowed": true,
-        "allocation": 130309880,
-        "host": "pcg01i",
-        "physical_gpus": [
-          5,
-          6
-        ],
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_loss_balance_80000_v1.json",
-        "config_sha256": "f34fe670ba9c9dece72d1194ee4920032a4c7c4071ebc5765ceaff6d441ab282",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1"
-      }
-    ],
     "ssh_exception": {
       "explicit_human_authorized": true,
       "kernel_scheduler_membership": false,
@@ -975,12 +947,57 @@
       "authorization": "Direct current human instruction to use the previous direct SSH launch after disclosure of missing scheduler membership. This is a narrow exception, not inherited scheduler accounting.",
       "stop_policy": "Stop only the new child process group on allocation loss, CPU-affinity escape, aggregate RSS above64GiB, GPU memory above90percent or any contract failure; retain allocation keeper."
     },
+    "source_checkpoint": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
+      "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
+      "asset_exposures": 80000,
+      "step": 1683,
+      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a"
+    },
+    "prerequisite_loss_balance": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/result.json",
+      "sha256": "5b73b75c429dd7f60c66fb474410ccb2c030a43b23867ef90bf7bc6e3351573d"
+    },
+    "primary_weight_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
+    "selected_structure_weight": 4,
+    "runs": [
+      {
+        "name": "preflight_continue160000_v1",
+        "mode": "preflight",
+        "approved": true,
+        "execution_allowed": true,
+        "allocation": 130309880,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          6
+        ],
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_continue160000_preflight_v1.json",
+        "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1"
+      },
+      {
+        "name": "capacity_continue160000_v1",
+        "mode": "profile",
+        "approved": true,
+        "execution_allowed": true,
+        "allocation": 130309880,
+        "host": "pcg01i",
+        "physical_gpus": [
+          5,
+          6
+        ],
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_continue160000_preflight_v1.json",
+        "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1"
+      }
+    ],
     "acceptance": [
-      "No optimizer or parameter update; own80k model fingerprint identical before/after.",
-      "Separate structure/XYZ gradients on32fixed train cases, including52/non52 and grammar-choice metrics; raw losses are not gradient importance.",
-      "Larger baseline32train_seen+32train_heldout+128valid contexts at8frames (1536views), projecting the original128views from identical outputs.",
-      "Primary reviews actual gradients before selecting weight and publishing formal160k. Preserve model/data/normalization/LR and own Adam/RNG/sampling continuation.",
-      "No oldAB weights, extra GPUs, allocation release or new request."
+      "Read-only CPU check of actual own80k checkpoint,626namedAdamstates and both saved streams; preserve full80kprefix and planned firstfive updates.",
+      "Fresh-source bounded32-step fit and9capacity cases at weight4; all diagnostics start from the approved official-only initialization and their trained weights are discarded.",
+      "Finite losses/gradients, correct independent gradient routes and initial state, passing per-rank capacity at the declared microbatch schedule.",
+      "No formal continuation until primary reviews these new receipts. Retain own80k model/Adam/RNG for actual continuation, not diagnostic weights.",
+      "Retain allocation130309880 and5/6 only; enforce explicitly published SSH supervision."
     ],
     "stop_conditions": [
       "nonfinite_loss_or_gradients",

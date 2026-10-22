@@ -1,0 +1,94 @@
+{
+  "schema": "structure_xyz_fill_loss_balance_review_v1",
+  "reviewed_utc": "2026-10-22T17:58:00Z",
+  "decision": "Select structure_weight4 for a controlled own80k-to160k continuation, conditional on new-source GPU preflight/capacity and actual checkpoint/stream handoff checks. No quality acceptance.",
+  "diagnostic": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/result.json",
+    "sha256": "5b73b75c429dd7f60c66fb474410ccb2c030a43b23867ef90bf7bc6e3351573d"
+  },
+  "large_baseline": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/evaluation_large_080000/summary.json",
+    "sha256": "bab0f558d594ef04e935727396e400397f5424275bfb47c0c3887c6a8c51b075"
+  },
+  "small_baseline": {
+    "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/loss_balance_80000_v1/evaluation_080000/summary.json",
+    "sha256": "6df9627038a9e3b7ceff096845c93319a08cb018ce0c21d0c9610a315928ae0e"
+  },
+  "execution_valid": true,
+  "model_unchanged": true,
+  "optimizer_updates": 0,
+  "quality_accepted": false,
+  "diagnostic_scope": {
+    "train_cases": 32,
+    "joints52": 10,
+    "non52": 22,
+    "input_frames": 8,
+    "pruning_applied": false,
+    "optimizer_preconditioning_measured": false
+  },
+  "weight_choice": {
+    "old_structure_weight": 1,
+    "new_structure_weight": 4,
+    "xyz_weight": 1,
+    "all_shared_structure_over_xyz_median": 0.1314455096407599,
+    "non52_shared_structure_over_xyz_median": 0.16833828506462628,
+    "non52_motion_structure_over_xyz_median": 0.23500124216915758,
+    "all_shared_cosine_median": 0.02515469845041258,
+    "projected_weighted_shared_median": 0.5257820385630396,
+    "projected_weighted_non52_shared_median": 0.6733531402585051,
+    "projected_weighted_non52_motion_median": 0.9400049686766303,
+    "rationale": "A moderate4x increase brings the non52 shared raw gradient near two-thirds of XYZ and motion raw gradient near parity. Do not equalize raw CE magnitudes or claim this coefficient is optimal. Task directions are not predominantly opposed in this fixed train diagnostic.",
+    "limitations": [
+      "Per-asset T8 unpruned raw gradients, not the full random/pruned training mixture or Adam-preconditioned updates.",
+      "The structure head is independent of XYZ; Adam's approximate scale invariance means4xloss is not4xlearning rate. Shared-feature tradeoffs and clipping change.",
+      "Teacher-forced structure accuracy is not free-generation generalization; higher weight is an experiment, not a demonstrated fix."
+    ]
+  },
+  "baseline_f1_rounded6": {
+    "large": {
+      "train_seen": 0.684827,
+      "train_heldout": 0.654941,
+      "valid": 0.640624
+    },
+    "small": {
+      "train_seen": 0.699405,
+      "train_heldout": 0.618816,
+      "valid": 0.558888
+    }
+  },
+  "baseline_views": {
+    "large": 1536,
+    "small": 128,
+    "small_is_exact_output_projection": true
+  },
+  "continuation": {
+    "from_assets": 80000,
+    "target_assets": 160000,
+    "expected_total_updates": 3355,
+    "new_updates": 1672,
+    "expected_total_frames": 2068624,
+    "expected_plan_sha256": "f12a885946f44b46a8fa84753812f4102e8c361d06563b3d426d23866ad726d3",
+    "evaluation_assets": [
+      90000,
+      100000,
+      110000,
+      120000,
+      130000,
+      140000,
+      150000,
+      160000
+    ],
+    "old_model_data_normalization_LR_preserved": true,
+    "Adam_RNG_sampling_preserved": true,
+    "warmup_restarted": false,
+    "old_AB_weights_allowed": false
+  },
+  "readiness": {
+    "CPU_tests_passed": 175,
+    "checkpoint_plan_unit_tests_passed": 2,
+    "new_GPU_preflight_passed": false,
+    "new_capacity_passed": false,
+    "actual_saved_stream_audit_passed": false,
+    "formal_training_released": false
+  }
+}

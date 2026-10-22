@@ -20,6 +20,33 @@ from structure_xyz_fill_runtime import (
 )
 from train_structure_xyz_fill import training_contract
 
+FIXED_WITHOUT_ADAM = {'motion_encoder.time_embed', 'motion_encoder.motion_feature_mlp.0.weight',
+    'motion_encoder.motion_feature_mlp.0.bias', 'motion_encoder.motion_feature_mlp.2.weight',
+    'motion_encoder.motion_feature_mlp.2.bias', 'motion_encoder.motion_feature_mlp.3.weight',
+    'motion_encoder.motion_feature_mlp.3.bias'}
+
+
+def validate_adam_identity(saved):
+    named, groups = saved['optimizer_parameter_names'], saved['optimizer']['param_groups']
+    assert len(named) == len(groups) == 4
+    initialized, missing = set(), set()
+    for named_group, group in zip(named, groups):
+        assert named_group['group'] == group['name']
+        names = named_group['parameters']
+        assert len(names) == len(group['params'])
+        for name, identifier in zip(names, group['params']):
+            if identifier not in saved['optimizer']['state']:
+                missing.add(name)
+                continue
+            state = saved['optimizer']['state'][identifier]
+            assert float(state['step']) == 1683
+            assert state['exp_avg'].shape == saved['model'][name].shape == state['exp_avg_sq'].shape
+            assert identifier not in initialized
+            initialized.add(identifier)
+    assert missing == FIXED_WITHOUT_ADAM
+    assert initialized == set(saved['optimizer']['state']) and len(initialized) == 626
+    return len(initialized), groups, sorted(missing)
+
 
 def plan_handoff(base, future, entries, states):
     reports, plans = [], []
@@ -118,20 +145,8 @@ def main():
     entries = read_entries(base)
     verify_data_selection(base, entries)
     report = plan_handoff(base, future, entries['train'], saved['rank_states'])
-    named = saved['optimizer_parameter_names']
-    groups = saved['optimizer']['param_groups']
-    assert len(named) == len(groups) == 4
-    count = 0
-    for named_group, group in zip(named, groups):
-        assert named_group['group'] == group['name']
-        names = named_group['parameters']
-        assert len(names) == len(group['params'])
-        for name, identifier in zip(names, group['params']):
-            state = saved['optimizer']['state'][identifier]
-            assert float(state['step']) == 1683
-            assert state['exp_avg'].shape == saved['model'][name].shape == state['exp_avg_sq'].shape
-            count += 1
-    assert count == 626 and not torch.cuda.is_initialized()
+    count, groups, fixed = validate_adam_identity(saved)
+    assert not torch.cuda.is_initialized()
     assert args.checkpoint.stat().st_mtime_ns == stat.st_mtime_ns and args.checkpoint.stat().st_size == stat.st_size
     report.update(passed=True, complete=True, candidate_plan_only=True,
                   source_checkpoint={'path': str(args.checkpoint), 'sha256': args.checkpoint_sha256,
@@ -141,6 +156,7 @@ def main():
                   target_config={'path': str(args.target_config), 'sha256': sha256(args.target_config)},
                   loss_weight_only_transition_verified=True,
                   boundaries=boundaries, initialized_adam_states=count,
+                  fixed_parameters_without_adam=fixed,
                   optimizer_groups=[{key: group[key] for key in ('name', 'lr', 'peak_lr')} for group in groups],
                   optimizer_updates_executed=0, CUDA_initialized=False, checkpoint_modified=False,
                   model_constructed=False, finished_utc=datetime.now(timezone.utc).isoformat())

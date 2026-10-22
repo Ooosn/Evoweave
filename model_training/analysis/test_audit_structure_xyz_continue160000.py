@@ -4,9 +4,10 @@ from pathlib import Path
 import sys
 
 import pytest
+import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from audit_structure_xyz_continue160000 import ROOT, make_stream, plan_handoff
+from audit_structure_xyz_continue160000 import FIXED_WITHOUT_ADAM, ROOT, make_stream, plan_handoff, validate_adam_identity
 
 
 def inputs():
@@ -42,3 +43,35 @@ def test_wrong_saved_cursor_is_rejected():
     states[0]['stream']['cursor'] -= 24
     with pytest.raises(ValueError):
         plan_handoff(base, future, entries, states)
+
+
+def adam_fixture():
+    names = [f'parameter{index}' for index in range(626)] + sorted(FIXED_WITHOUT_ADAM)
+    groups, named = [], []
+    for index in range(4):
+        identifiers = list(range(index, len(names), 4))
+        groups.append({'name': f'group{index}', 'params': identifiers})
+        named.append({'group': f'group{index}', 'parameters': [names[i] for i in identifiers]})
+    return {'optimizer_parameter_names': named, 'model': {name: torch.zeros(2) for name in names},
+            'optimizer': {'param_groups': groups, 'state': {index: {'step': torch.tensor(1683),
+                          'exp_avg': torch.zeros(2), 'exp_avg_sq': torch.zeros(2)} for index in range(626)}}}
+
+
+def test_exact_fixed_parameters_may_lack_adam_but_every_trained_parameter_is_required():
+    saved = adam_fixture()
+    count, _, fixed = validate_adam_identity(saved)
+    assert count == 626 and set(fixed) == FIXED_WITHOUT_ADAM
+    del saved['optimizer']['state'][5]
+    with pytest.raises(AssertionError):
+        validate_adam_identity(saved)
+
+
+def test_adam_step_and_shape_are_checked():
+    saved = adam_fixture()
+    saved['optimizer']['state'][5]['step'] = torch.tensor(1682)
+    with pytest.raises(AssertionError):
+        validate_adam_identity(saved)
+    saved = adam_fixture()
+    saved['optimizer']['state'][5]['exp_avg'] = torch.zeros(3)
+    with pytest.raises(AssertionError):
+        validate_adam_identity(saved)

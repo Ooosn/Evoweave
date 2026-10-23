@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "mistaken_reconstructed_baseline_rejected_20261024",
-  "updated_at": "2026-10-23T20:38:25Z",
+  "state_id": "real_frame_id_xyz_consistency_cpu_audit_20261024",
+  "updated_at": "2026-10-23T22:07:44Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -34,7 +34,7 @@
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/BASELINE_FLAT_UNIRIG.md"
+    "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -130,6 +130,7 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
+    "The newly authorized real-frame full ID/XYZ autoregressive model has no measured quality result yet. First validate the implementation and run20000 exposures with structural consistency; the matched lambda0 control is staged separately.",
     "The existing real-frame-only single-query implementation, completed dynamic-frame run and root-RT integration are identified separately. The exact completed run/configuration combining dynamic frames, root-RT removal and expanded data remains to be matched; the requested fresh fixed5k 100000-exposure run has not started.",
     "The structure/XYZ-fill experiment completed160000 asset exposures; its final larger-panel quality trajectory remains unaccepted. The earlier8192-to20000 preparation is historical, not the current stage.",
     "Direct DFS IDs preserve parent identity. Original coordinate quantization can still reduce spatial-matching F1; retain original GT and report quantized-GT references without relabeling or claiming a mathematical upper bound."
@@ -146,7 +147,7 @@
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_explicit_ssh_legacy_single_target",
+    "status": "retained_for_explicit_ssh_id_xyz_consistency",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -375,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Original single-query implementation identified: train_dynamic_rig.py, July HGC baseline, and completed dynamic-frame bias_h8 run at fb27ce9. Locate the combined dynamic-frame/root-RT/expanded-data completed-run record and bind the fresh fixed5k 100000-exposure configuration to the existing implementation. Exact GPU execution remains unpublished.",
+  "next_required_result": "Publish and execute the new real-frame full ID/XYZ CPU audit, then review bounded GPU fit and measured capacity before starting the lambda1 first20000 exposures. Keep lambda0 as the paired sequential control; original single-query baseline restoration is deferred.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -918,6 +919,66 @@
     ]
   },
   "active_operation": {
+    "label": "real_frame_id_xyz_consistency_20261024_v1",
+    "status": "cpu_audit_released_gpu_stages_not_released",
+    "operation": "inspect",
+    "mode": "audit",
+    "complete": false,
+    "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
+    "contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
+    "authorization": "Human explicitly selected real-frame all-target ID+XYZ autoregression with GT-position cross-frame structural CE, removed virtual query/fusion/auxiliary heads, and said start, still direct SSH. First20000 exposures; no automatic100k continuation.",
+    "code_commit": "58c5f569107282e32ded5aacf2ea3acaafc9a324",
+    "cpu_tests_passed": 38,
+    "resource_supervisor_regression_tests_passed": 8,
+    "deployed_code": "/work/wangyy/id_xyz_consistency_20261024/code",
+    "output_root": "/work/wangyy/id_xyz_consistency_20261024/outputs",
+    "source_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "source_checkpoint_sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+    "train_manifest_sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
+    "valid_manifest_sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "gpu_preflight_passed": false,
+    "gpu_capacity_passed": false,
+    "new_training_processes": 0,
+    "last_observed_utc": "2026-10-23T22:07:44Z",
+    "last_observed_gpu_memory_mib": [0, 0],
+    "ordinary_ssh_kernel_scheduler_membership": false,
+    "ssh_exception": {
+      "scope": "real_frame_id_xyz_consistency_20261024_v1",
+      "explicit_human_authorized": true,
+      "authorization": "Human2026-10-23T21:51:32Z explicitly said start, still direct SSH, after the actual nonmembership and independent CPU/RAM/VRAM limits were explained. Existing scheduler-owned attach attempts and supported reattachment had failed; this is a scoped informed exception, not an impersonated allocation member.",
+      "kernel_scheduler_membership": false,
+      "allocation": 130309880,
+      "host": "pcg01i",
+      "physical_gpus": [5, 6],
+      "cpu_slots": 1,
+      "rss_limit_bytes": 68719476736,
+      "gpu_memory_fraction_limit": 0.85,
+      "keeper_pid": 1090013
+    },
+    "runs": [{
+      "mode": "audit",
+      "approved": true,
+      "config": "/work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json",
+      "config_sha256": "d2d9800bbe42ece20ae446cfeb084df14e0ad655ecf537c16a7b084e90984188",
+      "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v1",
+      "allocation": 130309880,
+      "physical_gpus": [5, 6],
+      "cpu_only": true,
+      "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v1 --mode audit"
+    }],
+    "acceptance": [
+      "Only real frames; shared final1024mesh tokens per frame; one full ID+XYZ decoder; no virtual/fusion/auxiliary path.",
+      "Every real frame receives ordinary GT next-token CE; consistency uses only GT ID,parentID,BRANCH,EOS positions and detached leave-one-out full-vocabulary targets.",
+      "Preserve original data, rootRT, selected-input union bbox,256 coordinate bins and heldout8 poses; no pruning or clipping.",
+      "Audit official initialization, appended vocabulary and real-data round trips before GPU release.",
+      "Require finite gradient routes, bounded non52 fixed fit and measured two-H100 Adam-resident capacity before formal training.",
+      "Stop at exactly20000 asset exposures and assess matched original-GT quality and cross-frame structure consistency; do not promote automatically."
+    ],
+    "deferred_work": "Original existing single-query baseline versus bestB restoration remains deferred; the rejected reconstruction is not reused. Lambda0 control is prepared but not concurrently released."
+  },
+  "rejected_legacy_single_target_reconstruction_20261024": {
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "rejected_reconstruction",
     "operation": "inspect",
@@ -10970,12 +11031,18 @@
     "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
   },
   "architecture_contract": {
-    "id": "original_flat_unirig_single_query",
-    "document": "model_training/docs/BASELINE_FLAT_UNIRIG.md",
-    "stage": "original_route_identified_exact_restored_config_pending",
+    "id": "real_frame_id_xyz_consistency_v1",
+    "document": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
+    "stage": "implementation_and_preflight",
     "virtual_query_frame": false,
-    "query_source": "one selected real input frame",
-    "later_abc_distinction": "A/B/C add a mesh-free1024-slot virtual query frame. All three retain it; B uses real-frame attention queries but virtual-frame keys/values. Their all-target supervision is a separate change.",
+    "frame_fusion": false,
+    "independent_auxiliary_decoder": false,
+    "all_real_frames_supervised": true,
+    "per_frame_condition_tokens": 1024,
+    "register_tokens": 96,
+    "main_decoder": "official_full_UniRig_AR_with_appended_explicit_DFS_ID_rows",
+    "main_target": "single_joint_ID_and_XYZ_sequence",
+    "consistency": "GT_structural_positions_leave_one_out_detached_soft_target_CE",
     "second_stage_position_decoder": false
   },
   "preserved_virtual_query_architecture_contract_20261013": {
@@ -11003,13 +11070,13 @@
     "formal_asset_exposures": 80016
   },
   "comparison_contract": {
-    "relationship": "independent_new_structure_XYZ_fill_from_official_surface_and_fresh_modules",
+    "relationship": "same_real_frame_ID_XYZ_model_lambda1_vs_lambda0_from_identical_official_initialization",
     "old_method_trained_checkpoint_initialization_allowed": false,
     "dataset": "unchanged_immutable_normal5000",
     "trial_matching": ["shared_initial_tensors", "asset_order", "frame_choices", "sampling_seeds", "exposure_milestones", "small_evaluation_panel"],
     "initialization_pending_publication": false,
     "precision": "bfloat16_autocast",
-    "required_contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
+    "required_contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md"
   },
   "preserved_virtual_query_comparison_contract_20261013": {
     "relationship": "independent_new_route_from_common_official_upstream",

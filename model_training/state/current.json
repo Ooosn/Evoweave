@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "structure_xyz_fill_formal160000_running_20261023_v1",
-  "updated_at": "2026-10-22T18:40:10Z",
+  "state_id": "legacy_single_target_100000_preparation_20261024_v1",
+  "updated_at": "2026-10-23T17:20:52.515Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -29,14 +29,14 @@
     "npz_files_changed": 0
   },
   "module": "model_training",
-  "human_context": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+  "human_context": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/VIRTUAL_QUERY_XYZ_20261013.md",
     "model_training/docs/VIRTUAL_FUSION_20261013.md",
-    "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
-    "model_training/docs/STRUCTURE_XYZ_CONDITION_8192_20261022.md"
+    "model_training/docs/STRUCTURE_XYZ_CONDITION_8192_20261022.md",
+    "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md"
   ],
   "reference_runs": {
     "flat_unirig": {
@@ -137,11 +137,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "preflight",
+    "train",
     "matched_eval",
     "submit"
   ],
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "The first5 resumed updates passed exact sampling/pruning/loss/LR/resource checks and the current own80k-to160k job is running. Preserve its frozenfa7729b checkout and original allocation. Observe the scheduled large/small evaluations at90000..160000; do not start concurrent GPU work. At160000 verify terminal checkpoint/optimizer/RNG/trace integrity and assess quality against each panel's own80k baseline. No automatic extension beyond160000 or model-quality acceptance.",
+  "next_required_result": "Review single-target implementation/recipe and CPU tests, establish verified in-job execution entry, then publish exact preflight/capacity and100k release.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -919,153 +919,41 @@
     ]
   },
   "active_operation": {
-    "label": "structure_xyz_fill_formal160000_20261023_v1",
-    "mode": "user_authorized_formal_continuation_with_weight4",
-    "operation": "train",
-    "status": "running_startup_accepted",
-    "authorization": "Human requested loss-balance diagnosis/adjustment, own80k continuation to cumulative160k, and larger evaluation. After being informed ordinary SSH is outside the scheduler resource group, human explicitly clarified to retain the existing allocation and use the previous direct SSH method. No release or new allocation.",
-    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
-    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
-    "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
-    "quality_accepted": false,
+    "label": "legacy_single_target_100000_20261024_v1",
+    "mode": "preparation",
+    "operation": "inspect",
+    "status": "preparing_execution_entry_unavailable",
     "complete": false,
-    "sequential_execution_only": true,
-    "ssh_exception": {
-      "explicit_human_authorized": true,
-      "kernel_scheduler_membership": false,
-      "independent_resource_supervisor": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
+    "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
+    "authorization": "Human authorized careful audit then two-H100100000-exposure training; latest reply requests SSH control and preserving existing cards, not allocation release.",
+    "target_assets": 100000,
+    "train_assets": 5000,
+    "target_policy": "one_uniform_random_selected_input_pose_per_asset_visit",
+    "initialization_policy": "fresh_official_UniRig_same_as_B_no_old_trained_weights",
+    "data_policy": "current_dynamic2to24_rootRT_selected_input_mesh_union_bbox_no_GT_changes",
+    "baseline": "best_old_B65000_same_fixed_panel_not_A",
+    "resource_request": {
+      "h100": 2,
       "allocation": 130309880,
-      "allocation_keeper_pid": 1090013,
       "host": "pcg01i",
       "physical_gpus": [
         5,
         6
       ],
-      "cpu_slots": 1,
-      "rss_limit_bytes": 68719476736,
-      "normal_entry_failure": "Original in-job shell is a keepalive without command input; qrsh-inherit was rejected by execd. Both H100 hosts have zero free GPUs and pending requests; immediate release/reacquisition cannot be guaranteed.",
-      "authorization": "Direct current human instruction to use the previous direct SSH launch after disclosure of missing scheduler membership. This is a narrow exception, not inherited scheduler accounting.",
-      "stop_policy": "Stop only the new child process group on allocation loss, CPU-affinity escape, aggregate RSS above64GiB, GPU memory above90percent or any contract failure; retain allocation keeper."
+      "preserve_allocation": true
     },
-    "selected_initialization": "random",
-    "source_checkpoint": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
-      "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
-      "asset_exposures": 80000,
-      "step": 1683,
-      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a",
-      "bytes": 5480784524,
-      "counts": [
-        80000,
-        1040352,
-        1683
-      ]
-    },
-    "readiness_review": "model_training/analysis/structure_xyz_fill_formal160000_readiness_review_v1.json",
-    "weight_balance_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
-    "continuation_plan_audit": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan160000_v1/result.json",
-      "sha256": "575528b7ddd42ba17b63133232c7e10695ddaba111b7c8e0524764ae4d143262"
-    },
-    "preflight": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1/preflight.json",
-      "sha256": "74afbcaf219b3b1668e46162b0a67ab9e65109dbfa707926fb1120fb51064681",
-      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
-      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
-    },
-    "capacity": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1/capacity.json",
-      "sha256": "79ec0255cd225d7d38053d0d3a08e26755324ea247f5912be2e9faf33f254268",
-      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
-      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
-    },
-    "runs": [
-      {
-        "name": "formal_random_160000_v1",
-        "mode": "train",
-        "approved": true,
-        "execution_allowed": true,
-        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_160000_v1.json",
-        "config_sha256": "311be24a2a31993af61e52fb1409d927051a5b45bd0d806edd694ee2c1db189e",
-        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1",
-        "physical_gpus": [
-          5,
-          6
-        ],
-        "allocation": 130309880,
-        "host": "pcg01i"
-      }
-    ],
-    "trial_contract": {
-      "target_assets": 160000,
-      "start_assets": 80000,
-      "start_updates": 1683,
-      "start_frames": 1040352,
-      "total_updates": 3355,
-      "total_frames": 2068624,
-      "new_updates": 1672,
-      "new_frames": 1028272,
-      "plan_sha256": "f12a885946f44b46a8fa84753812f4102e8c361d06563b3d426d23866ad726d3",
-      "all5000_assets_visits_at_target": 32,
-      "loss": {
-        "xyz_weight": 1,
-        "structure_weight_before": 1,
-        "structure_weight_after": 4
-      },
-      "model_data_pruning_normalization_LR_unchanged": true,
-      "Adam_RNG_and_sampling_preserved": true,
-      "warmup_restarted": false,
-      "evaluate_and_save": [
-        90000,
-        100000,
-        110000,
-        120000,
-        130000,
-        140000,
-        150000,
-        160000
-      ],
-      "large_views_per_evaluation": 1536,
-      "small_views_projected": 128
-    },
+    "entry_blocker": "In-job keeper has no command interface and fresh qrsh-inherit was rejected. Ordinary SSH does not inherit scheduler membership. No new payload started.",
     "acceptance": [
-      "Start only from the exact own80k checkpoint with all named Adam states, rank RNGs and sampling continuation. Do not use diagnostic or oldAB weights.",
-      "Only optimization.structure_weight changes1->4 with pinned read-only gradient evidence. Keep all model/data/normalization/pruning/LR settings and warmup state.",
-      "Verify the first5 actual updates1684..1688 ending80240assets/1043568frames against saved-stream CPU plan, including64bit visit seeds, asset IDs, pruning and exact counters. Check finite gradients/loss and resource caps.",
-      "At90000 then every10000 through160000 save and score the fixed1536view large panel, projecting the original128small views from the same outputs. Preserve original GT/raw-frame identities.",
-      "The larger80k validationF1.640624 is a new-cohort baseline, not an improvement over old small-panelF1.559265. Evaluate each cohort against its own baseline.",
-      "Stop exactly160000 and retain outputs/allocation; no automatic later stage or model-quality promotion."
-    ],
-    "stop_conditions": [
-      "nonfinite_loss_or_gradients",
-      "source_or_manifest_drift",
-      "wrong_GT_or_frame_identity",
-      "model_fingerprint_changed",
-      "missing_or_duplicated_views",
-      "out_of_memory",
-      "resource_limit_or_allocation_drift"
-    ],
-    "end_policy": "Stop at exactly160000, retain all outputs and the allocation. No automatic later extension. Quality remains unaccepted pending larger-panel trajectory review.",
-    "startup_accepted": true,
-    "startup_verified_utc": "2026-10-22T18:37:00.670428+00:00",
-    "startup_receipt": {
-      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1/startup_verification_80240.json",
-      "sha256": "e2b2804e83a504984da045d4a1e42b699e7345d50e53fe2018ad46465dcb9c99"
-    },
-    "source_commit": "fa7729bcbe1cf5216d5759fb47161c9ae810cbcf",
-    "last_observed_utc": "2026-10-22T18:38:07Z",
-    "latest_verified_counts": [
-      80336,
-      1044624,
-      1690
-    ],
-    "runtime_checkout_preserved": "Running source remains frozen atfa7729bcbe1cf5216d5759fb47161c9ae810cbcf. This startup metadata publication does not modify the live checkout or outputs.",
-    "processes": {
-      "outer": 1173847,
-      "inner": 1173849
-    }
+      "Exactly one real-query-first AR target per asset, with no virtual/fusion/auxiliary heads.",
+      "Preserve all-frame geometry, normalization and GT when changing target.",
+      "Validate exact common initialization, target alignment, gradients, seeded sampling and separate input/supervised-frame counters.",
+      "Require in-job preflight and measured dual-H100 capacity before formal release.",
+      "Compare against bestB on identical128asset8frame validation including non52/failures.",
+      "Stop at exactly100000 assets; preserve all outputs and allocation."
+    ]
   },
   "preserved_structure_xyz_fill_formal20000_v1": {
     "label": "structure_xyz_fill_formal20000_20261022_v1",
@@ -2901,176 +2789,165 @@
     ]
   },
   "last_operation": {
-    "label": "structure_cohort_audit_v1",
-    "operation": "preflight",
-    "status": "completed",
-    "accepted": true,
-    "prepared_at": "2026-10-12T06:25:29.625635+00:00",
-    "code_parent_commit": "ce6ef1fdba23b4336ec652c7bd469cec39a762f1",
-    "config": "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/experiments/virtual_structure_cohort_20261012.json",
-    "config_sha256": "1213d30817e99655db79d4ba0e3d63d873c77a64796e384153e80ee54f2528aa",
-    "checkpoints": [
-      {
-        "name": "rank_0",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
-      },
-      {
-        "name": "rank_1",
-        "checkpoint": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/compare_self_cross_2_v1/checkpoint_sample_005040.pt",
-        "sha256": "c5c3767b995ff41ff0cc7885f265c4a4c3ee1b57580732f7b99993dba0648c40"
-      }
-    ],
-    "output": "/home/wangyy/evorig/outputs/shared_virtual_frame_20261012/structure_cohort_audit_v1",
-    "manifests": {
-      "status": "verified_published",
-      "root": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012",
-      "train_rows": 18018,
-      "valid_rows": 969,
-      "quarantined_rows": 81,
-      "target_mesh_padding": 1.1,
-      "all_frame_all_target_joint_abs_limit": 1.0,
-      "receipt": "/home/wangyy/evorig/evoweave_rootless_v3_unimate_v1_coordbounded_hgc_20261012/provenance/coordinate_bounds_receipt.json",
-      "receipt_sha256": "31cfe31c49ca569c4651e24be7c218640ff7f34cb586df5e5ff28a255e54d311",
-      "train_manifest_sha256": "cc2d417bf3537df290ec489e9f3bc0fbcc5b2cfa9b6eb3f31706baac286689c3",
-      "valid_manifest_sha256": "545e3211e6680c9841cb5f895a0ab2ffb1748949d445c67803d45463b61df7ff",
-      "npz_files_changed": 0
-    },
-    "resources": {
-      "allocation": 129547842,
+    "label": "structure_xyz_fill_formal160000_20261023_v1",
+    "mode": "user_authorized_formal_continuation_with_weight4",
+    "operation": "train",
+    "status": "completed_execution_quality_unaccepted",
+    "authorization": "Human requested loss-balance diagnosis/adjustment, own80k continuation to cumulative160k, and larger evaluation. After being informed ordinary SSH is outside the scheduler resource group, human explicitly clarified to retain the existing allocation and use the previous direct SSH method. No release or new allocation.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_structure_xyz_fill.py",
+    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md",
+    "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "quality_accepted": false,
+    "complete": true,
+    "sequential_execution_only": true,
+    "ssh_exception": {
+      "explicit_human_authorized": true,
+      "kernel_scheduler_membership": false,
+      "independent_resource_supervisor": true,
+      "allocation": 130309880,
+      "allocation_keeper_pid": 1090013,
       "host": "pcg01i",
       "physical_gpus": [
         5,
-        7
+        6
+      ],
+      "cpu_slots": 1,
+      "rss_limit_bytes": 68719476736,
+      "normal_entry_failure": "Original in-job shell is a keepalive without command input; qrsh-inherit was rejected by execd. Both H100 hosts have zero free GPUs and pending requests; immediate release/reacquisition cannot be guaranteed.",
+      "authorization": "Direct current human instruction to use the previous direct SSH launch after disclosure of missing scheduler membership. This is a narrow exception, not inherited scheduler accounting.",
+      "stop_policy": "Stop only the new child process group on allocation loss, CPU-affinity escape, aggregate RSS above64GiB, GPU memory above90percent or any contract failure; retain allocation keeper."
+    },
+    "selected_initialization": "random",
+    "source_checkpoint": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_80000_v1/checkpoint_asset_080000.pt",
+      "sha256": "8fc91b982ff7f81daa2306fdde3bdf6b6476af017bc2dd22619a562e3654d2e7",
+      "asset_exposures": 80000,
+      "step": 1683,
+      "model_sha256": "75f5c18fce2e29bb25d701189cfe5f80af52f61de55375c6730ea0d0fa67cf2a",
+      "bytes": 5480784524,
+      "counts": [
+        80000,
+        1040352,
+        1683
       ]
     },
-    "command": [
-      "bash",
-      "/home/wangyy/evorig/Evoweave-motion-compare-20261010/model_training/jobs/run_virtual_structure_probe.sh"
-    ],
-    "authorization": "User prioritizes actual architecture and implementation verification; read-only paired96asset localization conditioning audit, not optimization or formal training.",
-    "acceptance": "Read-only paired localization audit on the SAME32train64valid cases, eight frames, exact sample5040 new weights. GT parent conditioning isolates localization; NOT free-generation scores. Each case encodes once and reuses the same H/A/points across normal, zero learned anchors, zero explicit points, broken anchor-point pairing, and spatially averaged learned anchors. No optimizer, fitted readout or parameter update. Invalid/OOD ablations diagnose input use and are NOT candidate inference pipelines. Summarize paired per-asset changes and counts, without promoting one-case findings or attributing a causal root from attention entropy alone. Formal remains blocked.",
-    "formal_training_allowed": false,
-    "complete": true,
-    "exit_code": 0,
-    "execution_valid": true,
-    "accepted_meaning": "paired_read_only_diagnostic_execution_valid_NOT_model_quality_or_formal_approval",
-    "finished_at": "2026-10-12T06:29:58.857782+00:00",
-    "result": {
-      "train": {
-        "assets": 32,
-        "modes": {
-          "normal": {
-            "xyz_l1": 0.2726979572325945,
-            "query_F1": 0.0625471782496353,
-            "paired_xyz_delta": 0.0,
-            "XYZ_better": 0,
-            "XYZ_worse": 0,
-            "paired_F1_delta": 0.0,
-            "F1_better": 0,
-            "F1_worse": 0
-          },
-          "zero_learned_anchors": {
-            "xyz_l1": 0.3136663497425616,
-            "query_F1": 0.06553405147367745,
-            "paired_xyz_delta": 0.04096839250996709,
-            "XYZ_better": 4,
-            "XYZ_worse": 28,
-            "paired_F1_delta": 0.0029868732240421613,
-            "F1_better": 15,
-            "F1_worse": 13
-          },
-          "zero_explicit_points": {
-            "xyz_l1": 0.28192367404699326,
-            "query_F1": 0.06282186846344187,
-            "paired_xyz_delta": 0.009225716814398766,
-            "XYZ_better": 6,
-            "XYZ_worse": 26,
-            "paired_F1_delta": 0.0002746902138065827,
-            "F1_better": 13,
-            "F1_worse": 12
-          },
-          "break_feature_point_pairing": {
-            "xyz_l1": 0.27318301796913147,
-            "query_F1": 0.06504229343461423,
-            "paired_xyz_delta": 0.0004850607365369797,
-            "XYZ_better": 15,
-            "XYZ_worse": 17,
-            "paired_F1_delta": 0.0024951151849789523,
-            "F1_better": 8,
-            "F1_worse": 8
-          },
-          "spatial_mean_anchors": {
-            "xyz_l1": 0.2759845503605902,
-            "query_F1": 0.06664629773108752,
-            "paired_xyz_delta": 0.0032865931279957294,
-            "XYZ_better": 10,
-            "XYZ_worse": 22,
-            "paired_F1_delta": 0.004099119481452236,
-            "F1_better": 13,
-            "F1_worse": 11
-          }
-        }
-      },
-      "valid": {
-        "assets": 64,
-        "modes": {
-          "normal": {
-            "xyz_l1": 0.23812025121878833,
-            "query_F1": 0.08758685849361329,
-            "paired_xyz_delta": 0.0,
-            "XYZ_better": 0,
-            "XYZ_worse": 0,
-            "paired_F1_delta": 0.0,
-            "F1_better": 0,
-            "F1_worse": 0
-          },
-          "zero_learned_anchors": {
-            "xyz_l1": 0.2849637344479561,
-            "query_F1": 0.07276180125604838,
-            "paired_xyz_delta": 0.04684348322916776,
-            "XYZ_better": 4,
-            "XYZ_worse": 60,
-            "paired_F1_delta": -0.014825057237564906,
-            "F1_better": 21,
-            "F1_worse": 34
-          },
-          "zero_explicit_points": {
-            "xyz_l1": 0.2661725413054228,
-            "query_F1": 0.0849171982874475,
-            "paired_xyz_delta": 0.028052290086634457,
-            "XYZ_better": 24,
-            "XYZ_worse": 40,
-            "paired_F1_delta": -0.002669660206165789,
-            "F1_better": 22,
-            "F1_worse": 26
-          },
-          "break_feature_point_pairing": {
-            "xyz_l1": 0.23805889359209687,
-            "query_F1": 0.09296123081865454,
-            "paired_xyz_delta": -6.135762669146061e-05,
-            "XYZ_better": 35,
-            "XYZ_worse": 29,
-            "paired_F1_delta": 0.005374372325041256,
-            "F1_better": 21,
-            "F1_worse": 13
-          },
-          "spatial_mean_anchors": {
-            "xyz_l1": 0.240139972534962,
-            "query_F1": 0.07983840448081338,
-            "paired_xyz_delta": 0.0020197213161736727,
-            "XYZ_better": 25,
-            "XYZ_worse": 39,
-            "paired_F1_delta": -0.007748454012799908,
-            "F1_better": 16,
-            "F1_worse": 28
-          }
-        }
-      }
+    "readiness_review": "model_training/analysis/structure_xyz_fill_formal160000_readiness_review_v1.json",
+    "weight_balance_review": "model_training/analysis/structure_xyz_fill_loss_balance80000_review_v1.json",
+    "continuation_plan_audit": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/cpu_plan160000_v1/result.json",
+      "sha256": "575528b7ddd42ba17b63133232c7e10695ddaba111b7c8e0524764ae4d143262"
     },
-    "local_artifacts": "D:\\evoweave-artifacts\\shared-virtual-frame-20261012\\training\\structure_cohort_audit_v1",
-    "report_sha256": "6ac519fe611987d37e097ed710f10ed23336f468e70c6214dbb4ee446ec24c1c",
-    "conclusion": "Geometry is used: removing learned anchors/explicit points worsens validation XYZ error. But breaking anchor-feature/coordinate pairing leaves error essentially unchanged, and spatially averaging anchors changes it by <1percent. This is weak local geometric correspondence in the learned sample5040 model, not proof of a specific implementation bug or an optimizer-only cause. These are GT-parent-conditioned counterfactual/OOD diagnostics, not alternative production models."
+    "preflight": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/preflight_continue160000_v1/preflight.json",
+      "sha256": "74afbcaf219b3b1668e46162b0a67ab9e65109dbfa707926fb1120fb51064681",
+      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+    },
+    "capacity": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/capacity_continue160000_v1/capacity.json",
+      "sha256": "79ec0255cd225d7d38053d0d3a08e26755324ea247f5912be2e9faf33f254268",
+      "code_commit": "25709ff7dffae57e14797ab6ecf3fd5a623763f8",
+      "config_sha256": "78a3177f38da2c1ede4d0d8306bccd0cafa435791f01ae8e931a4799d239c92c"
+    },
+    "runs": [
+      {
+        "name": "formal_random_160000_v1",
+        "mode": "train",
+        "approved": true,
+        "execution_allowed": true,
+        "config": "/work/wangyy/structure_xyz_fill_20261022/code/model_training/experiments/structure_xyz_fill_random_160000_v1.json",
+        "config_sha256": "311be24a2a31993af61e52fb1409d927051a5b45bd0d806edd694ee2c1db189e",
+        "output": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1",
+        "physical_gpus": [
+          5,
+          6
+        ],
+        "allocation": 130309880,
+        "host": "pcg01i"
+      }
+    ],
+    "trial_contract": {
+      "target_assets": 160000,
+      "start_assets": 80000,
+      "start_updates": 1683,
+      "start_frames": 1040352,
+      "total_updates": 3355,
+      "total_frames": 2068624,
+      "new_updates": 1672,
+      "new_frames": 1028272,
+      "plan_sha256": "f12a885946f44b46a8fa84753812f4102e8c361d06563b3d426d23866ad726d3",
+      "all5000_assets_visits_at_target": 32,
+      "loss": {
+        "xyz_weight": 1,
+        "structure_weight_before": 1,
+        "structure_weight_after": 4
+      },
+      "model_data_pruning_normalization_LR_unchanged": true,
+      "Adam_RNG_and_sampling_preserved": true,
+      "warmup_restarted": false,
+      "evaluate_and_save": [
+        90000,
+        100000,
+        110000,
+        120000,
+        130000,
+        140000,
+        150000,
+        160000
+      ],
+      "large_views_per_evaluation": 1536,
+      "small_views_projected": 128
+    },
+    "acceptance": [
+      "Start only from the exact own80k checkpoint with all named Adam states, rank RNGs and sampling continuation. Do not use diagnostic or oldAB weights.",
+      "Only optimization.structure_weight changes1->4 with pinned read-only gradient evidence. Keep all model/data/normalization/pruning/LR settings and warmup state.",
+      "Verify the first5 actual updates1684..1688 ending80240assets/1043568frames against saved-stream CPU plan, including64bit visit seeds, asset IDs, pruning and exact counters. Check finite gradients/loss and resource caps.",
+      "At90000 then every10000 through160000 save and score the fixed1536view large panel, projecting the original128small views from the same outputs. Preserve original GT/raw-frame identities.",
+      "The larger80k validationF1.640624 is a new-cohort baseline, not an improvement over old small-panelF1.559265. Evaluate each cohort against its own baseline.",
+      "Stop exactly160000 and retain outputs/allocation; no automatic later stage or model-quality promotion."
+    ],
+    "stop_conditions": [
+      "nonfinite_loss_or_gradients",
+      "source_or_manifest_drift",
+      "wrong_GT_or_frame_identity",
+      "model_fingerprint_changed",
+      "missing_or_duplicated_views",
+      "out_of_memory",
+      "resource_limit_or_allocation_drift"
+    ],
+    "end_policy": "Stop at exactly160000, retain all outputs and the allocation. No automatic later extension. Quality remains unaccepted pending larger-panel trajectory review.",
+    "startup_accepted": true,
+    "startup_verified_utc": "2026-10-22T18:37:00.670428+00:00",
+    "startup_receipt": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1/startup_verification_80240.json",
+      "sha256": "e2b2804e83a504984da045d4a1e42b699e7345d50e53fe2018ad46465dcb9c99"
+    },
+    "source_commit": "fa7729bcbe1cf5216d5759fb47161c9ae810cbcf",
+    "last_observed_utc": "2026-10-23T17:08:10Z",
+    "latest_verified_counts": [
+      80336,
+      1044624,
+      1690
+    ],
+    "runtime_checkout_preserved": "Running source remains frozen atfa7729bcbe1cf5216d5759fb47161c9ae810cbcf. This startup metadata publication does not modify the live checkout or outputs.",
+    "processes": {
+      "outer": 1173847,
+      "inner": 1173849
+    },
+    "finished_utc": "2026-10-23T11:58:37.591084Z",
+    "result": {
+      "path": "/work/wangyy/structure_xyz_fill_20261022/outputs/formal_random_160000_v1/result.json",
+      "sha256": "d200706c995a1f3643c627e8902e7a74874d8cd15b35878ce46758066fee57e7",
+      "complete": true,
+      "passed": true,
+      "quality_accepted": false,
+      "asset_exposures": 160000,
+      "supervised_frame_exposures": 2068624,
+      "updates": 3355,
+      "final_model_sha256": "be86025acd1e29e024e74190ff3aa5246f2376e70c58324761672a4244021c71"
+    }
   },
   "receipt_max_age_minutes": 240,
   "operation_history": [
@@ -10953,24 +10830,10 @@
     "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
   },
   "architecture_contract": {
-    "id": "structure_xyz_token_fill_v1",
-    "virtual_query_tokens": 1024,
-    "motion_depth": 12,
-    "structure_decoder": "two_layer_autoregressive_explicit_DFS_ID_BRANCH_EOS",
-    "xyz_decoder": "four_layer_bidirectional_structure_and_XYZ_masks_cross_final_mesh_anchors",
-    "fill_position_capacity": 3076,
-    "fill_width": 1024,
-    "fill_heads": 8,
-    "fill_ffn_dim": 4096,
-    "coordinate_classes": 256,
-    "coordinate_loss": "exact_UniRig_quantized_token_CE",
-    "structure_hidden_state_passed_to_xyz": false,
-    "mesh_memory_detached": false,
-    "shared_upstream_trained_by_both_losses": true,
-    "cross_branch_loss_allowed": false,
-    "pruning": "batch80percent_intact;else_per_asset_uniform0to20percent_current_nonroot_leaf_deletions",
-    "initialization": "official_surface_only;fresh_motion_structure_XYZ;optional_official_position_rows;NO_old_AB_weights",
-    "contract": "model_training/docs/STRUCTURE_XYZ_FILL_20261022.md"
+    "id": "legacy_real_query_single_target_v1",
+    "document": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
+    "stage": "implementation_and_recipe_audit",
+    "second_stage_position_decoder": false
   },
   "preserved_virtual_query_architecture_contract_20261013": {
     "id": "virtual_query_xyz_aux_ids_v1",

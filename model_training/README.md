@@ -1,6 +1,16 @@
 # Evoweave Model Training
 
-## Active Route: Structure XYZ Token Filling
+## Active Route: Real Query Single Target
+
+The user authorized a fresh 100,000-asset-exposure, two-H100 comparison using
+the original real-query-first encoder and exactly one randomly selected AR
+target per asset visit. Preserve the current fixed5k data, dynamic2..24 poses,
+root-RT alignment and selected-input mesh-union normalization. See
+[Real query single target](docs/LEGACY_SINGLE_TARGET_20261024.md).
+Implementation and execution-entry checks are in progress; GPU permissions
+remain in `state/current.json`. Do not restart a historical launcher.
+
+## Historical Route: Structure XYZ Token Filling
 
 The user authorized implementation of
 [Structure XYZ token filling](docs/STRUCTURE_XYZ_FILL_20261022.md): one AR

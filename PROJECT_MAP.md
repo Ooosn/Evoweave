@@ -14,7 +14,7 @@ not model architecture, and does not authorize or start a training run.
 This checkout is the isolated fusion experiment workspace on branch
 `codex/virtual-fusion-20261013`, based on committed source `19d81ba`.
 The active experiment contract is
-`model_training/docs/STRUCTURE_XYZ_FILL_20261022.md`; stage permissions remain in
+`model_training/docs/LEGACY_SINGLE_TARGET_20261024.md`; stage permissions remain in
 `model_training/state/current.json`. Other code/training directories are not
 execution destinations and must remain unchanged.
 

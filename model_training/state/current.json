@@ -920,15 +920,15 @@
   },
   "active_operation": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
-    "status": "cpu_audit_v1_controlled_stop_for_review_fixes",
+    "status": "cpu_audit_v2_released_after_review_fixes",
     "operation": "inspect",
     "mode": "audit",
     "complete": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
     "contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
     "authorization": "Human explicitly selected real-frame all-target ID+XYZ autoregression with GT-position cross-frame structural CE, removed virtual query/fusion/auxiliary heads, and said start, still direct SSH. First20000 exposures; no automatic100k continuation.",
-    "code_commit": "58c5f569107282e32ded5aacf2ea3acaafc9a324",
-    "cpu_tests_passed": 38,
+    "code_commit": "d4419ea3af67028fbf7de8bae65845f8e6d2d12b",
+    "cpu_tests_passed": 51,
     "resource_supervisor_regression_tests_passed": 8,
     "deployed_code": "/work/wangyy/id_xyz_consistency_20261024/code",
     "output_root": "/work/wangyy/id_xyz_consistency_20261024/outputs",
@@ -972,6 +972,16 @@
       "physical_gpus": [5, 6],
       "cpu_only": true,
       "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v1 --mode audit"
+    }, {
+      "mode": "audit",
+      "approved": true,
+      "config": "/work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json",
+      "config_sha256": "d2d9800bbe42ece20ae446cfeb084df14e0ad655ecf537c16a7b084e90984188",
+      "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v2",
+      "allocation": 130309880,
+      "physical_gpus": [5, 6],
+      "cpu_only": true,
+      "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v2 --mode audit"
     }],
     "acceptance": [
       "Only real frames; shared final1024mesh tokens per frame; one full ID+XYZ decoder; no virtual/fusion/auxiliary path.",

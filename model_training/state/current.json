@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "mistaken_reconstructed_baseline_rejected_20261024",
-  "updated_at": "2026-10-23T20:32:58Z",
+  "updated_at": "2026-10-23T20:38:25Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -130,7 +130,8 @@
     "the full train random-pose tokenizer round-trip changes parent identity on 989 of 15920 rows and 4696 of 728028 edges; 792 of those 989 rows have no continuous exact-zero edge, and the worst identity edge F1 is 0.216"
   ],
   "unknowns": [
-    "SelectedR8192 covers all5000 assets and improves validation-panel F1 to0.17719, but structures remain strongly template-dominated. The read-only audit finds weak condition sensitivity and no consistent validation benefit. Primary approves the unchanged first controlled formal20k stage as a longer-learning experiment, not model-quality acceptance;40k remains blocked pending review. Some historical anchor samples are not bitwise reproducible; GT and scored frame identities remain unchanged and no operator cause is established.",
+    "The existing real-frame-only single-query implementation, completed dynamic-frame run and root-RT integration are identified separately. The exact completed run/configuration combining dynamic frames, root-RT removal and expanded data remains to be matched; the requested fresh fixed5k 100000-exposure run has not started.",
+    "The structure/XYZ-fill experiment completed160000 asset exposures; its final larger-panel quality trajectory remains unaccepted. The earlier8192-to20000 preparation is historical, not the current stage.",
     "Direct DFS IDs preserve parent identity. Original coordinate quantization can still reduce spatial-matching F1; retain original GT and report quantized-GT references without relabeling or claiming a mathematical upper bound."
   ],
   "allowed_operations": [
@@ -10972,6 +10973,9 @@
     "id": "original_flat_unirig_single_query",
     "document": "model_training/docs/BASELINE_FLAT_UNIRIG.md",
     "stage": "original_route_identified_exact_restored_config_pending",
+    "virtual_query_frame": false,
+    "query_source": "one selected real input frame",
+    "later_abc_distinction": "A/B/C add a mesh-free1024-slot virtual query frame. All three retain it; B uses real-frame attention queries but virtual-frame keys/values. Their all-target supervision is a separate change.",
     "second_stage_position_decoder": false
   },
   "preserved_virtual_query_architecture_contract_20261013": {

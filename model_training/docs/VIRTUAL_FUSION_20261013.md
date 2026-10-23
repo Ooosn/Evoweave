@@ -11,8 +11,15 @@ current availability. This report records results, not permission to resume trai
 
 ## Question And Controlled Architectures
 
-Does making each real pose the query, rather than the virtual representation, improve
-pose-specific skeleton generation while retaining shared cross-pose information?
+The defining change from the original baseline is an added virtual query frame:
+1,024 slots without an observed input mesh, interacting with the real poses.
+The original baseline contains only real input frames and selects one as its query.
+A/B/C all retain the added virtual frame and compare how its final features fuse
+with real-frame features. All-target supervision is a separate change.
+
+Within this virtual-frame architecture, does making each real pose the attention
+query improve generation relative to using the virtual representation as query?
+The A/B/C comparison alone does not isolate the benefit of adding a virtual frame.
 
 All arms use 1,024 corresponding real/virtual anchor tokens, 96 internal registers,
 12 spatial/temporal blocks, width 1,024, 8 heads, and one frame-fusion block.
@@ -25,6 +32,9 @@ its generated structure, count and hidden states never condition the main XYZ br
 | A / `virtual_queries_real` | Final virtual tokens | Final real-frame tokens | Virtual residual |
 | B / `real_queries_virtual` | Final real-frame tokens | Final virtual tokens | Real residual; same initial parameter tensors as A |
 | C / `relative_position` | As A | As A | As A, plus per-head input-anchor coordinate-delta bias, MLP 3->64->8 with zero-initialized output |
+
+B still uses the virtual frame as keys/values. A real-frame attention query
+does not make B a real-frame-only historical baseline.
 
 C uses observed anchor coordinates, never GT joint coordinates. Shared modules, fresh official
 initialization and seed 20261013 match; C's extra parameters have a separate full fingerprint.

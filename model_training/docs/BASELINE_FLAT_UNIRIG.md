@@ -7,6 +7,13 @@ single real query pose plus other observed poses of the same asset. Each asset
 visit supervises one query skeleton. This is the baseline trained on Westlake
 and then reproduced on HGC, before the later all-target and A/B experiments.
 
+All input frames in this baseline are real observed poses; one is the query.
+It has no added virtual query frame. Dynamic frame sampling, root-RT alignment
+and data expansion are separate changes and do not imply a virtual-frame model.
+The later A/B/C family adds a mesh-free virtual query frame with 1,024 slots.
+Even B's real-query fusion retains that virtual frame as keys/values, so B is
+not the original baseline. Auxiliary register tokens are not a virtual frame.
+
 1. Select one random eligible query frame and place it in input slot 0.
 2. Sample surface points and form 1,024 query-aligned anchor tokens.
 3. Encode the selected poses with the spatial/temporal motion encoder.

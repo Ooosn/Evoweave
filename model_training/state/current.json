@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "legacy_single_target_capacity_20261024_v1",
-  "updated_at": "2026-10-23T18:53:00Z",
+  "state_id": "legacy_single_target_capacity_20261024_v2",
+  "updated_at": "2026-10-23T19:15:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -922,12 +922,12 @@
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "capacity",
     "operation": "preflight",
-    "status": "capacity_v1_nonfinite_gradient_rejected",
+    "status": "capacity_v2_exact_replay_anomaly_trace_approved",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
-    "prepared_config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
-    "code_commit": "17f4d5a4d80a0cd9d7a5072ad38814e95054f5fb",
+    "prepared_config_sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1",
+    "code_commit": "ee87e9b6ec4319afb7c866231426b27e0c1754e2",
     "deployed_code": "/work/wangyy/legacy_single_target_20261024/code",
     "last_observed_utc": "2026-10-23T18:48:09Z",
     "last_observed_gpu_memory_mib": [0, 0],
@@ -937,7 +937,7 @@
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
@@ -958,10 +958,10 @@
     "runs": [
       {
         "mode": "capacity",
-        "approved": false,
+        "approved": true,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
-        "config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
-        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v1",
+        "config_sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1",
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2",
         "allocation": 130309880,
         "physical_gpus": [5, 6]
       }

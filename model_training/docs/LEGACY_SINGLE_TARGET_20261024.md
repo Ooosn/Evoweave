@@ -29,10 +29,12 @@ implement the proposed second-stage cross-pose joint-position decoder.
 ## Model And Supervision
 
 All selected real poses participate in the existing surface encoder and
-cross-pose motion attention. Choose one target uniformly for each asset visit
-with a separately reproducible random stream, place it in the real target role,
-and feed its final 1,024 condition tokens into the original complete UniRig XYZ
-autoregressive decoder. Supervise only that target's full sequence.
+cross-pose motion attention. The current loader already chooses a uniformly
+random query from eligible raw frames, places it in slot0, and selects motion
+FPS/random evidence relative to it. Use that query as the single training
+target; do not draw a second target from the resulting FPS-biased input set.
+Feed its final 1,024 condition tokens into the original complete UniRig XYZ
+autoregressive decoder and supervise only that target's full sequence.
 
 There are no virtual-frame slots, final virtual/real fusion, auxiliary pure-tree
 loss, or XYZ-fill head in this experiment. Non-target poses still receive
@@ -79,3 +81,23 @@ verify actual scheduler membership and CPU/GPU limits before workload imports.
 Preparation and CPU tests are allowed. Exact GPU preflight/training release,
 source/config hashes, capacity receipts and a usable execution entry remain
 to be published in `state/current.json`. No new training has started.
+
+## Completed Implementation Review
+
+The new standalone model, current-loader adapter, B-lineage learning-rate
+schedule, original-metric evaluation adapter, guarded trainer and resource
+supervisor are implemented. All22 focused CPU tests pass, including original
+encoder/logit/gradient parity, exact common tensor preservation, random raw-query
+selection, the unchanged B20k sampling prefix, separate input/target counts,
+2100 exact-budget updates, and fail-closed stage/two-rank receipt checks.
+Independent review also ran26 existing regression tests before integration.
+
+The common encoder recipe remains B's12blocks/96registers/8head motion bias,
+with no extra final condition norm. This restores the original query routing,
+not every historical command-line default. There is no auxiliary structure
+loss or training-time pruning. The final LR phase remains3e-5 through100k.
+
+These are CPU implementation results only. Actual official-weight fingerprint
+verification, two-rank CUDA execution, capacity measurement and training have
+not run. See `analysis/legacy_single_target_preparation_review_v1.json` for
+file hashes, tests and the remaining execution-entry blocker.

@@ -1,0 +1,97 @@
+{
+  "schema": "legacy_single_target_readiness.v1",
+  "created_utc": "2026-10-23T17:46:56.729Z",
+  "status": "cpu_implementation_accepted_gpu_validation_pending",
+  "source_parent": "c5ca780",
+  "acceptance_scope": "CPU implementation/recipe checks only, not GPU readiness or model quality",
+  "human_target": {
+    "asset_exposures": 100000,
+    "nominal_epochs": 20,
+    "optimizer_updates": 2100,
+    "supervised_target_frames": 100000,
+    "input_frames": "dynamic2..24",
+    "gpus": 2
+  },
+  "target_policy": "Current loader chooses uniform raw query atslot0 before selectingFPS/random evidence; no second target draw",
+  "common_recipe": {
+    "initialization": "same official pretrained UniRig asB; exact real-weight fingerprint must still be verified onHGC",
+    "encoder": "12blocks96registers1024anchors8heads motionbias, original real-query-first path",
+    "removed": [
+      "virtual slots",
+      "frame fusion",
+      "extra condition norm",
+      "auxiliary structure head",
+      "XYZ fill head"
+    ],
+    "lr": "B65 lineage0..20kOneCycle,20..60k1e-4,60..100k3e-5",
+    "pruning": false,
+    "normalization": "current retained-rootRT and selected-input mesh union bbox padding1.1"
+  },
+  "cpu_tests": {
+    "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
+    "passed": 22,
+    "failed": 0,
+    "syntax_checks_passed": true,
+    "diff_whitespace_check_passed": true
+  },
+  "independent_review": {
+    "worker": "Hooke",
+    "model_tests_passed": 10,
+    "prior_regression_tests_passed": 26,
+    "findings_fixed": [
+      "receipt mode must match preflight/capacity",
+      "exactly two unique complete passed rank receipts required"
+    ],
+    "regression_fixtures_added": true
+  },
+  "files": [
+    {
+      "path": "model_training/rigweave/src/rigweave/dynamic_rig/legacy_single_target.py",
+      "sha256": "5f599bb63fc789d05f8059c3c448609d86645c8c58267dd30c4bc4675968d5e2"
+    },
+    {
+      "path": "model_training/rigweave/scripts/legacy_single_target_runtime.py",
+      "sha256": "8238309bf9cd7c801ad0086a4b67f4ec8b80b47bbda4829e3cf445c503a8cf51"
+    },
+    {
+      "path": "model_training/rigweave/scripts/train_legacy_single_target.py",
+      "sha256": "f2c4005e67d1666e9db50f2498eb6d94f6e3468d17078552c85665a93e193d52"
+    },
+    {
+      "path": "model_training/jobs/launch_legacy_single_target.py",
+      "sha256": "71de2ac56777763c4756e00b4d921a6f2f523aabd399d5f88dcadd2d3a27d59f"
+    },
+    {
+      "path": "model_training/experiments/legacy_single_target_100000_v1.json",
+      "sha256": "a248c7d9717bc0e6ca9341351d1aaedb5908b74e98db0f5f78d06336ff218ef7"
+    },
+    {
+      "path": "model_training/rigweave/tests/test_legacy_single_target.py",
+      "sha256": "e9bf2cfe034f4740e506ea09db997c5ccaf7a10add77fbbdef02b7eb302a7184"
+    },
+    {
+      "path": "model_training/rigweave/tests/test_legacy_single_target_runtime.py",
+      "sha256": "dd137244c1819416e861c715773aad7b18571c5959f7d58e752ee4493f9fbd1b"
+    }
+  ],
+  "gpu": {
+    "launched": false,
+    "preflight_passed": false,
+    "capacity_passed": false,
+    "real_initialization_verified": false,
+    "formal_release": false,
+    "allocation": 130309880,
+    "physical_gpus": [
+      5,
+      6
+    ],
+    "host": "pcg01i",
+    "preserve_allocation": true,
+    "blocker": "No usable in-job command entry; keeper only sleeps; qrsh-inherit rejected. Ordinary SSH is outside the required scheduler cgroup."
+  },
+  "limitations": [
+    "Actual pretrained model two-rank continuous updates and memory capacity remain untested.",
+    "No new quality measurements; compare against bestB only after approved GPU execution.",
+    "Single-target vs all-target supervision and absence ofB auxiliary loss are declared comparison differences."
+  ]
+}

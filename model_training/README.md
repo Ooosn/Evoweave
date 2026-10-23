@@ -7,8 +7,9 @@ the original real-query-first encoder and exactly one randomly selected AR
 target per asset visit. Preserve the current fixed5k data, dynamic2..24 poses,
 root-RT alignment and selected-input mesh-union normalization. See
 [Real query single target](docs/LEGACY_SINGLE_TARGET_20261024.md).
-Implementation and execution-entry checks are in progress; GPU permissions
-remain in `state/current.json`. Do not restart a historical launcher.
+Implementation passed22 focused CPU checks. Hardware validation and formal
+training remain blocked on an in-job execution entry; GPU permissions remain
+in `state/current.json`. Do not restart a historical launcher.
 
 ## Historical Route: Structure XYZ Token Filling
 

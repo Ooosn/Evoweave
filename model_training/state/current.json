@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_consistency_cpu_audit_20261024",
-  "updated_at": "2026-10-23T22:07:44Z",
+  "updated_at": "2026-10-23T22:14:39Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -920,7 +920,7 @@
   },
   "active_operation": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
-    "status": "cpu_audit_released_gpu_stages_not_released",
+    "status": "cpu_audit_v1_controlled_stop_for_review_fixes",
     "operation": "inspect",
     "mode": "audit",
     "complete": false,
@@ -941,7 +941,7 @@
     "gpu_preflight_passed": false,
     "gpu_capacity_passed": false,
     "new_training_processes": 0,
-    "last_observed_utc": "2026-10-23T22:07:44Z",
+    "last_observed_utc": "2026-10-23T22:14:39Z",
     "last_observed_gpu_memory_mib": [0, 0],
     "ordinary_ssh_kernel_scheduler_membership": false,
     "ssh_exception": {
@@ -959,7 +959,12 @@
     },
     "runs": [{
       "mode": "audit",
-      "approved": true,
+      "approved": false,
+      "status": "controlled_stop_before_model_construction_no_GPU_used",
+      "exit_code": -15,
+      "payload_cleanup_complete": true,
+      "keeper_preserved": true,
+      "reason": "Independent review identified CPU FlashAttention constructor and three receipt-binding gaps; fix and rerun CPU audit before any GPU stage.",
       "config": "/work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json",
       "config_sha256": "d2d9800bbe42ece20ae446cfeb084df14e0ad655ecf537c16a7b084e90984188",
       "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v1",

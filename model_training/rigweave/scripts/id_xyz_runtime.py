@@ -43,6 +43,7 @@ def source_hashes():
         "src/rigweave/dynamic_rig/sampling.py", "src/rigweave/dynamic_rig/frame_batch_sampler.py",
         "src/rigweave/dynamic_rig/surface_tokenizer.py", "src/rigweave/dynamic_rig/skeleton_topology_metrics.py",
         "scripts/virtual_query_xyz_runtime.py", "scripts/virtual_fusion_normal_runtime.py",
+        "scripts/virtual_frame_runtime.py",
         "scripts/structure_xyz_fill_runtime.py", "scripts/structure_xyz_fill_evaluation.py",
         "scripts/id_xyz_runtime.py", "scripts/id_xyz_evaluation.py",
         "scripts/train_id_xyz_consistency.py", "scripts/id_xyz_stages.py",
@@ -144,6 +145,9 @@ def build_model(config, device):
     lm_args = dict(specification["llm"])
     lm_args.pop("pretrained_model_name_or_path")
     lm_args["vocab_size"] = tokenizer.vocab_size
+    if torch.device(device).type == "cpu":
+        # CPU audit constructs and fingerprints weights without running attention.
+        lm_args["_attn_implementation"] = "eager"
     lm_config = OPTConfig.from_pretrained(runtime["opt_config_root"], local_files_only=True, **lm_args)
     lm_config.torch_dtype = torch.float32
     decoder = OPTForCausalLM(lm_config)
@@ -254,10 +258,13 @@ def gradient_groups(model):
 
 
 def training_contract(config):
-    return {key: config[key] for key in
+    contract = {key: config[key] for key in
             ("family", "architecture", "model_contract", "codec", "surface_sampling", "data",
              "initialization", "optimization", "consistency", "training", "evaluation",
              "final_evaluation", "reference_evaluation")}
+    contract["tokenizer"] = {key: config["runtime"][key] for key in
+                             ("tokenizer_config", "tokenizer_config_sha256")}
+    return contract
 
 
 def paired_contract_hash(config):

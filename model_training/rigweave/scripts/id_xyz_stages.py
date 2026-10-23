@@ -48,7 +48,9 @@ def read_reviewed(spec):
     return result
 
 
-def validate_receipt(config, receipt):
+def validate_receipt(config, receipt, *, mode=None):
+    if mode is not None and receipt.get("mode") != mode:
+        raise ValueError("evidence belongs to the wrong execution stage")
     if (receipt["paired_contract_sha256"] != paired_contract_hash(config)
             or receipt["source_sha256"] != source_hashes()):
         raise ValueError("evidence does not cover the current source/data/model contract")
@@ -272,7 +274,7 @@ def capacity_cases(config, reviewed):
 
 def capacity(model, tokenizer, codec, initial, entries, config, args, device, rank, world, reviewed):
     pre = read_reviewed(config["safety"]["preflight"])
-    validate_receipt(config, pre)
+    validate_receipt(config, pre, mode="preflight")
     if config["safety"]["primary_accepted"] is not True:
         raise ValueError("preflight evidence requires primary review before capacity")
     dataset = fixed_dataset(entries["train"], config, 2, mode="train")
@@ -356,7 +358,7 @@ def save_checkpoint(model, optimizer, stream, config, args, initial, source, sam
 
 def train(model, tokenizer, codec, initial, entries, config, args, device, rank, world, source, reviewed):
     for key in ("preflight", "capacity"):
-        validate_receipt(config, read_reviewed(config["safety"][key]))
+        validate_receipt(config, read_reviewed(config["safety"][key]), mode=key)
     cap = read_reviewed(config["safety"]["capacity"])
     if (config["safety"]["primary_accepted"] is not True
             or cap["frame_policy"] != config["training"]["frame_policy"]

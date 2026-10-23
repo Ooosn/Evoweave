@@ -54,7 +54,7 @@ def main():
             dist.barrier()
             claimed = True
             reviewed = read_reviewed(config["safety"]["data_audit"])
-            validate_receipt(config, reviewed)
+            validate_receipt(config, reviewed, mode="audit")
             model, tokenizer, codec, initial = build_model(config, device)
             if initial["initial_model_sha256"] != reviewed["initialization"]["initial_model_sha256"]:
                 raise RuntimeError("GPU weights differ from the CPU-audited official initialization")

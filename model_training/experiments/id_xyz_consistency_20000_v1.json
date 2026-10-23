@@ -251,9 +251,14 @@
       "code_commit": "b595d1a75f73d10a605b2b7e47e0bcd3b820ac11",
       "config_sha256": "d2d9800bbe42ece20ae446cfeb084df14e0ad655ecf537c16a7b084e90984188"
     },
-    "preflight": null,
+    "preflight": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/preflight_v1/preflight.json",
+      "sha256": "a1e248d187763dbabeb910767ad59ae839293c76ea8d0a73b27044bc60f02e65",
+      "code_commit": "7c46e4482bb3d7a1de1abd1936de51be1a0c6815",
+      "config_sha256": "3118ec0708b692647de0237cb2cb0c76581672879994f5512e2edede9dec2de4"
+    },
     "capacity": null,
-    "primary_accepted": false
+    "primary_accepted": true
   },
   "arm": "consistency"
 }

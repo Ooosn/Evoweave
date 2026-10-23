@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "legacy_single_target_capacity_20261024_v2",
-  "updated_at": "2026-10-23T19:15:00Z",
+  "state_id": "legacy_single_target_gradient_trace_20261024_v1",
+  "updated_at": "2026-10-23T19:40:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review all six dual-H100 capacity cases, resource cleanup and remaining allocation time, then release the exact fresh100000-asset training configuration.",
+  "next_required_result": "Locate first nonfinite backward node from the pinned pre-T6 model/optimizer/RNG checkpoint. Diagnostic replay cannot authorize formal training; require final-code preflight and full capacity after the fix.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -922,22 +922,22 @@
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "capacity",
     "operation": "preflight",
-    "status": "capacity_v2_backward_nan_rejected",
+    "status": "diagnostic_only_pinned_T6_gradient_trace_approved",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
-    "prepared_config_sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1",
-    "code_commit": "ee87e9b6ec4319afb7c866231426b27e0c1754e2",
+    "prepared_config_sha256": "81fdfd6a4e703fcbd40d648020ec1caa9e9f4fe48db77c584279bb383942cf91",
+    "code_commit": "e463c3eee472e43fd81fe665a36ecdd5bd8b7e77",
     "deployed_code": "/work/wangyy/legacy_single_target_20261024/code",
     "last_observed_utc": "2026-10-23T18:48:09Z",
     "last_observed_gpu_memory_mib": [0, 0],
     "ordinary_ssh_kernel_scheduler_membership": false,
     "new_training_processes": 0,
-    "cpu_tests_passed": 41,
+    "cpu_tests_passed": 51,
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
@@ -958,10 +958,10 @@
     "runs": [
       {
         "mode": "capacity",
-        "approved": false,
+        "approved": true,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
-        "config_sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1",
-        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2",
+        "config_sha256": "81fdfd6a4e703fcbd40d648020ec1caa9e9f4fe48db77c584279bb383942cf91",
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_gradient_trace_v1",
         "allocation": 130309880,
         "physical_gpus": [5, 6]
       }

@@ -382,6 +382,8 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
     total_memory = torch.cuda.get_device_properties(device).total_memory
     replay = config['capacity'].get('diagnostic_replay')
     replay_case = None
+    activation = {}
+    activation_handles = []
     if replay:
         import random
         import numpy as np
@@ -400,6 +402,11 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
         random.setstate(rng['python'])
         replay_case = saved['next_case']
         del saved, rng
+        for block_index, block in enumerate(model.motion_encoder.blocks):
+            def capture_activation(module, inputs, output, index=block_index):
+                activation.update(tensor=output.detach(), block=index,
+                                  calls=activation.get('calls', 0) + 1)
+            activation_handles.append(block.pose_inner.linear1.register_forward_hook(capture_activation))
     report = {'complete': False, 'passed': False, 'cases': [], 'rank': rank, 'source': source,
               'contract_sha256': rt.contract_sha256(config), 'initialization': initial,
               'gpu_total_bytes': total_memory, 'diagnostic_weights_discarded': True,
@@ -448,7 +455,36 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
                         def record_error(evidence):
                             rt.write_json(args.output / f'first_nonfinite_rank_{rank}.json',
                                 {'case': case, 'iteration': iteration, 'microbatch': micro, **evidence})
-                        handles = install_nonfinite_gradient_hooks(loss, record_error)
+                        def inspect_gelu(name, grad_inputs, grad_outputs):
+                            x = activation.get('tensor')
+                            details = {'capture': 'most_recent_pose_inner_linear1_output',
+                                       'block_index': activation.get('block'), 'capture_calls': activation.get('calls')}
+                            if name != 'GeluBackward0' or x is None or x.shape != grad_inputs[0].shape:
+                                return {**details, 'shape_matches': False}
+                            dx, dy = grad_inputs[0], grad_outputs[0]
+                            finite = torch.isfinite(x)
+                            details.update(shape_matches=True, activation_nonfinite=int((~finite).sum()),
+                                           activation_stride=list(x.stride()), incoming_stride=list(dy.stride()),
+                                           produced_stride=list(dx.stride()), torch_version=torch.__version__)
+                            if bool(finite.all()):
+                                minimum, maximum = torch.aminmax(x)
+                                details.update(activation_min=float(minimum), activation_max=float(maximum))
+                            positions = (~torch.isfinite(dx)).reshape(-1).nonzero().reshape(-1)[:64]
+                            xs = torch.take(x, positions).float().cpu().tolist()
+                            dys = torch.take(dy, positions).float().cpu().tolist()
+                            indices = positions.cpu().tolist()
+                            rows = []
+                            for position, value, incoming in zip(indices, xs, dys):
+                                expected = (incoming * (.5 * (1 + math.erf(value / math.sqrt(2)))
+                                            + value * math.exp(-.5 * value * value) / math.sqrt(2 * math.pi))
+                                            if math.isfinite(value) and math.isfinite(incoming) else None)
+                                rows.append({'flat_index': position, 'token_index': (position // x.shape[-1]) % x.shape[-2],
+                                             'input': value if math.isfinite(value) else str(value),
+                                             'incoming': incoming if math.isfinite(incoming) else str(incoming),
+                                             'expected_float64_gelu_gradient': expected})
+                            details['bad_position_samples'] = rows
+                            return details
+                        handles = install_nonfinite_gradient_hooks(loss, record_error, tensor_callback=inspect_gelu)
                     try:
                         loss.backward()
                     finally:
@@ -473,6 +509,9 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
                                 'covered_stress_groups': aliases})
         rt.write_json(args.output / f'capacity_rank_{rank}.json', report)
         print('CAPACITY '+json.dumps({'rank': rank, **report['cases'][-1]}), flush=True)
+    for handle in activation_handles:
+        handle.remove()
+    activation.clear()
     report.update(complete=True, passed=True)
     rt.write_json(args.output / f'capacity_rank_{rank}.json', report)
     return report

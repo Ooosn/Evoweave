@@ -28,8 +28,8 @@
     "normalization": "current retained-rootRT and selected-input mesh union bbox padding1.1"
   },
   "cpu_tests": {
-    "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
-    "passed": 51,
+    "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy*.py\"",
+    "passed": 55,
     "failed": 0,
     "syntax_checks_passed": true,
     "diff_whitespace_check_passed": true
@@ -58,7 +58,7 @@
     },
     {
       "path": "model_training/rigweave/scripts/train_legacy_single_target.py",
-      "sha256": "dc0150525f56c34ad146f0402521f36f0d244f13ef3d34df9b467f36c520c722"
+      "sha256": "3ed80cc47e9eb7ba5fc0edcb81a10b77b330749c0e51ccebfb83b8b73af34cf0"
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
@@ -86,11 +86,11 @@
     },
     {
       "path": "model_training/rigweave/scripts/legacy_gradient_trace.py",
-      "sha256": "5dc890d48b55f9598ec863bae1fc6314995f4e09b1f4b10d01843f302c0ea6e5"
+      "sha256": "68c86c443f34db1a76865b42637d637c560724065d9c1c8e967138b53b16f84c"
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_gradient_trace.py",
-      "sha256": "5d67f2c1067a6b6091c668de79b7c17296e848712a9c98f5eb18d7c56084533d"
+      "sha256": "80b8d491553df17fccc6c82b1f577027a6f2d77bb030f67fc1ec32e98aceae7a"
     }
   ],
   "gpu": {

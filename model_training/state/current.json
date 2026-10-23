@@ -922,7 +922,7 @@
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "capacity",
     "operation": "preflight",
-    "status": "diagnostic_only_pinned_T6_gradient_trace_approved",
+    "status": "diagnostic_gradient_trace_v1_completed_root_GELU_inputs_pending",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
@@ -937,7 +937,7 @@
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
@@ -958,7 +958,7 @@
     "runs": [
       {
         "mode": "capacity",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
         "config_sha256": "81fdfd6a4e703fcbd40d648020ec1caa9e9f4fe48db77c584279bb383942cf91",
         "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_gradient_trace_v1",
@@ -983,6 +983,23 @@
       "preserve_allocation": true
     },
     "entry_blocker": null,
+    "diagnostic_history": [
+      {
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_gradient_trace_v1",
+        "diagnostic_only": true,
+        "first_nonfinite_node": "GeluBackward0",
+        "incoming_gradients_finite_both_ranks": true,
+        "produced_nan_counts": [6109, 6167],
+        "gradient_dtype": "bfloat16",
+        "gradient_shape": [144, 1121, 4096],
+        "rank_report_sha256": ["610f5cc768bbb046a738f12d43ce149656bf0c73ee56b75a93c29bb1cec52024", "8b978c81d48fd4cf0a457bfb95b9b72925a4e1d49a91a5c115cd902cb711f5cd"],
+        "resource_sha256": "5b09d901a69e06d07f509c03d53418d3bab61489051003e9da70e182fff40de2",
+        "exit_code": 1,
+        "payload_cleanup_complete": true,
+        "finished_utc": "2026-10-23T19:44:16Z",
+        "next_action": "Capture the recomputed pose-FFN GELU input and incoming gradient ranges at failing positions before changing numerical execution."
+      }
+    ],
     "capacity_history": [
       {
         "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v1",

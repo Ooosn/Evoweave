@@ -35,8 +35,8 @@ class SparseGradient(torch.autograd.Function):
 
 
 class GradientTraceTests(unittest.TestCase):
-    def install(self, loss, reports):
-        handles = install_nonfinite_gradient_hooks(loss, reports.append)
+    def install(self, loss, reports, **kwargs):
+        handles = install_nonfinite_gradient_hooks(loss, reports.append, **kwargs)
         self.addCleanup(lambda: [handle.remove() for handle in handles])
         return handles
 
@@ -150,6 +150,63 @@ class GradientTraceTests(unittest.TestCase):
             install_nonfinite_gradient_hooks(torch.tensor(1., requires_grad=True), lambda report: None)
         with self.assertRaisesRegex(TypeError, 'callable'):
             install_nonfinite_gradient_hooks(torch.tensor(1., requires_grad=True).square(), None)
+
+    def test_tensor_callback_raw_gradients_once_and_incoming_range(self):
+        value = torch.ones(2, requires_grad=True)
+        loss = (InfGradient.apply(value) * torch.tensor([-2., 3.])).sum()
+        reports, calls = [], []
+
+        def details(name, inputs, outputs):
+            calls.append(name)
+            self.assertIsInstance(inputs, tuple)
+            self.assertIsInstance(outputs, tuple)
+            self.assertTrue(torch.isinf(inputs[0]).all().item())
+            torch.testing.assert_close(outputs[0], torch.tensor([-2., 3.]))
+            self.assertEqual(reports, [])
+            return {'checked': True, 'bad_count': int(torch.isinf(inputs[0]).sum())}
+
+        self.install(loss, reports, tensor_callback=details)
+        with self.assertRaisesRegex(RuntimeError, 'InfGradientBackward'):
+            loss.backward()
+        self.assertEqual(calls, ['InfGradientBackward'])
+        self.assertEqual(reports[0]['tensor_details'], {'checked': True, 'bad_count': 2})
+        self.assertEqual(reports[0]['grad_outputs'][0]['min'], -2.)
+        self.assertEqual(reports[0]['grad_outputs'][0]['max'], 3.)
+        self.assertNotIn('min', reports[0]['grad_inputs'][0])
+        json.dumps(reports[0], allow_nan=False)
+
+    def test_tensor_callback_is_not_called_for_finite_graph(self):
+        value = torch.tensor(2., requires_grad=True)
+        loss = value.square()
+        calls, reports = [], []
+        self.install(loss, reports, tensor_callback=lambda *args: calls.append(args))
+        loss.backward()
+        self.assertEqual(calls, [])
+        self.assertEqual(reports, [])
+
+    def test_tensor_callback_errors_do_not_hide_original_failure(self):
+        def broken(*args):
+            raise ValueError('detail capture failed')
+
+        callbacks = [broken, lambda *args: [], lambda *args: {'unsafe': float('inf')},
+                     lambda *args: {'unsafe': torch.tensor(1.)}]
+        for callback in callbacks:
+            with self.subTest(callback=callback):
+                loss = InfGradient.apply(torch.tensor(1., requires_grad=True))
+                reports = []
+                self.install(loss, reports, tensor_callback=callback)
+                with self.assertRaisesRegex(RuntimeError, 'nonfinite_backward_gradient at InfGradientBackward'):
+                    loss.backward()
+                self.assertEqual(len(reports), 1)
+                self.assertIsNone(reports[0]['tensor_details'])
+                self.assertIn('type', reports[0]['tensor_details_error'])
+                self.assertTrue(reports[0]['tensor_details_error']['message'])
+                json.dumps(reports[0], allow_nan=False)
+
+    def test_tensor_callback_argument_validation(self):
+        loss = torch.tensor(1., requires_grad=True).square()
+        with self.assertRaisesRegex(TypeError, 'tensor_callback'):
+            install_nonfinite_gradient_hooks(loss, lambda report: None, tensor_callback=3)
 
 
 if __name__ == '__main__':

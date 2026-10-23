@@ -1,5 +1,15 @@
 # Real Query, Single Target, Current Data Pipeline
 
+## Rejected Reconstruction
+
+This attempted reconstruction was rejected on2026-10-24 after the human
+clarified the historical baseline. The intended training version had ALREADY
+worked with dynamic frames and global-RT removal BEFORE all-target decoding
+and A/B. This newly assembled implementation is not that successful version.
+All execution permissions are closed. Preserve code and outputs for audit;
+do not treat numerical failures here as evidence that the old training failed.
+The remainder of this document records the rejected attempt, not a live plan.
+
 ## Authorization And Scope
 
 On 2026-10-24 JST the user authorized a fresh two-H100 experiment with the

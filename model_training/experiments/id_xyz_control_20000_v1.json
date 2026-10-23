@@ -257,7 +257,12 @@
       "code_commit": "7c46e4482bb3d7a1de1abd1936de51be1a0c6815",
       "config_sha256": "3118ec0708b692647de0237cb2cb0c76581672879994f5512e2edede9dec2de4"
     },
-    "capacity": null,
+    "capacity": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/capacity_v1/capacity.json",
+      "sha256": "57f98df493dd9f6c8647246f0783c96305c06d030368a4627b71d96ebcd2c5a5",
+      "code_commit": "57032cbc5d544f63c08a8212873c94094dba4abb",
+      "config_sha256": "675da788b278b8cabe94afebd3eb9afc8e31e38c127716228c9ca64933e2ea07"
+    },
     "primary_accepted": true
   },
   "arm": "control"

@@ -22,6 +22,28 @@ class LauncherCleanupTests(unittest.TestCase):
         self.assertEqual(launcher.resource_cgroups('1:devices:/user.slice\n2:cpuset:/\n3:cpu:/other'),
                          {'devices': '/user.slice', 'cpuset': '/'})
 
+    def test_live_resource_cgroup_match(self):
+        with patch.object(launcher, 'process_identity', return_value=(1, 'R')), \
+                patch.object(launcher.Path, 'read_text', return_value='1:devices:/user.slice\n2:cpuset:/'):
+            self.assertTrue(launcher.verify_child_cgroups(20, {'devices':'/user.slice','cpuset':'/'}))
+
+    def test_existing_zombie_is_not_subject_to_live_cgroup_check(self):
+        with patch.object(launcher, 'process_identity', return_value=(1, 'Z')), \
+                patch.object(launcher.Path, 'read_text') as read:
+            self.assertFalse(launcher.verify_child_cgroups(20, {'devices':'/user.slice'}))
+        read.assert_not_called()
+
+    def test_exit_race_does_not_misreport_root_cgroup_as_escape(self):
+        with patch.object(launcher, 'process_identity', side_effect=[(1, 'R'), (1, 'Z')]), \
+                patch.object(launcher.Path, 'read_text', return_value='1:devices:/\n2:cpuset:/'):
+            self.assertFalse(launcher.verify_child_cgroups(20, {'devices':'/user.slice','cpuset':'/'}))
+
+    def test_live_resource_cgroup_change_still_fails(self):
+        with patch.object(launcher, 'process_identity', return_value=(1, 'R')), \
+                patch.object(launcher.Path, 'read_text', return_value='1:devices:/\n2:cpuset:/'):
+            with self.assertRaises(RuntimeError):
+                launcher.verify_child_cgroups(20, {'devices':'/user.slice','cpuset':'/'})
+
     def test_cleanup_kills_adopted_rank_but_never_keeper_or_self(self):
         processes = {10: (1, 0), 20: (10, 0), 99: (1, 0)}
         with patch.object(launcher.os, 'getpid', return_value=10), \

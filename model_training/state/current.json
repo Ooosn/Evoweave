@@ -922,22 +922,22 @@
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "preflight",
     "operation": "preflight",
-    "status": "approved_supervised_gpu_preflight",
+    "status": "preflight_v1_numerical_pass_supervisor_exit_rejected",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
     "prepared_config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
     "code_commit": "1e9ed7750c26de2e57a90a3b70b769328628428b",
     "deployed_code": "/work/wangyy/legacy_single_target_20261024/code",
-    "last_observed_utc": "2026-10-23T18:34:05Z",
+    "last_observed_utc": "2026-10-23T18:48:09Z",
     "last_observed_gpu_memory_mib": [0, 0],
     "ordinary_ssh_kernel_scheduler_membership": false,
     "new_training_processes": 0,
-    "cpu_tests_passed": 33,
+    "cpu_tests_passed": 41,
     "gpu_preflight_passed": false,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
@@ -958,7 +958,7 @@
     "runs": [
       {
         "mode": "preflight",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
         "config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
         "output": "/work/wangyy/legacy_single_target_20261024/outputs/preflight_v1",
@@ -983,6 +983,20 @@
       "preserve_allocation": true
     },
     "entry_blocker": null,
+    "preflight_history": [
+      {
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/preflight_v1",
+        "result_sha256": "2860194178db7e5e4d786b5856b5b3ebd3fccfb72b0c357ebbd9dac7f82339a7",
+        "numerical_passed": true,
+        "supervisor_passed": false,
+        "accepted": false,
+        "failure": "After successful numerical completion the old supervisor treated an exiting zombie's root-cgroup transition as an escape. Reproduced on HGC; fixed with before/after live-task checks and orphan cleanup.",
+        "cleanup_verified_utc": "2026-10-23T18:48:09Z",
+        "all_payload_processes_gone": true,
+        "gpu_memory_mib": [0, 0],
+        "keeper_preserved": true
+      }
+    ],
     "acceptance": [
       "Exactly one real-query-first AR target per asset, with no virtual/fusion/auxiliary heads.",
       "Preserve all-frame geometry, normalization and GT when changing target.",

@@ -84,6 +84,18 @@ def resource_cgroups(text):
     return result
 
 
+def verify_child_cgroups(pid, expected):
+    if process_identity(pid)[1] == 'Z':
+        return False
+    actual = resource_cgroups((Path('/proc') / str(pid) / 'cgroup').read_text())
+    if actual != expected:
+        # Linux moves exited tasks to root cgroups before their parent reaps them.
+        if process_identity(pid)[1] == 'Z':
+            return False
+        raise RuntimeError(f'live child {pid} changed resource cgroups: {actual} != {expected}')
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
@@ -174,11 +186,8 @@ def main():
                 raise RuntimeError('the training process tree exceeded64GiB RAM')
             for pid in processes:
                 try:
-                    child_cgroup = (Path('/proc') / str(pid) / 'cgroup').read_text()
-                    if in_job:
-                        require_job_membership(child_cgroup, runtime['allocation'])
-                    elif resource_cgroups(child_cgroup) != resource_cgroups(actual_cgroup):
-                        raise RuntimeError('an SSH child changed its recorded resource cgroups')
+                    if not verify_child_cgroups(pid, resource_cgroups(actual_cgroup)):
+                        continue
                     for task in (Path('/proc') / str(pid) / 'task').iterdir():
                         if not os.sched_getaffinity(int(task.name)) <= binding:
                             raise RuntimeError('a child thread escaped its CPU affinity')

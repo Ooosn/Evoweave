@@ -29,7 +29,7 @@
   },
   "cpu_tests": {
     "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
-    "passed": 37,
+    "passed": 41,
     "failed": 0,
     "syntax_checks_passed": true,
     "diff_whitespace_check_passed": true
@@ -42,7 +42,8 @@
       "receipt mode must match preflight/capacity",
       "exactly two unique complete passed rank receipts required",
       "null SSH exception must raise a fail-closed RuntimeError",
-      "supervisor adopts and identity-checks orphaned elastic rank workers before terminating only its descendants"
+      "supervisor adopts and identity-checks orphaned elastic rank workers before terminating only its descendants",
+      "ignore dead/zombie task cgroup transitions; reproduced Linux root-cgroup exit behavior on HGC"
     ],
     "regression_fixtures_added": true
   },
@@ -61,7 +62,7 @@
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
-      "sha256": "50afcd71f8a0b54956c9a8e35efaae574b89b969260a61a5944460c11852ee66"
+      "sha256": "452cd4766fcec5005e14b9de8b576a29bda8a3a9fbd990504988603860dcc773"
     },
     {
       "path": "model_training/experiments/legacy_single_target_100000_v1.json",
@@ -81,7 +82,7 @@
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_launcher.py",
-      "sha256": "be51fb7f09041b569583eacfabd5f4f9167b13a8e553f4aa6a8dcf5d56e9728d"
+      "sha256": "e08a2b81e640ccf316d441bdd81b3c1d2e67d04a745727fb7bf462ed9cd6d0ea"
     }
   ],
   "gpu": {

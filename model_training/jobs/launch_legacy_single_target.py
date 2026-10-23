@@ -2,6 +2,7 @@
 """Supervise the exact approved allocation, including its run-scoped SSH exception."""
 import argparse
 import ctypes
+import importlib
 from datetime import datetime, timezone
 import json
 import os
@@ -96,18 +97,24 @@ def verify_child_cgroups(pid, expected):
     return True
 
 
-def main():
+def main(*, trainer_module_name='train_legacy_single_target',
+         exception_env_name='EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION',
+         trainer_script='train_legacy_single_target.py',
+         modes=('preflight', 'capacity', 'train'), cpu_modes=()):
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=('preflight', 'capacity', 'train'), required=True)
+    parser.add_argument('--mode', choices=modes, required=True)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     runtime = config['runtime']
     root = Path(runtime['repo'])
     sys.path.insert(0, str(root / 'model_training/rigweave/scripts'))
-    from train_legacy_single_target import (require_job_membership, validate_ssh_exception,
-                                            verify_exception_keeper, verify_launch)
+    checks = importlib.import_module(trainer_module_name)
+    require_job_membership = checks.require_job_membership
+    validate_ssh_exception = checks.validate_ssh_exception
+    verify_exception_keeper = checks.verify_exception_keeper
+    verify_launch = checks.verify_launch
     # Read actual kernel provenance before setting CUDA visibility or importing torch.
     actual_cgroup = Path('/proc/self/cgroup').read_text()
     exception = None
@@ -119,7 +126,7 @@ def main():
         exception = validate_ssh_exception(state, config)
         verify_exception_keeper(exception)
         in_job = False
-        os.environ['EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION'] = '1'
+        os.environ[exception_env_name] = '1'
     if in_job and (os.environ.get('JOB_ID') != str(runtime['allocation'])
             or int(os.environ.get('NSLOTS', '0')) != runtime['cpu_slots']):
         raise RuntimeError('the launcher must inherit the real job ID and CPU grant')
@@ -132,7 +139,7 @@ def main():
     binding = set(allowed[:runtime['cpu_slots']])
     os.sched_setaffinity(0, binding)
     os.environ['EVOWEAVE_RESOURCE_SUPERVISOR_PID'] = str(os.getpid())
-    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str, runtime['physical_gpus']))
+    os.environ['CUDA_VISIBLE_DEVICES'] = '' if args.mode in cpu_modes else ','.join(map(str, runtime['physical_gpus']))
     os.environ.update({name: '1' for name in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS',
         'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'PYTHONDONTWRITEBYTECODE',
         'HF_HUB_OFFLINE', 'TRANSFORMERS_OFFLINE', 'RIGWEAVE_DISABLE_OPEN3D',
@@ -146,9 +153,11 @@ def main():
     receipt_path = args.output.with_name(args.output.name + '_resources.json')
     if receipt_path.exists() or args.output.exists():
         raise RuntimeError('refuse to overwrite a prior stage or resource receipt')
-    command = [runtime['python'], '-m', 'torch.distributed.run', '--standalone', '--nnodes=1',
-        '--nproc_per_node=2', str(root / 'model_training/rigweave/scripts/train_legacy_single_target.py'),
-        '--config', str(args.config), '--output', str(args.output), '--mode', args.mode]
+    command = [runtime['python']]
+    if args.mode not in cpu_modes:
+        command += ['-m', 'torch.distributed.run', '--standalone', '--nnodes=1', '--nproc_per_node=2']
+    command += [str(root / 'model_training/rigweave/scripts' / trainer_script),
+                '--config', str(args.config), '--output', str(args.output), '--mode', args.mode]
     receipt = {'complete': False, 'passed': False, 'source': source, 'mode': args.mode,
         'allocation': runtime['allocation'], 'kernel_scheduler_membership': in_job,
         'execution_mode': runtime['execution_mode'], 'actual_cgroup': actual_cgroup,
@@ -202,6 +211,13 @@ def main():
             memory = [[int(v.strip()) for v in line.split(',')] for line in text.strip().splitlines()]
             if sorted(row[0] for row in memory) != [5, 6] or any(used > total*.85 for _, used, total in memory):
                 raise RuntimeError('the authorized GPUs exceeded85percent memory or changed identity')
+            if runtime.get('gpu_uuids'):
+                applications = subprocess.check_output(['nvidia-smi',
+                    '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader'], text=True, timeout=30)
+                for line in applications.splitlines():
+                    pid, gpu = (value.strip() for value in line.split(','))
+                    if int(pid) in processes and gpu not in runtime['gpu_uuids']:
+                        raise RuntimeError('a payload process used an unapproved GPU')
             receipt.update(last_observed_utc=datetime.now(timezone.utc).isoformat(), tree_rss_bytes=rss,
                 peak_tree_rss_bytes=max(rss, receipt['peak_tree_rss_bytes']), process_count=len(processes),
                 aggregate_cpu_seconds=total_ticks/os.sysconf('SC_CLK_TCK'), gpu_memory_mib=memory)

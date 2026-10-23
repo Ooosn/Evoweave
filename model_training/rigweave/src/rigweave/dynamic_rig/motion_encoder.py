@@ -174,6 +174,7 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         motion_evidence_fusion: str = "off",
         motion_evidence_heads: int = 0,
         register_temporal_mode: str = "aligned",
+        frame_role_policy: str = "query_first",
     ) -> None:
         super().__init__()
         self.dim = int(dim)
@@ -185,6 +186,9 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         self.motion_evidence_fusion = str(motion_evidence_fusion)
         self.motion_evidence_heads = int(motion_evidence_heads)
         self.register_temporal_mode = _validate_register_temporal_mode(register_temporal_mode)
+        if frame_role_policy not in {"query_first", "all_real"}:
+            raise ValueError("frame_role_policy must be query_first or all_real")
+        self.frame_role_policy = frame_role_policy
 
         self.role_token = nn.Parameter(torch.randn(1, 2, 1, dim) * 0.02)
         if self.register_tokens > 0:
@@ -301,9 +305,12 @@ class AnchorWiseAlternatingMotionEncoder(nn.Module):
         else:
             regs = z.new_empty((batch_size, frame_count, 0, dim))
 
-        canonical_role = self.role_token[:, 0:1].expand(batch_size, 1, -1, -1)
-        motion_roles = self.role_token[:, 1:2].expand(batch_size, max(0, frame_count - 1), -1, -1)
-        role = torch.cat([canonical_role, motion_roles], dim=1)
+        if self.frame_role_policy == "all_real":
+            role = self.role_token[:, 1:2].expand(batch_size, frame_count, -1, -1)
+        else:
+            canonical_role = self.role_token[:, 0:1].expand(batch_size, 1, -1, -1)
+            motion_roles = self.role_token[:, 1:2].expand(batch_size, max(0, frame_count - 1), -1, -1)
+            role = torch.cat([canonical_role, motion_roles], dim=1)
         z = torch.cat([role, regs, z], dim=2)
         if self.use_time_embedding:
             z = z + self.time_embed[:frame_count].view(1, frame_count, 1, dim)

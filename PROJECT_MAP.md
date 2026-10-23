@@ -12,10 +12,10 @@ manifest row, including `root_rt`. This revision changes data preprocessing,
 not model architecture, and does not authorize or start a training run.
 
 This checkout is the model research workspace on branch
-`codex/virtual-fusion-20261013`. The current task restores the existing original
-single-query training route on current data. Read
+`codex/virtual-fusion-20261013`. The current task tests real-frame ID/XYZ
+autoregression with teacher-forced cross-frame structural consistency. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
-[original baseline](model_training/docs/BASELINE_FLAT_UNIRIG.md).
+[experiment protocol](model_training/docs/ID_XYZ_CONSISTENCY_20261024.md).
 Exact execution permissions are in `model_training/state/current.json`.
 
 This workspace is organized by module. Each module owns its own code, runbook,

@@ -13,15 +13,18 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The current task is to restore the existing single-query training route for a
-fresh 100,000-exposure experiment on the fixed 5,000-asset subset, with dynamic
-2..24 frames and current root-RT preprocessing. The original implementation
-has been identified; the restored formal run has not started.
+The current task is a 20,000-exposure real-frame ID/XYZ autoregressive trial
+on the fixed 5,000-asset subset, with dynamic 2..24 frames and unchanged root-RT
+preprocessing. Every real frame is supervised by the same full decoder;
+structural consistency is evaluated under ground-truth prefixes. See the
+[protocol](docs/ID_XYZ_CONSISTENCY_20261024.md). The original single-query
+baseline comparison is deferred, not redefined as this experiment.
 
 ## Code Entry Points
 
-- Training: [train_dynamic_rig.py](rigweave/scripts/train_dynamic_rig.py).
-- Launcher: [run_dynamic_ar_train.sh](rigweave/scripts/run_dynamic_ar_train.sh).
+- Current training: [train_id_xyz_consistency.py](rigweave/scripts/train_id_xyz_consistency.py).
+- Current launcher: [launch_id_xyz_consistency.py](jobs/launch_id_xyz_consistency.py).
+- Original baseline training: [train_dynamic_rig.py](rigweave/scripts/train_dynamic_rig.py).
 - Generation: [eval_dynamic_rig_generation.py](rigweave/scripts/eval_dynamic_rig_generation.py).
 - Teacher-forced evaluation: [eval_dynamic_rig_ce.py](rigweave/scripts/eval_dynamic_rig_ce.py).
 - Model implementation: `rigweave/src/rigweave/dynamic_rig/`.

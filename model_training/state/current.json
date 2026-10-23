@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "legacy_single_target_100000_preparation_20261024_v1",
-  "updated_at": "2026-10-23T17:20:52.515Z",
+  "state_id": "legacy_single_target_preflight_20261024_v1",
+  "updated_at": "2026-10-23T18:38:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,17 +137,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_explicit_ssh_weight4_continuation",
+    "status": "retained_for_explicit_ssh_legacy_single_target",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -920,28 +920,52 @@
   },
   "active_operation": {
     "label": "legacy_single_target_100000_20261024_v1",
-    "mode": "preparation",
-    "operation": "inspect",
-    "status": "prepared_awaiting_in_job_entry",
+    "mode": "preflight",
+    "operation": "preflight",
+    "status": "approved_supervised_gpu_preflight",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
-    "prepared_config_sha256": "a248c7d9717bc0e6ca9341351d1aaedb5908b74e98db0f5f78d06336ff218ef7",
-    "code_commit": "929518268ec1c7003a9ac8542b781b627ad1f87e",
+    "prepared_config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
+    "code_commit": "1e9ed7750c26de2e57a90a3b70b769328628428b",
     "deployed_code": "/work/wangyy/legacy_single_target_20261024/code",
-    "last_observed_utc": "2026-10-23T17:50:12Z",
+    "last_observed_utc": "2026-10-23T18:34:05Z",
     "last_observed_gpu_memory_mib": [0, 0],
     "ordinary_ssh_kernel_scheduler_membership": false,
     "new_training_processes": 0,
-    "cpu_tests_passed": 22,
+    "cpu_tests_passed": 33,
     "gpu_preflight_passed": false,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
-    "authorization": "Human authorized careful audit then two-H100100000-exposure training; latest reply requests SSH control and preserving existing cards, not allocation release.",
+    "authorization": "Human authorized careful audit then two-H100100000-exposure training and explicitly authorized this run as a direct SSH exception after being informed actual kernel scheduler membership is absent. Preserve the existing allocation; no other cards.",
+    "ssh_exception": {
+      "scope": "legacy_single_target_100000_20261024_v1",
+      "explicit_human_authorized": true,
+      "authorization": "2026-10-23T18:25:55Z human explicitly ordered treating this as a special case and using SSH to run directly as before; scope is this existing two-H100 run only.",
+      "kernel_scheduler_membership": false,
+      "allocation": 130309880,
+      "host": "pcg01i",
+      "physical_gpus": [5, 6],
+      "cpu_slots": 1,
+      "rss_limit_bytes": 68719476736,
+      "gpu_memory_fraction_limit": 0.85,
+      "keeper_pid": 1090013
+    },
+    "runs": [
+      {
+        "mode": "preflight",
+        "approved": true,
+        "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
+        "config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/preflight_v1",
+        "allocation": 130309880,
+        "physical_gpus": [5, 6]
+      }
+    ],
     "target_assets": 100000,
     "train_assets": 5000,
     "target_policy": "sampled_random_query_at_slot0",
@@ -958,12 +982,12 @@
       ],
       "preserve_allocation": true
     },
-    "entry_blocker": "In-job keeper has no command interface and fresh qrsh-inherit was rejected. Ordinary SSH does not inherit scheduler membership. No new payload started.",
+    "entry_blocker": null,
     "acceptance": [
       "Exactly one real-query-first AR target per asset, with no virtual/fusion/auxiliary heads.",
       "Preserve all-frame geometry, normalization and GT when changing target.",
       "Validate exact common initialization, target alignment, gradients, seeded sampling and separate input/supervised-frame counters.",
-      "Require in-job preflight and measured dual-H100 capacity before formal release.",
+      "Require supervised preflight and measured dual-H100 capacity under the explicit SSH exception before formal release.",
       "Compare against bestB on identical128asset8frame validation including non52/failures.",
       "Stop at exactly100000 assets; preserve all outputs and allocation."
     ]

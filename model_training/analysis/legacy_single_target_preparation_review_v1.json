@@ -1,9 +1,9 @@
 {
   "schema": "legacy_single_target_readiness.v1",
   "created_utc": "2026-10-23T17:46:56.729Z",
-  "status": "cpu_implementation_accepted_gpu_validation_pending",
+  "status": "cpu_and_real_dual_gpu_preflight_accepted_capacity_pending",
   "source_parent": "c5ca780",
-  "acceptance_scope": "CPU implementation/recipe checks only, not GPU readiness or model quality",
+  "acceptance_scope": "CPU implementation and real two-rank preflight accepted; capacity/formal release pending; not model quality",
   "human_target": {
     "asset_exposures": 100000,
     "nominal_epochs": 20,
@@ -86,10 +86,10 @@
     }
   ],
   "gpu": {
-    "launched": false,
-    "preflight_passed": false,
+    "launched": true,
+    "preflight_passed": true,
     "capacity_passed": false,
-    "real_initialization_verified": false,
+    "real_initialization_verified": true,
     "formal_release": false,
     "allocation": 130309880,
     "physical_gpus": [
@@ -104,7 +104,7 @@
     "exception_review": "User explicitly authorized direct SSH after the failed in-job entry. Preserve live keeper/grant, enforce one CPU,64GiB RSS and85percent GPU memory; never copy scheduler identity. GPU validation is still required."
   },
   "limitations": [
-    "Actual pretrained model two-rank continuous updates and memory capacity remain untested.",
+    "Real two-rank continuous updates passed; full physical batch memory capacity remains untested.",
     "No new quality measurements; compare against bestB only after approved GPU execution.",
     "Single-target vs all-target supervision and absence ofB auxiliary loss are declared comparison differences."
   ]

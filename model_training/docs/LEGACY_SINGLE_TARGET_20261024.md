@@ -105,7 +105,10 @@ with no extra final condition norm. This restores the original query routing,
 not every historical command-line default. There is no auxiliary structure
 loss or training-time pruning. The final LR phase remains3e-5 through100k.
 
-These are CPU implementation results only. Actual official-weight fingerprint
-verification, two-rank CUDA execution, capacity measurement and training have
-not run. See `analysis/legacy_single_target_preparation_review_v1.json` for
-file hashes, tests and the explicitly authorized execution exception.
+Real two-rank preflight v2 passed at2026-10-23T18:51:27Z, including exact
+official/common initialization, T2/T24 continuous updates, all gradient groups,
+generation parity and normal supervisor cleanup. v1 numerical checks passed
+but its exit-time zombie-cgroup false alarm was rejected, reproduced and fixed.
+Capacity measurement is the next approved stage; formal training remains gated.
+See `analysis/legacy_single_target_preparation_review_v1.json` and current state
+for evidence and the explicitly authorized execution exception.

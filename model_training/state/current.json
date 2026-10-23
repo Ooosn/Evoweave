@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "legacy_single_target_preflight_20261024_v2",
-  "updated_at": "2026-10-23T18:50:00Z",
+  "state_id": "legacy_single_target_capacity_20261024_v1",
+  "updated_at": "2026-10-23T18:53:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Review single-target implementation/recipe and CPU tests, establish verified in-job execution entry, then publish exact preflight/capacity and100k release.",
+  "next_required_result": "Review all six dual-H100 capacity cases, resource cleanup and remaining allocation time, then release the exact fresh100000-asset training configuration.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -920,9 +920,9 @@
   },
   "active_operation": {
     "label": "legacy_single_target_100000_20261024_v1",
-    "mode": "preflight",
+    "mode": "capacity",
     "operation": "preflight",
-    "status": "approved_supervised_gpu_preflight_v2",
+    "status": "preflight_accepted_capacity_approved",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
@@ -934,7 +934,7 @@
     "ordinary_ssh_kernel_scheduler_membership": false,
     "new_training_processes": 0,
     "cpu_tests_passed": 41,
-    "gpu_preflight_passed": false,
+    "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "complete": false,
     "gpu_work_allowed": true,
@@ -957,11 +957,11 @@
     },
     "runs": [
       {
-        "mode": "preflight",
+        "mode": "capacity",
         "approved": true,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
         "config_sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30",
-        "output": "/work/wangyy/legacy_single_target_20261024/outputs/preflight_v2",
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v1",
         "allocation": 130309880,
         "physical_gpus": [5, 6]
       }
@@ -995,6 +995,17 @@
         "all_payload_processes_gone": true,
         "gpu_memory_mib": [0, 0],
         "keeper_preserved": true
+      },
+      {
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/preflight_v2",
+        "result_sha256": "f4666ada5d0e8bdf34aef930fc3f809d7889324e030b2881f5caf2add16c58f5",
+        "resource_sha256": "e6b4fd39462908efa2dcedbec81edfa9d1c297b74f2c0ba78eaeadc124f92e2f",
+        "numerical_passed": true,
+        "supervisor_passed": true,
+        "accepted": true,
+        "exit_code": 0,
+        "payload_cleanup_complete": true,
+        "common_initial_state_sha256": "f10cb3d89daadc3cad5ffc886ec467609f72b4bb88faee079b0db1adedae8185"
       }
     ],
     "acceptance": [

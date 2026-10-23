@@ -94,7 +94,7 @@ to be published in `state/current.json`. No new training has started.
 
 The new standalone model, current-loader adapter, B-lineage learning-rate
 schedule, original-metric evaluation adapter, guarded trainer and resource
-supervisor are implemented. All33 focused CPU tests pass, including original
+supervisor are implemented. All37 focused CPU tests pass, including original
 encoder/logit/gradient parity, exact common tensor preservation, random raw-query
 selection, the unchanged B20k sampling prefix, separate input/target counts,
 2100 exact-budget updates, and fail-closed stage/two-rank receipt checks.

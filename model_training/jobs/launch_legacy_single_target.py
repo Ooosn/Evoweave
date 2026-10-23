@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Supervise the exact approved allocation, including its run-scoped SSH exception."""
 import argparse
+import ctypes
 from datetime import datetime, timezone
 import json
 import os
@@ -23,6 +24,54 @@ def write_json(path, data):
 def cpu_ticks(pid):
     fields = (Path('/proc') / str(pid) / 'stat').read_text().rsplit(') ', 1)[1].split()
     return int(fields[11]) + int(fields[12])
+
+
+def process_identity(pid):
+    fields = (Path('/proc') / str(pid) / 'stat').read_text().rsplit(') ', 1)[1].split()
+    return int(fields[19]), fields[0]
+
+
+def reap_exited_children():
+    while True:
+        try:
+            if os.waitpid(-1, os.WNOHANG)[0] == 0:
+                return
+        except ChildProcessError:
+            return
+
+
+def cleanup_payload(child, keeper_pid):
+    # Elastic workers use separate sessions. A subreaper retains orphan ownership.
+    known = {}
+    terminated = set()
+    for sig, duration in ((signal.SIGTERM, 30), (signal.SIGKILL, 10)):
+        until = time.monotonic() + duration
+        while True:
+            for pid in descendants(os.getpid()):
+                if pid in (os.getpid(), keeper_pid):
+                    continue
+                try:
+                    known.setdefault(pid, process_identity(pid)[0])
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+            alive = []
+            for pid, identity in known.items():
+                try:
+                    started, status = process_identity(pid)
+                    if started == identity and status != 'Z':
+                        alive.append(pid)
+                        terminated.add(pid)
+                        os.kill(pid, sig)
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+            child.poll()
+            if not alive:
+                reap_exited_children()
+                return sorted(terminated)
+            if time.monotonic() >= until:
+                break
+            time.sleep(.2)
+    raise RuntimeError(f'payload children survived cleanup: {alive}')
 
 
 def resource_cgroups(text):
@@ -95,6 +144,9 @@ def main():
         'physical_gpus': runtime['physical_gpus'], 'cpu_affinity': sorted(binding),
         'rss_limit_bytes': runtime['rss_limit_bytes'], 'peak_tree_rss_bytes': 0,
         'aggregate_cpu_seconds': 0., 'supervisor_pid': os.getpid()}
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
+        raise OSError(ctypes.get_errno(), 'cannot retain ownership of orphaned rank workers')
     child = subprocess.Popen(command, cwd=root, start_new_session=True)
     receipt['child_pid'] = child.pid
     interrupted = []
@@ -152,19 +204,22 @@ def main():
         receipt.update(complete=True, passed=child.returncode == 0, exit_code=child.returncode)
     except BaseException as exc:
         receipt['error'] = repr(exc)
-        try:
-            os.killpg(child.pid, signal.SIGTERM)
-            child.wait(timeout=30)
-        except subprocess.TimeoutExpired:
-            os.killpg(child.pid, signal.SIGKILL)
-            child.wait(timeout=10)
-        except ProcessLookupError:
-            pass
+        receipt.update(complete=True, passed=False)
         raise
     finally:
-        receipt['finished_utc'] = datetime.now(timezone.utc).isoformat()
-        write_json(receipt_path, receipt)
-    return child.returncode
+        try:
+            receipt['cleaned_payload_pids'] = cleanup_payload(child, exception['keeper_pid'] if exception else None)
+            receipt['payload_cleanup_complete'] = True
+            if receipt['cleaned_payload_pids']:
+                receipt.update(passed=False, error=receipt.get('error', 'orphan workers remained after torchrun exit'))
+        except BaseException as exc:
+            receipt.update(passed=False, payload_cleanup_complete=False, cleanup_error=repr(exc))
+            raise
+        finally:
+            receipt['exit_code'] = child.poll()
+            receipt['finished_utc'] = datetime.now(timezone.utc).isoformat()
+            write_json(receipt_path, receipt)
+    return 0 if receipt['passed'] else 1
 
 
 if __name__ == '__main__':

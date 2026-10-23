@@ -29,7 +29,7 @@
   },
   "cpu_tests": {
     "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
-    "passed": 33,
+    "passed": 37,
     "failed": 0,
     "syntax_checks_passed": true,
     "diff_whitespace_check_passed": true
@@ -41,7 +41,8 @@
     "findings_fixed": [
       "receipt mode must match preflight/capacity",
       "exactly two unique complete passed rank receipts required",
-      "null SSH exception must raise a fail-closed RuntimeError"
+      "null SSH exception must raise a fail-closed RuntimeError",
+      "supervisor adopts and identity-checks orphaned elastic rank workers before terminating only its descendants"
     ],
     "regression_fixtures_added": true
   },
@@ -60,7 +61,7 @@
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
-      "sha256": "aef9fbd99a64bee3ff4a5af4c5cceb7a6107f17e72d899a1ceb5fab1629a5648"
+      "sha256": "50afcd71f8a0b54956c9a8e35efaae574b89b969260a61a5944460c11852ee66"
     },
     {
       "path": "model_training/experiments/legacy_single_target_100000_v1.json",
@@ -77,6 +78,10 @@
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_ssh_exception.py",
       "sha256": "52ce834b35c1ad14895d5aa7fa3792c84852b338b3269b38948a465e1ccb00d2"
+    },
+    {
+      "path": "model_training/rigweave/tests/test_legacy_single_target_launcher.py",
+      "sha256": "be51fb7f09041b569583eacfabd5f4f9167b13a8e553f4aa6a8dcf5d56e9728d"
     }
   ],
   "gpu": {

@@ -74,6 +74,10 @@ def validate_config(config):
     if (config['runtime']['world_size'] != 2 or config['runtime']['physical_gpus'] != [5, 6]
             or config['runtime']['allocation'] != 130309880 or config['runtime']['host'] != 'pcg01i'):
         raise ValueError('only the existing two granted H100s are authorized')
+    if (config['runtime'].get('execution_mode') != 'explicit_ssh_exception'
+            or config['runtime'].get('require_scheduler_membership') is not False
+            or config['runtime'].get('gpu_memory_fraction_limit') != .85):
+        raise ValueError('this run requires its explicitly published, resource-bounded SSH exception')
     if config['capacity']['allocated_fraction_limit'] != .85:
         raise ValueError('capacity must retain at least15percent GPU headroom')
     return milestones

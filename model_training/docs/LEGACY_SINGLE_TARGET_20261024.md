@@ -75,8 +75,16 @@ At 2026-10-23T17:08Z, allocation 130309880 still held pcg01 physical H100s 5/6,
 both with zero allocated GPU memory. Its keeper is an in-job sleep loop without
 a command interface. A fresh read-only `qrsh -inherit` attempt at 17:12Z was
 rejected by execd. Do not release the keeper or copy environment variables to
-pretend an ordinary SSH child belongs to this job. A training launcher must
-verify actual scheduler membership and CPU/GPU limits before workload imports.
+pretend an ordinary SSH child belongs to this job.
+
+At 18:25:55Z the user explicitly authorized a one-run exception after those
+failures: use SSH directly and preserve only these two cards. This does not
+change the general HGC policy. The launcher records actual scheduler membership
+as false and must preserve keeper PID1090013 in job130309880, verify the live
+grant, bind the entire payload to one CPU, enforce64GiB aggregate RSS and an
+85percent GPU-memory ceiling, and stop only its own children on any violation.
+No copied scheduler identity, cgroup migration, allocation release or other GPU
+is authorized. The exact exception must be published with each approved stage.
 
 Preparation and CPU tests are allowed. Exact GPU preflight/training release,
 source/config hashes, capacity receipts and a usable execution entry remain
@@ -86,7 +94,7 @@ to be published in `state/current.json`. No new training has started.
 
 The new standalone model, current-loader adapter, B-lineage learning-rate
 schedule, original-metric evaluation adapter, guarded trainer and resource
-supervisor are implemented. All22 focused CPU tests pass, including original
+supervisor are implemented. All33 focused CPU tests pass, including original
 encoder/logit/gradient parity, exact common tensor preservation, random raw-query
 selection, the unchanged B20k sampling prefix, separate input/target counts,
 2100 exact-budget updates, and fail-closed stage/two-rank receipt checks.
@@ -100,4 +108,4 @@ loss or training-time pruning. The final LR phase remains3e-5 through100k.
 These are CPU implementation results only. Actual official-weight fingerprint
 verification, two-rank CUDA execution, capacity measurement and training have
 not run. See `analysis/legacy_single_target_preparation_review_v1.json` for
-file hashes, tests and the remaining execution-entry blocker.
+file hashes, tests and the explicitly authorized execution exception.

@@ -29,7 +29,7 @@
   },
   "cpu_tests": {
     "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
-    "passed": 22,
+    "passed": 33,
     "failed": 0,
     "syntax_checks_passed": true,
     "diff_whitespace_check_passed": true
@@ -40,7 +40,8 @@
     "prior_regression_tests_passed": 26,
     "findings_fixed": [
       "receipt mode must match preflight/capacity",
-      "exactly two unique complete passed rank receipts required"
+      "exactly two unique complete passed rank receipts required",
+      "null SSH exception must raise a fail-closed RuntimeError"
     ],
     "regression_fixtures_added": true
   },
@@ -51,19 +52,19 @@
     },
     {
       "path": "model_training/rigweave/scripts/legacy_single_target_runtime.py",
-      "sha256": "8238309bf9cd7c801ad0086a4b67f4ec8b80b47bbda4829e3cf445c503a8cf51"
+      "sha256": "4e16708790ff396d4fa263cfc9c926f883c12d13525c963624b7c6d680e56991"
     },
     {
       "path": "model_training/rigweave/scripts/train_legacy_single_target.py",
-      "sha256": "f2c4005e67d1666e9db50f2498eb6d94f6e3468d17078552c85665a93e193d52"
+      "sha256": "5bab44f95c0f2db1d0b776abba74a845fc6ef8f5064448fdcf786ee40ee78657"
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
-      "sha256": "71de2ac56777763c4756e00b4d921a6f2f523aabd399d5f88dcadd2d3a27d59f"
+      "sha256": "aef9fbd99a64bee3ff4a5af4c5cceb7a6107f17e72d899a1ceb5fab1629a5648"
     },
     {
       "path": "model_training/experiments/legacy_single_target_100000_v1.json",
-      "sha256": "a248c7d9717bc0e6ca9341351d1aaedb5908b74e98db0f5f78d06336ff218ef7"
+      "sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30"
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target.py",
@@ -71,7 +72,11 @@
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_runtime.py",
-      "sha256": "dd137244c1819416e861c715773aad7b18571c5959f7d58e752ee4493f9fbd1b"
+      "sha256": "65eee0e308a2e810e425fd095365bb0951f14ddb8d3d9cd5e54280ec42a4e362"
+    },
+    {
+      "path": "model_training/rigweave/tests/test_legacy_single_target_ssh_exception.py",
+      "sha256": "52ce834b35c1ad14895d5aa7fa3792c84852b338b3269b38948a465e1ccb00d2"
     }
   ],
   "gpu": {
@@ -87,7 +92,10 @@
     ],
     "host": "pcg01i",
     "preserve_allocation": true,
-    "blocker": "No usable in-job command entry; keeper only sleeps; qrsh-inherit rejected. Ordinary SSH is outside the required scheduler cgroup."
+    "execution_mode": "explicit_human_authorized_run_scoped_SSH_exception",
+    "kernel_scheduler_membership": false,
+    "blocker": null,
+    "exception_review": "User explicitly authorized direct SSH after the failed in-job entry. Preserve live keeper/grant, enforce one CPU,64GiB RSS and85percent GPU memory; never copy scheduler identity. GPU validation is still required."
   },
   "limitations": [
     "Actual pretrained model two-rank continuous updates and memory capacity remain untested.",

@@ -41,15 +41,77 @@ def require_job_membership(text, job):
         raise RuntimeError('launcher is outside the granted scheduler job; GPU IDs alone are insufficient')
 
 
+def validate_ssh_exception(state, config):
+    runtime = config['runtime']
+    op = state.get('active_operation', {})
+    scope = 'legacy_single_target_100000_20261024_v1'
+    if not isinstance(op, dict):
+        raise RuntimeError('there is no explicit run-scoped SSH exception')
+    exception = op.get('ssh_exception', {})
+    if not isinstance(exception, dict):
+        raise RuntimeError('there is no explicit run-scoped SSH exception')
+    if (runtime.get('execution_mode') != 'explicit_ssh_exception'
+            or runtime.get('require_scheduler_membership') is not False
+            or op.get('label') != scope or exception.get('scope') != scope
+            or exception.get('explicit_human_authorized') is not True
+            or exception.get('kernel_scheduler_membership') is not False
+            or not isinstance(exception.get('authorization'), str)
+            or not exception['authorization'].strip()):
+        raise RuntimeError('there is no explicit run-scoped SSH exception')
+    exact = {'allocation': 130309880, 'host': 'pcg01i', 'physical_gpus': [5, 6],
+             'cpu_slots': 1, 'rss_limit_bytes': 68719476736, 'gpu_memory_fraction_limit': .85}
+    for key, value in exact.items():
+        if (type(exception.get(key)) is not type(value) or exception[key] != value
+                or type(runtime.get(key)) is not type(value) or runtime[key] != value):
+            raise RuntimeError(f'SSH exception changed the authorized {key}')
+    if type(exception.get('keeper_pid')) is not int or exception['keeper_pid'] != 1090013:
+        raise RuntimeError('SSH exception must preserve the identified allocation keeper')
+    return exception
+
+
+def verify_exception_keeper(exception):
+    keeper = Path('/proc') / str(exception['keeper_pid'])
+    require_job_membership((keeper / 'cgroup').read_text(), exception['allocation'])
+    command = (keeper / 'cmdline').read_bytes().replace(b'\0', b' ').decode()
+    if ('/home/wangyy/jobs/virtual_fusion_allocation_20261021_v3/fusion_allocation_v3.sh hold' not in command):
+        raise RuntimeError('the preserved allocation keeper identity changed')
+
+
+def verify_resource_supervisor():
+    raw = os.environ.get('EVOWEAVE_RESOURCE_SUPERVISOR_PID', '')
+    if not raw.isdigit():
+        raise RuntimeError('SSH exception requires the independent resource supervisor')
+    supervisor = int(raw)
+    command = (Path('/proc') / raw / 'cmdline').read_bytes().replace(b'\0', b' ').decode()
+    if '/model_training/jobs/launch_legacy_single_target.py' not in command:
+        raise RuntimeError('the declared resource supervisor is not the approved launcher')
+    pid = os.getpid()
+    while pid > 1 and pid != supervisor:
+        status = (Path('/proc') / str(pid) / 'status').read_text()
+        pid = int(next(line.split(':', 1)[1] for line in status.splitlines() if line.startswith('PPid:')))
+    if pid != supervisor:
+        raise RuntimeError('the training process is not a descendant of its resource supervisor')
+
+
 def verify_launch(args, config):
     runtime = config['runtime']
     job = runtime['allocation']
-    require_job_membership(Path('/proc/self/cgroup').read_text(), job)
-    if (os.environ.get('JOB_ID') != str(job) or socket.gethostname().split('.')[0] != 'pcg01'
+    state = json.loads((ROOT / 'model_training/state/current.json').read_text())
+    try:
+        require_job_membership(Path('/proc/self/cgroup').read_text(), job)
+        in_job = True
+    except RuntimeError:
+        exception = validate_ssh_exception(state, config)
+        if os.environ.get('EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION') != '1':
+            raise RuntimeError('explicit SSH execution was not enabled by the supervised launcher')
+        verify_exception_keeper(exception)
+        verify_resource_supervisor()
+        in_job = False
+    if ((in_job and os.environ.get('JOB_ID') != str(job)) or socket.gethostname().split('.')[0] != 'pcg01'
             or os.environ.get('CUDA_VISIBLE_DEVICES') != '5,6'
             or runtime['physical_gpus'] != [5, 6] or runtime['world_size'] != 2):
         raise RuntimeError('runtime differs from the existing two-H100 allocation')
-    slots = int(os.environ.get('NSLOTS', '0'))
+    slots = int(os.environ.get('NSLOTS', '0')) if in_job else runtime['cpu_slots']
     affinity = os.sched_getaffinity(0)
     if slots != runtime['cpu_slots'] or slots < 1 or len(affinity) != slots:
         raise RuntimeError('apply and verify the granted CPU binding before workload imports')
@@ -60,13 +122,14 @@ def verify_launch(args, config):
     lines = [line for line in grant.splitlines() if line.startswith('granted_devices')]
     if (len(lines) != 1 or runtime['host'] + ':' not in lines[0]
             or sorted(map(int, re.findall(r'/dev/nvidia(\d+)', lines[0]))) != [5, 6]
-            or not re.search(r'job_state\s+\d+:\s+r\b', grant)):
+            or not re.search(r'job_state\s+\d+:\s+r\b', grant)
+            or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
+            or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
         raise RuntimeError('the scheduler no longer grants these two devices')
     if (ROOT.resolve() != Path(runtime['repo']).resolve()
             or args.config.resolve().parent != (ROOT / 'model_training/experiments').resolve()
             or args.output.resolve().parent != Path(runtime['output_root']).resolve()):
         raise RuntimeError('use only the isolated published source/config/output directories')
-    state = json.loads((ROOT / 'model_training/state/current.json').read_text())
     op = state['active_operation']
     if (state.get('architecture_contract', {}).get('id') != 'legacy_real_query_single_target_v1'
             or op.get('gpu_work_allowed') is not True or op.get('complete') is not False
@@ -422,7 +485,7 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     source = verify_launch(args, config)
-    # Scheduler provenance and CPU binding have been checked before torch imports.
+    # Provenance (including a declared exception) and CPU binding precede torch imports.
     sys.path.insert(0, str(ROOT / 'model_training/rigweave/src'))
     import torch
     import torch.distributed as dist
@@ -447,7 +510,10 @@ def main():
         reference = rt.verify_reference(config, entries)
         model, tokenizer, codec, initial = rt.build_model(config, device)
         initial.update(source=source, config_sha256=rt.sha256(args.config),
-                       contract_sha256=rt.contract_sha256(config))
+                       contract_sha256=rt.contract_sha256(config),
+                       execution_mode=config['runtime'].get('execution_mode', 'scheduler'),
+                       actual_cgroup=Path('/proc/self/cgroup').read_text(),
+                       resource_supervisor_pid=os.environ.get('EVOWEAVE_RESOURCE_SUPERVISOR_PID'))
         rt.write_json(args.output / f'initialization_rank_{rank}.json', initial)
         functions = {'preflight': run_preflight, 'capacity': run_capacity, 'train': run_training}
         arguments = (model, tokenizer, codec, entries, config, args, initial, source, rank, world, device)

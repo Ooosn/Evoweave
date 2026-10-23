@@ -19,7 +19,9 @@
     "output_root": "/work/wangyy/legacy_single_target_20261024/outputs",
     "cpu_slots": 1,
     "rss_limit_bytes": 68719476736,
-    "require_scheduler_membership": true
+    "require_scheduler_membership": false,
+    "execution_mode": "explicit_ssh_exception",
+    "gpu_memory_fraction_limit": 0.85
   },
   "initialization": {
     "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
@@ -273,7 +275,7 @@
     "approved": false,
     "requires": [
       "single_target_cpu_tests",
-      "in_job_gpu_contract_preflight",
+      "supervised_gpu_contract_preflight",
       "dual_H100_capacity",
       "primary_review"
     ]

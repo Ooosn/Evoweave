@@ -38,7 +38,8 @@ class SingleTargetRuntimeTests(unittest.TestCase):
     def test_config_preserves_declared_contract(self):
         self.assertEqual(rt.validate_config(CONFIG), list(range(5000, 100001, 5000)))
         self.assertFalse(CONFIG['formal_release']['approved'])
-        self.assertTrue(CONFIG['runtime']['require_scheduler_membership'])
+        self.assertFalse(CONFIG['runtime']['require_scheduler_membership'])
+        self.assertEqual(CONFIG['runtime']['execution_mode'], 'explicit_ssh_exception')
 
     def test_config_rejects_silent_recipe_changes(self):
         changes = [('target_policy', 'second_random_target'), ('pruning', {'enabled': True}),

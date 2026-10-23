@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Launch and supervise a payload only inside the approved HGC allocation."""
+"""Supervise the exact approved allocation, including its run-scoped SSH exception."""
 import argparse
 from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -24,6 +25,16 @@ def cpu_ticks(pid):
     return int(fields[11]) + int(fields[12])
 
 
+def resource_cgroups(text):
+    result = {}
+    for line in text.splitlines():
+        _, controllers, path = line.split(':', 2)
+        for controller in controllers.split(','):
+            if controller in ('devices', 'cpuset'):
+                result[controller] = path
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
@@ -34,17 +45,32 @@ def main():
     runtime = config['runtime']
     root = Path(runtime['repo'])
     sys.path.insert(0, str(root / 'model_training/rigweave/scripts'))
-    from train_legacy_single_target import require_job_membership, verify_launch
+    from train_legacy_single_target import (require_job_membership, validate_ssh_exception,
+                                            verify_exception_keeper, verify_launch)
     # Read actual kernel provenance before setting CUDA visibility or importing torch.
-    require_job_membership(Path('/proc/self/cgroup').read_text(), runtime['allocation'])
-    if (os.environ.get('JOB_ID') != str(runtime['allocation'])
+    actual_cgroup = Path('/proc/self/cgroup').read_text()
+    exception = None
+    try:
+        require_job_membership(actual_cgroup, runtime['allocation'])
+        in_job = True
+    except RuntimeError:
+        state = json.loads((root / 'model_training/state/current.json').read_text())
+        exception = validate_ssh_exception(state, config)
+        verify_exception_keeper(exception)
+        in_job = False
+        os.environ['EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION'] = '1'
+    if in_job and (os.environ.get('JOB_ID') != str(runtime['allocation'])
             or int(os.environ.get('NSLOTS', '0')) != runtime['cpu_slots']):
         raise RuntimeError('the launcher must inherit the real job ID and CPU grant')
-    allowed = sorted(os.sched_getaffinity(0))
+    allowed = os.sched_getaffinity(0)
+    if exception:
+        allowed &= os.sched_getaffinity(exception['keeper_pid'])
+    allowed = sorted(allowed)
     if len(allowed) < runtime['cpu_slots']:
         raise RuntimeError('insufficient allowed CPUs')
     binding = set(allowed[:runtime['cpu_slots']])
     os.sched_setaffinity(0, binding)
+    os.environ['EVOWEAVE_RESOURCE_SUPERVISOR_PID'] = str(os.getpid())
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(map(str, runtime['physical_gpus']))
     os.environ.update({name: '1' for name in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS',
         'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'PYTHONDONTWRITEBYTECODE',
@@ -63,7 +89,9 @@ def main():
         '--nproc_per_node=2', str(root / 'model_training/rigweave/scripts/train_legacy_single_target.py'),
         '--config', str(args.config), '--output', str(args.output), '--mode', args.mode]
     receipt = {'complete': False, 'passed': False, 'source': source, 'mode': args.mode,
-        'allocation': runtime['allocation'], 'kernel_scheduler_membership': True,
+        'allocation': runtime['allocation'], 'kernel_scheduler_membership': in_job,
+        'execution_mode': runtime['execution_mode'], 'actual_cgroup': actual_cgroup,
+        'ssh_exception': exception,
         'physical_gpus': runtime['physical_gpus'], 'cpu_affinity': sorted(binding),
         'rss_limit_bytes': runtime['rss_limit_bytes'], 'peak_tree_rss_bytes': 0,
         'aggregate_cpu_seconds': 0., 'supervisor_pid': os.getpid()}
@@ -80,8 +108,13 @@ def main():
             now = time.monotonic()
             if now >= next_grant:
                 grant = subprocess.check_output(['qstat', '-j', str(runtime['allocation'])], text=True, timeout=30)
-                if f'pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant:
+                if (f'pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
+                        or not re.search(r'job_state\s+\d+:\s+r\b', grant)
+                        or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
+                        or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
                     raise RuntimeError('the authorized GPU grant changed')
+                if exception:
+                    verify_exception_keeper(exception)
                 next_grant = now + 60
             processes = descendants(child.pid)
             rss = sum(value[1] for value in processes.values())
@@ -89,7 +122,11 @@ def main():
                 raise RuntimeError('the training process tree exceeded64GiB RAM')
             for pid in processes:
                 try:
-                    require_job_membership((Path('/proc') / str(pid) / 'cgroup').read_text(), runtime['allocation'])
+                    child_cgroup = (Path('/proc') / str(pid) / 'cgroup').read_text()
+                    if in_job:
+                        require_job_membership(child_cgroup, runtime['allocation'])
+                    elif resource_cgroups(child_cgroup) != resource_cgroups(actual_cgroup):
+                        raise RuntimeError('an SSH child changed its recorded resource cgroups')
                     for task in (Path('/proc') / str(pid) / 'task').iterdir():
                         if not os.sched_getaffinity(int(task.name)) <= binding:
                             raise RuntimeError('a child thread escaped its CPU affinity')

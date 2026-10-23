@@ -1,770 +1,139 @@
-# Isolated virtual-frame fusion experiments
+# Virtual-Query Fusion: Scientific Experiment Report
 
-The current October22 implementation is now governed by
-[STRUCTURE_XYZ_FILL_20261022.md](STRUCTURE_XYZ_FILL_20261022.md). It supersedes
-the earlier localization proposals below: bidirectional XYZ token filling,
-discrete structure inputs only, no structure-hidden-state bridge, both losses
-training shared upstream features. This file preserves the stopped A/B history.
+## Scope And Outcome
 
-This is the active experimental contract on branch
-`codex/virtual-fusion-20261013`, based on committed source `19d81ba`.
-The older checkout, unpublished working changes and training outputs are
-read-only references, not execution destinations. GPU authority remains in
-`model_training/state/current.json`; this document is not launch permission.
+This later all-target study is not the [original single-query baseline](BASELINE_FLAT_UNIRIG.md).
+A/B training was stopped by the user on October 21, 2026; C completed its 20k comparison.
+A completed 150k asset visits. B65k is the latest reviewed metric; a B70k save was recorded,
+but its evaluation and full payload audit were not completed. B did not complete 80k.
+Some old checkpoint weights were subsequently deleted; recorded paths/hashes do not establish
+current availability. This report records results, not permission to resume training.
 
-## Current direction: query contribution and shared-structure localization
+## Question And Controlled Architectures
 
-On October21 the user ended the current A/B training comparison. The latest
-direction (October22JST) explicitly drops cross-branch alignment loss entirely,
-not merely postpones it. Investigate query contribution and a single generated
-structure followed by per-frame XYZ localization. The A/B heartbeat is PAUSED.
-Do not resume B80 or automatically promote the former expanded839-asset plan.
+Does making each real pose the query, rather than the virtual representation, improve
+pose-specific skeleton generation while retaining shared cross-pose information?
 
-The primary stopped only verified torchrun3649983 at14:50:01UTC. Both ranks
-3650002/3650003 exited, and physical GPUs5/6 have no compute processes. The
-qlogin allocation130309880 and keepalive1090013 remain alive. This is an
-intentional user stop, not an unexpected training failure or full80k completion.
-The saved70k checkpoint has1470updates/918232supervisedframes and8438115504bytes;
-its atomic save completed, but its evaluation and full payload audit did not.
-The latest accepted B65k original-GT F1 is0.7705062590, compared with A140k best
-0.7388475706. Preserve all checkpoints and evaluation records.
+All arms use 1,024 corresponding real/virtual anchor tokens, 96 internal registers,
+12 spatial/temporal blocks, width 1,024, 8 heads, and one frame-fusion block.
+The complete official UniRig XYZ AR decoder supervises every selected input pose.
+A two-layer auxiliary DFS-ID decoder reads final virtual tokens with loss weight 0.1;
+its generated structure, count and hidden states never condition the main XYZ branch.
 
-Stop evidence: `b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json`, SHA256
-`f7672302f5e7e73bd9a0d81244d3a1f9dc587a31c7c80b1c26da98efdf0b5a97`.
-The previously discussed ID+XYZ two-stream format is not the current default.
-The current proposal emits one explicit-ID structure, such as
-`J0 J1 J2 BRANCH J0 J3 EOS`, then localizes its joints in each frame. Branch
-parents use ID references rather than regenerated parent coordinates. The
-structure generator is autoregressive. Once the complete structure exists,
-the downstream XYZ localization head reads that complete structure and each
-frame's final mesh features; it does not predict a second skeleton.
-
-Do not require a separate bidirectional structural re-encoding stage. XYZ
-queries can directly attend to all cached structure states and frame geometry
-memory. For example, a joint state can query the combined full-structure and
-mesh memory before a coordinate head. If XYZ tokens follow the entire
-structure prefix, even ordinary causal attention already sees all structure
-tokens. The earlier insistence on an extra unmasked structural self-attention
-stage was an overconstraint and is withdrawn.
-
-Do not add cross-branch CE, representation alignment, or consistency loss as a
-later stage. Ordinary structure-generation and coordinate supervision are
-separate questions; valid/padding masks remain, and GT XYZ must not leak into
-the localization inputs. Exact module choices and coordinate loss are not yet
-implemented or authorized as a GPU experiment. No new model change or GPU
-diagnostic has been launched. Partial structural regularities, not exact
-whole-tree equality, are the relevant structure-learning criterion.
-
-## Historical normal 5000-asset trend comparison
-
-### Post-maintenance recovery preparation, October21
-
-B80 launched21:34:39JST with frozen runtimea9f2455, torchrun3649983 and ranks
-3650002/3650003 on physical5/6. Primary accepted first8updates1261..1268,
-60384assets/793968frames: all947AdamWstates restored at1e-4, then only LR
-changed to3e-5; sampling indices/seeds and actual per-step frame counts match.
-Incoming FINAL60k and both restored M0 tensor hashes are
-`f34096726d9875e484298cdccda2f39a56d573a031b8a8833816d7c2becdab7c`.
-Startup review SHA256
-`2015bca8c27e9d2dbd1b501058f8c4d39e17651b0c25f63900304d6a9ab0c9a1`.
-Full supervisorv1PID137340 is verified active; at21:48:20JST both ranks were
-1279updates/60912assets/804192frames. Its action-only control CLI was corrected
-and tested before start; exactstep/asynchrony/source/terminal gates passed.
-No GPU restart occurred. This is startup acceptance, not completed training
-or quality acceptance. Keep remotea9f2455 frozen while training. After full80k
-acceptance, freeze each route's best original128-panel checkpoint and perform
-the authorized remaining839-asset/eight-view evaluation. Retain bothH100s.
-
-B80 preparation accepted21:31JST: exactconfig0468a7fe, implementation862479c.
-The actual FINALrecovered60k payload passed CPU checks for all947finiteAdamW
-moments atstep1260/LR1e-4, bothrankRNG structures, completed60kstream and full
-B20/B40/B60/recovery provenance. Primary33regression tests passed, including
-both ranks' first8suffix updates and unchanged legacy continuation gates.
-The existing new-node capacity receipt matches the unchanged B80 capacity
-contract. Continue at3e-5 to1680updates/80000assets/1041832frames, planf561a7d8;
-evaluate65/70/75/80k. Expectedfirst8 is1268/60384/793968. GPU work is authorized
-only for this stage after fresh idle/resource checks; all model/data rules remain
-unchanged. Startup and full-stage acceptance are still required.
-
-Recovered B60 completed exit0 by21:16JST. Primary accepted both ranks at
-1260updates/60000assets/788304frames, all210resumed updates against the exact
-sampling plan,20immutable artifact hashes and both55k/60k1536-view panels.
-Raw frame identities and target tokens also match the accepted A150 reference.
-Completion review SHA256
-`20cd60a67e89da8370dae5cdcf3d9a893acf8faf9fc94d316b1274d4051f392b`.
-Valid original-GT F1 at55k/60k is0.765294/0.750580; success0.980469/0.976563,
-exact joint count0.531250/0.549805. This is execution acceptance, not model
-quality acceptance. FINAL60k is8438113904bytes, SHA256
-`8bdf349eb0c808871dd13a9fda4ff84a9ae8ac1e815f855f6cb50c52f4608d76`,
-frozen runtimeda2ee88. The authorized next stage remains FINAL60k-to80k at3e-5
-without best rollback. Its recovered-checkpoint adapter is being implemented
-locally; GPU work is blocked until exact publication and real payload checks.
-Both H100s and keepalive are retained. The user confirmed hourly automatic
-followthrough; a-b is ACTIVE, superseding the earlier paused/pending note.
-
-Recovery training launched18:31:29JST with frozen runtimeda2ee88. Primary
-accepted the first8updates1051..1058/50384assets/660752frames; both ranks
-restored all947AdamW states at1e-4 and the original sampling seeds/order.
-Actual incoming checkpoint and restored model tensor fingerprint on both ranks:
-`5b73652cf5940e29bc8a236a27f65b0c7a6fd40d3a36a1563fc2c7ab8b8cdf4e`.
-Startup review SHA256
-`b2e419f5daaa75b6b6ca28d3802883cf1292ea9c84d2a7af9c4721d13ea3554e`.
-The evaluation panel hash9f7ffbf4 remains exactly the original A/B panel.
-Training remains active; this is execution acceptance, not completion or model
-quality acceptance. The local first8 monitor initially required terminal files
-too early; its logic was corrected and checked without restarting GPU work.
-Keep the running remote source frozen. The existing30-minute heartbeat was
-observed PAUSED; a user question about reactivation is pending. The dedicated
-worker is authorized to supervise this recovered60k stage to its terminal gate.
-
-Full supervisorv3PID146072 is verified active. At18:53:27JST both ranks were
-1088updates/51824assets/680000frames. Actual rankPIDs2192214/2192215 remain on
-physical5/6 under torchrun2191050 and frozenDA2source. Local monitor revisions
-added exact per-step plan checks, tolerated one-update non-atomic snapshot
-skew and tested the actual integer evaluation-list schema. All logic tests
-passed; no GPU process or keepalive restart occurred. Terminal evidence must
-include55k/60k raw panels, full checkpoint hashes and exact60k counters before
-primary acceptance and B80 preparation. Do not deploy these status-only edits
-over the healthy running remote checkout.
-
-At18:28JST the new-node capacity run completed exit0. Both ranks passed all
-nine cases; peak allocated memory was60.570GiB, within the85percent limit.
-Primary review SHA256
-`c697dc18afe596bf8d5c74ca8ab4415bddf0323d48aa8349364ee5eb7edf067f`.
-The actual B50 payload also passed the new CPU validator, including all947
-AdamW entries, both RNG/stream records and full continuation history. Training
-is now released only for the new exclusive recovery output
-`normal_b_recover60000_20261021_v1`, with checkpoints/evaluations55k/60k.
-Validate the first eight updates1051..1058 against the saved60k stream before
-accepting startup. Old45k/50k evaluations remain preserved in the interrupted
-output. Profile weights are discarded; all training weights restore fromB50.
-
-The user subsequently said to start. A dedicated interrupted recovery entry
-`recover_virtual_fusion_normal.py` and pinned B50-to60 config passed32CPUtests,
-including actual training-loop optimizer/RNG continuity regression and matching
-both ranks' remaining sampling requests. Unlike completed-stage extension,
-this restores the saved60k plan at its50k cursor. It preserves the existing
-checkpoint-before-milestone-evaluation RNG policy and does not repeat initial
-evaluation; no bitwise future-trajectory claim is made. New-device capacity
-must pass the same nine dual-rank stress cases before training is released.
-Profile weights are never reused. The authorized recovery source is01592f4;
-the exact stage and source/config identities are in current.json.
-
-The user explicitly authorized a new two-H100 qlogin and preparation for
-training recovery. Live SSH/scheduler access returned before the historical
-website's planned end. Old allocation130258195 is absent. New allocation
-130309880 started2026-10-21 17:35:28JST onpcg01i, physicalH100s5/6, mem_req64G,
-with a96-hour limit endingOctober25 17:35:28JST. Keep its explicit keepalive;
-no further allocation or release is authorized. The unrelated A100 job was
-not modified. Both80GB devices were idle; PyTorch2.5.1+cu121 sees exactlytwo
-CUDA devices with unlimited virtual memory. /work is verifiedNVMe RAID0/XFS.
-
-The latest surviving full B checkpoint is checkpoint_asset_050000.pt under
-normal_b_extend60000_v1:8438111152bytes, SHA256
-`dc1d598cb3179694f367a4d9cc9a069e26dceb2236b6dc235a0ed4891e36ebcf`.
-Its CPU payload reports50000asset exposures/1050updates/657056supervisedframes,
-947AdamW entries at1e-4, and two rank states. Logs reached54080assets before
-maintenance, so4080unsaved exposures must be replayed from the durable50k
-boundary. The target remainsTOTAL60k at1e-4, thenTOTAL80k at3e-5, followed by
-the already approved expanded validation. This does not add logical budget.
-
-Frozen sourcec643fc7 was restored through GitHub to the same normal_code path
-on the new node's SSD. The historical B60 bundle is incremental, not a complete
-repository backup. Existing job scripts and outputs remain untouched. Training
-has NOT restarted: the old entry requires a completed predecessor and binds
-pcg02/5,7. A separately reviewed interrupted-run adapter, checkpoint RNG/stream
-validation and fresh new-device capacity checks are required before training.
-Evidence is under allocation_20261021 and recovery_20261021/audit in local
-server_ops outputs. This section supersedes the historical pending-allocation
-authorization paragraphs below, but not their fixed training budgets.
-
-### Revised approved sequence: A150000, B80000
-
-2026-10-19 01:11JST user explicitly confirmed revised budgets and lifted the
-temporary promotion hold. This supersedes the earlier unlaunched B50k plan:
-1. Finish the already running A120000-to130000 stage at3e-5 and review it.
-2. Resume FINAL A130000 to150000, keeping3e-5 and full optimizer/RNG state.
-3. Resume FINAL B40000 to60000 at1e-4, then FINAL B60000 to80000 at3e-5.
-4. Freeze each route's best checkpoint selected on the unchanged128-asset
-   validation panel, then compare them on the remaining validation assets
-   not used to select checkpoints (expected839 of967), eight views each.
-5. Preserve qlogin130258195 after training and evaluation.
-
-Preserve AdamW moments/betas and rank RNG/sampling state at every transition.
-No model, loss, tokenizer, training membership, RT/normalization, decoding,
-warmup or scheduler restart changes are authorized. A/B cumulative budgets
-remain different; this is not a matched-budget architecture-superiority proof.
-Future stages are authorized but require exact prepared and reviewed configs.
-B40000 and A150000 have completed and been accepted; B40000-to60000 at1e-4
-is the unfinished stage. New GPU work is currently blocked by the confirmed HGC
-maintenance described below. Preserve both final and best checkpoints.
-The immutable revised plan is `normal_ops/sequence_20261019_plan_v2.json`,
-SHA256 `c74106ad0e6146febb228ff84e87de6716e60f818fde77f5820e421e06fc07fc`.
-New A150/B60/B80 stages need exact pinned configs/checkpoints and tests; do not
-extend a running process in place or deploy local changes while it runs.
-
-A130 terminal01:36JST2026-10-19: exit0,2730updates/130000assets/1685592frames,
-210suffixrows eachrank. Primary verified16 terminalhashes and both1536-view
-125/130k panels, same originalAselection. Valid F1 at130k0.733665703 is A's
-best so far, success0.989257813, exactcount0.452148438. Final fullcheckpoint
-8438115760bytes, SHA256
-`d1c041e055e8be507137d0851fb137b29244a5f0bf604bc0bddc2f4f309b8676`,
-sourcea189013. Completion review SHA256
-`49dd74b60ea429bd090e4a2b243982a660e6492291a4b42fbff369f134440bbd`.
-
-A130-to150 configuration SHA256
-`17b99060f97158009091f1c47f447c6af5ac5fee14a62241e64c74d92e7ac1a3`,
-core5e38742,53 CPU tests passed. It preserves source AND continuation LR3e-5,
-full optimizer and40/80/120/130 history; adds420updates/264272frames, ending
-3150updates/1949864frames. Evaluate135/140/145/150k. New plan SHA256
-`70ac110617d1d84b935c6aeaaa4ed95776533159638591a673c5f048aa0021e1`.
-
-A150 launched02:05:04JST2026-10-19 with frozen runtimec5f0216. First8
-primaryaccepted02:14JST:2731..2738/130384assets/1690344frames. Both ranks
-restored947AdamW states/betas and sourceLR3e-5; actual A130 tensor fingerprint
-`0c0acb49fcecc8e95b2b5ec10c792aaf7094f1cbc72f2172489e56b4f2eac305`.
-Primary rehashed10startup artifacts and accepted28strict checks. Startupreview
-SHA256 `3f2c19fec1fada464a58abba6c1afee78fcf88715ecd685e856b359c91e51ba0`.
-The successful first8 runner is v2. V1 used an obsolete in-memory1e-4 restore
-expectation; a monitor-only correction and41CPUtests passed before v2.
-No GPU restart or remote code mutation occurred. Full supervisor PID119932 is
-active: at02:16:47JST bothranks2745/130720assets/1694328frames, noerrors.
-Startup acceptance does not imply training completion or model-quality acceptance.
-
-B40-to60 at1e-4 is CPU-prepared in localcode50df272,55tests passed, configSHA
-`92e59e3b73a0637785928f18b59f3bda42c86ef144d5fd832933ec5b84ce93a3`.
-It preserves FINAL40k optimizer/RNG and the full sampling prefix, then adds
-420updates/260008frames to1260updates/788304frames; evaluate45/50/55/60k.
-Preparation receipt SHA256
-`381d3904b949bdb6147d3f50b9b2c035cff189772560a869339ba0a39471b352`.
-This is local preparation only: do not deploy while A150 runs. B60 requires
-A150 terminal review, fresh idle/resource checks and a pinned stage launcher.
-B60-to80 and expanded-validation execution remain to be implemented.
-
-A150 terminal07:11JST2026-10-19: exit0, bothranks3150updates/150000assets/
-1949864frames,420suffixupdates. Primary rehashed18terminal artifacts and
-recomputed all four1536-view panels, including exact originalA asset membership
-and eight distinct raw poses. ValidF1 at135/140/145/150k is
-0.737083/0.738848/0.735886/0.737160. Best140k has success0.996094 and
-exactcount0.484375; final150k has success0.989258 and exactcount0.436523.
-Final full checkpoint8438118128bytes SHA256
-`04645eb6eaa29ac32aac9f76938ef701a263f4a17da08e9b52867b08760caba6`,
-sourcec5f0216. Primary completion review SHA256
-`e7fd0754d10182cc04e772ebf6afa2dd3177293c5343b878136879f90b06e28b`.
-B60 is the sole executable stage, from FINALB40, with A150 as a separately
-checked sequential prerequisite. It launched07:32:08JST with244433seconds
-remaining on the retained grant and frozen runtimec643fc7. First8 primary
-accepted07:40JST:841..848/40384assets/532616frames. Bothranks restored947AdamW
-entries/betas and LR1e-4; actual incoming B40 tensor fingerprint is
-`ed11cc2db24940d6f2c6a3900ae3f1ace30d43f99ba85f42230f9d8c9373661e`.
-Primary rehashed10startup artifacts and accepted28strict checks. Startupreview
-SHA256 `59d9e279fb8b6487fd22300cd1c080efdd9e7130fc707e52b5342218f8e74aa8`.
-Successful local first8 runner is `runner_first8_b_extend60000_v1_v3`, receiptv2.
-Two prior local monitor attempts failed closed on stale launcher/source bindings;
-15monitor tests passed after correction. No GPU restart or remote mutation.
-Full supervisorPID138928 is active; at07:43:19JST bothranks854/40672assets/
-536552frames, noerrors. This is not completed training or quality acceptance.
-Frozen-choice expanded evaluation remains after B80 completion.
-
-B60 supervision interruption09:06JST2026-10-19: local monitorPID138928 exited2
-after bounded SSH transport retries. Last successful observation09:01:35JST
-had113suffix rows perrank and45k evaluation complete, without application errors.
-Primary09:26-09:29JST TCP checks cannot reach either HGC gateway address on22;
-current training/allocation state is unverified, not established as failed.
-No GPU restart, stop, remote edit or release occurred. Local v2 recovery entrypoint
-passed20CPUtests and preserves v1 artifacts, revalidating cached45k against
-remote bytes and retaining the original process/model identities. It is NOT
-started until fresh live checks and primary approval. The heartbeat remains active.
-
-Official maintenance confirmed10:58JST2026-10-19, correcting the earlier
-transport-only diagnosis: HGC is unavailable fromOct19 09:00 toOct22 18:00JST.
-The official notice says AGE jobs will be deleted. Individual job/checkpoint
-state remains unverified; original grant130258195 cannot be assumed to survive,
-and its original expiryOct22 03:26JST is before the planned maintenance end.
-Sources: https://gc.hgc.jp/2026/09/shirokane-inspection-2026b/ and
-https://gc.hgc.jp/2026/10/shirokane-inspection-2026b-2/ .
-No new GPU work is currently permitted. A conditional replacement-two-H100
-authorization question has been sent to the user; no answer has yet been received.
-After access returns, inspect scheduler state and latest surviving full checkpoint
-before choosing recovery. The prepared v2 supervisor applies only if original
-processes actually survive. Otherwise an exact interrupted-run continuation must
-preserve full model/AdamW/rankRNG/stream state from the latest verified checkpoint,
-with the same total60k/80k targets and learning rates. Keep the heartbeat active;
-do not treat maintenance as completed training or release/reapply GPUs automatically.
-Future launch preflight must check planned maintenance as well as grant walltime.
-
-A120k acceptance:840 suffix updates,22 terminal hashes and all eight1536-view
-evaluations verified, with per-view F1/success recomputed against original A's
-unchanged panel. Final120k is also best: train0.856699,heldout0.822426,
-valid0.713389, still below B20k0.729074. Final full checkpoint8438113456bytes,
-SHA256 `e3e8a8569641005c5798d9974ecf011f388987c0bfb72d47b2f6ebd736437628`.
-Primary acceptance receipt:
-`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_extension120000_completion_v1.json`
-SHA256 `2193f3dc8fdb693db994a5b0cff5e0146717ac3ba002726df1872b22f0b06d66`.
-
-B40k preparation passed36 focused CPU tests. B's original OneCycle tail was
-about2e-6; the explicitly selected continuation protocol raises LR to1e-4,
-as A20k-to40k did, while preserving optimizer moments/betas. This intentional
-LR change is not an optimizer reset. All later low-LR stages use3e-5.
-
-B40 launched16:52JST on2026-10-18 with frozen remote source5703f2c. At17:01JST,
-both ranks passed the first8 updates421..428, reaching20384 assets/267592
-supervised frames. Actual restored model fingerprint is
-`ecaf772173cd255e7e56011967915fd76baa95a3bd27deee8ba4818b13014c76`,
-identical to incoming B20 tensors on both ranks;947 AdamW state entries and
-betas(0.9499999512612207,0.999) were retained. Full B40 supervision is approved;
-this accepts startup integrity, not completed training or model quality.
-Primary review `normal_ops/reviewed_normal_b_extension40000_startup_v1.json`
-has SHA256 `f1ad62b786f291bc440cd9def3c47307830f19677ad91514a45dde0caf3b10cf`.
-
-A120-to130 at3e-5 is prepared in codee1d2f9a, with49 CPU tests passed,
-config SHA256 `584f9b709f7c9b993a5f78f38a1318bca5871883dc16add911073aa26dcdd325`.
-It preserves the full120k sampling prefix and adds210updates/130088frames,
-ending2730updates/1685592frames; evaluate125k and130k. It launched23:00:36JST,
-with frozen remote sourcea189013. Primary accepted first8 at23:09JST:
-2521..2528/120384assets/1561264frames,947AdamW states/betas restored, LR3e-5,
-actual A120 tensor fingerprint
-`f5314b59215aca744803f1046302fab4323041815c3f4e6130d3928b733247b1`.
-Startup review SHA256
-`93b257f34a8764673e2bcfef9adec342eb8cc8463d281dc129c5d7be721427ba`.
-The successful local monitor runner is first8_v2, not failed preflight_v1;
-no GPU training restart occurred. A130 full supervision is authorized.
-
-B40-to50 at3e-5 was CPU-prepared in localcode2888186, with51tests passed and
-config SHA256 `acc9b1ccdb85d47ef380bc092e07e903189d6fcf8f7f65324025acd085d0c92b`.
-It adds210updates/128760frames, ending1050updates/657056frames; evaluate45/50k.
-It was never launched and is now SUPERSEDED by the B40-to60-to80 sequence.
-Do not activate its config. Expanded-validation execution remains to be implemented.
-The30-minute heartbeat `a-b` follows the approved sequence, stays quiet on
-unchanged healthy progress, and must never duplicate the active supervisor.
-Current execution tracker is
-`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/sequence_20261018_execution_v1.json`.
-
-B40 terminal22:52JST on2026-10-18: exit0, both ranks840updates/40000assets/
-528296frames,420suffix trace rows each,18 local terminal artifact hashes and
-all four1536-view evaluations verified. Primary recomputed per-view F1/success
-and confirmed original B panel equality. Valid F1 at25/30/35/40k is
-0.712425/0.728128/0.734596/0.722256. Best35k improves over20k0.729074 by0.005522;
-final40k is lower, with success0.919922 and exactcount0.500977. Continue from
-FINAL40k after A150 under the revised sequence, not best35k. Final full checkpoint8438108720bytes,
-SHA256 `4e48925a44b0ec78d0b88a3a4169823d70d6bce9068e0385cef9e4d3447c0928`,
-source5703f2c. Completion review SHA256
-`2e852bcbf18ca37981567dd52015565ea447ebf91009388ea11dbd9404c0f09e`.
-
-### Historical A80000-to120000 authorization
-
-2026-10-18 03:22JST user explicitly requested release of the old two-H100
-qlogin, a replacement two-H100 qlogin, automatic continuation of A toTOTAL120000,
-and retention of the replacement allocation after completion. Old129839822
-was verified idle and released. New130258195 was granted03:26:02JST on the same
-pcg02i physical GPUs5/7, with a fresh96h limit. Only the allocation identity
-changes; the source is final80000, not best75000. Preserve full model/AdamW,
-RNG and sampling state, constant1e-4, fixed5000-asset pool and1536-view panel.
-Prepare and validate the exact continuation before training; do not restart,
-reset heads or change the learning-rate schedule. Retain the keepalive after
-the120000 checkpoint and final evaluation, within the scheduler's96h limit.
-
-The pinned continuation adds840 updates and513672 supervised-frame exposures,
-ending at2520 updates/1555504 frames. New plan SHA256:
-`26ff999633011ec96e21b0015e671e18c654a92c9e0b5a7bfe1cc7cc18df4a70`.
-Its full80000 prefix is unchanged; first new update is1681/80048assets.
-Code129f713 passed34 continuation/gate/stream/training CPU tests. Reuse the
-accepted A capacity receipt because architecture, batch/precision policy,
-node and physical devices are unchanged. Require at least24h remaining at
-launch; the fresh allocation provides96h. Independently verify first8 updates
-and restored80k model/AdamW state before full supervision. This does not
-authorize automatic B continuation if A later exceeds B; report that result.
-
-### Historical A80000 completion
-
-2026-10-18 completion: A reached80000 exposures/1680 global updates/1041832
-supervised frames and terminal exit0, verified at01:13JST. All840 additional
-updates retained1e-4. Both full traces,22 terminal artifact hashes and all eight
-new1536-view evaluations passed review. Per-view F1/success were recomputed;
-the evaluation selection exactly matches original A. This accepts execution
-integrity, not formal model quality or a matched-budget comparison with B20k.
-
-| Asset exposures | Train-pool F1 | Heldout-pose F1 | Validation F1 |
+| Arm / fusion mode | Queries | Keys/values | Residual and additional parameters |
 | --- | --- | --- | --- |
-| 40000 | 0.482980 | 0.481394 | 0.421903 |
-| 45000 | 0.561562 | 0.557844 | 0.498740 |
-| 50000 | 0.656981 | 0.626412 | 0.588187 |
-| 55000 | 0.683880 | 0.665054 | 0.625416 |
-| 60000 | 0.704813 | 0.673164 | 0.644832 |
-| 65000 | 0.720171 | 0.680320 | 0.641813 |
-| 70000 | 0.758991 | 0.749522 | 0.661098 |
-| 75000 | 0.751346 | 0.742180 | 0.680518 |
-| 80000 | 0.725442 | 0.733758 | 0.645741 |
+| A / `virtual_queries_real` | Final virtual tokens | Final real-frame tokens | Virtual residual |
+| B / `real_queries_virtual` | Final real-frame tokens | Final virtual tokens | Real residual; same initial parameter tensors as A |
+| C / `relative_position` | As A | As A | As A, plus per-head input-anchor coordinate-delta bias, MLP 3->64->8 with zero-initialized output |
 
-Scores are original continuous-GT edge F1, failed generations scored zero,
-on the fixed1536-view panel, not the full validation dataset. Best validation
-is75k,0.048556 below B20k0.729074; final80k is0.083333 below B. Validation
-generation success/count exactness decline from96.78/40.43percent at75k to
-93.95/36.62percent at80k. This does not identify an overfitting mechanism or
-an absolute architecture ceiling. The user's conditional B extension required
-A to surpass B; that condition was not met, so no B continuation was launched.
+C uses observed anchor coordinates, never GT joint coordinates. Shared modules, fresh official
+initialization and seed 20261013 match; C's extra parameters have a separate full fingerprint.
+The official checkpoint SHA is `d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4`.
+Architecture and token contracts: [Virtual Query XYZ](VIRTUAL_QUERY_XYZ_20261013.md);
+implementation: [virtual_query_xyz.py](../rigweave/src/rigweave/dynamic_rig/virtual_query_xyz.py).
 
-Both75k and80k checkpoints are8438111024bytes and remain preserved. Full SHA256:
-- 75k: `7aac9118eef587e4aad313bb35d69319977fe6d98973c748c8f70fab4c61ac12`
-- 80k: `e3ec08bd177b583874c85b33f8d921ef1e4fbd3902533320b88bae56571bb600`
+## Fixed-5k Protocol
 
-Primary completion review:
-`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_extension80000_completion_v1.json`
-SHA256 `a0ad0947eac52533f68e661308ae607efb129feb5e56477c6909696e509aafd8`.
-At02:25JST fresh checks confirmed clean frozen runtime21f3a2e, launcher and both
-ranks gone, GPUs5/7 idle, and allocation129839822 preserved. This local/GitHub
-completion metadata is not deployed over the completed runtime. Only inspect
-and report remain allowed; no new GPU work, architecture/head initialization
-changes, or allocation release without a new user decision.
+- Current screened data are 18,002 train / 967 valid assets; see [data source](../../DATASET_SOURCE_OF_TRUTH.md).
+- Training uses one immutable 5,000-row subset: 4,397 base + 603 addition assets, no validation overlap;
+  SHA-256 `a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88`.
+- Preserve manifest `root_rt`, inverse retained-root RT, selected-input mesh-union normalization
+  with padding 1.1, complete GT, and trackable surface samples; no persistent learned-feature cache.
+- Each visit samples T uniformly from 2..24 and fresh poses from non-heldout frames. Eight raw
+  poses per asset are reserved. T is common to an optimizer update; exposure-index seeds align
+  asset order and pose/surface draws across arms, independently of microbatch partition.
+- Initial comparison: exactly 20,000 asset visits, four shuffled passes, 420 updates and
+  263,608 supervised-frame visits per arm. Each 5k boundary uses 104 batches of 48 plus one of 8.
+  Asset visits, supervised-frame visits and optimizer updates are different budgets.
+- Effective batch is 48 on two GPUs. A/B use per-rank batches 24/12/6 for T=2..6/7..12/13..24
+  with accumulation 1/2/4; C uses 12/6/3 with accumulation 2/4/8. This is not fixed frame-budget batching.
+- BF16, AdamW, weight decay 0, gradient clip 1; initial OneCycle spans 20k visits, peak LR 1e-4,
+  warmup fraction 0.1, division factors 5 and 10. Profile/fitting weights do not initialize this study.
+- Evaluate at 0/5k/10k/15k/20k. The fixed panel has 32 training assets with eight non-heldout poses,
+  the SAME 32 assets with all eight reserved poses, and 128 unseen validation assets with eight poses:
+  256 + 256 + 1,024 = 1,536 main generations. Training-pool poses need not be exact previously seen inputs.
+- Main score is original continuous-GT spatial edge F1, with every failed generation scored zero.
+  Natural EOS/parse success and joint count are separate measures; generation is capped at 2,048 new tokens.
+  Conditional J2J must state its successful-view denominator and GT convention; auxiliary scores are
+  once per asset/group, not per pose. Spatial edge F1 is not exact tree or joint-identity equivalence.
+- The 128 validation assets are a checkpoint-selection panel, not the complete 967-asset set.
 
-### Historical A40000-to80000 authorization
+## Matched 20k Results
 
-2026-10-17 13:36JST user authorization: continue A's own40000 full checkpoint
-to TOTAL80000, adding40000 exposures at the existing constant1e-4. Restore
-AdamW moments/betas and rank sampler/RNG; no new warmup, decay, model/data
-change or initial evaluation replay. Plan SHA256
-`f561a7d8432792920292cc1cf06f74858872b06173187d9ac3f132efdf72b7f2`
-has1680 total updates and1041832 supervised frames (840 updates/513536 frames
-additional). Save/evaluate at45000 through80000 every5000, using the same
-fixed1536-view panel. Prepared code2c0e182 passed42 CPU tests, including two
-successive checkpoint restores, plus6 exact-plan continuation checks.
+| Arm | Train-pool F1 (256 views) | Heldout-pose F1 (256) | Validation F1 (1,024) |
+| --- | ---: | ---: | ---: |
+| A | 0.324185 | 0.304345 | 0.282056 |
+| B | 0.766583 | 0.786313 | 0.729074 |
+| C | 0.337525 | 0.295678 | 0.279036 |
 
-The user explicitly accepted possible allocation expiry before completion.
-At13:37JST the existing twoH100 grant had62091.5seconds remaining. Observed
-timings imply51552.9seconds at average speed, versus68289.3seconds under a
-conservative per-update-tail/evaluation allowance; the latter is not a95percent
-confidence bound for total runtime. Launch requires freshremaining>=51553seconds,
-idle GPUs5/7 and all pinned source/checkpoint gates. This admission uses the
-point estimate only under the explicit user risk decision; completion is not
-guaranteed. Preserve every checkpoint and qlogin. A same-target partial restart
-after expiry needs a separately verified saved-checkpoint binding and is not
-automatic. No replacement allocation is requested now.
+B is substantially better under this matched protocol; C does not improve on A in validation.
+The later query-first comparator was stopped at 10,864 visits; its reviewed 10k validation F1
+was 0.690604 versus A's 0.192411. It has no 15k/20k comparator. It processes each target pose
+separately for all-target supervision and is NOT a reproduction of the historical single-query run.
 
-At launch this operation superseded the completed/report-only40k operation below,
-which is retained as historical evidence. Actual40k restored tensor identity,
-optimizer state and dedicated first8 checks must pass before full supervision.
-No D/E/F, dataset expansion or formal80016 promotion is authorized.
+## Continuations And Learning-Rate Caveat
 
-### Completed A40000 evidence
+After the initial OneCycle tail (about 2e-6), both A and B returned to constant 1e-4 without
+resetting Adam moments/betas. A used 1e-4 from 20k to 120k, then 3e-5 through 150k.
+B used 1e-4 from 20k to 60k, then 3e-5 until the user stop. Saved model/optimizer/RNG/stream
+state was restored; B's interrupted 60k stage resumed from its durable 50k boundary.
+These changes confound extra exposure with LR policy. Unequal final budgets are not an
+architecture-only superiority experiment or proof of an absolute quality ceiling.
 
-2026-10-17 completion: A continuation finished with exit0 at06:09JST, exactly
-40000 asset exposures,840 global updates and528296 supervised-frame exposures.
-The420 additional updates all used1e-4; the original model, AdamW moments/betas,
-sampler/RNG state and20k prefix were restored and verified. No initial evaluation
-was replayed. All four new fixed1536-view evaluations were preserved and
-recomputed from per-view records; panel selection exactly matches original A.
+| Arm / milestone | Cumulative asset visits | Validation F1 | Interpretation |
+| --- | ---: | ---: | --- |
+| A | 40,000 | 0.421903 | Improvement from 20k, concentrated in 35k->40k |
+| A | 75,000 | 0.680518 | Best through 80k |
+| A | 80,000 | 0.645741 | Final 80k below 75k |
+| A | 120,000 | 0.713389 | Still below B20k |
+| A | 140,000 | 0.7388475706 | Best reviewed A |
+| A | 150,000 | 0.737160 | Completed final budget, 3,150 updates |
+| B | 35,000 | 0.734596 | Best through 40k |
+| B | 40,000 | 0.722256 | Final 40k below 35k |
+| B | 55,000 | 0.765294 | Reviewed recovered-stage milestone |
+| B | 60,000 | 0.750580 | Completed 60k, 1,260 updates |
+| B | 65,000 | 0.7705062590 | Latest reviewed B metric |
+| B | 70,000 | Not reviewed | Save recorded at 1,470 updates; no accepted evaluation/payload audit |
 
-| Asset exposures | Global updates | Train-pool F1 | Heldout-pose F1 | Validation F1 |
-| --- | --- | --- | --- | --- |
-| 20000 | 420 | 0.324185 | 0.304345 | 0.282056 |
-| 25000 | 525 | 0.304480 | 0.309754 | 0.282285 |
-| 30000 | 630 | 0.333847 | 0.319775 | 0.285100 |
-| 35000 | 735 | 0.343242 | 0.348920 | 0.299811 |
-| 40000 | 840 | 0.482980 | 0.481394 | 0.421903 |
+A140k generation success / exact count were 0.996094 / 0.484375; A150k was
+0.989258 / 0.436523. Thus the final checkpoint is not automatically the best.
+Full milestone curves, success/count denominators and per-view predictions remain in the evidence below.
 
-These are original continuous-GT topology F1 scores with failed generations
-scored zero. Training uses the same5000 assets; the fixed evaluation panel has
-32/32/128 assets with8 views each, not the entire validation dataset. Final
-generation success is238/256,244/256,955/1024. Validation improved by0.139847
-from20k (49.58percent relative), mostly in35k->40k. The25k near-plateau did not
-establish saturation. This continuation changes both training exposure and the
-learning-rate policy, so it does not isolate either cause. Execution integrity
-is accepted; formal model quality and a matched-budget A40k-vs-B/C20k claim are not.
+## Earlier Bounded Studies
 
-Final checkpoint:8438108528bytes, SHA256
-`8725e36d17733d56dbb76242f5a5ab5a657ee51a4f4be1ed8392e190579d6f13`.
-Final evaluation summary SHA256:
-`be535d882c0b84a2d7caf6802a923f4153e5b91bc6e926bd861b571a7e3bcf24`.
-Primary completion review is
-`D:/evoweave/server_ops/outputs/virtual_fusion_20261013/normal_ops/reviewed_normal_a_continuation_completion_v1.json`
-(SHA256 `4c454f1da947b5e94129aa1974fa94d8d9cfc5210b506961d5e3821a85adb7c5`).
-At completion the HGC runtime was frozen at6715a2b. Fresh checks confirmed both
-training ranks and launcher gone, GPUs5/7 idle and allocation129839822 retained.
-That continuation is finished. Its completed/report-only operation is preserved;
-the separate80000 operation above is the only new training authorization.
+These studies used different cohorts and budgets; do not merge them with the 5k results.
+- Fixed8/T4: A/B each completed 1,024 updates, 8,192 asset and 32,768 supervised-frame visits.
+  First joint main+auxiliary passes were A at update 256, B at 128; both ended with 32/32
+  exact main GT token sequences and 8/8 auxiliary parent trees. A can fit this task under the
+  effective-batch/OneCycle recipe; this does not isolate batch versus schedule or prove generalization.
+- Fixed64/T4: 512 updates, effective batch 48, 24,576 visits (384 per training asset).
+  Only 8/64 training assets were monitored: 32 seen + 32 heldout views; validation was 32 other
+  assets / 128 views. A/B heldout F1 was 0.475601/0.841470; validation F1 was 0.090075/0.361060
+  with failures zero. Valid generations were 126/128 and 127/128; exact auxiliary validation
+  trees were only 1/32 and 0/32. Both fit all 32 monitored seen-pose token streams; auxiliary
+  training trees were 7/8 and 8/8. B passed relative main-task gates, not generalization acceptance.
+  See [paired review](../experiments/fusion_ab_medium_v1_review.json); paired J2J used quantized GT
+  on common-success poses, unlike original continuous-GT F1. An exact quantized-token fit is not F1=1 by definition.
 
-### Historical continuation authorization
+## Conclusions And Limits
 
-2026-10-16 user revision: finish the current C20000 run, then SKIP D.
-Resume the preserved A20000 full checkpoint to TOTAL40000 exposures, adding
-20000 with constant learning rate1e-4, no new warmup or decay. Restore AdamW
-moments/betas and rank sampling/RNG state; do not initialize from B/C/profile
-weights or restart A from official weights. The model/data/physical batch
-policy are unchanged. Keep the original20000 exposure prefix exactly and add
-evaluation/checkpoints at25000/30000/35000/40000 on the same1536-view panel.
-The resulting plan has840updates and528296supervised-frame exposures, with
-264688 new frame exposures. This is a continuation with an explicitly changed
-learning rate, not a matched-budget comparison against B/C20000.
-C completed on frozen cf1c1ae with exit0,20000exposures/420updates/263608frames.
-All five1536-view evaluations, full two-rank traces, actual source identity and
-final checkpoint SHA were reviewed. Final original-GT F1 is0.337525 train-pool /
-0.295678 heldout poses /0.279036 validation. This accepts execution integrity,
-not model quality. The final C checkpoint SHA is
-c502729b683e5696d4f64f5be3d464a5d2c899a3afef357538af45c5b42e810c.
-Prepared continuation commit455793a was merged into this authorized
-branch. At launch, state released only the A continuation entrypoint, bound to C's exit0
-result, the original A full checkpoint and the accepted A capacity receipt.
-Admission requires at least96978seconds remaining: accepted A worst-case
-microbatch timings over the exact new420-update plan,25percent training margin
-and10h for four evaluations/checkpoints/full-state restore. This26.94h threshold
-is conservative admission accounting, not an ETA. Both granted GPUs must be idle.
-The first new update must be421/20048exposures at1e-4. Verify actual model and
-optimizer/RNG restoration plus the dedicated continuation first8 monitor before
-routine supervision; the historical official-initialization hash is not the
-resumed model's weight hash. No D/E/F or additional experiment is authorized.
-The checkpoint was saved before its20k evaluation; restore that saved RNG
-state without replaying the old evaluation. No bitwise GPU equivalence to a
-hypothetical uninterrupted40k run after that evaluation is claimed.
+B's real-query/real-residual fusion is the stronger measured later all-target route, not the
+original baseline. Neither fitting nor natural EOS establishes unseen-topology correctness.
+Intermediate plateaus and late declines do not identify a unique optimization/overfitting mechanism.
+The proposed evaluation on the remaining 839 validation assets was not completed; no result on
+that cohort is claimed. Subsequent structure/XYZ work is a separate experiment, documented in
+[Structure-XYZ](STRUCTURE_XYZ_FILL_20261022.md), not an accepted improvement established here.
 
-2026-10-16 C transition: B completed20000 exposures/420 updates/263608
-supervised-frame exposures with exit0 and five complete1536-view evaluations.
-Its final original-GT F1 is0.766583 train-pool /0.786313 heldout poses /
-0.729074 unseen validation, with generation failures scored zero. B's full
-terminal evidence and checkpoint are preserved; execution integrity is accepted,
-not formal quality. Legacy has no15000/20000 node for a matched comparison.
-C's independent dual-rank capacity profile completed with all9cases accepted,
-exit0, finite gradients/losses and a maximum46.5353GiB allocated,58.77percent
-of device memory below the85percent cap. Primary review is SHA-bound in
-reviewed_capacity_c_v1.json (5e31b951...); training is now released only after
-a fresh remaining-grant check against113348seconds. This conservative allowance
-uses worst stress timing plus25percent and8h evaluation/checkpoint overhead,
-not an observed normal-data ETA. C uses the existing
-relative_position mode: A's virtual-query fusion plus per-head relative input
-anchor-coordinate bias, not a new residual/depth intervention. Its explicit
-pairwise bias intermediates motivate conservative per-rank12/6/3 batches for
-T2-6/T7-12/T13-24, with2/4/8 accumulation to retain effective48.
-The full exposure/frame plan, supervision and evaluation remain identical.
-The nine capacity cases still cover all three longest-main assets, the pinned
-geometry maximum and longest auxiliary target at each bucket maximum.
-C's full initial fingerprint includes its added bias parameters; only the
-shared fingerprint must equal A/B, and full fingerprints must match across ranks.
-Fresh C training must match full initial fingerprint e1bf55a0... on both ranks
-and shared a89b29c9..., without loading profile or prior-route trained weights.
-The initial1536-view evaluation precedes all updates; audit the first8updates
-against the same asset/seed/frame plan before routine milestone supervision.
+## Configuration And Evidence Entrypoints
 
-2026-10-16 update: A completed all20000 exposures,420 updates and263608
-supervised-frame exposures with exit0. Both complete traces are finite,
-initialization/exposure identities match, and all five evaluations are saved.
-Its original-GT F1 at20000 is0.324185 train-pool /0.304345 heldout poses /
-0.282056 unseen validation. These are the same32/32/128-asset panels, eight
-frames each, with generation failures scored zero. Execution integrity is
-accepted, not architecture quality. Legacy has no15000/20000 comparator;
-at the matched10000 node A validation F1 was0.192411 versus legacy0.690604.
-Preserve A's final checkpoint and complete terminal receipt. B is next, using
-real queries / virtual memory / real residual with otherwise identical runtime.
-Its independent two-rank9-case capacity profile completed with exit0; both
-ranks passed finite execution and the85-percent allocated-memory limit.
-Maximum allocated memory was60.5701GiB. Primary review accepts the capacity
-receipt `reviewed_capacity_b_v1.json`; B training is now released with the
-same24/12/6 per-rank microbatch buckets and1/2/4 accumulation counts as A.
-The minimum remaining-time check is89890seconds, based on stress-case timing,
-25percent training margin and8hours for evaluation/checkpoints, not an ETA.
-Always refresh the grant allowance immediately before the B launch.
-Do not apply the discussed residual removal, fusion-depth changes or new
-frame-budget pairing to this comparison. Report original-GT F1 as the primary
-metric; label experiment size, exposure milestone and panel on every table.
-
-2026-10-15 update: the user stopped the legacy run after10864 exposures
-(228 updates); its complete10000 checkpoint and evaluation are preserved.
-The latest instruction explicitly defers new frame-budget/batch-pairing
-features to a separate later study. This comparison keeps random2..24 inputs
-and effective48 assets, not a fixed1152-frame update budget. A starts fresh
-from the same official tensors, with the same exposure plan as legacy.
-Its completed two-rank9-case capacity confirmation passed with exit0 and
-peak allocated memory60.57GiB. Per-rank microbatches are24/12/6 for
-T2-6/T7-12/T13-24, accumulated1/2/4 times to keep global effective48.
-The reviewed receipt is `reviewed_capacity_a_v1.json` in the normal job
-directory. Later B/C/D still need route-specific capacity approval.
-
-The user's2026-10-14 correction supersedes the fixed-small-cohort promotion
-sequence below. Fixed8/fixed64 runs are diagnostic history, not a substitute
-for normal online training and not an additional prerequisite for this stage.
-The legacy64/T4 reference completed all512 updates and its final evaluation
-at2026-10-14T12:46:58Z with exit0. Preserve its outputs and allocation129839822.
-The user explicitly approved starting the normal sequence at2026-10-14T13:16Z:
-legacy -> A -> B -> C -> D, using both physical GPUs5/7 for ONE route at a time.
-
-Use the ALREADY PREPARED immutable5000-row subset, SHA256
-`a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88`.
-Its original rows and root_rt metadata are preserved, with4397 base/603 addition
-assets and no validation overlap. Data selection/screening is complete: do not
-repeat NPZ censuses, rebuild RT, or introduce another data adapter. The focused
-RT consumer review and12 existing CPU tests passed on2026-10-14.
-
-Every training visit selects a fresh input count T uniformly from2..24 and
-resamples poses from ALL non-heldout frames. T is shared within each global
-optimizer update so both DDP ranks and every route use the same shape schedule.
-The existing mesh-only motion-FPS/random pose selector, root-RT removal,
-selected-input mesh-union normalization, trackable surface sampling and
-all-input-frame main supervision remain unchanged. There is no fixed-pose or
-learned-feature cache. Exposure-index seeds make asset order and pose/surface
-draws independent of the physical microbatch policy.
-
-Compare legacy query-first, A, B, C and D from the same official initial shared
-tensors. Preserve effective batch48, BF16, OneCycle peak1e-4/warmup.1/div5/
-final10, weight_decay0, clip1. A/B/C/D retain auxiliary weight.1; legacy has no
-auxiliary task. Every route receives EXACTLY20000 asset exposures: four
-shuffled visits to each of5000 assets. Evaluate at0/5000/10000/15000/20000.
-Each5000 segment is one visit per asset:104 updates of48 plus one update of8,
-for420 updates total. The old80016 full-dataset budget does
-not apply to this trend comparison. No fit-to-perfect stopping criterion.
-
-Use a deterministic random panel of32 training assets and128 independent
-validation assets. Training-pool evaluation uses eight non-heldout poses per
-asset; these are not necessarily the exact input sets seen during optimization.
-Heldout evaluation uses ALL eight reserved poses for the SAME32 assets. Each
-validation asset contributes eight poses. Thus every checkpoint has1536 main
-generations (256/256/1024); auxiliary evaluation is once per asset/group only
-for A/B/C/D. Failure-as-zero F1 includes every generation; conditional J2J reports
-its denominator. This panel monitors trends; it is not the full967 validation
-set or a statistical generalization guarantee.
-
-The completed A single-GPU profile measured T24/B6 at55.48GiB and T24/B8
-at70.03GiB (above the85-percent limit). It is not a legacy/DDP capacity receipt.
-Before training, require two-rank coverage against long-main-token and geometry
-extremes, plus longest auxiliary targets for A/B/C/D; include resident gradients
-and optimizer state. Use a few physical-batch buckets: profile the maximum T
-in each bucket at its actual B. Shorter T is covered only at the SAME B and for
-identical stress-asset membership from the existing pinned selection. This
-avoids retesting every shorter tensor shape without changing any training input.
-Keep at least15 percent measured allocated-memory headroom.
-Report physical batch, accumulation, memory and time, not just effective48.
-Run each route on physical5/7 with DDP. Profiles never
-supply trained weights. Preserve allocation129839822 and check full runtime
-plus safety margin before every launch.
-
-New source: `/work/wangyy/virtual_fusion_20261013/normal_code`.
-New jobs: `/home/wangyy/jobs/virtual_fusion_normal_20261014_v1`.
-New outputs: `/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014`.
-The legacy64 source remains frozen at2658d6c in its existing `code` directory.
-`train_virtual_fusion_normal.py` reuses the established training/loss loop;
-its bounded normal5000 authority is separate from full-data formal release.
-Do not launch another full-data80016 run or use historical small-fit gates.
-Only fusion-specific C/D parameter additions are excluded from the common
-initialization fingerprint; record the actual full fingerprint separately.
-
-## Preserved model and data
-
-Keep the retained-root RT manifests (18002 train / 967 valid), selected-input
-mesh-union normalization, 1024 virtual/real anchor tokens, 96 internal
-registers and 12 spatial/temporal layers. Keep the complete official UniRig
-XYZ autoregressive decoder, original vocabulary and all-frame supervision.
-The auxiliary DFS-ID decoder consumes final virtual tokens and contributes
-only a loss; its generated structure, length or hidden state never enters
-the main prediction path. Fresh trials load official checkpoint SHA
-`d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4`.
-
-## Isolation and authorization
-
-- Local code: `C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave`.
-- Local operational artifacts: `D:/evoweave/server_ops/outputs/virtual_fusion_20261013`.
-- HGC source/cache/temp: `/work/wangyy/virtual_fusion_20261013/` on verified SSD.
-- HGC jobs: `/home/wangyy/jobs/virtual_fusion_20261013_v1`.
-- HGC outputs: `/home/wangyy/evorig/outputs/virtual_fusion_20261013/`.
-- Initial qlogin129547842 (physicalH100s5/7) completed both fitting runs,
-  then expired at the scheduler96h hard limit on2026-10-13 18:37JST.
-  Replacement job129839822 was granted on pcg02i at2026-10-14 06:52:02.966JST,
-  exactly twoH100s/mem64G, physical5/7 verified by UUID on this NEW node.
-  The new /work is verified NVMe RAID0/XFS. Preserve its keepalive; the96h
-  limit expires at2026-10-18 06:52:02.966JST. Before every long launch,
-  refresh live remaining walltime and require full duration plus safety margin.
-  The expired pcg01i grant is never an execution destination.
-- User authorized GitHub publication of code/config/result summaries only.
-  No datasets, weights or credentials. Every output is exclusive-create.
-
-## Comparison sequence
-
-First audit the existing auxiliary-weight .1 step2048 checkpoint read-only:
-greedy auxiliary generation from BOS, natural EOS, exact count and DFS-parent
-tree, plus deterministic cross-asset virtual-condition swap. Verify the
-checkpoint SHA and unchanged parameter state; perform zero optimizer steps.
-
-Round one is A (`virtual_queries_real`) versus B (`real_queries_virtual`).
-A preserves original virtual Q, real K/V and virtual residual; B uses real
-Q, virtual K/V and real residual. Other modules and initial tensor bytes match.
-Only if neither resolves the problem, round two compares C
-(`relative_position`) and D (`token_film`). C adds zero-initialized per-head
-anchor-coordinate delta bias, MLP 3->64->8, to A's attention logits. D uses a
-same-index virtual MLP 1024->256->2048 to modulate normalized real tokens,
-preserving the real residual. Neither consumes GT positions in fusion.
-
-## Training and acceptance
-
-All candidates: seed20261013, auxiliary weight .1, fresh official weights,
-same fixed diverse8/T4 inputs, effective batch8 via asset gradient accumulation,
-1024 updates = 8192 actual asset / 32768 supervised frame exposures. OneCycle
-peak1e-4, warmup.1, div5/final10, weight_decay0, clip1, established BF16 path.
-Pair-ready fingerprints gate the first optimizer update. Evaluate updates
-0/32/64/128/256/512/1024. Preserve the first passing checkpoint but complete
-the same training budget on both cards; do not selectively shorten baseline.
-
-Main acceptance: all32 valid natural EOS, teacher accuracy >=.99, >=29 views
-with exact count, normalized J2J <=4/256 and (raw edge F1 >=.95 OR exact
-canonical GT tokens). Auxiliary acceptance: all8 valid natural EOS with exact
-DFS parent trees. Both must pass at the same checkpoint; CE alone is insufficient.
-
-Passing candidates enter fixed64 train / heldout poses / fixed32 valid,
-effective batch48, 512 updates =24576 actual asset exposures, same schedule
-and data across comparisons. Evaluate all four input poses per asset at
-0/128/256/512, including the eight training/heldout-pose assets and32validation
-assets (192main generations per checkpoint). Initial generation is separate
-for each fusion mode even when initial parameter tensors are identical.
-Success rate and failure-as-zero F1 against continuous originalGT must not
-decrease versus A; paired common-success mean J2J may worsen by at most1/256.
-J2J uses the quantizedGT, with exactly the same common-success pose set on
-both sides; missing common-success evidence does not automatically pass.
-This is one-seed bounded validation, not a statistical/generalization claim.
-
-Prefer A when sufficient, otherwise B,C,D in order; stop expanding once a
-complete candidate passes. If all fail, diagnose auxiliary structure versus
-frame-information loss before any new hypothesis. Full training stays blocked
-until primary review, hash-bound real capacity checks across T2..24 and the
-existing formal release gates. Formal training uses fresh official weights,
-not these fitting checkpoints, and retains the prior80016-exposure budget.
-
-## Completed first round
-
-A and B both completed1024updates/8192actualassetexposures. First complete
-main+aux passing checks were A256 andB128; final both reproduce32/32main GT
-token sequences and8/8auxiliary parent trees. A already passed at2048actual
-exposures, the total exposure count of the older failedB1 constantLR run.
-This establishes that the original fusion can learn this fixed task under
-the new effectivebatch/OneCycle recipe; it does not isolate the contributions
-of batch averaging and schedule, or establish heldout generalization.
-Do not run C/D. A remains the preferred architecture pending medium review;
-B is the already-tested matched comparator, not a commitment to replacement.
-
-## Completed medium comparison and new reference request
-
-Both A and B completed512 updates, effectivebatch48, or24576 asset exposures
-on the same64 training assets and four fixed poses. Each asset therefore had
-384 visits. The monitored training-generation subset is8 of64 assets, not
-the complete training cohort. Validation uses32 different assets/four poses.
-The complete matched receipt is
-`../experiments/fusion_ab_medium_v1_review.json`.
-
-At512, both reproduce all32 monitored training-pose GT token streams. Exact
-auxiliary training trees are A7/8 andB8/8. Heldout-pose main F1 is
-A0.475601/B0.841470; unseen-asset validation F1 is A0.090075/B0.361060,
-with failed generation counted zero against continuous originalGT. Valid
-generation counts are126/128 and127/128. Exact auxiliary validation trees
-remain A1/32 andB0/32. B passes the predeclared relative main-task gates,
-but this is not evidence that unseen-asset structure generalization is solved.
-
-On2026-10-14 the user requested an actual old-training comparison before
-formal release, to investigate the shared data/training pipeline and small
-cohort coverage or overfitting. Next run the proven legacy query-first route
-on the SAME raw cache, official initial shared weights,64/32 split,T4,
-effective48,512updates and0/128/256/512 full main generation checkpoints.
-Each target pose is processed separately by the original query-first encoder.
-This matches target exposure across architectures; it is not a historical
-single-target sampling-run reproduction. The old route has no virtual/auxiliary
-structure branch, so its auxiliary metrics are not applicable rather than zero.
-Inspect complete learning curves, not only the final loss. A poor old-reference
-result alone does not uniquely identify data, optimization or cohort size.
-
-Formal release and further variants wait for this requested reference.
-Only A/B were trained in this fusion round, each at8 and64 assets; C/D have
-implementation/tests but no training runs. Earlier8-asset legacy/final-real
-controls do not substitute for this matched64-asset reference.
+- Initial 5k configs: [A](../experiments/fusion_normal_a_v1.json), [B](../experiments/fusion_normal_b_v1.json), [C](../experiments/fusion_normal_c_v1.json).
+- Continuation chains and LR overrides: [A150](../experiments/fusion_normal_a_lr3e5_150000_v1.json), [B60 recovery](../experiments/fusion_normal_b_recover60000_20261021_v1.json), [B80 target, stopped](../experiments/fusion_normal_b_lr3e5_80000_v1.json).
+- Earlier paired configs: [A8](../experiments/fusion_a_fit8_v1.json), [B8](../experiments/fusion_b_fit8_v1.json), [A64](../experiments/fusion_a_medium_v1.json), [B64](../experiments/fusion_b_medium_v1.json).
+- Runtime: [train_virtual_fusion_normal.py](../rigweave/scripts/train_virtual_fusion_normal.py); machine-readable status/provenance: [current.json](../state/current.json). Historical configs are not launch authority.
+- Raw 5k outputs: `/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/`; earlier fixed-cohort outputs: `/home/wangyy/evorig/outputs/virtual_fusion_20261013/`.
+- Local evidence root: `D:/evoweave/server_ops/outputs/virtual_fusion_20261013/`; the following paths are relative to it.
+- 20k receipts: `normal_ops/reviewed_normal_a_completion_v1.json`, `normal_ops/reviewed_normal_b_completion_v1.json`, `normal_ops/reviewed_normal_c_completion_v1.json`.
+- A terminal/curve index: `normal_ops/reviewed_normal_a_lr3e5_150000_completion_v1.json` and `normal_ops/sequence_20261018_execution_v1.json`.
+- B65 evidence directory: `b80_20261021/primary_evaluation_065000_v1/`; files `reviewed_milestone65_v1.json`, `evaluation_selection.json`, `evaluation_065000/summary.json`, `evaluation_065000/rank_0.json`, `evaluation_065000/rank_1.json` bind scores to poses.
+- Stop/70k status: `b80_20261021/user_stop_20261021_v1/stop_receipt_v1.json`.
+- Recorded checkpoint hashes identify historical payloads; verify existence before any attempted reuse. This cleanup does not recreate, relocate or assert retention of deleted weights.

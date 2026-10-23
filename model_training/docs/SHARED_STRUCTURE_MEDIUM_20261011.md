@@ -2,6 +2,25 @@
 
 ## Preserved Checkpoint Results
 
+### Historical Coordinate Coverage
+
+The October 12 audit for
+[shared_structure_full_20261012_r3.json](../experiments/shared_structure_full_20261012_r3.json)
+read all 19,068 historical input assets without errors. Maximum absolute
+normalized joint coordinates were 1.69815 on training-eligible poses, 1.74906
+on heldout poses, and 1.03566 on validation. Training poses exceeded the old
+range on 75 assets, or 79 when heldout poses were included; 67 had skinned
+joints outside the range. Five extreme cases matched direct NPZ calculations
+to within 1.2e-7.
+
+That branch extended the output range to [-2,2] with 512 bins, keeping bin
+spacing 1/128 and copying the old 256-bin weights into the central offset.
+It addressed representable range, not a demonstrated cause of low F1.
+The audit exposed that a skeleton/mesh bbox-size-ratio filter did not guarantee
+joint containment. The subsequent coordinate screening and root-RT
+publication define the [current data contract](../../DATASET_SOURCE_OF_TRUTH.md);
+the historical 512-bin extension belongs to this experiment only.
+
 ### Legacy Topology Precision, Recall And F1
 
 The original summary omitted the existing topology P/R/F1. Exact ordered-tree

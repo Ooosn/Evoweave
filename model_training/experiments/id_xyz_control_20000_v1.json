@@ -245,7 +245,12 @@
     "allocated_fraction_limit": 0.85
   },
   "safety": {
-    "data_audit": null,
+    "data_audit": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/cpu_audit_v2/audit.json",
+      "sha256": "19c10c4807f13a42e99f90632316aa60d63f33b8b4421e3228952e5fdc11dd92",
+      "code_commit": "b595d1a75f73d10a605b2b7e47e0bcd3b820ac11",
+      "config_sha256": "d2d9800bbe42ece20ae446cfeb084df14e0ad655ecf537c16a7b084e90984188"
+    },
     "preflight": null,
     "capacity": null,
     "primary_accepted": false

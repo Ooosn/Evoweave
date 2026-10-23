@@ -922,7 +922,7 @@
     "label": "legacy_single_target_100000_20261024_v1",
     "mode": "capacity",
     "operation": "preflight",
-    "status": "capacity_v2_exact_replay_anomaly_trace_approved",
+    "status": "capacity_v2_backward_nan_rejected",
     "preparation_complete": true,
     "preparation_review": "model_training/analysis/legacy_single_target_preparation_review_v1.json",
     "prepared_config": "model_training/experiments/legacy_single_target_100000_v1.json",
@@ -937,7 +937,7 @@
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "complete": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_legacy_single_target.py",
     "contract": "model_training/docs/LEGACY_SINGLE_TARGET_20261024.md",
@@ -958,7 +958,7 @@
     "runs": [
       {
         "mode": "capacity",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/legacy_single_target_20261024/code/model_training/experiments/legacy_single_target_100000_v1.json",
         "config_sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1",
         "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2",
@@ -997,6 +997,26 @@
         "gpu_memory_mib": [0, 0],
         "keeper_preserved": true,
         "next_action": "Replay the exact stress order with anomaly detection on T6; do not silently shrink batches or accept partial capacity."
+      },
+      {
+        "output": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2",
+        "accepted": false,
+        "passed_cases_per_rank": 4,
+        "failed_case": "T6_batch24_longest_main",
+        "detected_operation": "GeluBackward0 at motion_evidence.py pose-inner FFN; underlying first Inf/NaN source not yet established",
+        "failure_receipt_sha256_both_ranks": "bbbb28fe3b5c0ca5b76cc7a69d37d418d8671b37d1030d99ca764a029bf1b003",
+        "resource_sha256": "dc3fe16792888bff1a08bc019079cc264e11a44f2ac9fa3e668cde324584c2cf",
+        "exit_code": 1,
+        "payload_cleanup_complete": true,
+        "cleanup_verified_utc": "2026-10-23T19:34:34Z",
+        "gpu_memory_mib": [0, 0],
+        "keeper_preserved": true,
+        "diagnostic_checkpoint": {
+          "path": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2/diagnostic_before_T6.pt",
+          "sha256": "0f592458cb75ef18cee76001e669a4d23e71ffece9c0817fe9f4a0ea3d1803b2",
+          "bytes": 7952808390,
+          "formal_training_use_forbidden": true
+        }
       }
     ],
     "preflight_history": [

@@ -197,6 +197,11 @@
   },
   "capacity": {
     "diagnose_nonfinite": true,
+    "diagnostic_replay": {
+      "path": "/work/wangyy/legacy_single_target_20261024/outputs/capacity_v2/diagnostic_before_T6.pt",
+      "sha256": "0f592458cb75ef18cee76001e669a4d23e71ffece9c0817fe9f4a0ea3d1803b2",
+      "source": "e1da28f15f54d5893efefe1fa2d5e82389c05473"
+    },
     "selection": {
       "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/capacity_selection.json",
       "sha256": "de651fdec9abceb213b784bc1b469e133a769c54856f70fc7e3f7048dccc40f9"

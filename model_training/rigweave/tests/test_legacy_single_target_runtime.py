@@ -131,7 +131,15 @@ class SingleTargetRuntimeTests(unittest.TestCase):
             validate_release(CONFIG, rt)
         changed = deepcopy(CONFIG)
         changed['formal_release']['approved'] = True
+        changed['capacity'].pop('diagnostic_replay', None)
         with self.assertRaises(RuntimeError):
+            validate_release(changed, rt)
+
+    def test_diagnostic_replay_cannot_release_formal_training(self):
+        changed = deepcopy(CONFIG)
+        changed['formal_release']['approved'] = True
+        changed['capacity']['diagnostic_replay'] = {'path': 'diagnostic-only'}
+        with self.assertRaisesRegex(RuntimeError, 'diagnostic replay'):
             validate_release(changed, rt)
 
     def test_release_requires_correct_stage_and_two_complete_rank_receipts(self):
@@ -156,6 +164,7 @@ class SingleTargetRuntimeTests(unittest.TestCase):
         def check(mutate=None):
             config = deepcopy(CONFIG)
             config['formal_release']['approved'] = True
+            config['capacity'].pop('diagnostic_replay', None)
             values = {mode: receipt(mode, config) for mode in ('preflight', 'capacity')}
             if mutate:
                 mutate(values)
@@ -169,6 +178,8 @@ class SingleTargetRuntimeTests(unittest.TestCase):
 
         check()
         mutations = [
+            lambda v: v['capacity'].update(diagnostic_only=True),
+            lambda v: v['capacity']['ranks'][0].update(diagnostic_only=True),
             lambda v: v['preflight'].update(mode='capacity'),
             lambda v: v['capacity'].update(ranks=[]),
             lambda v: v['capacity']['ranks'][1].update(rank=0),

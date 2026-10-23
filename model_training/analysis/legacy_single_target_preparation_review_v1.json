@@ -29,7 +29,7 @@
   },
   "cpu_tests": {
     "command": "python -m unittest discover -s model_training/rigweave/tests -p \"test_legacy_single_target*.py\" -v",
-    "passed": 41,
+    "passed": 51,
     "failed": 0,
     "syntax_checks_passed": true,
     "diff_whitespace_check_passed": true
@@ -58,7 +58,7 @@
     },
     {
       "path": "model_training/rigweave/scripts/train_legacy_single_target.py",
-      "sha256": "a9b1ad4aaf829d7f685588095638b2b23f5b47e282efd7e336e860c3982615cd"
+      "sha256": "dc0150525f56c34ad146f0402521f36f0d244f13ef3d34df9b467f36c520c722"
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
@@ -66,7 +66,7 @@
     },
     {
       "path": "model_training/experiments/legacy_single_target_100000_v1.json",
-      "sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1"
+      "sha256": "81fdfd6a4e703fcbd40d648020ec1caa9e9f4fe48db77c584279bb383942cf91"
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target.py",
@@ -74,7 +74,7 @@
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_runtime.py",
-      "sha256": "65eee0e308a2e810e425fd095365bb0951f14ddb8d3d9cd5e54280ec42a4e362"
+      "sha256": "9df359321a361ffb524fecc469d858386626a3f5d1de8616433d528ed8e45704"
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_ssh_exception.py",
@@ -83,6 +83,14 @@
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target_launcher.py",
       "sha256": "e08a2b81e640ccf316d441bdd81b3c1d2e67d04a745727fb7bf462ed9cd6d0ea"
+    },
+    {
+      "path": "model_training/rigweave/scripts/legacy_gradient_trace.py",
+      "sha256": "5dc890d48b55f9598ec863bae1fc6314995f4e09b1f4b10d01843f302c0ea6e5"
+    },
+    {
+      "path": "model_training/rigweave/tests/test_legacy_gradient_trace.py",
+      "sha256": "5d67f2c1067a6b6091c668de79b7c17296e848712a9c98f5eb18d7c56084533d"
     }
   ],
   "gpu": {

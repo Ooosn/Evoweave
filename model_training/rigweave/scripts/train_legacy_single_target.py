@@ -380,13 +380,36 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
     dataset = rt.fixed_dataset(entries['train'], config, 2, mode='train')
     optimizer, wrapped = optimizer_for(model, config), wrapped_model(model, device)
     total_memory = torch.cuda.get_device_properties(device).total_memory
+    replay = config['capacity'].get('diagnostic_replay')
+    replay_case = None
+    if replay:
+        import random
+        import numpy as np
+        if rt.sha256(replay['path']) != replay['sha256']:
+            raise RuntimeError('diagnostic replay checkpoint changed')
+        saved = torch.load(replay['path'], map_location='cpu', weights_only=False)
+        if (saved.get('diagnostic_only') is not True or saved['source'] != replay['source']
+                or saved['next_case'] != 4 or rt.contract_sha256(saved['config']) != rt.contract_sha256(config)):
+            raise RuntimeError('diagnostic replay does not match the exact pre-T6 state')
+        model.load_state_dict(saved['model'], strict=True)
+        optimizer.load_state_dict(saved['optimizer'])
+        rng = saved['rank_rng'][rank]
+        torch.set_rng_state(rng['torch'])
+        torch.cuda.set_rng_state(rng['cuda'], device)
+        np.random.set_state(rng['numpy'])
+        random.setstate(rng['python'])
+        replay_case = saved['next_case']
+        del saved, rng
     report = {'complete': False, 'passed': False, 'cases': [], 'rank': rank, 'source': source,
               'contract_sha256': rt.contract_sha256(config), 'initialization': initial,
-              'gpu_total_bytes': total_memory, 'diagnostic_weights_discarded': True}
+              'gpu_total_bytes': total_memory, 'diagnostic_weights_discarded': True,
+              'diagnostic_only': bool(replay)}
     model.train()
     for number, case in enumerate(config['capacity']['cases']):
+        if replay_case is not None and number != replay_case:
+            continue
         indices, batch, frames = groups[case['stress_group']], case['batch_per_rank'], case['frames']
-        if config['capacity'].get('diagnose_nonfinite') and frames == 6 and case['stress_group'] == 'longest_main':
+        if not replay and config['capacity'].get('diagnose_nonfinite') and frames == 6 and case['stress_group'] == 'longest_main':
             import random
             import numpy as np
             local_rng = {'torch': torch.get_rng_state(), 'cuda': torch.cuda.get_rng_state(device),
@@ -418,7 +441,19 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
                         out = wrapped(surface, target, target_indices=rt.train_target_indices(surface))
                     if not bool(torch.isfinite(out['loss'])):
                         raise RuntimeError('nonfinite capacity loss')
-                    (out['loss']/2).backward()
+                    loss = out['loss']/2
+                    handles = []
+                    if replay:
+                        from legacy_gradient_trace import install_nonfinite_gradient_hooks
+                        def record_error(evidence):
+                            rt.write_json(args.output / f'first_nonfinite_rank_{rank}.json',
+                                {'case': case, 'iteration': iteration, 'microbatch': micro, **evidence})
+                        handles = install_nonfinite_gradient_hooks(loss, record_error)
+                    try:
+                        loss.backward()
+                    finally:
+                        for handle in handles:
+                            handle.remove()
                 del surface, target, geometry, out
             group_norms = gradients(model)
             norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
@@ -446,12 +481,14 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
 def validate_release(config, rt):
     if config['formal_release'].get('approved') is not True:
         raise RuntimeError('formal training is not released')
+    if config['capacity'].get('diagnostic_replay'):
+        raise RuntimeError('a diagnostic replay can never authorize formal training')
     for mode in ('preflight', 'capacity'):
         spec = config[mode]['receipt']
         if not spec or rt.sha256(spec['path']) != spec['sha256']:
             raise RuntimeError(f'{mode} receipt is missing or changed')
         result = json.loads(Path(spec['path']).read_text())
-        if (result.get('mode') != mode or result.get('complete') is not True or result.get('passed') is not True
+        if (result.get('diagnostic_only') or result.get('mode') != mode or result.get('complete') is not True or result.get('passed') is not True
                 or result.get('world_size') != 2 or result.get('contract_sha256') != rt.contract_sha256(config)):
             raise RuntimeError(f'{mode} did not validate this exact training contract')
         reports = result.get('ranks')
@@ -460,7 +497,7 @@ def validate_release(config, rt):
                 or {r['rank'] for r in reports} != {0, 1}):
             raise RuntimeError(f'{mode} requires exactly two distinct rank receipts')
         for report in reports:
-            if (report.get('complete') is not True or report.get('passed') is not True
+            if (report.get('diagnostic_only') or report.get('complete') is not True or report.get('passed') is not True
                     or report.get('source') != result.get('code_commit')
                     or report.get('contract_sha256') != result['contract_sha256']
                     or report.get('diagnostic_weights_discarded') is not True):
@@ -550,6 +587,7 @@ def main():
             if args.mode == 'train' and len({r['final_model_sha256'] for r in results}) != 1:
                 raise RuntimeError('terminal rank model tensors disagree')
             rt.write_json(args.output / 'result.json', {'complete': True,
+                'diagnostic_only': args.mode == 'capacity' and bool(config['capacity'].get('diagnostic_replay')),
                 'passed': all(r.get('passed', r.get('complete')) is True for r in results),
                 'world_size': world, 'mode': args.mode, 'ranks': results,
                 'contract_sha256': rt.contract_sha256(config), 'code_commit': source,

@@ -162,9 +162,20 @@ def gradients(model):
     import torch
     report = {}
     for name in ('surface_tokenizer', 'motion_encoder', 'xyz_decoder'):
-        values = [p.grad.detach().float() for p in getattr(model, name).parameters() if p.grad is not None]
-        if not values or any(not bool(torch.isfinite(g).all()) for g in values):
-            raise RuntimeError(f'missing/nonfinite {name} gradients')
+        named = [(key, p.grad.detach().float()) for key, p in getattr(model, name).named_parameters()
+                 if p.grad is not None]
+        if not named:
+            raise RuntimeError(f'missing all {name} gradients')
+        bad = []
+        for key, grad in named:
+            if not bool(torch.isfinite(grad).all()):
+                bad.append({'parameter': key, 'shape': list(grad.shape),
+                            'nan': int(torch.isnan(grad).sum()), 'inf': int(torch.isinf(grad).sum())})
+                if len(bad) == 8:
+                    break
+        if bad:
+            raise RuntimeError(f'nonfinite {name} gradients: {json.dumps(bad)}')
+        values = [g for _, g in named]
         norm = sum(float(g.square().sum()) for g in values) ** .5
         if norm <= 0:
             raise RuntimeError(f'zero {name} learning signal')
@@ -375,6 +386,19 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
     model.train()
     for number, case in enumerate(config['capacity']['cases']):
         indices, batch, frames = groups[case['stress_group']], case['batch_per_rank'], case['frames']
+        if config['capacity'].get('diagnose_nonfinite') and frames == 6 and case['stress_group'] == 'longest_main':
+            import random
+            import numpy as np
+            local_rng = {'torch': torch.get_rng_state(), 'cuda': torch.cuda.get_rng_state(device),
+                         'numpy': np.random.get_state(), 'python': random.getstate()}
+            rank_rng = [None] * world
+            dist.all_gather_object(rank_rng, local_rng)
+            if rank == 0:
+                torch.save({'diagnostic_only': True, 'model': model.state_dict(),
+                            'optimizer': optimizer.state_dict(), 'rank_rng': rank_rng,
+                            'config': config, 'source': source, 'next_case': number},
+                           args.output / 'diagnostic_before_T6.pt')
+            dist.barrier()
         requests = [FrameSampleRequest(indices[i % len(indices)], frames, 77000 + number*100 + i)
                     for i in range(batch)]
         measurements = []
@@ -387,7 +411,9 @@ def run_capacity(model, tokenizer, codec, entries, config, args, initial, source
                 for i, (asset, path) in enumerate(zip(geometry['asset_id'], geometry['path'])):
                     if int(target['main_attention_mask'][i, 0].sum()) != lengths[asset, path]:
                         raise RuntimeError('capacity target differs from the certified longest-token cases')
-                with (wrapped.no_sync() if micro == 0 else nullcontext()):
+                anomaly = (torch.autograd.detect_anomaly(check_nan=True)
+                           if config['capacity'].get('diagnose_nonfinite') and frames == 6 else nullcontext())
+                with anomaly, (wrapped.no_sync() if micro == 0 else nullcontext()):
                     with torch.autocast('cuda', dtype=torch.bfloat16):
                         out = wrapped(surface, target, target_indices=rt.train_target_indices(surface))
                     if not bool(torch.isfinite(out['loss'])):

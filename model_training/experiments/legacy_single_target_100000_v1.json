@@ -196,6 +196,7 @@
     }
   },
   "capacity": {
+    "diagnose_nonfinite": true,
     "selection": {
       "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/capacity_selection.json",
       "sha256": "de651fdec9abceb213b784bc1b469e133a769c54856f70fc7e3f7048dccc40f9"

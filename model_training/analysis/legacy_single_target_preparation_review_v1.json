@@ -1,7 +1,7 @@
 {
   "schema": "legacy_single_target_readiness.v1",
   "created_utc": "2026-10-23T17:46:56.729Z",
-  "status": "cpu_and_real_dual_gpu_preflight_accepted_capacity_pending",
+  "status": "capacity_nonfinite_gradient_rejected_diagnosis_pending",
   "source_parent": "c5ca780",
   "acceptance_scope": "CPU implementation and real two-rank preflight accepted; capacity/formal release pending; not model quality",
   "human_target": {
@@ -58,7 +58,7 @@
     },
     {
       "path": "model_training/rigweave/scripts/train_legacy_single_target.py",
-      "sha256": "5bab44f95c0f2db1d0b776abba74a845fc6ef8f5064448fdcf786ee40ee78657"
+      "sha256": "a9b1ad4aaf829d7f685588095638b2b23f5b47e282efd7e336e860c3982615cd"
     },
     {
       "path": "model_training/jobs/launch_legacy_single_target.py",
@@ -66,7 +66,7 @@
     },
     {
       "path": "model_training/experiments/legacy_single_target_100000_v1.json",
-      "sha256": "828f38f81f3f2e1755262284d3e4eee533039b3607b2de130836e5a7cc51ef30"
+      "sha256": "9b5aecd7abbe5f0f15aa354440a26ef13261a25d066fc0456eca4039915404e1"
     },
     {
       "path": "model_training/rigweave/tests/test_legacy_single_target.py",
@@ -104,7 +104,7 @@
     "exception_review": "User explicitly authorized direct SSH after the failed in-job entry. Preserve live keeper/grant, enforce one CPU,64GiB RSS and85percent GPU memory; never copy scheduler identity. GPU validation is still required."
   },
   "limitations": [
-    "Real two-rank continuous updates passed; full physical batch memory capacity remains untested.",
+    "Capacity four cases passed but T6batch24 longest-main backward produced missing/nonfinite surface gradients. All payloads stopped cleanly; repeat exact stress order with anomaly tracing before release.",
     "No new quality measurements; compare against bestB only after approved GPU execution.",
     "Single-target vs all-target supervision and absence ofB auxiliary loss are declared comparison differences."
   ]

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_cpu4_resume_running_20261024",
-  "updated_at": "2026-10-24T19:37:27Z",
+  "updated_at": "2026-10-24T19:53:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -138,11 +138,11 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "train"
+    "train",
+    "matched_eval"
   ],
   "blocked_operations": [
     "preflight",
-    "matched_eval",
     "submit"
   ],
   "compute_allocation": {
@@ -930,7 +930,7 @@
     },
     "baseline_matched_evaluation": {
       "label": "original_single_query_matched_eval_20261025_v1",
-      "status": "local_CPU_audit_v2_prepared_after_numpy_distribution_repair",
+      "status": "local_CPU_audit_v2_accepted_smoke_only_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked to verify the existing original-baseline checkpoint and evaluate it if present, then explicitly said evaluation may run locally. Preserve HGC training and unrelated local GPU processes.",
       "code_commit": "b00e47ac407dcbd26f4b44b2ab1346ff6f4e816c",
@@ -960,7 +960,24 @@
       "tests_passed": 76,
       "tests_skipped": 1,
       "test_log": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/cpu_tests_runner.log",
-      "GPU_allowed": false,
+      "GPU_allowed": true,
+      "local_CPU_audit": {
+        "accepted": true,
+        "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v2",
+        "summary_sha256": "e97e2013ac2163e52adb60fb157b030404cc9b9e138adb9da2a6a1eef1d79073",
+        "audit_sha256": "254de7ddff34aa3709b30c45c8d7118fdd39f1813fea6ea688d735f0c11c5c51",
+        "exit_code": 0,
+        "assets": 16,
+        "matched_reference_raw_frames_and_GT_tokens": 128,
+        "all_64_query_permutations_verified": true,
+        "all_1117_saved_tensors_equal": true,
+        "cuda_visible_devices": "",
+        "peak_tree_rss_bytes": 6230614016,
+        "payload_cleanup_complete": true,
+        "lossy_legacy_parent_roundtrip_assets": 2,
+        "lossy_legacy_parent_roundtrip_frames": 16,
+        "original_GT_preserved": true
+      },
       "smoke_accepted": false,
       "quality_approval": false,
       "local_environment": {
@@ -986,13 +1003,14 @@
         {
           "mode": "audit",
           "approved": true,
+          "status": "completed_accepted",
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
           "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v2"
         },
         {
           "mode": "smoke",
-          "approved": false,
+          "approved": true,
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
           "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/smoke_v1"

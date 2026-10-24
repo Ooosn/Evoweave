@@ -53,3 +53,14 @@ and85% aggregate VRAM, and waits for unrelated Python GPU jobs to finish.
 The state component `active_operation.baseline_matched_evaluation` authorizes
 exact stages. Separate operation-entrypoint bindings preserve the existing HGC
 training entrypoint. Never pull local changes into live HGC `cpu4_code`.
+
+## Local CPU Acceptance
+
+The second CPU audit completed with exit0 and no visible CUDA device. It
+strictly restored all1117 saved tensors, matched all128 raw frames and GT token
+streams for16 assets to B65, and verified all64 query permutations. Peak process
+tree RSS was6230614016bytes and cleanup completed. The original legacy codec
+changes parent identity on2 assets/16 frames; this is recorded, not repaired or
+substituted into the scoring GT. Original continuous GT remains the reference.
+Only the8-view GPU smoke stage is currently authorized; full64-view evaluation
+requires primary acceptance of its execution and resource receipts.

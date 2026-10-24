@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_batch_capacity_20261024",
-  "updated_at": "2026-10-24T06:46:38Z",
+  "updated_at": "2026-10-24T06:56:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -920,7 +920,7 @@
   },
   "active_operation": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
-    "status": "exact20k_restore_accepted_batch_capacity_released",
+    "status": "batch_capacity_gradient_failure_diagnostic_retry_released",
     "operation": "preflight",
     "mode": "capacity",
     "complete": false,
@@ -928,8 +928,11 @@
     "contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
     "authorization": "Human selected real-frame all-target ID+XYZ autoregression with GT-position cross-frame structural CE and explicitly said start, still direct SSH. On2026-10-24 the human corrected the total budget to100000 asset exposures. Continue the same model and training state; this is an explicit budget extension, not automatic promotion.",
     "target_asset_exposures": 100000,
-    "code_commit": "e78406ab1436f97d216cc2a341e78798484fbd94",
-    "cpu_tests_passed": 97,
+    "code_commit": "4f79333ed4c23b2b282de958eb02cfa7fa8c83ae",
+    "cpu_tests_passed": 102,
+    "cpu_tests_skipped": 1,
+    "cpu_test_skip_reason": "Windows Gloo unsupported device; production CUDA surface encoder not covered by CPU fixture.",
+    "batch_profile_gradient_tests_passed": 5,
     "batch_transition_tests_passed": 21,
     "continuation_tests_passed": 25,
     "stage_regression_tests_passed": 13,
@@ -948,7 +951,7 @@
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": false,
     "new_training_processes": 0,
-    "last_observed_utc": "2026-10-24T06:45:12Z",
+    "last_observed_utc": "2026-10-24T06:49:27Z",
     "last_observed_gpu_memory_mib": [0, 0],
     "training_producer_head": "382e14c4e110d952cc99cadee029f934d8a93273",
     "supervisor_pid": null,
@@ -982,6 +985,7 @@
     },
     "batch_restore_audit": {
       "accepted": true,
+      "refresh_required_before_formal_training": "Profile-only helper instrumentation changed source hashes; repeat CPU audit for the final frozen source after capacity diagnosis.",
       "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/batch_resume_audit_20000_v1/resume_audit.json",
       "sha256": "c90fb28b7070a1f61dd0e72ed7d4a20fa3329cb4d93cbe9e75da4544b43354f4",
       "resource_sha256": "62836e5eb456d85579ad44c3062ab77f0b92b8ef2a7585f14e3eb1eb7880633e",
@@ -1270,9 +1274,13 @@
       "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/experiments/id_xyz_consistency_100000_batch_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/batch_resume_audit_20000_v1 --mode audit"
     }, {
       "mode": "capacity",
-      "approved": true,
-      "execution_allowed": true,
-      "status": "released_matched_batch_capacity_and_timing",
+      "approved": false,
+      "execution_allowed": false,
+      "status": "failed_surface_gradients_no_valid_capacity_or_speed_measurement",
+      "exit_code": 1,
+      "payload_cleanup_complete": true,
+      "failure": "Both ranks reported missing or nonfinite surface_tokenizer gradients before the first complete measurement. No OOM in log; cause not yet established.",
+      "evidence": "D:/evoweave/server_ops/outputs/id_xyz_consistency_20261024/preparation/batch_capacity_v1/download_manifest.json",
       "config": "/work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/experiments/id_xyz_consistency_100000_batch_v1.json",
       "config_sha256": "9ae183bc0b78af13f33b88be6d05890337715daae96816b633415a7f7335fdc1",
       "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/batch_capacity_v1",
@@ -1282,6 +1290,20 @@
       "profile_learning_rate": 0,
       "profile_weights_for_training": false,
       "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/experiments/id_xyz_consistency_100000_batch_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/batch_capacity_v1 --mode capacity"
+    }, {
+      "mode": "capacity",
+      "approved": true,
+      "execution_allowed": true,
+      "status": "released_baseline_first_gradient_diagnostic_and_matched_profile",
+      "config": "/work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/experiments/id_xyz_consistency_100000_batch_v1.json",
+      "config_sha256": "9ae183bc0b78af13f33b88be6d05890337715daae96816b633415a7f7335fdc1",
+      "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/batch_capacity_v2",
+      "allocation": 130309880,
+      "physical_gpus": [5, 6],
+      "global_assets_per_update": 48,
+      "profile_learning_rate": 0,
+      "profile_weights_for_training": false,
+      "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/batch_code/model_training/experiments/id_xyz_consistency_100000_batch_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/batch_capacity_v2 --mode capacity"
     }],
     "acceptance": [
       "Only real frames; shared final1024mesh tokens per frame; one full ID+XYZ decoder; no virtual/fusion/auxiliary path.",

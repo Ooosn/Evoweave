@@ -22,13 +22,61 @@ CONTINUATION_SOURCE_CHANGES = {
 }
 
 
+def batch_source_configuration(config):
+    from id_xyz_runtime import paired_contract_hash, sha256, source_hashes
+    from id_xyz_stages import read_reviewed
+    transition = config.get("batch_transition")
+    if transition is None:
+        return None
+    if (not isinstance(transition, dict) or set(transition) != {"kind", "source_configuration", "source_audit"}
+            or transition["kind"] != "physical_batch_only_v1"):
+        raise ValueError("invalid physical-batch transition declaration")
+    spec = transition["source_configuration"]
+    if sha256(spec["path"]) != spec["sha256"]:
+        raise ValueError("the immutable batch-source configuration changed")
+    source = json.loads(Path(spec["path"]).read_text())
+    if source.get("batch_transition") or source["training"]["target_assets"] != 100000:
+        raise ValueError("batch transition must reference the reviewed original100k recipe")
+    excluded = {"runtime", "training", "safety", "batch_transition"}
+    if {k: v for k, v in config.items() if k not in excluded} != {
+            k: v for k, v in source.items() if k not in excluded}:
+        raise ValueError("batch transition changed model, data, loss, schedule or evaluation")
+    if {k: v for k, v in config["runtime"].items() if k != "repo"} != {
+            k: v for k, v in source["runtime"].items() if k != "repo"}:
+        raise ValueError("batch transition changed runtime resources or dependencies")
+    plan_excluded = {"frame_policy", "resume_checkpoint"}
+    if {k: v for k, v in config["training"].items() if k not in plan_excluded} != {
+            k: v for k, v in source["training"].items() if k not in plan_excluded}:
+        raise ValueError("batch transition changed the global exposure/update plan")
+    old, new = source["training"]["frame_policy"], config["training"]["frame_policy"]
+    if set(old) != set(new) or set(new) != {str(t) for t in range(2, 25)}:
+        raise ValueError("batch policies must cover exactly2..24 frames")
+    if old == new:
+        raise ValueError("batch transition must increase at least one physical tier")
+    for frame in range(2, 25):
+        before, after = old[str(frame)], new[str(frame)]
+        ceiling = 6 if frame <= 6 else 12 if frame <= 12 else 24
+        if (type(after) is not int or after not in (before, before * 2) or 24 % after
+                or after != new[str(ceiling)]):
+            raise ValueError("only an unchanged or doubled physical batch tier is allowed")
+    audit = read_reviewed(transition["source_audit"])
+    if audit.get("mode") != "resume_audit" or audit["paired_contract_sha256"] != paired_contract_hash(source):
+        raise ValueError("batch-source audit does not cover its exact recipe")
+    previous, current = audit["source_sha256"], source_hashes()
+    if (set(previous) != set(current)
+            or not {key for key in previous if previous[key] != current[key]}.issubset(CONTINUATION_SOURCE_CHANGES)):
+        raise ValueError("batch transition changed model, data, loss, generation or sampling source")
+    return source
+
+
 def parent_configuration(config):
     from id_xyz_runtime import sha256
     spec = config["continuation"]["parent_configuration"]
     if sha256(spec["path"]) != spec["sha256"]:
         raise ValueError("the immutable parent configuration changed")
     parent = json.loads(Path(spec["path"]).read_text())
-    excluded = {"arm", "runtime", "training", "safety", "continuation"}
+    batch_source = batch_source_configuration(config)
+    excluded = {"arm", "runtime", "training", "safety", "continuation", "batch_transition"}
     if {k: v for k, v in config.items() if k not in excluded} != {
             k: v for k, v in parent.items() if k not in excluded}:
         raise ValueError("continuation changed the model, data, objective or evaluation recipe")
@@ -37,6 +85,8 @@ def parent_configuration(config):
             k: v for k, v in parent["runtime"].items() if k not in runtime_excluded}:
         raise ValueError("continuation changed runtime resources or dependencies")
     plan_excluded = {"target_assets", "checkpoint_assets", "evaluation_assets", "resume_checkpoint"}
+    if batch_source is not None:
+        plan_excluded.add("frame_policy")
     if {k: v for k, v in config["training"].items() if k not in plan_excluded} != {
             k: v for k, v in parent["training"].items() if k not in plan_excluded}:
         raise ValueError("continuation changed the effective or physical batch policy")
@@ -92,6 +142,10 @@ def restore_stream(config, state, *, samples, frames, step, rank, world):
     new = make_stream(config, rank, world)
     for key in set(old.contract) - {"target_assets", "update_boundaries"}:
         if old.contract[key] != new.contract[key]:
+            if key == "frame_policy" and config.get("batch_transition"):
+                source = batch_source_configuration(config)
+                if old.contract[key] == source["training"][key]:
+                    continue
             raise ValueError(f"continuation changed sampler contract {key}")
     n = len(old.update_sizes)
     if (new.target_assets < old.target_assets
@@ -162,7 +216,7 @@ def validate_random_state(state):
 
 
 def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=None):
-    from id_xyz_runtime import sha256, source_hashes, training_contract
+    from id_xyz_runtime import make_stream, sha256, source_hashes, training_contract
     from id_xyz_stages import read_reviewed
     if type(rank) is not int or type(world) is not int or world != config["runtime"]["world_size"] or not 0 <= rank < world:
         raise ValueError("invalid continuation rank/world")
@@ -172,11 +226,15 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
         if Path(spec["path"]).stat().st_size != spec["bytes"] or sha256(spec["path"]) != spec["sha256"]:
             raise ValueError("continuation checkpoint identity changed")
         saved = torch.load(spec["path"], map_location="cpu", mmap=True, weights_only=False)
+    batch_source = batch_source_configuration(config)
+    from_batch_source = batch_source is not None and saved["training_contract"] == training_contract(batch_source)
     from_parent = saved["training_contract"] == training_contract(parent)
-    if not from_parent and saved["training_contract"] != training_contract(config):
+    if (batch_source is not None and from_parent
+            or not (from_parent or from_batch_source) and saved["training_contract"] != training_contract(config)):
         raise ValueError("saved model/data/loss/schedule contract changed")
-    expected_source = (read_reviewed(config["safety"]["data_audit"])["source_sha256"]
-                       if from_parent else source_hashes())
+    expected_source = (read_reviewed(config["batch_transition"]["source_audit"])["source_sha256"] if from_batch_source
+                       else read_reviewed(config["safety"]["data_audit"])["source_sha256"] if from_parent
+                       else source_hashes())
     samples, step = saved["asset_exposures"], saved["step"]
     frames = saved["supervised_frame_exposures"]
     if (saved["code_commit"] != spec["producer_head"] or saved["source_sha256"] != expected_source
@@ -184,6 +242,10 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
             or saved["input_frame_exposures"] != frames or len(saved["rank_states"]) != world
             or (from_parent and samples != config["continuation"]["handoff_assets"])):
         raise ValueError("checkpoint producer, counters or rank coverage changed")
+    saved_recipe = batch_source if from_batch_source else parent if from_parent else config
+    for index, state in enumerate(saved["rank_states"]):
+        if state["stream"]["contract"] != make_stream(saved_recipe, index, world).contract:
+            raise ValueError("saved sampler does not match its producer training contract")
     if saved["optimizer_parameter_names"] != optimizer_names(model, optimizer):
         raise ValueError("optimizer parameter names or order changed")
     ids = [index for group in saved["optimizer"]["param_groups"] for index in group["params"]]
@@ -225,6 +287,13 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
               "supervised_frame_exposures": frames, "rank_signatures": signatures,
               "next_learning_rate_and_beta1": list(extended_learning_rate(samples, config)),
               "loaded_learning_rates": [g["lr"] for g in optimizer.param_groups]}
+    if batch_source is not None:
+        report["physical_batch_transition"] = {
+            "source_policy": batch_source["training"]["frame_policy"],
+            "resumed_policy": config["training"]["frame_policy"],
+            "global_asset_frame_seed_order_preserved": True,
+            "future_bitwise_trajectory_claimed": False,
+        }
     return streams[rank], saved["rank_states"][rank], saved["initialization"], report
 
 

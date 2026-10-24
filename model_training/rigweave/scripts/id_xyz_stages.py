@@ -51,6 +51,9 @@ def read_reviewed(spec):
 def validate_receipt(config, receipt, *, mode=None):
     if mode is not None and receipt.get("mode") != mode:
         raise ValueError("evidence belongs to the wrong execution stage")
+    if (receipt["paired_contract_sha256"] == paired_contract_hash(config)
+            and receipt["source_sha256"] == source_hashes()):
+        return
     if config.get("continuation") and mode in ("audit", "preflight", "capacity"):
         from id_xyz_resume import validate_prior_receipt
         validate_prior_receipt(config, receipt)
@@ -284,6 +287,8 @@ def capacity(model, tokenizer, codec, initial, entries, config, args, device, ra
     validate_receipt(config, pre, mode="preflight")
     if config["safety"]["primary_accepted"] is not True:
         raise ValueError("preflight evidence requires primary review before capacity")
+    if config.get("batch_transition"):
+        return batch_capacity(model, codec, initial, entries, config, args, device, rank, world, reviewed)
     dataset = fixed_dataset(entries["train"], config, 2, mode="train")
     optimizer = optimizer_for(model, config)
     wrapped = wrap(model, device, world)
@@ -321,6 +326,126 @@ def capacity(model, tokenizer, codec, initial, entries, config, args, device, ra
               "frame_policy": config["training"]["frame_policy"], "cases": capacity_cases(config, reviewed),
               "profile_weights_are_never_training_initialization": True,
               **evidence(config, initial["code_commit"], args.config)}
+    if rank == 0:
+        write_json(args.output / "capacity.json", result)
+    return result
+
+
+class TimedCapacityForward(torch.nn.Module):
+    """Split forward timing without changing the production model or DDP graph."""
+    def __init__(self, model, device):
+        super().__init__()
+        self.model, self.device = model, device
+        self.seconds = {}
+
+    def forward(self, surface, targets, *, consistency_weight):
+        tick = time.monotonic()
+        conditions = self.model.encode(surface)
+        torch.cuda.synchronize(self.device)
+        encoded = time.monotonic()
+        output = self.model.forward_encoded(conditions, targets, consistency_weight=consistency_weight)
+        torch.cuda.synchronize(self.device)
+        self.seconds = {"encode": encoded - tick, "decode_and_loss": time.monotonic() - encoded}
+        return output
+
+
+def batch_capacity(model, codec, initial, entries, config, args, device, rank, world, reviewed):
+    from id_xyz_resume import batch_source_configuration
+    source = batch_source_configuration(config)
+    if world != 2:
+        raise ValueError("matched batch profiling requires both approved GPUs")
+    dataset = fixed_dataset(entries["train"], config, 2, mode="train")
+    optimizer = optimizer_for(model, config)
+    # Keep model tensors fixed while allocating and exercising real Adam state.
+    for group in optimizer.param_groups:
+        group["lr"] = 0.
+    timed = TimedCapacityForward(model, device)
+    wrapped = wrap(timed, device, world)
+    model.train()
+    results = []
+    for number, case in enumerate(capacity_cases(config, reviewed)):
+        requests = requests_for(config, case["indices"], frames=case["frames"], batch=24, rank=rank, number=number)
+        variants = [("candidate", case["batch_per_rank"])]
+        if case["stress_group"] == "mixed":
+            variants.append(("baseline", source["training"]["frame_policy"][str(case["frames"])]))
+        profiles, reference_inputs = {}, None
+        for label, batch in variants:
+            measurements = []
+            for iteration in range(2):
+                optimizer.zero_grad(set_to_none=True)
+                torch.cuda.reset_peak_memory_stats(device)
+                torch.cuda.synchronize(device)
+                started = time.monotonic()
+                sections = dict.fromkeys(("prepare", "encode", "decode_and_loss", "backward", "optimizer"), 0.)
+                losses, identities, widths = [], [], []
+                inputs = hashlib.sha256()
+                for offset in range(0, 24, batch):
+                    chunk = requests[offset:offset + batch]
+                    tick = time.monotonic()
+                    surface, targets, geometry = prepare_batch(dataset, chunk, config, codec, device)
+                    torch.cuda.synchronize(device)
+                    sections["prepare"] += time.monotonic() - tick
+                    for index, request in enumerate(chunk):
+                        width = targets["lengths"][index]
+                        inputs.update(json.dumps([request.item_index, request.frames, str(request.sampling_seed),
+                            geometry["selected_frames"][index].tolist(), width], separators=(",", ":")).encode())
+                        inputs.update(targets["input_ids"][index, :, :width].detach().cpu().numpy().tobytes())
+                    with (wrapped.no_sync() if offset + len(chunk) < 24 else nullcontext()):
+                        with torch.autocast("cuda", dtype=torch.bfloat16):
+                            output = wrapped(surface, targets, consistency_weight=config["consistency"]["weight"])
+                        if not bool(torch.isfinite(output["loss_per_asset"]).all()):
+                            raise RuntimeError("nonfinite physical-batch profile loss")
+                        sections["encode"] += timed.seconds["encode"]
+                        sections["decode_and_loss"] += timed.seconds["decode_and_loss"]
+                        tick = time.monotonic()
+                        (output["loss_per_asset"].sum() / 24).backward()
+                        torch.cuda.synchronize(device)
+                        sections["backward"] += time.monotonic() - tick
+                    losses.append(float(output["loss"].detach()) * len(chunk))
+                    identities.extend(geometry["asset_id"])
+                    widths.extend(targets["lengths"])
+                    del surface, targets, geometry, output
+                digest = inputs.hexdigest()
+                if reference_inputs is None:
+                    reference_inputs = digest
+                if digest != reference_inputs:
+                    raise ValueError("batch comparison changed asset/frame/seed/GT identity")
+                tick = time.monotonic()
+                groups = gradient_groups(model)
+                norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
+                optimizer.step()
+                torch.cuda.synchronize(device)
+                sections["optimizer"] = time.monotonic() - tick
+                measurement = {"iteration": iteration, "loss": sum(losses) / 24,
+                    "gradient_norm": norm, "gradient_groups": groups, "maximum_tokens": max(widths),
+                    "assets": identities, "input_identity_sha256": digest,
+                    "global_assets": 48, "microbatches_per_rank": 24 // batch,
+                    "seconds": time.monotonic() - started, "section_seconds": sections,
+                    **memory_check(config, device)}
+                measurements.append(measurement)
+                print("BATCH_PROFILE " + json.dumps({"rank": rank, "case": number, "variant": label,
+                    "frames": case["frames"], "batch_per_rank": batch, **measurement}), flush=True)
+            profiles[label] = {"batch_per_rank": batch, "measurements": measurements}
+        results.append({**case, "passed": True, "measurements": profiles["candidate"]["measurements"],
+                        "profiles": profiles})
+        write_json(args.output / f"capacity_rank_{rank}.json", {"passed": False, "rank": rank, "cases": results})
+    reports = gather({"rank": rank, "cases": results, "passed": True}, world)
+    comparisons = []
+    for number, case in enumerate(capacity_cases(config, reviewed)):
+        if case["stress_group"] != "mixed":
+            continue
+        times = {label: max(report["cases"][number]["profiles"][label]["measurements"][1]["seconds"]
+                           for report in reports) for label in ("baseline", "candidate")}
+        comparisons.append({"frames": case["frames"], **times,
+                            "speedup": times["baseline"] / times["candidate"]})
+    result = {"passed": True, "mode": "capacity", "ranks": reports,
+        "frame_policy": config["training"]["frame_policy"], "cases": capacity_cases(config, reviewed),
+        "profile_weights_are_never_training_initialization": True, "profile_learning_rate": 0.,
+        "comparison_global_assets_per_update": 48, "comparison_inputs_identical": True,
+        "performance_comparisons": comparisons,
+        "aggregate_matched_speedup": sum(row["baseline"] for row in comparisons) / sum(row["candidate"] for row in comparisons),
+        "timing_scope": "Second Adam-resident update, synchronized section timing; same asset/frame/seed/GT and fixed model weights. Not a full-run ETA.",
+        **evidence(config, initial["code_commit"], args.config)}
     if rank == 0:
         write_json(args.output / "capacity.json", result)
     return result

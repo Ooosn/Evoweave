@@ -409,7 +409,7 @@ class TemporalFailureProbe:
             torch.cuda.reset_peak_memory_stats(device)
             tick = time.monotonic()
             accumulated = [torch.zeros_like(parameter) for parameter in parameters]
-            input_bad, output_bad, input_max, forward_difference = 0, 0, 0., 0.
+            input_bad, output_bad, forward_bad, input_max, forward_difference = 0, 0, 0, 0., 0.
             for offset in range(0, len(self.input), chunk):
                 x = self.input[offset:offset + chunk].detach().requires_grad_(True)
                 backend_context = (nullcontext() if backend is None else torch.backends.cuda.sdp_kernel(
@@ -417,14 +417,19 @@ class TemporalFailureProbe:
                     enable_mem_efficient=False, enable_cudnn=False))
                 with backend_context, torch.autocast("cuda", dtype=torch.bfloat16):
                     y = module(x, x, x, need_weights=False)[0]
+                    forward_bad += int((~torch.isfinite(y)).sum())
+                    difference = (y.detach() - self.output[offset:offset + chunk]).abs()
+                    if not bool(torch.isfinite(difference).all()):
+                        forward_difference = None
+                    elif forward_difference is not None:
+                        forward_difference = max(forward_difference, float(difference.max()))
+                    del difference
                     gradients = torch.autograd.grad(y, (x, *parameters),
                         self.output_gradient[offset:offset + chunk])
                 stats = statistics(gradients[0])
                 input_bad += stats["nonfinite"]
                 input_max = max(input_max, stats["finite_max_abs"])
                 output_bad += int((~torch.isfinite(y)).sum())
-                forward_difference = max(forward_difference, float(
-                    (y.detach() - self.output[offset:offset + chunk]).abs().max()))
                 for total, gradient in zip(accumulated, gradients[1:]):
                     total.add_(gradient)
                 del x, y, gradients
@@ -432,7 +437,8 @@ class TemporalFailureProbe:
             torch.cuda.synchronize(device)
             item = {"variant": label, "chunk_size": chunk,
                     "seconds": time.monotonic() - tick,
-                    "output_nonfinite": output_bad,
+                    "forward_nonfinite_before_backward": forward_bad,
+                    "output_nonfinite_after_backward": output_bad,
                     "forward_max_abs_difference": forward_difference,
                     "input_gradient_nonfinite": input_bad, "input_gradient_finite_max_abs": input_max,
                     "parameter_gradients": {name: statistics(gradient) for name, gradient in zip(names, accumulated)},
@@ -456,7 +462,6 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
         group["lr"] = 0.
     timed = TimedCapacityForward(model, device)
     wrapped = wrap(timed, device, world)
-    probe = TemporalFailureProbe(model.motion_encoder.blocks[-1].anchor_temporal.self_attn)
     model.train()
     results = []
     for number, case in enumerate(capacity_cases(config, reviewed)):
@@ -488,7 +493,7 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
                             geometry["selected_frames"][index].tolist(), width], separators=(",", ":")).encode())
                         inputs.update(targets["input_ids"][index, :, :width].detach().cpu().numpy().tobytes())
                     with (wrapped.no_sync() if offset + len(chunk) < 24 else nullcontext()):
-                        with probe.armed(), torch.autocast("cuda", dtype=torch.bfloat16):
+                        with torch.autocast("cuda", dtype=torch.bfloat16):
                             output = wrapped(surface, targets, consistency_weight=config["consistency"]["weight"])
                         if not bool(torch.isfinite(output["loss_per_asset"]).all()):
                             raise RuntimeError("nonfinite physical-batch profile loss")
@@ -525,9 +530,6 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
                         "frames": case["frames"], "batch_per_rank": batch,
                         "loss": sum(losses) / 24, "input_identity_sha256": digest,
                         "gradient_failures": details, **memory_check(config, device)})
-                    probe.close()
-                    optimizer.zero_grad(set_to_none=True)
-                    probe.run(config, device, args.output / f"temporal_failure_probe_rank_{rank}.json")
                     raise
                 norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
                 optimizer.step()
@@ -546,7 +548,6 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
         results.append({**case, "passed": True, "measurements": profiles["candidate"]["measurements"],
                         "profiles": profiles})
         write_json(args.output / f"capacity_rank_{rank}.json", {"passed": False, "rank": rank, "cases": results})
-    probe.close()
     reports = gather({"rank": rank, "cases": results, "passed": True}, world)
     comparisons = []
     for number, case in enumerate(capacity_cases(config, reviewed)):

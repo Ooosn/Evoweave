@@ -116,11 +116,31 @@ class IdXYZBatchTransitionTests(unittest.TestCase):
         return resume.restore_stream(self.config if config is None else config, state, samples=samples,
             frames=self.frames if frames is None else frames, step=step, rank=rank, world=2)
 
+    def temporal_v2(self):
+        config, audit, saved = deepcopy(self.config), deepcopy(self.audit), deepcopy(self.saved)
+        execution = {'kind': 'independent_temporal_sequence_chunks_v1', 'max_sequences': 13452,
+                     'source_before_sha256': 'b' * 64,
+                     'source_after_sha256': self.current_sources[resume.TEMPORAL_SOURCE]}
+        config['batch_transition'].update(kind='physical_batch_temporal_chunks_v2', temporal_execution=execution)
+        audit['source_sha256'][resume.TEMPORAL_SOURCE] = execution['source_before_sha256']
+        saved['source_sha256'] = deepcopy(audit['source_sha256'])
+        self.replace_audit(audit, config)
+        return config, audit, saved
+
+    def prior_receipt(self, hashes):
+        return {'mode': 'preflight', 'paired_contract_sha256': runtime.paired_contract_hash(self.parent),
+                'source_sha256': {key: value for key, value in hashes.items()
+                                  if key != 'scripts/id_xyz_resume.py'}}
+
     def test_draft_pins_real_source_audit_cpu1_global48_and_target_policy(self):
         path = fixtures.ROOT.parent / 'experiments/id_xyz_consistency_100000_batch_v1.json'
         draft = json.loads(path.read_text())
         transition = draft['batch_transition']
-        self.assertEqual(transition['kind'], 'physical_batch_only_v1')
+        self.assertEqual(transition['kind'], 'physical_batch_temporal_chunks_v2')
+        self.assertEqual(resume.temporal_execution(draft), {
+            'kind': 'independent_temporal_sequence_chunks_v1', 'max_sequences': 13452,
+            'source_before_sha256': '999b3be8672e9b12a69aed32b3174ec7c24bfa2415c56235b7010d933dc640e6',
+            'source_after_sha256': self.current_sources[resume.TEMPORAL_SOURCE]})
         self.assertEqual(transition['source_configuration']['sha256'],
                          '27d62327284dc9f7aac65a41987d132ea2980ecab045a032e61cfbaa034b196c')
         self.assertEqual(transition['source_audit']['sha256'],
@@ -131,6 +151,187 @@ class IdXYZBatchTransitionTests(unittest.TestCase):
         self.assertEqual(draft['training']['effective_assets_per_update'], 48)
         self.assertEqual(draft['training']['frame_policy'], self.config['training']['frame_policy'])
         self.assertEqual(draft['continuation'], fixtures.recipe(100000)['continuation'])
+
+    def test_temporal_v1_cannot_authorize_a_core_source_change(self):
+        self.assertIsNone(resume.temporal_execution(self.config))
+        self.assertIsNone(resume.temporal_execution(self.source))
+        config, audit, _ = self.temporal_v2()
+        config['batch_transition']['kind'] = 'physical_batch_only_v1'
+        config['batch_transition'].pop('temporal_execution')
+        self.assertEqual(resume.approved_source_changes(config, audit['source_sha256'], self.current_sources),
+                         resume.CONTINUATION_SOURCE_CHANGES)
+        with self.assertRaises(ValueError):
+            resume.batch_source_configuration(config)
+        with self.assertRaises(ValueError):
+            resume.validate_prior_receipt(config, self.prior_receipt(audit['source_sha256']))
+
+    def test_temporal_v2_accepts_only_the_exact_extra_source_and_prior_receipts(self):
+        config, audit, _ = self.temporal_v2()
+        self.assertEqual(resume.temporal_execution(config), config['batch_transition']['temporal_execution'])
+        self.assertEqual(resume.approved_source_changes(config, audit['source_sha256'], self.current_sources),
+                         resume.CONTINUATION_SOURCE_CHANGES | {resume.TEMPORAL_SOURCE})
+        self.assertEqual(resume.batch_source_configuration(config), self.source)
+        self.assertEqual(resume.parent_configuration(config), self.parent)
+        runtime.validate_config(config)
+        resume.validate_prior_receipt(config, self.prior_receipt(audit['source_sha256']))
+
+    def test_temporal_v2_rejects_invalid_schema_types_cap_and_digest_format(self):
+        config, _, _ = self.temporal_v2()
+        transition = config['batch_transition']
+        spec = transition['temporal_execution']
+        variants = [None, {}, [], dict(spec, unknown=True),
+                    {key: value for key, value in spec.items() if key != 'kind'}]
+        for value in (-1, 0, 1, 13451, 13453, True, False, 13452., '13452', None):
+            variants.append(dict(spec, max_sequences=value))
+        variants.append(dict(spec, kind='frame_chunks'))
+        for key in ('source_before_sha256', 'source_after_sha256'):
+            for value in ('A' * 64, 'g' * 64, 'a' * 63, 'a' * 65, '', None, 123):
+                variants.append(dict(spec, **{key: value}))
+        variants.append(dict(spec, source_before_sha256=spec['source_after_sha256']))
+        for index, value in enumerate(variants):
+            changed = deepcopy(config)
+            changed['batch_transition']['temporal_execution'] = value
+            with self.subTest(variant=index), self.assertRaises(ValueError):
+                resume.temporal_execution(changed)
+            with self.subTest(batch_validation=index), self.assertRaises(ValueError):
+                resume.batch_source_configuration(changed)
+        for value in (dict(transition, unknown=True), dict(transition, kind='physical_batch_only_v1'),
+                      {key: item for key, item in transition.items() if key != 'temporal_execution'}):
+            changed = deepcopy(config)
+            changed['batch_transition'] = value
+            with self.subTest(transition=value), self.assertRaises(ValueError):
+                resume.temporal_execution(changed)
+
+    def test_temporal_v2_rejects_mismatched_or_missing_before_and_after_source_hashes(self):
+        config, audit, _ = self.temporal_v2()
+        for side in ('previous', 'current'):
+            for missing in (False, True):
+                previous, current = deepcopy(audit['source_sha256']), deepcopy(self.current_sources)
+                selected = previous if side == 'previous' else current
+                if missing:
+                    selected.pop(resume.TEMPORAL_SOURCE)
+                else:
+                    selected[resume.TEMPORAL_SOURCE] = 'c' * 64
+                with self.subTest(side=side, missing=missing), self.assertRaises(ValueError):
+                    resume.approved_source_changes(config, previous, current)
+        for field in ('source_before_sha256', 'source_after_sha256'):
+            changed = deepcopy(config)
+            changed['batch_transition']['temporal_execution'][field] = 'c' * 64
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                resume.batch_source_configuration(changed)
+
+    def test_temporal_v2_does_not_permit_any_other_core_data_or_sampling_source_change(self):
+        config, audit, _ = self.temporal_v2()
+        allowed = resume.CONTINUATION_SOURCE_CHANGES | {resume.TEMPORAL_SOURCE}
+        protected = sorted(set(self.current_sources) - allowed)
+        self.assertTrue(any('data' in key for key in protected))
+        self.assertTrue(any('id_xyz_consistency' in key for key in protected))
+        for name in protected:
+            changed = dict(self.current_sources, **{name: 'd' * 64})
+            with self.subTest(source=name), patch.object(runtime, 'source_hashes', return_value=changed):
+                with self.assertRaises(ValueError):
+                    resume.batch_source_configuration(config)
+                with self.assertRaises(ValueError):
+                    resume.validate_prior_receipt(config, self.prior_receipt(audit['source_sha256']))
+
+    def test_temporal_v2_prior_receipt_independently_checks_exact_before_hash(self):
+        config, audit, _ = self.temporal_v2()
+        receipt = self.prior_receipt(audit['source_sha256'])
+        receipt['source_sha256'][resume.TEMPORAL_SOURCE] = 'c' * 64
+        self.assertEqual(resume.batch_source_configuration(config), self.source)
+        with self.assertRaisesRegex(ValueError, 'before/after'):
+            resume.validate_prior_receipt(config, receipt)
+
+    def test_temporal_v2_training_contract_and_paired_digest_bind_execution(self):
+        config, _, _ = self.temporal_v2()
+        spec = config['batch_transition']['temporal_execution']
+        contract = runtime.training_contract(config)
+        self.assertEqual(contract['temporal_execution'], spec)
+        self.assertNotIn('temporal_execution', runtime.training_contract(self.config))
+        self.assertEqual({key: value for key, value in contract.items() if key != 'temporal_execution'},
+                         runtime.training_contract(self.config))
+        self.assertNotEqual(runtime.paired_contract_hash(config), runtime.paired_contract_hash(self.config))
+        for key in ('source_before_sha256', 'source_after_sha256'):
+            changed = deepcopy(config)
+            changed['batch_transition']['temporal_execution'][key] = 'c' * 64
+            self.assertNotEqual(runtime.training_contract(changed), contract)
+            self.assertNotEqual(runtime.paired_contract_hash(changed), runtime.paired_contract_hash(config))
+
+    def test_temporal_v2_requires_fresh_resume_audit_and_accepts_exact_current_receipt(self):
+        config, _, _ = self.temporal_v2()
+        receipt = {'mode': 'resume_audit', 'source_sha256': self.current_sources,
+                   'paired_contract_sha256': runtime.paired_contract_hash(config)}
+        with patch.object(stages, 'source_hashes', return_value=self.current_sources):
+            stages.validate_receipt(config, receipt, mode='resume_audit')
+            for old_contract in (self.source, self.config):
+                stale = dict(receipt, paired_contract_sha256=runtime.paired_contract_hash(old_contract))
+                with self.subTest(old_contract=old_contract.get('batch_transition')), self.assertRaises(ValueError):
+                    stages.validate_receipt(config, stale, mode='resume_audit')
+            stale = dict(receipt, source_sha256=dict(self.current_sources, **{resume.TEMPORAL_SOURCE: 'b' * 64}))
+            with self.assertRaises(ValueError):
+                stages.validate_receipt(config, stale, mode='resume_audit')
+
+    def test_temporal_v2_tiny20k_full_state_and_next48_requests_restore_exactly(self):
+        config, _, saved = self.temporal_v2()
+        requests = []
+        for rank in (0, 1):
+            model, optimizer, (stream, rng, initial, report) = self.restore(saved, config, rank)
+            self.assertEqual(resume.state_fingerprint(model.state_dict()), resume.state_fingerprint(self.model.state_dict()))
+            self.assertEqual(resume.optimizer_fingerprint(model, optimizer), resume.optimizer_fingerprint(self.model, self.optimizer))
+            self.assertEqual(resume.rng_fingerprint(rng), resume.rng_fingerprint(saved['rank_states'][rank]))
+            self.assertEqual(initial, saved['initialization'])
+            self.assertEqual((report['asset_exposures'], report['step'], report['input_frame_exposures'],
+                              report['supervised_frame_exposures']), (20000, 420, self.frames, self.frames))
+            self.assertEqual(report['physical_batch_transition']['temporal_execution'],
+                             config['batch_transition']['temporal_execution'])
+            self.assertEqual((stream.cursor, stream.plan_sha256), (10000, self.streams[rank].plan_sha256))
+            for name in ('order', 'frame_counts', 'update_sizes', 'global_ends'):
+                np.testing.assert_array_equal(getattr(stream, name), getattr(self.streams[rank], name))
+            _, actual = consume(stream)
+            self.assertEqual(actual, consume(deepcopy(self.streams[rank]))[1])
+            requests.extend(actual)
+            baseline = deepcopy(self.model)
+            baseline_optimizer = runtime.optimizer_for(baseline, self.source)
+            baseline_optimizer.load_state_dict(deepcopy(self.optimizer.state_dict()))
+            fixtures.update(model, optimizer, 20000, config)
+            fixtures.update(baseline, baseline_optimizer, 20000, self.source)
+            self.assertEqual(resume.state_fingerprint(model.state_dict()), resume.state_fingerprint(baseline.state_dict()))
+            self.assertEqual(resume.optimizer_fingerprint(model, optimizer), resume.optimizer_fingerprint(baseline, baseline_optimizer))
+        self.assertEqual([item.sampling_seed for item in requests],
+                         list(range((20261013 << 32) + 20000, (20261013 << 32) + 20048)))
+
+    def test_temporal_v2_future_checkpoint_resumes_and_rejects_execution_contract_tampering(self):
+        config, _, saved = self.temporal_v2()
+        model, optimizer, _ = self.restore(saved, config)
+        fixtures.update(model, optimizer, 20000, config)
+        future = deepcopy(saved)
+        future.update(model=deepcopy(model.state_dict()), optimizer=deepcopy(optimizer.state_dict()),
+            training_contract=deepcopy(runtime.training_contract(config)), configuration=deepcopy(config),
+            source_sha256=deepcopy(self.current_sources), code_commit='f' * 40, asset_exposures=20048, step=421)
+        frames = self.frames + 48 * int(self.streams[0].frame_counts[420])
+        future.update(input_frame_exposures=frames, supervised_frame_exposures=frames)
+        for rank in (0, 1):
+            stream = runtime.make_stream(config, rank, 2)
+            stream.cursor = 10024
+            future['rank_states'][rank]['stream'] = stream.state_dict()
+        config['training']['resume_checkpoint'].update(producer_head='f' * 40, asset_exposures=20048, step=421)
+        for rank in (0, 1):
+            actual_model, actual_optimizer, (stream, rng, _, report) = self.restore(future, config, rank)
+            self.assertEqual((report['step'], report['asset_exposures'], stream.cursor), (421, 20048, 10024))
+            self.assertEqual(resume.state_fingerprint(actual_model.state_dict()), resume.state_fingerprint(model.state_dict()))
+            self.assertEqual(resume.optimizer_fingerprint(actual_model, actual_optimizer), resume.optimizer_fingerprint(model, optimizer))
+            self.assertEqual(resume.rng_fingerprint(rng), resume.rng_fingerprint(future['rank_states'][rank]))
+        for change in ('removed', 'cap', 'before', 'after'):
+            changed = deepcopy(future)
+            contract = changed['training_contract']
+            if change == 'removed':
+                contract.pop('temporal_execution')
+            elif change == 'cap':
+                contract['temporal_execution']['max_sequences'] = 26904
+            else:
+                contract['temporal_execution']['source_' + change + '_sha256'] = 'c' * 64
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.restore(changed, config)
 
     def test_all_seven_unchanged_or_doubled_tier_combinations_are_accepted(self):
         for increased in itertools.product((False, True), repeat=3):

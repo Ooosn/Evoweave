@@ -305,12 +305,7 @@
       "config_sha256": "675da788b278b8cabe94afebd3eb9afc8e31e38c127716228c9ca64933e2ea07"
     },
     "primary_accepted": true,
-    "continuation_audit": {
-      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/batch_resume_audit_20000_v1/resume_audit.json",
-      "sha256": "c90fb28b7070a1f61dd0e72ed7d4a20fa3329cb4d93cbe9e75da4544b43354f4",
-      "code_commit": "9c947be05575fe520ed488e5d7fa73ed446447b7",
-      "config_sha256": "3810c1bff0b6592e49ec1ceb8b8e51f7dec1d4fa4167174f430bc408c70f2fac"
-    }
+    "continuation_audit": null
   },
   "arm": "consistency",
   "continuation": {
@@ -322,7 +317,13 @@
     }
   },
   "batch_transition": {
-    "kind": "physical_batch_only_v1",
+    "kind": "physical_batch_temporal_chunks_v2",
+    "temporal_execution": {
+      "kind": "independent_temporal_sequence_chunks_v1",
+      "max_sequences": 13452,
+      "source_before_sha256": "999b3be8672e9b12a69aed32b3174ec7c24bfa2415c56235b7010d933dc640e6",
+      "source_after_sha256": "50b6f9d4091d1a3eb48cbffaf50a6bc0773c0d337aeba4e0df480c629059faa0"
+    },
     "source_configuration": {
       "path": "/work/wangyy/id_xyz_consistency_20261024/continue_code/model_training/experiments/id_xyz_consistency_100000_v1.json",
       "sha256": "27d62327284dc9f7aac65a41987d132ea2980ecab045a032e61cfbaa034b196c"

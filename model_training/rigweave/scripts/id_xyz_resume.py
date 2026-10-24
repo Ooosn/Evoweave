@@ -20,6 +20,43 @@ CONTINUATION_SOURCE_CHANGES = {
     "scripts/id_xyz_runtime.py", "scripts/id_xyz_stages.py",
     "scripts/train_id_xyz_consistency.py", "scripts/id_xyz_resume.py",
 }
+TEMPORAL_SOURCE = "src/rigweave/dynamic_rig/motion_encoder.py"
+
+
+def temporal_execution(config):
+    transition = config.get("batch_transition")
+    if transition is None:
+        return None
+    required = {"kind", "source_configuration", "source_audit"}
+    if not isinstance(transition, dict):
+        raise ValueError("invalid physical-batch transition declaration")
+    if transition.get("kind") == "physical_batch_only_v1" and set(transition) == required:
+        return None
+    if (transition.get("kind") != "physical_batch_temporal_chunks_v2"
+            or set(transition) != required | {"temporal_execution"}):
+        raise ValueError("invalid physical-batch transition declaration")
+    spec = transition["temporal_execution"]
+    if (not isinstance(spec, dict) or set(spec) != {
+            "kind", "max_sequences", "source_before_sha256", "source_after_sha256"}
+            or spec["kind"] != "independent_temporal_sequence_chunks_v1"
+            or type(spec["max_sequences"]) is not int or spec["max_sequences"] != 13452
+            or any(not isinstance(spec[key], str) or len(spec[key]) != 64
+                   or any(c not in "0123456789abcdef" for c in spec[key])
+                   for key in ("source_before_sha256", "source_after_sha256"))
+            or spec["source_before_sha256"] == spec["source_after_sha256"]):
+        raise ValueError("invalid reviewed temporal execution change")
+    return spec
+
+
+def approved_source_changes(config, previous, current):
+    allowed = set(CONTINUATION_SOURCE_CHANGES)
+    execution = temporal_execution(config)
+    if execution is not None:
+        if (previous.get(TEMPORAL_SOURCE) != execution["source_before_sha256"]
+                or current.get(TEMPORAL_SOURCE) != execution["source_after_sha256"]):
+            raise ValueError("temporal source does not match the exact reviewed before/after hashes")
+        allowed.add(TEMPORAL_SOURCE)
+    return allowed
 
 
 def batch_source_configuration(config):
@@ -28,9 +65,7 @@ def batch_source_configuration(config):
     transition = config.get("batch_transition")
     if transition is None:
         return None
-    if (not isinstance(transition, dict) or set(transition) != {"kind", "source_configuration", "source_audit"}
-            or transition["kind"] != "physical_batch_only_v1"):
-        raise ValueError("invalid physical-batch transition declaration")
+    temporal_execution(config)
     spec = transition["source_configuration"]
     if sha256(spec["path"]) != spec["sha256"]:
         raise ValueError("the immutable batch-source configuration changed")
@@ -64,7 +99,8 @@ def batch_source_configuration(config):
         raise ValueError("batch-source audit does not cover its exact recipe")
     previous, current = audit["source_sha256"], source_hashes()
     if (set(previous) != set(current)
-            or not {key for key in previous if previous[key] != current[key]}.issubset(CONTINUATION_SOURCE_CHANGES)):
+            or not {key for key in previous if previous[key] != current[key]}.issubset(
+                approved_source_changes(config, previous, current))):
         raise ValueError("batch transition changed model, data, loss, generation or sampling source")
     return source
 
@@ -104,7 +140,7 @@ def validate_prior_receipt(config, receipt):
     if not set(old).issubset(new) or set(new) - set(old) != {"scripts/id_xyz_resume.py"}:
         raise ValueError("unexpected source additions or removals at continuation")
     changes = {name for name in old if old[name] != new[name]}
-    if not changes.issubset(CONTINUATION_SOURCE_CHANGES):
+    if not changes.issubset(approved_source_changes(config, old, new)):
         raise ValueError("model, data, loss, generation or sampling implementation changed")
 
 
@@ -294,6 +330,8 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
             "global_asset_frame_seed_order_preserved": True,
             "future_bitwise_trajectory_claimed": False,
         }
+        if temporal_execution(config) is not None:
+            report["physical_batch_transition"]["temporal_execution"] = temporal_execution(config)
     return streams[rank], saved["rank_states"][rank], saved["initialization"], report
 
 
@@ -313,7 +351,8 @@ def audit_continuation(args, config, source):
     report = {"passed": True, "mode": "resume_audit", "no_GPU_or_optimizer_update": True,
               "initialization": initial, "restored": restored,
               "reused_prior_engineering_evidence": config["safety"],
-              "approved_training_source_changes": sorted(CONTINUATION_SOURCE_CHANGES),
+              "approved_training_source_changes": sorted(CONTINUATION_SOURCE_CHANGES | (
+                  {TEMPORAL_SOURCE} if temporal_execution(config) else set())),
               **evidence(config, source, args.config)}
     write_json(args.output / "resume_audit.json", report)
     return report

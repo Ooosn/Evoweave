@@ -180,6 +180,11 @@ def build_model(config, device):
     decoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     reset_random(initial["seed"])
     model = IdXYZRig(FixedQuerySurfaceTokenizer(mesh, projection), decoder, IdXYZConfig(**config["architecture"]))
+    from id_xyz_resume import temporal_execution
+    execution = temporal_execution(config)
+    if execution is not None:
+        for block in model.motion_encoder.blocks:
+            block.set_temporal_batch_chunk_size(execution["max_sequences"])
     fingerprint = parameter_fingerprint(model)
     report = {"source": source, "official_checkpoint_sha256": initial["sha256"],
               "load_report": loaded, "vocabulary_extension": extension,
@@ -187,6 +192,8 @@ def build_model(config, device):
               "architecture": model.configuration(), "codec": codec.configuration(),
               "groups": {name: sum(p.numel() for p in getattr(model, name).parameters() if p.requires_grad)
                          for name in ("surface_tokenizer", "motion_encoder", "xyz_decoder")}}
+    if execution is not None:
+        report["temporal_execution"] = execution
     model.to(device)
     return model, tokenizer, codec, report
 
@@ -276,6 +283,10 @@ def training_contract(config):
     contract["training"] = {k: v for k, v in config["training"].items() if k != "resume_checkpoint"}
     if config.get("continuation"):
         contract["continuation"] = config["continuation"]
+    from id_xyz_resume import temporal_execution
+    execution = temporal_execution(config)
+    if execution is not None:
+        contract["temporal_execution"] = execution
     return contract
 
 

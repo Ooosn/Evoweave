@@ -64,6 +64,7 @@ class AnchorWiseAlternatingBlock(nn.Module):
             batch_first=True,
             norm_first=True,
         )
+        self.temporal_batch_chunk_size = 0
         self.motion_injection = MotionEvidenceInjection(
             dim, heads, fusion=motion_evidence_fusion, biased_heads=motion_evidence_heads,
         )
@@ -71,6 +72,21 @@ class AnchorWiseAlternatingBlock(nn.Module):
 
     def set_register_temporal_mode(self, mode: str) -> None:
         self.register_temporal_mode = _validate_register_temporal_mode(mode)
+
+    def set_temporal_batch_chunk_size(self, size: int) -> None:
+        size = _validate_nonnegative_count(size, "temporal_batch_chunk_size")
+        if size and (self.anchor_temporal.self_attn.dropout != 0 or any(
+                module.p != 0 for module in self.anchor_temporal.modules() if isinstance(module, nn.Dropout))):
+            raise ValueError("temporal batch chunking requires zero dropout")
+        self.temporal_batch_chunk_size = size
+
+    def _temporal_forward(self, tokens: torch.Tensor) -> torch.Tensor:
+        limit = self.temporal_batch_chunk_size
+        if not limit or tokens.shape[0] <= limit:
+            return self.anchor_temporal(tokens)
+        # The leading dimension contains independent sequences, not time steps.
+        # Bound its size for the measured large-batch FlashAttention backward issue.
+        return torch.cat([self.anchor_temporal(part) for part in tokens.split(limit, dim=0)], dim=0)
 
     def _apply_temporal_attention(
         self,
@@ -84,7 +100,7 @@ class AnchorWiseAlternatingBlock(nn.Module):
         # registers are free summary slots and may mix across frame and slot.
         if self.register_temporal_mode == "aligned" or self.register_tokens == 0:
             z = z.permute(0, 2, 1, 3).reshape(batch_size * slot_count, frame_count, dim)
-            z = self.anchor_temporal(z)
+            z = self._temporal_forward(z)
             return z.reshape(batch_size, slot_count, frame_count, dim).permute(0, 2, 1, 3)
 
         register_end = self.role_prefix_count + self.register_tokens
@@ -100,7 +116,7 @@ class AnchorWiseAlternatingBlock(nn.Module):
         role_and_anchors = role_and_anchors.permute(0, 2, 1, 3).reshape(
             batch_size * (slot_count - self.register_tokens), frame_count, dim
         )
-        role_and_anchors = self.anchor_temporal(role_and_anchors)
+        role_and_anchors = self._temporal_forward(role_and_anchors)
         role_and_anchors = role_and_anchors.reshape(
             batch_size, slot_count - self.register_tokens, frame_count, dim
         ).permute(0, 2, 1, 3)
@@ -108,7 +124,7 @@ class AnchorWiseAlternatingBlock(nn.Module):
         registers = z[:, :, self.role_prefix_count : register_end].reshape(
             batch_size, frame_count * self.register_tokens, dim
         )
-        registers = self.anchor_temporal(registers)
+        registers = self._temporal_forward(registers)
         registers = registers.reshape(batch_size, frame_count, self.register_tokens, dim)
 
         role = role_and_anchors[:, :, : self.role_prefix_count]

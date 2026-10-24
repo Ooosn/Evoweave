@@ -365,9 +365,10 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
     results = []
     for number, case in enumerate(capacity_cases(config, reviewed)):
         requests = requests_for(config, case["indices"], frames=case["frames"], batch=24, rank=rank, number=number)
-        variants = [("candidate", case["batch_per_rank"])]
-        if case["stress_group"] == "mixed":
+        variants = []
+        if case["stress_group"] == "mixed" or number == 0:
             variants.append(("baseline", source["training"]["frame_policy"][str(case["frames"])]))
+        variants.append(("candidate", case["batch_per_rank"]))
         profiles, reference_inputs = {}, None
         for label, batch in variants:
             measurements = []
@@ -411,7 +412,24 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
                 if digest != reference_inputs:
                     raise ValueError("batch comparison changed asset/frame/seed/GT identity")
                 tick = time.monotonic()
-                groups = gradient_groups(model)
+                try:
+                    groups = gradient_groups(model)
+                except RuntimeError:
+                    details = []
+                    for name, parameter in model.named_parameters():
+                        if not parameter.requires_grad:
+                            continue
+                        gradient = parameter.grad
+                        if gradient is None or not bool(torch.isfinite(gradient).all()):
+                            details.append({"parameter": name, "missing": gradient is None,
+                                "nonfinite_elements": None if gradient is None else int((~torch.isfinite(gradient)).sum()),
+                                "elements": parameter.numel()})
+                    write_json(args.output / f"gradient_failure_rank_{rank}.json", {
+                        "case": number, "variant": label, "iteration": iteration,
+                        "frames": case["frames"], "batch_per_rank": batch,
+                        "loss": sum(losses) / 24, "input_identity_sha256": digest,
+                        "gradient_failures": details, **memory_check(config, device)})
+                    raise
                 norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
                 optimizer.step()
                 torch.cuda.synchronize(device)

@@ -311,8 +311,13 @@
       "code_commit": "44f9f0f09f3dacf6caf7302c8d648960e971cdc8",
       "config_sha256": "8d80fb86a0a9de6fcf965918514c1e998d77f8595d9a002c49a1118740c91422"
     },
-    "primary_accepted": false,
-    "continuation_audit": null
+    "primary_accepted": true,
+    "continuation_audit": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/cpu4_resume_audit_35000_v1/resume_audit.json",
+      "sha256": "0eab3045042f122eb9677cffbd725871a7accdb260df329f24abfb4decaa7db8",
+      "code_commit": "885f8a4abf6415fc474ba22d24a9d3c3482c24a0",
+      "config_sha256": "e1b3cfddca0f0515f8f59e97e5e56ae4999227245365af96165d9d52fb47aef4"
+    }
   },
   "arm": "consistency",
   "continuation": {

@@ -13,10 +13,12 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The current task is a 20,000-exposure real-frame ID/XYZ autoregressive trial
+The current task is a 100,000-total-exposure real-frame ID/XYZ autoregressive trial
 on the fixed 5,000-asset subset, with dynamic 2..24 frames and unchanged root-RT
 preprocessing. Every real frame is supervised by the same full decoder;
-structural consistency is evaluated under ground-truth prefixes. See the
+structural consistency is evaluated under ground-truth prefixes. The first
+5,000 exposures are checkpointed for exact-state continuation after the user's
+budget extension. See the
 [protocol](docs/ID_XYZ_CONSISTENCY_20261024.md). The original single-query
 baseline comparison is deferred, not redefined as this experiment.
 

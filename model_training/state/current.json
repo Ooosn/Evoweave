@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_cpu4_resume_running_20261024",
-  "updated_at": "2026-10-24T19:53:00Z",
+  "updated_at": "2026-10-24T19:54:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -930,7 +930,7 @@
     },
     "baseline_matched_evaluation": {
       "label": "original_single_query_matched_eval_20261025_v1",
-      "status": "local_CPU_audit_v2_accepted_smoke_only_authorized",
+      "status": "local_smoke_accepted_full64_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked to verify the existing original-baseline checkpoint and evaluate it if present, then explicitly said evaluation may run locally. Preserve HGC training and unrelated local GPU processes.",
       "code_commit": "b00e47ac407dcbd26f4b44b2ab1346ff6f4e816c",
@@ -978,7 +978,25 @@
         "lossy_legacy_parent_roundtrip_frames": 16,
         "original_GT_preserved": true
       },
-      "smoke_accepted": false,
+      "smoke_accepted": true,
+      "local_smoke": {
+        "accepted": true,
+        "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/smoke_v1",
+        "summary_sha256": "5d05a80a89bb32c61de24863e9fa8d4d932c0d960826da38181bca5899e12f6a",
+        "resource_sha256": "e18174d76b71585c739b15bb1de603a035b80066c28e39bf691f29d775db5fe3",
+        "exit_code": 0,
+        "generated_views": 8,
+        "parse_failures": 0,
+        "eos_failures": 0,
+        "peak_tree_rss_bytes": 6244065280,
+        "last_observed_aggregate_gpu_used_mib": 15412,
+        "gpu_total_mib": 32760,
+        "payload_cleanup_complete": true,
+        "source_config_reference_hashes_unchanged": true,
+        "optimizer_created": false,
+        "backward_performed": false,
+        "acceptance_scope": "Execution, input identity and resource safety only; not model quality. Full64 uses the same computation/configuration."
+      },
       "quality_approval": false,
       "local_environment": {
         "python": "3.12.12",
@@ -1011,13 +1029,14 @@
         {
           "mode": "smoke",
           "approved": true,
+          "status": "completed_execution_accepted",
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
           "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/smoke_v1"
         },
         {
           "mode": "evaluate",
-          "approved": false,
+          "approved": true,
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
           "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/evaluate_v1"

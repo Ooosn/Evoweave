@@ -62,5 +62,9 @@ streams for16 assets to B65, and verified all64 query permutations. Peak process
 tree RSS was6230614016bytes and cleanup completed. The original legacy codec
 changes parent identity on2 assets/16 frames; this is recorded, not repaired or
 substituted into the scoring GT. Original continuous GT remains the reference.
-Only the8-view GPU smoke stage is currently authorized; full64-view evaluation
-requires primary acceptance of its execution and resource receipts.
+The8-view GPU smoke completed with exit0, no parse/EOS failure and no parameter
+update. Original inputs/config/reference hashes remained unchanged; peak
+process-tree RSS was6244065280bytes and cleanup completed. The supervisor's
+last aggregate GPU sample was15412/32760MiB; it is not a recorded peak.
+Primary accepted execution and resource safety, not model quality, and released
+the full64-view evaluation with unchanged computation and configuration.

@@ -10,7 +10,6 @@ import json
 import os
 import re
 import random
-import resource
 import sys
 import time
 import types
@@ -24,6 +23,13 @@ import numpy as np
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, RandomSampler
 from torch.utils.data.distributed import DistributedSampler
+
+try:
+    import resource
+except ModuleNotFoundError:
+    if sys.platform != "win32":
+        raise
+    resource = None
 
 
 REPO = Path(__file__).resolve().parents[2]
@@ -262,6 +268,8 @@ def _fmt_gib(num_bytes: int) -> str:
 def log_process_memory(rank: int, label: str, enabled: bool) -> None:
     if not enabled:
         return
+    if resource is None:
+        raise RuntimeError("POSIX process-memory logging is unavailable on Windows")
     pid = os.getpid()
     pids = [pid] + _child_pids(pid)
     rows: list[str] = []
@@ -437,7 +445,7 @@ def accounting_fields(step: int, effective_batch: int, train_rows: int, batch_ac
     }
 
 
-def load_unirig(tokenizer: Any, model_config: Path, checkpoint: Path) -> Any:
+def load_unirig(tokenizer: Any, model_config: Path, checkpoint: Path | None) -> Any:
     if os.environ.get("RIGWEAVE_DISABLE_LIGHTNING_IMPORT", "0") == "1" and "lightning.pytorch" not in sys.modules:
         # UniRig's model base class inherits LightningModule, but this training
         # script never uses Lightning Trainer APIs.  Stubbing avoids importing
@@ -482,6 +490,8 @@ def load_unirig(tokenizer: Any, model_config: Path, checkpoint: Path) -> Any:
     with pushd(UNIRIG_ROOT):
         model = get_model(**cfg)
 
+    if checkpoint is None:
+        return model
     ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
     state = ckpt.get("state_dict", ckpt)
     state = {k.removeprefix("model."): v for k, v in state.items()}

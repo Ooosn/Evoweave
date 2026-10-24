@@ -110,6 +110,45 @@ class RootRTTests(unittest.TestCase):
         return root_rt.load_root_rt(self.row if row is None else row, count,
                                     self.numbers if numbers is None else numbers, root_index=root_index)
 
+    def test_relocated_files_preserve_canonical_identity_and_exact_geometry(self):
+        original = VirtualFrameDataset([self.row], mode="seen_eval")[0]
+        canonical = deepcopy(self.row)
+        canonical["path"] = "/original/server/asset.npz"
+        canonical["root_rt"]["cache_path"] = "/original/server/rt.npz"
+        saved = deepcopy(canonical)
+        shard = deepcopy(self.shard)
+        shard["path_hashes"] = np.asarray([hashlib.sha256(canonical["path"].encode()).hexdigest()], dtype="U64")
+        self.write_shard(shard)
+        mapping = {canonical["path"]: self.path, canonical["root_rt"]["cache_path"]: self.cache}
+        moved = VirtualFrameDataset([canonical], mode="seen_eval", file_resolver=mapping.__getitem__)[0]
+        self.assertEqual(canonical, saved)
+        self.assertEqual(moved["path"], [canonical["path"]])
+        self.assertEqual(moved["resolved_path"], [str(self.path)])
+        for key, value in original.items():
+            if isinstance(value, torch.Tensor):
+                self.assertTrue(torch.equal(value, moved[key]), key)
+            elif key != "path":
+                self.assertEqual(value, moved[key], key)
+        bad = deepcopy(canonical)
+        bad["path"] = "/original/server/wrong_asset.npz"
+        mapping[bad["path"]] = self.path
+        with self.assertRaisesRegex(ValueError, "path hash mismatch"):
+            load_medium_batch(bad, [0, 1], file_resolver=mapping.__getitem__)
+
+    def test_canonical_posix_manifest_paths_survive_windows_reading(self):
+        from rigweave.dynamic_rig.virtual_frame_data import read_virtual_manifest
+        row = deepcopy(self.row)
+        row["path"] = "/original/server/asset.npz"
+        row["root_rt"]["cache_path"] = "/original/server/rt.npz"
+        manifest = self.directory / 'remote_manifest.jsonl'
+        manifest.write_text(json.dumps(row) + '\n', encoding='utf-8')
+        self.assertEqual(read_virtual_manifest(manifest, expected_count=1,
+            expected_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest()), [row])
+        root_rt.validate_descriptor(row)
+        row['path'] = 'relative/asset.npz'
+        with self.assertRaisesRegex(ValueError, 'original absolute'):
+            root_rt.validate_descriptor(row)
+
     def flat(self, row=None, global_rotation=None, legacy=False):
         manifest = self.directory / "manifest.jsonl"
         manifest.write_text(json.dumps(self.row if row is None else row) + "\n", encoding="utf-8")

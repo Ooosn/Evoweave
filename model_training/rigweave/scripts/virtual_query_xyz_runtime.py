@@ -121,11 +121,12 @@ def read_entries(config):
     return result
 
 
-def fixed_dataset(rows, config, frames, mode='seen_eval'):
+def fixed_dataset(rows, config, frames, mode='seen_eval', *, file_resolver=None):
     data = config['data']
     return VirtualFrameDataset(rows, frame_seed=data['frame_seed'], sampling_seed=data['surface_seed'],
         frames=frames, heldout_frames=data['heldout_frames'], mode=mode,
-        motion_fps_ratio=.75, minimum_random_frames=1, motion_vertex_samples=512)
+        motion_fps_ratio=.75, minimum_random_frames=1, motion_vertex_samples=512,
+        file_resolver=file_resolver)
 
 
 def prepare_batch(batch, config, tokenizer, codec, device):

@@ -106,7 +106,10 @@ def apply_checkpoint_eval_defaults(args: argparse.Namespace) -> dict[str, Any]:
     return train_args
 
 
-def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch.device) -> torch.nn.Module:
+def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch.device,
+                         *, strict_checkpoint: bool = False,
+                         initialize_from_official: bool = True,
+                         checkpoint_payload: dict[str, Any] | None = None) -> torch.nn.Module:
     from rigweave.dynamic_rig import (
         FixedQuerySurfaceTokenizer,
         FrameTypeAnchorWiseAlternatingMotionEncoder,
@@ -116,7 +119,10 @@ def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch
     from rigweave.dynamic_rig.model import DynamicRigConditioner
     from rigweave.dynamic_rig.unirig_wrapper import DynamicRigUniRigAR
 
-    ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+    if not initialize_from_official and not strict_checkpoint:
+        raise ValueError("skipping official initialization requires a complete strict checkpoint")
+    ckpt = (checkpoint_payload if checkpoint_payload is not None else
+            torch.load(args.checkpoint, map_location="cpu", weights_only=False))
     state = ckpt["model"]
     legacy_motion_encoder = any(
         key.startswith("conditioner.motion_encoder.blocks.") and ".spatial." in key for key in state
@@ -127,7 +133,8 @@ def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch
         and "conditioner.motion_encoder.role_token" not in state
     )
 
-    unirig = load_unirig(tokenizer, args.model_config, args.unirig_checkpoint)
+    unirig = load_unirig(tokenizer, args.model_config,
+                         args.unirig_checkpoint if initialize_from_official else None)
     surface_tokenizer = FixedQuerySurfaceTokenizer(unirig.mesh_encoder, unirig.output_proj)
     if legacy_motion_encoder:
         motion_encoder_cls = LegacyTemporalMotionEncoder
@@ -197,7 +204,7 @@ def _build_dynamic_model(args: argparse.Namespace, tokenizer: Any, device: torch
         explicit_tree_action_branch_loss_weight=args.explicit_tree_action_branch_loss_weight,
         explicit_tree_xyz_loss_weight=args.explicit_tree_xyz_loss_weight,
     )
-    missing, unexpected = model.load_state_dict(state, strict=False)
+    missing, unexpected = model.load_state_dict(state, strict=strict_checkpoint)
     evidence_key_errors = [key for key in [*missing, *unexpected] if ".motion_injection." in key]
     if evidence_key_errors:
         raise RuntimeError(f"motion evidence checkpoint/config mismatch: {evidence_key_errors}")

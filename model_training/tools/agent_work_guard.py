@@ -101,9 +101,15 @@ def begin() -> int:
 
 
 def _check_entrypoint(state: dict[str, Any], operation: str, entrypoint: str | None) -> None:
-    expected = state.get("active_operation", {}).get("required_entrypoint")
+    active = state.get("active_operation", {})
+    bindings = active.get("operation_entrypoints", {})
+    if not isinstance(bindings, dict):
+        raise RuntimeError("operation_entrypoints must be a mapping")
+    expected = bindings.get(operation, active.get("required_entrypoint"))
     if operation not in {"train", "preflight", "submit", "matched_eval"} or expected is None:
         return
+    if not isinstance(expected, str) or not expected.strip():
+        raise RuntimeError("the recorded entrypoint must be a nonempty path")
     if not entrypoint or (REPO_ROOT / entrypoint).resolve() != (REPO_ROOT / expected).resolve():
         raise RuntimeError(f"operation requires the recorded entrypoint {expected!r}; historical launchers are blocked")
 

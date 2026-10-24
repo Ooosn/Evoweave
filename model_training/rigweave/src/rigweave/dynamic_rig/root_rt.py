@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 import hashlib
 from numbers import Integral, Real
-from pathlib import Path
-from typing import Any, Mapping
+from pathlib import Path, PurePosixPath
+from typing import Any, Callable, Mapping
 
 import numpy as np
 
@@ -31,6 +31,10 @@ def _integer(value: Any, name: str, minimum: int = 0) -> int:
     return int(value)
 
 
+def is_absolute_manifest_path(value: Any) -> bool:
+    return isinstance(value, str) and (Path(value).is_absolute() or PurePosixPath(value).is_absolute())
+
+
 def validate_descriptor(row: Mapping[str, Any]) -> Mapping[str, Any] | None:
     if "root_rt" not in row:
         return None
@@ -49,9 +53,9 @@ def validate_descriptor(row: Mapping[str, Any]) -> Mapping[str, Any] | None:
         raise ValueError("root_rt reference_index must be 0")
     _integer(spec["index"], "index")
     _integer(spec["frame_count"], "frame_count", 1)
-    if not isinstance(row.get("path"), str) or not Path(row["path"]).is_absolute():
+    if not is_absolute_manifest_path(row.get("path")):
         raise ValueError("root_rt requires the original absolute manifest path string")
-    if not isinstance(spec["cache_path"], str) or not Path(spec["cache_path"]).is_absolute():
+    if not is_absolute_manifest_path(spec["cache_path"]):
         raise ValueError("root_rt cache_path must be absolute")
     return spec
 
@@ -140,7 +144,7 @@ class RootRT:
 
 def load_root_rt(
     row: Mapping[str, Any], frame_count: int, frame_numbers: np.ndarray | None,
-    *, root_index: int | None = None,
+    *, root_index: int | None = None, file_resolver: Callable[[str], str | Path] | None = None,
 ) -> RootRT | None:
     spec = validate_descriptor(row)
     if spec is None:
@@ -153,7 +157,7 @@ def load_root_rt(
     numbers = np.asarray(frame_numbers)
     if numbers.shape != (count,) or not np.issubdtype(numbers.dtype, np.integer):
         raise ValueError("root_rt invalid NPZ frame_numbers")
-    path = Path(spec["cache_path"])
+    path = Path(file_resolver(spec["cache_path"]) if file_resolver else spec["cache_path"])
     shard = _load_shard(str(path), _stamp(path))
     index = spec["index"]
     if index >= len(shard["frame_counts"]):

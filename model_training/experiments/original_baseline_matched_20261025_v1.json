@@ -1,0 +1,62 @@
+{
+  "family": "original_single_query_matched_eval_v1",
+  "runtime": {
+    "execution_mode": "local_windows",
+    "repo": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave",
+    "python": "D:/Users/namew/miniconda3/envs/mygs/python.exe",
+    "unirig_root": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/vendor/UniRig",
+    "opt_config_root": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/vendor/opt-config",
+    "extra_pythonpath": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runtime",
+    "cache_root": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runtime_cache",
+    "world_size": 1,
+    "device_index": 0,
+    "gpu_uuid": "GPU-7907eaad-32b2-c0d1-236e-e7b84cee8bbb",
+    "cpu_affinity": [8, 9, 10, 11, 12, 13, 14, 15],
+    "rss_limit_bytes": 34359738368,
+    "gpu_memory_fraction_limit": 0.45,
+    "aggregate_gpu_fraction_limit": 0.85,
+    "attention_backend": "sdpa"
+  },
+  "checkpoint": {
+    "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/weights/checkpoint_sample_80000.pt",
+    "sha256": "4cdde3cac8b8b83d690128785065bcde6b6186044bcbdeac6f701acff3b7bb55",
+    "bytes": 7995123574,
+    "step": 1667,
+    "sample_seen": 80016
+  },
+  "panel_config": {
+    "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/inputs/panel_config.json",
+    "sha256": "3015e803467ca248204303db31ffc042661b61959d5cf8d10d17af134fb45831"
+  },
+  "local_artifacts_manifest": {
+    "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/download_manifest.json",
+    "sha256": "9402d78ad5b217084a549a8a4dc538725b485df1c656b199d00b72f0224794d9"
+  },
+  "evaluation": {
+    "input_frames": 8,
+    "frame_slots": [0, 2, 4, 6],
+    "valid_assets": 16,
+    "max_new_tokens": 2048,
+    "seed": 20261022
+  },
+  "reference_B65": {
+    "files": {
+      "selection": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_selection.json",
+        "sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
+      },
+      "rank_0": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_065000/rank_0.json",
+        "sha256": "377b225168dddfe4ab11362b3e616882fb53bab6cbbc4bfc0fa7ac81a80bfd1e"
+      },
+      "rank_1": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_065000/rank_1.json",
+        "sha256": "9d78b1b959f02c2b8cde63d7d1d6273e5f810021ec3e557d17635fff9274e354"
+      },
+      "summary": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_065000/summary.json",
+        "sha256": "f79b18aa3351d576f112a6e0150a6b1bcf408ff1c3de40eb2f065be5a7faf14e"
+      }
+    }
+  }
+}

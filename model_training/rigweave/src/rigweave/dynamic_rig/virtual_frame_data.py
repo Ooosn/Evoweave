@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from pathlib import Path
-from typing import Any
+from pathlib import Path, PurePosixPath
+from typing import Any, Callable
 
 import numpy as np
 import torch
@@ -14,7 +14,7 @@ from .data import select_mesh_frame_ids
 from .frame_batch_sampler import FrameSampleRequest
 from .sampling import materialize_trackable_surface, sample_trackable_surface
 from .shared_structure_medium_data import load_medium_batch, partition_raw_frames
-from .root_rt import BATCH_KEYS
+from .root_rt import BATCH_KEYS, is_absolute_manifest_path
 
 
 def read_virtual_manifest(path: str | Path, *, expected_count: int, expected_sha256: str) -> list[dict[str, Any]]:
@@ -27,7 +27,7 @@ def read_virtual_manifest(path: str | Path, *, expected_count: int, expected_sha
     if len(rows) != expected_count or len({row["path"] for row in rows}) != len(rows):
         raise ValueError("manifest count or unique path count differs from the selected dataset")
     for row in rows:
-        if not Path(row["path"]).is_absolute() or not row.get("asset_id"):
+        if not is_absolute_manifest_path(row["path"]) or not row.get("asset_id"):
             raise ValueError("canonical manifest rows require absolute backing paths and asset IDs")
     return rows
 
@@ -43,6 +43,7 @@ class VirtualFrameDataset(Dataset):
         mode: str = "train", motion_fps_ratio: float = .75, minimum_random_frames: int = 1,
         motion_vertex_samples: int = 512,
         global_rotation: np.ndarray | None = None,
+        file_resolver: Callable[[str], str | Path] | None = None,
     ) -> None:
         if mode not in {"train", "seen_eval", "heldout_eval"}:
             raise ValueError("unknown frame partition mode")
@@ -56,6 +57,7 @@ class VirtualFrameDataset(Dataset):
         self.minimum_random_frames = minimum_random_frames
         self.motion_vertex_samples = motion_vertex_samples
         self.global_rotation = global_rotation
+        self.file_resolver = file_resolver
 
     def __len__(self) -> int:
         return len(self.entries)
@@ -67,7 +69,7 @@ class VirtualFrameDataset(Dataset):
             index, frames = int(request), self.frames
             seed = partition_seed(self.sampling_seed, self.entries[index]["asset_id"])
         entry = self.entries[index]
-        path = Path(entry["path"])
+        path = PurePosixPath(entry["path"]) if entry["path"].startswith('/') else Path(entry["path"])
         selection: dict[str, Any] = {}
 
         def choose(vertices: np.ndarray) -> np.ndarray:
@@ -86,7 +88,8 @@ class VirtualFrameDataset(Dataset):
             selection.update(raw_frame_count=len(vertices), heldout_raw_ids=heldout.tolist())
             return selected
 
-        batch = load_medium_batch(entry, choose, global_rotation=self.global_rotation)
+        batch = load_medium_batch(entry, choose, global_rotation=self.global_rotation,
+                                  file_resolver=self.file_resolver)
         vertices = batch["frame_vertices"]
         batch["frame_mesh_bbox_side"] = (vertices.amax(dim=2) - vertices.amin(dim=2)).amax(dim=-1)
         batch.update(asset_id=entry["asset_id"], sampling_seed=int(seed), frame_partition=self.mode, **selection)

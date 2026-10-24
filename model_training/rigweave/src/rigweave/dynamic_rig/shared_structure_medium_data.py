@@ -93,6 +93,7 @@ def _joint_flags(value: Any, name: str, joints: int) -> np.ndarray:
 def load_medium_batch(
     path: str | Path | Mapping[str, Any], frame_ids: FrameIds | Callable[[np.ndarray], FrameIds],
     cls_name: str = "articulationxl", *, global_rotation: np.ndarray | None = None,
+    file_resolver: Callable[[str], str | Path] | None = None,
 ) -> dict[str, Any]:
     """Read a complete rootless-v3 target tree into an unpadded CPU B=1 batch.
 
@@ -103,7 +104,7 @@ def load_medium_batch(
     """
     ids = None if callable(frame_ids) else _frame_ids(frame_ids, "frame_ids")
     row = dict(path) if isinstance(path, Mapping) else {"path": str(path)}
-    path = Path(row["path"]).expanduser()
+    path = Path(file_resolver(row["path"]) if file_resolver else row["path"]).expanduser()
     if global_rotation is not None and "root_rt" not in row:
         raise ValueError("global_rotation requires root_rt manifest metadata")
     if not isinstance(cls_name, str) or not cls_name:
@@ -128,7 +129,8 @@ def load_medium_batch(
         retained_root = None
         if "target_raw_indices" in raw.files:
             retained_root = int(np.asarray(raw["target_raw_indices"])[0])
-        rt = load_root_rt(row, total_frames, all_frame_numbers, root_index=retained_root)
+        rt = load_root_rt(row, total_frames, all_frame_numbers, root_index=retained_root,
+                          file_resolver=file_resolver)
         if rt is not None:
             vertices = align_points(vertices, rt)
         if callable(frame_ids):
@@ -207,6 +209,8 @@ def load_medium_batch(
         "target_has_skin": torch.from_numpy(has_skin)[None],
         "target_is_synthetic_root": torch.from_numpy(synthetic)[None],
     }
+    if file_resolver is not None:
+        batch.update(path=[row["path"]], resolved_path=[str(path)])
     if frame_numbers is not None:
         batch["frame_numbers"] = torch.from_numpy(frame_numbers)[None]
     if rt is not None:

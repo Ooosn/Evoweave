@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "state_id": "real_frame_id_xyz_continuation100000_prepare_20261024",
+  "state_id": "real_frame_id_xyz_continuation100000_cpu_audit_20261024",
   "updated_at": "2026-10-24T00:36:03Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -920,21 +920,25 @@
   },
   "active_operation": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
-    "status": "checkpoint5000_controlled_handoff_for_human100000_extension",
+    "status": "exact5000_resume_CPU_audit_released_for100000_total",
     "operation": "inspect",
-    "mode": "continuation_preparation",
+    "mode": "audit",
     "complete": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
     "contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
     "authorization": "Human selected real-frame all-target ID+XYZ autoregression with GT-position cross-frame structural CE and explicitly said start, still direct SSH. On2026-10-24 the human corrected the total budget to100000 asset exposures. Continue the same model and training state; this is an explicit budget extension, not automatic promotion.",
     "target_asset_exposures": 100000,
-    "code_commit": "d4419ea3af67028fbf7de8bae65845f8e6d2d12b",
-    "cpu_tests_passed": 51,
+    "code_commit": "da3738b8b243022a06fe4e40a2c7487947f85fb6",
+    "cpu_tests_passed": 76,
+    "continuation_tests_passed": 25,
+    "stage_regression_tests_passed": 13,
     "resource_supervisor_regression_tests_passed": 8,
-    "deployed_code": "/work/wangyy/id_xyz_consistency_20261024/code",
+    "deployed_code": "/work/wangyy/id_xyz_consistency_20261024/continue_code",
+    "immutable_parent_code": "/work/wangyy/id_xyz_consistency_20261024/code",
     "output_root": "/work/wangyy/id_xyz_consistency_20261024/outputs",
-    "source_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
-    "source_checkpoint_sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+    "source_checkpoint": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_20000_v1/checkpoint_005000.pt",
+    "source_checkpoint_sha256": "8303f23a0b36820a1e14fa2ebee10b4325f78edf108ceca637f1804318050c90",
+    "lineage_initial_checkpoint_sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
     "train_manifest_sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
     "valid_manifest_sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a",
     "gpu_work_allowed": false,
@@ -1116,6 +1120,16 @@
       "effective_assets_per_update": 48,
       "fresh_official_initialization": true,
       "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/code/model_training/experiments/id_xyz_consistency_20000_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/consistency_20000_v1 --mode train"
+    }, {
+      "mode": "audit",
+      "approved": true,
+      "cpu_only": true,
+      "config": "/work/wangyy/id_xyz_consistency_20261024/continue_code/model_training/experiments/id_xyz_consistency_100000_v1.json",
+      "config_sha256": "0f6339c2cebbc3dd0d243b47fad339a8032025617218cc19106d9c6bd794bf95",
+      "output": "/work/wangyy/id_xyz_consistency_20261024/outputs/resume_audit_5000_v1",
+      "allocation": 130309880,
+      "physical_gpus": [5, 6],
+      "command": "/home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/id_xyz_consistency_20261024/continue_code/model_training/jobs/launch_id_xyz_consistency.py --config /work/wangyy/id_xyz_consistency_20261024/continue_code/model_training/experiments/id_xyz_consistency_100000_v1.json --output /work/wangyy/id_xyz_consistency_20261024/outputs/resume_audit_5000_v1 --mode audit"
     }],
     "acceptance": [
       "Only real frames; shared final1024mesh tokens per frame; one full ID+XYZ decoder; no virtual/fusion/auxiliary path.",
@@ -1125,7 +1139,7 @@
       "Require finite gradient routes, bounded non52 fixed fit and measured two-H100 Adam-resident capacity before formal training.",
       "Reach exactly100000 total asset exposures as explicitly requested; preserve the first5000 model/optimizer/RNG/sampler state, assess original-GT quality separately from consistency, and save a recoverable handoff before allocation expiry when necessary."
     ],
-    "deferred_work": "Original existing single-query baseline versus bestB restoration remains deferred; the rejected reconstruction is not reused. Lambda0 control is prepared but not concurrently released."
+    "deferred_work": "Original single-query versus bestB restoration remains deferred. The prior20k lambda0 draft is not a matched100k control; a fresh control must reproduce the extended budget and split schedule, and is not released."
   },
   "rejected_legacy_single_target_reconstruction_20261024": {
     "label": "legacy_single_target_100000_20261024_v1",

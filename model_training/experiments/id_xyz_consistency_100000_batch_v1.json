@@ -299,10 +299,10 @@
       "config_sha256": "3118ec0708b692647de0237cb2cb0c76581672879994f5512e2edede9dec2de4"
     },
     "capacity": {
-      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/capacity_v1/capacity.json",
-      "sha256": "57f98df493dd9f6c8647246f0783c96305c06d030368a4627b71d96ebcd2c5a5",
-      "code_commit": "57032cbc5d544f63c08a8212873c94094dba4abb",
-      "config_sha256": "675da788b278b8cabe94afebd3eb9afc8e31e38c127716228c9ca64933e2ea07"
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/batch_capacity_v4/capacity.json",
+      "sha256": "39482f424c22c0b50a4bcacbc880a581a093d7b90f194328e240f1bd7760f774",
+      "code_commit": "44f9f0f09f3dacf6caf7302c8d648960e971cdc8",
+      "config_sha256": "8d80fb86a0a9de6fcf965918514c1e998d77f8595d9a002c49a1118740c91422"
     },
     "primary_accepted": true,
     "continuation_audit": null

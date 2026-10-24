@@ -930,7 +930,7 @@
     },
     "baseline_matched_evaluation": {
       "label": "original_single_query_matched_eval_20261025_v1",
-      "status": "local_CPU_audit_prepared_GPU_stages_blocked",
+      "status": "local_CPU_audit_v2_prepared_after_numpy_distribution_repair",
       "explicit_human_authorized": true,
       "authorization": "Human asked to verify the existing original-baseline checkpoint and evaluate it if present, then explicitly said evaluation may run locally. Preserve HGC training and unrelated local GPU processes.",
       "code_commit": "b00e47ac407dcbd26f4b44b2ab1346ff6f4e816c",
@@ -963,13 +963,32 @@
       "GPU_allowed": false,
       "smoke_accepted": false,
       "quality_approval": false,
+      "local_environment": {
+        "python": "3.12.12",
+        "torch": "2.7.1+cu128",
+        "transformers": "4.46.1 isolated overlay matching HGC",
+        "tokenizers": "0.20.3 isolated overlay",
+        "numpy": "1.26.4 isolated official wheel; shared mygs installation untouched",
+        "audit_v1_failure": "CPU strict model load succeeded, but canonical NPZ metadata could not import numpy._core from the shared local1.26.4 distribution. Installed a complete official1.26.4 wheel into the isolated overlay; all16 unchanged NPZ schema fields now read successfully.",
+        "audit_v1_exit_code": 1,
+        "audit_v1_payload_cleanup_complete": true,
+        "audit_v1_peak_tree_rss_bytes": 5988478976
+      },
       "runs": [
+        {
+          "mode": "audit",
+          "approved": false,
+          "status": "failed_numpy_compatibility_module_missing_before_geometry_audit",
+          "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
+          "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
+          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v1"
+        },
         {
           "mode": "audit",
           "approved": true,
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
-          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v1"
+          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v2"
         },
         {
           "mode": "smoke",

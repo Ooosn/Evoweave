@@ -349,6 +349,101 @@ class TimedCapacityForward(torch.nn.Module):
         return output
 
 
+class TemporalFailureProbe:
+    """Capture one original forward, ignoring checkpoint recomputation."""
+    def __init__(self, module):
+        self.module, self.enabled = module, False
+        self.input = self.output = self.output_gradient = None
+        self.handle = module.register_forward_hook(self.capture, with_kwargs=True)
+
+    def capture(self, module, args, kwargs, output):
+        if not self.enabled:
+            return
+        if (len(args) != 3 or args[0] is not args[1] or args[0] is not args[2]
+                or kwargs != {"attn_mask": None, "key_padding_mask": None,
+                              "need_weights": False, "is_causal": False}):
+            raise ValueError("temporal failure probe requires unmasked self-attention")
+        self.input, self.output = args[0].detach(), output[0].detach()
+        self.output_gradient = None
+        output[0].register_hook(self.capture_gradient)
+
+    def capture_gradient(self, gradient):
+        self.output_gradient = gradient.detach()
+
+    @contextmanager
+    def armed(self):
+        self.input = self.output = self.output_gradient = None
+        self.enabled = True
+        try:
+            yield
+        finally:
+            self.enabled = False
+
+    def close(self):
+        self.handle.remove()
+
+    def run(self, config, device, path):
+        def statistics(tensor):
+            finite = torch.isfinite(tensor)
+            return {"shape": list(tensor.shape), "dtype": str(tensor.dtype),
+                    "nonfinite": int((~finite).sum()),
+                    "finite_max_abs": float(torch.where(finite, tensor.abs(), 0.).max())}
+
+        if self.input is None or self.output_gradient is None:
+            raise RuntimeError("missing captured temporal attention input or gradient")
+        report = {"module": "motion_encoder.blocks[-1].anchor_temporal.self_attn",
+                  "torch_version": torch.__version__, "input": statistics(self.input),
+                  "output": statistics(self.output),
+                  "incoming_gradient": statistics(self.output_gradient), "variants": []}
+        write_json(path, report)
+        # The failed profile has already stopped. This isolated copy cannot alter
+        # model parameters, Adam state, DDP reductions, or any training checkpoint.
+        module = deepcopy(self.module)
+        module._forward_hooks.clear()
+        module._forward_hooks_with_kwargs.clear()
+        names, parameters = zip(*module.named_parameters())
+        for label, chunk, backend in (("default_full", len(self.input), None),
+                                      ("default_half", len(self.input) // 2, None),
+                                      ("flash_full", len(self.input), "flash"),
+                                      ("math_full", len(self.input), "math")):
+            torch.cuda.reset_peak_memory_stats(device)
+            tick = time.monotonic()
+            accumulated = [torch.zeros_like(parameter) for parameter in parameters]
+            input_bad, output_bad, input_max, forward_difference = 0, 0, 0., 0.
+            for offset in range(0, len(self.input), chunk):
+                x = self.input[offset:offset + chunk].detach().requires_grad_(True)
+                backend_context = (nullcontext() if backend is None else torch.backends.cuda.sdp_kernel(
+                    enable_flash=backend == "flash", enable_math=backend == "math",
+                    enable_mem_efficient=False, enable_cudnn=False))
+                with backend_context, torch.autocast("cuda", dtype=torch.bfloat16):
+                    y = module(x, x, x, need_weights=False)[0]
+                    gradients = torch.autograd.grad(y, (x, *parameters),
+                        self.output_gradient[offset:offset + chunk])
+                stats = statistics(gradients[0])
+                input_bad += stats["nonfinite"]
+                input_max = max(input_max, stats["finite_max_abs"])
+                output_bad += int((~torch.isfinite(y)).sum())
+                forward_difference = max(forward_difference, float(
+                    (y.detach() - self.output[offset:offset + chunk]).abs().max()))
+                for total, gradient in zip(accumulated, gradients[1:]):
+                    total.add_(gradient)
+                del x, y, gradients
+                memory_check(config, device)
+            torch.cuda.synchronize(device)
+            item = {"variant": label, "chunk_size": chunk,
+                    "seconds": time.monotonic() - tick,
+                    "output_nonfinite": output_bad,
+                    "forward_max_abs_difference": forward_difference,
+                    "input_gradient_nonfinite": input_bad, "input_gradient_finite_max_abs": input_max,
+                    "parameter_gradients": {name: statistics(gradient) for name, gradient in zip(names, accumulated)},
+                    **memory_check(config, device)}
+            report["variants"].append(item)
+            write_json(path, report)
+            print("TEMPORAL_FAILURE_PROBE " + json.dumps(item), flush=True)
+        del module
+        return report
+
+
 def batch_capacity(model, codec, initial, entries, config, args, device, rank, world, reviewed):
     from id_xyz_resume import batch_source_configuration
     source = batch_source_configuration(config)
@@ -361,6 +456,7 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
         group["lr"] = 0.
     timed = TimedCapacityForward(model, device)
     wrapped = wrap(timed, device, world)
+    probe = TemporalFailureProbe(model.motion_encoder.blocks[-1].anchor_temporal.self_attn)
     model.train()
     results = []
     for number, case in enumerate(capacity_cases(config, reviewed)):
@@ -392,7 +488,7 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
                             geometry["selected_frames"][index].tolist(), width], separators=(",", ":")).encode())
                         inputs.update(targets["input_ids"][index, :, :width].detach().cpu().numpy().tobytes())
                     with (wrapped.no_sync() if offset + len(chunk) < 24 else nullcontext()):
-                        with torch.autocast("cuda", dtype=torch.bfloat16):
+                        with probe.armed(), torch.autocast("cuda", dtype=torch.bfloat16):
                             output = wrapped(surface, targets, consistency_weight=config["consistency"]["weight"])
                         if not bool(torch.isfinite(output["loss_per_asset"]).all()):
                             raise RuntimeError("nonfinite physical-batch profile loss")
@@ -429,6 +525,9 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
                         "frames": case["frames"], "batch_per_rank": batch,
                         "loss": sum(losses) / 24, "input_identity_sha256": digest,
                         "gradient_failures": details, **memory_check(config, device)})
+                    probe.close()
+                    optimizer.zero_grad(set_to_none=True)
+                    probe.run(config, device, args.output / f"temporal_failure_probe_rank_{rank}.json")
                     raise
                 norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
                 optimizer.step()
@@ -447,6 +546,7 @@ def batch_capacity(model, codec, initial, entries, config, args, device, rank, w
         results.append({**case, "passed": True, "measurements": profiles["candidate"]["measurements"],
                         "profiles": profiles})
         write_json(args.output / f"capacity_rank_{rank}.json", {"passed": False, "rank": rank, "cases": results})
+    probe.close()
     reports = gather({"rank": rank, "cases": results, "passed": True}, world)
     comparisons = []
     for number, case in enumerate(capacity_cases(config, reviewed)):

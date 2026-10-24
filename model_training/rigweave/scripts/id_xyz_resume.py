@@ -21,6 +21,77 @@ CONTINUATION_SOURCE_CHANGES = {
     "scripts/train_id_xyz_consistency.py", "scripts/id_xyz_resume.py",
 }
 TEMPORAL_SOURCE = "src/rigweave/dynamic_rig/motion_encoder.py"
+RESOURCE_SOURCE_CHANGES = {"scripts/id_xyz_resume.py", "scripts/id_xyz_stages.py"}
+
+
+def resource_source_configuration(config):
+    """Validate an explicit CPU-only continuation against its frozen producer."""
+    transition = config.get("resource_transition")
+    if transition is None:
+        return None
+    from id_xyz_runtime import paired_contract_hash, sha256, source_hashes
+    from id_xyz_stages import read_reviewed
+    if (not isinstance(transition, dict) or set(transition) != {
+            "kind", "source_configuration", "source_audit", "source_head", "handoff_assets"}
+            or transition.get("kind") != "cpu_budget_only_v1"
+            or type(transition["handoff_assets"]) is not int
+            or transition["handoff_assets"] not in config["training"]["checkpoint_assets"]
+            or not 20000 < transition["handoff_assets"] < 100000
+            or not isinstance(transition["source_head"], str) or len(transition["source_head"]) != 40
+            or any(c not in "0123456789abcdef" for c in transition["source_head"])):
+        raise ValueError("invalid CPU resource transition declaration")
+    spec = transition["source_configuration"]
+    if sha256(spec["path"]) != spec["sha256"]:
+        raise ValueError("the immutable CPU-source configuration changed")
+    source = json.loads(Path(spec["path"]).read_text())
+    if source.get("resource_transition") or not source.get("batch_transition"):
+        raise ValueError("CPU transition must reference the reviewed physical-batch recipe")
+    excluded = {"runtime", "training", "safety", "resource_transition"}
+    if {k: v for k, v in config.items() if k not in excluded} != {
+            k: v for k, v in source.items() if k not in excluded}:
+        raise ValueError("CPU transition changed model, data, loss or evaluation")
+    runtime = config["runtime"]
+    cpus = runtime.get("cpu_affinity")
+    if (type(source["runtime"].get("cpu_slots")) is not int or source["runtime"]["cpu_slots"] != 1
+            or type(runtime.get("cpu_slots")) is not int or runtime["cpu_slots"] != 1
+            or any(key in source["runtime"] for key in ("execution_cpu_budget", "cpu_affinity"))
+            or runtime.get("execution_mode") != "explicit_ssh_exception"
+            or type(runtime.get("execution_cpu_budget")) is not int or runtime["execution_cpu_budget"] != 4
+            or not isinstance(cpus, list) or len(cpus) != 4
+            or any(type(cpu) is not int or cpu < 0 for cpu in cpus) or cpus != sorted(set(cpus))):
+        raise ValueError("CPU transition requires an explicit four-CPU bounded SSH budget")
+    expected_runtime = dict(source["runtime"], repo=runtime["repo"], execution_cpu_budget=4, cpu_affinity=cpus)
+    if runtime != expected_runtime:
+        raise ValueError("CPU transition changed other runtime resources or dependencies")
+    if {k: v for k, v in config["training"].items() if k != "resume_checkpoint"} != {
+            k: v for k, v in source["training"].items() if k != "resume_checkpoint"}:
+        raise ValueError("CPU transition changed the sampling or exposure plan")
+    checkpoint = config["training"]["resume_checkpoint"]
+    if (type(checkpoint.get("asset_exposures")) is not int
+            or checkpoint["asset_exposures"] < transition["handoff_assets"]):
+        raise ValueError("CPU transition cannot resume before its approved handoff")
+    audit = read_reviewed(transition["source_audit"])
+    if audit.get("mode") != "resume_audit" or audit["paired_contract_sha256"] != paired_contract_hash(source):
+        raise ValueError("CPU-source audit does not cover its exact recipe")
+    previous, current = audit["source_sha256"], source_hashes()
+    if (set(previous) != set(current)
+            or not {key for key in previous if previous[key] != current[key]}.issubset(RESOURCE_SOURCE_CHANGES)):
+        raise ValueError("CPU transition changed computational model, data or sampling source")
+    return source
+
+
+def validate_resource_receipt(config, receipt):
+    source = resource_source_configuration(config)
+    if source is None:
+        return False
+    from id_xyz_runtime import paired_contract_hash
+    from id_xyz_stages import read_reviewed
+    if receipt["paired_contract_sha256"] != paired_contract_hash(source):
+        return False
+    audit = read_reviewed(config["resource_transition"]["source_audit"])
+    if receipt["source_sha256"] != audit["source_sha256"]:
+        raise ValueError("resource-reused evidence has an unreviewed producer")
+    return True
 
 
 def temporal_execution(config):
@@ -62,6 +133,9 @@ def approved_source_changes(config, previous, current):
 def batch_source_configuration(config):
     from id_xyz_runtime import paired_contract_hash, sha256, source_hashes
     from id_xyz_stages import read_reviewed
+    resource_source = resource_source_configuration(config)
+    if resource_source is not None:
+        return batch_source_configuration(resource_source)
     transition = config.get("batch_transition")
     if transition is None:
         return None
@@ -107,6 +181,9 @@ def batch_source_configuration(config):
 
 def parent_configuration(config):
     from id_xyz_runtime import sha256
+    resource_source = resource_source_configuration(config)
+    if resource_source is not None:
+        return parent_configuration(resource_source)
     spec = config["continuation"]["parent_configuration"]
     if sha256(spec["path"]) != spec["sha256"]:
         raise ValueError("the immutable parent configuration changed")
@@ -263,22 +340,32 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
             raise ValueError("continuation checkpoint identity changed")
         saved = torch.load(spec["path"], map_location="cpu", mmap=True, weights_only=False)
     batch_source = batch_source_configuration(config)
+    resource_source = resource_source_configuration(config)
+    from_resource_source = resource_source is not None and saved.get("configuration") == resource_source
+    if (resource_source is not None and saved["code_commit"] == config["resource_transition"]["source_head"]
+            and not from_resource_source):
+        raise ValueError("CPU-source checkpoint configuration changed")
     from_batch_source = batch_source is not None and saved["training_contract"] == training_contract(batch_source)
     from_parent = saved["training_contract"] == training_contract(parent)
     if (batch_source is not None and from_parent
             or not (from_parent or from_batch_source) and saved["training_contract"] != training_contract(config)):
         raise ValueError("saved model/data/loss/schedule contract changed")
-    expected_source = (read_reviewed(config["batch_transition"]["source_audit"])["source_sha256"] if from_batch_source
+    expected_source = (read_reviewed(config["resource_transition"]["source_audit"])["source_sha256"] if from_resource_source
+                       else read_reviewed(config["batch_transition"]["source_audit"])["source_sha256"] if from_batch_source
                        else read_reviewed(config["safety"]["data_audit"])["source_sha256"] if from_parent
                        else source_hashes())
     samples, step = saved["asset_exposures"], saved["step"]
     frames = saved["supervised_frame_exposures"]
+    if from_resource_source and (samples != config["resource_transition"]["handoff_assets"]
+                                or saved["code_commit"] != config["resource_transition"]["source_head"]):
+        raise ValueError("CPU-source checkpoint does not identify the approved handoff")
     if (saved["code_commit"] != spec["producer_head"] or saved["source_sha256"] != expected_source
             or samples != spec["asset_exposures"] or step != spec["step"]
             or saved["input_frame_exposures"] != frames or len(saved["rank_states"]) != world
             or (from_parent and samples != config["continuation"]["handoff_assets"])):
         raise ValueError("checkpoint producer, counters or rank coverage changed")
-    saved_recipe = batch_source if from_batch_source else parent if from_parent else config
+    saved_recipe = (resource_source if from_resource_source else batch_source if from_batch_source
+                    else parent if from_parent else config)
     for index, state in enumerate(saved["rank_states"]):
         if state["stream"]["contract"] != make_stream(saved_recipe, index, world).contract:
             raise ValueError("saved sampler does not match its producer training contract")
@@ -332,6 +419,15 @@ def restore_checkpoint(model, optimizer, config, *, rank, world, device, saved=N
         }
         if temporal_execution(config) is not None:
             report["physical_batch_transition"]["temporal_execution"] = temporal_execution(config)
+    if resource_source is not None:
+        report["resource_transition"] = {
+            "kind": "cpu_budget_only_v1", "scheduler_cpu_slots": config["runtime"]["cpu_slots"],
+            "source_execution_cpu_budget": 1, "execution_cpu_budget": 4,
+            "cpu_affinity": config["runtime"]["cpu_affinity"],
+            "handoff_assets": config["resource_transition"]["handoff_assets"],
+            "checkpoint_from_before_transition": from_resource_source,
+            "computational_model_data_loss_sampling_unchanged": True,
+        }
     return streams[rank], saved["rank_states"][rank], saved["initialization"], report
 
 
@@ -351,8 +447,8 @@ def audit_continuation(args, config, source):
     report = {"passed": True, "mode": "resume_audit", "no_GPU_or_optimizer_update": True,
               "initialization": initial, "restored": restored,
               "reused_prior_engineering_evidence": config["safety"],
-              "approved_training_source_changes": sorted(CONTINUATION_SOURCE_CHANGES | (
-                  {TEMPORAL_SOURCE} if temporal_execution(config) else set())),
+              "approved_training_source_changes": sorted(RESOURCE_SOURCE_CHANGES if config.get("resource_transition")
+                  else CONTINUATION_SOURCE_CHANGES | ({TEMPORAL_SOURCE} if temporal_execution(config) else set())),
               **evidence(config, source, args.config)}
     write_json(args.output / "resume_audit.json", report)
     return report

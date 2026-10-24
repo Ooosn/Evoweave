@@ -97,6 +97,29 @@ def verify_child_cgroups(pid, expected):
     return True
 
 
+def select_cpu_binding(checks, config, exception):
+    runtime = config['runtime']
+    allowed = os.sched_getaffinity(0)
+    provider = getattr(checks, 'execution_cpu_binding', None)
+    if provider is not None:
+        # A scoped provider may use the SSH process allowance instead of the keeper's binding.
+        binding = provider(config, exception, set(allowed))
+        budget = runtime.get('execution_cpu_budget', runtime['cpu_slots'])
+        if (type(binding) is not set or not binding
+                or any(type(cpu) is not int or cpu < 0 for cpu in binding)
+                or not binding <= allowed or type(budget) is not int
+                or len(binding) != budget
+                or (budget != runtime['cpu_slots'] and not exception)):
+            raise RuntimeError('invalid or unauthorized execution CPU binding')
+        return binding
+    if exception:
+        allowed &= os.sched_getaffinity(exception['keeper_pid'])
+    allowed = sorted(allowed)
+    if len(allowed) < runtime['cpu_slots']:
+        raise RuntimeError('insufficient allowed CPUs')
+    return set(allowed[:runtime['cpu_slots']])
+
+
 def main(*, trainer_module_name='train_legacy_single_target',
          exception_env_name='EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION',
          trainer_script='train_legacy_single_target.py',
@@ -130,13 +153,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
     if in_job and (os.environ.get('JOB_ID') != str(runtime['allocation'])
             or int(os.environ.get('NSLOTS', '0')) != runtime['cpu_slots']):
         raise RuntimeError('the launcher must inherit the real job ID and CPU grant')
-    allowed = os.sched_getaffinity(0)
-    if exception:
-        allowed &= os.sched_getaffinity(exception['keeper_pid'])
-    allowed = sorted(allowed)
-    if len(allowed) < runtime['cpu_slots']:
-        raise RuntimeError('insufficient allowed CPUs')
-    binding = set(allowed[:runtime['cpu_slots']])
+    binding = select_cpu_binding(checks, config, exception)
     os.sched_setaffinity(0, binding)
     os.environ['EVOWEAVE_RESOURCE_SUPERVISOR_PID'] = str(os.getpid())
     os.environ['CUDA_VISIBLE_DEVICES'] = '' if args.mode in cpu_modes else ','.join(map(str, runtime['physical_gpus']))
@@ -163,6 +180,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
         'execution_mode': runtime['execution_mode'], 'actual_cgroup': actual_cgroup,
         'ssh_exception': exception,
         'physical_gpus': runtime['physical_gpus'], 'cpu_affinity': sorted(binding),
+        'scheduler_cpu_slots': runtime['cpu_slots'], 'execution_cpu_budget': len(binding),
         'rss_limit_bytes': runtime['rss_limit_bytes'], 'peak_tree_rss_bytes': 0,
         'aggregate_cpu_seconds': 0., 'supervisor_pid': os.getpid()}
     libc = ctypes.CDLL(None, use_errno=True)

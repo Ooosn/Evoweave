@@ -54,6 +54,10 @@ def validate_receipt(config, receipt, *, mode=None):
     if (receipt["paired_contract_sha256"] == paired_contract_hash(config)
             and receipt["source_sha256"] == source_hashes()):
         return
+    if config.get("resource_transition"):
+        from id_xyz_resume import validate_resource_receipt
+        if validate_resource_receipt(config, receipt):
+            return
     if config.get("continuation") and mode in ("audit", "preflight", "capacity"):
         from id_xyz_resume import validate_prior_receipt
         validate_prior_receipt(config, receipt)

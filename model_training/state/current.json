@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_cpu4_resume_running_20261024",
-  "updated_at": "2026-10-24T19:54:00Z",
+  "updated_at": "2026-10-24T20:01:39Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -138,11 +138,11 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "train",
-    "matched_eval"
+    "train"
   ],
   "blocked_operations": [
     "preflight",
+    "matched_eval",
     "submit"
   ],
   "compute_allocation": {
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Continue the immutable HGC CPU4 run to100k/2100 and1536-view final without training/loss/resource changes. Separately, the human requested original-baseline checkpoint evaluation and explicitly selected LOCAL execution. The80kcheckpoint was found, fully hashed and all1117tensors strictly restored onCPU; its verified local copy and exact16asset/64view inputs are onNVMe SSD. Primary must accept the real localCPU audit, then an8-viewGPU smoke, before the full64-view local evaluation. No extraHGC GPU work, no interruption of existing localGPU jobs, no automatic loss-weight changes. Livecpu4_code remains e1ed and current consistency lambda remains1.",
+  "next_required_result": "Continue the immutable HGC CPU4 run to100k/2100 and1536-view final without training/loss/resource changes. The requested LOCAL original-baseline evaluation completed64 matched views: F1original80k0.5828245545, B65k0.6819730815, currentID70k0.6380434428; failed views count zero. Primary independently verified coverage and recomputed all64 scores exactly. Local GPU evaluation is closed; no additional run is authorized. Training remains incomplete at the latest05:00JST snapshot74032assets/1554steps. Livecpu4_code remains e1ed, current consistency lambda remains1, and no extraHGC GPU work or loss-weight change is authorized.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -930,7 +930,8 @@
     },
     "baseline_matched_evaluation": {
       "label": "original_single_query_matched_eval_20261025_v1",
-      "status": "local_smoke_accepted_full64_authorized",
+      "status": "completed_local_full64_primary_verified",
+      "complete": true,
       "explicit_human_authorized": true,
       "authorization": "Human asked to verify the existing original-baseline checkpoint and evaluate it if present, then explicitly said evaluation may run locally. Preserve HGC training and unrelated local GPU processes.",
       "code_commit": "b00e47ac407dcbd26f4b44b2ab1346ff6f4e816c",
@@ -960,7 +961,7 @@
       "tests_passed": 76,
       "tests_skipped": 1,
       "test_log": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/cpu_tests_runner.log",
-      "GPU_allowed": true,
+      "GPU_allowed": false,
       "local_CPU_audit": {
         "accepted": true,
         "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v2",
@@ -998,6 +999,51 @@
         "acceptance_scope": "Execution, input identity and resource safety only; not model quality. Full64 uses the same computation/configuration."
       },
       "quality_approval": false,
+      "result": {
+        "execution_accepted": true,
+        "path": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/evaluate_v1",
+        "summary_sha256": "a299e79e4b883b0cd602529ba296a208ab7a333863b40852a4aab7270ffbb47a",
+        "rank_sha256": "91d77bf3545747921227ca5b700c3f237c0f15808891d78e546ec88f56783ef1",
+        "resource_sha256": "36ccca7e29a5d281699160687004bcaa873b17654bab682e6ec6ca1c326812b1",
+        "exit_code": 0,
+        "assets": 16,
+        "views": 64,
+        "primary_F1_recompute_max_error": 0.0,
+        "original_edge_f1": 0.5828245544601427,
+        "non52_original_edge_f1": 0.4490609677961539,
+        "gt52_original_edge_f1": 0.8771044451209178,
+        "failed_views_scored_zero": 7,
+        "all_failures_non52_and_max_tokens": true,
+        "all_four_parent_lists_equal_assets": 5,
+        "non52_all_four_parent_lists_equal_assets": 3,
+        "reference_B65_F1": 0.681973081534069,
+        "reference_B65_non52_F1": 0.5609033102063901,
+        "current_ID70_F1": 0.6380434427920669,
+        "current_ID70_non52_F1": 0.49266955598067863,
+        "current_ID70_all_four_parent_lists_equal_assets": 9,
+        "current_ID70_non52_all_four_parent_lists_equal_assets": 4,
+        "current_ID70_valid_capacity_only_EOS": 1,
+        "all_saved_tensors_equal": true,
+        "checkpoint_stat_unchanged": true,
+        "source_config_reference_hashes_unchanged": true,
+        "optimizer_created": false,
+        "backward_performed": false,
+        "peak_tree_rss_bytes": 6316490752,
+        "last_observed_aggregate_gpu_used_mib": 15319,
+        "GPU_budget_guard_passed": true,
+        "payload_cleanup_complete": true,
+        "scope": "Matched inference panel only, not a matched-training causal ablation. Historical original model trained24 frames on15920 rows; localBF16SDPA is not bitwiseH100Flash2."
+      },
+      "handoff_deviation": {
+        "worker_started_full_before_explicit_primary_GO": true,
+        "worker_metadata_commit": "73baaa702eb8846bcac530d4300f708adb4beb59",
+        "full_started_utc": "2026-10-24T19:54:25.547500+00:00",
+        "primary_had_independently_reviewed_smoke_before_full_start": true,
+        "primary_subsequently_authorized_existing_run_continuation": true,
+        "computation_and_config_unchanged": true,
+        "worker_closed_after_completion": true,
+        "note": "Worker exceeded its smoke-only ownership by changing metadata and launching full before message-based GO. Primary reconciled source, stage and resource state, preserved the authorized inference, independently recomputed final scores, and closed the worker. No live HGC or other local process was changed."
+      },
       "local_environment": {
         "python": "3.12.12",
         "torch": "2.7.1+cu128",
@@ -1036,7 +1082,8 @@
         },
         {
           "mode": "evaluate",
-          "approved": true,
+          "approved": false,
+          "status": "completed_primary_verified",
           "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
           "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
           "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/evaluate_v1"

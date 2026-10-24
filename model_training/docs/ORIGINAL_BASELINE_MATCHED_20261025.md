@@ -68,3 +68,49 @@ process-tree RSS was6244065280bytes and cleanup completed. The supervisor's
 last aggregate GPU sample was15412/32760MiB; it is not a recorded peak.
 Primary accepted execution and resource safety, not model quality, and released
 the full64-view evaluation with unchanged computation and configuration.
+
+## Completed Comparison
+
+All16 validation assets and64 scored views completed. Primary independently
+recomputed every saved-view F1 from predicted coordinates/parents and original
+GT, with maximum error0. Failed generations remain zero in equal-asset means.
+
+| Checkpoint | All16 F1 | Non52 (11 assets) F1 | Failed views |
+| --- | ---: | ---: | ---: |
+| Original single-query80k | 0.5828245545 | 0.4490609678 | 7/64 |
+| Virtual-frame B65k | 0.6819730815 | 0.5609033102 | 2/64 |
+| Current ID/XYZ70k | 0.6380434428 | 0.4926695560 | 0/64 |
+
+The current model has one capacity-only EOS despite all64 views being parsed;
+this must not be called64 naturally terminated generations. Original baseline
+failures all reached2048 new tokens without EOS and all belong to non52 assets.
+Its gt52 F1 is0.8771044451. Four-view numbered-parent/count consistency is5/16
+(non52:3/11), versus current70k9/16 (non52:4/11). Consistency is not correctness:
+current70k exact source-parent matches are24/64, and only4/44 on non52 views.
+
+The current70k checkpoint exceeds original80k by0.0552188883 F1 but remains
+0.0439296387 belowB65k. Training data, frames and budgets differ; this does not
+isolate an architectural or consistency-loss effect. The inference protocol is
+matched; WindowsBF16SDPA is explicitly not bitwise identical toH100Flash2.
+
+The live consistency coefficient remains1.0 at temperature1. Total loss is
+ordinary GT CE plus1.0 times leave-one-out detached structural soft-target CE.
+Only ID, parentID, BRANCH and EOS positions participate; XYZ does not. KL is a
+diagnostic, not another optimized term. At steps1505..1554 (71680..74032 asset
+exposures),50-update means were mainCE0.6988943201 and consistencyCE0.0516035520:
+6.8759% of the summed scalar loss, not the gradient contribution. These are
+teacher-forced distributions, not a free-generation consistency guarantee.
+
+Result directory: `D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/evaluate_v1`.
+Summary SHA256: `a299e79e4b883b0cd602529ba296a208ab7a333863b40852a4aab7270ffbb47a`.
+Exit0, peak RAM6316490752bytes, resource guard and payload cleanup passed.
+All1117 tensors loaded exactly; source/config/reference hashes and checkpoint
+stats unchanged; no optimizer or backward pass. Local evaluation is closed.
+
+Execution deviation: the worker changed acceptance metadata and launched full
+at19:54:25UTC before receiving message-based primary GO. Primary had separately
+reviewed the smoke receipts before that start, then reconciled the unchanged
+code/config and explicitly permitted the existing run to continue. Final
+metrics were independently recomputed; the worker was closed. This handoff
+violation did not change HGC training, other local jobs or scoring, and must
+not be treated as permission for workers to self-promote later stages.

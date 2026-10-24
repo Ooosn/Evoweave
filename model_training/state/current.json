@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "real_frame_id_xyz_cpu4_resume_running_20261024",
-  "updated_at": "2026-10-24T13:22:06Z",
+  "updated_at": "2026-10-24T19:37:27Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "CPU4 formal continuation is running. Primary independently accepted both whole GPU restore reports against the CPU audit and actual steps736/737 at35096assets/457944frames; all three initial gradient routes are finite/nonzero, seeds and resource limits verified. Observe the same run toward100k/2100 and1536-view final, or a full resumable checkpoint before allocation deadline. Keep livecpu4_codee1ed and oldbatch_code774 immutable; no model/data/loss/sampling/global48 changes, extra GPU jobs, automatic restart or budget shortening. Runtime budget is4totalCPUs while actual scheduler grant remains1slot. Quality is unaccepted;35k panel predatesCPU4updates.",
+  "next_required_result": "Continue the immutable HGC CPU4 run to100k/2100 and1536-view final without training/loss/resource changes. Separately, the human requested original-baseline checkpoint evaluation and explicitly selected LOCAL execution. The80kcheckpoint was found, fully hashed and all1117tensors strictly restored onCPU; its verified local copy and exact16asset/64view inputs are onNVMe SSD. Primary must accept the real localCPU audit, then an8-viewGPU smoke, before the full64-view local evaluation. No extraHGC GPU work, no interruption of existing localGPU jobs, no automatic loss-weight changes. Livecpu4_code remains e1ed and current consistency lambda remains1.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -925,6 +925,68 @@
     "mode": "train",
     "complete": false,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
+    "operation_entrypoints": {
+      "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py"
+    },
+    "baseline_matched_evaluation": {
+      "label": "original_single_query_matched_eval_20261025_v1",
+      "status": "local_CPU_audit_prepared_GPU_stages_blocked",
+      "explicit_human_authorized": true,
+      "authorization": "Human asked to verify the existing original-baseline checkpoint and evaluate it if present, then explicitly said evaluation may run locally. Preserve HGC training and unrelated local GPU processes.",
+      "code_commit": "b00e47ac407dcbd26f4b44b2ab1346ff6f4e816c",
+      "contract": "model_training/docs/ORIGINAL_BASELINE_MATCHED_20261025.md",
+      "checkpoint_sha256": "4cdde3cac8b8b83d690128785065bcde6b6186044bcbdeac6f701acff3b7bb55",
+      "checkpoint_bytes": 7995123574,
+      "checkpoint_training_assets": 80016,
+      "checkpoint_training_steps": 1667,
+      "checkpoint_inventory_receipt": "D:/evoweave/server_ops/outputs/id_xyz_consistency_20261024/preparation/original_baseline_checkpoint_audit_20261025.json",
+      "checkpoint_inventory_receipt_sha256": "1cb3bba23e90e6b746ff217d02fc8a152af9ac7caa9c62a364adca383bc4816a",
+      "source_CPU_strict_restore_receipt": "D:/evoweave/server_ops/outputs/id_xyz_consistency_20261024/preparation/original_baseline_model_cpu_audit_20261025.json",
+      "source_CPU_strict_restore_receipt_sha256": "c744f11f3e07535a2ec7c0a62990489fbf2b991d8cb297825420d7740d5cb15d",
+      "all_1117_saved_state_tensors_exact_on_source_CPU": true,
+      "initial_CPU_flash_backend_failure": "CPU-only construction cannot enableFlashAttention2. Preserved original failure; explicitCPU-onlyderivedSDPA YAML then passed fullstrict restoration. GPU-localSDPA is separately declared becauseFlashAttention2 is not installed onWindows.",
+      "local_download_manifest": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/download_manifest.json",
+      "local_download_manifest_sha256": "9402d78ad5b217084a549a8a4dc538725b485df1c656b199d00b72f0224794d9",
+      "local_files_verified": 145,
+      "storage": "D: verified WD_BLACK SN850X NVMe SSD; no dataset or checkpoint moved toHDD",
+      "panel_sha256": "da1b4eca4df249fa14f03af2b78d0b075b8fac23eec2b60141593be3f98fbe6f",
+      "valid_assets": 16,
+      "views": 64,
+      "input_frames": 8,
+      "scored_frame_slots": [0, 2, 4, 6],
+      "reference_B65_F1": 0.6819730815340691,
+      "current_IDXYZ65_F1": 0.6337931924319092,
+      "test_runs": 77,
+      "tests_passed": 76,
+      "tests_skipped": 1,
+      "test_log": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/cpu_tests_runner.log",
+      "GPU_allowed": false,
+      "smoke_accepted": false,
+      "quality_approval": false,
+      "runs": [
+        {
+          "mode": "audit",
+          "approved": true,
+          "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
+          "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
+          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/audit_v1"
+        },
+        {
+          "mode": "smoke",
+          "approved": false,
+          "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
+          "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
+          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/smoke_v1"
+        },
+        {
+          "mode": "evaluate",
+          "approved": false,
+          "config": "C:/Users/namew/.codex/worktrees/virtual-fusion-20261013/evoweave/model_training/experiments/original_baseline_matched_20261025_v1.json",
+          "config_sha256": "b13940153d9f47c8ff591903611b751ae4897cd6c142c32a0c330503df80e794",
+          "output": "D:/evoweave/server_ops/outputs/original_baseline_local_20261025/runs/evaluate_v1"
+        }
+      ]
+    },
     "contract": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
     "authorization": "Human selected real-frame all-target ID+XYZ autoregression with GT-position cross-frame structural CE and explicitly said start, still direct SSH. On2026-10-24 the human corrected the total budget to100000 asset exposures. Continue the same model and training state; this is an explicit budget extension, not automatic promotion.",
     "target_asset_exposures": 100000,

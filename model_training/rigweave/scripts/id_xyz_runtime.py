@@ -46,7 +46,7 @@ def source_hashes():
         "scripts/virtual_frame_runtime.py",
         "scripts/structure_xyz_fill_runtime.py", "scripts/structure_xyz_fill_evaluation.py",
         "scripts/id_xyz_runtime.py", "scripts/id_xyz_evaluation.py",
-        "scripts/train_id_xyz_consistency.py", "scripts/id_xyz_stages.py",
+        "scripts/train_id_xyz_consistency.py", "scripts/id_xyz_stages.py", "scripts/id_xyz_resume.py",
     ]
     return {path: sha256(root / "model_training/rigweave" / path) for path in paths}
 
@@ -84,10 +84,15 @@ def validate_config(config):
             or consistency["weight"] not in (0., 1.)):
         raise ValueError("the paired structural consistency experiment changed")
     plan = config["training"]
-    if (plan["target_assets"] != 20000 or plan["effective_assets_per_update"] != 48
-            or plan["checkpoint_assets"] != [5000, 10000, 15000, 20000]
-            or plan["evaluation_assets"] != [0, 5000, 10000, 15000, 20000]):
-        raise ValueError("the first-stage exposure/assessment budget changed")
+    continuation = config.get("continuation")
+    target = 100000 if continuation else 20000
+    milestones = list(range(5000, target + 1, 5000))
+    if (plan["target_assets"] != target or plan["effective_assets_per_update"] != 48
+            or plan["checkpoint_assets"] != milestones or plan["evaluation_assets"] != [0] + milestones):
+        raise ValueError("the authorized exposure/assessment budget changed")
+    if continuation and (continuation["handoff_assets"] != 5000
+                         or continuation["schedule"] != "continuous_cosine_tail_to_100000"):
+        raise ValueError("the authorized checkpoint/schedule transition changed")
     for frame in range(2, 25):
         batch = plan["frame_policy"].get(str(frame))
         if type(batch) is not int or batch < 1 or 24 % batch:
@@ -236,8 +241,12 @@ def optimizer_for(model, config):
 
 def set_learning_rate(optimizer, samples, config):
     p = config["optimization"]
-    lr, beta1 = exposure_learning_rate(samples, p["schedule_samples"], peak=p["peak_lr"],
-        warmup_fraction=p["warmup_fraction"], div_factor=p["div_factor"], final_div_factor=p["final_div_factor"])
+    if config.get("continuation"):
+        from id_xyz_resume import extended_learning_rate
+        lr, beta1 = extended_learning_rate(samples, config)
+    else:
+        lr, beta1 = exposure_learning_rate(samples, p["schedule_samples"], peak=p["peak_lr"],
+            warmup_fraction=p["warmup_fraction"], div_factor=p["div_factor"], final_div_factor=p["final_div_factor"])
     for group in optimizer.param_groups:
         group["lr"], group["betas"] = lr, (beta1, .999)
     return lr, beta1
@@ -264,6 +273,9 @@ def training_contract(config):
              "final_evaluation", "reference_evaluation")}
     contract["tokenizer"] = {key: config["runtime"][key] for key in
                              ("tokenizer_config", "tokenizer_config_sha256")}
+    contract["training"] = {k: v for k, v in config["training"].items() if k != "resume_checkpoint"}
+    if config.get("continuation"):
+        contract["continuation"] = config["continuation"]
     return contract
 
 

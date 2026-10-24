@@ -21,6 +21,9 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     source = verify_launch(args, config)
+    deadline = config["runtime"].get("stop_before_utc")
+    if args.mode != "audit" and deadline and datetime.now(timezone.utc) >= datetime.fromisoformat(deadline.replace("Z", "+00:00")):
+        raise RuntimeError("the allocation handoff deadline has already arrived")
     # All computation imports follow verified provenance, binding and stage authorization.
     sys.path.insert(0, str(ROOT / "model_training/analysis"))
     import torch

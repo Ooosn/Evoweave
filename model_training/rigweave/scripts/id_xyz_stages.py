@@ -51,6 +51,10 @@ def read_reviewed(spec):
 def validate_receipt(config, receipt, *, mode=None):
     if mode is not None and receipt.get("mode") != mode:
         raise ValueError("evidence belongs to the wrong execution stage")
+    if config.get("continuation") and mode in ("audit", "preflight", "capacity"):
+        from id_xyz_resume import validate_prior_receipt
+        validate_prior_receipt(config, receipt)
+        return
     if (receipt["paired_contract_sha256"] != paired_contract_hash(config)
             or receipt["source_sha256"] != source_hashes()):
         raise ValueError("evidence does not cover the current source/data/model contract")
@@ -88,6 +92,9 @@ def check_targets(geometry, targets, tokenizer, codec):
 
 
 def audit(args, config, entries, source):
+    if config.get("continuation"):
+        from id_xyz_resume import audit_continuation
+        return audit_continuation(args, config, source)
     previous = read_reviewed(config["audit"]["prior_data_certificate"])
     if (previous["manifests"] != config["data"]["manifests"]
             or previous["target_source_sha256"] != data_source_hashes()):
@@ -367,23 +374,53 @@ def train(model, tokenizer, codec, initial, entries, config, args, device, rank,
     dataset = fixed_dataset(entries["train"], config, 2, mode="train")
     stream = make_stream(config, rank, world)
     optimizer = optimizer_for(model, config)
+    samples, frames_seen, step = 0, 0, 0
+    restored, rng_state = None, None
+    if config["training"].get("resume_checkpoint"):
+        from id_xyz_resume import restore_checkpoint
+        checked = read_reviewed(config["safety"]["continuation_audit"])
+        validate_receipt(config, checked, mode="resume_audit")
+        stream, rng_state, initial, restored = restore_checkpoint(
+            model, optimizer, config, rank=rank, world=world, device=device)
+        if restored != checked["restored"]:
+            raise ValueError("GPU checkpoint restore differs from the reviewed CPU continuation audit")
+        samples, frames_seen, step = (restored[k] for k in ("asset_exposures", "supervised_frame_exposures", "step"))
+        write_json(args.output / f"restore_rank_{rank}.json", restored)
     wrapped = wrap(model, device, world)
+    if rng_state is not None:
+        from id_xyz_resume import apply_random_state
+        apply_random_state(rng_state, device)
     model.train()
-    report = {"complete": False, "rank": rank, "asset_exposures": 0, "input_frame_exposures": 0,
-              "supervised_frame_exposures": 0, "step": 0, "evaluations": [], "initialization": initial,
+    report = {"complete": False, "rank": rank, "asset_exposures": samples, "input_frame_exposures": frames_seen,
+              "supervised_frame_exposures": frames_seen, "step": step, "evaluations": [], "initialization": initial,
+              "resume_checkpoint": config["training"].get("resume_checkpoint"),
               "paired_contract_sha256": paired_contract_hash(config)}
     write_json(args.output / f"rank_{rank}.json", report)
     if rank == 0:
         write_json(args.output / "sampling_plan.json", stream.plan_report())
     with preserve_random():
-        evaluate_panel(model, tokenizer, codec, entries, config, args.output, samples=0, rank=rank, world=world)
-    report["evaluations"].append(0)
-    samples, frames_seen, step = 0, 0, 0
+        evaluate_panel(model, tokenizer, codec, entries, config, args.output, samples=samples, rank=rank, world=world)
+    report["evaluations"].append(samples)
+    first_step = step
+    last_saved_samples = None
     started = time.monotonic()
     names = ("loss", "main_loss", "consistency_ce", "consistency_kl", "structure_ce", "coordinate_ce",
              "structure_accuracy", "coordinate_accuracy")
     with (args.output / f"trace_rank_{rank}.jsonl").open("x", buffering=1) as trace:
         while samples < config["training"]["target_assets"]:
+            from id_xyz_resume import allocation_handoff_due
+            due = torch.tensor(int(allocation_handoff_due(config)), device=device)
+            if world > 1:
+                dist.all_reduce(due, op=dist.ReduceOp.MAX)
+            if bool(due):
+                if last_saved_samples != samples:
+                    save_checkpoint(model, optimizer, stream, config, args, initial, source, samples, frames_seen, step, rank, world)
+                report.update(stage_complete=True, allocation_handoff_required=True)
+                write_json(args.output / f"rank_{rank}.json", report)
+                return {"passed": True, "complete": False, "stage_complete": True, "mode": "train",
+                        "allocation_handoff_required": True, "asset_exposures": samples, "step": step,
+                        "input_frame_exposures": frames_seen, "supervised_frame_exposures": frames_seen,
+                        **evidence(config, source, args.config)}
             update = int(np.searchsorted(stream.global_ends, samples, side="right"))
             global_goal = int(stream.update_sizes[update])
             local_goal = global_goal // world
@@ -425,7 +462,7 @@ def train(model, tokenizer, codec, initial, entries, config, args, device, rank,
             for parameter in model.parameters():
                 if parameter.grad is not None:
                     parameter.grad.mul_(world / actual_assets)
-            groups = gradient_groups(model) if step == 0 else None
+            groups = gradient_groups(model) if step == first_step else None
             norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
             optimizer.step()
             samples, frames_seen, step = samples + actual_assets, frames_seen + actual_frames, step + 1
@@ -443,6 +480,7 @@ def train(model, tokenizer, codec, initial, entries, config, args, device, rank,
             print("TRAIN " + json.dumps({"rank": rank, **item}, allow_nan=False), flush=True)
             if samples in config["training"]["checkpoint_assets"]:
                 save_checkpoint(model, optimizer, stream, config, args, initial, source, samples, frames_seen, step, rank, world)
+                last_saved_samples = samples
             if samples in config["training"]["evaluation_assets"]:
                 with preserve_random():
                     evaluate_panel(model, tokenizer, codec, entries, config, args.output, samples=samples, rank=rank, world=world)

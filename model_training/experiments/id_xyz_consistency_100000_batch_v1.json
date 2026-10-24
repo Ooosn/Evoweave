@@ -211,8 +211,8 @@
     },
     "resume_checkpoint": {
       "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_100000_v1/checkpoint_020000.pt",
-      "sha256": null,
-      "bytes": null,
+      "sha256": "5f49de5f30706009cb5ed14761bc2ea9aa48ad7200fc22dcfad824def97ff5d5",
+      "bytes": 7956026526,
       "producer_head": "382e14c4e110d952cc99cadee029f934d8a93273",
       "asset_exposures": 20000,
       "step": 420

@@ -55,3 +55,17 @@ explicit SSH execution is bounded to4 total CPUs `[58,63,64,65]`,64GiB RAM and
 85% GPU memory under the existing supervisor. Do not touch other processes,
 release the allocation or modify the trained checkout. Stop before16:45JST.
 17 CPU diagnostic/guard/oracle tests passed before real CPU audit.
+
+## CPU Acceptance
+
+The actual CPU audit completed exit0 at13:23:49JST: all896 saved state tensors
+and the final model fingerprint matched; all32 group-assets/128 scored views
+matched original frame IDs, continuous GT, parents and target tokens. CUDA was
+not initialized; peak process-tree RAM3457019904bytes, cleanup complete.
+Summary SHA256 `d08c8c254e5bad9924b37253abe44a68d56f174935b20dff10468274d138c304`.
+
+Post-audit review fixed only GPU-result aggregation of anomalous sequence
+endings, which must not be counted as exact matches. The CPU restoration/data
+audit and model/forward/oracle paths are unchanged;17 CPU tests passed again.
+Primary released only the8-view GPU smoke. Full128-view execution still needs
+independent smoke acceptance; no weight updates are authorized.

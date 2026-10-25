@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_diagnostics_CPU_prepared_20261025",
-  "updated_at": "2026-10-25T03:46:04Z",
+  "state_id": "frozen_ID100k_diagnostics_smoke_authorized_20261025",
+  "updated_at": "2026-10-25T04:25:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,11 +137,11 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "matched_eval",
     "submit"
   ],
@@ -931,18 +931,33 @@
     },
     "query_decoder_diagnostics": {
       "label": "frozen_query_decoder_diagnostics_20261025_v1",
-      "status": "CPU_audit_prepared_GPU_not_released",
+      "status": "CPU_audit_accepted_8view_smoke_only_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
       "complete": false,
-      "code_commit": "d258652ede5775bb76652c8edad19cf0064ed70c",
+      "code_commit": "3d7debcf3b48475c9ca2ff33f4ceb82414aec732",
       "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
-      "GPU_allowed": false,
+      "GPU_allowed": true,
       "smoke_accepted": false,
       "optimizer_allowed": false,
       "backward_allowed": false,
       "quality_approval": false,
       "CPU_tests_passed": 17,
+      "CPU_audit": {
+        "accepted": true,
+        "summary_sha256": "d08c8c254e5bad9924b37253abe44a68d56f174935b20dff10468274d138c304",
+        "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/audit_v1",
+        "execution_source": "b9ac7f98d1e9d18d5ede51a2169bbdcd8ed658a6",
+        "all896_saved_tensors_equal": true,
+        "matched_group_assets": 32,
+        "matched_views": 128,
+        "cuda_initialized": false,
+        "model_and_checkpoint_unchanged": true,
+        "exit_code": 0,
+        "peak_tree_rss_bytes": 3457019904,
+        "payload_cleanup_complete": true,
+        "post_audit_source_review": "3d7debc changes only the non-CPU summary label for anomalous sequence endings and its regression tests. Model restoration, CPU geometry audit, frozen model/data source, GPU forward and oracle code are unchanged. All17CPU tests pass; actual GPU behavior remains subject to smoke acceptance."
+      },
       "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_result.json",
       "frozen_trained_source": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code",
       "frozen_trained_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
@@ -969,13 +984,14 @@
         {
           "mode": "audit",
           "approved": true,
+          "status": "completed_primary_accepted",
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
           "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/audit_v1"
         },
         {
           "mode": "smoke",
-          "approved": false,
+          "approved": true,
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
           "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v1"

@@ -147,7 +147,8 @@ class PairRuntimeTests(unittest.TestCase):
                 runtime.write_json(output / variant / 'evaluation_100000/summary.json', {
                     'complete': True, 'samples': 100000, 'variant': variant,
                     'contract_sha256': runtime.contract_sha(config)})
-            self.assertEqual(runtime.pending_variants(progress, output, config), [])
+            # A bare summary is insufficient without a checkpoint and hashed rows.
+            self.assertEqual(runtime.pending_variants(progress, output, config), list(runtime.VARIANTS))
 
 
 if __name__ == '__main__':

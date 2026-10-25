@@ -120,6 +120,34 @@ def select_cpu_binding(checks, config, exception):
     return set(allowed[:runtime['cpu_slots']])
 
 
+def verify_allocation(checks, config, grant):
+    provider = getattr(checks, 'verify_allocation', None)
+    if provider is not None:
+        provider(config, grant)
+        return
+    if ('pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
+            or not re.search(r'job_state\s+\d+:\s+r\b', grant)
+            or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
+            or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
+        raise RuntimeError('the authorized GPU grant changed')
+
+
+def read_gpu_memory(config):
+    runtime = config['runtime']
+    devices = ','.join(map(str, runtime['physical_gpus']))
+    limit = runtime['gpu_memory_fraction_limit']
+    if type(limit) not in (int, float) or not 0 < limit <= 1:
+        raise RuntimeError('invalid GPU memory fraction limit')
+    text = subprocess.check_output(['nvidia-smi', '-i', devices,
+        '--query-gpu=index,memory.used,memory.total', '--format=csv,noheader,nounits'],
+        text=True, timeout=30)
+    memory = [[int(v.strip()) for v in line.split(',')] for line in text.strip().splitlines()]
+    if (sorted(row[0] for row in memory) != sorted(runtime['physical_gpus'])
+            or any(total <= 0 or used < 0 or used > total * limit for _, used, total in memory)):
+        raise RuntimeError('the authorized GPUs exceeded their memory limit or changed identity')
+    return memory
+
+
 def main(*, trainer_module_name='train_legacy_single_target',
          exception_env_name='EVOWEAVE_LEGACY_SINGLE_TARGET_SSH_EXCEPTION',
          trainer_script='train_legacy_single_target.py',
@@ -145,6 +173,8 @@ def main(*, trainer_module_name='train_legacy_single_target',
         require_job_membership(actual_cgroup, runtime['allocation'])
         in_job = True
     except RuntimeError:
+        if runtime.get('execution_mode') == 'scheduler_job' or runtime.get('require_scheduler_membership') is True:
+            raise RuntimeError('scheduler-owned execution requires actual job membership')
         state = json.loads((root / 'model_training/state/current.json').read_text())
         exception = validate_ssh_exception(state, config)
         verify_exception_keeper(exception)
@@ -199,11 +229,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
             now = time.monotonic()
             if now >= next_grant:
                 grant = subprocess.check_output(['qstat', '-j', str(runtime['allocation'])], text=True, timeout=30)
-                if (f'pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
-                        or not re.search(r'job_state\s+\d+:\s+r\b', grant)
-                        or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
-                        or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
-                    raise RuntimeError('the authorized GPU grant changed')
+                verify_allocation(checks, config, grant)
                 if exception:
                     verify_exception_keeper(exception)
                 next_grant = now + 60
@@ -223,12 +249,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
                     last_ticks[pid] = ticks
                 except (FileNotFoundError, ProcessLookupError):
                     pass
-            text = subprocess.check_output(['nvidia-smi', '-i', '5,6',
-                '--query-gpu=index,memory.used,memory.total', '--format=csv,noheader,nounits'],
-                text=True, timeout=30)
-            memory = [[int(v.strip()) for v in line.split(',')] for line in text.strip().splitlines()]
-            if sorted(row[0] for row in memory) != [5, 6] or any(used > total*.85 for _, used, total in memory):
-                raise RuntimeError('the authorized GPUs exceeded85percent memory or changed identity')
+            memory = read_gpu_memory(config)
             if runtime.get('gpu_uuids'):
                 applications = subprocess.check_output(['nvidia-smi',
                     '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader'], text=True, timeout=30)

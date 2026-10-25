@@ -24,6 +24,7 @@ from train_virtual_fusion_normal import record_samples
 from virtual_frame_runtime import exposure_learning_rate
 from virtual_fusion_normal_runtime import MatchedFrameStream
 from virtual_pair_guard import ROOT, SCOPE, deadline_due
+from virtual_pair_loading import OrderedAssetPrefetch
 from virtual_query_xyz_runtime import build_model as build_base, fixed_dataset, read_entries, sha256
 
 
@@ -67,7 +68,29 @@ def validate_config(config):
         raise ValueError('shared128-asset validation panel changed')
     if not config['artifacts']['preserve_all_checkpoints']:
         raise ValueError('checkpoint preservation is mandatory')
+    target = operation_target(config)
+    extra = config.get('execution', {}).get('evaluation_assets', [])
+    if (target not in plan['checkpoint_assets'] or target > plan['target_assets']
+            or any(type(x) is not int or x not in plan['checkpoint_assets'] or x > target for x in extra)
+            or target not in evaluation_milestones(config)):
+        raise ValueError('operation must end at a retained and evaluated checkpoint')
+    workers = config['runtime'].get('data_workers_per_rank', 0)
+    if (type(workers) is not int or workers < 0
+            or (workers and (workers + 1) * config['runtime']['world_size'] + 1
+                > config['runtime']['execution_cpu_budget'])):
+        raise ValueError('data workers exceed the total CPU budget')
+    if config['runtime'].get('prefetch_microbatches', 2) not in (1, 2):
+        raise ValueError('prefetch must remain bounded to one or two microbatches')
     make_stream(config, 0, 2)
+
+
+def operation_target(config):
+    return config.get('execution', {}).get('stop_assets_per_variant', config['training']['target_assets'])
+
+
+def evaluation_milestones(config):
+    return sorted(set(config['training']['evaluation_assets'])
+        | set(config.get('execution', {}).get('evaluation_assets', [])))
 
 
 def scientific_contract(config):
@@ -86,11 +109,13 @@ def source_hashes():
     paths = ['model_training/rigweave/scripts/' + name for name in (
         'virtual_pair_runtime.py', 'train_virtual_pair.py', 'virtual_query_xyz_runtime.py',
         'virtual_fusion_normal_runtime.py', 'virtual_frame_runtime.py', 'probe_virtual_query_xyz.py',
-        'id_xyz_stages.py', 'train_virtual_query_xyz.py', 'train_virtual_fusion_normal.py')]
+        'id_xyz_stages.py', 'train_virtual_query_xyz.py', 'train_virtual_fusion_normal.py',
+        'virtual_pair_loading.py')]
     paths += ['model_training/rigweave/src/rigweave/dynamic_rig/' + name for name in (
         'virtual_path_ablation.py', 'virtual_query_xyz.py', 'motion_encoder.py', 'motion_evidence.py',
         'surface_tokenizer.py', 'virtual_frame_data.py', 'virtual_query_xyz_data.py', 'root_rt.py',
-        'aux_skeleton_tokens.py', 'sampling.py', 'skeleton_topology_metrics.py')]
+        'aux_skeleton_tokens.py', 'sampling.py', 'skeleton_topology_metrics.py',
+        'data.py', 'shared_structure_medium_data.py')]
     return {path: sha256(ROOT / path) for path in paths}
 
 
@@ -99,6 +124,26 @@ def make_stream(config, rank, world, state=None):
         seed=config['data']['stream_seed'], target_assets=config['training']['target_assets'],
         effective_assets=48, frame_policy=config['training']['frame_policy'], manifest_sha256=TRAIN_SHA,
         state=state, update_boundaries=config['training']['checkpoint_assets'])
+
+
+def next_update_batches(stream, samples, world):
+    index = int(np.searchsorted(stream.global_ends, samples, side='right'))
+    goal = int(stream.update_sizes[index])
+    batches, count = [], 0
+    while count < goal // world:
+        requests = stream.take(goal // world - count)
+        batches.append(requests)
+        count += len(requests)
+    return goal, batches
+
+
+def planned_microbatches(config, stream, limit):
+    planner = make_stream(config, stream.rank, stream.world_size, stream.state_dict())
+    samples = planner.cursor * planner.world_size
+    while samples < limit:
+        goal, batches = next_update_batches(planner, samples, planner.world_size)
+        yield from batches
+        samples += goal
 
 
 def gather(value, world):
@@ -163,6 +208,17 @@ def set_lr(optimizer, samples, config):
     return lr, beta
 
 
+def compatible_source(incoming, purpose):
+    current = source_hashes()
+    if incoming == current:
+        return True
+    state = json.loads((ROOT / 'model_training/state/current.json').read_text())
+    transition = state['active_operation'].get('source_transition', {})
+    return (transition.get('accepted') is True and purpose in transition.get('allowed_uses', [])
+        and incoming == transition.get('previous_source_sha256')
+        and current == transition.get('current_source_sha256'))
+
+
 def reviewed(config, name):
     state = json.loads((ROOT / 'model_training/state/current.json').read_text())
     spec = state['active_operation'][name]
@@ -170,7 +226,8 @@ def reviewed(config, name):
         raise RuntimeError(f'{name} is not the exact primary-accepted receipt')
     report = json.loads(Path(spec['path']).read_text())
     if (not report.get('passed') or not report.get('complete')
-            or report['contract_sha256'] != contract_sha(config) or report['source_sha256'] != source_hashes()):
+            or report['contract_sha256'] != contract_sha(config)
+            or not compatible_source(report['source_sha256'], name)):
         raise RuntimeError(f'{name} computation or data contract differs')
     return report
 
@@ -205,11 +262,46 @@ def audit(config, entries, output, source):
     plans = [make_stream(config, r, 2).plan_report() for r in range(2)]
     if plans[0]['plan_sha256'] != plans[1]['plan_sha256']:
         raise RuntimeError('distributed sampling plans disagree')
+    loader = audit_loader(config, entries, groups) if config['runtime'].get('data_workers_per_rank') else None
     return {'complete': True, 'passed': True, 'mode': 'audit', 'training_assets': 5000,
         'validation_pool': 967, 'validation_panel': len(selected), 'initialization': initial,
         'capacity_groups': groups, 'capacity_length_records': len(lengths), 'sampling_plan': plans[0],
         'source': source, 'source_sha256': source_hashes(), 'contract_sha256': contract_sha(config),
-        'cuda_initialized': torch.cuda.is_initialized(), 'optimizer_created': False}
+        'cuda_initialized': torch.cuda.is_initialized(), 'optimizer_created': False,
+        'parallel_loader': loader}
+
+
+def audit_loader(config, entries, groups):
+    from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
+    dataset = fixed_dataset(entries['train'], config, 2, mode='train')
+    workers = config['runtime']['data_workers_per_rank']
+    before = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
+        'python': random.getstate()})
+    results = []
+    for number, case in enumerate(config['capacity']['cases']):
+        indices = groups[case['stress_group']]
+        requests = [FrameSampleRequest(indices[i % len(indices)], case['frames'], 830000 + number * 100 + i)
+                    for i in range(min(6, case['batch_per_rank']))]
+        started = time.monotonic()
+        expected = [tree_fingerprint(dataset[request]) for request in requests]
+        serial_seconds = time.monotonic() - started
+        started = time.monotonic()
+        with OrderedAssetPrefetch(dataset, [requests], workers=workers) as loader:
+            loaded, timing = loader.take(requests)
+            actual = [tree_fingerprint(loaded[request]) for request in requests]
+        parallel_seconds = time.monotonic() - started
+        if actual != expected:
+            raise RuntimeError('parallel CPU data changed geometry, normalization, frames or GT')
+        results.append({**case, 'checked_assets': len(requests), 'workers': workers,
+            'all_CPU_fields_bitwise_equal': True, 'serial_seconds': serial_seconds,
+            'parallel_seconds': parallel_seconds, 'comparison_order': 'serial_then_parallel_cache_bias_possible',
+            'input_sha256': actual, **timing})
+    after = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
+        'python': random.getstate()})
+    if before != after or torch.cuda.is_initialized():
+        raise RuntimeError('CPU loading changed global RNG or initialized CUDA')
+    return {'passed': True, 'cases': results, 'global_RNG_unchanged': True,
+            'cuda_initialized': False, 'training_or_optimizer_updates': 0}
 
 
 def check_gradient_groups(model, variant):
@@ -241,7 +333,7 @@ def wrap(model, device, world):
 
 
 def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config, variant,
-           samples, device, world, *, check_groups=False):
+           samples, device, world, *, check_groups=False, prefetch=None):
     model.train()
     optimizer.zero_grad(set_to_none=True)
     lr, beta = set_lr(optimizer, samples, config)
@@ -249,8 +341,15 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
     started = time.monotonic()
     totals = torch.zeros(4, dtype=torch.float64, device=device)
     schedule = []
+    loading = {'cpu_data_wait_seconds': 0., 'cpu_data_task_seconds': 0.}
     for i, requests in enumerate(batches):
-        surface, target, geometry = prepare(dataset, requests, config, tokenizer, codec, device)
+        prepared_dataset = dataset
+        if prefetch is not None:
+            prepared_dataset, timing = prefetch.take(requests)
+            for key in loading:
+                loading[key] += timing[key]
+        surface, target, geometry = prepare(prepared_dataset, requests, config, tokenizer, codec, device)
+        del prepared_dataset
         with wrapped.no_sync() if world > 1 and i < len(batches) - 1 else nullcontext():
             with torch.autocast('cuda', dtype=torch.bfloat16):
                 losses = wrapped(surface, target, auxiliary_weight=0.)
@@ -280,6 +379,7 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
     return {'assets_in_update': assets, 'frames_in_update': int(totals[3]),
         'main_loss': float(totals[0] / assets), 'main_accuracy': float(totals[1] / assets),
         'learning_rate': lr, 'beta1': beta, 'gradient_norm': norm, 'gradient_groups': gradients,
+        'data_workers_per_rank': config['runtime'].get('data_workers_per_rank', 0), **loading,
         'seconds': time.monotonic() - started, 'microbatches': schedule, **memory}
 
 
@@ -342,7 +442,7 @@ def latest_checkpoint(output, config, variant):
     return max(rows, key=lambda row: row['asset_exposures']) if rows else None
 
 
-def evaluation_complete(output, config, variant, samples):
+def evaluation_summary_path(output, config, variant, samples):
     roots = [output]
     if config['training'].get('resume_root'):
         roots.append(Path(config['training']['resume_root']))
@@ -350,15 +450,34 @@ def evaluation_complete(output, config, variant, samples):
         path = root / variant / f'evaluation_{samples:06d}' / 'summary.json'
         if path.exists():
             result = json.loads(path.read_text())
+            checkpoint = latest_checkpoint(output, config, variant)
+            artifacts = result.get('row_artifacts', [])
             if (result.get('complete') is True and result.get('samples') == samples
-                    and result.get('variant') == variant and result.get('contract_sha256') == contract_sha(config)):
-                return True
-    return False
+                    and result.get('variant') == variant and result.get('contract_sha256') == contract_sha(config)
+                    and result.get('source_sha256') == source_hashes()
+                    and result.get('selection_sha256') == config['evaluation']['selection']['sha256']
+                    and checkpoint and checkpoint['asset_exposures'] == samples
+                    and result.get('checkpoint_sha256') == checkpoint['sha256']
+                    and len(artifacts) == config['runtime']['world_size']
+                    and all(Path(r['path']).is_file() and sha256(r['path']) == r['sha256'] for r in artifacts)):
+                rows = [row for artifact in artifacts for row in json.loads(Path(artifact['path']).read_text())]
+                selection = json.loads(Path(config['evaluation']['selection']['path']).read_text())['valid']
+                expected = {(r['asset_id'], f) for r in selection for f in range(8)}
+                if len(rows) == 1024 and {(r['asset_id'], r['frame_index']) for r in rows} == expected:
+                    return path
+    return None
+
+
+def evaluation_complete(output, config, variant, samples):
+    return evaluation_summary_path(output, config, variant, samples) is not None
 
 
 def pending_variants(progress, output, config):
-    return [variant for variant in VARIANTS if progress[variant] < config['training']['target_assets']
-        or not evaluation_complete(output, config, variant, config['training']['target_assets'])]
+    target = operation_target(config)
+    if any(value > target for value in progress.values()):
+        raise RuntimeError('saved progress exceeds the authorized operation target')
+    return [variant for variant in VARIANTS if progress[variant] < target
+        or not evaluation_complete(output, config, variant, target)]
 
 
 def restore_checkpoint(model, optimizer, config, spec, variant, rank, world):
@@ -366,7 +485,7 @@ def restore_checkpoint(model, optimizer, config, spec, variant, rank, world):
         raise RuntimeError('checkpoint file digest differs')
     payload = torch.load(spec['path'], map_location='cpu', mmap=True, weights_only=False)
     if (payload['variant'] != variant or payload['contract_sha256'] != contract_sha(config)
-            or payload['source_sha256'] != source_hashes()
+            or not compatible_source(payload['source_sha256'], 'checkpoint')
             or payload['optimizer_parameter_names'] != parameter_names(model)
             or len(payload['rank_states']) != world):
         raise RuntimeError('checkpoint scientific/optimizer/rank contract differs')
@@ -439,18 +558,39 @@ def evaluate(model, tokenizer, codec, config, entries, output, variant, samples,
     local = selected[rank::world]
     dataset = fixed_dataset(local, config, 8, mode='seen_eval')
     root = output / variant / f'evaluation_{samples:06d}'
-    directory = root / f'rank_{rank}'
+    checkpoint = latest_checkpoint(output, config, variant)
+    if not checkpoint or checkpoint['asset_exposures'] != samples:
+        raise RuntimeError('evaluation must bind to its retained checkpoint')
+    attempt = max([int(p.name.split('_')[-1]) for p in root.glob('attempt_*')] + [0]) + 1 if rank == 0 else None
+    attempt = gather(attempt, world)[0]
+    directory = root / f'attempt_{attempt:03d}' / f'rank_{rank}'
     directory.mkdir(parents=True, exist_ok=False)
+    original_targets = {}
     def items():
         for i in range(len(dataset)):
             if shared_deadline_due(config, device, world):
                 raise EvaluationHandoff('saved training state retained; evaluation reached deadline')
-            yield prepare(dataset, [i], config, tokenizer, codec, device)
+            prepared = prepare(dataset, [i], config, tokenizer, codec, device)
+            geometry = prepared[2]
+            count = int(geometry['joint_count'][0])
+            for frame in range(8):
+                original_targets[(geometry['asset_id'][0], frame)] = {
+                    'gt_joint_count': count,
+                    'original_GT_sha256': tree_fingerprint({
+                        'joints': geometry['frame_target_joints'][0, frame, :count],
+                        'parents': geometry['target_parents'][0, :count]}),
+                    'normalization_sha256': tree_fingerprint({key: geometry[key] for key in ('query_center', 'query_scale')})}
+            yield prepared
     result = original_evaluate(model, items(), tokenizer,
         {**config, 'probe': {'auxiliary_weight': 0., 'evaluate_auxiliary': False, 'max_new_tokens': 2048}},
         directory, samples, frame_indices=config['evaluation']['frame_indices'])
     for row in result['rows']:
-        row['gt_joint_count'] = len(row['target_quantized_joints'])
+        row.update(original_targets[(row['asset_id'], row['frame_index'])])
+        row['predicted_joint_count'] = len(row['predicted_joints']) if row['success'] else None
+        row['absolute_joint_count_error'] = abs(row['predicted_joint_count'] - row['gt_joint_count']) if row['success'] else None
+    row_path = directory / 'scored_rows.json'
+    write_json(row_path, result['rows'])
+    artifacts = gather({'rank': rank, 'path': str(row_path), 'sha256': sha256(row_path)}, world)
     all_rows = [row for values in gather(result['rows'], world) for row in values]
     expected = {(row['asset_id'], f) for row in selected for f in range(8)}
     if len(all_rows) != 1024 or {(r['asset_id'], r['frame_index']) for r in all_rows} != expected:
@@ -459,14 +599,59 @@ def evaluate(model, tokenizer, codec, config, entries, output, variant, samples,
         summary = {}
         for name, rows in [('all', all_rows), ('non52', [r for r in all_rows if r['gt_joint_count'] != 52]),
                            ('gt52', [r for r in all_rows if r['gt_joint_count'] == 52])]:
+            errors = [r['absolute_joint_count_error'] for r in rows if r['success']]
             summary[name] = {'views': len(rows), 'assets': len({r['asset_id'] for r in rows}),
                 'original_edge_f1': float(np.mean([r['original_edge_f1'] for r in rows])) if rows else None,
                 'failures': sum(not r['success'] for r in rows),
-                'exact_count_fraction': float(np.mean([r['exact_count'] for r in rows])) if rows else None}
+                'exact_count_fraction': float(np.mean([r['exact_count'] for r in rows])) if rows else None,
+                'joint_count_MAE_successful_views': float(np.mean(errors)) if errors else None}
         write_json(root / 'summary.json', {'complete': True, 'variant': variant, 'samples': samples,
             'groups': summary, 'quality_accepted': False, 'failed_views_scored_zero': True,
-            'original_GT_scoring': True, 'oracle_not_used': True, 'contract_sha256': contract_sha(config)})
+            'original_GT_scoring': True, 'oracle_not_used': True, 'contract_sha256': contract_sha(config),
+            'checkpoint_sha256': checkpoint['sha256'], 'source_sha256': source_hashes(),
+            'selection_sha256': config['evaluation']['selection']['sha256'], 'row_artifacts': artifacts})
     synchronize(device, world)
+
+
+def compare_evaluations(output, config, samples):
+    rows_by_arm, checkpoints = {}, {}
+    for variant in VARIANTS:
+        summary_path = evaluation_summary_path(output, config, variant, samples)
+        if summary_path is None:
+            raise RuntimeError('paired comparison requires both checkpoint-bound evaluations')
+        summary = json.loads(summary_path.read_text())
+        rows = [row for artifact in summary['row_artifacts'] for row in json.loads(Path(artifact['path']).read_text())]
+        rows_by_arm[variant] = {(r['asset_id'], r['frame_index']): r for r in rows}
+        checkpoints[variant] = summary['checkpoint_sha256']
+    on, off = (rows_by_arm[v] for v in VARIANTS)
+    for key, row in on.items():
+        for field in ('raw_frame_index', 'gt_joint_count', 'original_GT_sha256', 'normalization_sha256', 'target_tokens'):
+            if row[field] != off[key][field]:
+                raise RuntimeError(f'paired validation input/target differs: {key} {field}')
+    groups = {}
+    for name, predicate in [('all', lambda r: True), ('non52', lambda r: r['gt_joint_count'] != 52),
+                            ('gt52', lambda r: r['gt_joint_count'] == 52)]:
+        keys = [key for key in on if predicate(on[key])]
+        assets = sorted({key[0] for key in keys})
+        differences = np.asarray([np.mean([on[k]['original_edge_f1'] - off[k]['original_edge_f1']
+            for k in keys if k[0] == asset]) for asset in assets])
+        rng = np.random.default_rng(20261025)
+        interval = np.quantile(rng.choice(differences, size=(2000, len(differences)), replace=True).mean(1),
+                               [.025, .975]).tolist() if len(differences) else None
+        groups[name] = {'assets': len(assets), 'views': len(keys),
+            'Vplus_minus_Vminus_original_edge_f1': float(differences.mean()) if len(differences) else None,
+            'paired_asset_bootstrap_95pct_interval': interval,
+            'arms': {variant: {'original_edge_f1': float(np.mean([table[k]['original_edge_f1'] for k in keys])) if keys else None,
+                              'failures': sum(not table[k]['success'] for k in keys),
+                              'exact_count_fraction': float(np.mean([table[k]['exact_count'] for k in keys])) if keys else None}
+                     for variant, table in rows_by_arm.items()}}
+    result = {'complete': True, 'quality_accepted': False, 'samples_per_variant': samples,
+        'validation_assets': 128, 'views_per_asset': 8, 'matched_raw_frames_GT_normalization_tokens': True,
+        'checkpoint_sha256': checkpoints, 'source_sha256': source_hashes(), 'contract_sha256': contract_sha(config),
+        'groups': groups, 'bootstrap': {'unit': 'asset', 'replicates': 2000, 'seed': 20261025,
+            'limitation': 'validation-asset uncertainty for one training seed; not training-seed variability'}}
+    write_json(output / f'paired_evaluation_{samples:06d}.json', result)
+    return result
 
 
 def train_pair(config, entries, output, source, device, rank, world):
@@ -499,45 +684,43 @@ def train_pair(config, entries, output, source, device, rank, world):
             if saved is not None:
                 apply_rng(saved)
             evaluation_interrupted = False
-            if (samples in config['training']['evaluation_assets']
+            if (samples in evaluation_milestones(config)
                     and not evaluation_complete(output, config, variant, samples)):
                 try:
                     with preserve_random():
                         evaluate(model, tokenizer, codec, config, entries, output, variant, samples, device, rank, world)
                 except EvaluationHandoff:
                     evaluation_interrupted = True
-            limit = min(((samples // 5000) + 1) * 5000, config['training']['target_assets'])
+            limit = min(((samples // 5000) + 1) * 5000, operation_target(config))
             first_step, last_saved = step, samples if checkpoints[variant] else None
             write_json(output / f'initialization_{variant}_rank_{rank}.json', initial)
-            while samples < limit and not evaluation_interrupted:
-                if shared_deadline_due(config, device, world):
-                    break
-                index = int(np.searchsorted(stream.global_ends, samples, side='right'))
-                goal = int(stream.update_sizes[index])
-                batches, count = [], 0
-                while count < goal // world:
-                    requests = stream.take(goal // world - count)
-                    batches.append(requests)
-                    count += len(requests)
-                value = update(model, wrapped, optimizer, dataset, batches, tokenizer, codec,
-                    config, variant, samples, device, world, check_groups=step == first_step)
-                if value['assets_in_update'] != goal:
-                    raise RuntimeError('actual update differs from the matched exposure plan')
-                samples += goal
-                frames += value['frames_in_update']
-                step += 1
-                value.update(variant=variant, rank=rank, step=step, asset_exposures=samples,
-                    input_frame_exposures=frames, supervised_frame_exposures=frames,
-                    sampling_plan_sha256=stream.plan_sha256)
-                trace.write(json.dumps(value, allow_nan=False) + '\n')
-                progress[variant] = samples
-                write_json(output / f'progress_rank_{rank}.json', {'complete': False, 'progress': progress,
-                    'latest': {k: v for k, v in value.items() if k != 'microbatches'}})
-                print('TRAIN ' + json.dumps({k: v for k, v in value.items() if k != 'microbatches'}), flush=True)
+            workers = config['runtime'].get('data_workers_per_rank', 0)
+            loading = OrderedAssetPrefetch(dataset, planned_microbatches(config, stream, limit),
+                workers=workers, depth=config['runtime'].get('prefetch_microbatches', 2)) if workers else nullcontext(None)
+            with loading as prefetch:
+                while samples < limit and not evaluation_interrupted:
+                    if shared_deadline_due(config, device, world):
+                        break
+                    goal, batches = next_update_batches(stream, samples, world)
+                    value = update(model, wrapped, optimizer, dataset, batches, tokenizer, codec,
+                        config, variant, samples, device, world, check_groups=step == first_step, prefetch=prefetch)
+                    if value['assets_in_update'] != goal:
+                        raise RuntimeError('actual update differs from the matched exposure plan')
+                    samples += goal
+                    frames += value['frames_in_update']
+                    step += 1
+                    value.update(variant=variant, rank=rank, step=step, asset_exposures=samples,
+                        input_frame_exposures=frames, supervised_frame_exposures=frames,
+                        sampling_plan_sha256=stream.plan_sha256)
+                    trace.write(json.dumps(value, allow_nan=False) + '\n')
+                    progress[variant] = samples
+                    write_json(output / f'progress_rank_{rank}.json', {'complete': False, 'progress': progress,
+                        'latest': {k: v for k, v in value.items() if k != 'microbatches'}})
+                    print('TRAIN ' + json.dumps({k: v for k, v in value.items() if k != 'microbatches'}), flush=True)
             if last_saved != samples:
                 checkpoints[variant] = save_checkpoint(model, optimizer, stream, config, output, variant,
                     initial, source, samples, frames, step, rank, world, device)
-            if (samples in config['training']['evaluation_assets']
+            if (samples in evaluation_milestones(config)
                     and not evaluation_complete(output, config, variant, samples)
                     and not shared_deadline_due(config, device, world)):
                 try:
@@ -550,7 +733,12 @@ def train_pair(config, entries, output, source, device, rank, world):
             torch.cuda.empty_cache()
             synchronize(device, world)
         finished = not pending_variants(progress, output, config)
-    return {'passed': True, 'complete': finished, 'stage_complete': True, 'mode': 'train',
+    if finished and rank == 0:
+        compare_evaluations(output, config, operation_target(config))
+    synchronize(device, world)
+    return {'passed': True, 'complete': finished and operation_target(config) == config['training']['target_assets'],
+        'operation_complete': finished, 'operation_target_per_variant': operation_target(config),
+        'stage_complete': True, 'mode': 'train',
         'allocation_handoff_required': not finished, 'progress': progress, 'checkpoints': checkpoints,
         'target_per_variant': config['training']['target_assets'], 'training_assets': 5000,
         'quality_accepted': False, 'contract_sha256': contract_sha(config), 'source_sha256': source_hashes()}

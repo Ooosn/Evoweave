@@ -8,7 +8,7 @@ import socket
 import subprocess
 import sys
 
-from train_legacy_single_target import file_sha256, require_job_membership, verify_exception_keeper
+from train_legacy_single_target import file_sha256, verify_exception_keeper
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -16,6 +16,25 @@ LAUNCHER = 'model_training/jobs/launch_virtual_pair.py'
 SCOPE = 'virtual_query_matched_5k_20261025_v1'
 EXCEPTION_ENV = 'EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION'
 CPUS = [58, 63, 64, 65]
+
+
+def require_job_membership(text, job):
+    membership = {}
+    for line in text.splitlines():
+        try:
+            _, controllers, path = line.split(':', 2)
+        except ValueError as error:
+            raise RuntimeError('invalid scheduler cgroup record') from error
+        for controller in controllers.split(','):
+            if controller in ('devices', 'cpuset'):
+                if controller in membership:
+                    raise RuntimeError('duplicate scheduler cgroup controller')
+                membership[controller] = path
+    root = f'/AGE/{job}.1'
+    # qrsh places this allocation's payload in /master under the job root.
+    if (membership.get('devices') not in (root, root + '/master')
+            or membership.get('cpuset') != membership.get('devices')):
+        raise RuntimeError('launcher is outside the granted scheduler job')
 
 
 def operation(state):
@@ -48,9 +67,80 @@ def validate_ssh_exception(state, config):
 
 
 def execution_cpu_binding(config, exception, allowed_cpus):
+    if config['runtime'].get('execution_mode') == 'scheduler_job':
+        runtime = scheduler_runtime(config)
+        binding = set(runtime['cpu_affinity'])
+        if exception is not None or not binding <= allowed_cpus:
+            raise RuntimeError('approved scheduler CPU binding unavailable')
+        return binding
     if not exception or not set(CPUS) <= allowed_cpus:
         raise RuntimeError('approved four-CPU binding unavailable')
     return set(CPUS)
+
+
+def scheduler_runtime(config):
+    runtime = config['runtime']
+    if (config.get('family') != SCOPE or runtime.get('execution_mode') != 'scheduler_job'
+            or runtime.get('require_scheduler_membership') is not True):
+        raise RuntimeError('scheduler-owned execution must require job membership')
+    for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 16), ('world_size', 2)):
+        if type(runtime.get(name)) is not int or runtime[name] != expected:
+            raise RuntimeError(f'scheduler resource binding differs: {name}')
+    cpus, gpus, uuids = (runtime.get(name) for name in ('cpu_affinity', 'physical_gpus', 'gpu_uuids'))
+    for name, values, count in (('CPU affinity', cpus, 16), ('physical GPUs', gpus, 2)):
+        if (type(values) is not list or len(values) != count
+                or any(type(value) is not int or value < 0 for value in values)
+                or len(set(values)) != count):
+            raise RuntimeError(f'invalid scheduler {name}')
+    if (type(uuids) is not list or len(uuids) != 2
+            or any(not isinstance(value, str) or not value.strip() for value in uuids)
+            or len(set(uuids)) != 2):
+        raise RuntimeError('invalid scheduler GPU UUID binding')
+    if (type(runtime.get('allocation')) is not int or runtime['allocation'] <= 0
+            or not isinstance(runtime.get('host'), str) or not runtime['host'].strip()
+            or ('hostname' in runtime and (not isinstance(runtime['hostname'], str)
+                                          or not runtime['hostname'].strip()))):
+        raise RuntimeError('invalid scheduler allocation/host binding')
+    limit = runtime.get('gpu_memory_fraction_limit')
+    if type(limit) not in (int, float) or not 0 < limit <= 1:
+        raise RuntimeError('invalid scheduler GPU memory limit')
+    return runtime
+
+
+def verify_allocation(config, grant):
+    if config['runtime'].get('execution_mode') == 'scheduler_job':
+        runtime = scheduler_runtime(config)
+        fields = {
+            'job': re.findall(r'^job_number:[ \t]*(\d+)[ \t]*$', grant, re.MULTILINE),
+            'owner': re.findall(r'^owner:[ \t]*(\S+)[ \t]*$', grant, re.MULTILINE),
+            'state': re.findall(r'^job_state[ \t]+\d+:[ \t]*(\S+)[ \t]*$', grant, re.MULTILINE),
+            'host': re.findall(r'^exec_host_list[ \t]+\d+:[ \t]*(.+?)[ \t]*$', grant, re.MULTILINE),
+            'devices': re.findall(r'^granted_devices\b[^\r\n]*$', grant, re.MULTILINE),
+        }
+        if (fields['job'] != [str(runtime['allocation'])] or fields['owner'] != ['wangyy']
+                or fields['state'] != ['r']
+                or fields['host'] != [f"{runtime['host']}:{runtime['cpu_slots']}"]
+                or len(fields['devices']) != runtime['cpu_slots']):
+            raise RuntimeError('live scheduler allocation differs')
+        # This scheduler reports the same device grant once for each task-1 CPU slot.
+        records = [re.fullmatch(r'granted_devices[ \t]+(\d+),(\d+):[ \t]*(.+?)[ \t]*', row)
+                   for row in fields['devices']]
+        if (any(row is None for row in records)
+                or {(int(row[1]), int(row[2])) for row in records}
+                != {(1, slot) for slot in range(runtime['cpu_slots'])}):
+            raise RuntimeError('live scheduler GPU slot records differ')
+        expected = {f'/dev/nvidia{gpu}' for gpu in runtime['physical_gpus']}
+        for row in records:
+            host, separator, devices = row[3].partition(':')
+            if (not separator or host != runtime['host'] or len(devices.split()) != len(expected)
+                    or set(devices.split()) != expected):
+                raise RuntimeError('live scheduler GPU devices differ')
+        return
+    if ('pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
+            or not re.search(r'job_state\s+\d+:\s+r\b', grant)
+            or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
+            or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
+        raise RuntimeError('live allocation differs')
 
 
 def deadline_due(config):
@@ -80,10 +170,20 @@ def verify_launch(args, config):
     runtime = config['runtime']
     state = json.loads((ROOT / 'model_training/state/current.json').read_text())
     op = validate_stage(state, config, args)
-    exception = validate_ssh_exception(state, config)
-    verify_exception_keeper(exception)
+    scheduler = runtime.get('execution_mode') == 'scheduler_job'
+    exception = None
+    if scheduler:
+        scheduler_runtime(config)
+        require_job_membership(Path('/proc/self/cgroup').read_text(), runtime['allocation'])
+        if (os.environ.get('JOB_ID') != str(runtime['allocation'])
+                or os.environ.get('NSLOTS') != str(runtime['cpu_slots'])
+                or os.environ.get(EXCEPTION_ENV) == '1'):
+            raise RuntimeError('scheduler execution needs inherited job/slots without an SSH exception')
+    else:
+        exception = validate_ssh_exception(state, config)
+        verify_exception_keeper(exception)
     supervisor = os.environ.get('EVOWEAVE_RESOURCE_SUPERVISOR_PID', '')
-    if os.environ.get(EXCEPTION_ENV) != '1' or not supervisor.isdigit():
+    if (not scheduler and os.environ.get(EXCEPTION_ENV) != '1') or not supervisor.isdigit():
         raise RuntimeError('reviewed resource supervisor is required')
     command = (Path('/proc') / supervisor / 'cmdline').read_bytes().replace(b'\0', b' ').decode()
     if str(ROOT / LAUNCHER) not in command:
@@ -95,19 +195,20 @@ def verify_launch(args, config):
     if pid != int(supervisor):
         raise RuntimeError('payload escaped supervisor')
     cpu = args.mode == 'audit'
-    if (socket.gethostname().split('.')[0] != 'pcg01' or os.sched_getaffinity(0) != set(CPUS)
-            or os.environ.get('CUDA_VISIBLE_DEVICES') != ('' if cpu else '5,6') or runtime['world_size'] != 2):
+    expected_host = (runtime.get('hostname', 'pcg01' if runtime['host'] == 'pcg01i' else runtime['host'])
+                     if scheduler else 'pcg01')
+    affinity = os.sched_getaffinity(0)
+    binding = execution_cpu_binding(config, exception, affinity)
+    devices = ','.join(map(str, runtime['physical_gpus']))
+    if (socket.gethostname().split('.')[0] != expected_host or affinity != binding
+            or os.environ.get('CUDA_VISIBLE_DEVICES') != ('' if cpu else devices) or runtime['world_size'] != 2):
         raise RuntimeError('host/CPU/GPU binding differs')
     import resource
     if resource.getrlimit(resource.RLIMIT_AS)[0] != resource.RLIM_INFINITY:
         raise RuntimeError('unlimited CUDA virtual address space required')
     grant = subprocess.check_output(['qstat', '-j', str(runtime['allocation'])], text=True, timeout=30)
-    if ('pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
-            or not re.search(r'job_state\s+\d+:\s+r\b', grant)
-            or not re.search(r'^owner:\s+wangyy\s*$', grant, re.MULTILINE)
-            or not re.search(r'exec_host_list\s+\d+:\s+pcg01i:1\s*$', grant, re.MULTILINE)):
-        raise RuntimeError('live allocation differs')
-    uuids = subprocess.check_output(['nvidia-smi', '-i', '5,6', '--query-gpu=uuid',
+    verify_allocation(config, grant)
+    uuids = subprocess.check_output(['nvidia-smi', '-i', devices, '--query-gpu=uuid',
         '--format=csv,noheader'], text=True, timeout=30).split()
     if uuids != runtime['gpu_uuids']:
         raise RuntimeError('GPU UUIDs changed')

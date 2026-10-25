@@ -131,3 +131,35 @@ A bounded read-only watcher collects the terminal stage and verifies checkpoint
 receipts/file presence before alerting primary. Authority to request the same
 two H100s after the current grant expires is still pending; no extra allocation
 has been requested.
+
+## Allocation Handoff
+
+The stage exited0 at17:10:45JST after V+reached5000exposures,105updates and66928
+supervised frames. Primary checked both complete training traces:2500asset
+requests per rank, exactly5000distinct manifest indices0..4999, each seen once.
+V- is still0 and has no checkpoint. This is one full pass over the required5k
+training set, not completion of the100k-per-arm comparison. No quality evaluation
+or architecture conclusion is claimed at this unequal progress.
+
+The full V+model/Adam/all-rank RNG/sampler checkpoint is8223925514bytes at both:
+
+```text
+/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v1/virtual_on/checkpoint_005000.pt
+/home/wangyy/evorig/outputs/virtual_query_matched_5k_20261025/virtual_on/checkpoint_005000.pt
+```
+
+Producer-verified SHA256:
+`2edb0f6f487c090caebdd8716a9505b103eca8ab8dd0398882b26bb0f0cb6727`.
+Independent terminal inspection confirmed both files' existence, equal byte
+counts and matching JSON receipts; it did not download or rehash the payloads.
+Model fingerprint is
+`5a272a6e5f7a610cd5168c04b5935248d1f77e747bcf4643a86370182cf5c8ed`.
+Both ranks agree on progress, their payloads are gone, GPU5/6use0MiB, and keeper
+1090013/the current allocation remain. Resource and verification receipts are
+under the local `runs/train_v1` and `monitor_train_v1` artifact directories.
+
+Current launch permissions are closed. The objective remains incomplete. Future
+authorized continuation should start the less-trained V- arm from the identical
+official initialization and later restore V+including optimizer/RNG/sampler,
+without changing the recipe or100k horizon. New-allocation authorization is
+pending; no replacement GPUs or automatic resume were initiated.

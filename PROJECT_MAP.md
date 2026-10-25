@@ -12,8 +12,9 @@ manifest row, including `root_rt`. This revision changes data preprocessing,
 not model architecture, and does not authorize or start a training run.
 
 This checkout is the model research workspace on branch
-`codex/virtual-fusion-20261013`. The current task tests virtual-module on/off
-with the legacy codec under matched fixed-5000-asset training. Read
+`codex/virtual-fusion-20261013`. The matched virtual-module on/off comparison
+completed at20k exposures per arm on fixed5000assets. Both arms retain real-frame
+motion interaction, whose benefit is established and is not being retested. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
 [experiment protocol](model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md).
 Exact execution permissions are in `model_training/state/current.json`.

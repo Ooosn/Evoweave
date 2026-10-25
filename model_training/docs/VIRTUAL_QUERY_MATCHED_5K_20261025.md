@@ -1,5 +1,60 @@
 # Matched Virtual-Module Training On Fixed 5k Assets
 
+## Completed 20k Result
+
+Completed October26 at02:33:34JST under producer
+`7af1e559f2cc75936f5e891ab16a07c0abdebe96`. Both arms reached exactly20000
+asset exposures,420updates and263608supervised frames: four complete passes
+over the same5000assets. All420recorded paired steps on both ranks match in
+asset/frame identities, seeds, target hashes, LR/beta and accounting.
+V+restored its retained5000model, Adam, RNG and sampler before update106.
+
+**Real-frame motion benefit is an established project conclusion, reaffirmed
+by the user on October26. Do not repeat that ablation. Both arms HERE retain
+real-frame temporal interaction; this comparison isolates the virtual path.**
+
+The fixed128validation assets have8views each. Scores use original continuous
+GT and count generation failures as zero; original GT, normalization, frame
+identities and target tokens match between arms.
+
+| Metric | Virtual on | Virtual off |
+| --- | ---: | ---: |
+| All1024views original-GT edge F1 | 0.69050064 | 0.71108141 |
+| GT52 group F1 (45assets/360views) | 0.85644170 | 0.86395009 |
+| Non52 group F1 (83assets/664views) | 0.60053260 | 0.62820079 |
+| Generation failures | 88 | 57 |
+| Exact joint-count fraction | 0.44042969 | 0.47753906 |
+
+On-minus-off F1 is-0.02058077. Paired asset bootstrap (2000resamples,
+seed20261025) gives95% interval[-0.04356053,0.00184155], including zero.
+No incremental virtual-module gain is observed at20k under this recipe.
+This is one training seed at an early point on the unchanged100kLRhorizon,
+not evidence of universal harm or proof of a decoder/training-recipe cause.
+
+All88on failures hit the generation limit; off has55limit failures and2invalid
+EOS sequences. On the925views where both succeed, on-minus-off F1 is-0.01142832.
+The all-view difference decomposes into-0.01032343 from shared successes and
+-0.01025733 from unequal success/failure outcomes. These are descriptive,
+posthoc partitions, not causal mechanisms or replacement evaluation endpoints.
+
+Execution and pairing are accepted; model quality is not promoted. All8full
+checkpoints remain on NVMe and durable storage. The producer verified payload
+SHA; independent checks verified files, sizes and receipts without downloading
+or rehashing8GBweights. At02:45JST the primary confirmed all4payload PIDs absent,
+both GPUs idle and the keeper retained. No further experiment or100kextension
+is authorized by this completion record.
+
+Evidence (local artifacts):
+- `D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/runs/train_v2/paired_evaluation_020000.json`, SHA256 `a635c23403ff8310aa2c7c353eb2f513232a5d461d4b05d415c1b26c39462c3b`.
+- `D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/monitor_train_v2/receipt.json`, SHA256 `e62e3e7ae2d1d5f557fa2a4c1cf619f47f4e3b85ade4b383bf2c7f8aa5a3e242`.
+- `D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/primary_review/primary_row_review.json`, SHA256 `df1ea15dfe80f2840a0a705f501a54f59d8227d391d6cbaec782a7958883259d`.
+
+## Historical Execution Record
+
+The following sections retain the admission, startup and handoff history.
+Their running/pending statements are historical; current permissions and the
+completed result are above and in `state/current.json`.
+
 ## Authorized 20k Continuation
 
 The latest human request authorizes a new two-H100 allocation and a first matched

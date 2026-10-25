@@ -13,17 +13,17 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The current task is a matched virtual-module on/off pair using the legacy codec,
-the fixed 5,000-asset subset, dynamic 2..24 frames and unchanged root-RT
-preprocessing. Every real frame is supervised. Both arms start from identical
-official-initialized state under the same 100,000-exposure learning-rate horizon.
-The currently authorized continuation stops both at 20,000 exposures for a matched
-evaluation; V+ resumes its 5,000 checkpoint and V- starts at zero. The new grant
-has two H100s and 16 CPU slots, with bounded ordered CPU-data prefetch configured;
-auxiliary and cross-frame consistency losses are both zero. No small-data fitting
-substitutes for this comparison. See the
-[protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md). The completed ID/XYZ run and
-original single-query baseline evaluation remain separate historical results.
+The matched virtual-module on/off comparison is complete at20,000exposures per
+arm, with four full passes over the fixed5,000assets. Both arms retain real-frame
+temporal interaction: its benefit is established and is not being tested again.
+Original-GT edge F1 is0.69050on versus0.71108off; the paired95%interval for the
+difference includes zero. No incremental virtual-module benefit was observed.
+The100,000-exposure LRhorizon was preserved, not completed. No further compute
+is authorized. See the [result and protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md#completed-20k-result).
+
+Keep `state/current.json` limited to current permissions, contracts and results.
+Historical runs and source-transition details are [archived](state/archive/current_before_compaction_20261026.json);
+archive permissions are never active.
 
 ## Code Entry Points
 

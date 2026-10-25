@@ -208,8 +208,11 @@ def verify_launch(args, config):
         raise RuntimeError('unlimited CUDA virtual address space required')
     grant = subprocess.check_output(['qstat', '-j', str(runtime['allocation'])], text=True, timeout=30)
     verify_allocation(config, grant)
-    uuids = subprocess.check_output(['nvidia-smi', '-i', devices, '--query-gpu=uuid',
-        '--format=csv,noheader'], text=True, timeout=30).split()
+    try:
+        uuids = subprocess.check_output(['nvidia-smi', '-i', devices, '--query-gpu=uuid',
+            '--format=csv,noheader'], text=True, timeout=30, stderr=subprocess.STDOUT).split()
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f'GPU identity query failed rc={error.returncode}: {error.output}') from error
     if uuids != runtime['gpu_uuids']:
         raise RuntimeError('GPU UUIDs changed')
     if not cpu and os.getpid() == int(supervisor):

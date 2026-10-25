@@ -28,6 +28,7 @@ class PairRuntimeTests(unittest.TestCase):
         run = {'mode': 'audit', 'config': str(path), 'output': str(args.output),
                'approved': True, 'config_sha256': runtime.sha256(path)}
         op = {'label': guard.SCOPE, 'explicit_human_authorized': True, 'complete': False,
+              'required_entrypoint': guard.ENTRYPOINT,
               'runs': [run], 'gpu_work_allowed': False}
         state = {'active_operation': op}
         guard.validate_stage(state, config, args)
@@ -115,6 +116,11 @@ class PairRuntimeTests(unittest.TestCase):
             self.assertEqual(runtime.tree_fingerprint(optimizer.state_dict()), runtime.tree_fingerprint(target_optimizer.state_dict()))
             self.assertEqual(restored[0].state_dict(), stream.state_dict())
             self.assertEqual(runtime.latest_checkpoint(output, config, 'virtual_on'), spec)
+            config['training']['resume_root'] = config['artifacts']['durable_root']
+            durable_spec = runtime.latest_checkpoint(Path(directory) / 'new_allocation', config, 'virtual_on')
+            self.assertEqual(durable_spec['path'], spec['durable_path'])
+            self.assertEqual(durable_spec['restoration_source'], 'explicit_durable_resume_root')
+            runtime.restore_checkpoint(target, target_optimizer, config, durable_spec, 'virtual_on', 0, 1)
             with self.assertRaises(RuntimeError):
                 runtime.restore_checkpoint(target, target_optimizer, config, spec, 'virtual_off', 0, 1)
             with patch.object(runtime, 'random_state', return_value=rng), self.assertRaises(RuntimeError):

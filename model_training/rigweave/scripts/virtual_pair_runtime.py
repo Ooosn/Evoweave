@@ -328,7 +328,17 @@ def checkpoint_candidates(root, variant):
 def latest_checkpoint(output, config, variant):
     rows = checkpoint_candidates(output, variant)
     if config['training'].get('resume_root'):
-        rows += checkpoint_candidates(config['training']['resume_root'], variant)
+        root = Path(config['training']['resume_root'])
+        resumed = checkpoint_candidates(root, variant)
+        if root.resolve() == Path(config['artifacts']['durable_root']).resolve():
+            for row in resumed:
+                durable = Path(row['durable_path'])
+                if durable.parent.resolve() != (root / variant).resolve():
+                    raise RuntimeError('durable checkpoint escaped the explicit resume root')
+                row['original_primary_path'] = row['path']
+                row['path'] = str(durable)
+                row['restoration_source'] = 'explicit_durable_resume_root'
+        rows += resumed
     return max(rows, key=lambda row: row['asset_exposures']) if rows else None
 
 

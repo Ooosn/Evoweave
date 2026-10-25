@@ -22,6 +22,8 @@ def operation(state):
     op = state.get('active_operation', {})
     if op.get('label') != SCOPE or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
+    if op.get('required_entrypoint') != ENTRYPOINT:
+        raise RuntimeError('state is not bound to the matched-pair trainer')
     return op
 
 

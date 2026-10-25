@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "matched_virtual_query_fixed5k_20k_continuation_allocation_authorized_20261025",
-  "updated_at": "2026-10-25T10:48:00Z",
+  "updated_at": "2026-10-25T11:35:30Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,18 +137,20 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
     "matched_eval",
     "submit",
-    "preflight",
-    "train"
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "granted_scheduler_owned16slots_no_new_training_yet",
-    "last_observed_utc": "2026-10-25T10:42:00.586840Z",
+    "status": "CPU_audit_complete_scheduler_UUID_binding_accepted_training_ready",
+    "last_observed_utc": "2026-10-25T11:35:30.302596Z",
+    "job_local_NVML_indices": [0, 1],
+    "CUDA_GPU_binding": "granted_UUIDs_not_host_numeric_indices",
     "qlogin_job_id": 130494177,
     "host": "pcg01i",
     "hostname": "pcg01",
@@ -157,7 +159,7 @@
     "cpu_slots": 16,
     "execution_cpu_budget": 16,
     "cpu_affinity": [6, 12, 13, 15, 17, 18, 19, 20, 74, 79, 82, 87, 88, 95, 97, 108],
-    "cpu_binding_status": "selected_for_payload; keeper remains in original scheduler cpuset",
+    "cpu_binding_status": "CPU_audit_all_threads_verified_within_selected16; keeper remains in original scheduler cpuset",
     "kernel_scheduler_membership": true,
     "devices_cgroup": "/AGE/130494177.1/master",
     "cpuset_cgroup": "/AGE/130494177.1/master",
@@ -410,7 +412,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Human now authorizes a fresh2H100 allocation and a matched20k-exposure milestone per arm on the SAMEfull5000assets. Latest CPUdefault is8slotsperH100,16total; inspect scheduler availability before requesting. Allocate only the reviewed16-slot scheduler-owned keeper; formal compute remains blocked until exact grant, parallel-loader equivalence, source-transition compatibility and new entrypoints are accepted. Preserve V+5000 fullstate and all prior artifacts. Keep the100k OneCycle horizon unchanged, initialize V-off from accepted official state, restore V+exactly, stop both at20k and evaluate the same128x8validation panel. Do not restart, shrink data, silently continue to100k, or equate CPUallocation with actual loading parallelism.",
+  "next_required_result": "Primary accepted CPUaudit_v7: identical official initialization and sampling plan;36CPUinput comparisons match bitwise; all6fulltwo-rank queue stress cases pass with17.9GiBpeak below48GiBdata limit, CUDA/optimizerunused andRNGunchanged. Job130494177 genuinely grants2H100/16CPU/64GiB; internalGPUindices0/1 correspond to host3/4 andUUIDbinding fixes admission without changing controls. Release onlytrain_v2 on unchangedfull5000assets,6dataworkers perrank/2microbatchprefetch. StartV-off0 then restoreV+5000exactly, alternate5ksegments, stopboth20000 and evaluate identical128x8views. Preserve100kOneCyclehorizon andeverycheckpointtwocopies. Verifyactualfirststeps,input replay,andV+model/Adam/sampler restoration before claiming resumed training. Noautomaticcontinuation past20k or extraGPUallocation/release.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -954,7 +956,7 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "scheduler_GPU_reindexing_confirmed_UUID_binding_fixed_CPU_audit7_pending",
+    "status": "CPU_audit7_accepted_exact_source_transition_and_train_v2_released",
     "continuation_request": {
       "explicit_human_authorized": true,
       "authorization": "Human: can apply now and proceed with experiments, recommends updating to20k; subsequent correction requires8CPUslotsperH100,16total for2H100 and proactively implemented useful CPUdata parallelism.",
@@ -979,10 +981,10 @@
         "command": "qrsh -clear -jsv /geadmin/N1GE/util/resources/jsv/jsv_docker.pl -q gpuh.q@pcg01i -pe def_slot 16 -l mem_req=4G -l h100=2 -l h_rt=24:00:00 -now n -N vpair20k /home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/virtual_query_matched_5k_20261025/code/model_training/jobs/hold_virtual_pair_allocation.py --directory /work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k"
       }
     },
-    "producer_source": "8feea86c24be80543befca1c374c1b57ae6c93c4",
-    "supervisor_pid": 922127,
-    "payload_launcher_pid": 922156,
-    "last_observed_utc": "2026-10-25T08:11:15Z",
+    "previous_training_producer_source": "8feea86c24be80543befca1c374c1b57ae6c93c4",
+    "previous_training_supervisor_pid": 922127,
+    "previous_training_payload_launcher_pid": 922156,
+    "last_observed_utc": "2026-10-25T11:35:30.302596Z",
     "observed_exposures": {"virtual_on": 5000, "virtual_off": 0},
     "observed_optimizer_updates": {"virtual_on": 105, "virtual_off": 0},
     "observed_supervised_frames": {"virtual_on": 66928, "virtual_off": 0},
@@ -1054,7 +1056,8 @@
     "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py", "submit": "model_training/jobs/hold_virtual_pair_allocation.py"},
     "code_commit": "d78cbac731656b9e0ffde81c3f4d3cac30bac5b8",
     "source_transition": {
-      "accepted": false,
+      "accepted": true,
+      "primary_acceptance_evidence": "audit_v7_SHA92706351041d631fed21b07757d7776f944dc0a5bef135bf11816ee0fdb7419a; exact initialization/plan/input/RNG equivalence;6full2rankCPUqueue cases; no model/optimizer/forward/sampling arithmetic changes;65focusedCPUtests pass",
       "allowed_uses": [
         "capacity",
         "checkpoint"
@@ -1112,13 +1115,36 @@
       "unit_test_evidence": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/tests_v2.log"
     },
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
-    "gpu_work_allowed": false,
-    "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": true,
+    "CPU_audit_accepted": true,
     "CPU_audit": {
-      "accepted": false,
+      "accepted": true,
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
-      "required": "same full initialization and scientific contract; CPU-only parallel loader exact-field/RNG validation"
+      "sha256": "92706351041d631fed21b07757d7776f944dc0a5bef135bf11816ee0fdb7419a",
+      "resource_sha256": "3c179b64ab967881b117d08b221289f4b062284021db57d71c835fea8ac0c712",
+      "finished_utc": "2026-10-25T11:35:13.502705Z",
+      "exit_code": 0,
+      "payload_cleanup_complete": true,
+      "all_initial_states_equal": true,
+      "initial_model_sha256": "5637def54e52b339063ea4338c432755c876f08a5520f96e2b45d73570331a3c",
+      "sampling_plan_identical_to_prior_run": true,
+      "training_assets": 5000,
+      "validation_pool": 967,
+      "validation_panel": 128,
+      "cuda_initialized": false,
+      "optimizer_created": false,
+      "parallel_input_comparisons": 36,
+      "all_CPU_fields_bitwise_equal": true,
+      "RNG_unchanged": true,
+      "two_rank_full_queue_stress_cases": 6,
+      "workers_per_rank": 6,
+      "resident_microbatches_per_rank": 3,
+      "peak_process_rss_bytes": 19172925440,
+      "data_RAM_limit_bytes": 51539607552,
+      "model_runtime_RAM_headroom_bytes": 17179869184,
+      "microbenchmark_cache_and_brief_inspection_bias_not_a_formal_throughput_claim": true,
+      "trainable_parameters": {"virtual_on": 675917600, "virtual_off": 670666528}
     },
     "CPU_audit_v2": {
       "accepted": true,
@@ -1136,7 +1162,7 @@
       "payload_cleanup_complete": true,
       "trainable_parameters": {"virtual_on": 675917600, "virtual_off": 670666528}
     },
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "capacity": {
       "accepted": true,
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
@@ -1205,7 +1231,8 @@
       "refresh_reason": "Review fixed durable-only checkpoint recovery and bound the CPU entrypoint. Model/data/optimizer arithmetic unchanged; repeat CPU audit to pin final source before GPU release."
     },
     "train_assets": 5000,
-    "target_exposures_per_variant": 100000,
+    "target_exposures_per_variant": 20000,
+    "scientific_schedule_horizon_assets": 100000,
     "variants": ["virtual_on", "virtual_off"],
     "initialization": "same official UniRig checkpoint; no old trained experiment weights",
     "no_small_data_fit": true,
@@ -1234,7 +1261,7 @@
       "keeper_pid": 1090013
     },
     "runs": [
-      {"mode": "audit", "approved": true, "status": "approved_UUID_bound_CPU_audit_with_parallel_queue_stress",
+      {"mode": "audit", "approved": false, "status": "completed_primary_accepted_UUID_bound_parallel_CPU_audit",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
        "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7"},
@@ -1254,7 +1281,7 @@
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
        "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v3"},
-      {"mode": "train", "approved": false, "status": "blocked_pending_CPU_and_source_transition_acceptance",
+      {"mode": "train", "approved": true, "status": "released_after_CPU_audit7_and_exact_source_transition_acceptance",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
        "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v2"},

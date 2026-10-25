@@ -40,6 +40,20 @@ may be inherited only through an exact, primary-reviewed source transition;
 model/data math and optimizer settings are unchanged. No new formal compute is
 released before fresh CPU equivalence and scheduler admission pass.
 
+CPUaudit_v7 passed at20:35JST, with unchanged initial fingerprint and sampling
+plan,36bitwise-equal CPUinput comparisons, unchanged RNG and all6fulltwo-rank
+queue stress cases accepted. Peak process RSS19172925440bytes (17.9GiB), below
+the48GiBdata threshold that leaves16GiB for the previously measured model/runtime.
+The65focused CPUregressions pass. Primary accepted the exact source transition
+for the old GPUcapacity receipt and V+checkpoint, then released onlytrain_v2.
+This acceptance is execution integrity, not a quality or throughput conclusion.
+
+The first command-job checks stopped before Torch because qstat was absent from
+PATH and host GPUindices were not job-local indices. The scoped launcher now
+loads official scheduler settings and queries/binds the granted UUIDs. Actual
+job inventory showed logical0/1map to host3/4; unauthorized device opens remain
+denied. No device controls were changed and no SSHcompute fallback was used.
+
 ## Purpose And Authorization
 
 The human wants to distinguish a benefit of virtual queries from decoder/training

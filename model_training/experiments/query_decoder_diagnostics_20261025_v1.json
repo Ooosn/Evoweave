@@ -1,0 +1,62 @@
+{
+  "family": "frozen_id_xyz_checkpoint_diagnostics_v1",
+  "runtime": {
+    "repo": "/work/wangyy/query_decoder_diagnostics_20261025/code",
+    "output_root": "/work/wangyy/query_decoder_diagnostics_20261025/outputs",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 130309880,
+    "host": "pcg01i",
+    "physical_gpus": [5, 6],
+    "gpu_uuids": ["GPU-6cdbda3c-ca49-504e-c970-aba4fd30eef1", "GPU-5a6b25a5-6863-8604-090c-acec391973ff"],
+    "world_size": 2,
+    "cpu_slots": 1,
+    "execution_cpu_budget": 4,
+    "cpu_affinity": [58, 63, 64, 65],
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.85,
+    "execution_mode": "explicit_ssh_exception",
+    "require_scheduler_membership": false,
+    "keeper_pid": 1090013,
+    "stop_before_utc": "2026-10-25T07:45:00Z"
+  },
+  "trained_source": {
+    "repo": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code",
+    "commit": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
+    "config": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code/model_training/experiments/id_xyz_consistency_100000_cpu4_v1.json",
+    "config_sha256": "3015e803467ca248204303db31ffc042661b61959d5cf8d10d17af134fb45831"
+  },
+  "checkpoint": {
+    "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_100000_cpu4_v1/checkpoint_100000.pt",
+    "sha256": "ada70ea7b97b4bdbcbd699b1698696faa0eef0298df09e07637e687eea3a29c8",
+    "bytes": 7956028382,
+    "asset_exposures": 100000,
+    "step": 2100,
+    "model_sha256": "b546677a66e26d321bea1432c4307f7d612cdade2cd5c8d683af08c96835dd23"
+  },
+  "reference": {
+    "rank_0": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_100000_cpu4_v1/evaluation_100000/rank_0.json",
+      "sha256": "a8511209a28ec54a3bb14087278bda7f39fd8611e1c5fec66cfb7d26fed65d37"
+    },
+    "rank_1": {
+      "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_100000_cpu4_v1/evaluation_100000/rank_1.json",
+      "sha256": "62f74a7ded18ccda13ac9fb5fa56733b87723c349dbba3bf1ca612e2957b4b0d"
+    }
+  },
+  "diagnostics": {
+    "frame_slots": [0, 2, 4, 6],
+    "groups": ["train_seen", "valid", "train_heldout"],
+    "smoke_valid_assets": 2,
+    "reproduce_saved_generation": true,
+    "teacher_full_vocab_roles": true,
+    "teacher_legal_choice_roles": true,
+    "same_asset_wrong_pose_teacher": true,
+    "GT_structure_free_XYZ_oracle": true,
+    "optimizer_allowed": false,
+    "backward_allowed": false,
+    "quality_approval": false
+  }
+}

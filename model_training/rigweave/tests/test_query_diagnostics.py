@@ -10,7 +10,7 @@ import torch
 
 BASE = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(BASE / "src"), str(BASE / "scripts")]
-from diagnose_id_xyz_checkpoint import gt_structure_free_xyz, replay_with_native_evaluator, structural_divergence, summarize, verify_geometry
+from diagnose_id_xyz_checkpoint import gt_structure_free_xyz, replay_with_native_evaluator, structural_divergence, summarize, tensor_difference, tensor_identity, verify_geometry
 from query_diagnostics_guard import CPUS, FAMILY, SCOPE, execution_cpu_binding, validate_ssh_exception
 from rigweave.dynamic_rig.id_xyz_diagnostics import classify_gt_roles, first_divergence_summary, teacher_forced_diagnostics
 from rigweave.dynamic_rig.id_xyz_tokens import IdXYZTokens
@@ -44,6 +44,18 @@ class Decoder:
 
 
 class OracleTests(unittest.TestCase):
+    def test_tensor_repetition_reports_bitwise_and_numeric_difference(self):
+        first = torch.tensor([1., 2., 3.])
+        second = first.clone()
+        self.assertTrue(tensor_difference(first, second)["equal"])
+        self.assertEqual(tensor_identity(first), tensor_identity(second))
+        second[-1] += .25
+        difference = tensor_difference(first, second)
+        self.assertFalse(difference["equal"])
+        self.assertEqual(difference["max_abs"], .25)
+        with self.assertRaises(ValueError):
+            tensor_difference(first, second.double())
+
     def test_native_replay_captures_exact_condition_without_replacing_output(self):
         class Encoder(torch.nn.Module):
             def forward(self, x):

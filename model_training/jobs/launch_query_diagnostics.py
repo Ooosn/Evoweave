@@ -7,4 +7,4 @@ if __name__ == "__main__":
     raise SystemExit(main(trainer_module_name="query_diagnostics_guard",
         exception_env_name="EVOWEAVE_QUERY_DIAGNOSTICS_SSH_EXCEPTION",
         trainer_script="diagnose_id_xyz_checkpoint.py",
-        modes=("audit", "smoke", "diagnose"), cpu_modes=("audit",)))
+        modes=("audit", "smoke", "repeatability", "diagnose"), cpu_modes=("audit",)))

@@ -193,6 +193,65 @@ def replay_with_native_evaluator(model, tokenizer, codec, surface, target, geome
     return captured[0], {row["frame_index"]: row for row in rows}
 
 
+def tensor_identity(value):
+    data = value.detach().cpu().contiguous()
+    return {"shape": list(data.shape), "dtype": str(data.dtype),
+        "sha256": hashlib.sha256(data.numpy().tobytes()).hexdigest()}
+
+
+def tensor_difference(left, right):
+    import torch
+    if left.shape != right.shape or left.dtype != right.dtype:
+        raise ValueError("repeatability tensors must share shape and dtype")
+    delta = left.detach().float() - right.detach().float()
+    return {"equal": bool(torch.equal(left, right)),
+        "max_abs": float(delta.abs().max()), "rms": float(delta.square().mean().sqrt())}
+
+
+def repeatability_probe(model, tokenizer, codec, batch, surface, target, geometry, trained, group, reference):
+    import torch
+    from rigweave.dynamic_rig.virtual_frame_data import prepare_virtual_surface
+    from rigweave.dynamic_rig.motion_evidence import grouped_motion_evidence
+    second_surface, _ = prepare_virtual_surface([batch], surface["query_points"].device, **trained["surface_sampling"])
+    sampling = {key: {"first": tensor_identity(value), "repeat": tensor_identity(second_surface[key]),
+        "equal": bool(torch.equal(value, second_surface[key]))} for key, value in surface.items()}
+    del second_surface
+    motion = [grouped_motion_evidence(surface["dense_points"], surface["query_indices"]) for _ in range(3)]
+    motion_diffs = [{"states": tensor_difference(motion[0].states, item.states),
+        "anchor_features": tensor_difference(motion[0].anchor_features, item.anchor_features),
+        "valid_groups_equal": bool(torch.equal(motion[0].valid_groups, item.valid_groups))} for item in motion[1:]]
+    del motion
+    conditions, repetitions = [], []
+    for _ in range(3):
+        condition, rows = replay_with_native_evaluator(model, tokenizer, codec, surface, target, geometry, group)
+        conditions.append(condition)
+        repetitions.append(rows)
+    same_condition = []
+    with torch.autocast("cuda", dtype=torch.bfloat16):
+        for _ in range(3):
+            same_condition.append(model.generate(conditions[0][:, 0], codec, max_new_tokens=2048))
+    views = {}
+    for slot in (0, 2, 4, 6):
+        old = reference[group, batch["asset_id"], slot]
+        rows = [value[slot] for value in repetitions]
+        views[slot] = {"historical_F1": old["original_edge_f1"],
+            "historical_tokens": old["predicted_tokens"],
+            "native_F1": [row["original_edge_f1"] for row in rows],
+            "native_tokens": [row["predicted_tokens"] for row in rows],
+            "native_parents": [row["predicted_parents"] for row in rows],
+            "native_teacher_main_CE": [row["teacher_main_ce"] for row in rows],
+            "all_repetitions_equal": all(row["predicted_tokens"] == rows[0]["predicted_tokens"] for row in rows),
+            "historical_match": [row["predicted_tokens"] == old["predicted_tokens"] for row in rows]}
+    return {"group": group, "asset_id": batch["asset_id"], "sampling": sampling,
+        "motion_repeat_differences": motion_diffs,
+        "condition_repeat_differences": [tensor_difference(conditions[0], value) for value in conditions[1:]],
+        "same_fixed_condition_decoder_tokens": [value["tokens"] for value in same_condition],
+        "same_fixed_condition_decoder_equal": all(value["tokens"] == same_condition[0]["tokens"] for value in same_condition),
+        "fixed_condition_vs_native_first_equal": same_condition[0]["tokens"] == repetitions[0][0]["predicted_tokens"],
+        "views": views, "native_evaluator_repetitions": 3, "optimizer_created": False,
+        "oracle_quality_claimed": False}
+
+
 def summarize(rows):
     def full_mismatch_label(value):
         if value.get("status") == "match":
@@ -264,11 +323,11 @@ def run(args, config, source):
             dataset = runtime.fixed_dataset(subset, trained, 8,
                 mode="heldout_eval" if group == "train_heldout" else "seen_eval")
             for index in range(len(subset)):
-                if args.mode == "smoke" and (group != "valid" or index != 0):
+                if args.mode in ("smoke", "repeatability") and (group != "valid" or index != 0):
                     continue
                 work.append((group, dataset, index))
     args.output.mkdir(parents=True, exist_ok=True)
-    rows, audited = [], []
+    rows, audited, repeatability = [], [], []
     with torch.no_grad():
         for group, dataset, index in work:
             check_deadline(config)
@@ -284,6 +343,12 @@ def run(args, config, source):
                 continue
             surface, gpu_geometry = prepare_virtual_surface([batch], device, **trained["surface_sampling"])
             gpu_targets = runtime.build_targets(gpu_geometry, codec, device)
+            if args.mode == "repeatability":
+                repeatability.append(repeatability_probe(model, tokenizer, codec, batch, surface,
+                    gpu_targets, gpu_geometry, trained, group, reference))
+                write(args.output / f"repeatability_rank_{rank}.json", repeatability)
+                del batch, surface, gpu_geometry, gpu_targets, targets, geometry
+                continue
             condition, native_rows = replay_with_native_evaluator(model, tokenizer, codec,
                 surface, gpu_targets, gpu_geometry, group)
             del surface, gpu_geometry
@@ -336,7 +401,7 @@ def run(args, config, source):
             map_location="cpu", weights_only=False)["source_sha256"]:
         raise RuntimeError("trained source changed during diagnostics")
     local = {"complete": True, "mode": args.mode, "source": source, "rank": rank,
-        "restoration": restored, "audited_assets": audited, "rows": rows,
+        "restoration": restored, "audited_assets": audited, "rows": rows, "repeatability": repeatability,
         "model_unchanged": True, "checkpoint_stat_unchanged": True,
         "cuda_initialized": torch.cuda.is_initialized(), "optimizer_created": False, "backward_performed": False}
     if cpu and local["cuda_initialized"]:
@@ -347,7 +412,7 @@ def run(args, config, source):
     if rank == 0:
         reports = [local] if cpu else [json.loads((args.output / f"rank_{r}.json").read_text()) for r in range(2)]
         combined = [row for report in reports for row in report["rows"]]
-        expected = 0 if cpu else 8 if args.mode == "smoke" else 128
+        expected = 0 if cpu or args.mode == "repeatability" else 8 if args.mode == "smoke" else 128
         keys = {(row["group"], row["asset_id"], row["frame_index"]) for row in combined}
         if len(combined) != expected or len(keys) != expected:
             raise RuntimeError("missing or duplicated diagnostic views")
@@ -357,7 +422,8 @@ def run(args, config, source):
             "restoration": restored, "groups": summarize(combined), "optimizer_created": False,
             "backward_performed": False, "model_unchanged": True, "quality_approval": False,
             "oracle_is_diagnostic_not_model_quality": True,
-            "B65_ablation_status": "blocked_missing_deleted_checkpoint_not_substituted"}
+            "B65_ablation_status": "blocked_missing_deleted_checkpoint_not_substituted",
+            "repeatability": [item for report in reports for item in report["repeatability"]]}
         write(args.output / "summary.json", summary)
     if not cpu:
         dist.barrier()
@@ -368,7 +434,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--mode", choices=("audit", "smoke", "diagnose"), required=True)
+    parser.add_argument("--mode", choices=("audit", "smoke", "repeatability", "diagnose"), required=True)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     source = verify_launch(args, config)

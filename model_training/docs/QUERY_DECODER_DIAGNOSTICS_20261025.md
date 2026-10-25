@@ -69,3 +69,13 @@ endings, which must not be counted as exact matches. The CPU restoration/data
 audit and model/forward/oracle paths are unchanged;17 CPU tests passed again.
 Primary released only the8-view GPU smoke. Full128-view execution still needs
 independent smoke acceptance; no weight updates are authorized.
+
+The first GPU smoke stopped on replay mismatch at the first validation view on
+both ranks (first token differences at positions49/53). Weights/source and GT
+identity checks passed, but no diagnostic metric is accepted from this run.
+Exit1 and payload cleanup were recorded. The retry invokes the frozen native
+`evaluate_item` with its original no-grad/autocast scope and leaves parameter
+requires-grad flags unchanged. A read-only output hook captures exactly the
+native encoder condition for additional measurements; it cannot replace outputs
+and is removed even after failure.19CPU tests pass, including this capture and
+cleanup. The token-equality gate is unchanged; full execution remains blocked.

@@ -13,10 +13,12 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The newly authorized task compares single-target and all-frame supervision with
-unchanged multi-frame input, no virtual path and the same20kasset budget. Only
-the single-target arm is new; CPU/GPU admission precedes formal training. See
-the [single-query protocol](docs/SINGLE_QUERY_SUPERVISION_20261026.md).
+The single-target/all-frame comparison is complete with unchanged multi-frame
+input, no virtual path and the same20kasset budget. F1 is0.66660single versus
+0.71108all-frame; the paired-asset95%interval for single-minus-all is entirely
+negative. Prefer retaining dense per-frame supervision; the proposed reference
+skeleton/XYZ design is not yet tested. No further compute is automatically
+released. See the [single-query result](docs/SINGLE_QUERY_SUPERVISION_20261026.md#completed-result).
 
 The prior matched virtual-module on/off comparison is complete at20,000exposures per
 arm, with four full passes over the fixed5,000assets. Both arms retain real-frame

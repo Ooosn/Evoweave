@@ -105,3 +105,12 @@ Active parameters are675917600(V+) and670666528(V-). All5000training identities,
 967validation identities and the128-asset evaluation selection were verified.
 Primary accepted this audit and released only both-arm GPU capacity. Formal
 training remains blocked pending its measured acceptance.
+
+The two-arm capacity stage subsequently completed exit0 at16:10:24JST. Each arm
+passed6stress configurations with2optimizer steps and2accumulation microbatches
+per case on both ranks. All expected gradient routes were finite/nonzero; disabled
+virtual parameters had no gradients. Peak reserved memory was66137882624bytes(V+)
+and63789072384bytes(V-); peak process-tree RAM11829301248bytes. The original
+profile weights were discarded and payload cleanup completed. Primary accepted
+execution and released only the exact fresh train_v1 configuration. This is not
+evidence of model quality or of a virtual-module benefit.

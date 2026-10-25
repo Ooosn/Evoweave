@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "matched_virtual_query_fixed5k_CPU_accepted_capacity_authorized_20261025",
-  "updated_at": "2026-10-25T06:41:25Z",
+  "state_id": "matched_virtual_query_fixed5k_capacity_accepted_training_authorized_20261025",
+  "updated_at": "2026-10-25T07:12:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -138,17 +138,17 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "matched_eval",
-    "submit"
+    "submit",
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_completed_frozen_IDXYZ_diagnostics_no_release_authorized",
-    "last_observed_utc": "2026-10-25T05:28:02Z",
+    "status": "retained_ready_for_fixed5k_matched_training_after_capacity",
+    "last_observed_utc": "2026-10-25T07:11:14Z",
     "diagnostic_supervisor_absent": true,
     "last_observed_gpu_used_mib": [0, 0],
     "keeper_pid": 1090013,
@@ -380,7 +380,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Human authorized retraining with design discretion but strictly all5000fixed training assets; no small-data research substitute. Execute a matched legacy-codec virtual-on/off pair, auxiliary0 and consistency0,100000exposures each from identical official initialization/data/pose/sampling/schedule. Primary accept actual CPU restoration and both-arm capacity before training. Alternate5ksegments, keep exact model/Adam/RNG/sampler, save every checkpoint locally and SHA-verified durable copies. Stop for handoff before17:10JST without claiming target complete; preserve existing allocation and all older checkpoints. Historical B70 was explicitly retained but is absent from checked original/backup locations; deletion cause is unproven, do not blame the human's generic cleanup request. Current release is CPUaudit only.",
+  "next_required_result": "Actual CPU initialization and both-arm real GPU capacity passed and were primary-reviewed. Start the exact fixed5000-asset legacy-codec virtual-on/off pair, auxiliary0/consistency0,100000exposures each, identical init/data/pose/sampling/OneCycle100k schedule. Verify actual first updates and retain full model/Adam/RNG/sampler at each5ksegment and allocation handoff, with SHA-verified local and durable copies. Only train_v1 is released; no small-fit or pose-use research substitute. Stop for handoff before17:10JST, current grant expires17:35JST; a request for authority to obtain the same2H100 after expiry is pending, no extra allocation yet authorized. Do not call a partial/unequal pair complete or compare it causally. Historical B70 retention was real but its later disappearance is unexplained; preserve all earlier evidence and checkpoints.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -924,7 +924,7 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "CPU_audit_accepted_both_arm_GPU_capacity_authorized",
+    "status": "both_arm_capacity_accepted_exact_formal_train_v1_authorized",
     "operation": "train",
     "mode": "matched_virtual_pair",
     "complete": false,
@@ -935,7 +935,7 @@
     "code_commit": "ab4847d44da6412562b7d9823a7d0b6e2a470bba",
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
     "CPU_audit": {
       "accepted": true,
@@ -953,7 +953,27 @@
       "payload_cleanup_complete": true,
       "trainable_parameters": {"virtual_on": 675917600, "virtual_off": 670666528}
     },
-    "capacity_accepted": false,
+    "capacity_accepted": true,
+    "capacity": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
+      "sha256": "0a5aa224435f8496d43e14a3d0bfc19b55957412b0e4e6561b19d8311ade475c",
+      "resource_sha256": "1dba864481634c172b2cd8cb822ce88e1afa665ed4712e0f5b207ad8a9f620a7",
+      "finished_utc": "2026-10-25T07:10:24.189682+00:00",
+      "exit_code": 0,
+      "cases_per_variant": 6,
+      "optimizer_steps_per_case": 2,
+      "accumulation_microbatches": 2,
+      "ranks": 2,
+      "all_expected_case_steps_and_gradient_routes_verified": true,
+      "second_step_Adam_resident": true,
+      "max_allocated_bytes": {"virtual_on": 64446072320, "virtual_off": 62212976640},
+      "max_reserved_bytes": {"virtual_on": 66137882624, "virtual_off": 63789072384},
+      "peak_tree_rss_bytes": 11829301248,
+      "payload_cleanup_complete": true,
+      "profile_weights_discarded": true,
+      "quality_claimed": false
+    },
     "CPU_tests_passed": 16,
     "CPU_audit_v1": {
       "passed": true,
@@ -1002,11 +1022,11 @@
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
        "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v2"},
-      {"mode": "capacity", "approved": true,
+      {"mode": "capacity", "approved": false, "status": "completed_primary_accepted",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
        "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1"},
-      {"mode": "train", "approved": false,
+      {"mode": "train", "approved": true,
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
        "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v1"}

@@ -13,19 +13,19 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The current task is a 100,000-total-exposure real-frame ID/XYZ autoregressive trial
-on the fixed 5,000-asset subset, with dynamic 2..24 frames and unchanged root-RT
-preprocessing. Every real frame is supervised by the same full decoder;
-structural consistency is evaluated under ground-truth prefixes. The first
-5,000 exposures are checkpointed for exact-state continuation after the user's
-budget extension. See the
-[protocol](docs/ID_XYZ_CONSISTENCY_20261024.md). The original single-query
-baseline comparison is deferred, not redefined as this experiment.
+The current task is a matched virtual-module on/off pair using the legacy codec,
+the fixed 5,000-asset subset, dynamic 2..24 frames and unchanged root-RT
+preprocessing. Every real frame is supervised. Both arms start from identical
+official-initialized state and receive 100,000 exposures under the same schedule;
+auxiliary and cross-frame consistency losses are both zero. No small-data fitting
+substitutes for this comparison. See the
+[protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md). The completed ID/XYZ run and
+original single-query baseline evaluation remain separate historical results.
 
 ## Code Entry Points
 
-- Current training: [train_id_xyz_consistency.py](rigweave/scripts/train_id_xyz_consistency.py).
-- Current launcher: [launch_id_xyz_consistency.py](jobs/launch_id_xyz_consistency.py).
+- Current training: [train_virtual_pair.py](rigweave/scripts/train_virtual_pair.py).
+- Current launcher: [launch_virtual_pair.py](jobs/launch_virtual_pair.py).
 - Original baseline training: [train_dynamic_rig.py](rigweave/scripts/train_dynamic_rig.py).
 - Generation: [eval_dynamic_rig_generation.py](rigweave/scripts/eval_dynamic_rig_generation.py).
 - Teacher-forced evaluation: [eval_dynamic_rig_ce.py](rigweave/scripts/eval_dynamic_rig_ce.py).

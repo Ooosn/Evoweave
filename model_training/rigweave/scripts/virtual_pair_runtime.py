@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import gc
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import random
 import shutil
 import time
@@ -25,6 +25,7 @@ from virtual_frame_runtime import exposure_learning_rate
 from virtual_fusion_normal_runtime import MatchedFrameStream
 from virtual_pair_guard import ROOT, SCOPE, deadline_due
 from virtual_pair_loading import OrderedAssetPrefetch
+from single_query_protocol import SINGLE_SCOPE, SINGLE_VARIANT, SELECTOR, select_target_frames, supervised_count
 from virtual_query_xyz_runtime import build_model as build_base, fixed_dataset, read_entries, sha256
 
 
@@ -33,9 +34,14 @@ TRAIN_SHA = 'a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88'
 VALID_SHA = 'fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a'
 
 
+def variants(config):
+    return (SINGLE_VARIANT,) if config.get('family') == SINGLE_SCOPE else VARIANTS
+
+
 def validate_config(config):
     data, plan, optim = config['data'], config['training'], config['optimization']
-    if config.get('family') != SCOPE or config['pair']['variants'] != list(VARIANTS):
+    single = config.get('family') == SINGLE_SCOPE
+    if config.get('family') not in (SCOPE, SINGLE_SCOPE) or config['pair']['variants'] != list(variants(config)):
         raise ValueError('not the declared matched pair')
     if [(data['manifests'][key]['rows'], data['manifests'][key]['sha256']) for key in ('train', 'valid')] != [
             (5000, TRAIN_SHA), (967, VALID_SHA)]:
@@ -57,10 +63,26 @@ def validate_config(config):
     if (config['pair']['auxiliary_weight'] != 0 or config['pair']['consistency_weight'] != 0
             or config['pair']['legacy_codec'] is not True
             or config['pair']['same_asset_pose_sampling_plan'] is not True
-            or config['pair']['all_real_frames_supervised'] is not True
+            or config['pair']['all_real_frames_supervised'] is not (not single)
             or config['pair']['common_post_attention_ffn'] is not True
             or config['architecture']['fusion_mode'] != 'real_queries_virtual'):
         raise ValueError('this pair changes only virtual interaction/readout, not codec/losses')
+    if single:
+        if (config['pair'].get('target_selection') != {'algorithm': SELECTOR, 'seed': 20261026}
+                or config['runtime'].get('execution_mode') != 'scheduler_job'
+                or operation_target(config) != 20000
+                or config['training'].get('resume_root')):
+            raise ValueError('single-target control must start fresh and stop at20k under the scheduler')
+        reference = config['pair'].get('reference', {})
+        if set(reference) != {'config', 'CPU_audit', 'evaluation', 'checkpoint_sha256'}:
+            raise ValueError('single-target control needs pinned all-frame references')
+        for name in ('config', 'CPU_audit', 'evaluation'):
+            if (set(reference[name]) != {'path', 'sha256'}
+                    or not PurePosixPath(reference[name]['path']).is_absolute()
+                    or len(reference[name]['sha256']) != 64):
+                raise ValueError('invalid all-frame reference receipt')
+    elif 'target_selection' in config['pair'] or 'reference' in config['pair']:
+        raise ValueError('target selection belongs only to the single-target experiment')
     if plan['frame_policy'] != {str(t): 24 if t <= 6 else 12 if t <= 12 else 6 for t in range(2, 25)}:
         raise ValueError('training batches exceed the declared capacity buckets')
     if (config['evaluation']['valid_assets'], config['evaluation']['input_frames'],
@@ -110,7 +132,7 @@ def source_hashes():
         'virtual_pair_runtime.py', 'train_virtual_pair.py', 'virtual_query_xyz_runtime.py',
         'virtual_fusion_normal_runtime.py', 'virtual_frame_runtime.py', 'probe_virtual_query_xyz.py',
         'id_xyz_stages.py', 'train_virtual_query_xyz.py', 'train_virtual_fusion_normal.py',
-        'virtual_pair_loading.py')]
+        'virtual_pair_loading.py', 'single_query_protocol.py')]
     paths += ['model_training/rigweave/src/rigweave/dynamic_rig/' + name for name in (
         'virtual_path_ablation.py', 'virtual_query_xyz.py', 'motion_encoder.py', 'motion_evidence.py',
         'surface_tokenizer.py', 'virtual_frame_data.py', 'virtual_query_xyz_data.py', 'root_rt.py',
@@ -173,7 +195,7 @@ class EvaluationHandoff(RuntimeError):
 
 def build_model(config, variant, device):
     from rigweave.dynamic_rig.virtual_path_ablation import VirtualPathAblationRig
-    if variant not in VARIANTS:
+    if variant not in variants(config):
         raise ValueError('unknown pair arm')
     base, tokenizer, codec, initial = build_base(config, device)
     base_fp = parameter_fingerprint(base)
@@ -247,28 +269,119 @@ def evaluation_rows(config, entries):
     return [lookup[row['asset_id']] for row in selected]
 
 
+def pinned_json(spec):
+    if sha256(spec['path']) != spec['sha256']:
+        raise RuntimeError('pinned reference digest differs')
+    return json.loads(Path(spec['path']).read_text())
+
+
+def reference_control(config, initial=None):
+    reference = config['pair']['reference']
+    previous = pinned_json(reference['config'])
+    audited = pinned_json(reference['CPU_audit'])
+    evaluated = pinned_json(reference['evaluation'])
+    if previous.get('family') != SCOPE:
+        raise RuntimeError('reference is not the completed virtual-path pair')
+    for key in ('initialization', 'architecture', 'auxiliary_codec', 'surface_sampling', 'data',
+                'normal_match', 'optimization', 'evaluation', 'capacity'):
+        if config[key] != previous[key]:
+            raise RuntimeError(f'single-target control changed common field: {key}')
+    old_training, new_training = deepcopy(previous['training']), deepcopy(config['training'])
+    old_training.pop('resume_root', None)
+    new_training.pop('resume_root', None)
+    if old_training != new_training:
+        raise RuntimeError('single-target control changed the sampling or LR horizon')
+    excluded = {'variants', 'all_real_frames_supervised', 'target_selection', 'reference'}
+    if ({k: v for k, v in previous['pair'].items() if k not in excluded}
+            != {k: v for k, v in config['pair'].items() if k not in excluded}):
+        raise RuntimeError('single-target control changed another pair setting')
+    if (not audited.get('complete') or not audited.get('passed') or audited.get('cuda_initialized')
+            or audited['contract_sha256'] != contract_sha(previous)
+            or not audited.get('parallel_loader', {}).get('passed')):
+        raise RuntimeError('reference CPU/loader audit is incomplete')
+    current = source_hashes()
+    permitted_changes = {'model_training/rigweave/scripts/virtual_pair_runtime.py',
+                         'model_training/rigweave/src/rigweave/dynamic_rig/virtual_path_ablation.py'}
+    for path, digest in audited['source_sha256'].items():
+        if path not in permitted_changes and current.get(path) != digest:
+            raise RuntimeError(f'unchanged reference computation differs: {path}')
+    for key in ('data_workers_per_rank', 'prefetch_microbatches', 'world_size', 'execution_cpu_budget', 'rss_limit_bytes'):
+        if config['runtime'][key] != previous['runtime'][key]:
+            raise RuntimeError('accepted loader/RAM envelope changed')
+    expected = deepcopy(audited['initialization']['virtual_off'])
+    expected['variant'] = SINGLE_VARIANT
+    if initial is not None and initial != expected:
+        raise RuntimeError('single-target initialization differs from the all-frame control')
+    if (evaluated.get('complete') is not True or evaluated.get('variant') != 'virtual_off'
+            or evaluated.get('samples') != operation_target(config)
+            or evaluated.get('contract_sha256') != audited['contract_sha256']
+            or evaluated.get('source_sha256') != audited['source_sha256']
+            or evaluated.get('checkpoint_sha256') != reference['checkpoint_sha256']
+            or evaluated.get('selection_sha256') != config['evaluation']['selection']['sha256']
+            or evaluated.get('original_GT_scoring') is not True
+            or evaluated.get('failed_views_scored_zero') is not True
+            or evaluated.get('oracle_not_used') is not True):
+        raise RuntimeError('reference evaluation/checkpoint binding differs')
+    return audited, evaluated
+
+
+def audit_target_selection(config):
+    records, histograms = [], {}
+    before = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
+                              'python': random.getstate()})
+    for rank in range(2):
+        stream, samples, count, inputs, digest = make_stream(config, rank, 2), 0, 0, 0, hashlib.sha256()
+        while samples < operation_target(config):
+            goal, batches = next_update_batches(stream, samples, 2)
+            for requests in batches:
+                selected = select_target_frames(requests, config['pair']['target_selection']['seed'])
+                for request, frame in zip(requests, selected):
+                    digest.update(json.dumps([request.item_index, request.frames, request.sampling_seed, frame]).encode())
+                    histogram = histograms.setdefault(str(request.frames), [0] * request.frames)
+                    histogram[frame] += 1
+                    count += 1
+                    inputs += request.frames
+            samples += goal
+        records.append({'rank': rank, 'asset_exposures': count, 'supervised_frames': count,
+                        'input_frames': inputs, 'selected_plan_sha256': digest.hexdigest(),
+                        'input_plan_sha256': stream.plan_sha256})
+    after = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
+                             'python': random.getstate()})
+    if before != after or sum(row['asset_exposures'] for row in records) != operation_target(config):
+        raise RuntimeError('target selection changed RNG or exposure accounting')
+    return {'passed': True, 'global_RNG_unchanged': True, 'ranks': records,
+            'selection_histograms_diagnostic_only': histograms}
+
+
 def audit(config, entries, output, source):
     verify_data_selection(config, entries)
     groups, lengths = load_capacity_selection(config, entries['train'])
     selected = evaluation_rows(config, entries)
     initial = {}
-    for variant in VARIANTS:
+    for variant in variants(config):
         model, _, _, report = build_model(config, variant, 'cpu')
         initial[variant] = report
         del model
         gc.collect()
-    if initial['virtual_on']['wrapped_initial_sha256'] != initial['virtual_off']['wrapped_initial_sha256']:
+    if len({report['wrapped_initial_sha256'] for report in initial.values()}) != 1:
         raise RuntimeError('pair does not start with identical common state')
     plans = [make_stream(config, r, 2).plan_report() for r in range(2)]
     if plans[0]['plan_sha256'] != plans[1]['plan_sha256']:
         raise RuntimeError('distributed sampling plans disagree')
-    loader = audit_loader(config, entries, groups) if config['runtime'].get('data_workers_per_rank') else None
+    single = config.get('family') == SINGLE_SCOPE
+    if single:
+        previous, _ = reference_control(config, initial[SINGLE_VARIANT])
+        loader = previous['parallel_loader']
+    else:
+        loader = audit_loader(config, entries, groups) if config['runtime'].get('data_workers_per_rank') else None
     return {'complete': True, 'passed': True, 'mode': 'audit', 'training_assets': 5000,
         'validation_pool': 967, 'validation_panel': len(selected), 'initialization': initial,
         'capacity_groups': groups, 'capacity_length_records': len(lengths), 'sampling_plan': plans[0],
         'source': source, 'source_sha256': source_hashes(), 'contract_sha256': contract_sha(config),
         'cuda_initialized': torch.cuda.is_initialized(), 'optimizer_created': False,
-        'parallel_loader': loader}
+        'parallel_loader': loader, 'parallel_loader_inherited_from_pinned_reference': single,
+        'target_selection': audit_target_selection(config) if single else None,
+        'all_frame_reference_initialization_exact': single}
 
 
 def audit_loader(config, entries, groups):
@@ -374,17 +487,32 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
                 loading[key] += timing[key]
         surface, target, geometry = prepare(prepared_dataset, requests, config, tokenizer, codec, device)
         del prepared_dataset
+        selected, arguments = None, {}
+        if config.get('family') == SINGLE_SCOPE:
+            selected = select_target_frames(requests, config['pair']['target_selection']['seed'])
+            arguments['target_frame_indices'] = torch.tensor(selected, dtype=torch.int64, device=device)
         with wrapped.no_sync() if world > 1 and i < len(batches) - 1 else nullcontext():
             with torch.autocast('cuda', dtype=torch.bfloat16):
-                losses = wrapped(surface, target, auxiliary_weight=0.)
+                losses = wrapped(surface, target, auxiliary_weight=0., **arguments)
+            expected_targets = 1 if selected is not None else requests[0].frames
+            if losses['main_loss_per_frame'].shape != (len(requests), expected_targets):
+                raise RuntimeError('decoder did not supervise the declared target count')
             if not bool(torch.isfinite(losses['loss'])):
                 raise RuntimeError('nonfinite pair objective')
             losses['loss_per_asset'].sum().backward()
         size, frames = len(requests), requests[0].frames
         totals += torch.stack((losses['main_loss'].detach() * size, losses['main_accuracy'].detach() * size,
             totals.new_tensor(size), totals.new_tensor(size * frames)))
-        schedule.append({**record_samples(geometry, requests), 'frames': frames,
-            'target_sha256': hashlib.sha256(target['main_input_ids'].cpu().numpy().tobytes()).hexdigest()})
+        recorded = {**record_samples(geometry, requests), 'frames': frames,
+            'target_sha256': hashlib.sha256(target['main_input_ids'].cpu().numpy().tobytes()).hexdigest()}
+        if selected is not None:
+            rows = torch.arange(size, device=device)
+            selected_ids = target['main_input_ids'][rows, arguments['target_frame_indices']]
+            recorded.update(target_frame_indices=selected,
+                selected_target_raw_frames=[raw[index] for raw, index in zip(recorded['selected_raw_frames'], selected)],
+                selected_target_sha256=hashlib.sha256(selected_ids.cpu().numpy().tobytes()).hexdigest(),
+                decoder_targets_per_asset=1)
+        schedule.append(recorded)
         del surface, target, geometry, losses
     if world > 1:
         dist.all_reduce(totals)
@@ -401,6 +529,7 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
     if memory['max_reserved_bytes'] > .85 * torch.cuda.get_device_properties(device).total_memory:
         raise RuntimeError('pair update exceeded approved memory fraction')
     return {'assets_in_update': assets, 'frames_in_update': int(totals[3]),
+        'supervised_frames_in_update': supervised_count(config, assets, int(totals[3])),
         'main_loss': float(totals[0] / assets), 'main_accuracy': float(totals[1] / assets),
         'learning_rate': lr, 'beta1': beta, 'gradient_norm': norm, 'gradient_groups': gradients,
         'data_workers_per_rank': config['runtime'].get('data_workers_per_rank', 0), **loading,
@@ -412,7 +541,7 @@ def capacity(config, entries, output, source, device, rank, world):
     approved = reviewed(config, 'CPU_audit')
     dataset = fixed_dataset(entries['train'], config, 2, mode='train')
     results = []
-    for variant in VARIANTS:
+    for variant in variants(config):
         model, tokenizer, codec, initial = build_model(config, variant, device)
         if initial != approved['initialization'][variant]:
             raise RuntimeError('GPU initialization differs from CPU audit')
@@ -500,7 +629,7 @@ def pending_variants(progress, output, config):
     target = operation_target(config)
     if any(value > target for value in progress.values()):
         raise RuntimeError('saved progress exceeds the authorized operation target')
-    return [variant for variant in VARIANTS if progress[variant] < target
+    return [variant for variant in variants(config) if progress[variant] < target
         or not evaluation_complete(output, config, variant, target)]
 
 
@@ -522,7 +651,9 @@ def restore_checkpoint(model, optimizer, config, spec, variant, rank, world):
     if saved['rank'] != rank:
         raise RuntimeError('rank-state identity differs')
     stream = make_stream(config, rank, world, saved['stream'])
-    samples, frames, step = (payload[key] for key in ('asset_exposures', 'supervised_frame_exposures', 'step'))
+    samples, frames, step = (payload[key] for key in ('asset_exposures', 'input_frame_exposures', 'step'))
+    if payload['supervised_frame_exposures'] != supervised_count(config, samples, frames):
+        raise RuntimeError('checkpoint input/supervision accounting differs')
     if stream.cursor * world != samples:
         raise RuntimeError('saved sampler cursor differs from optimizer progress')
     return stream, saved, payload['initialization'], samples, frames, step
@@ -548,7 +679,8 @@ def save_checkpoint(model, optimizer, stream, config, output, variant, initial, 
         model_fp, optimizer_fp = parameter_fingerprint(model), tree_fingerprint(optimizer.state_dict())
         payload = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'rank_states': ranks,
             'optimizer_parameter_names': parameter_names(model), 'variant': variant,
-            'asset_exposures': samples, 'input_frame_exposures': frames, 'supervised_frame_exposures': frames,
+            'asset_exposures': samples, 'input_frame_exposures': frames,
+            'supervised_frame_exposures': supervised_count(config, samples, frames),
             'step': step, 'initialization': initial, 'configuration': config,
             'contract_sha256': contract_sha(config), 'source_sha256': source_hashes(), 'code_commit': source,
             'model_sha256': model_fp, 'optimizer_sha256': optimizer_fp}
@@ -567,7 +699,8 @@ def save_checkpoint(model, optimizer, stream, config, output, variant, initial, 
         temporary.replace(durable)
         spec = {'complete': True, 'path': str(path), 'durable_path': str(durable), 'sha256': digest,
             'bytes': path.stat().st_size, 'asset_exposures': samples, 'step': step,
-            'supervised_frame_exposures': frames, 'model_sha256': model_fp, 'optimizer_sha256': optimizer_fp,
+            'input_frame_exposures': frames, 'supervised_frame_exposures': supervised_count(config, samples, frames),
+            'model_sha256': model_fp, 'optimizer_sha256': optimizer_fp,
             'contract_sha256': contract_sha(config), 'variant': variant, 'both_copies_verified': True}
         write_json(path.with_suffix('.json'), spec)
         write_json(durable.with_suffix('.json'), spec)
@@ -638,16 +771,33 @@ def evaluate(model, tokenizer, codec, config, entries, output, variant, samples,
 
 
 def compare_evaluations(output, config, samples):
-    rows_by_arm, checkpoints = {}, {}
-    for variant in VARIANTS:
+    rows_by_arm, checkpoints, sources, contracts = {}, {}, {}, {}
+    single = config.get('family') == SINGLE_SCOPE
+    names = (SINGLE_VARIANT, 'all_frames') if single else VARIANTS
+    def read_rows(variant, summary):
+        artifacts = summary['row_artifacts']
+        if (len(artifacts) != 2 or {r['rank'] for r in artifacts} != {0, 1}
+                or any(sha256(row['path']) != row['sha256'] for row in artifacts)):
+            raise RuntimeError('comparison row artifact binding differs')
+        rows = [row for artifact in artifacts for row in json.loads(Path(artifact['path']).read_text())]
+        table = {(r['asset_id'], r['frame_index']): r for r in rows}
+        selection = json.loads(Path(config['evaluation']['selection']['path']).read_text())['valid']
+        if len(rows) != 1024 or set(table) != {(r['asset_id'], f) for r in selection for f in range(8)}:
+            raise RuntimeError('comparison coverage differs')
+        rows_by_arm[variant] = table
+        checkpoints[variant] = summary['checkpoint_sha256']
+        sources[variant], contracts[variant] = summary['source_sha256'], summary['contract_sha256']
+    for variant in variants(config):
         summary_path = evaluation_summary_path(output, config, variant, samples)
         if summary_path is None:
             raise RuntimeError('paired comparison requires both checkpoint-bound evaluations')
         summary = json.loads(summary_path.read_text())
-        rows = [row for artifact in summary['row_artifacts'] for row in json.loads(Path(artifact['path']).read_text())]
-        rows_by_arm[variant] = {(r['asset_id'], r['frame_index']): r for r in rows}
-        checkpoints[variant] = summary['checkpoint_sha256']
-    on, off = (rows_by_arm[v] for v in VARIANTS)
+        read_rows(variant, summary)
+    if single:
+        _, reference = reference_control(config)
+        read_rows('all_frames', reference)
+    on, off = (rows_by_arm[v] for v in names)
+    difference_name = 'single_minus_all_original_edge_f1' if single else 'Vplus_minus_Vminus_original_edge_f1'
     for key, row in on.items():
         for field in ('raw_frame_index', 'gt_joint_count', 'original_GT_sha256', 'normalization_sha256', 'target_tokens'):
             if row[field] != off[key][field]:
@@ -663,7 +813,7 @@ def compare_evaluations(output, config, samples):
         interval = np.quantile(rng.choice(differences, size=(2000, len(differences)), replace=True).mean(1),
                                [.025, .975]).tolist() if len(differences) else None
         groups[name] = {'assets': len(assets), 'views': len(keys),
-            'Vplus_minus_Vminus_original_edge_f1': float(differences.mean()) if len(differences) else None,
+            difference_name: float(differences.mean()) if len(differences) else None,
             'paired_asset_bootstrap_95pct_interval': interval,
             'arms': {variant: {'original_edge_f1': float(np.mean([table[k]['original_edge_f1'] for k in keys])) if keys else None,
                               'failures': sum(not table[k]['success'] for k in keys),
@@ -672,6 +822,8 @@ def compare_evaluations(output, config, samples):
     result = {'complete': True, 'quality_accepted': False, 'samples_per_variant': samples,
         'validation_assets': 128, 'views_per_asset': 8, 'matched_raw_frames_GT_normalization_tokens': True,
         'checkpoint_sha256': checkpoints, 'source_sha256': source_hashes(), 'contract_sha256': contract_sha(config),
+        'arm_source_sha256': sources, 'arm_contract_sha256': contracts,
+        'comparison': 'single_target_vs_pinned_all_frame_control' if single else 'virtual_on_vs_off',
         'groups': groups, 'bootstrap': {'unit': 'asset', 'replicates': 2000, 'seed': 20261025,
             'limitation': 'validation-asset uncertainty for one training seed; not training-seed variability'}}
     write_json(output / f'paired_evaluation_{samples:06d}.json', result)
@@ -684,8 +836,8 @@ def train_pair(config, entries, output, source, device, rank, world):
     if measured['frame_policy'] != config['training']['frame_policy'] or measured['cases'] != config['capacity']['cases']:
         raise RuntimeError('training physical batches were not measured')
     dataset = fixed_dataset(entries['train'], config, 2, mode='train')
-    checkpoints = {variant: latest_checkpoint(output, config, variant) for variant in VARIANTS}
-    progress = {variant: checkpoints[variant]['asset_exposures'] if checkpoints[variant] else 0 for variant in VARIANTS}
+    checkpoints = {variant: latest_checkpoint(output, config, variant) for variant in variants(config)}
+    progress = {variant: checkpoints[variant]['asset_exposures'] if checkpoints[variant] else 0 for variant in variants(config)}
     finished = False
     with (output / f'trace_rank_{rank}.jsonl').open('x', buffering=1) as trace:
         while pending_variants(progress, output, config):
@@ -734,7 +886,7 @@ def train_pair(config, entries, output, source, device, rank, world):
                     frames += value['frames_in_update']
                     step += 1
                     value.update(variant=variant, rank=rank, step=step, asset_exposures=samples,
-                        input_frame_exposures=frames, supervised_frame_exposures=frames,
+                        input_frame_exposures=frames, supervised_frame_exposures=supervised_count(config, samples, frames),
                         sampling_plan_sha256=stream.plan_sha256)
                     trace.write(json.dumps(value, allow_nan=False) + '\n')
                     progress[variant] = samples

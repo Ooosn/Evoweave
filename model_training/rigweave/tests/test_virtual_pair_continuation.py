@@ -185,7 +185,8 @@ class ContinuationTests(unittest.TestCase):
             stream = runtime.make_stream(config, rank, world)
             state = stream.state_dict()
             state['cursor'] = spec['asset_exposures'] // world
-            return runtime.make_stream(config, rank, world, state), {}, {}, spec['asset_exposures'], 0, spec['asset_exposures'] // 5000 * 105
+            return (runtime.make_stream(config, rank, world, state), {}, {}, spec['asset_exposures'],
+                    spec['asset_exposures'] * 2, spec['asset_exposures'] // 5000 * 105)
         def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config, variant, samples, device, world, **kwargs):
             size = sum(map(len, batches)) * world
             updates.append((variant, samples, size))

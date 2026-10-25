@@ -189,9 +189,12 @@ class VirtualPathAblationRig(nn.Module):
         if auxiliary_weight > 0:
             raise ValueError('auxiliary_weight must be exactly 0 for virtual path ablation')
 
-    def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight, query_points=None):
+    def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight, query_points=None,
+                        target_frame_indices=None):
         self._validate_auxiliary_weight(auxiliary_weight)
         if self.virtual_enabled:
+            if target_frame_indices is not None:
+                raise ValueError('selected-frame supervision requires virtual_enabled=False')
             return self.base.forward_encoded(final_frames, virtual, targets,
                                              auxiliary_weight=0., query_points=query_points)
 
@@ -199,6 +202,18 @@ class VirtualPathAblationRig(nn.Module):
         ids, mask = targets['main_input_ids'], targets['main_attention_mask']
         if ids.ndim != 3 or ids.shape != mask.shape or ids.shape[:2] != condition.shape[:2]:
             raise ValueError('each real frame needs its own full XYZ target sequence')
+        if target_frame_indices is not None:
+            batch, frames = condition.shape[:2]
+            if (not isinstance(target_frame_indices, torch.Tensor)
+                    or target_frame_indices.dtype != torch.int64
+                    or target_frame_indices.shape != (batch,)):
+                raise ValueError('target_frame_indices must be an int64 tensor with shape [B]')
+            if bool(((target_frame_indices < 0) | (target_frame_indices >= frames)).any()):
+                raise ValueError('target_frame_indices outside the input frame range')
+            indices = target_frame_indices.to(device=condition.device)
+            rows = torch.arange(batch, device=condition.device)
+            condition = condition[rows, indices][:, None]
+            ids, mask = ids[rows, indices][:, None], mask[rows, indices][:, None]
         losses, accuracies = [], []
         for frame in range(condition.shape[1]):
             labels = ids[:, frame, 1:].clone().masked_fill(~mask[:, frame, 1:].bool(), -100)
@@ -221,12 +236,15 @@ class VirtualPathAblationRig(nn.Module):
             'auxiliary_accuracy': auxiliary.mean(),
         }
 
-    def forward(self, surface, targets, *, auxiliary_weight):
+    def forward(self, surface, targets, *, auxiliary_weight, target_frame_indices=None):
         self._validate_auxiliary_weight(auxiliary_weight)
         if self.virtual_enabled:
+            if target_frame_indices is not None:
+                raise ValueError('selected-frame supervision requires virtual_enabled=False')
             return self.base.forward(surface, targets, auxiliary_weight=0.)
         final_frames, virtual = self.encode(surface)
-        return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=0.)
+        return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=0.,
+                                    target_frame_indices=target_frame_indices)
 
     def generate_condition(self, condition, start_tokens, *, eos_token, max_new_tokens,
                            logits_processor=None):

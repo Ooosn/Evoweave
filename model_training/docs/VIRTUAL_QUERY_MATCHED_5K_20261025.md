@@ -114,3 +114,20 @@ and63789072384bytes(V-); peak process-tree RAM11829301248bytes. The original
 profile weights were discarded and payload cleanup completed. Primary accepted
 execution and released only the exact fresh train_v1 configuration. This is not
 evidence of model quality or of a virtual-module benefit.
+
+Formal train_v1 has started from the accepted official-initialized state under
+producer commit `8feea86c24be80543befca1c374c1b57ae6c93c4`, supervisor922127 and
+launcher922156. Primary verified the first3real updates on both ranks at16:18JST:
+48assets/update,144exposures,1920supervised frames, exact shared sampling plan and
+initialization, finite nonzero gradient routes. At16:22:20JST both ranks had
+completed10updates,480exposures and6720frames on V+; V- had not started. This is
+the full5000-asset stream, not the capacity cohort. No model-quality comparison
+is available at this unequal progress. The100k endpoint per arm is the primary
+comparison; intermediate matched-budget curves do not replace it.
+
+The running producer checkout is kept unchanged. Startup evidence is under
+`D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/startup_v1/`.
+A bounded read-only watcher collects the terminal stage and verifies checkpoint
+receipts/file presence before alerting primary. Authority to request the same
+two H100s after the current grant expires is still pending; no extra allocation
+has been requested.

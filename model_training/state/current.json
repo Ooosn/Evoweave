@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "matched_virtual_query_fixed5k_20k_continuation_allocation_authorized_20261025",
-  "updated_at": "2026-10-25T10:31:21Z",
+  "updated_at": "2026-10-25T10:48:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,15 +137,44 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "submit"
+    "report"
   ],
   "blocked_operations": [
     "matched_eval",
+    "submit",
     "preflight",
     "train"
   ],
   "compute_allocation": {
+    "server": "HGC",
+    "status": "granted_scheduler_owned16slots_no_new_training_yet",
+    "last_observed_utc": "2026-10-25T10:42:00.586840Z",
+    "qlogin_job_id": 130494177,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [3, 4],
+    "gpu_uuids": ["GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7", "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"],
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "cpu_affinity": [6, 12, 13, 15, 17, 18, 19, 20, 74, 79, 82, 87, 88, 95, 97, 108],
+    "cpu_binding_status": "selected_for_payload; keeper remains in original scheduler cpuset",
+    "kernel_scheduler_membership": true,
+    "devices_cgroup": "/AGE/130494177.1/master",
+    "cpuset_cgroup": "/AGE/130494177.1/master",
+    "keeper_pid": 1098441,
+    "keeper_root": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k",
+    "start_utc": "2026-10-25T10:33:29.625Z",
+    "expiry_utc": "2026-10-26T10:33:29.625Z",
+    "h_rt_seconds": 86400,
+    "handoff_deadline_utc": "2026-10-26T10:03:00Z",
+    "total_host_memory_bytes": 68719476736,
+    "mem_req_per_slot": "4G",
+    "last_observed_gpu_used_mib": [0, 0],
+    "ssd_verified": "/work XFS /dev/md0 RAID0 two ROTA=0 NVMe;3.2TiBfree before request",
+    "resource_selection": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k/resource_selection.json",
+    "authorization": "Human explicitly approved same2H100 continuation and then changed CPUdefault to8slots perH100,16total. No additionalGPUcount or release authorized."
+  },
+  "preserved_compute_allocation_130309880": {
     "server": "HGC",
     "status": "expired_naturally_qacct_confirmed_20261025_173529JST",
     "last_observed_utc": "2026-10-25T08:11:15Z",
@@ -925,7 +954,7 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "new_16CPU_2H100_allocation_authorized_compute_pending_review",
+    "status": "new_16CPU_2H100_granted_parallel_loader_CPU_audit_pending",
     "continuation_request": {
       "explicit_human_authorized": true,
       "authorization": "Human: can apply now and proceed with experiments, recommends updating to20k; subsequent correction requires8CPUslotsperH100,16total for2H100 and proactively implemented useful CPUdata parallelism.",
@@ -1023,12 +1052,75 @@
     "authorization": "Human confirmed the goal is virtual-query contribution versus decoder/training confounds, asked why a retainedB checkpoint disappeared, and explicitly authorized retraining with design discretion on the fixed5000assets, rejecting small-data fitting experiments. Preserve allocated GPUs and prior artifacts.",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
     "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py", "submit": "model_training/jobs/hold_virtual_pair_allocation.py"},
-    "code_commit": "ab4847d44da6412562b7d9823a7d0b6e2a470bba",
+    "code_commit": "a0c1f4d300ccd8d56bd3da81dcdbd3aaabbd24bb",
+    "source_transition": {
+      "accepted": false,
+      "allowed_uses": [
+        "capacity",
+        "checkpoint"
+      ],
+      "previous_source_sha256": {
+        "model_training/rigweave/scripts/id_xyz_stages.py": "e7a8bd2067e32e7219b9ccb190167039999e9ff18cad7847558a82ab15407845",
+        "model_training/rigweave/scripts/probe_virtual_query_xyz.py": "e0dec04ab84b1e851b3179624b990859f5f07a6020ba8b6cfad6cefd66b32739",
+        "model_training/rigweave/scripts/train_virtual_fusion_normal.py": "4f2ce51fa04e76f1a47bf67e579679ddffa6148f5bc854175054741687f12307",
+        "model_training/rigweave/scripts/train_virtual_pair.py": "83ed59cbb220a0e67221f9dc5680916c64c93cdbc7ddd0e8a3b041d494f69669",
+        "model_training/rigweave/scripts/train_virtual_query_xyz.py": "f297a4d30ea38ace13df49a22edc1ac112ab57b97f5469cba1a094fea8dbc02b",
+        "model_training/rigweave/scripts/virtual_frame_runtime.py": "286f7cad4f0c02e4bef7fabd10b021797183f5496811afa1dd6762e5710827c3",
+        "model_training/rigweave/scripts/virtual_fusion_normal_runtime.py": "08783516cfd1f713139cf8405e8bd7196ae42da83e8fc70b6379447587a8d05d",
+        "model_training/rigweave/scripts/virtual_pair_runtime.py": "d1fe211333eb8b3097f2c9c50d8bb19da8d3d39aa18c03e1b6a13b7ee1243e77",
+        "model_training/rigweave/scripts/virtual_query_xyz_runtime.py": "72c28081c683d8ab8d8092188d02e08efa896621b3d32ced4d1012c4831a7fcd",
+        "model_training/rigweave/src/rigweave/dynamic_rig/aux_skeleton_tokens.py": "9de8bc8c560761a2eef5ac1b87e78b997de9ea99aa45b9d3f3e6cd5d3e0381bb",
+        "model_training/rigweave/src/rigweave/dynamic_rig/motion_encoder.py": "50b6f9d4091d1a3eb48cbffaf50a6bc0773c0d337aeba4e0df480c629059faa0",
+        "model_training/rigweave/src/rigweave/dynamic_rig/motion_evidence.py": "e748264b8eb08ccacdd002f282792af18ffaad1c986f99d9534ad41353d463ce",
+        "model_training/rigweave/src/rigweave/dynamic_rig/root_rt.py": "0a11795579e02062b825fc6dabd6c38e823795bd10777d2d86ef43d6791b9f76",
+        "model_training/rigweave/src/rigweave/dynamic_rig/sampling.py": "1ef50cd7244ec4ce5ac8e4a9ef003dd86786611dfd8abbde8ade2f2a1a406741",
+        "model_training/rigweave/src/rigweave/dynamic_rig/skeleton_topology_metrics.py": "840ab64b2cd627b2f861d53e21a760fd7a18c4cbc27dbc922f5901f256cfdf9b",
+        "model_training/rigweave/src/rigweave/dynamic_rig/surface_tokenizer.py": "d4db6f91673765dc6184a43561f9fabafe7cf6756747a3adfcb495cab54b9483",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_frame_data.py": "7bbaf6cea9e81caa682c6de39c410de7ec8f329c32626d70f7ab78fbb2827673",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_path_ablation.py": "1651d4369cdc5f4292cd57606a29f380448d327ef1102dda5a5c49487dcf0cc8",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_query_xyz.py": "4ca29c1fe91df3325074423ee4de635427b2b86b1c8a0581ea60df1c829cfec1",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_query_xyz_data.py": "f45bfb6159b36e90893da12e3ebd83bac5708cf252e3f19f8157068924fe47ff"
+      },
+      "current_source_sha256": {
+        "model_training/rigweave/scripts/virtual_pair_runtime.py": "ae60c6efbc54e1a17ee48c0d81d24f6214e0d4051759884c0cacd310949ccf01",
+        "model_training/rigweave/scripts/train_virtual_pair.py": "83ed59cbb220a0e67221f9dc5680916c64c93cdbc7ddd0e8a3b041d494f69669",
+        "model_training/rigweave/scripts/virtual_query_xyz_runtime.py": "72c28081c683d8ab8d8092188d02e08efa896621b3d32ced4d1012c4831a7fcd",
+        "model_training/rigweave/scripts/virtual_fusion_normal_runtime.py": "08783516cfd1f713139cf8405e8bd7196ae42da83e8fc70b6379447587a8d05d",
+        "model_training/rigweave/scripts/virtual_frame_runtime.py": "286f7cad4f0c02e4bef7fabd10b021797183f5496811afa1dd6762e5710827c3",
+        "model_training/rigweave/scripts/probe_virtual_query_xyz.py": "e0dec04ab84b1e851b3179624b990859f5f07a6020ba8b6cfad6cefd66b32739",
+        "model_training/rigweave/scripts/id_xyz_stages.py": "e7a8bd2067e32e7219b9ccb190167039999e9ff18cad7847558a82ab15407845",
+        "model_training/rigweave/scripts/train_virtual_query_xyz.py": "f297a4d30ea38ace13df49a22edc1ac112ab57b97f5469cba1a094fea8dbc02b",
+        "model_training/rigweave/scripts/train_virtual_fusion_normal.py": "4f2ce51fa04e76f1a47bf67e579679ddffa6148f5bc854175054741687f12307",
+        "model_training/rigweave/scripts/virtual_pair_loading.py": "3e35b19142bd8682c1e82188a7a37257821cca06e6cb6198590ffd25fcebfb29",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_path_ablation.py": "1651d4369cdc5f4292cd57606a29f380448d327ef1102dda5a5c49487dcf0cc8",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_query_xyz.py": "4ca29c1fe91df3325074423ee4de635427b2b86b1c8a0581ea60df1c829cfec1",
+        "model_training/rigweave/src/rigweave/dynamic_rig/motion_encoder.py": "50b6f9d4091d1a3eb48cbffaf50a6bc0773c0d337aeba4e0df480c629059faa0",
+        "model_training/rigweave/src/rigweave/dynamic_rig/motion_evidence.py": "e748264b8eb08ccacdd002f282792af18ffaad1c986f99d9534ad41353d463ce",
+        "model_training/rigweave/src/rigweave/dynamic_rig/surface_tokenizer.py": "d4db6f91673765dc6184a43561f9fabafe7cf6756747a3adfcb495cab54b9483",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_frame_data.py": "7bbaf6cea9e81caa682c6de39c410de7ec8f329c32626d70f7ab78fbb2827673",
+        "model_training/rigweave/src/rigweave/dynamic_rig/virtual_query_xyz_data.py": "f45bfb6159b36e90893da12e3ebd83bac5708cf252e3f19f8157068924fe47ff",
+        "model_training/rigweave/src/rigweave/dynamic_rig/root_rt.py": "0a11795579e02062b825fc6dabd6c38e823795bd10777d2d86ef43d6791b9f76",
+        "model_training/rigweave/src/rigweave/dynamic_rig/aux_skeleton_tokens.py": "9de8bc8c560761a2eef5ac1b87e78b997de9ea99aa45b9d3f3e6cd5d3e0381bb",
+        "model_training/rigweave/src/rigweave/dynamic_rig/sampling.py": "1ef50cd7244ec4ce5ac8e4a9ef003dd86786611dfd8abbde8ade2f2a1a406741",
+        "model_training/rigweave/src/rigweave/dynamic_rig/skeleton_topology_metrics.py": "840ab64b2cd627b2f861d53e21a760fd7a18c4cbc27dbc922f5901f256cfdf9b",
+        "model_training/rigweave/src/rigweave/dynamic_rig/data.py": "9b12b6f534657b64d5f98aacf7512352040276e31f83e57edc334cd6ff9230cd",
+        "model_training/rigweave/src/rigweave/dynamic_rig/shared_structure_medium_data.py": "773ec026cdf11d17a19ea42e4d5a0300cfd521da53a98e7e1a290c179372daf8"
+      },
+      "scientific_contract_sha256": "6a566d0a6e2afe2097e8e90356add13d1779d45c6d7fc17b3537dea00894ade2",
+      "review": "Only matched-pair orchestration changed among the20previously pinned files. New ordered CPU loader and two previously unpinned but unchanged data dependencies are now pinned. Forward/loss/optimizer/GT/sampling arithmetic remains unchanged. Admission pending actual CPU parallel-loader exact-field/RNG audit; previous measured GPU capacity may be reused only under this exact transition.",
+      "required_CPU_audit": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v3/result.json",
+      "unit_test_evidence": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/tests_v2.log"
+    },
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
     "gpu_work_allowed": false,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": true,
+    "CPU_audit_accepted": false,
     "CPU_audit": {
+      "accepted": false,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v3/result.json",
+      "required": "same full initialization and scientific contract; CPU-only parallel loader exact-field/RNG validation"
+    },
+    "CPU_audit_v2": {
       "accepted": true,
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v2/result.json",
       "sha256": "50db7c4a8f45cb0d8916b797acb7391de89bc9d387f94d71c1091f4db48d4f43",
@@ -1044,7 +1136,7 @@
       "payload_cleanup_complete": true,
       "trainable_parameters": {"virtual_on": 675917600, "virtual_off": 670666528}
     },
-    "capacity_accepted": true,
+    "capacity_accepted": false,
     "capacity": {
       "accepted": true,
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
@@ -1065,7 +1157,7 @@
       "profile_weights_discarded": true,
       "quality_claimed": false
     },
-    "CPU_tests_passed": 16,
+    "CPU_tests_passed": 61,
     "CPU_audit_v1": {
       "passed": true,
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v1/result.json",
@@ -1089,7 +1181,7 @@
       "global_absence_proven": false,
       "inventory": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/preparation/inventory.log"
     },
-    "ssh_exception": {
+    "preserved_ssh_exception_130309880": {
       "scope": "virtual_query_matched_5k_20261025_v1",
       "explicit_human_authorized": true,
       "authorization": "Reuse the human-retained2H100 grant for explicitly requested fixed5kmatched training, with the established boundedSSH exception:1scheduler slot,4total execution CPUs, no extra GPUs.",
@@ -1105,6 +1197,14 @@
       "keeper_pid": 1090013
     },
     "runs": [
+      {"mode": "audit", "approved": true, "status": "approved_pending_launch",
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+       "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v3"},
+      {"mode": "train", "approved": false, "status": "blocked_pending_CPU_and_source_transition_acceptance",
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+       "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v2"},
       {"mode": "audit", "approved": false, "status": "passed_pre_restore_path_review",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
        "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",

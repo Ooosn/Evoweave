@@ -16,7 +16,10 @@ Data production is owned by `data_processing/`.
 The current task is a matched virtual-module on/off pair using the legacy codec,
 the fixed 5,000-asset subset, dynamic 2..24 frames and unchanged root-RT
 preprocessing. Every real frame is supervised. Both arms start from identical
-official-initialized state and receive 100,000 exposures under the same schedule;
+official-initialized state under the same 100,000-exposure learning-rate horizon.
+The currently authorized continuation stops both at 20,000 exposures for a matched
+evaluation; V+ resumes its 5,000 checkpoint and V- starts at zero. The new grant
+has two H100s and 16 CPU slots, with bounded ordered CPU-data prefetch configured;
 auxiliary and cross-frame consistency losses are both zero. No small-data fitting
 substitutes for this comparison. See the
 [protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md). The completed ID/XYZ run and

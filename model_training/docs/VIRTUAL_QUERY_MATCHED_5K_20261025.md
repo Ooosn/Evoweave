@@ -1,5 +1,45 @@
 # Matched Virtual-Module Training On Fixed 5k Assets
 
+## Authorized 20k Continuation
+
+The latest human request authorizes a new two-H100 allocation and a first matched
+comparison at20000asset exposures per arm. This operational cap does not change
+the fixed5000training identities, the original100000-exposure OneCycle horizon,
+or the deterministic sampling plan. V-off begins from the accepted official
+initialization; V+continues its retained5000checkpoint including Adam/RNG/cursor.
+Do not automatically continue past20k. Completion of this milestone is distinct
+from completion of the originally planned100k horizon.
+
+The latest CPU default is8slots per H100, hence16total for this pair. Before
+submission the selected queue had71allocatable CPU slots and4available H100s.
+Job130494177 started19:33:29JST onOctober25 with16slots, H100devices3/4 and64GiB
+total host-memory reservation (mem_req4G per slot). Its keeper is a real scheduler
+child in both devices/cpuset cgroups; no SSH-membership exception is used. The
+24hour grant endsOctober26 at19:33:29JST; checkpoint handoff deadline is19:03JST.
+All ranks/helpers will be bound to16selected distinct physical cores within the
+job's allowed CPUs, with numerical-library threads kept at1.
+
+CPU input work previously ran serially inside each GPU rank. Ordered loading now
+uses6CPUworker threads per rank and at most2queued microbatches; it parallelizes
+the unchanged NPZ/root-RT/frame-selection/normalization/normals loader. GPU surface
+sampling and target construction remain in the owning rank, with the original
+request-specific seeds. Prefetch uses a separate planner; checkpoints contain
+only the consumed training cursor. CPU audit compares all loaded fields exactly
+on the existing stress groups and records timing without treating cache-biased
+microbenchmarks as production throughput. Real trace data-wait and step timing
+are recorded after admission.
+
+The20k evaluation uses the unchanged128validation assets and8views each. Partial
+attempts are preserved and retried in new directories. Completion binds hashed
+row artifacts to the exact checkpoint, source and selection. The final paired
+report checks identical raw frames, continuous GT, normalization and target
+tokens, and reports V+minusV- F1 with asset-level bootstrap intervals. Those
+intervals describe validation-asset uncertainty for one training seed, not
+variation across independently trained seeds. The original GPU capacity receipt
+may be inherited only through an exact, primary-reviewed source transition;
+model/data math and optimizer settings are unchanged. No new formal compute is
+released before fresh CPU equivalence and scheduler admission pass.
+
 ## Purpose And Authorization
 
 The human wants to distinguish a benefit of virtual queries from decoder/training

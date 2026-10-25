@@ -171,6 +171,11 @@ def gt_structure_free_xyz(model, codec, condition, target, roles):
 
 
 def summarize(rows):
+    def full_mismatch_label(value):
+        if value.get("status") == "match":
+            return "equal"
+        return value.get("role") or value.get("status", "unknown")
+
     def one(selected):
         if not selected:
             return {"views": 0}
@@ -178,7 +183,7 @@ def summarize(rows):
             "free_original_F1": statistics.mean(r["original_edge_f1"] for r in selected),
             "GT_structure_oracle_original_F1": statistics.mean(r["oracle_original_edge_f1"] for r in selected),
             "GT_roundtrip_original_F1": statistics.mean(r["GT_roundtrip_original_edge_f1"] for r in selected),
-            "first_full_mismatch_roles": dict(Counter(r["free_first_divergence"].get("role") or "equal" for r in selected)),
+            "first_full_mismatch_roles": dict(Counter(full_mismatch_label(r["free_first_divergence"]) for r in selected)),
             "first_structure_mismatch_roles": dict(Counter(r["free_structure_divergence"].get("role") or "equal" for r in selected)),
             "all_saved_generation_tokens_equal": all(r["saved_generation_tokens_equal"] for r in selected),
             "oracle_not_model_quality": True, "roles": {}}

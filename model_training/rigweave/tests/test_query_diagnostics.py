@@ -84,6 +84,13 @@ class OracleTests(unittest.TestCase):
         self.assertIsNone(result["roles"]["class"]["nontrivial_legal_accuracy"])
         self.assertEqual(result["roles"]["new_joint_id"]["nontrivial_legal_accuracy"], 1)
         self.assertTrue(result["oracle_not_model_quality"])
+        for status in ("generated_has_extra_tokens", "prefix_mismatch", "uncomparable_prefix"):
+            changed = copy.deepcopy(row)
+            changed["free_first_divergence"] = {"status": status, "role": None}
+            counts = summarize([changed])["valid"]["all"]["first_full_mismatch_roles"]
+            self.assertEqual(counts, {status: 1})
+        row["free_first_divergence"] = {"status": "match", "role": None}
+        self.assertEqual(summarize([row])["valid"]["all"]["first_full_mismatch_roles"], {"equal": 1})
 
 
 class GeometryTests(unittest.TestCase):

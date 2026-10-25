@@ -60,6 +60,17 @@ def check_deadline(config):
         raise RuntimeError("the bounded diagnostic time window ended")
 
 
+def validate_repeatability_protocol(config, op):
+    protocol = config["diagnostics"]
+    if protocol.get("require_historical_token_equality", True) is True:
+        return
+    evidence = config.get("repeatability_receipt", {})
+    if (op.get("native_repeatability_accepted") is not True or protocol.get("native_repeats") != 3
+            or protocol.get("require_fixed_condition_decoder_equality") is not True
+            or file_sha256(evidence["path"]) != evidence["sha256"]):
+        raise RuntimeError("paired repetition protocol requires accepted native-variation evidence")
+
+
 def verify_launch(args, config):
     runtime = config["runtime"]
     state = json.loads((ROOT / "model_training/state/current.json").read_text())
@@ -120,6 +131,7 @@ def verify_launch(args, config):
         raise RuntimeError("this exact diagnostic stage is not approved")
     if op.get("complete") is not False:
         raise RuntimeError("the diagnostic study is already closed")
+    validate_repeatability_protocol(config, op)
     check_deadline(config)
     subprocess.run([sys.executable, str(ROOT / "model_training/tools/agent_work_guard.py"),
         "check", "--operation", "report" if cpu else "preflight", "--entrypoint", ENTRYPOINT],

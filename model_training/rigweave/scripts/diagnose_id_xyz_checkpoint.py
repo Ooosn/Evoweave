@@ -194,9 +194,10 @@ def replay_with_native_evaluator(model, tokenizer, codec, surface, target, geome
 
 
 def tensor_identity(value):
+    import torch
     data = value.detach().cpu().contiguous()
     return {"shape": list(data.shape), "dtype": str(data.dtype),
-        "sha256": hashlib.sha256(data.numpy().tobytes()).hexdigest()}
+        "sha256": hashlib.sha256(data.view(torch.uint8).numpy().tobytes()).hexdigest()}
 
 
 def tensor_difference(left, right):
@@ -262,12 +263,25 @@ def summarize(rows):
         if not selected:
             return {"views": 0}
         result = {"views": len(selected), "assets": len({r["asset_id"] for r in selected}),
+            "unique_views": len({(r["asset_id"], r["frame_index"]) for r in selected}),
+            "native_repeats": len({r["repeat_index"] for r in selected}),
+            "generation_failures": sum(not r["free_generation"]["success"] for r in selected),
+            "capacity_only_EOS": sum(r["eos_only_legal_choice"] for r in selected),
+            "exact_count_fraction": statistics.mean(r["exact_count"] for r in selected),
+            "exact_structure_fraction": statistics.mean(r["exact_structure"] for r in selected),
             "free_original_F1": statistics.mean(r["original_edge_f1"] for r in selected),
+            "historical_reference_F1": statistics.mean(r["historical_reference_F1"] for r in selected),
             "GT_structure_oracle_original_F1": statistics.mean(r["oracle_original_edge_f1"] for r in selected),
             "GT_roundtrip_original_F1": statistics.mean(r["GT_roundtrip_original_edge_f1"] for r in selected),
             "first_full_mismatch_roles": dict(Counter(full_mismatch_label(r["free_first_divergence"]) for r in selected)),
             "first_structure_mismatch_roles": dict(Counter(r["free_structure_divergence"].get("role") or "equal" for r in selected)),
             "all_saved_generation_tokens_equal": all(r["saved_generation_tokens_equal"] for r in selected),
+            "historical_token_match_fraction": statistics.mean(r["saved_generation_tokens_equal"] for r in selected),
+            "all_fixed_condition_decodes_equal": all(r["fixed_condition_decoder_equal"] for r in selected),
+            "free_F1_by_repeat": {str(index): statistics.mean(r["original_edge_f1"] for r in selected if r["repeat_index"] == index)
+                for index in sorted({r["repeat_index"] for r in selected})},
+            "oracle_F1_by_repeat": {str(index): statistics.mean(r["oracle_original_edge_f1"] for r in selected if r["repeat_index"] == index)
+                for index in sorted({r["repeat_index"] for r in selected})},
             "oracle_not_model_quality": True, "roles": {}}
         for role in selected[0]["teacher"]["per_role"]:
             values = [r["teacher"]["per_role"][role] for r in selected]
@@ -328,6 +342,8 @@ def run(args, config, source):
                 work.append((group, dataset, index))
     args.output.mkdir(parents=True, exist_ok=True)
     rows, audited, repeatability = [], [], []
+    repetitions = config["diagnostics"].get("native_repeats", 1)
+    strict_history = config["diagnostics"].get("require_historical_token_equality", True)
     with torch.no_grad():
         for group, dataset, index in work:
             check_deadline(config)
@@ -349,48 +365,65 @@ def run(args, config, source):
                 write(args.output / f"repeatability_rank_{rank}.json", repeatability)
                 del batch, surface, gpu_geometry, gpu_targets, targets, geometry
                 continue
-            condition, native_rows = replay_with_native_evaluator(model, tokenizer, codec,
-                surface, gpu_targets, gpu_geometry, group)
-            del surface, gpu_geometry
-            for slot, ids in frames.items():
-                ref = reference[group, batch["asset_id"], slot]
-                gt = torch.tensor([ids], device=device)
-                attention = torch.ones_like(gt, dtype=torch.bool)
-                with torch.autocast("cuda", dtype=torch.bfloat16):
-                    logits = model.logits(condition[:, slot], gt[:, :-1], attention[:, :-1])[0].float().cpu()
-                    other = model.logits(condition[:, (slot + 2) % 8], gt[:, :-1], attention[:, :-1])[0].float().cpu()
+            sampled_identity = {key: tensor_identity(value) for key, value in surface.items()}
+            for repetition in range(repetitions):
+                check_deadline(config)
+                condition, native_rows = replay_with_native_evaluator(model, tokenizer, codec,
+                    surface, gpu_targets, gpu_geometry, group)
+                for slot, ids in frames.items():
+                    ref = reference[group, batch["asset_id"], slot]
+                    condition_identity = tensor_identity(condition[:, slot])
+                    gt = torch.tensor([ids], device=device)
+                    attention = torch.ones_like(gt, dtype=torch.bool)
                     generated = {"tokens": native_rows[slot]["predicted_tokens"],
                         "status": native_rows[slot]["status"], "success": native_rows[slot]["success"]}
-                    oracle_ids = gt_structure_free_xyz(model, codec, condition[:, slot], ids,
-                        diagnostics.classify_gt_roles(codec, ids))
-                matches = generated["tokens"] == ref["predicted_tokens"]
-                if not matches:
-                    write(args.output / f"replay_mismatch_rank_{rank}.json", {"group": group,
-                        "asset_id": batch["asset_id"], "slot": slot,
-                        "actual": generated, "reference": ref})
-                    raise RuntimeError("free generation did not reproduce the frozen reference tokens")
-                parsed, truth = codec.decode(oracle_ids), codec.decode(ids)
-                if not np.array_equal(parsed["parents"], truth["parents"]):
-                    raise RuntimeError("GT-structure oracle changed the GT parent identities")
-                target_xyz = np.asarray(ref["original_target_joints"], dtype=np.float32)
-                parents = ref["original_target_parents"]
-                metric = lambda output: float(_topology_metrics(output["joints"], output["parents"].tolist(),
-                    target_xyz, parents)["edge_f1"])
-                row = {"group": group, "asset_id": batch["asset_id"], "frame_index": slot,
-                    "gt_joint_count": ref["gt_joint_count"], "raw_frame_index": ref["raw_frame_index"],
-                    "saved_generation_tokens_equal": matches, "original_edge_f1": ref["original_edge_f1"],
-                    "teacher": diagnostics.teacher_forced_diagnostics(codec, ids, logits, legal_choice=True),
-                    "other_pose_teacher": diagnostics.teacher_forced_diagnostics(codec, ids, other),
-                    "other_pose_slot": (slot + 2) % 8,
-                    "free_first_divergence": diagnostics.first_divergence_summary(codec, generated["tokens"], ids),
-                    "free_structure_divergence": structural_divergence(codec, generated["tokens"], ids),
-                    "oracle_original_edge_f1": metric(parsed), "GT_roundtrip_original_edge_f1": metric(truth),
-                    "oracle_tokens": oracle_ids, "oracle_not_model_quality": True}
-                rows.append(row)
-                del logits, other, gt, attention
+                    with torch.autocast("cuda", dtype=torch.bfloat16):
+                        logits = model.logits(condition[:, slot], gt[:, :-1], attention[:, :-1])[0].float().cpu()
+                        other = model.logits(condition[:, (slot + 2) % 8], gt[:, :-1], attention[:, :-1])[0].float().cpu()
+                        repeated = model.generate(condition[:, slot], codec, max_new_tokens=2048)
+                        oracle_ids = gt_structure_free_xyz(model, codec, condition[:, slot], ids,
+                            diagnostics.classify_gt_roles(codec, ids))
+                    fixed_equal = repeated["tokens"] == generated["tokens"]
+                    if not fixed_equal or tensor_identity(condition[:, slot]) != condition_identity:
+                        raise RuntimeError("paired decoder replay or condition immutability failed")
+                    matches = generated["tokens"] == ref["predicted_tokens"]
+                    if strict_history and not matches:
+                        write(args.output / f"replay_mismatch_rank_{rank}.json", {"group": group,
+                            "asset_id": batch["asset_id"], "slot": slot,
+                            "actual": generated, "reference": ref})
+                        raise RuntimeError("free generation did not reproduce the frozen reference tokens")
+                    parsed, truth = codec.decode(oracle_ids), codec.decode(ids)
+                    if not np.array_equal(parsed["parents"], truth["parents"]):
+                        raise RuntimeError("GT-structure oracle changed the GT parent identities")
+                    target_xyz = np.asarray(ref["original_target_joints"], dtype=np.float32)
+                    parents = ref["original_target_parents"]
+                    metric = lambda output: float(_topology_metrics(output["joints"], output["parents"].tolist(),
+                        target_xyz, parents)["edge_f1"])
+                    row = {"group": group, "asset_id": batch["asset_id"], "frame_index": slot,
+                        "repeat_index": repetition, "gt_joint_count": ref["gt_joint_count"],
+                        "raw_frame_index": ref["raw_frame_index"], "condition_identity": condition_identity,
+                        "sampled_surface_identity": sampled_identity, "fixed_condition_decoder_equal": fixed_equal,
+                        "saved_generation_tokens_equal": matches, "original_edge_f1": native_rows[slot]["original_edge_f1"],
+                        "historical_reference_F1": ref["original_edge_f1"], "free_generation": generated,
+                        "eos_only_legal_choice": native_rows[slot]["eos_only_legal_choice"],
+                        "exact_count": native_rows[slot]["exact_count"],
+                        "exact_structure": native_rows[slot]["exact_structure"],
+                        "teacher": diagnostics.teacher_forced_diagnostics(codec, ids, logits, legal_choice=True),
+                        "other_pose_teacher": diagnostics.teacher_forced_diagnostics(codec, ids, other),
+                        "other_pose_slot": (slot + 2) % 8,
+                        "free_first_divergence": diagnostics.first_divergence_summary(codec, generated["tokens"], ids),
+                        "free_structure_divergence": structural_divergence(codec, generated["tokens"], ids) if generated["success"]
+                            else {"equal": False, "role": "generation_failure"},
+                        "oracle_original_edge_f1": metric(parsed), "GT_roundtrip_original_edge_f1": metric(truth),
+                        "oracle_tokens": oracle_ids, "oracle_not_model_quality": True}
+                    rows.append(row)
+                    del logits, other, gt, attention
+                del condition, native_rows
+            if {key: tensor_identity(value) for key, value in surface.items()} != sampled_identity:
+                raise RuntimeError("the fixed sampled surface changed during paired diagnostics")
             write(args.output / f"progress_rank_{rank}.json", {"assets_complete": len(audited), "views": len(rows)})
             print(json.dumps({"rank": rank, "group": group, "asset_complete": batch["asset_id"]}), flush=True)
-            del condition, batch, targets, geometry, gpu_targets, native_rows
+            del surface, gpu_geometry, batch, targets, geometry, gpu_targets
     if parameter_fingerprint(model) != restored["model_sha256"]:
         raise RuntimeError("inference changed model weights")
     stat = Path(config["checkpoint"]["path"]).stat()
@@ -412,11 +445,13 @@ def run(args, config, source):
     if rank == 0:
         reports = [local] if cpu else [json.loads((args.output / f"rank_{r}.json").read_text()) for r in range(2)]
         combined = [row for report in reports for row in report["rows"]]
-        expected = 0 if cpu or args.mode == "repeatability" else 8 if args.mode == "smoke" else 128
-        keys = {(row["group"], row["asset_id"], row["frame_index"]) for row in combined}
+        expected = 0 if cpu or args.mode == "repeatability" else (8 if args.mode == "smoke" else 128) * repetitions
+        keys = {(row["group"], row["asset_id"], row["frame_index"], row["repeat_index"]) for row in combined}
         if len(combined) != expected or len(keys) != expected:
             raise RuntimeError("missing or duplicated diagnostic views")
         summary = {"complete": True, "mode": args.mode, "views": len(combined),
+            "unique_views": len({key[:3] for key in keys}), "native_repeats": repetitions,
+            "historical_token_equality_required": strict_history,
             "audited_group_assets": sum(len(report["audited_assets"]) for report in reports),
             "trained_source": config["trained_source"], "checkpoint": config["checkpoint"],
             "restoration": restored, "groups": summarize(combined), "optimizer_created": False,

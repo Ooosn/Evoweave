@@ -1,7 +1,9 @@
 import copy
+import hashlib
 from pathlib import Path
 from types import SimpleNamespace
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -11,7 +13,7 @@ import torch
 BASE = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(BASE / "src"), str(BASE / "scripts")]
 from diagnose_id_xyz_checkpoint import gt_structure_free_xyz, replay_with_native_evaluator, structural_divergence, summarize, tensor_difference, tensor_identity, verify_geometry
-from query_diagnostics_guard import CPUS, FAMILY, SCOPE, execution_cpu_binding, validate_ssh_exception
+from query_diagnostics_guard import CPUS, FAMILY, SCOPE, execution_cpu_binding, validate_repeatability_protocol, validate_ssh_exception
 from rigweave.dynamic_rig.id_xyz_diagnostics import classify_gt_roles, first_divergence_summary, teacher_forced_diagnostics
 from rigweave.dynamic_rig.id_xyz_tokens import IdXYZTokens
 
@@ -49,6 +51,7 @@ class OracleTests(unittest.TestCase):
         second = first.clone()
         self.assertTrue(tensor_difference(first, second)["equal"])
         self.assertEqual(tensor_identity(first), tensor_identity(second))
+        self.assertEqual(tensor_identity(first.bfloat16()), tensor_identity(second.bfloat16()))
         second[-1] += .25
         difference = tensor_difference(first, second)
         self.assertFalse(difference["equal"])
@@ -116,6 +119,10 @@ class OracleTests(unittest.TestCase):
             scores[i, token] = 5.
         teacher = teacher_forced_diagnostics(codec(), ids, scores, legal_choice=True)
         row = {"group": "valid", "asset_id": "a", "gt_joint_count": 4,
+            "frame_index": 0, "repeat_index": 0, "historical_reference_F1": .7,
+            "fixed_condition_decoder_equal": True,
+            "free_generation": {"success": True}, "eos_only_legal_choice": False,
+            "exact_count": True, "exact_structure": True,
             "original_edge_f1": .7, "oracle_original_edge_f1": .8,
             "GT_roundtrip_original_edge_f1": .9, "free_first_divergence": {"role": "x"},
             "free_structure_divergence": {"role": None}, "saved_generation_tokens_equal": True,
@@ -125,6 +132,13 @@ class OracleTests(unittest.TestCase):
         self.assertIsNone(result["roles"]["class"]["nontrivial_legal_accuracy"])
         self.assertEqual(result["roles"]["new_joint_id"]["nontrivial_legal_accuracy"], 1)
         self.assertTrue(result["oracle_not_model_quality"])
+        second = copy.deepcopy(row)
+        second.update(repeat_index=1, original_edge_f1=.6)
+        repeated = summarize([row, second])["valid"]["all"]
+        self.assertEqual(repeated["views"], 2)
+        self.assertEqual(repeated["unique_views"], 1)
+        self.assertEqual(repeated["native_repeats"], 2)
+        self.assertEqual(repeated["free_F1_by_repeat"], {"0": .7, "1": .6})
         for status in ("generated_has_extra_tokens", "prefix_mismatch", "uncomparable_prefix"):
             changed = copy.deepcopy(row)
             changed["free_first_divergence"] = {"status": status, "role": None}
@@ -161,6 +175,21 @@ class GeometryTests(unittest.TestCase):
 
 
 class GuardTests(unittest.TestCase):
+    def test_repetition_policy_requires_primary_acceptance_and_pinned_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            evidence = Path(directory) / "receipt.json"
+            evidence.write_text("{}")
+            config = {"diagnostics": {"require_historical_token_equality": False,
+                "native_repeats": 3, "require_fixed_condition_decoder_equality": True},
+                "repeatability_receipt": {"path": str(evidence),
+                    "sha256": hashlib.sha256(evidence.read_bytes()).hexdigest()}}
+            validate_repeatability_protocol(config, {"native_repeatability_accepted": True})
+            with self.assertRaises(RuntimeError):
+                validate_repeatability_protocol(config, {"native_repeatability_accepted": False})
+            config["diagnostics"]["native_repeats"] = 1
+            with self.assertRaises(RuntimeError):
+                validate_repeatability_protocol(config, {"native_repeatability_accepted": True})
+
     def fixture(self):
         exception = {"scope": SCOPE, "explicit_human_authorized": True,
             "kernel_scheduler_membership": False, "allocation": 130309880, "host": "pcg01i",

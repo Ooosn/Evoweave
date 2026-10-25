@@ -26,7 +26,9 @@ Only the new diagnostic metrics and entrypoint come from the isolated new checko
   plus16 validation assets;8 real inputs and scored slots0/2/4/6,128 views total.
 - Strictly restore every saved tensor and verify the completed model fingerprint.
   Verify raw frame IDs, original continuous GT, parents and target tokens against
-  saved ID100k records. Native free generation must reproduce those records exactly.
+  saved ID100k records. After the measured native-repeatability audit below,
+  historical-token agreement is recorded rather than required; a second decode
+  of each identical captured condition must still reproduce its native tokens.
 - Under the correct GT prefix, separate class/new-ID/parent-ID/BRANCH/EOS/X/Y/Z
   NLL and accuracy. Preserve full-vocabulary metrics. Separately report native
   grammar-constrained decisions and sites with more than one legal choice.
@@ -47,7 +49,7 @@ Only the new diagnostic metrics and entrypoint come from the isolated new checko
 
 CPU audit covers all32 group-assets without CUDA. Primary accepts the actual
 audit before releasing2 validation assets/8 views on GPU. Primary accepts the
-smoke before releasing the128-view run. Any input/weight/source/replay mismatch
+smoke before releasing the128-view run. Any input/weight/source/fixed-condition replay mismatch
 stops execution and is preserved as a failure receipt; no fallback initialization.
 
 Reuse allocation130309880, GPU5/6, keeper1090013. Actual scheduler grant is1slot;
@@ -93,3 +95,29 @@ points; decode the identical first captured condition three times. Record
 condition/motion tensor deltas, token equality and per-repeat F1. No deterministic
 mode, alternate kernel, model repair, new sampling policy or weight change is
 introduced. Full diagnostics remain blocked pending interpretation.
+
+## Measured Native Variation And Paired Protocol
+
+The repetition audit completed exit0 with all saved weights/fingerprint unchanged.
+Both assets' five sampled-surface tensors matched bitwise on repeated sampling.
+On the same fixed input, motion states differed by at most1.79e-6 and encoder
+conditions by at most0.005562. Native output tokens varied; the8-view mean F1
+was0.857208/0.854363/0.866831 across three repeats. Decoding an identical captured
+condition three times was exact on both assets and matched that native pass.
+Motion evidence varies too, but this is not proof that it is the unique cause.
+
+The original historical bitwise-token gate was therefore inappropriate for
+this native pipeline. This is an explicit evidence-backed protocol correction,
+not a silent tolerance or a change to model arithmetic. Version2 preserves
+runtime, frozen model source, trained configuration, weights and reference data
+exactly. It runs3 native encoder/evaluation repetitions on each fixed sampled
+input. Within each repetition, free generation, teacher scoring, wrong-pose
+scoring and the GT-structure oracle share the captured native condition.
+Every view additionally repeats decoder generation on that identical condition
+and requires exact token equality and unchanged condition bytes.
+
+Report native F1 by repeat, historical F1 separately, historical-token agreement,
+and paired oracle differences. Oracle results remain diagnostic only. Coverage
+is8 unique smoke views/24 repeated rollouts, then128 unique full views/384
+rollouts. The repeatability receipt is hash-pinned and primary acceptance is a
+launch prerequisite.21 CPU tests pass. Only the revised smoke is released.

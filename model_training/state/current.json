@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_native_repeatability_audit_20261025",
+  "state_id": "frozen_ID100k_paired_repeat_smoke_prepared_20261025",
   "updated_at": "2026-10-25T04:42:15Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -931,18 +931,36 @@
     },
     "query_decoder_diagnostics": {
       "label": "frozen_query_decoder_diagnostics_20261025_v1",
-      "status": "two_replay_mismatches_bounded_native_repeatability_only_authorized",
+      "status": "native_variation_measured_paired_three_repeat_smoke_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
       "complete": false,
-      "code_commit": "5af1bba94d49eb165ca7ae05eb19fdf03b5e99d5",
+      "code_commit": "bf89f5d5f74ac869b8b3e9929e6c296a71df2879",
       "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
       "GPU_allowed": true,
       "smoke_accepted": false,
       "optimizer_allowed": false,
       "backward_allowed": false,
       "quality_approval": false,
-      "CPU_tests_passed": 20,
+      "CPU_tests_passed": 21,
+      "native_repeatability_accepted": true,
+      "native_repeatability": {
+        "observed_and_reviewed_utc": "2026-10-25T04:54:15Z",
+        "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/repeatability_v1",
+        "summary_sha256": "f04c09db27618762c8e52e37e3d1f26314c64c7d084f1f374121951bbd79032f",
+        "resource_sha256": "9b8293a93e05a272bb38986d0ee14707f3eca16f9d385873c8752e8c51af39fb",
+        "exit_code": 0,
+        "all5_sampled_surface_fields_equal_for_both_assets": true,
+        "max_motion_state_repeat_difference": 0.0000017881393432617188,
+        "max_encoder_condition_repeat_difference": 0.00556182861328125,
+        "same_fixed_condition_decoder_3repeats_equal_both_assets": true,
+        "same_fixed_condition_decode_matches_native_first": true,
+        "eight_view_mean_F1_by_repeat": [0.8572082409111367, 0.854363189522396, 0.8668309804821976],
+        "peak_tree_rss_bytes": 8563634176,
+        "payload_cleanup_complete": true,
+        "interpretation": "Native condition generation varies on identical sampled input; the motion evidence also varies, but its unique causal contribution is not established. Decoder replay is exact when its captured condition is fixed. Bitwise historical-output equality is not a valid admission condition for this nondeterministic native pipeline.",
+        "new_protocol": "Preserve all model/GT/source checks. Measure3 native repetitions per input and pair free decoding, teacher scoring and GT-structure oracle within each exact captured condition. Require a second same-condition decoder call to match its native tokens exactly on every view. Record historical disagreement, fresh F1 and variation separately; do not overwrite historical quality."
+      },
       "smoke_v2_failure": {
         "exit_code": 1,
         "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/smoke_v2",
@@ -974,7 +992,7 @@
         "payload_cleanup_complete": true,
         "post_audit_source_review": "3d7debc changes only the non-CPU summary label for anomalous sequence endings and its regression tests. Model restoration, CPU geometry audit, frozen model/data source, GPU forward and oracle code are unchanged. All17CPU tests pass; actual GPU behavior remains subject to smoke acceptance."
       },
-      "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_v4_result.json",
+      "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_v5_result.json",
       "frozen_trained_source": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code",
       "frozen_trained_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
       "checkpoint_sha256": "ada70ea7b97b4bdbcbd699b1698696faa0eef0298df09e07637e687eea3a29c8",
@@ -1023,10 +1041,25 @@
         },
         {
           "mode": "repeatability",
-          "approved": true,
+          "approved": false,
+          "status": "completed_native_variation_primary_verified",
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
           "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/repeatability_v1"
+        },
+        {
+          "mode": "smoke",
+          "approved": true,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
+          "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v3"
+        },
+        {
+          "mode": "diagnose",
+          "approved": false,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
+          "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/diagnose_v2"
         },
         {
           "mode": "diagnose",

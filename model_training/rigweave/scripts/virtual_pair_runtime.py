@@ -1,5 +1,5 @@
 """One data/optimization contract for both fixed-5k virtual-path arms."""
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from copy import deepcopy
 from datetime import datetime, timezone
 import gc
@@ -272,6 +272,7 @@ def audit(config, entries, output, source):
 
 
 def audit_loader(config, entries, groups):
+    import resource
     from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
     dataset = fixed_dataset(entries['train'], config, 2, mode='train')
     workers = config['runtime']['data_workers_per_rank']
@@ -292,10 +293,33 @@ def audit_loader(config, entries, groups):
         parallel_seconds = time.monotonic() - started
         if actual != expected:
             raise RuntimeError('parallel CPU data changed geometry, normalization, frames or GT')
-        results.append({**case, 'checked_assets': len(requests), 'workers': workers,
+        del loaded
+        with ExitStack() as stack:
+            pipelines, first_batches, held = [], [], []
+            for rank in range(2):
+                microbatches = [[FrameSampleRequest(indices[i % len(indices)], case['frames'],
+                    840000 + number * 1000 + rank * 100 + micro * 30 + i)
+                    for i in range(case['batch_per_rank'])] for micro in range(3)]
+                first_batches.append(microbatches[0])
+                pipelines.append(stack.enter_context(OrderedAssetPrefetch(dataset, microbatches,
+                    workers=workers, depth=config['runtime'].get('prefetch_microbatches', 2))))
+            for pipeline, requests in zip(pipelines, first_batches):
+                held.append(pipeline.take(requests)[0])
+            for pipeline in pipelines:
+                for _, futures in pipeline.pending:
+                    for future in futures:
+                        future.result()
+            peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+            if peak_rss > config['runtime']['rss_limit_bytes'] - 16 * 1024**3:
+                raise RuntimeError('two-rank CPU prefetch leaves insufficient RAM for the measured model/runtime')
+        del held, pipelines, pipeline, futures, future
+        results.append({**case, 'checked_assets': len(expected), 'workers': workers,
             'all_CPU_fields_bitwise_equal': True, 'serial_seconds': serial_seconds,
             'parallel_seconds': parallel_seconds, 'comparison_order': 'serial_then_parallel_cache_bias_possible',
-            'input_sha256': actual, **timing})
+            'input_sha256': actual, 'two_rank_full_microbatch_queue_exercised': True,
+            'resident_microbatches_per_rank': 1 + config['runtime'].get('prefetch_microbatches', 2),
+            'cumulative_process_peak_rss_bytes': peak_rss, 'reserved_model_runtime_headroom_bytes': 16 * 1024**3,
+            **timing})
     after = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
         'python': random.getstate()})
     if before != after or torch.cuda.is_initialized():
@@ -717,9 +741,10 @@ def train_pair(config, entries, output, source, device, rank, world):
                     write_json(output / f'progress_rank_{rank}.json', {'complete': False, 'progress': progress,
                         'latest': {k: v for k, v in value.items() if k != 'microbatches'}})
                     print('TRAIN ' + json.dumps({k: v for k, v in value.items() if k != 'microbatches'}), flush=True)
-            if last_saved != samples:
-                checkpoints[variant] = save_checkpoint(model, optimizer, stream, config, output, variant,
-                    initial, source, samples, frames, step, rank, world, device)
+                # Save consumed progress before waiting on any unused prefetch reads.
+                if last_saved != samples:
+                    checkpoints[variant] = save_checkpoint(model, optimizer, stream, config, output, variant,
+                        initial, source, samples, frames, step, rank, world, device)
             if (samples in evaluation_milestones(config)
                     and not evaluation_complete(output, config, variant, samples)
                     and not shared_deadline_due(config, device, world)):

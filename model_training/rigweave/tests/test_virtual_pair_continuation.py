@@ -6,6 +6,7 @@ import sys
 import tempfile
 import threading
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -82,6 +83,25 @@ class PrefetchTests(unittest.TestCase):
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_CPU_audit_exercises_two_full_prefetch_queues_and_reserves_RAM(self):
+        config = configuration()
+        groups = {case['stress_group']: list(range(6)) for case in config['capacity']['cases']}
+        class Dataset:
+            def __getitem__(self, request):
+                return {'request': torch.tensor(tuple(request))}
+        resource = SimpleNamespace(RUSAGE_SELF=0,
+            getrusage=lambda _: SimpleNamespace(ru_maxrss=4 * 1024**2))
+        with patch.object(runtime, 'fixed_dataset', return_value=Dataset()), \
+                patch.dict(sys.modules, {'resource': resource}):
+            report = runtime.audit_loader(config, {'train': []}, groups)
+            self.assertTrue(report['passed'])
+            self.assertEqual(len(report['cases']), 6)
+            self.assertTrue(all(case['two_rank_full_microbatch_queue_exercised'] for case in report['cases']))
+            self.assertTrue(all(case['checked_assets'] == 6 for case in report['cases']))
+            resource.getrusage = lambda _: SimpleNamespace(ru_maxrss=49 * 1024**2)
+            with self.assertRaisesRegex(RuntimeError, 'insufficient RAM'):
+                runtime.audit_loader(config, {'train': []}, groups)
+
     def test_evaluation_requires_hashed_rows_checkpoint_and_matched_GT(self):
         config = configuration()
         with tempfile.TemporaryDirectory() as directory:

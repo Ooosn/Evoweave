@@ -79,3 +79,17 @@ requires-grad flags unchanged. A read-only output hook captures exactly the
 native encoder condition for additional measurements; it cannot replace outputs
 and is removed even after failure.19CPU tests pass, including this capture and
 cleanup. The token-equality gate is unchanged; full execution remains blocked.
+
+Native-path smoke2 also failed historical replay (first mismatches49/61;
+12/6 positions differ in the first two equal-length outputs). Both failures
+cleaned up their own payloads; no metrics or weight updates were accepted.
+The frozen motion-evidence code uses CUDA index_add reductions, a possible
+source of numerical variation, but that is not yet a demonstrated cause.
+
+The next approved stage is only a two-asset repeatability audit: materialize
+surface inputs twice and compare exact hashes; hold one materialization fixed
+for three native evaluations; compute motion evidence three times on identical
+points; decode the identical first captured condition three times. Record
+condition/motion tensor deltas, token equality and per-repeat F1. No deterministic
+mode, alternate kernel, model repair, new sampling policy or weight change is
+introduced. Full diagnostics remain blocked pending interpretation.

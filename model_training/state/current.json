@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_native_replay_smoke_retry_20261025",
-  "updated_at": "2026-10-25T04:33:00Z",
+  "state_id": "frozen_ID100k_native_repeatability_audit_20261025",
+  "updated_at": "2026-10-25T04:42:15Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -931,18 +931,26 @@
     },
     "query_decoder_diagnostics": {
       "label": "frozen_query_decoder_diagnostics_20261025_v1",
-      "status": "smoke_v1_replay_mismatch_native_evaluator_smoke_v2_authorized",
+      "status": "two_replay_mismatches_bounded_native_repeatability_only_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
       "complete": false,
-      "code_commit": "5db87c6705228df2956a4d114d2feeef555a4575",
+      "code_commit": "5af1bba94d49eb165ca7ae05eb19fdf03b5e99d5",
       "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
       "GPU_allowed": true,
       "smoke_accepted": false,
       "optimizer_allowed": false,
       "backward_allowed": false,
       "quality_approval": false,
-      "CPU_tests_passed": 19,
+      "CPU_tests_passed": 20,
+      "smoke_v2_failure": {
+        "exit_code": 1,
+        "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/smoke_v2",
+        "failure": "Frozen native evaluate_item also differed from historical tokens; first differences49/61 and12/6 differing positions on the first two equal-length sequences. Native-path and initial-path outputs also differ from each other. Root cause not established.",
+        "peak_tree_rss_bytes": 8569143296,
+        "payload_cleanup_complete": true,
+        "response": "Do not treat a CUDA nondeterminism hypothesis as proof. Freeze sampled inputs, repeat native evaluation3times, separately repeat sampling2times and motion evidence3times, and decode the identical captured condition3times. Only2assets/8unique views; no original-quality or full-diagnostic acceptance yet."
+      },
       "smoke_v1_failure": {
         "exit_code": 1,
         "failure": "Native-token replay mismatch on the first valid view of each rank, despite exact saved weights/source and originalGT/frame checks. Initial mismatch indices49/53; no metrics accepted.",
@@ -966,7 +974,7 @@
         "payload_cleanup_complete": true,
         "post_audit_source_review": "3d7debc changes only the non-CPU summary label for anomalous sequence endings and its regression tests. Model restoration, CPU geometry audit, frozen model/data source, GPU forward and oracle code are unchanged. All17CPU tests pass; actual GPU behavior remains subject to smoke acceptance."
       },
-      "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_v3_result.json",
+      "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_v4_result.json",
       "frozen_trained_source": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code",
       "frozen_trained_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
       "checkpoint_sha256": "ada70ea7b97b4bdbcbd699b1698696faa0eef0298df09e07637e687eea3a29c8",
@@ -1007,10 +1015,18 @@
         },
         {
           "mode": "smoke",
-          "approved": true,
+          "approved": false,
+          "status": "failed_native_replay_mismatch_no_metrics_accepted",
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
           "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v2"
+        },
+        {
+          "mode": "repeatability",
+          "approved": true,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
+          "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/repeatability_v1"
         },
         {
           "mode": "diagnose",

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_diagnostics_completed_B_virtual_ablation_unresolved_20261025",
-  "updated_at": "2026-10-25T05:31:00Z",
+  "state_id": "matched_virtual_query_fixed5k_CPU_audit_authorized_20261025",
+  "updated_at": "2026-10-25T06:35:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -380,7 +380,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Frozen ID100k role/pose/structure diagnostics are complete:128unique views,384paired rollouts, exact weights and same-condition decoder replay. GT-prefix parent/EOS prediction is near-perfect on sampled training assets but weak on unseen non52 assets; pose-specific condition is used; forcingGTstructure alone lowers validationF1. These do not identify virtual-query benefit or establish that more steps alone fix the decoder. B65 weights remain absent, so B module ablation is unresolved. Propose a separately approved matched legacy-codec virtual+/virtual- training pair with controlled init/data/budget/losses, then ID-codec controls if needed; do not auto-launch. Preserve completed100k, immutablecpu4_codee1ed, all evidence and the retained allocation. Only inspect/report are currently allowed.",
+  "next_required_result": "Human authorized retraining with design discretion but strictly all5000fixed training assets; no small-data research substitute. Execute a matched legacy-codec virtual-on/off pair, auxiliary0 and consistency0,100000exposures each from identical official initialization/data/pose/sampling/schedule. Primary accept actual CPU restoration and both-arm capacity before training. Alternate5ksegments, keep exact model/Adam/RNG/sampler, save every checkpoint locally and SHA-verified durable copies. Stop for handoff before17:10JST without claiming target complete; preserve existing allocation and all older checkpoints. Historical B70 was explicitly retained but is absent from checked original/backup locations; deletion cause is unproven, do not blame the human's generic cleanup request. Current release is CPUaudit only.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -923,6 +923,67 @@
     ]
   },
   "active_operation": {
+    "label": "virtual_query_matched_5k_20261025_v1",
+    "status": "CPU_audit_only_authorized",
+    "operation": "train",
+    "mode": "matched_virtual_pair",
+    "complete": false,
+    "explicit_human_authorized": true,
+    "authorization": "Human confirmed the goal is virtual-query contribution versus decoder/training confounds, asked why a retainedB checkpoint disappeared, and explicitly authorized retraining with design discretion on the fixed5000assets, rejecting small-data fitting experiments. Preserve allocated GPUs and prior artifacts.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
+    "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py"},
+    "code_commit": "88e8133ef1eaa7118341b0ad9ba26167fb97b8cf",
+    "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "CPU_tests_passed": 16,
+    "train_assets": 5000,
+    "target_exposures_per_variant": 100000,
+    "variants": ["virtual_on", "virtual_off"],
+    "initialization": "same official UniRig checkpoint; no old trained experiment weights",
+    "no_small_data_fit": true,
+    "B_retention_audit": {
+      "B70_explicitly_retained_20261021": true,
+      "B70_original_path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/checkpoint_asset_070000.pt",
+      "B70_recorded_bytes": 8438115504,
+      "B70_deletion_cause": "unknown; no deletion/move/archive receipt found; generic old checkpoint deletion statement does not prove authorization to delete the retained file",
+      "checked_original_and_known_backup_scopes_no_B_weights": true,
+      "global_absence_proven": false,
+      "inventory": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/preparation/inventory.log"
+    },
+    "ssh_exception": {
+      "scope": "virtual_query_matched_5k_20261025_v1",
+      "explicit_human_authorized": true,
+      "authorization": "Reuse the human-retained2H100 grant for explicitly requested fixed5kmatched training, with the established boundedSSH exception:1scheduler slot,4total execution CPUs, no extra GPUs.",
+      "kernel_scheduler_membership": false,
+      "allocation": 130309880,
+      "host": "pcg01i",
+      "physical_gpus": [5, 6],
+      "cpu_slots": 1,
+      "execution_cpu_budget": 4,
+      "cpu_affinity": [58, 63, 64, 65],
+      "rss_limit_bytes": 68719476736,
+      "gpu_memory_fraction_limit": 0.85,
+      "keeper_pid": 1090013
+    },
+    "runs": [
+      {"mode": "audit", "approved": true,
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
+       "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v1"},
+      {"mode": "capacity", "approved": false,
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
+       "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1"},
+      {"mode": "train", "approved": false,
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v1.json",
+       "config_sha256": "b1abb5c8290d83fbb266899e3caf3b7d9ba8c5f0348c2db6c597d4292e31b7b5",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v1"}
+    ]
+  },
+  "preserved_IDXYZ100000_completed_with_diagnostics_20261025": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
     "status": "completed100000_execution_verified_quality_not_accepted",
     "operation": "train",
@@ -12155,6 +12216,18 @@
     "required_virtual_query": "Virtual query has no actual input mesh, but retains1024 query-token slots; its final1024 tokens condition the first-level joint generator. Registers remain auxiliary and must not replace these tokens."
   },
   "architecture_contract": {
+    "id": "virtual_query_matched_5k_20261025_v1",
+    "document": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
+    "main_decoder": "identical original complete UniRig legacy256-bin decoder",
+    "variants": ["virtual_temporal_feedback_and_final_real_reads_virtual", "real_only_temporal_without_virtual_readout"],
+    "common_FFN_and_final_norm_preserved": true,
+    "auxiliary_loss": 0,
+    "consistency_loss": 0,
+    "all_real_frames_supervised": true,
+    "per_frame_condition_tokens": 1024,
+    "register_tokens": 96
+  },
+  "preserved_IDXYZ_architecture_contract_20261024": {
     "id": "real_frame_id_xyz_consistency_v1",
     "document": "model_training/docs/ID_XYZ_CONSISTENCY_20261024.md",
     "stage": "implementation_and_preflight",
@@ -12194,6 +12267,17 @@
     "formal_asset_exposures": 80016
   },
   "comparison_contract": {
+    "relationship": "same legacy codec and fixed5k recipe, virtual path on versus off",
+    "training_assets": 5000,
+    "target_exposures_per_variant": 100000,
+    "trial_matching": ["all initial state tensors", "asset order", "pose and surface seeds", "all-frame supervision", "OneCycle100k horizon", "effective batch48", "validation128x8"],
+    "auxiliary_and_consistency_weights": 0,
+    "historical_B_recipe_reproduction": false,
+    "small_data_fitting_allowed": false,
+    "precision": "bfloat16_autocast",
+    "required_contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md"
+  },
+  "preserved_IDXYZ_comparison_contract_20261024": {
     "relationship": "same_real_frame_ID_XYZ_model_lambda1_vs_lambda0_from_identical_official_initialization",
     "old_method_trained_checkpoint_initialization_allowed": false,
     "dataset": "unchanged_immutable_normal5000",

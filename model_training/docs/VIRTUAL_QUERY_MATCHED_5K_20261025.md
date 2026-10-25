@@ -98,5 +98,10 @@ completed-training claim even when both arms have reached100k.
 
 ## Current Stage
 
-Implementation and16CPU tests passed. Only the actual CPU audit is released;
-GPU capacity and training still require primary acceptance of their prerequisites.
+Implementation and16CPU tests passed. Actual CPU audit completed exit0 at15:40:31JST,
+without initializing CUDA. Both arms have exactly identical initial state,
+fingerprint `5637def54e52b339063ea4338c432755c876f08a5520f96e2b45d73570331a3c`.
+Active parameters are675917600(V+) and670666528(V-). All5000training identities,
+967validation identities and the128-asset evaluation selection were verified.
+Primary accepted this audit and released only both-arm GPU capacity. Formal
+training remains blocked pending its measured acceptance.

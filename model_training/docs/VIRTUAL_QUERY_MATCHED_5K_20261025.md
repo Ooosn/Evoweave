@@ -54,6 +54,17 @@ loads official scheduler settings and queries/binds the granted UUIDs. Actual
 job inventory showed logical0/1map to host3/4; unauthorized device opens remain
 denied. No device controls were changed and no SSHcompute fallback was used.
 
+Formaltrain_v2 is running under immutable producer
+`7af1e559f2cc75936f5e891ab16a07c0abdebe96`, supervisor1143687 and launcher1143790.
+Primary accepted the first3V-offupdates: exact input/target/seed/LR replay against
+the old V+first3, identical common initialization and finite active gradients.
+At20:47JST V-off had288exposures/6updates/3456frames; V+remained at the retained
+5000checkpoint and had not yet resumed. Rank0CPUdata wait was0.146/0.144milliseconds
+on updates2/3, whose total times were23.69/28.30seconds. These startup measurements
+are not a controlled whole-training speedup estimate. A read-only monitor is
+authorized to verify V+restoration and the final matched20k outputs; no quality
+comparison is yet available.
+
 ## Purpose And Authorization
 
 The human wants to distinguish a benefit of virtual queries from decoder/training

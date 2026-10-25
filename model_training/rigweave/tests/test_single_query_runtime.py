@@ -71,6 +71,16 @@ class SingleRuntimeTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             guard.validate_ssh_exception({'active_operation': operation}, config)
 
+    def test_sampling_report_labels_inputs_and_targets_separately(self):
+        config, previous = configuration(), configuration(False)
+        single = runtime.sampling_plan_report(config, runtime.make_stream(config, 0, 2))
+        all_frames = runtime.sampling_plan_report(previous, runtime.make_stream(previous, 0, 2))
+        self.assertEqual(single['plan_sha256'], all_frames['plan_sha256'])
+        self.assertEqual(single['input_frame_exposures'], 1294112)
+        self.assertEqual(single['supervised_frame_exposures'], 100000)
+        self.assertEqual(all_frames['supervised_frame_exposures'], 1294112)
+        self.assertEqual(all_frames, runtime.make_stream(previous, 0, 2).plan_report())
+
     def test_checkpoint_restores_distinct_input_and_supervision_counts(self):
         config = configuration()
         with tempfile.TemporaryDirectory() as temporary:

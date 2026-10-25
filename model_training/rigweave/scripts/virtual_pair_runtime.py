@@ -353,6 +353,16 @@ def audit_target_selection(config):
             'selection_histograms_diagnostic_only': histograms}
 
 
+def sampling_plan_report(config, stream):
+    report = stream.plan_report()
+    if config.get('family') == SINGLE_SCOPE:
+        # The shared sampler's legacy field counts every input frame.
+        report['input_frame_exposures'] = report['supervised_frame_exposures']
+        report['supervised_frame_exposures'] = config['training']['target_assets']
+        report['decoder_target_policy'] = SELECTOR
+    return report
+
+
 def audit(config, entries, output, source):
     verify_data_selection(config, entries)
     groups, lengths = load_capacity_selection(config, entries['train'])
@@ -365,7 +375,7 @@ def audit(config, entries, output, source):
         gc.collect()
     if len({report['wrapped_initial_sha256'] for report in initial.values()}) != 1:
         raise RuntimeError('pair does not start with identical common state')
-    plans = [make_stream(config, r, 2).plan_report() for r in range(2)]
+    plans = [sampling_plan_report(config, make_stream(config, r, 2)) for r in range(2)]
     if plans[0]['plan_sha256'] != plans[1]['plan_sha256']:
         raise RuntimeError('distributed sampling plans disagree')
     single = config.get('family') == SINGLE_SCOPE

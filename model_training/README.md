@@ -13,13 +13,18 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
-The matched virtual-module on/off comparison is complete at20,000exposures per
+The newly authorized task compares single-target and all-frame supervision with
+unchanged multi-frame input, no virtual path and the same20kasset budget. Only
+the single-target arm is new; CPU/GPU admission precedes formal training. See
+the [single-query protocol](docs/SINGLE_QUERY_SUPERVISION_20261026.md).
+
+The prior matched virtual-module on/off comparison is complete at20,000exposures per
 arm, with four full passes over the fixed5,000assets. Both arms retain real-frame
 temporal interaction: its benefit is established and is not being tested again.
 Original-GT edge F1 is0.69050on versus0.71108off; the paired95%interval for the
 difference includes zero. No incremental virtual-module benefit was observed.
-The100,000-exposure LRhorizon was preserved, not completed. No further compute
-is authorized. See the [result and protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md#completed-20k-result).
+The100,000-exposure LRhorizon was preserved, not completed. Its permission does
+not authorize an extension. See the [result and protocol](docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md#completed-20k-result).
 
 Keep `state/current.json` limited to current permissions, contracts and results.
 Historical runs and source-transition details are [archived](state/archive/current_before_compaction_20261026.json);

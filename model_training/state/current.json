@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "state_id": "real_frame_id_xyz_100000_completed_20261025",
+  "state_id": "frozen_ID100k_diagnostics_CPU_prepared_20261025",
   "updated_at": "2026-10-25T03:46:04Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "The explicit100000-exposure training target and final1536-view evaluation are complete, with exit0 and payload cleanup. Report results without claiming quality acceptance: same16asset/64view valid F1original80k0.5828245545, B65k0.6819730815, ID100k0.6390797884; full128asset/1024view valid ID100k0.7336758450 versus B65k0.7705062590. Consistency remains insufficient and lambda1 causal benefit is not isolated. Await the human's next experiment decision; no automatic extension, new training, loss change or GPU release. At12:46JST allocation130309880 and keeper remain alive, both GPUs idle. Preserve final checkpoint and all evidence; livecpu4_code remains frozene1ed.",
+  "next_required_result": "Human said to try the staged query-utility/decoder diagnostics and begin. First execute frozen ID100k role diagnostics without optimizer/backward: primary CPU audit acceptance,8-view smoke acceptance, then matched128-view small panel. B65 weights were previously deleted and remain absent from the checked original/known backup locations; do not substitute another model or claim a B checkpoint ablation. B virtual-module testing needs a recovered checkpoint or separately designed matched training. No automatic fresh training, loss change, checkpoint overwrite or GPU release. Preserve completed100k and immutablecpu4_codee1ed. Only the explicitly approved diagnostic stages may execute.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -926,7 +926,68 @@
     "complete": true,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
     "operation_entrypoints": {
-      "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py"
+      "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py",
+      "preflight": "model_training/rigweave/scripts/diagnose_id_xyz_checkpoint.py"
+    },
+    "query_decoder_diagnostics": {
+      "label": "frozen_query_decoder_diagnostics_20261025_v1",
+      "status": "CPU_audit_prepared_GPU_not_released",
+      "explicit_human_authorized": true,
+      "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
+      "complete": false,
+      "code_commit": "d258652ede5775bb76652c8edad19cf0064ed70c",
+      "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
+      "GPU_allowed": false,
+      "smoke_accepted": false,
+      "optimizer_allowed": false,
+      "backward_allowed": false,
+      "quality_approval": false,
+      "CPU_tests_passed": 17,
+      "CPU_test_receipt": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/cpu_tests_result.json",
+      "frozen_trained_source": "/work/wangyy/id_xyz_consistency_20261024/cpu4_code",
+      "frozen_trained_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
+      "checkpoint_sha256": "ada70ea7b97b4bdbcbd699b1698696faa0eef0298df09e07637e687eea3a29c8",
+      "model_sha256": "b546677a66e26d321bea1432c4307f7d612cdade2cd5c8d683af08c96835dd23",
+      "B_checkpoint_status": "previously_deleted_absent_from_checked_original_and_known_backups_no_substitution",
+      "inventory_log": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/preparation/inventory_runner.log",
+      "ssh_exception": {
+        "scope": "frozen_query_decoder_diagnostics_20261025_v1",
+        "explicit_human_authorized": true,
+        "authorization": "Reuse the retained2H100 allocation under the human's established bounded SSH permission and latest explicit instruction to begin inference diagnostics. Actual grant remains1slot; total execution CPU budget4 is separately enforced.",
+        "kernel_scheduler_membership": false,
+        "allocation": 130309880,
+        "host": "pcg01i",
+        "physical_gpus": [5, 6],
+        "cpu_slots": 1,
+        "execution_cpu_budget": 4,
+        "cpu_affinity": [58, 63, 64, 65],
+        "rss_limit_bytes": 68719476736,
+        "gpu_memory_fraction_limit": 0.85,
+        "keeper_pid": 1090013
+      },
+      "runs": [
+        {
+          "mode": "audit",
+          "approved": true,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
+          "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/audit_v1"
+        },
+        {
+          "mode": "smoke",
+          "approved": false,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
+          "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v1"
+        },
+        {
+          "mode": "diagnose",
+          "approved": false,
+          "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
+          "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/diagnose_v1"
+        }
+      ]
     },
     "baseline_matched_evaluation": {
       "label": "original_single_query_matched_eval_20261025_v1",

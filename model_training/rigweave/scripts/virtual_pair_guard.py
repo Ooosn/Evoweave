@@ -108,6 +108,14 @@ def scheduler_runtime(config):
     return runtime
 
 
+def gpu_selection(config):
+    runtime = config['runtime']
+    if runtime.get('execution_mode') == 'scheduler_job':
+        scheduler_runtime(config)
+        return ','.join(runtime['gpu_uuids'])
+    return ','.join(map(str, runtime['physical_gpus']))
+
+
 def verify_allocation(config, grant):
     if config['runtime'].get('execution_mode') == 'scheduler_job':
         runtime = scheduler_runtime(config)
@@ -200,7 +208,7 @@ def verify_launch(args, config):
                      if scheduler else 'pcg01')
     affinity = os.sched_getaffinity(0)
     binding = execution_cpu_binding(config, exception, affinity)
-    devices = ','.join(map(str, runtime['physical_gpus']))
+    devices = gpu_selection(config)
     if (socket.gethostname().split('.')[0] != expected_host or affinity != binding
             or os.environ.get('CUDA_VISIBLE_DEVICES') != ('' if cpu else devices) or runtime['world_size'] != 2):
         raise RuntimeError('host/CPU/GPU binding differs')

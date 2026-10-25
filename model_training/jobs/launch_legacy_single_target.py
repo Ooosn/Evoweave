@@ -134,18 +134,27 @@ def verify_allocation(checks, config, grant):
 
 def read_gpu_memory(config):
     runtime = config['runtime']
-    devices = ','.join(map(str, runtime['physical_gpus']))
+    uuid_binding = runtime.get('execution_mode') == 'scheduler_job'
+    devices = ','.join(runtime['gpu_uuids']) if uuid_binding else ','.join(map(str, runtime['physical_gpus']))
     limit = runtime['gpu_memory_fraction_limit']
     if type(limit) not in (int, float) or not 0 < limit <= 1:
         raise RuntimeError('invalid GPU memory fraction limit')
+    identity = 'uuid' if uuid_binding else 'index'
     text = subprocess.check_output(['nvidia-smi', '-i', devices,
-        '--query-gpu=index,memory.used,memory.total', '--format=csv,noheader,nounits'],
+        f'--query-gpu={identity},memory.used,memory.total', '--format=csv,noheader,nounits'],
         text=True, timeout=30)
-    memory = [[int(v.strip()) for v in line.split(',')] for line in text.strip().splitlines()]
+    rows = [[v.strip() for v in line.split(',')] for line in text.strip().splitlines()]
+    if uuid_binding:
+        mapping = dict(zip(runtime['gpu_uuids'], runtime['physical_gpus']))
+        if len(rows) != len(mapping) or {row[0] for row in rows} != set(mapping):
+            raise RuntimeError('the authorized GPU UUIDs changed')
+        memory = [[mapping[row[0]], int(row[1]), int(row[2])] for row in rows]
+    else:
+        memory = [[int(v) for v in row] for row in rows]
     if (sorted(row[0] for row in memory) != sorted(runtime['physical_gpus'])
             or any(total <= 0 or used < 0 or used > total * limit for _, used, total in memory)):
         raise RuntimeError('the authorized GPUs exceeded their memory limit or changed identity')
-    return memory
+    return sorted(memory, key=lambda row: row[0])
 
 
 def main(*, trainer_module_name='train_legacy_single_target',
@@ -186,7 +195,8 @@ def main(*, trainer_module_name='train_legacy_single_target',
     binding = select_cpu_binding(checks, config, exception)
     os.sched_setaffinity(0, binding)
     os.environ['EVOWEAVE_RESOURCE_SUPERVISOR_PID'] = str(os.getpid())
-    os.environ['CUDA_VISIBLE_DEVICES'] = '' if args.mode in cpu_modes else ','.join(map(str, runtime['physical_gpus']))
+    gpu_selection = getattr(checks, 'gpu_selection', lambda config: ','.join(map(str, config['runtime']['physical_gpus'])))
+    os.environ['CUDA_VISIBLE_DEVICES'] = '' if args.mode in cpu_modes else gpu_selection(config)
     os.environ.update({name: '1' for name in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS',
         'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'PYTHONDONTWRITEBYTECODE',
         'HF_HUB_OFFLINE', 'TRANSFORMERS_OFFLINE', 'RIGWEAVE_DISABLE_OPEN3D',
@@ -210,6 +220,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
         'execution_mode': runtime['execution_mode'], 'actual_cgroup': actual_cgroup,
         'ssh_exception': exception,
         'physical_gpus': runtime['physical_gpus'], 'cpu_affinity': sorted(binding),
+        'cuda_visible_devices': os.environ['CUDA_VISIBLE_DEVICES'],
         'scheduler_cpu_slots': runtime['cpu_slots'], 'execution_cpu_budget': len(binding),
         'rss_limit_bytes': runtime['rss_limit_bytes'], 'peak_tree_rss_bytes': 0,
         'aggregate_cpu_seconds': 0., 'supervisor_pid': os.getpid()}

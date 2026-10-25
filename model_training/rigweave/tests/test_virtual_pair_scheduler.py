@@ -66,7 +66,8 @@ class SchedulerGuardTests(unittest.TestCase):
         runtime = config['runtime']
         env = dict(JOB_ID=str(runtime['allocation']), NSLOTS=str(runtime['cpu_slots']),
             EVOWEAVE_RESOURCE_SUPERVISOR_PID='100',
-            CUDA_VISIBLE_DEVICES=','.join(map(str, runtime['physical_gpus'])))
+            CUDA_VISIBLE_DEVICES=','.join(runtime['gpu_uuids']) if runtime['execution_mode'] == 'scheduler_job'
+                else ','.join(map(str, runtime['physical_gpus'])))
         if runtime['execution_mode'] == 'explicit_ssh_exception':
             env[guard.EXCEPTION_ENV] = '1'
         env.update(environment or {})
@@ -85,7 +86,7 @@ class SchedulerGuardTests(unittest.TestCase):
                 return grant_text(config) if grant is None else grant
             if command[0] == 'nvidia-smi':
                 if '--query-gpu=uuid' in command:
-                    self.assertEqual(command[1:3], ['-i', ','.join(map(str, runtime['physical_gpus']))])
+                    self.assertEqual(command[1:3], ['-i', guard.gpu_selection(config)])
                     return '\n'.join(runtime['gpu_uuids'] if uuids is None else uuids)
                 return ''
             if 'status' in command:
@@ -279,10 +280,10 @@ class SupervisorTests(unittest.TestCase):
     def test_memory_monitor_uses_configured_devices_and_fraction(self):
         config, _, _ = fixture()
         config['runtime']['gpu_memory_fraction_limit'] = .6
-        with patch.object(launcher.subprocess, 'check_output', return_value='0, 600, 1000\n2, 599, 1000\n') as call:
+        with patch.object(launcher.subprocess, 'check_output', return_value='GPU-first, 600, 1000\nGPU-second, 599, 1000\n') as call:
             self.assertEqual(launcher.read_gpu_memory(config), [[0, 600, 1000], [2, 599, 1000]])
-        self.assertEqual(call.call_args.args[0][1:3], ['-i', '0,2'])
-        for text in ('0, 601, 1000\n2, 599, 1000\n', '5, 0, 1000\n6, 0, 1000\n'):
+        self.assertEqual(call.call_args.args[0][1:3], ['-i', 'GPU-first,GPU-second'])
+        for text in ('GPU-first, 601, 1000\nGPU-second, 599, 1000\n', 'GPU-other, 0, 1000\nGPU-second, 0, 1000\n'):
             with patch.object(launcher.subprocess, 'check_output', return_value=text), self.assertRaises(RuntimeError):
                 launcher.read_gpu_memory(config)
         legacy, _, _ = fixture(legacy=True)
@@ -291,6 +292,15 @@ class SupervisorTests(unittest.TestCase):
         with patch.object(launcher.subprocess, 'check_output', return_value='5, 851, 1000\n6, 850, 1000\n'):
             with self.assertRaises(RuntimeError):
                 launcher.read_gpu_memory(legacy)
+
+    def test_reindexed_job_uses_UUIDs_and_reports_physical_identity(self):
+        config, _, _ = fixture()
+        config['runtime']['physical_gpus'] = [3, 4]
+        self.assertEqual(guard.gpu_selection(config), 'GPU-first,GPU-second')
+        with patch.object(launcher.subprocess, 'check_output',
+                return_value='GPU-second, 200, 1000\nGPU-first, 100, 1000\n') as call:
+            self.assertEqual(launcher.read_gpu_memory(config), [[3, 100, 1000], [4, 200, 1000]])
+            self.assertIn('--query-gpu=uuid,memory.used,memory.total', call.call_args.args[0])
 
     def test_missing_scheduler_membership_never_enters_ssh_fallback(self):
         config, _, args = fixture()
@@ -315,16 +325,17 @@ class SupervisorTests(unittest.TestCase):
         runtime = config['runtime']
         checks = SimpleNamespace(require_job_membership=guard.require_job_membership,
             validate_ssh_exception=Mock(), verify_exception_keeper=Mock(), verify_launch=Mock(return_value='new-source'),
-            execution_cpu_binding=guard.execution_cpu_binding, verify_allocation=Mock(wraps=guard.verify_allocation))
+            execution_cpu_binding=guard.execution_cpu_binding, gpu_selection=guard.gpu_selection,
+            verify_allocation=Mock(wraps=guard.verify_allocation))
         child = Mock(pid=900, returncode=0)
         child.poll.side_effect = [None, 0, 0, 0]
 
         def output(command, **kwargs):
             if command[0] == 'qstat':
                 return grant_text(config)
-            if '--query-gpu=index,memory.used,memory.total' in command:
-                self.assertEqual(command[1:3], ['-i', '0,2'])
-                return '0, 0, 1000\n2, 0, 1000\n'
+            if '--query-gpu=uuid,memory.used,memory.total' in command:
+                self.assertEqual(command[1:3], ['-i', 'GPU-first,GPU-second'])
+                return 'GPU-first, 0, 1000\nGPU-second, 0, 1000\n'
             return ''
 
         with ExitStack() as stack:
@@ -365,6 +376,7 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(receipt['scheduler_cpu_slots'], 16)
             self.assertEqual(receipt['execution_cpu_budget'], 16)
             self.assertEqual(receipt['physical_gpus'], [0, 2])
+            self.assertEqual(receipt['cuda_visible_devices'], 'GPU-first,GPU-second')
             self.assertTrue(receipt['passed'])
             self.assertTrue(receipt['payload_cleanup_complete'])
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "matched_virtual_query_fixed5k_first_pass_saved_handoff_verified_20261025",
-  "updated_at": "2026-10-25T08:15:00Z",
+  "state_id": "matched_virtual_query_fixed5k_20k_continuation_allocation_authorized_20261025",
+  "updated_at": "2026-10-25T10:31:21Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,17 +137,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "submit"
   ],
   "blocked_operations": [
     "matched_eval",
-    "submit",
     "preflight",
     "train"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_verified_matched_pair_handoff_no_release_authorized",
+    "status": "expired_naturally_qacct_confirmed_20261025_173529JST",
     "last_observed_utc": "2026-10-25T08:11:15Z",
     "diagnostic_supervisor_absent": true,
     "last_observed_gpu_used_mib": [0, 0],
@@ -381,7 +381,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Current allocation stage ended cleanly at17:10:45JST after V+completed one full5000-asset pass:105updates,66928supervisedframes; V-off remains0. Primary verified actual trace coverage of all5000distinct manifest rows once. The paired100000-per-arm objective is NOTcomplete and no quality comparison exists. Preserve the8.22GB full model/Adam/RNG/sampler checkpoint at both recorded NVMe/durable paths with SHA2edb0f6f487c090caebdd8716a9505b103eca8ab8dd0398882b26bb0f0cb6727. Await the pending human response about requesting the same2H100 after17:35expiry; no new grant/resume is currently released. After authorized allocation and fresh resource checks, continue the SAMEpaired recipe, initializing V-off from the same official state and restoring V+exactly, using explicit durable resume_root when needed. Do not restart V+, shrink training membership, change losses or call unequal/partial runs an architecture result. Keep current allocation until natural expiry, no release. Historical retainedB70loss cause remains unknown.",
+  "next_required_result": "Human now authorizes a fresh2H100 allocation and a matched20k-exposure milestone per arm on the SAMEfull5000assets. Latest CPUdefault is8slotsperH100,16total; inspect scheduler availability before requesting. Allocate only the reviewed16-slot scheduler-owned keeper; formal compute remains blocked until exact grant, parallel-loader equivalence, source-transition compatibility and new entrypoints are accepted. Preserve V+5000 fullstate and all prior artifacts. Keep the100k OneCycle horizon unchanged, initialize V-off from accepted official state, restore V+exactly, stop both at20k and evaluate the same128x8validation panel. Do not restart, shrink data, silently continue to100k, or equate CPUallocation with actual loading parallelism.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -925,7 +925,31 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "train_v1_clean_handoff_Vplus5000_Vminus0_full_objective_incomplete",
+    "status": "new_16CPU_2H100_allocation_authorized_compute_pending_review",
+    "continuation_request": {
+      "explicit_human_authorized": true,
+      "authorization": "Human: can apply now and proceed with experiments, recommends updating to20k; subsequent correction requires8CPUslotsperH100,16total for2H100 and proactively implemented useful CPUdata parallelism.",
+      "stop_assets_per_variant": 20000,
+      "unchanged_training_assets": 5000,
+      "unchanged_schedule_horizon": 100000,
+      "evaluation_assets": [20000],
+      "allocation_request": {
+        "approved": true,
+        "queue": "gpuh.q@pcg01i",
+        "h100": 2,
+        "cpu_slots": 16,
+        "pe": "def_slot",
+        "mem_req_per_slot": "4G",
+        "total_reserved_host_memory_bytes": 68719476736,
+        "h_rt_seconds": 86400,
+        "available_cpu_slots_observed": 71,
+        "available_h100_observed": 4,
+        "execution_mode": "scheduler_job",
+        "keeper_entrypoint": "model_training/jobs/hold_virtual_pair_allocation.py",
+        "keeper_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k",
+        "command": "qrsh -clear -jsv /geadmin/N1GE/util/resources/jsv/jsv_docker.pl -q gpuh.q@pcg01i -pe def_slot 16 -l mem_req=4G -l h100=2 -l h_rt=24:00:00 -now n -N vpair20k /home/wangyy/miniconda3/envs/mygs/bin/python -B /work/wangyy/virtual_query_matched_5k_20261025/code/model_training/jobs/hold_virtual_pair_allocation.py --directory /work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k"
+      }
+    },
     "producer_source": "8feea86c24be80543befca1c374c1b57ae6c93c4",
     "supervisor_pid": 922127,
     "payload_launcher_pid": 922156,
@@ -990,7 +1014,7 @@
       "local_output": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/monitor_train_v1",
       "alert_deadline_utc": "2026-10-25T08:25:00Z",
       "training_handoff_deadline_utc": "2026-10-25T08:10:00Z",
-      "new_allocation_authorization_pending": true
+      "new_allocation_authorization_pending": false
     },
     "operation": "train",
     "mode": "matched_virtual_pair",
@@ -998,7 +1022,7 @@
     "explicit_human_authorized": true,
     "authorization": "Human confirmed the goal is virtual-query contribution versus decoder/training confounds, asked why a retainedB checkpoint disappeared, and explicitly authorized retraining with design discretion on the fixed5000assets, rejecting small-data fitting experiments. Preserve allocated GPUs and prior artifacts.",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
-    "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py"},
+    "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py", "submit": "model_training/jobs/hold_virtual_pair_allocation.py"},
     "code_commit": "ab4847d44da6412562b7d9823a7d0b6e2a470bba",
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
     "gpu_work_allowed": false,

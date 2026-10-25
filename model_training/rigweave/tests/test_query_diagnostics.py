@@ -3,13 +3,14 @@ from pathlib import Path
 from types import SimpleNamespace
 import sys
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import torch
 
 BASE = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(BASE / "src"), str(BASE / "scripts")]
-from diagnose_id_xyz_checkpoint import gt_structure_free_xyz, structural_divergence, summarize, verify_geometry
+from diagnose_id_xyz_checkpoint import gt_structure_free_xyz, replay_with_native_evaluator, structural_divergence, summarize, verify_geometry
 from query_diagnostics_guard import CPUS, FAMILY, SCOPE, execution_cpu_binding, validate_ssh_exception
 from rigweave.dynamic_rig.id_xyz_diagnostics import classify_gt_roles, first_divergence_summary, teacher_forced_diagnostics
 from rigweave.dynamic_rig.id_xyz_tokens import IdXYZTokens
@@ -43,6 +44,34 @@ class Decoder:
 
 
 class OracleTests(unittest.TestCase):
+    def test_native_replay_captures_exact_condition_without_replacing_output(self):
+        class Encoder(torch.nn.Module):
+            def forward(self, x):
+                return x[:, 0, 2:], x
+        encoder = Encoder()
+        model = SimpleNamespace(motion_encoder=encoder,
+            config=SimpleNamespace(register_tokens=1, query_tokens=4, dim=4))
+        values = torch.arange(48.).reshape(1, 2, 6, 4)
+        def evaluate(model, *args, **kwargs):
+            result = model.motion_encoder(values)
+            self.assertIs(result[1], values)
+            return [{"frame_index": slot} for slot in (0, 2, 4, 6)]
+        with patch.dict(sys.modules, {"id_xyz_evaluation": SimpleNamespace(evaluate_item=evaluate)}):
+            condition, rows = replay_with_native_evaluator(model, None, codec(), None, None, None, "valid")
+        self.assertTrue(torch.equal(condition, values[:, :, 2:]))
+        self.assertEqual(set(rows), {0, 2, 4, 6})
+        self.assertFalse(encoder._forward_hooks)
+
+    def test_native_replay_removes_hook_after_failure(self):
+        encoder = torch.nn.Identity()
+        model = SimpleNamespace(motion_encoder=encoder, config=SimpleNamespace())
+        def fail(*args, **kwargs):
+            raise ValueError("native failure")
+        with patch.dict(sys.modules, {"id_xyz_evaluation": SimpleNamespace(evaluate_item=fail)}):
+            with self.assertRaisesRegex(ValueError, "native failure"):
+                replay_with_native_evaluator(model, None, codec(), None, None, None, "valid")
+        self.assertFalse(encoder._forward_hooks)
+
     def test_oracle_forces_only_structure_and_predicts_coordinates(self):
         ids, native = target(), codec()
         roles = classify_gt_roles(native, ids)

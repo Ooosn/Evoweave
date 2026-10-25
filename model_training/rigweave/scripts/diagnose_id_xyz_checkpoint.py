@@ -97,7 +97,7 @@ def restore(config, trained, runtime, device):
         "checkpoint_sha256": checkpoint["sha256"], "checkpoint_stat": [stat.st_size, stat.st_mtime_ns],
         "trained_source_hashes_equal": True, "optimizer_created": False, "backward_performed": False}
     del actual, saved
-    model.eval().requires_grad_(False)
+    model.eval()
     return model, tokenizer, codec, result
 
 
@@ -168,6 +168,29 @@ def gt_structure_free_xyz(model, codec, condition, target, roles):
         output = model.xyz_decoder(input_ids=ids[:, -1:], attention_mask=mask,
             past_key_values=output.past_key_values, use_cache=True, return_dict=True)
     raise RuntimeError("GT oracle stream did not terminate")
+
+
+def replay_with_native_evaluator(model, tokenizer, codec, surface, target, geometry, group):
+    from id_xyz_evaluation import evaluate_item
+    captured = []
+
+    def capture_condition(module, inputs, output):
+        if not isinstance(output, tuple) or len(output) != 2:
+            raise RuntimeError("native encoder did not return its all-frame representation")
+        condition = output[1][:, :, 1 + model.config.register_tokens:]
+        if condition.shape[2:] != (model.config.query_tokens, model.config.dim):
+            raise RuntimeError("captured native condition has unexpected dimensions")
+        captured.append(condition)
+
+    handle = model.motion_encoder.register_forward_hook(capture_condition)
+    try:
+        rows = evaluate_item(model, tokenizer, codec, surface, target, geometry,
+            frame_indices=(0, 2, 4, 6), group=group, max_new_tokens=2048)
+    finally:
+        handle.remove()
+    if len(captured) != 1:
+        raise RuntimeError("native evaluator must encode its input exactly once")
+    return captured[0], {row["frame_index"]: row for row in rows}
 
 
 def summarize(rows):
@@ -246,7 +269,7 @@ def run(args, config, source):
                 work.append((group, dataset, index))
     args.output.mkdir(parents=True, exist_ok=True)
     rows, audited = [], []
-    with torch.inference_mode():
+    with torch.no_grad():
         for group, dataset, index in work:
             check_deadline(config)
             batch = dataset[index]
@@ -260,8 +283,9 @@ def run(args, config, source):
                     diagnostics.classify_gt_roles(codec, ids)
                 continue
             surface, gpu_geometry = prepare_virtual_surface([batch], device, **trained["surface_sampling"])
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                condition = model.encode(surface)
+            gpu_targets = runtime.build_targets(gpu_geometry, codec, device)
+            condition, native_rows = replay_with_native_evaluator(model, tokenizer, codec,
+                surface, gpu_targets, gpu_geometry, group)
             del surface, gpu_geometry
             for slot, ids in frames.items():
                 ref = reference[group, batch["asset_id"], slot]
@@ -270,7 +294,8 @@ def run(args, config, source):
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     logits = model.logits(condition[:, slot], gt[:, :-1], attention[:, :-1])[0].float().cpu()
                     other = model.logits(condition[:, (slot + 2) % 8], gt[:, :-1], attention[:, :-1])[0].float().cpu()
-                    generated = model.generate(condition[:, slot], codec, max_new_tokens=2048)
+                    generated = {"tokens": native_rows[slot]["predicted_tokens"],
+                        "status": native_rows[slot]["status"], "success": native_rows[slot]["success"]}
                     oracle_ids = gt_structure_free_xyz(model, codec, condition[:, slot], ids,
                         diagnostics.classify_gt_roles(codec, ids))
                 matches = generated["tokens"] == ref["predicted_tokens"]
@@ -300,7 +325,7 @@ def run(args, config, source):
                 del logits, other, gt, attention
             write(args.output / f"progress_rank_{rank}.json", {"assets_complete": len(audited), "views": len(rows)})
             print(json.dumps({"rank": rank, "group": group, "asset_complete": batch["asset_id"]}), flush=True)
-            del condition, batch, targets, geometry
+            del condition, batch, targets, geometry, gpu_targets, native_rows
     if parameter_fingerprint(model) != restored["model_sha256"]:
         raise RuntimeError("inference changed model weights")
     stat = Path(config["checkpoint"]["path"]).stat()

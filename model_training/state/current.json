@@ -954,7 +954,7 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "new_16CPU_2H100_granted_parallel_loader_CPU_audit_pending",
+    "status": "scheduler_NVML_access_diagnostic_pending_no_new_parameter_updates",
     "continuation_request": {
       "explicit_human_authorized": true,
       "authorization": "Human: can apply now and proceed with experiments, recommends updating to20k; subsequent correction requires8CPUslotsperH100,16total for2H100 and proactively implemented useful CPUdata parallelism.",
@@ -1052,7 +1052,7 @@
     "authorization": "Human confirmed the goal is virtual-query contribution versus decoder/training confounds, asked why a retainedB checkpoint disappeared, and explicitly authorized retraining with design discretion on the fixed5000assets, rejecting small-data fitting experiments. Preserve allocated GPUs and prior artifacts.",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
     "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py", "submit": "model_training/jobs/hold_virtual_pair_allocation.py"},
-    "code_commit": "351b1209888242c55dc29bf95098923183594931",
+    "code_commit": "15388b82e7ba73a51c0e087089e10245c9ffe68a",
     "source_transition": {
       "accepted": false,
       "allowed_uses": [
@@ -1108,7 +1108,7 @@
       },
       "scientific_contract_sha256": "6a566d0a6e2afe2097e8e90356add13d1779d45c6d7fc17b3537dea00894ade2",
       "review": "Only matched-pair orchestration changed among the20previously pinned files. New ordered CPU loader and two previously unpinned but unchanged data dependencies are now pinned. Forward/loss/optimizer/GT/sampling arithmetic remains unchanged. Admission pending actual CPU parallel-loader exact-field/RNG audit; previous measured GPU capacity may be reused only under this exact transition.",
-      "required_CPU_audit": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v5/result.json",
+      "required_CPU_audit": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6/result.json",
       "unit_test_evidence": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/tests_v2.log"
     },
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
@@ -1117,7 +1117,7 @@
     "CPU_audit_accepted": false,
     "CPU_audit": {
       "accepted": false,
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v5/result.json",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6/result.json",
       "required": "same full initialization and scientific contract; CPU-only parallel loader exact-field/RNG validation"
     },
     "CPU_audit_v2": {
@@ -1158,6 +1158,14 @@
       "quality_claimed": false
     },
     "CPU_tests_passed": 64,
+    "audit_v5_failure": {
+      "before_torch_or_payload_launch": true,
+      "parameter_updates": 0,
+      "NVML_returncode": 6,
+      "NVML_output": "No devices were found",
+      "cause": "not yet established; same exact NVML query succeeds from read-only SSH, no protected controls were changed",
+      "launch_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_20261025_20k/audit_v5_launch.json"
+    },
     "audit_v4_failure": {
       "exit_code": 1,
       "before_torch_or_payload_launch": true,
@@ -1214,7 +1222,11 @@
       "keeper_pid": 1090013
     },
     "runs": [
-      {"mode": "audit", "approved": true, "status": "approved_with_GPU_query_diagnostics_and_full_CPU_queue_stress",
+      {"mode": "audit", "approved": true, "status": "approved_actual_job_NVML_access_diagnostic_then_CPU_audit_only_if_admitted",
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+       "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6"},
+      {"mode": "audit", "approved": false, "status": "failed_before_torch_NVML_no_devices_found",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
        "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v5"},

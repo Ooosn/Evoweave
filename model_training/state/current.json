@@ -954,7 +954,7 @@
   },
   "active_operation": {
     "label": "virtual_query_matched_5k_20261025_v1",
-    "status": "scheduler_NVML_access_diagnostic_pending_no_new_parameter_updates",
+    "status": "scheduler_GPU_reindexing_confirmed_UUID_binding_fixed_CPU_audit7_pending",
     "continuation_request": {
       "explicit_human_authorized": true,
       "authorization": "Human: can apply now and proceed with experiments, recommends updating to20k; subsequent correction requires8CPUslotsperH100,16total for2H100 and proactively implemented useful CPUdata parallelism.",
@@ -1052,7 +1052,7 @@
     "authorization": "Human confirmed the goal is virtual-query contribution versus decoder/training confounds, asked why a retainedB checkpoint disappeared, and explicitly authorized retraining with design discretion on the fixed5000assets, rejecting small-data fitting experiments. Preserve allocated GPUs and prior artifacts.",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
     "operation_entrypoints": {"preflight": "model_training/rigweave/scripts/train_virtual_pair.py", "train": "model_training/rigweave/scripts/train_virtual_pair.py", "submit": "model_training/jobs/hold_virtual_pair_allocation.py"},
-    "code_commit": "15388b82e7ba73a51c0e087089e10245c9ffe68a",
+    "code_commit": "d78cbac731656b9e0ffde81c3f4d3cac30bac5b8",
     "source_transition": {
       "accepted": false,
       "allowed_uses": [
@@ -1108,7 +1108,7 @@
       },
       "scientific_contract_sha256": "6a566d0a6e2afe2097e8e90356add13d1779d45c6d7fc17b3537dea00894ade2",
       "review": "Only matched-pair orchestration changed among the20previously pinned files. New ordered CPU loader and two previously unpinned but unchanged data dependencies are now pinned. Forward/loss/optimizer/GT/sampling arithmetic remains unchanged. Admission pending actual CPU parallel-loader exact-field/RNG audit; previous measured GPU capacity may be reused only under this exact transition.",
-      "required_CPU_audit": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6/result.json",
+      "required_CPU_audit": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
       "unit_test_evidence": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/tests_v2.log"
     },
     "contract": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
@@ -1117,7 +1117,7 @@
     "CPU_audit_accepted": false,
     "CPU_audit": {
       "accepted": false,
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6/result.json",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
       "required": "same full initialization and scientific contract; CPU-only parallel loader exact-field/RNG validation"
     },
     "CPU_audit_v2": {
@@ -1157,7 +1157,19 @@
       "profile_weights_discarded": true,
       "quality_claimed": false
     },
-    "CPU_tests_passed": 64,
+    "CPU_tests_passed": 65,
+    "GPU_namespace_resolution": {
+      "established_by_actual_scheduler_child": true,
+      "host_physical_devices": [3, 4],
+      "job_local_NVML_indices": [0, 1],
+      "UUIDs_unchanged": true,
+      "authorized_device_opens_succeeded": true,
+      "unallocated_device_opens_denied_EPERM": true,
+      "protected_controls_modified": false,
+      "fix": "Use granted UUIDs for CUDA visibility and NVML queries; retain physical device IDs for qstat/resource-report identity",
+      "diagnostic": "D:/evoweave/server_ops/outputs/virtual_query_matched_5k_20261025/continuation20k/admission_diagnostic_v6.json",
+      "all_failed_admission_attempts_before_torch_or_parameter_updates": true
+    },
     "audit_v5_failure": {
       "before_torch_or_payload_launch": true,
       "parameter_updates": 0,
@@ -1222,7 +1234,11 @@
       "keeper_pid": 1090013
     },
     "runs": [
-      {"mode": "audit", "approved": true, "status": "approved_actual_job_NVML_access_diagnostic_then_CPU_audit_only_if_admitted",
+      {"mode": "audit", "approved": true, "status": "approved_UUID_bound_CPU_audit_with_parallel_queue_stress",
+       "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+       "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
+       "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7"},
+      {"mode": "audit", "approved": false, "status": "failed_before_torch_diagnosed_actual_GPU_namespace_remapping",
        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
        "config_sha256": "9acc33a41270b50171b66b8ed53f84056a851162c3a07605dbb916e6ea5af3c3",
        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v6"},

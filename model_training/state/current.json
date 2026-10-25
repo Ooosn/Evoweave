@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_full_paired_diagnostics_authorized_20261025",
-  "updated_at": "2026-10-25T04:42:15Z",
+  "state_id": "frozen_ID100k_diagnostics_completed_B_virtual_ablation_unresolved_20261025",
+  "updated_at": "2026-10-25T05:31:00Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,17 +137,21 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
     "train",
     "matched_eval",
-    "submit"
+    "submit",
+    "preflight"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_idle_after_completed_IDXYZ100000_no_release_authorized",
+    "status": "retained_idle_after_completed_frozen_IDXYZ_diagnostics_no_release_authorized",
+    "last_observed_utc": "2026-10-25T05:28:02Z",
+    "diagnostic_supervisor_absent": true,
+    "last_observed_gpu_used_mib": [0, 0],
+    "keeper_pid": 1090013,
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -376,7 +380,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Human said to try the staged query-utility/decoder diagnostics and begin. First execute frozen ID100k role diagnostics without optimizer/backward: primary CPU audit acceptance,8-view smoke acceptance, then matched128-view small panel. B65 weights were previously deleted and remain absent from the checked original/known backup locations; do not substitute another model or claim a B checkpoint ablation. B virtual-module testing needs a recovered checkpoint or separately designed matched training. No automatic fresh training, loss change, checkpoint overwrite or GPU release. Preserve completed100k and immutablecpu4_codee1ed. Only the explicitly approved diagnostic stages may execute.",
+  "next_required_result": "Frozen ID100k role/pose/structure diagnostics are complete:128unique views,384paired rollouts, exact weights and same-condition decoder replay. GT-prefix parent/EOS prediction is near-perfect on sampled training assets but weak on unseen non52 assets; pose-specific condition is used; forcingGTstructure alone lowers validationF1. These do not identify virtual-query benefit or establish that more steps alone fix the decoder. B65 weights remain absent, so B module ablation is unresolved. Propose a separately approved matched legacy-codec virtual+/virtual- training pair with controlled init/data/budget/losses, then ID-codec controls if needed; do not auto-launch. Preserve completed100k, immutablecpu4_codee1ed, all evidence and the retained allocation. Only inspect/report are currently allowed.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -926,18 +930,75 @@
     "complete": true,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
     "operation_entrypoints": {
-      "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py",
-      "preflight": "model_training/rigweave/scripts/diagnose_id_xyz_checkpoint.py"
+      "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py"
     },
     "query_decoder_diagnostics": {
       "label": "frozen_query_decoder_diagnostics_20261025_v1",
-      "status": "paired_three_repeat_smoke_accepted_full128_authorized",
+      "status": "completed_frozen_ID_diagnostics_primary_verified_B_ablation_unresolved",
       "explicit_human_authorized": true,
       "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
-      "complete": false,
+      "complete": true,
+      "completion_scope": "Frozen ID100k diagnostics only; virtual-query causal comparison remains unresolved because B weights are unavailable.",
+      "B_virtual_ablation_complete": false,
       "code_commit": "bf89f5d5f74ac869b8b3e9929e6c296a71df2879",
       "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
-      "GPU_allowed": true,
+      "GPU_allowed": false,
+      "result": {
+        "execution_accepted": true,
+        "quality_approval": false,
+        "finished_utc": "2026-10-25T05:24:40.651927+00:00",
+        "producer_source": "f34cbf4fd06b1bc2cdf17860e98896faaa924904",
+        "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/diagnose_v2",
+        "summary_sha256": "9ee3e2a588eb4131dd52d0b36474ca01e3d30832bc44c1f576dbc86edefb1168",
+        "resource_sha256": "3de6a696ca91ae22a46024b5532c892e3737fee37deed443ce7229cbb2d341ab",
+        "rank0_sha256": "192f4b1fb68130a1d7ef11dc2e54b16b1572c6a9079ec2041e9c19602d0ab554",
+        "rank1_sha256": "5ba535cdc7bc22d9d5cd359591169f72a63c77cbadc8db12a46ff1ee0dc0ece4",
+        "analysis_path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/analysis_diagnose_v2_final.json",
+        "analysis_sha256": "26a40b76e5da788768b8aeaa1e523faa5d56901963cd1011b999d5e521215a36",
+        "analysis_unit_tests_passed": 15,
+        "analysis_runner_exit_code": 0,
+        "primary_nine_subgroup_F1_means_match_producer_atol": 1e-12,
+        "exit_code": 0,
+        "distinct_assets": 24,
+        "group_assets": 32,
+        "unique_views": 128,
+        "repeated_views": 384,
+        "native_repeats": 3,
+        "all384_fixed_condition_decoder_replays_exact": true,
+        "all896_saved_tensors_equal_both_ranks": true,
+        "model_and_checkpoint_unchanged_both_ranks": true,
+        "GT_frames_parents_and_target_tokens_match": true,
+        "optimizer_created": false,
+        "backward_performed": false,
+        "peak_tree_rss_bytes": 8568463360,
+        "payload_cleanup_complete": true,
+        "generation_failures": 0,
+        "capacity_only_EOS": 1,
+        "exact_structure_rollouts": 181,
+        "all181_exact_structure_oracle_tokens_and_F1_equal_free": true,
+        "valid_native_F1_by_repeat": [0.6350077831014007, 0.6325747799539884, 0.6374023654053763],
+        "valid_native_F1": 0.6349949761535885,
+        "valid_historical_reference_F1_unchanged": 0.6390797884284196,
+        "valid_non52_native_F1": 0.5054751924159442,
+        "valid_GT_structure_oracle_F1": 0.5418728425888802,
+        "valid_non52_GT_structure_oracle_F1": 0.3637305849651011,
+        "valid_paired_oracle_minus_native_F1": -0.09312213356470822,
+        "valid_paired_asset_bootstrap95CI": [-0.15587225215023423, -0.03457872265615144],
+        "valid_non52_paired_oracle_minus_native_F1": -0.14174460745084308,
+        "valid_non52_paired_asset_bootstrap95CI": [-0.21303472824871994, -0.07019955504313939],
+        "bootstrap_draws": 10000,
+        "bootstrap_seed": 20261025,
+        "bootstrap_unit": "asset, after averaging paired4views x3repeats; exploratory selected panel, not population proof",
+        "teacher_raw_token_weighted_parent_EOS_XYZ_accuracy": {
+          "train_seen": [0.9977678571428571, 1.0, 0.5511904761904762],
+          "train_heldout": [0.9955357142857143, 1.0, 0.5143518518518518],
+          "valid": [0.7191176470588235, 0.65625, 0.4576630920464701],
+          "valid_non52": [0.5659090909090909, 0.5, 0.3602537722908094]
+        },
+        "valid_XYZ_NLL_correct_other_pose": [2.016473894633102, 3.859938463036915],
+        "valid_non52_XYZ_NLL_correct_other_pose": [2.6294310348977987, 4.181411063829185],
+        "interpretation": "GT-prefix structural fitting on sampled training assets does not transfer fully to unseen assets. XYZ is imperfect even underGTprefix; free rollout changes structure. Pose-conditioned input is used. Correcting only structural tokens while leaving XYZautoregressive is not a sufficient repair and its score is not an upper bound. No causal claim about virtual queries, codec superiority or benefit from additional training steps."
+      },
       "smoke_accepted": true,
       "smoke_v3_acceptance": {
         "accepted": true,
@@ -1036,7 +1097,7 @@
       "runs": [
         {
           "mode": "audit",
-          "approved": true,
+          "approved": false,
           "status": "completed_primary_accepted",
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v1.json",
           "config_sha256": "f5f8fe469e332ac8dca7550d5f443eed8cebc056f53ee203ecf022e58c4d6480",
@@ -1068,7 +1129,7 @@
         },
         {
           "mode": "smoke",
-          "approved": true,
+          "approved": false,
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
           "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v3",
@@ -1076,7 +1137,8 @@
         },
         {
           "mode": "diagnose",
-          "approved": true,
+          "approved": false,
+          "status": "completed_primary_execution_and_analysis_accepted_not_model_quality",
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
           "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/diagnose_v2"

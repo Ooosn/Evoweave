@@ -4,6 +4,10 @@ The human explicitly requested beginning the proposed staged investigation.
 This first stage is inference only: no optimizer, backward, checkpoint rewrite,
 loss adjustment or fresh training. Completed100k training remains preserved.
 
+**Status: frozen ID100k diagnostics completed and execution accepted.** The full
+paired stage finished exit0 at14:24:40JST on October25. B virtual-query ablation
+remains blocked by missing weights; this is not completion of that causal test.
+
 ## Checkpoint Availability
 
 B65 was previously deleted. A fresh13:04JST read found no weights in its original
@@ -130,3 +134,111 @@ Peak process-tree RAM was8553304064bytes. Primary accepted execution and pairing
 not model quality, then released the128-unique-view/384-repetition stage with
 unchanged computation and protocol. Oracle F1 need not exceed unconstrained F1;
 this two-asset result does not establish a general mechanism.
+
+## Full Paired Results
+
+There are24 distinct assets:8 training assets measured in seen and heldout-pose
+windows, plus16 validation assets. These form32 group-assets,128 unique scored
+views and384 rollouts with3 native repetitions. Both ranks strictly restored896
+saved tensors, retained the exact completed model fingerprint and unchanged
+checkpoint stats, and matched all GT/frame records. All384 same-condition
+decoder replays were exact. No optimizer or backward ran. Peak process-tree RAM
+was8568463360bytes; exit0 and payload cleanup were verified. At14:28:02JST the
+supervisor was absent, GPU5/6 each used0MiB, and the original allocation/keeper
+remained active. No GPU release or further run was requested.
+
+Full artifacts are under
+`D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/diagnose_v2`.
+Summary SHA256 `9ee3e2a588eb4131dd52d0b36474ca01e3d30832bc44c1f576dbc86edefb1168`;
+resources SHA256 `3de6a696ca91ae22a46024b5532c892e3737fee37deed443ce7229cbb2d341ab`.
+Final local analysis is
+`D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/analysis_diagnose_v2_final.json`,
+SHA256 `26a40b76e5da788768b8aeaa1e523faa5d56901963cd1011b999d5e521215a36`.
+Its15unit tests passed and the canonical CPU runner exited0. Primary independently
+checked coverage, replay flags,181exact-structure invariants and all9subgroup F1
+means against producer summaries (absolute tolerance1e-12).
+
+### GT-Prefix Diagnostics
+
+These are full-vocabulary, token-weighted top1 accuracies. The entire previous
+token history is GT. XYZ accuracy means exactly the correct quantization bin,
+not spatial F1 or a geometric tolerance. Parent-ID sites occur after BRANCH;
+ordinary chain parents are implicit in this codec.
+
+| Group | Assets | Parent ID | BRANCH | EOS | XYZ |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Training seen | 8 | 99.78% | 100.00% | 100.00% | 55.12% |
+| Training heldout poses | 8, same identities | 99.55% | 100.00% | 100.00% | 51.44% |
+| Validation | 16 | 71.91% | 90.74% | 65.63% | 45.77% |
+| Validation non52 | 11, subset | 56.59% | 85.68% | 50.00% | 36.03% |
+
+Grammar filtering is not a cure: validation non52 parent-ID accuracy among
+nontrivial legal choices is57.64%, and EOS is53.03%. Validation gt52 structural
+roles are100% under GT prefix, but this count-defined stratum is not automatically
+an exact-topology-frequency class. New-ID accuracy is100% on the sampled training
+assets,93.83% on validation and90.53% on validation non52; predictable serial IDs
+must not dominate an aggregate structural-accuracy interpretation.
+
+Token-weighted XYZ NLL for matched versus another pose's condition is1.165->3.604
+on training-seen,1.245->3.719 on heldout poses,2.016->3.860 on validation and
+2.629->4.181 on validation non52, in nats per token (lower is better).
+The target prefix and target coordinates are unchanged. Thus the current
+real-frame-only model uses pose-specific condition information under GT prefixes.
+This does not measure virtual-query usefulness or cross-pose aggregation benefit.
+
+### Free Generation And Structure Intervention
+
+| Group | Native F1 | GT-structure/free-XYZ F1 | Paired change | Asset-bootstrap95% interval |
+| --- | ---: | ---: | ---: | --- |
+| Training seen | 0.79856 | 0.83557 | +0.03701 | [-0.00755, +0.08884] |
+| Training heldout poses | 0.78615 | 0.77447 | -0.01168 | [-0.05929, +0.02820] |
+| Validation | 0.63499 | 0.54187 | -0.09312 | [-0.15587, -0.03458] |
+| Validation non52 | 0.50548 | 0.36373 | -0.14174 | [-0.21303, -0.07020] |
+| Validation gt52 | 0.91994 | 0.93379 | +0.01385 | [0.00000, +0.03861] |
+
+Each asset first averages its four views and three paired repetitions; bootstrap
+resamples assets10000times with seed20261025 and percentile endpoints. Frames and
+repetitions are not independent samples. This selected diagnostic panel and its
+small subgroups support exploratory conclusions, not population-wide proof.
+In non52 validation,10assets decline,1is unchanged and0improve under intervention.
+
+All181 rollouts whose freely generated structure already equals GT have exactly
+equal oracle/native tokens and F1, including69validation rollouts. Therefore this
+intervention is a no-op on the observed exact-structure cases. When it changes
+structure, it also changes subsequent coordinate prefixes. Correct parent IDs
+and joint counts alone do not ensure compatible XYZ. The result rejects the
+simple sufficiency claim that repairing structure alone must improve this frozen
+model; it does not establish that GT structure is harmful, nor uniquely locate
+the remaining cause in the encoder or decoder. This oracle is not an upper bound.
+
+Every first full-token mismatch is XYZ (384/384), but coordinates are numerous
+and a one-bin difference already counts: this is not causal proof that every
+later structure error originated in coordinates. Exact free structure is53/96
+seen,59/96heldout and69/192validation; non52 validation is18/132 (13.64%). There
+are no generation failures, but1/384 outputs ends with EOS as the only legal
+capacity choice. Parsing/termination is not a quality pass.
+
+Validation native F1 across the3repeats is0.635008/0.632575/0.637402. Historical
+single-pass F1 remains0.639080 and is not overwritten; only21.88% of repeated
+validation token streams equal that historical stream exactly. Quantized-GT
+roundtrip F1 is0.93315 for validation and0.90276 for non52, a separate reference
+against original continuous GT, not a claimed ceiling.
+
+## Interpretation And Next Discriminating Test
+
+The sampled training structures are learned under GT prefixes, including on
+heldout poses, while unseen-asset parent/EOS prediction is substantially weaker
+even with correct history. Coordinate prediction is imperfect even on training
+assets and free rollout further changes structure. Evidence points to both
+unseen-asset generalization and coupled coordinate/structure rollout limitations,
+not merely an inability to learn serial IDs. More training might help, but this
+frozen diagnostic cannot establish that additional steps alone will fix them.
+
+The virtual-query question remains unanswered because B65 weights are absent.
+A proposed next causal comparison is a matched legacy-codec pair with/without
+virtual queries, initialized from the same official pretrained weights with the
+same current data, all-frame targets, optimization budget and selection rule.
+Hold auxiliary and cross-frame-consistency losses at0 in that first pair to
+isolate the virtual module; match/record any unavoidable capacity differences.
+Then add the ID-codec pair to obtain a2x2 test if needed. These are proposals,
+not authorized new training or a claim to reproduce historical B training.

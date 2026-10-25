@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "single_query20k_weights_verified_pending_corrected_CPU_audit_20261026",
-  "updated_at": "2026-10-25T18:39:53.823Z",
+  "state_id": "single_query20k_CPU_verified_capacity_admitted_20261026",
+  "updated_at": "2026-10-25T18:42:44.537Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -32,11 +32,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -51,8 +51,8 @@
     ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "status": "retained_grant_live_checked_idle_before_single_target_admission",
-    "last_observed_utc": "2026-10-25T18:36:35.661982Z",
+    "status": "CPU_audit_complete_idle_capacity_admitted",
+    "last_observed_utc": "2026-10-25T18:41:07.482045Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -65,7 +65,7 @@
   },
   "active_operation": {
     "label": "real_query_single_target_5k_20261026_v1",
-    "status": "CPU_v8_initialization_verified_pending_corrected_v9_report",
+    "status": "CPU_v9_primary_accepted_pending_capacity_v2",
     "operation": "train",
     "mode": "single_target_vs_retained_all_frame",
     "complete": false,
@@ -81,9 +81,9 @@
     "contract": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",
     "config": "model_training/experiments/real_query_single_target_5k_20261026_v1.json",
     "config_sha256": "31a68045fa2bacc610142ea7337d78d30b373da4990d8a0cb5ac2334ccc58334",
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "CPU_tests_passed": 90,
     "train_assets": 5000,
@@ -97,15 +97,16 @@
       {
         "mode": "audit",
         "stage": "audit_v9",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_single_target_5k_20261026_v1.json",
         "config_sha256": "31a68045fa2bacc610142ea7337d78d30b373da4990d8a0cb5ac2334ccc58334",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v9"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v9",
+        "status": "completed_primary_accepted"
       },
       {
         "mode": "capacity",
         "stage": "capacity_v2",
-        "approved": false,
+        "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_single_target_5k_20261026_v1.json",
         "config_sha256": "31a68045fa2bacc610142ea7337d78d30b373da4990d8a0cb5ac2334ccc58334",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v2"
@@ -128,6 +129,13 @@
       "initialization_and_selector_verified": true,
       "receipt_sha256": "0a7a3bcabb8f57ab10af922b5e70f56def31073fc5db0d032fc316b9631df00b",
       "superseded_reason": "Correct the inherited100k sampler report field: input frames1294112, supervised targets100000. Actual20k trace/checkpoint counters were already separate."
+    },
+    "CPU_audit": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v9/result.json",
+      "sha256": "79dd6c5cf0fd5d597290a96df975398ae31235003085c064079f379fbae57e6e",
+      "full_initialization_matches_retained_all_frame": true,
+      "global_input_RNG_unchanged": true
     }
   },
   "architecture_contract": {
@@ -156,7 +164,7 @@
     "model_quality_accepted": false,
     "local_evidence": "D:/evoweave/server_ops/outputs/single_query_20k_20261026"
   },
-  "next_required_result": "Execute and review real CPU initialization/selector audit, then fresh selected-target GPU capacity. Release only the single-target20k training after both pass; verify actual startup input matching and final paired evaluation.",
+  "next_required_result": "Run bounded fresh single-target GPU capacity/gradient checks. Discard profiling weights; formal20k training remains blocked until primary review. CPUv9 and corrected input/target accounting accepted.",
   "history": {
     "snapshot": "model_training/state/archive/current_before_compaction_20261026.json",
     "sha256": "6d40d0660c3f2829b68bf5a160ebacd6166eec89324975c87bec089103c60e29",

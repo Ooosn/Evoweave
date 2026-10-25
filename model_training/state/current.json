@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "state_id": "frozen_ID100k_paired_repeat_smoke_prepared_20261025",
+  "state_id": "frozen_ID100k_full_paired_diagnostics_authorized_20261025",
   "updated_at": "2026-10-25T04:42:15Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -931,14 +931,33 @@
     },
     "query_decoder_diagnostics": {
       "label": "frozen_query_decoder_diagnostics_20261025_v1",
-      "status": "native_variation_measured_paired_three_repeat_smoke_authorized",
+      "status": "paired_three_repeat_smoke_accepted_full128_authorized",
       "explicit_human_authorized": true,
       "authorization": "Human asked how to test virtual-query usefulness and ID-decoder training, then explicitly said to try and begin. Execute the proposed first stage: frozen checkpoint diagnostics, not automatic full retraining.",
       "complete": false,
       "code_commit": "bf89f5d5f74ac869b8b3e9929e6c296a71df2879",
       "contract": "model_training/docs/QUERY_DECODER_DIAGNOSTICS_20261025.md",
       "GPU_allowed": true,
-      "smoke_accepted": false,
+      "smoke_accepted": true,
+      "smoke_v3_acceptance": {
+        "accepted": true,
+        "path": "D:/evoweave/server_ops/outputs/query_utility_diagnostics_20261025/runs/smoke_v3",
+        "summary_sha256": "fd6938a2debaf9f3a781825768267a7a2f1f42218e8c29edceeff5ce3038751f",
+        "resource_sha256": "7ce17bfcd5a96f98120639e19c81f912ca5463766f1351d42d3e121f5ff0190b",
+        "exit_code": 0,
+        "unique_views": 8,
+        "repeated_views": 24,
+        "native_repeats": 3,
+        "all_fixed_condition_decoder_replays_exact": true,
+        "all896_saved_tensors_equal_both_ranks": true,
+        "model_fingerprint_unchanged_both_ranks": true,
+        "checkpoint_stats_unchanged_both_ranks": true,
+        "optimizer_created": false,
+        "backward_performed": false,
+        "peak_tree_rss_bytes": 8553304064,
+        "payload_cleanup_complete": true,
+        "acceptance_scope": "Measurement execution, pairing and input/weight identity only. Oracle F1 is diagnostic and need not exceed unconstrained F1. No model-quality or architecture claim from2assets."
+      },
       "optimizer_allowed": false,
       "backward_allowed": false,
       "quality_approval": false,
@@ -1052,11 +1071,12 @@
           "approved": true,
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
           "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
-          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v3"
+          "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/smoke_v3",
+          "status": "completed_primary_execution_accepted"
         },
         {
           "mode": "diagnose",
-          "approved": false,
+          "approved": true,
           "config": "/work/wangyy/query_decoder_diagnostics_20261025/code/model_training/experiments/query_decoder_diagnostics_20261025_v2.json",
           "config_sha256": "683f7766b498159bf95056c8b450443bd35a0df3bdfc774a8566859a6e4ca480",
           "output": "/work/wangyy/query_decoder_diagnostics_20261025/outputs/diagnose_v2"

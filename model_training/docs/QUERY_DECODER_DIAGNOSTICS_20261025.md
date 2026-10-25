@@ -121,3 +121,12 @@ and paired oracle differences. Oracle results remain diagnostic only. Coverage
 is8 unique smoke views/24 repeated rollouts, then128 unique full views/384
 rollouts. The repeatability receipt is hash-pinned and primary acceptance is a
 launch prerequisite.21 CPU tests pass. Only the revised smoke is released.
+
+The revised smoke completed exit0 at13:58:16JST. Both ranks strictly restored
+all896 tensors and retained the exact completed model fingerprint. Coverage
+was8 unique views/24 repetitions, with every fixed-condition decoder replay
+exact, no optimizer/backward, unchanged checkpoint stats, and full cleanup.
+Peak process-tree RAM was8553304064bytes. Primary accepted execution and pairing,
+not model quality, then released the128-unique-view/384-repetition stage with
+unchanged computation and protocol. Oracle F1 need not exceed unconstrained F1;
+this two-asset result does not establish a general mechanism.

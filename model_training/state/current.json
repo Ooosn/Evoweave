@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "real_frame_id_xyz_cpu4_resume_running_20261024",
-  "updated_at": "2026-10-24T20:01:39Z",
+  "state_id": "real_frame_id_xyz_100000_completed_20261025",
+  "updated_at": "2026-10-25T03:46:04Z",
   "publication_authorization": {
     "status": "explicit_user_approved",
     "destination": "https://github.com/Ooosn/Evoweave.git",
@@ -137,17 +137,17 @@
   ],
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "matched_eval",
     "submit"
   ],
   "compute_allocation": {
     "server": "HGC",
-    "status": "retained_for_explicit_ssh_id_xyz_consistency",
+    "status": "retained_idle_after_completed_IDXYZ100000_no_release_authorized",
     "qlogin_job_id": 130309880,
     "host": "pcg01i",
     "physical_gpus": [5, 6],
@@ -376,7 +376,7 @@
     },
     "scope": "Exact legacy nearest-position directed-edge P/R/F1 formula, with failed generation scored zero; mean per-frame F1 then macro-average assets. No distance cutoff or one-to-one assignment. Same metric formula, not a paired comparison with historical old-model aggregates. New identity-reuse and exact-tree metrics supplement rather than replace legacy P/R/F1."
   },
-  "next_required_result": "Continue the immutable HGC CPU4 run to100k/2100 and1536-view final without training/loss/resource changes. The requested LOCAL original-baseline evaluation completed64 matched views: F1original80k0.5828245545, B65k0.6819730815, currentID70k0.6380434428; failed views count zero. Primary independently verified coverage and recomputed all64 scores exactly. Local GPU evaluation is closed; no additional run is authorized. Training remains incomplete at the latest05:00JST snapshot74032assets/1554steps. Livecpu4_code remains e1ed, current consistency lambda remains1, and no extraHGC GPU work or loss-weight change is authorized.",
+  "next_required_result": "The explicit100000-exposure training target and final1536-view evaluation are complete, with exit0 and payload cleanup. Report results without claiming quality acceptance: same16asset/64view valid F1original80k0.5828245545, B65k0.6819730815, ID100k0.6390797884; full128asset/1024view valid ID100k0.7336758450 versus B65k0.7705062590. Consistency remains insufficient and lambda1 causal benefit is not isolated. Await the human's next experiment decision; no automatic extension, new training, loss change or GPU release. At12:46JST allocation130309880 and keeper remain alive, both GPUs idle. Preserve final checkpoint and all evidence; livecpu4_code remains frozene1ed.",
   "preserved_normal_b_extend40000_operation": {
     "label": "normal_b_extend40000_v1",
     "mode": "normal5000_continuation",
@@ -920,10 +920,10 @@
   },
   "active_operation": {
     "label": "real_frame_id_xyz_consistency_20261024_v1",
-    "status": "CPU4_formal_continuation_running_primary_startup_accepted",
+    "status": "completed100000_execution_verified_quality_not_accepted",
     "operation": "train",
     "mode": "train",
-    "complete": false,
+    "complete": true,
     "required_entrypoint": "model_training/rigweave/scripts/train_id_xyz_consistency.py",
     "operation_entrypoints": {
       "matched_eval": "model_training/rigweave/scripts/eval_original_baseline_matched.py"
@@ -1124,21 +1124,82 @@
     "lineage_initial_checkpoint_sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
     "train_manifest_sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
     "valid_manifest_sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "gpu_preflight_passed": true,
     "gpu_capacity_passed": true,
-    "new_training_processes": 1,
-    "last_observed_utc": "2026-10-24T13:22:06Z",
+    "new_training_processes": 0,
+    "last_observed_utc": "2026-10-25T03:46:04.104173+00:00",
     "training_producer_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
     "supervisor_pid": 2413392,
     "payload_launcher_pid": 2413412,
     "payload_rank_pids": [2414343, 2414344],
     "launched_utc": "2026-10-24T13:08:15Z",
-    "observed_optimizer_updates": 749,
-    "observed_asset_exposures": 35672,
-    "observed_input_frame_exposures": 467784,
-    "observed_supervised_frame_exposures": 467784,
+    "observed_optimizer_updates": 2100,
+    "observed_asset_exposures": 100000,
+    "observed_input_frame_exposures": 1294112,
+    "observed_supervised_frame_exposures": 1294112,
+    "completion": {
+      "execution_accepted": true,
+      "quality_accepted": false,
+      "overall_requested_training_budget_completed": true,
+      "trainer_finished_utc": "2026-10-25T00:59:34.395984+00:00",
+      "supervisor_finished_utc": "2026-10-25T01:00:05.081858+00:00",
+      "fresh_primary_remote_observation_utc": "2026-10-25T03:46:04.104173+00:00",
+      "exit_code": 0,
+      "payload_cleanup_complete": true,
+      "live_payload_threads": 0,
+      "live_GPU5_6_memory_mib": [0, 0],
+      "allocation_and_keeper_retained": true,
+      "issues": [],
+      "local_evidence": "D:/evoweave/server_ops/outputs/id_xyz_consistency_20261024/monitoring_100000_cpu4_v1",
+      "result_sha256": "5dc329c7de25268675f7bfb95847ef54a0ba8a48e1aa8743f4f6bb757ed5eca9",
+      "resource_sha256": "70757565dd5ed72e1630b00cedf4d7631920e8890596fadf91ef6a63cfbb2880",
+      "checkpoint": {
+        "path": "/work/wangyy/id_xyz_consistency_20261024/outputs/consistency_100000_cpu4_v1/checkpoint_100000.pt",
+        "sha256": "ada70ea7b97b4bdbcbd699b1698696faa0eef0298df09e07637e687eea3a29c8",
+        "bytes": 7956028382
+      },
+      "small_panel": {
+        "summary_sha256": "97d8977fbdd0598a3c38d3dacb3c64070066da009e5d1713267bf7ea7789f243",
+        "total_views_including_train": 128,
+        "valid_assets": 16,
+        "valid_views": 64,
+        "valid_F1": 0.6390797884284196,
+        "valid_non52_F1": 0.5096925431869679,
+        "valid_B65_F1": 0.681973081534069,
+        "valid_failed_views": 0,
+        "valid_capacity_only_EOS": 0,
+        "valid_all_four_structures_equal": 0.4375,
+        "valid_non52_all_four_structures_equal": 0.36363636363636365,
+        "valid_exact_structure": 0.359375,
+        "valid_non52_exact_structure": 0.13636363636363635
+      },
+      "full_panel": {
+        "summary_sha256": "a89c30f420fd1428cac88b9dc6807f95268458e1a4c23405fe7f568d981b0650",
+        "total_views_including_train": 1536,
+        "valid_assets": 128,
+        "valid_views": 1024,
+        "valid_F1": 0.7336758450411578,
+        "valid_non52_F1": 0.6374750701322297,
+        "valid_B65_F1": 0.7705062590378752,
+        "valid_failed_views": 0,
+        "valid_capacity_only_EOS": 4,
+        "valid_all_eight_structures_equal": 0.5625,
+        "valid_non52_all_eight_structures_equal": 0.4578313253012048,
+        "valid_exact_structure": 0.474609375,
+        "valid_non52_exact_structure": 0.2710843373493976
+      },
+      "final50_updates": {
+        "steps": [2051, 2100],
+        "consistency_weight": 1.0,
+        "main_CE_mean": 0.6419658528765041,
+        "consistency_CE_mean": 0.046166221923194806,
+        "consistency_scalar_fraction_total": 0.06708918769210526,
+        "KL_diagnostic_mean": 0.0021709045887352355,
+        "not_gradient_fraction": true
+      }
+    },
     "cpu_resource_handoff": {
       "human_authorized": true,
       "human_decision": "At the next complete checkpoint switch to4 total CPUs; preserve GPUs and all training state.",
@@ -1212,7 +1273,9 @@
     },
     "read_only_monitoring": {
       "accepted": true,
-      "status": "running",
+      "status": "completed_success_owner_closed",
+      "terminal_utc": "2026-10-25T01:00:05.837283+00:00",
+      "primary_fresh_refresh_utc": "2026-10-25T03:46:04.104173+00:00",
       "directory": "D:/evoweave/server_ops/outputs/id_xyz_consistency_20261024/monitoring_100000_cpu4_v1",
       "owner_agent": "01a16d19-e1fc-7941-9dcc-c17eb0a3394c",
       "observer_pid": 180712,
@@ -1783,9 +1846,9 @@
         "cpu_affinity": [58, 63, 64, 65]
     }, {
         "mode": "train",
-        "approved": true,
-        "execution_allowed": true,
-        "status": "running_primary_startup_accepted",
+        "approved": false,
+        "execution_allowed": false,
+        "status": "completed100000_and1536view_final_execution_accepted",
         "producer_head": "e1ed5bd8326ed3c237a63739868a089fe36e0bf4",
         "supervisor_pid": 2413392,
         "payload_launcher_pid": 2413412,

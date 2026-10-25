@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import socket
+import shutil
 import subprocess
 import sys
 
@@ -212,6 +213,20 @@ def verify_launch(args, config):
         uuids = subprocess.check_output(['nvidia-smi', '-i', devices, '--query-gpu=uuid',
             '--format=csv,noheader'], text=True, timeout=30, stderr=subprocess.STDOUT).split()
     except subprocess.CalledProcessError as error:
+        context = {'uid': os.getuid(), 'euid': os.geteuid(), 'nvidia_smi': shutil.which('nvidia-smi'),
+            'environment': {name: os.environ.get(name) for name in ('PATH', 'LD_LIBRARY_PATH', 'LD_PRELOAD',
+                'CUDA_VISIBLE_DEVICES', 'NVIDIA_VISIBLE_DEVICES', 'JOB_ID', 'NSLOTS', 'SGE_HGR_h100')},
+            'cgroups': Path('/proc/self/cgroup').read_text()}
+        for name, command in [('inventory', ['nvidia-smi', '-L']), ('version', ['nvidia-smi', '--version'])]:
+            diagnostic = subprocess.run(command, text=True, capture_output=True, timeout=30)
+            context[name] = {'returncode': diagnostic.returncode, 'stdout': diagnostic.stdout[-4000:],
+                             'stderr': diagnostic.stderr[-4000:]}
+        if shutil.which('strace'):
+            diagnostic = subprocess.run(['strace', '-f', '-e', 'trace=openat,ioctl', '-s', '120',
+                'nvidia-smi', '-i', devices, '--query-gpu=uuid', '--format=csv,noheader'],
+                text=True, capture_output=True, timeout=30)
+            context['access_trace'] = diagnostic.stderr[-12000:]
+        print('GPU_ADMISSION_DIAGNOSTIC ' + json.dumps(context), file=sys.stderr, flush=True)
         raise RuntimeError(f'GPU identity query failed rc={error.returncode}: {error.output}') from error
     if uuids != runtime['gpu_uuids']:
         raise RuntimeError('GPU UUIDs changed')

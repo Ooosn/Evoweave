@@ -64,6 +64,9 @@ def build_model(config, device):
     lm_args = dict(upstream_config['llm'])
     lm_args.pop('pretrained_model_name_or_path')
     lm_args['vocab_size'] = tokenizer.vocab_size
+    if torch.device(device).type == 'cpu':
+        # Weight-only CPU audits do not execute the CUDA attention backend.
+        lm_args['_attn_implementation'] = 'eager'
     lm_config = OPTConfig.from_pretrained(runtime['opt_config_root'], local_files_only=True, **lm_args)
     lm_config.torch_dtype = torch.float32
     main = OPTForCausalLM(lm_config)

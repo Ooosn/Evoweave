@@ -190,10 +190,10 @@ class VirtualPathAblationRig(nn.Module):
             raise ValueError('auxiliary_weight must be exactly 0 for virtual path ablation')
 
     def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight, query_points=None,
-                        target_frame_indices=None):
+                        target_frame_indices=None, target_frame_mask=None):
         self._validate_auxiliary_weight(auxiliary_weight)
         if self.virtual_enabled:
-            if target_frame_indices is not None:
+            if target_frame_indices is not None or target_frame_mask is not None:
                 raise ValueError('selected-frame supervision requires virtual_enabled=False')
             return self.base.forward_encoded(final_frames, virtual, targets,
                                              auxiliary_weight=0., query_points=query_points)
@@ -202,6 +202,9 @@ class VirtualPathAblationRig(nn.Module):
         ids, mask = targets['main_input_ids'], targets['main_attention_mask']
         if ids.ndim != 3 or ids.shape != mask.shape or ids.shape[:2] != condition.shape[:2]:
             raise ValueError('each real frame needs its own full XYZ target sequence')
+        valid = None
+        if target_frame_mask is not None and target_frame_indices is None:
+            raise ValueError('target_frame_mask requires target_frame_indices')
         if target_frame_indices is not None:
             batch, frames = condition.shape[:2]
             if (not isinstance(target_frame_indices, torch.Tensor)
@@ -214,25 +217,45 @@ class VirtualPathAblationRig(nn.Module):
             indices = target_frame_indices[:, None] if target_frame_indices.ndim == 1 else target_frame_indices
             if not 1 <= indices.shape[1] <= frames:
                 raise ValueError('target_frame_indices must select between 1 and T slots per asset')
+            if target_frame_mask is not None:
+                if (not isinstance(target_frame_mask, torch.Tensor)
+                        or target_frame_mask.dtype != torch.bool
+                        or target_frame_mask.shape != indices.shape
+                        or target_frame_mask.device.type == 'meta'):
+                    raise ValueError('target_frame_mask must be a concrete bool tensor with shape [B,K]')
+                valid = target_frame_mask.to(device=indices.device)
+                if (not bool(valid[:, 0].all())
+                        or bool((valid[:, 1:] & ~valid[:, :-1]).any())
+                        or not bool(valid[:, -1].any())):
+                    raise ValueError('target_frame_mask requires nonempty left-aligned selections without empty columns')
             if bool(((target_frame_indices < 0) | (target_frame_indices >= frames)).any()):
                 raise ValueError('target_frame_indices outside the input frame range')
-            ordered = indices.sort(dim=1).values
-            if bool((ordered[:, 1:] == ordered[:, :-1]).any()):
+            ordered = (indices if valid is None else indices.masked_fill(~valid, frames)).sort(dim=1).values
+            if bool(((ordered[:, 1:] == ordered[:, :-1]) & (ordered[:, 1:] < frames)).any()):
                 raise ValueError('target_frame_indices must contain distinct slots per asset')
             indices = indices.to(device=condition.device)
             rows = torch.arange(batch, device=condition.device)[:, None]
             condition = condition[rows, indices]
             ids, mask = ids[rows, indices], mask[rows, indices]
+            if valid is not None:
+                valid = valid.to(device=condition.device)
         losses, accuracies = [], []
         for frame in range(condition.shape[1]):
-            labels = ids[:, frame, 1:].clone().masked_fill(~mask[:, frame, 1:].bool(), -100)
-            logits = self.main_logits(condition[:, frame], ids[:, frame, :-1], mask[:, frame, :-1])
+            rows = slice(None) if valid is None else valid[:, frame].nonzero(as_tuple=True)[0]
+            labels = ids[rows, frame, 1:].clone().masked_fill(~mask[rows, frame, 1:].bool(), -100)
+            logits = self.main_logits(condition[rows, frame], ids[rows, frame, :-1], mask[rows, frame, :-1])
             loss, accuracy = sequence_ce(logits, labels)
+            if valid is not None:
+                loss = loss.new_zeros(condition.shape[0]).index_copy(0, rows, loss)
+                accuracy = accuracy.new_zeros(condition.shape[0]).index_copy(0, rows, accuracy)
             losses.append(loss)
             accuracies.append(accuracy)
         main_per_frame = torch.stack(losses, dim=1)
         accuracy_per_frame = torch.stack(accuracies, dim=1)
-        main = main_per_frame.mean(dim=1)
+        main = (main_per_frame.mean(dim=1) if valid is None
+                else main_per_frame.sum(dim=1) / valid.sum(dim=1))
+        accuracy = (accuracy_per_frame.mean() if valid is None
+                    else (accuracy_per_frame.sum(dim=1) / valid.sum(dim=1)).mean())
         auxiliary = main.new_zeros(main.shape)
         return {
             'loss': main.mean(),
@@ -241,19 +264,21 @@ class VirtualPathAblationRig(nn.Module):
             'main_loss_per_frame': main_per_frame,
             'main_accuracy_per_frame': accuracy_per_frame,
             'auxiliary_loss': auxiliary.mean(),
-            'main_accuracy': accuracy_per_frame.mean(),
+            'main_accuracy': accuracy,
             'auxiliary_accuracy': auxiliary.mean(),
         }
 
-    def forward(self, surface, targets, *, auxiliary_weight, target_frame_indices=None):
+    def forward(self, surface, targets, *, auxiliary_weight, target_frame_indices=None, target_frame_mask=None):
         self._validate_auxiliary_weight(auxiliary_weight)
         if self.virtual_enabled:
-            if target_frame_indices is not None:
+            if target_frame_indices is not None or target_frame_mask is not None:
                 raise ValueError('selected-frame supervision requires virtual_enabled=False')
             return self.base.forward(surface, targets, auxiliary_weight=0.)
         final_frames, virtual = self.encode(surface)
-        return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=0.,
-                                    target_frame_indices=target_frame_indices)
+        arguments = {'target_frame_indices': target_frame_indices}
+        if target_frame_mask is not None:
+            arguments['target_frame_mask'] = target_frame_mask
+        return self.forward_encoded(final_frames, virtual, targets, auxiliary_weight=0., **arguments)
 
     def generate_condition(self, condition, start_tokens, *, eos_token, max_new_tokens,
                            logits_processor=None):

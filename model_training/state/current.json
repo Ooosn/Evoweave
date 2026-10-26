@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "query_density20k_authorized_20261026",
-  "updated_at": "2026-10-26T08:05:00Z",
+  "state_id": "query_density20k_formal_authorized_20261026",
+  "updated_at": "2026-10-26T08:29:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
   "required_context": [
@@ -32,27 +32,32 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "submit"
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
+    "submit",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
     "server": "HGC",
-    "host": "pcg02i",
-    "status": "new16CPU_twoH100_allocation_requested_not_yet_submitted",
+    "qlogin_job_id": 130494177,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "h100_count": 2,
-    "previous_allocation": 130494177,
-    "policy": "Previous pcg01 allocation is preserved; its remaining lifetime cannot fit both new runs. New runs execute sequentially, never concurrently."
+    "keeper_pid": 1098441,
+    "status": "existing_allocation_extended_in_place_formal_start_pending",
+    "expiry_utc": "2026-10-26T22:33:29.625Z",
+    "policy": "Same granted GPUs and16CPUs. Native qalter -when now extended h_rt from24h to36h; keeper and allocation preserved. Unused pending request130589725 canceled, never granted."
   },
   "active_operation": {
     "label": "real_query_density_5k_20261026_v1",
-    "status": "implementing_new_target_policies",
+    "status": "both_formal_runs_approved_not_yet_started",
     "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
@@ -62,15 +67,54 @@
       "submit": "model_training/jobs/hold_virtual_pair_allocation.py"
     },
     "contract": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
-    "gpu_work_allowed": false,
-    "formal_training_allowed": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "acceptance_basis": "Reuse pinned all-frame CPU initialization/data/loader evidence and measured all-frame capacity; focused new selector/ragged-loss tests before formal launch. No standalone repeat audit/capacity jobs.",
-    "runs": [],
+    "runs": [
+      {
+        "stage": "train_v5",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_three_target_5k_20261026_v1.json",
+        "config_sha256": "63717260c4ab31983137aeac2241331943d37645fcbe9dfd7e35a612f99de023",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v5",
+        "variant": "three_query",
+        "expected_supervised_frames": 59416
+      },
+      {
+        "stage": "train_v6",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_fraction_target_5k_20261026_v1.json",
+        "config_sha256": "bc6b85480be764edb701d0d6decae004f152f7f557e575328a860967929bda4b",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v6",
+        "variant": "fraction_query",
+        "expected_supervised_frames": 45936
+      }
+    ],
     "checkpoint_policy": "Keep full5k/10k/15k/20k checkpoints and verified durable mirrors for both new arms.",
     "durable_root": "/home/wangyy/evorig/outputs/query_density_20k_20261026",
-    "end_policy": "Stop both arms at20k and evaluate fixed128x8. No100k or additional new arms."
+    "end_policy": "Stop both arms at20k and evaluate fixed128x8. No100k or additional new arms.",
+    "CPU_tests_passed": 66,
+    "inherited_evidence": {
+      "CPU_audit": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
+        "sha256": "92706351041d631fed21b07757d7776f944dc0a5bef135bf11816ee0fdb7419a"
+      },
+      "capacity": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
+        "sha256": "0a5aa224435f8496d43e14a3d0bfc19b55957412b0e4e6561b19d8311ade475c"
+      },
+      "description": "Immutable all-frame receipts reused; local bound-config check passed without model construction, CUDA, optimizer updates or a new audit job. Runtime compares every actual official initialization to the inherited fingerprint."
+    },
+    "monitor": {
+      "directory": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/monitor",
+      "status": "offline_tests_passed_live_not_started",
+      "owned_by": "primary",
+      "extra_agents": 0
+    }
   },
   "architecture_contract": {
     "input": "Same complete2..24-frame input stream and normalization.",
@@ -101,5 +145,5 @@
       "accepted_terminal_receipt_sha256": "95475fcac5d4156f714e1b4c2df41bf0ab825ab38c229382f3a93398d7196e23"
     }
   },
-  "next_required_result": "Complete focused new-code tests, bind actual scheduler grant once, launch both approved20k arms sequentially and report comparison."
+  "next_required_result": "Launch sequential train_v5/three_query and train_v6/fraction_query on preserved allocation130494177; observe first3 formal updates, then fixed20k metrics against retained1/2/all controls."
 }

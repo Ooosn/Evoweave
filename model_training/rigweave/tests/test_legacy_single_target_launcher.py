@@ -40,9 +40,28 @@ class LauncherCleanupTests(unittest.TestCase):
 
     def test_live_resource_cgroup_change_still_fails(self):
         with patch.object(launcher, 'process_identity', return_value=(1, 'R')), \
-                patch.object(launcher.Path, 'read_text', return_value='1:devices:/\n2:cpuset:/'):
+                patch.object(launcher.Path, 'read_text', return_value='1:devices:/\n2:cpuset:/'), \
+                patch.object(launcher.time, 'sleep') as wait:
             with self.assertRaises(RuntimeError):
                 launcher.verify_child_cgroups(20, {'devices':'/user.slice','cpuset':'/'})
+        self.assertEqual(wait.call_count, 4)
+
+    def test_root_transition_requires_demonstrated_exit(self):
+        for terminal in ((1, 'Z'), (2, 'R'), FileNotFoundError()):
+            with self.subTest(terminal=terminal), \
+                    patch.object(launcher, 'process_identity', side_effect=[(1, 'R'), (1, 'R'), (1, 'R'), terminal]), \
+                    patch.object(launcher.Path, 'read_text', return_value='1:devices:/\n2:cpuset:/'), \
+                    patch.object(launcher.time, 'sleep') as wait:
+                self.assertFalse(launcher.verify_child_cgroups(20, {'devices':'/AGE/1.1','cpuset':'/AGE/1.1'}))
+                self.assertEqual(wait.call_count, 2)
+
+    def test_other_live_cgroup_mismatch_has_no_exit_grace(self):
+        with patch.object(launcher, 'process_identity', return_value=(1, 'R')), \
+                patch.object(launcher.Path, 'read_text', return_value='1:devices:/other\n2:cpuset:/other'), \
+                patch.object(launcher.time, 'sleep') as wait:
+            with self.assertRaises(RuntimeError):
+                launcher.verify_child_cgroups(20, {'devices':'/AGE/1.1','cpuset':'/AGE/1.1'})
+        wait.assert_not_called()
 
     def test_cleanup_kills_adopted_rank_but_never_keeper_or_self(self):
         processes = {10: (1, 0), 20: (10, 0), 99: (1, 0)}

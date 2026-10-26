@@ -86,13 +86,25 @@ def resource_cgroups(text):
 
 
 def verify_child_cgroups(pid, expected):
-    if process_identity(pid)[1] == 'Z':
+    identity, status = process_identity(pid)
+    if status == 'Z':
         return False
     actual = resource_cgroups((Path('/proc') / str(pid) / 'cgroup').read_text())
     if actual != expected:
         # Linux moves exited tasks to root cgroups before their parent reaps them.
         if process_identity(pid)[1] == 'Z':
             return False
+        if actual == {'devices': '/', 'cpuset': '/'}:
+            # cgroup teardown can precede the zombie transition. Accept only
+            # demonstrated exit, never a still-live task in the root cgroups.
+            for delay in (.02, .05, .1, .2):
+                time.sleep(delay)
+                try:
+                    current, status = process_identity(pid)
+                except (FileNotFoundError, ProcessLookupError):
+                    return False
+                if current != identity or status == 'Z':
+                    return False
         raise RuntimeError(f'live child {pid} changed resource cgroups: {actual} != {expected}')
     return True
 

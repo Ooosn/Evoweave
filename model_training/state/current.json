@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "query_density20k_formal_authorized_20261026",
-  "updated_at": "2026-10-26T08:29:00Z",
+  "updated_at": "2026-10-26T08:46:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
   "required_context": [
@@ -74,22 +74,22 @@
     "acceptance_basis": "Reuse pinned all-frame CPU initialization/data/loader evidence and measured all-frame capacity; focused new selector/ragged-loss tests before formal launch. No standalone repeat audit/capacity jobs.",
     "runs": [
       {
-        "stage": "train_v5",
+        "stage": "train_v7",
         "mode": "train",
         "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_three_target_5k_20261026_v1.json",
         "config_sha256": "63717260c4ab31983137aeac2241331943d37645fcbe9dfd7e35a612f99de023",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v7",
         "variant": "three_query",
         "expected_supervised_frames": 59416
       },
       {
-        "stage": "train_v6",
+        "stage": "train_v8",
         "mode": "train",
         "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_fraction_target_5k_20261026_v1.json",
         "config_sha256": "bc6b85480be764edb701d0d6decae004f152f7f557e575328a860967929bda4b",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v6",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v8",
         "variant": "fraction_query",
         "expected_supervised_frames": 45936
       }
@@ -114,7 +114,19 @@
       "status": "offline_tests_passed_live_not_started",
       "owned_by": "primary",
       "extra_agents": 0
-    }
+    },
+    "code_commit": "6b55970e4d34abc376e6b0d18163b5937c2f377a",
+    "failed_admissions": [
+      {
+        "stages": [
+          "train_v5",
+          "train_v6"
+        ],
+        "reason": "Missing code_commit metadata; launcher rejected both before any model/optimizer work.",
+        "updates": 0,
+        "outputs_overwritten": false
+      }
+    ]
   },
   "architecture_contract": {
     "input": "Same complete2..24-frame input stream and normalization.",
@@ -145,5 +157,5 @@
       "accepted_terminal_receipt_sha256": "95475fcac5d4156f714e1b4c2df41bf0ab825ab38c229382f3a93398d7196e23"
     }
   },
-  "next_required_result": "Launch sequential train_v5/three_query and train_v6/fraction_query on preserved allocation130494177; observe first3 formal updates, then fixed20k metrics against retained1/2/all controls."
+  "next_required_result": "Launch sequential train_v7/three_query and train_v8/fraction_query on preserved allocation130494177; observe first3 formal updates, then fixed20k metrics against retained1/2/all controls."
 }

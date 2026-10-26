@@ -1,7 +1,11 @@
 # Three-Frame and Random-Fraction Supervision
 
 User authorized both follow-up arms on2026-10-26. Implementation and66 focused
-CPU tests passed; formal train_v5/train_v6 are approved, actual startup pending.
+CPU tests passed; formal train_v7/train_v8 are approved, actual startup pending.
+The earlier train_v5/train_v6 launchers rejected missing code_commit metadata
+before creating any training outputs or parameter updates. Their failure logs
+remain retained. The metadata is corrected; the monitor now reports pre-worker
+launcher failures immediately instead of treating absent training files as pending.
 
 ## Fixed Comparison
 

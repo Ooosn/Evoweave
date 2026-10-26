@@ -12,15 +12,83 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/scripts'))
-from reference_xyz_protocol import SCOPE, ENTRYPOINT, select_cohort, validate_config
+from reference_xyz_protocol import SCOPE, ENTRYPOINT, select_cohort, validate_config, sha256
 from reference_xyz_runtime import pack, row_metrics, evaluate
-from reference_xyz_runtime import generate_reference
+from reference_xyz_runtime import generate_reference, compose_prediction, load_reused_cache, forward_head
 from rigweave.dynamic_rig.reference_skeleton_xyz import ReferenceSkeletonXYZ, ReferenceXYZConfig
 import virtual_pair_guard as guard
 import test_virtual_pair_scheduler as scheduler_tests
 
 
 class ReferenceRuntimeTest(unittest.TestCase):
+    def test_residual_composition_preserves_reference_padding_and_gradients(self):
+        xyz = torch.randn(2, 3, 3)
+        reference = torch.tensor([0, 2])
+        mask = torch.tensor([[True, True, False], [True, True, True]])
+        raw = xyz[:, None].expand(-1, 3, -1, -1).clone().requires_grad_()
+        rigid = torch.randn_like(raw, requires_grad=True)
+        actual = compose_prediction(raw, xyz, rigid, mask, reference, 'local_rigid')
+        self.assertTrue(torch.equal(actual[0, 1, :2], rigid[0, 1, :2]))
+        self.assertTrue(torch.equal(actual[1, 2], xyz[1]))
+        self.assertTrue(torch.equal(actual[0, 0, :2], xyz[0, :2]))
+        self.assertEqual(actual[0, :, 2].abs().sum().item(), 0.)
+        actual.sum().backward()
+        self.assertIsNone(rigid.grad)
+        self.assertEqual(raw.grad[0, 1, :2].sum().item(), 6.)
+        self.assertEqual(raw.grad[0, 0].abs().sum().item(), 0.)
+        self.assertIs(compose_prediction(raw, xyz, None, mask, reference, 'copy'), raw)
+
+    def test_reused_cache_checks_bindings_coverage_hashes_and_heldout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / 'new'
+            output.mkdir()
+            (root / 'cache_rank_0').mkdir()
+            selection = {split: [{'asset_id': split, 'path': '/' + split, 'joint_count': 2}]
+                         for split in ('train', 'valid')}
+            (root / 'selection.json').write_text(json.dumps(selection))
+            binding = {'code_commit': 'old', 'config_sha256': 'old-config',
+                       'backbone_checkpoint': {'sha256': 'weights'}, 'backbone_configuration': {'sha256': 'recipe'}}
+            rows = []
+            for split in ('train', 'valid'):
+                path = root / 'cache_rank_0' / f'{split}_000.pt'
+                record = {'asset_id': split, 'features': torch.randn(3, 8, 8).bfloat16(),
+                    'points': torch.randn(3, 8, 3), 'normals': torch.randn(3, 8, 3),
+                    'targets': torch.randn(3, 2, 3), 'parents': torch.tensor([-1, 0]),
+                    'diagonal': torch.ones(3), 'selected_frames': torch.tensor([1, 2, 3]),
+                    'normalization_center': torch.zeros(3), 'normalization_scale': torch.ones(1),
+                    'heldout_raw_ids': [9], 'predicted_references': {0: {'success': False}}, 'source_binding': binding}
+                torch.save(record, path)
+                rows.append({'path': str(path), 'sha256': sha256(path), 'split': split,
+                             'asset_id': split, 'frames': [1, 2, 3], 'joints': 2})
+            manifest = {'complete': True, 'records': rows, **binding}
+            manifest_path = root / 'cache_manifest_rank_0.json'
+            manifest_path.write_text(json.dumps(manifest))
+            config = {'pilot': {'frames': 3, 'train_assets': 1, 'valid_assets': 1, 'evaluation_reference_slots': [0]},
+                'architecture': {'input_dim': 8, 'max_joints': 512}, '_config_sha256': 'new-config',
+                'backbone': {'checkpoint': binding['backbone_checkpoint'], 'config': binding['backbone_configuration']},
+                'reuse_cache': {'root': str(root), 'code_commit': 'old', 'config_sha256': 'old-config',
+                    'selection_sha256': sha256(root / 'selection.json'), 'manifest_sha256': [sha256(manifest_path)]}}
+            caches, selected, initial = load_reused_cache(config, output, 'new', 0, 1)
+            self.assertEqual(selected, selection)
+            self.assertEqual(caches['valid'][0]['asset_id'], 'valid')
+            self.assertTrue(initial['backbone_not_reloaded'])
+            self.assertTrue(json.loads((output / manifest_path.name).read_text())['read_only_reuse'])
+            bad = deepcopy(config)
+            bad['reuse_cache']['code_commit'] = 'other'
+            with self.assertRaisesRegex(ValueError, 'binding'):
+                load_reused_cache(bad, output, 'new', 0, 1)
+            valid_path = Path(rows[-1]['path'])
+            record['heldout_raw_ids'] = [2]
+            torch.save(record, valid_path)
+            with self.assertRaisesRegex(ValueError, 'digest'):
+                load_reused_cache(config, output, 'new', 0, 1)
+            rows[-1]['sha256'] = sha256(valid_path)
+            manifest_path.write_text(json.dumps(manifest))
+            config['reuse_cache']['manifest_sha256'][0] = sha256(manifest_path)
+            with self.assertRaisesRegex(ValueError, 'geometry contract'):
+                load_reused_cache(config, output, 'new', 0, 1)
+
     def test_complete_evaluation_has_separate_oracle_and_failed_predicted_views(self):
         torch.set_num_threads(1)
         torch.manual_seed(12)
@@ -45,6 +113,15 @@ class ReferenceRuntimeTest(unittest.TestCase):
             saved = json.loads((Path(directory) / 'evaluation_0000_rank_0.json').read_text())
             self.assertEqual(len(saved), 36)
             self.assertTrue(all(r['reference_slot'] != r['target_slot'] for r in saved))
+            config['pilot']['output_baseline'] = 'local_rigid'
+            groups = evaluate(model, {'train': [row], 'valid': [row]}, config,
+                              torch.device('cpu'), 0, 1, 0, Path(directory))
+            self.assertEqual(groups['valid/GT/all/learned']['normalized_mpjpe'], groups['valid/GT/all/local_rigid']['normalized_mpjpe'])
+            self.assertEqual(groups['valid/predicted/all/learned']['normalized_j2j'], groups['valid/predicted/all/local_rigid']['normalized_j2j'])
+            packed = pack([row], 'cpu')
+            prediction = forward_head(model, packed, torch.tensor([0]), config)
+            prediction.sum().backward()
+            self.assertGreater(model.output[-1].weight.grad.abs().sum().item(), 0.)
 
     def test_natural_reference_generation_and_invalid_tree(self):
         tokenizer = SimpleNamespace(bos=100, eos=101, cls_name_to_token=lambda name: 102,
@@ -69,6 +146,11 @@ class ReferenceRuntimeTest(unittest.TestCase):
     def test_exact_config_and_bounded_contract(self):
         config = json.loads((ROOT / 'model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json').read_text())
         validate_config(config)
+        residual = json.loads((ROOT / 'model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json').read_text())
+        validate_config(residual)
+        residual['reuse_cache']['code_commit'] = 'wrong-cache'
+        with self.assertRaisesRegex(ValueError, 'exact completed frozen cache'):
+            validate_config(residual)
         for key, value in (('updates', 10000), ('backbone_mode', 'trainable'), ('coordinate_clipping', True)):
             bad = deepcopy(config)
             bad['pilot'][key] = value

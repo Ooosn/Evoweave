@@ -7,6 +7,14 @@ from fit_cohort_selection import _joint_count
 
 SCOPE = 'reference_skeleton_xyz_20261027_v1'
 ENTRYPOINT = 'model_training/rigweave/scripts/train_reference_xyz.py'
+REUSE_CACHE = {
+    'root': '/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v12',
+    'code_commit': 'f124566541a03c970a2f7ac9edd2063c1690fc99',
+    'config_sha256': '029729e65f6b60dbc70f89814a0bac4bdb910e82d3f36370c5d89ebc0db4830c',
+    'selection_sha256': 'c83e2181d3e0a9effc97c905890b5495089e3c40e7f26b805f2d978816c47f71',
+    'manifest_sha256': ['712fd2c7bbfc9851f6b23911f33131cc192adad039b8e13d36803ed9737bd988',
+                        'c333eeda109046ef2afa20b18670c9575d92fbebb81373ef844af5ce07d81c31'],
+}
 
 
 def sha256(path):
@@ -38,6 +46,14 @@ def validate_config(config):
             raise ValueError(f'pilot contract differs: {key}')
     if pilot.get('learning_rate') != .0003 or pilot.get('weight_decay') != .0001:
         raise ValueError('unreviewed head optimizer')
+    baseline = pilot.get('output_baseline', 'copy')
+    if baseline not in ('copy', 'local_rigid'):
+        raise ValueError('unreviewed output baseline')
+    if baseline == 'local_rigid':
+        if config.get('reuse_cache') != REUSE_CACHE:
+            raise ValueError('residual pilot must reuse the exact completed frozen cache')
+    elif 'reuse_cache' in config:
+        raise ValueError('the original copy pilot must retain its extraction path')
     if config['backbone']['checkpoint']['sha256'] != '9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888':
         raise ValueError('pilot must use the retained random20-40 checkpoint')
     if config['backbone']['config']['sha256'] != '53c03ec4052abc2f811a00641b7ceaaf1a625250de7a89fbecde294580d98324':

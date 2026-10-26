@@ -109,4 +109,51 @@ It tested171/126joints,8poses,batch2on each rank, with all head gradient groups
 present and the donor frozen. Peak allocated tensors were4.23GB/rank, reserved
 4.45/4.43GB; observed total process RAM peaked6.18GB. The capacity head was discarded.
 Result SHA256:6ac00c49117f97db44f1199e4acdd12f869a6427afa44901548cb15554108376.
-The800-update pilot is now released; it starts a fresh head on the same donor.
+## Completed Copy-Initialized Pilot
+
+train_v11 stopped before head updates because of a natural-reference helper
+import error. The corrected import and complete GT/predicted evaluation path
+have CPU regression coverage. train_v12 completed800updates at2026-10-26T21:21:58Z,
+with clean supervisor exit0 and both GPUs idle. Producer:f124566541a03c970a2f7ac9edd2063c1690fc99.
+Result SHA256:b59a89eca06f5cec390d6848c693e1982bc1f94120d823b490d131c72f20c5b8.
+
+GT-reference normalized MPJPE (fraction of target mesh bbox diagonal):
+
+| Split | Copy | Local rigid | Learned |
+| --- | ---: | ---: | ---: |
+| Train64 |0.08036176|0.00475108|0.05789605|
+| Valid32 |0.09860527|0.00523756|0.07820311|
+
+Valid learned-minus-copy paired-asset difference:-0.02040215, stratified bootstrap
+95%CI[-0.03129108,-0.01079889]. Learned-minus-rigid:+0.07296555,
+CI[0.05453073,0.09353446]. The learned head is not a competitive tracker here;
+this does not establish why or rule out jointly trained features.
+Natural predicted-reference edge F1:copy0.36259814,rigid0.61139654,learned0.36433987.
+Four of64references failed, contributing28of448target views with F1zero.
+Successful-only normalized nearest-joint distance:0.08013879/0.02351093/0.06767666.
+Do not compare this balanced32asset/oracle diagnostic directly with the earlier
+128asset density benchmark. The key geometric assumption is known surface-anchor
+correspondence between these posed meshes, not arbitrary unrelated meshes.
+
+## Matched Rigid-Residual Pilot
+
+Exact recipe:reference_skeleton_xyz_rigid_residual_20261027_v1.json.
+Keep architecture, donor,64/32assets,8poses,head seed,800updates,optimizer,
+per-rank asset/reference sequence and evaluation unchanged. Change only the
+coordinate baseline:local-rigid XYZ plus the learned offset from the original
+head. Zero output initialization is therefore exactly the rigid baseline on
+every scored pose. The provided reference frame remains exact and excluded;
+padding is zero; no gradient or GT-target input enters the geometric baseline.
+
+Read the completed train_v12 caches in place on verified NVMe. Pin selection,
+both rank manifests, every payload digest, producer/config/donor bindings,
+rank-local order, shapes and disjoint reserved raw-frame IDs. Do not rebuild
+the encoder or regenerate predicted references; do not copy small files to HDD.
+Each output manifest retains the original producer plus an explicit reuse
+binding. New head checkpoints use a separate frozen_rigid_residual_v1 root.
+
+37 focused CPU tests pass, including zero-residual identity, reference/padding
+gradients, actual cache loading/tamper rejection, both evaluation variants and
+existing scheduler guards. capacity_v14 must pass3updates/rank on each rank's
+largest cached skeleton and clean resource completion before train_v13 is
+released. This is a bounded follow-up, not a full second encoder or100k run.

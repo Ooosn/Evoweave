@@ -148,21 +148,112 @@ def pack(records, device):
             'targets': targets, 'parents': parents, 'mask': mask}
 
 
-def forward_head(head, packed, reference):
-    return head(packed['features'], packed['points'], packed['normals'],
-                reference_slots(packed['targets'], reference), packed['parents'], packed['mask'], reference)
+def compose_prediction(raw, xyz, rigid, mask, reference, baseline):
+    if baseline == 'copy':
+        return raw
+    if baseline != 'local_rigid' or rigid is None or rigid.shape != raw.shape:
+        raise ValueError('residual prediction requires a matching local-rigid baseline')
+    prediction = rigid.detach().float() + (raw.float() - xyz[:, None].float())
+    is_reference = torch.arange(raw.shape[1], device=raw.device)[None] == reference[:, None]
+    prediction = torch.where(is_reference[:, :, None, None], xyz[:, None].float(), prediction)
+    return prediction.masked_fill(~mask[:, None, :, None], 0.)
+
+
+def forward_head(head, packed, reference, config):
+    xyz = reference_slots(packed['targets'], reference)
+    raw = head(packed['features'], packed['points'], packed['normals'],
+               xyz, packed['parents'], packed['mask'], reference)
+    baseline = config['pilot'].get('output_baseline', 'copy')
+    rigid = None
+    if baseline == 'local_rigid':
+        rigid, _ = local_rigid_transfer(xyz, packed['points'], reference,
+            neighbors=config['pilot']['local_rigid_neighbors'])
+    return compose_prediction(raw, xyz, rigid, packed['mask'], reference, baseline)
+
+
+def load_reused_cache(config, output, source, rank, world):
+    spec = config['reuse_cache']
+    root = Path(spec['root']).resolve(strict=True)
+    selection_path = root / 'selection.json'
+    if sha256(selection_path) != spec['selection_sha256']:
+        raise ValueError('reused cache selection digest changed')
+    selection = json.loads(selection_path.read_text())
+    manifest_path = root / f'cache_manifest_rank_{rank}.json'
+    if sha256(manifest_path) != spec['manifest_sha256'][rank]:
+        raise ValueError('reused cache manifest digest changed')
+    manifest = json.loads(manifest_path.read_text())
+    binding = {'code_commit': spec['code_commit'], 'config_sha256': spec['config_sha256'],
+        'backbone_checkpoint': config['backbone']['checkpoint'], 'backbone_configuration': config['backbone']['config']}
+    if not manifest['complete'] or any(manifest.get(k) != v for k, v in binding.items()):
+        raise ValueError('reused cache producer binding differs')
+    expected = [(split, i, row) for split in ('train', 'valid')
+                for i, row in enumerate(selection[split][rank::world])]
+    if len(expected) != len(manifest['records']):
+        raise ValueError('reused cache coverage differs')
+    all_ids, all_paths = set(), set()
+    for split in ('train', 'valid'):
+        if len(selection[split]) != config['pilot'][f'{split}_assets']:
+            raise ValueError('reused cache cohort count differs')
+        for item in selection[split]:
+            if item['asset_id'] in all_ids or item['path'] in all_paths:
+                raise ValueError('reused cache asset leakage')
+            all_ids.add(item['asset_id'])
+            all_paths.add(item['path'])
+    caches = {'train': [], 'valid': []}
+    for meta, (split, index, selected) in zip(manifest['records'], expected):
+        path = Path(meta['path']).resolve(strict=True)
+        wanted = root / f'cache_rank_{rank}' / f'{split}_{index:03d}.pt'
+        if path != wanted or not path.is_relative_to(root) or sha256(path) != meta['sha256']:
+            raise ValueError('reused cache payload path or digest changed')
+        record = torch.load(path, map_location='cpu', weights_only=False)
+        frames, joints = config['pilot']['frames'], selected['joint_count']
+        features, points = record['features'], record['points']
+        if (record['source_binding'] != binding or record['asset_id'] != selected['asset_id']
+                or meta['asset_id'] != selected['asset_id'] or meta['split'] != split
+                or meta['joints'] != joints or record['selected_frames'].tolist() != meta['frames']
+                or len(meta['frames']) != frames or len(set(meta['frames'])) != frames
+                or set(meta['frames']) & set(record['heldout_raw_ids'])
+                or features.ndim != 3 or features.shape[0] != frames
+                or features.shape[-1] != config['architecture']['input_dim']
+                or features.dtype != torch.bfloat16 or features.requires_grad
+                or points.shape != (*features.shape[:2], 3) or record['normals'].shape != points.shape
+                or record['targets'].shape != (frames, joints, 3) or record['parents'].shape != (joints,)
+                or record['diagonal'].shape != (frames,) or not bool((record['diagonal'] > 0).all())):
+            raise ValueError('reused cache tensor/geometry contract differs')
+        for key in ('points', 'normals', 'targets', 'diagonal', 'normalization_center', 'normalization_scale'):
+            if not bool(torch.isfinite(record[key]).all()):
+                raise ValueError('reused cache contains nonfinite geometry')
+        validate_reference(record['targets'][0:1], record['parents'][None],
+                           torch.ones(1, joints, dtype=torch.bool), max_joints=config['architecture']['max_joints'])
+        if split == 'valid' and set(record['predicted_references']) != set(config['pilot']['evaluation_reference_slots']):
+            raise ValueError('reused natural reference coverage differs')
+        caches[split].append(record)
+    initial = {'actual_initialization': config['backbone']['checkpoint'], 'backbone_frozen': True,
+        'backbone_not_reloaded': True, 'frozen_cache_reuse': spec, 'all_local_payload_digests_verified': True}
+    write_json(output / f'cache_manifest_rank_{rank}.json', {**manifest, 'reused_by': source_binding(config, source),
+        'source_manifest_sha256': spec['manifest_sha256'][rank], 'read_only_reuse': True})
+    if rank == 0:
+        write_json(output / 'selection.json', selection)
+        write_json(output / 'initialization.json', initial)
+    return caches, selection, initial
 
 
 def capacity(config, output, source, device, rank, world):
-    backbone, tokenizer, base_config, initial = load_frozen_backbone(config, device, rank)
-    selected, selection = cohort(config, base_config)
     # The largest-joint pilot asset bounds this readout's J dimension. Each rank
     # uses its complete eight-pose geometry, with the inherited dense sampler.
-    combined = list(zip(selected['train'], selection['train'])) + list(zip(selected['valid'], selection['valid']))
-    ordered = sorted(combined, key=lambda x: x[1]['joint_count'], reverse=True)
-    row, meta = ordered[rank]
-    dataset = fixed_dataset([row], base_config, config['pilot']['frames'], mode='train')
-    record = extract_asset(backbone, tokenizer, dataset[0], base_config, config, predicted_references=False)
+    backbone = None
+    if 'reuse_cache' in config:
+        caches, selection, initial = load_reused_cache(config, output, source, rank, world)
+        record = max(caches['train'] + caches['valid'], key=lambda r: r['parents'].numel())
+        row, meta = record, {'joint_count': record['parents'].numel()}
+    else:
+        backbone, tokenizer, base_config, initial = load_frozen_backbone(config, device, rank)
+        selected, selection = cohort(config, base_config)
+        combined = list(zip(selected['train'], selection['train'])) + list(zip(selected['valid'], selection['valid']))
+        ordered = sorted(combined, key=lambda x: x[1]['joint_count'], reverse=True)
+        row, meta = ordered[rank]
+        dataset = fixed_dataset([row], base_config, config['pilot']['frames'], mode='train')
+        record = extract_asset(backbone, tokenizer, dataset[0], base_config, config, predicted_references=False)
     packed = pack([record] * config['pilot']['batch_per_rank'], device)
     torch.manual_seed(config['pilot']['seed'])
     head = ReferenceSkeletonXYZ(ReferenceXYZConfig(**config['architecture'])).to(device)
@@ -173,7 +264,7 @@ def capacity(config, output, source, device, rank, world):
     for _ in range(3):
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast('cuda', dtype=torch.bfloat16):
-            prediction = forward_head(wrapped, packed, reference)
+            prediction = forward_head(wrapped, packed, reference, config)
             loss = localization_loss(prediction, packed['targets'], packed['mask'], reference).mean()
         if not bool(torch.isfinite(loss)):
             raise ValueError('nonfinite capacity loss')
@@ -184,7 +275,7 @@ def capacity(config, output, source, device, rank, world):
     gradients = {name: any(p.grad is not None and bool(p.grad.abs().sum() > 0) for p in module.parameters())
                  for name, module in (('reference', head.reference_blocks), ('target', head.target_blocks),
                                       ('geometry', head.target_geometry), ('output', head.output))}
-    if not all(gradients.values()) or any(p.grad is not None for p in backbone.parameters()):
+    if not all(gradients.values()) or (backbone is not None and any(p.grad is not None for p in backbone.parameters())):
         raise ValueError('readout gradient or frozen-backbone contract failed')
     record = {'rank': rank, 'asset_id': row['asset_id'], 'joints': meta['joint_count'],
               'frames': config['pilot']['frames'], 'batch': config['pilot']['batch_per_rank'],
@@ -241,6 +332,8 @@ def evaluate(head, caches, config, device, rank, world, step, output):
                         predicted = head(packed['features'], packed['points'], packed['normals'], xyz, parents, mask, reference)
                     rigid, degenerate = local_rigid_transfer(xyz, packed['points'], reference,
                         neighbors=config['pilot']['local_rigid_neighbors'])
+                    predicted = compose_prediction(predicted, xyz, rigid, mask, reference,
+                        config['pilot'].get('output_baseline', 'copy'))
                     methods = {'learned': predicted[0], 'copy': xyz[0, None].expand(config['pilot']['frames'], -1, -1),
                                'local_rigid': rigid[0]}
                     if step == 800 and record is records[0]:
@@ -284,6 +377,7 @@ def evaluate(head, caches, config, device, rank, world, step, output):
             'reference_pose_excluded': True, 'position_unit': 'fraction of target mesh bounding-box diagonal',
             'pck_threshold': .05, 'selection_distribution': 'equal low<=20,mid21..51,exact52,high>=53 strata',
             'frozen_readout_pilot_not_joint_training': True,
+            'output_baseline': config['pilot'].get('output_baseline', 'copy'),
             'row_artifacts': [{'path': str(output / f'evaluation_{step:04d}_rank_{r}.json'),
                                'sha256': sha256(output / f'evaluation_{step:04d}_rank_{r}.json')} for r in range(world)]})
         print(json.dumps({'event': 'evaluation', 'updates': step,
@@ -320,8 +414,7 @@ def save_head(head, optimizer, generator, config, selection, step, source, outpu
         **source_binding(config, source)})
 
 
-def train(config, output, source, device, rank, world):
-    validate_config(config)
+def extract_caches(config, output, source, device, rank, world):
     backbone, tokenizer, base_config, initial = load_frozen_backbone(config, device, rank)
     selected, selection = cohort(config, base_config)
     if rank == 0:
@@ -352,6 +445,15 @@ def train(config, output, source, device, rank, world):
     del backbone, tokenizer
     gc.collect()
     torch.cuda.empty_cache()
+    return caches, selection, initial
+
+
+def train(config, output, source, device, rank, world):
+    validate_config(config)
+    if 'reuse_cache' in config:
+        caches, selection, initial = load_reused_cache(config, output, source, rank, world)
+    else:
+        caches, selection, initial = extract_caches(config, output, source, device, rank, world)
     torch.manual_seed(config['pilot']['seed'])
     head = ReferenceSkeletonXYZ(ReferenceXYZConfig(**config['architecture'])).to(device)
     wrapped = DistributedDataParallel(head, device_ids=[device.index])
@@ -374,7 +476,7 @@ def train(config, output, source, device, rank, world):
             group['lr'] = lr
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast('cuda', dtype=torch.bfloat16):
-            prediction = forward_head(wrapped, packed, reference)
+            prediction = forward_head(wrapped, packed, reference, config)
             loss = localization_loss(prediction, packed['targets'], packed['mask'], reference).mean()
         if not bool(torch.isfinite(loss)):
             raise ValueError('nonfinite pilot loss')
@@ -397,7 +499,8 @@ def train(config, output, source, device, rank, world):
     result = {'complete': True, 'passed': True, 'mode': 'train', 'updates': steps,
               'asset_visits': steps * config['pilot']['batch_per_rank'] * world,
               'known_reference_target_visits': steps * config['pilot']['batch_per_rank'] * world * (config['pilot']['frames'] - 1),
-              'backbone_frozen': True, 'quality_accepted': False, **source_binding(config, source)}
+              'backbone_frozen': True, 'output_baseline': config['pilot'].get('output_baseline', 'copy'),
+              'quality_accepted': False, **source_binding(config, source)}
     if rank == 0:
         durable = Path(config['artifacts']['durable_root'])
         for path in output.glob('*.json*'):

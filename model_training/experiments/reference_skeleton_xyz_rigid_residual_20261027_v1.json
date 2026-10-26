@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "family": "reference_skeleton_xyz_20261027_v1",
+  "runtime": {
+    "repo": "/work/wangyy/virtual_query_matched_5k_20261025/code",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 130494177,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [3, 4],
+    "gpu_uuids": ["GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7", "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"],
+    "output_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs",
+    "world_size": 2,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "cpu_affinity": [6, 12, 13, 15, 17, 18, 19, 20, 74, 79, 82, 87, 88, 95, 97, 108],
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.85,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "keeper_pid": 1098441,
+    "required_h_rt_seconds": 172800,
+    "stop_before_utc": "2026-10-27T09:55:00Z"
+  },
+  "backbone": {
+    "config": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_fraction20_40_min2_5k_20261026_v1.json",
+      "sha256": "53c03ec4052abc2f811a00641b7ceaaf1a625250de7a89fbecde294580d98324"
+    },
+    "checkpoint": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
+    }
+  },
+  "architecture": {"input_dim": 1024, "dim": 256, "heads": 8, "reference_depth": 2, "target_depth": 2, "max_joints": 512},
+  "pilot": {
+    "train_assets": 64, "valid_assets": 32, "frames": 8, "updates": 800,
+    "batch_per_rank": 2, "seed": 20261027, "reference_policy": "uniform_per_visit",
+    "backbone_mode": "frozen", "loss": "continuous_L1_nonreference_mean_per_asset",
+    "evaluation_reference_slots": [0, 4], "local_rigid_neighbors": 32,
+    "coordinate_clipping": false, "learning_rate": 0.0003, "weight_decay": 0.0001,
+    "output_baseline": "local_rigid"
+  },
+  "reuse_cache": {
+    "root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v12",
+    "code_commit": "f124566541a03c970a2f7ac9edd2063c1690fc99",
+    "config_sha256": "029729e65f6b60dbc70f89814a0bac4bdb910e82d3f36370c5d89ebc0db4830c",
+    "selection_sha256": "c83e2181d3e0a9effc97c905890b5495089e3c40e7f26b805f2d978816c47f71",
+    "manifest_sha256": ["712fd2c7bbfc9851f6b23911f33131cc192adad039b8e13d36803ed9737bd988", "c333eeda109046ef2afa20b18670c9575d92fbebb81373ef844af5ce07d81c31"]
+  },
+  "artifacts": {
+    "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/frozen_rigid_residual_v1",
+    "cache_policy": "Read-only SHA-verified reuse of train_v12 frozen features on verified NVMe; preserve source caches and donor checkpoints."
+  }
+}

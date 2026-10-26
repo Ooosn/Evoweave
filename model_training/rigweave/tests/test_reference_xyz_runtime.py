@@ -3,6 +3,7 @@ from contextlib import nullcontext
 import json
 from pathlib import Path
 import sys
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -12,13 +13,39 @@ import torch
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/scripts'))
 from reference_xyz_protocol import SCOPE, ENTRYPOINT, select_cohort, validate_config
-from reference_xyz_runtime import pack, row_metrics
+from reference_xyz_runtime import pack, row_metrics, evaluate
 from reference_xyz_runtime import generate_reference
+from rigweave.dynamic_rig.reference_skeleton_xyz import ReferenceSkeletonXYZ, ReferenceXYZConfig
 import virtual_pair_guard as guard
 import test_virtual_pair_scheduler as scheduler_tests
 
 
 class ReferenceRuntimeTest(unittest.TestCase):
+    def test_complete_evaluation_has_separate_oracle_and_failed_predicted_views(self):
+        torch.set_num_threads(1)
+        torch.manual_seed(12)
+        model = ReferenceSkeletonXYZ(ReferenceXYZConfig(input_dim=8, dim=32, heads=4, reference_depth=1, target_depth=1))
+        row = {'asset_id': 'sample', 'features': torch.randn(3, 8, 8), 'points': torch.randn(3, 8, 3),
+               'normals': torch.randn(3, 8, 3), 'targets': torch.randn(3, 2, 3),
+               'parents': torch.tensor([-1, 0]), 'diagonal': torch.full((3,), 3.)}
+        row['predicted_references'] = {
+            0: {'success': True, 'xyz': row['targets'][0], 'parents': row['parents']},
+            1: {'success': False, 'status': 'max_tokens'},
+        }
+        config = {'pilot': {'evaluation_reference_slots': [0, 1], 'frames': 3, 'local_rigid_neighbors': 32}}
+        with tempfile.TemporaryDirectory() as directory, \
+                patch('reference_xyz_runtime.torch.autocast', return_value=nullcontext()), \
+                patch('reference_xyz_runtime.gather', side_effect=lambda value, world: [value]):
+            groups = evaluate(model, {'train': [row], 'valid': [row]}, config,
+                              torch.device('cpu'), 0, 1, 0, Path(directory))
+            self.assertEqual(groups['valid/GT/all/learned']['views'], 4)
+            self.assertEqual(groups['valid/predicted/all/learned']['failed_reference_views'], 2)
+            self.assertEqual(groups['valid/GT/all/learned']['normalized_mpjpe'], groups['valid/GT/all/copy']['normalized_mpjpe'])
+            self.assertIsNone(groups['valid/predicted/all/learned']['normalized_mpjpe'])
+            saved = json.loads((Path(directory) / 'evaluation_0000_rank_0.json').read_text())
+            self.assertEqual(len(saved), 36)
+            self.assertTrue(all(r['reference_slot'] != r['target_slot'] for r in saved))
+
     def test_natural_reference_generation_and_invalid_tree(self):
         tokenizer = SimpleNamespace(bos=100, eos=101, cls_name_to_token=lambda name: 102,
             detokenize=lambda tokens: SimpleNamespace(joints=[[0., 0., 0.], [0., .5, 0.]], parents=[None, 0]))

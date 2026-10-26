@@ -1,7 +1,9 @@
 from copy import deepcopy
+from contextlib import nullcontext
 import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -11,11 +13,32 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/scripts'))
 from reference_xyz_protocol import SCOPE, ENTRYPOINT, select_cohort, validate_config
 from reference_xyz_runtime import pack, row_metrics
+from reference_xyz_runtime import generate_reference
 import virtual_pair_guard as guard
 import test_virtual_pair_scheduler as scheduler_tests
 
 
 class ReferenceRuntimeTest(unittest.TestCase):
+    def test_natural_reference_generation_and_invalid_tree(self):
+        tokenizer = SimpleNamespace(bos=100, eos=101, cls_name_to_token=lambda name: 102,
+            detokenize=lambda tokens: SimpleNamespace(joints=[[0., 0., 0.], [0., .5, 0.]], parents=[None, 0]))
+        calls = []
+        def generate(condition, start, **kwargs):
+            calls.append((condition, start, kwargs))
+            return {'success': True, 'status': 'eos', 'tokens': [100, 102, 101]}
+        model = SimpleNamespace(generate_condition=generate)
+        with patch('reference_xyz_runtime.torch.autocast', return_value=nullcontext()):
+            record = generate_reference(model, tokenizer, torch.zeros(1, 4, 8))
+        self.assertTrue(record['success'])
+        self.assertEqual(record['parents'].tolist(), [-1, 0])
+        self.assertTrue(callable(calls[0][2]['logits_processor']))
+        self.assertEqual(calls[0][1].tolist(), [100, 102])
+        tokenizer.detokenize = lambda tokens: SimpleNamespace(joints=[[0., 0., 0.], [0., .5, 0.]], parents=[None, None])
+        with patch('reference_xyz_runtime.torch.autocast', return_value=nullcontext()):
+            failed = generate_reference(model, tokenizer, torch.zeros(1, 4, 8))
+        self.assertFalse(failed['success'])
+        self.assertEqual(failed['status'], 'invalid_reference_tree')
+
     def test_exact_config_and_bounded_contract(self):
         config = json.loads((ROOT / 'model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json').read_text())
         validate_config(config)

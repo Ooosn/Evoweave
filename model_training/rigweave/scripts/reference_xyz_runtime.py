@@ -81,8 +81,7 @@ def cohort(config, base_config):
 
 @torch.no_grad()
 def generate_reference(model, tokenizer, condition):
-    from probe_virtual_query_xyz import original_xyz_vocabulary_processor
-    from eval_dynamic_rig_generation import _parents_from_output
+    from rigweave.dynamic_rig.virtual_query_xyz import original_xyz_vocabulary_processor
     start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulationxl')], device=condition.device)
     with torch.autocast('cuda', dtype=torch.bfloat16):
         generated = model.generate_condition(condition, start, eos_token=tokenizer.eos, max_new_tokens=2048,
@@ -91,7 +90,8 @@ def generate_reference(model, tokenizer, condition):
     if generated['success']:
         try:
             parsed = tokenizer.detokenize(np.asarray(generated['tokens'], dtype=np.int64))
-            parents = [(-1 if value is None else int(value)) for value in _parents_from_output(parsed)]
+            raw_parents = parsed.parents if getattr(parsed, 'parents', None) is not None else parsed._get_parents()
+            parents = [(-1 if value is None else int(value)) for value in raw_parents]
             xyz = torch.as_tensor(np.asarray(parsed.joints), dtype=torch.float32)
             parent = torch.tensor(parents, dtype=torch.long)[None]
             validate_reference(xyz[None], parent, torch.ones_like(parent, dtype=torch.bool))

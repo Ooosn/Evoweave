@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 from train_legacy_single_target import file_sha256, verify_exception_keeper
-from single_query_protocol import SINGLE_SCOPE
+from single_query_protocol import SINGLE_SCOPE, TWO_SCOPE
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -41,7 +41,7 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
     if op.get('required_entrypoint') != ENTRYPOINT:
         raise RuntimeError('state is not bound to the matched-pair trainer')
@@ -82,7 +82,7 @@ def execution_cpu_binding(config, exception, allowed_cpus):
 
 def scheduler_runtime(config):
     runtime = config['runtime']
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 16), ('world_size', 2)):

@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "state_id": "single_query20k_completed_all_frame_supervision_preferred_20261026",
+  "updated_at": "2026-10-25T21:48:00.789Z",
+  "module": "model_training",
+  "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "Completed matched20k single-target versus all-frame supervision; all-frame quality is higher for this training seed and budget.",
+    "authorization": "User approved starting the discussed next step; run the single-target20k comparison first.",
+    "next_design": "Proposed real reference skeleton plus dense per-frame XYZ supervision; not implemented or launched in this run."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "train",
+    "preflight",
+    "submit",
+    "matched_eval"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130494177,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "cpu_slots": 16,
+    "total_host_memory_bytes": 68719476736,
+    "status": "experiment_complete_payloads_absent_GPUs_idle_at_cleanup",
+    "last_observed_utc": "2026-10-25T21:41:36.183051Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ],
+    "payload_processes_alive": false,
+    "keeper_pid": 1098441,
+    "expiry_utc": "2026-10-26T10:33:29.625Z",
+    "policy": "Retain allocation and all checkpoints. No automatic further experiment, extension, new allocation or release.",
+    "live_check_evidence": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/preparation/inspect_live.sh"
+  },
+  "active_operation": {
+    "label": "real_query_single_target_5k_20261026_v1",
+    "status": "completed_verified_single_target_lower_quality",
+    "operation": "train",
+    "mode": "single_target_vs_retained_all_frame",
+    "complete": true,
+    "completion_scope": "20000 exposures and paired128x8evaluation",
+    "full100k_training_complete": false,
+    "code_commit": "78a9c4c931f095b4b768d4f32acf425261c7dc01",
+    "producer_source": "acb549e438b87229a30de692b06b667fe3b55f33",
+    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
+    "contract": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",
+    "config": "model_training/experiments/real_query_single_target_5k_20261026_v1.json",
+    "config_sha256": "31a68045fa2bacc610142ea7337d78d30b373da4990d8a0cb5ac2334ccc58334",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_tests_passed": 90,
+    "CPU_audit": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v9/result.json",
+      "sha256": "79dd6c5cf0fd5d597290a96df975398ae31235003085c064079f379fbae57e6e",
+      "full_initialization_matches_retained_all_frame": true,
+      "global_input_RNG_unchanged": true
+    },
+    "capacity": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v2/result.json",
+      "sha256": "241d51cf2ab9bba8bf77f68c698a1ce805f880411c1a8ded3905cb730c0d0faf",
+      "cases": 6,
+      "optimizer_updates_per_rank": 12,
+      "max_reserved_bytes": 44639977472,
+      "profile_weights_discarded": true
+    },
+    "counts": {
+      "train_assets": 5000,
+      "complete_passes": 4,
+      "asset_exposures": 20000,
+      "optimizer_updates": 420,
+      "input_frames": 263608,
+      "supervised_frames": 20000,
+      "LR_horizon": 100000
+    },
+    "finished_utc": "2026-10-25T21:40:35.514253Z",
+    "execution_integrity_accepted": true,
+    "paired_comparison_accepted": true,
+    "model_quality_accepted": false,
+    "runs": [],
+    "checkpoint_retention": {
+      "checkpoints": 4,
+      "both_copies_verified": true,
+      "durable_root": "/home/wangyy/evorig/outputs/single_query_20k_20261026",
+      "final_sha256": "23c2ffc659f19a73456bfd8cc236bf8eff6a74f50391ad751a940ec47083ab82",
+      "final_bytes": 8181910586,
+      "verification": "Producer SHA plus independent presence/size/receipt checks; no independent weight-payload rehash."
+    },
+    "monitor": {
+      "status": "completed_verified_exit0",
+      "directory": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/monitor",
+      "receipt_sha256": "95475fcac5d4156f714e1b4c2df41bf0ab825ab38c229382f3a93398d7196e23"
+    }
+  },
+  "architecture_contract": {
+    "main_decoder": "Unchanged full legacy UniRig decoder and codec.",
+    "motion_encoder": "Unchanged multi-real-frame temporal attention, all-real roles, FFN and norm; no virtual frame.",
+    "target_policy": "One independently and uniformly selected real frame per asset exposure; full multi-frame encoding preserved.",
+    "auxiliary_loss": 0,
+    "consistency_loss": 0,
+    "new_parameters": 0
+  },
+  "comparison_contract": {
+    "question": "All-frame versus single-frame output supervision, NOT multi-frame input versus single-frame input.",
+    "reference_config": "model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+    "reference_evaluation": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v2/virtual_off/evaluation_020000/summary.json",
+    "reference_evaluation_sha256": "9a06a30846c3bc987598f8de24146ff511cd3098fedc8e6494071b40c456c9b5",
+    "reference_checkpoint_sha256": "338aeeb0fee74d3dea28f2719bfe3eff2e2915fe1d21dd58530610fc93463416",
+    "reference_f1": 0.7110814050960641,
+    "matched": "Common initial state/trainable names, input/target/seed plan, normalization, LR/beta, batch48,20kassets, validation128x8.",
+    "intentional_difference": "Supervised frames263608 versus20000; equal asset exposure is not equal compute.",
+    "selection_seed": 20261026,
+    "selection_algorithm": "sha256_python_random_randrange_v1",
+    "evaluation": "Original continuous GT; failures zero; single-minus-all F1 and asset-bootstrap95%CI, one training seed."
+  },
+  "result": {
+    "complete": true,
+    "metric": "original continuous GT edge F1; failures score zero",
+    "validation_assets": 128,
+    "views_per_asset": 8,
+    "single_query": {
+      "f1": 0.666595437675587,
+      "non52_f1": 0.5873106924323785,
+      "failures": 110,
+      "exact_count_fraction": 0.41796875
+    },
+    "all_frames": {
+      "f1": 0.7110814050960641,
+      "non52_f1": 0.6282007947855305,
+      "failures": 57,
+      "exact_count_fraction": 0.4775390625
+    },
+    "single_minus_all_f1": -0.0444859674204771,
+    "paired_asset_bootstrap_95pct_interval": [
+      -0.06536868009932537,
+      -0.021707428635728866
+    ],
+    "interpretation": "All-frame supervision is better at matched20kasset exposure. Prefer it over deleting other-frame supervision under this recipe.",
+    "limitations": "One training seed,20kpoint on100kLRhorizon,unequal decoder compute. Not proof of anchor bone semantics; original continuous-GT row F1 is producer evidence.",
+    "update_timing_seconds": {
+      "single_query": 6376.567991115036,
+      "all_frames": 9007.6895867188,
+      "method": "Sum of slower-rank update.seconds; excludes initialization/checkpoint/evaluation; separate-run timing, not controlled hardware benchmarking."
+    },
+    "paired_report": {
+      "path": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/monitor/runs/train_v3/paired_evaluation_020000.json",
+      "sha256": "0b9e196d63a7e4bede4cd783bc7733dca4ffba9c3688ab2b9fe20739ba3de39d"
+    },
+    "terminal_verification": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/monitor/receipt.json",
+    "result_sha256": "322755e5ff0209f6ce6487f1c98a002a0ee00a15f67c71791892fe37db33394d",
+    "resources_sha256": "e14781a58d64039d65a8efbd50d87e4adb658f4443cb48698ff22bdea42fa435"
+  },
+  "next_required_result": "Report the completed comparison: retain dense per-frame supervision as the current preference. Shared reference-skeleton/XYZ design remains a proposal, not a tested result. No automatic additional training; keep historical motion-benefit ablations closed.",
+  "history": {
+    "snapshot": "model_training/state/archive/current_before_compaction_20261026.json",
+    "sha256": "6d40d0660c3f2829b68bf5a160ebacd6166eec89324975c87bec089103c60e29",
+    "scope": "Exact full pre-compaction state, including old runs, references, source transitions, admission and full20k outcome.",
+    "execution_authority": false,
+    "policy": "History is evidence only. Keep current.json limited to current permissions, contracts and results; do not append historical runs."
+  },
+  "previous_completed_result": {
+    "label": "virtual_query_matched_5k_20261025_v1",
+    "producer": "7af1e559f2cc75936f5e891ab16a07c0abdebe96",
+    "document": "model_training/docs/VIRTUAL_QUERY_MATCHED_5K_20261025.md",
+    "full_record": "model_training/state/archive/current_before_compaction_20261026.json"
+  }
+}

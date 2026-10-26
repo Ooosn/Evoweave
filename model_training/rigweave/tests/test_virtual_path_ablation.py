@@ -5,6 +5,7 @@ from copy import deepcopy
 from io import BytesIO
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import torch
 from torch import nn
@@ -196,6 +197,137 @@ class VirtualPathAblationTests(unittest.TestCase):
         result = model.generate_condition(condition, torch.tensor([1]), eos_token=2,
                                           max_new_tokens=1)
         self.assertIn(result['status'], {'eos', 'max_tokens'})
+
+
+class VirtualTwoTargetTests(unittest.TestCase):
+    def setUp(self):
+        torch.set_num_threads(1)
+        self.model = VirtualPathAblationRig(make_base().double(), False).train()
+        self.surface = {key: value.double() for key, value in make_surface().items()}
+        self.targets = make_targets()
+        lengths = torch.tensor([[6, 3, 5], [4, 6, 2]])
+        self.targets['main_attention_mask'] = torch.arange(6)[None, None] < lengths[:, :, None]
+        self.targets['main_input_ids'].masked_fill_(~self.targets['main_attention_mask'], 0)
+        self.indices = torch.tensor([[0, 2], [2, 1]], dtype=torch.int64)
+
+    def assert_gradients_equal(self, actual, expected):
+        named = [(name, p) for name, p in self.model.named_parameters() if p.requires_grad]
+        parameters = [p for _, p in named]
+        actual_grad = torch.autograd.grad(actual, parameters, allow_unused=True, retain_graph=True)
+        expected_grad = torch.autograd.grad(expected, parameters, allow_unused=True)
+        for (name, _), actual, expected in zip(named, actual_grad, expected_grad):
+            with self.subTest(parameter=name):
+                if expected is None:
+                    self.assertIsNone(actual)
+                else:
+                    self.assertIsNotNone(actual)
+                    torch.testing.assert_close(actual, expected, atol=1e-8, rtol=1e-6, msg=name)
+
+    def test_two_target_loss_and_gradients_equal_selected_all_frame_entries(self):
+        frames, virtual = self.model.encode(self.surface)
+        all_frames = self.model.forward_encoded(frames, virtual, self.targets, auxiliary_weight=0.)
+        selected = self.model.forward_encoded(frames, virtual, self.targets, auxiliary_weight=0.,
+                                              target_frame_indices=self.indices)
+        rows = torch.arange(2)[:, None]
+        self.assertEqual(selected.keys(), all_frames.keys())
+        for key in ('main_loss_per_frame', 'main_accuracy_per_frame'):
+            self.assertEqual(selected[key].shape, (2, 2))
+            torch.testing.assert_close(selected[key], all_frames[key][rows, self.indices], atol=1e-12, rtol=1e-12)
+        expected_per_asset = all_frames['main_loss_per_frame'][rows, self.indices].mean(dim=1)
+        torch.testing.assert_close(selected['loss_per_asset'], expected_per_asset, atol=1e-12, rtol=1e-12)
+        torch.testing.assert_close(selected['loss'], expected_per_asset.mean(), atol=1e-12, rtol=1e-12)
+        self.assert_gradients_equal(selected['loss'], expected_per_asset.mean())
+
+    def test_uniform_two_target_expectation_matches_all_frame_loss_and_gradients(self):
+        frames, virtual = self.model.encode(self.surface)
+        all_frames = self.model.forward_encoded(frames, virtual, self.targets, auxiliary_weight=0.)
+        losses = [self.model.forward_encoded(frames, virtual, self.targets, auxiliary_weight=0.,
+            target_frame_indices=torch.tensor([pair, pair]))['loss']
+            for pair in ((0, 1), (0, 2), (1, 2))]
+        mean = torch.stack(losses).mean()
+        torch.testing.assert_close(mean, all_frames['loss'], atol=1e-12, rtol=1e-12)
+        self.assert_gradients_equal(mean, all_frames['loss'])
+
+    def test_k2_equals_all_when_t2_and_matrix_k1_equals_legacy_vector(self):
+        surface = {key: value[:, :2] for key, value in self.surface.items()}
+        targets = {key: value[:, :2] for key, value in self.targets.items()}
+        all_frames = self.model(surface, targets, auxiliary_weight=0.)
+        two = self.model(surface, targets, auxiliary_weight=0., target_frame_indices=torch.tensor([[0, 1], [0, 1]]))
+        for key in all_frames:
+            torch.testing.assert_close(two[key], all_frames[key], atol=0, rtol=0, msg=key)
+        indices = torch.tensor([2, 0])
+        vector = self.model(self.surface, self.targets, auxiliary_weight=0., target_frame_indices=indices)
+        matrix = self.model(self.surface, self.targets, auxiliary_weight=0., target_frame_indices=indices[:, None])
+        for key in vector:
+            torch.testing.assert_close(matrix[key], vector[key], atol=0, rtol=0, msg=key)
+
+    def test_only_selected_decoders_run_after_full_encoding(self):
+        targets = deepcopy(self.targets)
+        rows = torch.arange(2)[:, None]
+        unselected = torch.ones(2, 3, dtype=torch.bool)
+        unselected[rows, self.indices] = False
+        targets['main_input_ids'][unselected] = 1000
+        frames, virtual = self.model.encode(self.surface)
+        expected = self.model.conditions(frames, virtual)
+        with patch.object(self.model, '_encode_real_only', wraps=self.model._encode_real_only) as encoder, \
+                patch.object(self.model.surface_tokenizer, 'forward', wraps=self.model.surface_tokenizer.forward) as surface, \
+                patch.object(self.model, 'main_logits', wraps=self.model.main_logits) as decoder:
+            self.model(self.surface, targets, auxiliary_weight=0., target_frame_indices=self.indices)
+        encoder.assert_called_once()
+        self.assertEqual(encoder.call_args.args[0].shape, (2, 3, 3, 8))
+        self.assertEqual(surface.call_count, 3)
+        self.assertEqual(decoder.call_count, 2)
+        for slot, call in enumerate(decoder.call_args_list):
+            condition, ids, mask = call.args
+            choice = self.indices[:, slot]
+            torch.testing.assert_close(condition, expected[torch.arange(2), choice], atol=0, rtol=0)
+            torch.testing.assert_close(ids, self.targets['main_input_ids'][torch.arange(2), choice, :-1])
+            torch.testing.assert_close(mask, self.targets['main_attention_mask'][torch.arange(2), choice, :-1])
+
+    def test_selection_does_not_change_state_configuration_or_trainable_names(self):
+        original = deepcopy(self.model.state_dict())
+        configuration = deepcopy(self.model.configuration())
+        trainable = self.model.trainable_parameter_names
+        buffers = tuple(dict(self.model.named_buffers()))
+        self.model(self.surface, self.targets, auxiliary_weight=0., target_frame_indices=self.indices)['loss'].backward()
+        assert_state_equal(self, original, self.model.state_dict())
+        self.assertEqual(self.model.configuration(), configuration)
+        self.assertEqual(self.model.trainable_parameter_names, trainable)
+        self.assertEqual(tuple(dict(self.model.named_buffers())), buffers)
+        self.assertIsNone(self.model.motion_encoder.virtual_slots.grad)
+        self.assertIsNone(self.model.frame_fusion[0].cross.in_proj_weight.grad)
+        self.assertTrue(all(p.grad is None for p in self.model.auxiliary.parameters()))
+
+    def test_invalid_shape_dtype_bounds_duplicates_and_meta_device_reject_before_decode(self):
+        frames, virtual = self.model.encode(self.surface)
+        invalid = ([[0, 1], [1, 2]], torch.tensor([[0., 1.], [1., 2.]]),
+                   self.indices.to(torch.int32), self.indices.bool(), torch.tensor(0),
+                   torch.tensor([[[0]], [[1]]]), torch.tensor([[0, 1]]),
+                   torch.empty(2, 0, dtype=torch.int64), torch.zeros(2, 4, dtype=torch.int64),
+                   torch.tensor([[0, 0], [1, 2]]), torch.tensor([[0, -1], [1, 2]]),
+                   torch.tensor([[0, 3], [1, 2]]), torch.empty(2, 2, dtype=torch.int64, device='meta'))
+        for indices in invalid:
+            for encoded in (True, False):
+                with self.subTest(indices=indices, encoded=encoded), patch.object(self.model, 'main_logits') as decoder:
+                    with self.assertRaisesRegex(ValueError, 'target_frame_indices'):
+                        if encoded:
+                            self.model.forward_encoded(frames, virtual, self.targets, auxiliary_weight=0.,
+                                                       target_frame_indices=indices)
+                        else:
+                            self.model(self.surface, self.targets, auxiliary_weight=0., target_frame_indices=indices)
+                    decoder.assert_not_called()
+
+    def test_two_target_mode_rejects_virtual_path_and_auxiliary_loss(self):
+        plus = VirtualPathAblationRig(make_base().double(), True)
+        with patch.object(plus.base, 'forward') as forward, patch.object(plus.base, 'forward_encoded') as encoded:
+            with self.assertRaisesRegex(ValueError, 'virtual_enabled=False'):
+                plus(self.surface, self.targets, auxiliary_weight=0., target_frame_indices=self.indices)
+            with self.assertRaisesRegex(ValueError, 'virtual_enabled=False'):
+                plus.forward_encoded(None, None, self.targets, auxiliary_weight=0., target_frame_indices=self.indices)
+            forward.assert_not_called()
+            encoded.assert_not_called()
+        with self.assertRaisesRegex(ValueError, 'exactly 0'):
+            self.model(self.surface, self.targets, auxiliary_weight=.1, target_frame_indices=self.indices)
 
 
 if __name__ == '__main__':

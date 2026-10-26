@@ -16,7 +16,9 @@ sys.path.insert(0, str(ROOT / 'model_training/rigweave/src'))
 sys.path.insert(0, str(ROOT / 'model_training/rigweave/scripts'))
 
 import single_query_protocol as protocol
-from single_query_protocol import SELECTOR, SINGLE_SCOPE, SINGLE_VARIANT, select_target_frames, supervised_count
+from single_query_protocol import (SELECTOR, SINGLE_SCOPE, SINGLE_VARIANT, TWO_SCOPE, TWO_VARIANT,
+                                   TWO_SELECTOR, select_target_frames, select_two_target_frames,
+                                   supervised_count)
 from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
 from virtual_fusion_normal_runtime import MatchedFrameStream
 
@@ -37,12 +39,12 @@ def configured_stream(rank, *, world_size=2, state=None, frame_policy=None):
         state=state)
 
 
-def collect(stream, limit, *, cap=None):
+def collect(stream, limit, *, cap=None, selector=select_target_frames):
     requests, selected = [], []
     while stream.cursor < limit:
         batch = stream.take(min(cap or stream.local_update, limit - stream.cursor))
         requests.extend(batch)
-        selected.extend(select_target_frames(batch, SELECTION_SEED))
+        selected.extend(selector(batch, SELECTION_SEED))
     return requests, selected
 
 
@@ -208,6 +210,129 @@ class SingleQueryProtocolTests(unittest.TestCase):
             for assets, frames in ((1, 0), (3, 2)):
                 with self.assertRaisesRegex(ValueError, 'exceed'):
                     supervised_count(config, assets, frames)
+
+
+class TwoQueryProtocolTests(unittest.TestCase):
+    def test_constants_and_exact_encoding_vectors(self):
+        self.assertEqual(TWO_SCOPE, 'real_query_two_target_5k_20261026_v1')
+        self.assertEqual(TWO_VARIANT, 'two_query')
+        self.assertEqual(TWO_SELECTOR, 'sha256_python_random_sample2_v1')
+        vectors = (
+            (0, FrameSampleRequest(0, 2, 0),
+             'f47bd871977e7a09e8d73dd55279a74975a97b380f7236b9af16e5d5dfa10fe0', [0, 1]),
+            (20261026, FrameSampleRequest(17, 24, 2**64 - 1),
+             'a0c2e0d749f6f795663c6bca47563a5ae61626956be40ec073d6990ab85da02e', [14, 21]),
+            (2**64 - 1, FrameSampleRequest(5000, 17, 2**32 + 7),
+             '6e48038c8611d946089494c4bc83fc94a9a056007448d1fb2cf4be84bb0aea17', [1, 8]),
+        )
+        for seed, request, digest, expected in vectors:
+            with self.subTest(seed=seed, request=request), \
+                    patch.object(protocol.random, 'Random', wraps=random.Random) as rng:
+                self.assertEqual(select_two_target_frames([request], seed), [expected])
+                rng.assert_called_once_with(int(digest, 16))
+
+    def test_full_integer_precision_iterables_and_requests_are_preserved(self):
+        requests = [FrameSampleRequest(np.int64(17), np.int32(24), np.uint64(2**64 - 1)),
+                    FrameSampleRequest(np.int64(5000), np.int32(17), np.uint64(2**32 + 7))]
+        original = deepcopy(requests)
+        expected = select_two_target_frames([FrameSampleRequest(*(int(v) for v in r))
+                                             for r in requests], 2**64 - 1)
+        actual = select_two_target_frames(iter(requests), np.uint64(2**64 - 1))
+        self.assertEqual(actual, expected)
+        self.assertEqual(requests, original)
+        self.assertTrue(all(type(i) is int for pair in actual for i in pair))
+        self.assertEqual(select_two_target_frames([], 0), [])
+        upper = FrameSampleRequest(17, 24, 2**64 - 1)
+        lower = upper._replace(sampling_seed=(2**64 - 1) % 2**32)
+        with patch.object(protocol.random, 'Random', wraps=random.Random) as rng:
+            select_two_target_frames([upper, lower], 0)
+            self.assertNotEqual(rng.call_args_list[0], rng.call_args_list[1])
+
+    def test_invalid_fields_and_frame_bounds_are_rejected(self):
+        request = FrameSampleRequest(0, 2, 0)
+        for value in (True, np.bool_(True), -1, 2.0, np.float64(2), float('nan'), '2', None):
+            with self.subTest(field='seed', value=value), self.assertRaises(ValueError):
+                select_two_target_frames([], value)
+            for field in ('item_index', 'frames', 'sampling_seed'):
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    select_two_target_frames([request._replace(**{field: value})], 0)
+        for frames in (0, 1, 25, 2**64):
+            with self.subTest(frames=frames), self.assertRaisesRegex(ValueError, '2..24'):
+                select_two_target_frames([request._replace(frames=frames)], 0)
+
+    def test_selection_preserves_global_rngs_even_on_invalid_input(self):
+        before = (random.getstate(), np.random.get_state(), torch.get_rng_state().clone())
+        requests = [FrameSampleRequest(i, t, 2**48 + i) for i, t in enumerate(range(2, 25))]
+        expected = select_two_target_frames(requests, SELECTION_SEED)
+        self.assertEqual(select_two_target_frames(requests, SELECTION_SEED), expected)
+        with self.assertRaises(ValueError):
+            select_two_target_frames(requests + [FrameSampleRequest(0, 1, 0)], 0)
+        self.assertEqual(random.getstate(), before[0])
+        after = np.random.get_state()
+        self.assertEqual(after[0], before[1][0])
+        np.testing.assert_array_equal(after[1], before[1][1])
+        self.assertEqual(after[2:], before[1][2:])
+        self.assertTrue(torch.equal(torch.get_rng_state(), before[2]))
+
+    def test_full_20k_input_plan_pairs_and_rank_invariance(self):
+        combined = []
+        for rank in (0, 1):
+            stream, reference = configured_stream(rank), configured_stream(rank)
+            plan = deepcopy(stream.plan_report())
+            while stream.cursor < 10000:
+                requests = stream.take()
+                self.assertEqual(requests, reference.take())
+                state = deepcopy(stream.state_dict())
+                pairs = select_two_target_frames(requests, SELECTION_SEED)
+                self.assertEqual(stream.state_dict(), state)
+                self.assertEqual(stream.state_dict(), reference.state_dict())
+                self.assertEqual(len(pairs), len(requests))
+                for request, pair in zip(requests, pairs):
+                    self.assertEqual(len(pair), 2)
+                    self.assertTrue(0 <= pair[0] < pair[1] < request.frames)
+                combined.extend(zip(requests, pairs))
+            self.assertEqual(stream.plan_report(), plan)
+        combined.sort(key=lambda row: row[0].sampling_seed)
+        self.assertEqual(len(combined), 20000)
+        self.assertEqual(Counter(r.item_index for r, _ in combined), {i: 4 for i in range(5000)})
+        self.assertEqual(sum(r.frames for r, _ in combined), 263608)
+        self.assertEqual(sum(len(pair) for _, pair in combined), 40000)
+        expected = collect(configured_stream(0, world_size=1), 20000, selector=select_two_target_frames)
+        self.assertEqual(combined, list(zip(*expected)))
+
+    def test_full_20k_replay_rebatching_and_reordering(self):
+        for rank in (0, 1):
+            stream = configured_stream(rank)
+            expected = collect(stream, 10000, selector=select_two_target_frames)
+            interrupted = configured_stream(rank)
+            prefix = collect(interrupted, 3731, cap=7, selector=select_two_target_frames)
+            saved = deepcopy(interrupted.state_dict())
+            restored = configured_stream(rank, state=saved)
+            suffix = collect(restored, 10000, cap=1, selector=select_two_target_frames)
+            self.assertEqual((prefix[0] + suffix[0], prefix[1] + suffix[1]), expected)
+            self.assertEqual(interrupted.state_dict(), saved)
+            self.assertEqual(restored.state_dict(), stream.state_dict())
+            rebatched = configured_stream(rank, frame_policy={str(t): 24 for t in range(2, 25)})
+            self.assertEqual(rebatched.plan_sha256, stream.plan_sha256)
+            self.assertEqual(collect(rebatched, 10000, selector=select_two_target_frames), expected)
+            requests, pairs = expected
+            self.assertEqual(select_two_target_frames(requests[::-1], SELECTION_SEED), pairs[::-1])
+            self.assertEqual(select_two_target_frames([requests[0]] * 3, SELECTION_SEED), [pairs[0]] * 3)
+
+    def test_two_target_supervised_counts_and_strict_lower_bound(self):
+        config = {'family': TWO_SCOPE}
+        for assets, frames in ((0, 0), (0, 24), (1, 2), (48, 336),
+                               (np.int64(20000), np.int64(263608))):
+            self.assertEqual(supervised_count(config, assets, frames), 2 * assets)
+            self.assertIs(type(supervised_count(config, assets, frames)), int)
+        for assets, frames in ((1, 1), (3, 5), (1, 0)):
+            with self.assertRaisesRegex(ValueError, 'exceed'):
+                supervised_count(config, assets, frames)
+        for value in (True, np.bool_(True), -1, 1.0, float('inf'), '1', None):
+            with self.assertRaises(ValueError):
+                supervised_count(config, value, 24)
+            with self.assertRaises(ValueError):
+                supervised_count(config, 0, value)
 
 
 if __name__ == '__main__':

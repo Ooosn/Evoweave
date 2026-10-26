@@ -206,14 +206,23 @@ class VirtualPathAblationRig(nn.Module):
             batch, frames = condition.shape[:2]
             if (not isinstance(target_frame_indices, torch.Tensor)
                     or target_frame_indices.dtype != torch.int64
-                    or target_frame_indices.shape != (batch,)):
-                raise ValueError('target_frame_indices must be an int64 tensor with shape [B]')
+                    or target_frame_indices.ndim not in (1, 2)
+                    or target_frame_indices.shape[0] != batch):
+                raise ValueError('target_frame_indices must be an int64 tensor with shape [B] or [B,K]')
+            if target_frame_indices.device.type == 'meta':
+                raise ValueError('target_frame_indices must be on a device with concrete values')
+            indices = target_frame_indices[:, None] if target_frame_indices.ndim == 1 else target_frame_indices
+            if not 1 <= indices.shape[1] <= frames:
+                raise ValueError('target_frame_indices must select between 1 and T slots per asset')
             if bool(((target_frame_indices < 0) | (target_frame_indices >= frames)).any()):
                 raise ValueError('target_frame_indices outside the input frame range')
-            indices = target_frame_indices.to(device=condition.device)
-            rows = torch.arange(batch, device=condition.device)
-            condition = condition[rows, indices][:, None]
-            ids, mask = ids[rows, indices][:, None], mask[rows, indices][:, None]
+            ordered = indices.sort(dim=1).values
+            if bool((ordered[:, 1:] == ordered[:, :-1]).any()):
+                raise ValueError('target_frame_indices must contain distinct slots per asset')
+            indices = indices.to(device=condition.device)
+            rows = torch.arange(batch, device=condition.device)[:, None]
+            condition = condition[rows, indices]
+            ids, mask = ids[rows, indices], mask[rows, indices]
         losses, accuracies = [], []
         for frame in range(condition.shape[1]):
             labels = ids[:, frame, 1:].clone().masked_fill(~mask[:, frame, 1:].bool(), -100)

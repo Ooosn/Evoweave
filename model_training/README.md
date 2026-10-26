@@ -20,6 +20,11 @@ negative. Prefer retaining dense per-frame supervision; the proposed reference
 skeleton/XYZ design is not yet tested. No further compute is automatically
 released. See the [single-query result](docs/SINGLE_QUERY_SUPERVISION_20261026.md#completed-result).
 
+The user has now approved the fixed random two-target20k point. It retains
+all multi-frame inputs and averages the two distinct target losses per asset.
+Fresh CPU and capacity acceptance precede training; the exact current stage is
+in machine state. See the [two-target protocol](docs/TWO_QUERY_SUPERVISION_20261026.md).
+
 The prior matched virtual-module on/off comparison is complete at20,000exposures per
 arm, with four full passes over the fixed5,000assets. Both arms retain real-frame
 temporal interaction: its benefit is established and is not being tested again.

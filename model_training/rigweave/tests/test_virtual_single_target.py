@@ -160,7 +160,7 @@ class VirtualSingleTargetTests(unittest.TestCase):
     def test_invalid_indices_are_rejected_before_decoding(self):
         frames, virtual = self.model.encode(self.surface)
         invalid = ([0, 1], torch.tensor([0., 1.]), torch.tensor([0, 1], dtype=torch.int32),
-                   torch.tensor([False, True]), torch.tensor(0), torch.tensor([[0], [1]]),
+                   torch.tensor([False, True]), torch.tensor(0), torch.tensor([[[0]], [[1]]]),
                    torch.tensor([0]), torch.tensor([0, 1, 2]), torch.empty(0, dtype=torch.int64),
                    torch.tensor([-1, 0]), torch.tensor([0, 3]))
         for indices in invalid:

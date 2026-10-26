@@ -25,7 +25,8 @@ from virtual_frame_runtime import exposure_learning_rate
 from virtual_fusion_normal_runtime import MatchedFrameStream
 from virtual_pair_guard import ROOT, SCOPE, deadline_due
 from virtual_pair_loading import OrderedAssetPrefetch
-from single_query_protocol import SINGLE_SCOPE, SINGLE_VARIANT, SELECTOR, select_target_frames, supervised_count
+from single_query_protocol import (SINGLE_SCOPE, SINGLE_VARIANT, SELECTOR, TWO_SCOPE,
+    TWO_VARIANT, TWO_SELECTOR, select_target_frames, select_two_target_frames, supervised_count)
 from virtual_query_xyz_runtime import build_model as build_base, fixed_dataset, read_entries, sha256
 
 
@@ -35,13 +36,22 @@ VALID_SHA = 'fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a'
 
 
 def variants(config):
-    return (SINGLE_VARIANT,) if config.get('family') == SINGLE_SCOPE else VARIANTS
+    return {SINGLE_SCOPE: (SINGLE_VARIANT,), TWO_SCOPE: (TWO_VARIANT,)}.get(config.get('family'), VARIANTS)
+
+
+def selected_target_count(config):
+    return {SINGLE_SCOPE: 1, TWO_SCOPE: 2}.get(config.get('family'))
+
+
+def target_selection(config, requests):
+    selector = select_two_target_frames if config.get('family') == TWO_SCOPE else select_target_frames
+    return selector(requests, config['pair']['target_selection']['seed'])
 
 
 def validate_config(config):
     data, plan, optim = config['data'], config['training'], config['optimization']
-    single = config.get('family') == SINGLE_SCOPE
-    if config.get('family') not in (SCOPE, SINGLE_SCOPE) or config['pair']['variants'] != list(variants(config)):
+    single = selected_target_count(config) is not None
+    if config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE) or config['pair']['variants'] != list(variants(config)):
         raise ValueError('not the declared matched pair')
     if [(data['manifests'][key]['rows'], data['manifests'][key]['sha256']) for key in ('train', 'valid')] != [
             (5000, TRAIN_SHA), (967, VALID_SHA)]:
@@ -68,11 +78,12 @@ def validate_config(config):
             or config['architecture']['fusion_mode'] != 'real_queries_virtual'):
         raise ValueError('this pair changes only virtual interaction/readout, not codec/losses')
     if single:
-        if (config['pair'].get('target_selection') != {'algorithm': SELECTOR, 'seed': 20261026}
+        selector = TWO_SELECTOR if config.get('family') == TWO_SCOPE else SELECTOR
+        if (config['pair'].get('target_selection') != {'algorithm': selector, 'seed': 20261026}
                 or config['runtime'].get('execution_mode') != 'scheduler_job'
                 or operation_target(config) != 20000
                 or config['training'].get('resume_root')):
-            raise ValueError('single-target control must start fresh and stop at20k under the scheduler')
+            raise ValueError('selected-target control must start fresh and stop at20k under the scheduler')
         reference = config['pair'].get('reference', {})
         if set(reference) != {'config', 'CPU_audit', 'evaluation', 'checkpoint_sha256'}:
             raise ValueError('single-target control needs pinned all-frame references')
@@ -309,7 +320,7 @@ def reference_control(config, initial=None):
         if config['runtime'][key] != previous['runtime'][key]:
             raise RuntimeError('accepted loader/RAM envelope changed')
     expected = deepcopy(audited['initialization']['virtual_off'])
-    expected['variant'] = SINGLE_VARIANT
+    expected['variant'] = variants(config)[0]
     if initial is not None and initial != expected:
         raise RuntimeError('single-target initialization differs from the all-frame control')
     if (evaluated.get('complete') is not True or evaluated.get('variant') != 'virtual_off'
@@ -334,15 +345,17 @@ def audit_target_selection(config):
         while samples < operation_target(config):
             goal, batches = next_update_batches(stream, samples, 2)
             for requests in batches:
-                selected = select_target_frames(requests, config['pair']['target_selection']['seed'])
+                selected = target_selection(config, requests)
                 for request, frame in zip(requests, selected):
                     digest.update(json.dumps([request.item_index, request.frames, request.sampling_seed, frame]).encode())
                     histogram = histograms.setdefault(str(request.frames), [0] * request.frames)
-                    histogram[frame] += 1
+                    for slot in frame if isinstance(frame, list) else [frame]:
+                        histogram[slot] += 1
                     count += 1
                     inputs += request.frames
             samples += goal
-        records.append({'rank': rank, 'asset_exposures': count, 'supervised_frames': count,
+        records.append({'rank': rank, 'asset_exposures': count,
+                        'supervised_frames': supervised_count(config, count, inputs),
                         'input_frames': inputs, 'selected_plan_sha256': digest.hexdigest(),
                         'input_plan_sha256': stream.plan_sha256})
     after = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
@@ -355,11 +368,11 @@ def audit_target_selection(config):
 
 def sampling_plan_report(config, stream):
     report = stream.plan_report()
-    if config.get('family') == SINGLE_SCOPE:
+    if selected_target_count(config) is not None:
         # The shared sampler's legacy field counts every input frame.
         report['input_frame_exposures'] = report['supervised_frame_exposures']
-        report['supervised_frame_exposures'] = config['training']['target_assets']
-        report['decoder_target_policy'] = SELECTOR
+        report['supervised_frame_exposures'] = selected_target_count(config) * config['training']['target_assets']
+        report['decoder_target_policy'] = config['pair']['target_selection']['algorithm']
     return report
 
 
@@ -378,9 +391,9 @@ def audit(config, entries, output, source):
     plans = [sampling_plan_report(config, make_stream(config, r, 2)) for r in range(2)]
     if plans[0]['plan_sha256'] != plans[1]['plan_sha256']:
         raise RuntimeError('distributed sampling plans disagree')
-    single = config.get('family') == SINGLE_SCOPE
+    single = selected_target_count(config) is not None
     if single:
-        previous, _ = reference_control(config, initial[SINGLE_VARIANT])
+        previous, _ = reference_control(config, initial[variants(config)[0]])
         loader = previous['parallel_loader']
     else:
         loader = audit_loader(config, entries, groups) if config['runtime'].get('data_workers_per_rank') else None
@@ -498,13 +511,13 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
         surface, target, geometry = prepare(prepared_dataset, requests, config, tokenizer, codec, device)
         del prepared_dataset
         selected, arguments = None, {}
-        if config.get('family') == SINGLE_SCOPE:
-            selected = select_target_frames(requests, config['pair']['target_selection']['seed'])
+        if selected_target_count(config) is not None:
+            selected = target_selection(config, requests)
             arguments['target_frame_indices'] = torch.tensor(selected, dtype=torch.int64, device=device)
         with wrapped.no_sync() if world > 1 and i < len(batches) - 1 else nullcontext():
             with torch.autocast('cuda', dtype=torch.bfloat16):
                 losses = wrapped(surface, target, auxiliary_weight=0., **arguments)
-            expected_targets = 1 if selected is not None else requests[0].frames
+            expected_targets = selected_target_count(config) if selected is not None else requests[0].frames
             if losses['main_loss_per_frame'].shape != (len(requests), expected_targets):
                 raise RuntimeError('decoder did not supervise the declared target count')
             if not bool(torch.isfinite(losses['loss'])):
@@ -517,11 +530,14 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, config
             'target_sha256': hashlib.sha256(target['main_input_ids'].cpu().numpy().tobytes()).hexdigest()}
         if selected is not None:
             rows = torch.arange(size, device=device)
+            if selected_target_count(config) == 2:
+                rows = rows[:, None]
             selected_ids = target['main_input_ids'][rows, arguments['target_frame_indices']]
             recorded.update(target_frame_indices=selected,
-                selected_target_raw_frames=[raw[index] for raw, index in zip(recorded['selected_raw_frames'], selected)],
+                selected_target_raw_frames=[([raw[slot] for slot in index] if isinstance(index, list) else raw[index])
+                    for raw, index in zip(recorded['selected_raw_frames'], selected)],
                 selected_target_sha256=hashlib.sha256(selected_ids.cpu().numpy().tobytes()).hexdigest(),
-                decoder_targets_per_asset=1)
+                decoder_targets_per_asset=selected_target_count(config))
         schedule.append(recorded)
         del surface, target, geometry, losses
     if world > 1:
@@ -782,8 +798,8 @@ def evaluate(model, tokenizer, codec, config, entries, output, variant, samples,
 
 def compare_evaluations(output, config, samples):
     rows_by_arm, checkpoints, sources, contracts = {}, {}, {}, {}
-    single = config.get('family') == SINGLE_SCOPE
-    names = (SINGLE_VARIANT, 'all_frames') if single else VARIANTS
+    single = selected_target_count(config) is not None
+    names = (variants(config)[0], 'all_frames') if single else VARIANTS
     def read_rows(variant, summary):
         artifacts = summary['row_artifacts']
         if (len(artifacts) != 2 or {r['rank'] for r in artifacts} != {0, 1}
@@ -807,7 +823,8 @@ def compare_evaluations(output, config, samples):
         _, reference = reference_control(config)
         read_rows('all_frames', reference)
     on, off = (rows_by_arm[v] for v in names)
-    difference_name = 'single_minus_all_original_edge_f1' if single else 'Vplus_minus_Vminus_original_edge_f1'
+    difference_name = ('two_minus_all_original_edge_f1' if config.get('family') == TWO_SCOPE
+        else 'single_minus_all_original_edge_f1' if single else 'Vplus_minus_Vminus_original_edge_f1')
     for key, row in on.items():
         for field in ('raw_frame_index', 'gt_joint_count', 'original_GT_sha256', 'normalization_sha256', 'target_tokens'):
             if row[field] != off[key][field]:
@@ -833,7 +850,8 @@ def compare_evaluations(output, config, samples):
         'validation_assets': 128, 'views_per_asset': 8, 'matched_raw_frames_GT_normalization_tokens': True,
         'checkpoint_sha256': checkpoints, 'source_sha256': source_hashes(), 'contract_sha256': contract_sha(config),
         'arm_source_sha256': sources, 'arm_contract_sha256': contracts,
-        'comparison': 'single_target_vs_pinned_all_frame_control' if single else 'virtual_on_vs_off',
+        'comparison': ('two_target_vs_pinned_all_frame_control' if config.get('family') == TWO_SCOPE
+            else 'single_target_vs_pinned_all_frame_control' if single else 'virtual_on_vs_off'),
         'groups': groups, 'bootstrap': {'unit': 'asset', 'replicates': 2000, 'seed': 20261025,
             'limitation': 'validation-asset uncertainty for one training seed; not training-seed variability'}}
     write_json(output / f'paired_evaluation_{samples:06d}.json', result)

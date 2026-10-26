@@ -14,8 +14,9 @@ not model architecture, and does not authorize or start a training run.
 This checkout is the model research workspace on branch
 `codex/virtual-fusion-20261013`. The single-target/all-frame supervision comparison
 completed at20k on fixed5000assets; all-frame F1 was higher. Multi-frame motion
-input was preserved; its established benefit was not retested. The proposed
-real-reference-skeleton/XYZ design has not started. Read
+input was preserved; its established benefit was not retested. The user approved
+a fixed random two-target20k follow-up, requiring fresh CPU/capacity admission.
+The proposed real-reference-skeleton/XYZ design has not started. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
 [experiment protocol](model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md).
 Exact execution permissions are in `model_training/state/current.json`.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "reference_xyz_conditional_ar_capacity_authorized_20261027",
-  "updated_at": "2026-10-26T22:04:22Z",
+  "state_id": "reference_xyz_conditional_ar_training_authorized_20261027",
+  "updated_at": "2026-10-26T22:10:15Z",
   "module": "model_training",
   "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
@@ -33,10 +33,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
-    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -52,10 +52,10 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "both_reference_pilots_completed_GPUs_idle_keeper_retained",
+    "status": "conditional_AR_capacity_completed_keeper_retained",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-26T21:42:59.701775Z",
+    "last_observed_utc": "2026-10-26T22:09:04.866559Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -63,8 +63,8 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "conditional_ar_capacity_pending",
-    "operation": "preflight",
+    "status": "conditional_AR_learning_check_pending",
+    "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User required learned generation rather than fitting, confirmed the complete-reference conditioned target-XYZ direction, and explicitly said to begin.",
@@ -72,20 +72,20 @@
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
-    "acceptance_basis": "45focusedCPU tests pass. Only capacity_v15 is admitted; full free generation and gradients on largest cached skeletons must finish cleanly before an800update8train/32valid AR learning diagnostic.",
+    "capacity_accepted": true,
+    "acceptance_basis": "45CPU tests plus clean capacity_v15:3updates/rank,126/171joints,full378/513token free generation with KV cache,all conditioning/decoder gradients,exit0,GPUsidle. New train_v14 starts fresh with identical model/config.",
     "CPU_tests_passed": 45,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/coordinate_generator_tests_v2_result.json",
     "runs": [
       {
-        "stage": "capacity_v15",
-        "mode": "capacity",
+        "stage": "train_v14",
+        "mode": "train",
         "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_ar_fit_20261027_v1.json",
         "config_sha256": "bda4a0d272c2ad0396b092d23233c2664212d3597649e68c259bc50f37c9a726",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v15"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v14"
       }
     ],
     "checkpoint_policy": "Read the existing immutable train_v12 caches and train_v9 donor binding. Preserve previous checkpoints. Save new AR head400/800 optimizer/RNG bindings with verified durable mirrors.",
@@ -95,7 +95,22 @@
       "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
       "extra_agents": 0,
-      "status": "capacity_v15_pending"
+      "status": "train_v14_pending"
+    },
+    "capacity_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v15/result.json",
+      "sha256": "87bd4b2ea8d69ed6d13cb66152244b3724d7ed93fee51a5b966b81bbaad66bd7",
+      "source": "19cf0de4d61076b85c58992e902713217e43dc7e",
+      "complete": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "gradient_groups_passed": true,
+      "free_generation_passed": true,
+      "head_discarded_before_pilot": true,
+      "peak_allocated_bytes_per_rank": [
+        950601728,
+        1162105856
+      ]
     }
   },
   "architecture_contract": {
@@ -120,7 +135,7 @@
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "starting_decision": "Preserve complete naturally decoded reference joints, then learn target-pose conditional generation using reference coordinates/tree and mesh evidence. Shared versus separate learned conditioning remains an experimental question. Generation is the user-required main route; geometry is a diagnostic control only.",
-    "compute_status": "User said to begin conditional generation. Only capacity_v15 currently released; train_v14 needs clean capacity acceptance."
+    "compute_status": "Conditional AR capacity_v15 accepted; release only800-update train_v14 with8training/32validation assets. Geometric experiments remain closed."
   },
   "completed_reference_pilots": [
     {
@@ -168,6 +183,6 @@
       "interpretation": "No useful increment over local rigid transfer in this frozen diagnostic. The user's later correction rejects geometric tracking as the main route; preserve results as controls and continue learned conditional generation. Neither frozen pilot settles joint training."
     }
   ],
-  "next_required_result": "Accept capacity_v15 full free-generation/gradient/resource completion, then run the bounded conditional-AR8train/32valid learning check. Explain teacher-prefix versus free generation, not geometric-fit performance.",
+  "next_required_result": "Complete train_v14 and inspect teacher-forced versus freely generated coordinates, quantization floor and train/valid generalization. Do not interpret the prior geometric control as the main solution.",
   "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json"
 }

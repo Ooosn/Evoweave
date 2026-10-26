@@ -278,3 +278,10 @@ existing head/scheduler regressions. A new capacity_v15 must test3real updates
 and complete free generation on the largest cached skeletons126/171joints;
 natural predicted references in the retained panel have at most54joints. Only
 clean capacity completion releases train_v14. No later run is automatically queued.
+
+capacity_v15 completed3updates/rank and full378/513token free generation on
+126/171joint skeletons. All four gradient groups passed; peak allocated tensors
+0.951/1.162GB, process-tree RAM5.325GB. Supervisor exit0, both GPUs idle and
+keeper retained at2026-10-26T22:09:04Z. Producer19cf0de4d61076b85c58992e902713217e43dc7e;
+result SHA25687bd4b2ea8d69ed6d13cb66152244b3724d7ed93fee51a5b966b81bbaad66bd7.
+The capacity model is discarded before the newly admitted train_v14 starts.

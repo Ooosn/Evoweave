@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "reference_xyz_rigid_residual_training_authorized_20261027",
-  "updated_at": "2026-10-26T21:40:30Z",
+  "state_id": "reference_xyz_two_frozen_pilots_completed_20261027",
+  "updated_at": "2026-10-26T21:46:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
@@ -31,11 +31,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "preflight",
+    "train",
     "submit",
     "matched_eval"
   ],
@@ -51,10 +51,10 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "rigid_residual_capacity_completed_keeper_retained",
+    "status": "both_reference_pilots_completed_GPUs_idle_keeper_retained",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-26T21:40:07.296801Z",
+    "last_observed_utc": "2026-10-26T21:42:59.701775Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -62,19 +62,20 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "rigid_residual_pilot_pending",
-    "operation": "train",
-    "complete": false,
+    "status": "completed_no_learned_upgrade",
+    "operation": "report",
+    "complete": true,
+    "quality_accepted": false,
     "explicit_human_authorized": true,
     "authorization": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "code_commit": "419da3078d2873d1a260a859dbb3de5b0c35a9cf",
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "acceptance_basis": "37 focused CPU tests passed. capacity_v14 completed3updates/rank,8poses,batch2,126/171joints,all gradient groups,exact frozen cache digests and clean supervisor exit0. Both GPUs idle; capacity head discarded. Release matched800-update train_v13 with unchanged core and config.",
+    "acceptance_basis": "Both800-update pilots completed with clean exit0 and retained checkpoints. Independent aggregation verifies all24artifacts each, identical input/cache/baselines and1600rank-update asset/reference/LR sequence. Neither trained head is accepted as a quality upgrade over local rigid transfer. No further stage queued.",
     "capacity_evidence": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v14/result.json",
       "sha256": "544b80e894573860bb75873ef9ad39d25185b14a4733c9d9460cf7d1cc42bde2",
@@ -83,16 +84,7 @@
       "gradient_groups_passed": true, "head_discarded_before_pilot": true,
       "peak_allocated_bytes_per_rank": [582514176, 676188672]
     },
-    "runs": [
-      {
-        "stage": "train_v13",
-        "mode": "train",
-        "approved": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
-        "config_sha256": "ed05b301b97e5b73d1bba056a087e1d6a510f65f168349563899a5e3dcd54520",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v13"
-      }
-    ],
+    "runs": [],
     "CPU_tests_passed": 37,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/rigid_residual_tests_v1_result.json",
     "checkpoint_policy": "Read donor train_v9 without modification. Retain new head400/800 full optimizer/RNG checkpoints and SHA-verified durable mirrors. Derived frozen caches stay on verified NVMe.",
@@ -102,7 +94,7 @@
       "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
       "extra_agents": 0,
-      "status": "train_v13_pending"
+      "status": "train_v13_complete_observer_exit0"
     },
     "prior_capacity_attempts": [
       {
@@ -181,7 +173,7 @@
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
-    "compute_status": "Copy-initialized train_v12 completed. Residual capacity_v14 accepted; release only matched800-update train_v13. No old density stages reopened."
+    "compute_status": "Copy-initialized train_v12 and rigid-residual train_v13 completed. Gates closed. Broader research authorization remains, but further compute needs a new reviewed exact configuration; no automatic100k or architecture sweep."
   },
   "completed_reference_pilots": [{
     "stage": "train_v12", "source": "f124566541a03c970a2f7ac9edd2063c1690fc99",
@@ -192,6 +184,21 @@
     "analysis_sha256": "aec887bb775412672a300c23a615ecebed2a49d0d0aa85d67921624efce4c1dd",
     "GT_valid_normalized_MPJPE": {"copy": 0.09860526660512343, "local_rigid": 0.005237562837862697, "learned": 0.07820311308803087},
     "interpretation": "Copy-initialized learned head improves over static copy but is much worse than geometric transfer. Reuse its exact frozen caches for a matched rigid-residual pilot; preserve all original outputs."
+  }, {
+    "stage": "train_v13", "source": "979acbe03a015fd16e4e3a31b9c9999e953a9645",
+    "complete": true, "quality_accepted": false, "updates": 800,
+    "config": "model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
+    "config_sha256": "ed05b301b97e5b73d1bba056a087e1d6a510f65f168349563899a5e3dcd54520",
+    "result_sha256": "33b8ba3b3c974161895bf3e5df4357acab7c9d8ea9d3229365f9ef61982fa9cb",
+    "supervisor_exit_code": 0, "payload_cleanup_complete": true,
+    "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v13_analysis.json",
+    "analysis_sha256": "aa8806f26294cbdf7301e2fee9d7d2537589a7923ad13f523cb11ddc529df724",
+    "GT_valid_normalized_MPJPE": {"local_rigid": 0.005237562837862697, "learned": 0.0052391125733005795},
+    "predicted_reference_F1": {"local_rigid": 0.6113965356542218, "learned": 0.6125576294270997},
+    "matched_input_reference_LR_and_baselines_verified": true,
+    "head_0400_sha256": "e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85",
+    "head_0800_sha256": "0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6",
+    "interpretation": "No useful increment over local rigid transfer. Recommend geometric tracking under known correspondence, preserve the learned implementation for future research; neither frozen pilot settles joint training."
   }],
-  "next_required_result": "Complete isolated train_v13 at800updates. Compare rigid residual to rigid baseline and completed train_v12 with exact cached input/reference/optimizer-sequence matching."
+  "next_required_result": "Report both completed pilots and the correspondence/GT-reference limitations. A subsequent reviewed study should expand matched geometry/end-to-end evaluation before a second full model; no additional compute is currently admitted."
 }

@@ -13,11 +13,20 @@ Data production is owned by `data_processing/`.
 | Data | [Dataset source of truth](../DATASET_SOURCE_OF_TRUTH.md) | Current membership, root-RT alignment, and normalization |
 | Execution | [Machine state](state/current.json) | Exact operation permissions, configurations, and receipts |
 
+The reference-skeleton XYZ pilot has completed two matched800-update head runs.
+On32held-out assets with GT reference, normalized joint error is7.8203%for the
+copy-initialized learned head,0.5238%for local rigid transfer and0.5239%for rigid
+plus learned residual. Current learned heads are not quality upgrades. Prefer
+an appended geometric tracker under known surface correspondences, not a second
+full encoder. Frozen-feature results do not settle joint training. See the
+[reference XYZ result](docs/REFERENCE_SKELETON_XYZ_20261027.md#completed-rigid-residual-result).
+Completed stage gates are closed; checkpoints and the original grant are retained.
+
 The single-target/all-frame comparison is complete with unchanged multi-frame
 input, no virtual path and the same20kasset budget. F1 is0.66660single versus
 0.71108all-frame; the paired-asset95%interval for single-minus-all is entirely
-negative. The single-frame baseline is lower in this comparison; the proposed reference
-skeleton/XYZ design is not yet tested. No further compute is automatically
+negative. The single-frame baseline is lower in this comparison; at that stage the proposed reference
+skeleton/XYZ design had not yet been tested. No further compute was automatically
 released. See the [single-query result](docs/SINGLE_QUERY_SUPERVISION_20261026.md#completed-result).
 
 The fixed random two-target20k point is also complete: F1 is0.69958, improving
@@ -58,7 +67,8 @@ this completion. Historical statements about no further authorization apply
 to their own completed runs, not this new research request. New compute remains
 gated by a separate exact configuration in state/current.json.
 
-- Current training: [train_virtual_pair.py](rigweave/scripts/train_virtual_pair.py).
+- Reference XYZ pilot: [train_reference_xyz.py](rigweave/scripts/train_reference_xyz.py).
+- Prior density training: [train_virtual_pair.py](rigweave/scripts/train_virtual_pair.py).
 - Current launcher: [launch_virtual_pair.py](jobs/launch_virtual_pair.py).
 - Original baseline training: [train_dynamic_rig.py](rigweave/scripts/train_dynamic_rig.py).
 - Generation: [eval_dynamic_rig_generation.py](rigweave/scripts/eval_dynamic_rig_generation.py).

@@ -164,3 +164,61 @@ gradient groups present; peak allocated tensors0.583/0.676GB. All reused payload
 digests passed. Producer:efec0bd9e4f0e93a11938fc44e4a83d7a0629161.
 Result SHA256:544b80e894573860bb75873ef9ad39d25185b14a4733c9d9460cf7d1cc42bde2.
 The capacity head is discarded; train_v13 starts fresh with unchanged code/config.
+
+## Completed Rigid-Residual Result
+
+train_v13 completed800updates/3200asset visits/22400other-pose targets with
+clean supervisor exit0. Observer at2026-10-26T21:42:59Z found both GPUs idle and
+the original keeper retained. Producer:979acbe03a015fd16e4e3a31b9c9999e953a9645.
+Result SHA256:33b8ba3b3c974161895bf3e5df4357acab7c9d8ea9d3229365f9ef61982fa9cb.
+Peak process-tree RSS:5722169344bytes. Both60,338,618byte head checkpoints have
+producer-verified SHA-identical NVMe/durable copies and observer-checked sizes:
+400:e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85;
+800:0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6.
+
+Independent aggregation rehashed all24small artifacts and verified unchanged
+selection, original cache/payload bindings, all1600rank-update asset/reference/LR
+sequences, and every copy/local-rigid metric row against train_v12. At step0,
+the residual method exactly reproduces the scored local-rigid baseline.
+
+| Split / Metric | Local rigid | Rigid + learned residual |
+| --- | ---: | ---: |
+| Train GT normalized MPJPE |0.0047510754|0.0047514243|
+| Valid GT normalized MPJPE |0.0052375628|0.0052391126|
+| Valid GT PCK@0.05 |0.9789816819|0.9789816819|
+| Valid predicted-reference edge F1 |0.6113965357|0.6125576294|
+| Valid predicted-reference successful-only normalized J2J |0.0235109305|0.0235108277|
+
+Valid GT learned-minus-rigid error:+1.549735e-6, paired stratified asset95%CI
+[7.731345e-7,2.402817e-6]. This is a very small deterioration, not an improvement.
+Predicted-reference edge F1 difference:+0.00116109,95%CI[-0.00327716,0.00535316];
+no reliable incremental benefit. Four failed references remain unchanged.
+Step400 GT valid error0.00524544 also does not improve over the baseline.
+
+Posthoc large-motion diagnostic:247of448GT validation target views have static
+copy error above5%of the target bbox diagonal. Local rigid error0.00775287 versus
+copy-initialized learned error0.12548115, so geometric success is not limited to
+near-static poses. This subset is exploratory, not a separate held-out test.
+
+Analysis: D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v13_analysis.json
+SHA256:aa8806f26294cbdf7301e2fee9d7d2537589a7923ad13f523cb11ddc529df724.
+Visual: D:/evoweave/server_ops/outputs/reference_xyz_20261027/reference_xyz_examples.png
+shows the first validation asset on each rank, reference0 and the other pose with
+largest GT static-copy error. Selection does not depend on predicted quality.
+
+### Current Decision And Limits
+
+Do not add a second complete encoder/model based on this pilot. For meshes with
+the established surface correspondences, append explicit geometric transfer
+to the reference skeleton first. It preserves reference count/tree by design;
+it cannot repair a wrong reference topology. Retain the shared-backbone head
+as a research implementation, but do not promote either trained head as a
+quality upgrade. GT-reference and natural-reference gaps motivate investigating
+stage-one errors as well as residual localization; they do not isolate one cause.
+
+This is one seed,64train/32valid balanced diagnostic, frozen donor and800head
+updates. It neither proves learned corrections unnecessary in general nor
+decides joint training, unmatched/remeshed input, arbitrary correspondence or
+full population performance. A useful next reviewed experiment is a larger
+matched geometric/end-to-end evaluation before spending on another full model.
+No additional run is queued; the completed stage gates are closed.

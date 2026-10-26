@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "state_id": "seven_density20k_complete_reference_xyz_research_next_20261027",
-  "updated_at": "2026-10-26T20:39:00Z",
+  "state_id": "reference_xyz_frozen_pilot_capacity_authorized_20261027",
+  "updated_at": "2026-10-26T20:52:00Z",
   "module": "model_training",
-  "human_context": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+  "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md"
+    "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md"
   ],
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -31,11 +31,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -51,103 +51,67 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "completed_payloads_cleaned_keeper_retained",
-    "expiry_utc": "2026-10-26T22:33:29.625Z",
-    "policy": "Same granted GPUs and16CPUs. Native qalter -when now extended h_rt from24h to36h; keeper and allocation preserved. Unused pending request130589725 canceled, never granted.",
-    "last_observed_utc": "2026-10-26T20:33:00.566690Z",
+    "status": "existing_grant_extended_48h_reference_capacity_pending",
+    "expiry_utc": "2026-10-27T10:33:29.625Z",
+    "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
+    "last_observed_utc": "2026-10-26T20:48:38Z",
     "last_observed_gpu_used_mib": [
       0,
       0
     ]
   },
   "active_operation": {
-    "label": "real_query_density_5k_20261026_v1",
-    "status": "fraction20_40_and_four_completed",
-    "operation": "train",
-    "complete": true,
+    "label": "reference_skeleton_xyz_20261027_v1",
+    "status": "CPU_tests_passed_capacity_pending",
+    "operation": "capacity",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User explicitly requested20%-40%,minimum2-target supervision, followed after completion by a4-frame decoder-supervision run, on2026-10-26. Same fresh20k comparison contract.",
-    "code_commit": "382fbfb1652fbb667e504c3e63ccef9eb3ee8be0",
-    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
-    "contract": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
-    "gpu_work_allowed": false,
+    "authorization": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
+    "code_commit": "08f7244881a747d4d42953491b477e6e12e57a5c",
+    "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
+    "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "acceptance_basis": "Only selector/variant rules changed. Five focused CPU tests passed. Reuse established ragged decoder/loss and pinned all-frame initialization/data/capacity evidence; no new audit or capacity stage.",
-    "inherited_evidence": {
-      "CPU_audit": {
-        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
-        "sha256": "92706351041d631fed21b07757d7776f944dc0a5bef135bf11816ee0fdb7419a"
-      },
-      "capacity": {
-        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
-        "sha256": "0a5aa224435f8496d43e14a3d0bfc19b55957412b0e4e6561b19d8311ade475c"
-      },
-      "description": "Immutable all-frame receipts reused; local bound-config check passed without model construction, CUDA, optimizer updates or a new audit job. Runtime compares every actual official initialization to the inherited fingerprint."
-    },
-    "runs": [],
-    "producer_commit": "a0bda62bb8fba70320310b063da8c7898ddaf441",
-    "result": {
-      "complete": true,
-      "execution_integrity_accepted": true,
-      "random_rule_superiority_proven": false,
-      "comparison_path": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/seven_arm_comparison.json",
-      "comparison_sha256": "32529e04a241af22044567bf6720c5af4afa8cbc2876e68373f93d69dd92cf46",
-      "fraction20_40_query": {
-        "assets": 20000,
-        "updates": 420,
-        "input_frames": 263608,
-        "targets": 75065,
-        "F1": 0.7140051228677848,
-        "non52_F1": 0.6307932596570485,
-        "failures": 65,
-        "exact_count_fraction": 0.4560546875,
-        "update_seconds": 7502.80663740891,
-        "checkpoint_sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
-      },
-      "four_query": {
-        "assets": 20000,
-        "updates": 420,
-        "input_frames": 263608,
-        "targets": 77920,
-        "F1": 0.7042420365220934,
-        "non52_F1": 0.6236589340444709,
-        "failures": 78,
-        "exact_count_fraction": 0.4296875,
-        "update_seconds": 7115.967267001397,
-        "checkpoint_sha256": "f64ba563ae5df03e58b763e2592d495ff59e8e3003e6ae5a1ecc61031cfad07a"
-      },
-      "small_artifacts_primary_rehashed": 36,
-      "new_full_checkpoints_durably_mirrored": 8,
-      "checkpoint_payloads_primary_rehashed": false
-    },
-    "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler checkpoints on NVMe with verified durable mirrors for both new arms.",
-    "durable_root": "/home/wangyy/evorig/outputs/query_density_followup_20k_20261026",
-    "end_policy": "Stop each arm at20k and fixed128x8 evaluation; no100k or additional arms.",
-    "CPU_tests_passed": 5,
+    "capacity_accepted": false,
+    "acceptance_basis": "33 focused CPU tests passed: readout geometry/graph/permutation/padding/gradient/synthetic fit, exact pilot/cohort/position metrics, new family and existing scheduler/supervisor regressions. Donor checkpoint, data and normalization contracts are pinned; real dual-GPU capacity/gradient check still required.",
+    "runs": [
+      {
+        "stage": "capacity_v11",
+        "mode": "capacity",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json",
+        "config_sha256": "029729e65f6b60dbc70f89814a0bac4bdb910e82d3f36370c5d89ebc0db4830c",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v11"
+      }
+    ],
+    "CPU_tests_passed": 33,
+    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/integration_tests_v2_result.json",
+    "checkpoint_policy": "Read donor train_v9 without modification. Retain new head400/800 full optimizer/RNG checkpoints and SHA-verified durable mirrors. Derived frozen caches stay on verified NVMe.",
+    "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/frozen_pilot_v1",
+    "end_policy": "Capacity only now. Release the bounded800-update frozen pilot only after accepted real capacity results. No automatic100k or open-ended search.",
     "monitor": {
-      "directory": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/monitor",
-      "status": "completed_exit0_receipt_passed",
+      "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
-      "extra_agents": 0
+      "extra_agents": 0,
+      "status": "preparing"
     }
   },
   "architecture_contract": {
-    "input": "Unchanged complete2..24-frame inputs, noV, legacy decoder and normalization.",
-    "supervision": "fraction20_40_query:K=max(2,floor(T*(0.2+0.2*U)));four_query:K=min(4,T). Distinct uniform frames per asset visit; private SHA-seeded RNG.",
-    "loss": "Mean selected frames per asset, then mean assets; unchanged proven ragged decoder path.",
-    "initialization": "Fresh same official initialization independently for each arm, not a continuation of any20k checkpoint.",
-    "LR": "Unchanged100k horizon; stop at20k."
+    "input": "Existing noV shared real-frame features plus explicit corresponding anchor XYZ/normals; complete eight-pose inputs in this bounded pilot.",
+    "reference": "Full reference XYZ, parent tree, joint mask and reference slot. No semantic joint-ID vocabulary or topology-only reference.",
+    "output": "Continuous per-joint XYZ for the same reference joints. Reference slot held fixed and excluded from losses/metrics.",
+    "training": "Frozen train_v9 backbone, new joint readout only.64train/32valid equal-size joint-count strata;800updates at4global assets/update after capacity acceptance.",
+    "evaluation": "GT reference is oracle; naturally predicted reference is separate end-to-end diagnostic. Copy and local Kabsch controls, normalized MPJPE/PCK for GT, J2J and edgeF1 for predicted references. No claim of joint-training performance."
   },
   "previous_completed_result": {
-    "document": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
-    "full_record": "model_training/state/archive/query_density20k_completed_20261026.json",
-    "git_source": "379cd901b5265d4eb9415f7edd4f84edc940135d",
+    "document": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+    "full_record": "model_training/state/archive/seven_density20k_completed_20261027.json",
+    "git_source": "8abd772",
     "execution_authority": false,
     "comparison": {
-      "path": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/five_arm_comparison.json",
-      "sha256": "8e2085cc59d69b34b8043c50edcf73402a11d0c5dfa250f9b092793399c3f0ef"
+      "path": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/seven_arm_comparison.json",
+      "sha256": "32529e04a241af22044567bf6720c5af4afa8cbc2876e68373f93d69dd92cf46"
     }
   },
   "next_research_authorization": {
@@ -157,5 +121,5 @@
     "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
     "compute_status": "CPU design and implementation authorized; no new GPU launch until exact config, tests, resource lifetime and state gates are ready."
   },
-  "next_required_result": "Implement and test the bounded reference-skeleton XYZ pilot, then admit it under its own exact guarded contract; do not rerun or extend completed density arms."
+  "next_required_result": "Run and inspect capacity_v11; then explicitly admit train_v11 for the bounded800-update reference-XYZ pilot."
 }

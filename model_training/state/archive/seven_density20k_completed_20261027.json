@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "state_id": "seven_density20k_complete_reference_xyz_research_next_20261027",
+  "updated_at": "2026-10-26T20:39:00Z",
+  "module": "model_training",
+  "human_context": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "Seven density arms are complete. Start the newly authorized reference-skeleton XYZ research, preserving all completed controls and trained checkpoints."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "train",
+    "preflight",
+    "submit",
+    "matched_eval"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130494177,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "cpu_slots": 16,
+    "total_host_memory_bytes": 68719476736,
+    "keeper_pid": 1098441,
+    "status": "completed_payloads_cleaned_keeper_retained",
+    "expiry_utc": "2026-10-26T22:33:29.625Z",
+    "policy": "Same granted GPUs and16CPUs. Native qalter -when now extended h_rt from24h to36h; keeper and allocation preserved. Unused pending request130589725 canceled, never granted.",
+    "last_observed_utc": "2026-10-26T20:33:00.566690Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ]
+  },
+  "active_operation": {
+    "label": "real_query_density_5k_20261026_v1",
+    "status": "fraction20_40_and_four_completed",
+    "operation": "train",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "User explicitly requested20%-40%,minimum2-target supervision, followed after completion by a4-frame decoder-supervision run, on2026-10-26. Same fresh20k comparison contract.",
+    "code_commit": "382fbfb1652fbb667e504c3e63ccef9eb3ee8be0",
+    "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
+    "contract": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "acceptance_basis": "Only selector/variant rules changed. Five focused CPU tests passed. Reuse established ragged decoder/loss and pinned all-frame initialization/data/capacity evidence; no new audit or capacity stage.",
+    "inherited_evidence": {
+      "CPU_audit": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
+        "sha256": "92706351041d631fed21b07757d7776f944dc0a5bef135bf11816ee0fdb7419a"
+      },
+      "capacity": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v1/result.json",
+        "sha256": "0a5aa224435f8496d43e14a3d0bfc19b55957412b0e4e6561b19d8311ade475c"
+      },
+      "description": "Immutable all-frame receipts reused; local bound-config check passed without model construction, CUDA, optimizer updates or a new audit job. Runtime compares every actual official initialization to the inherited fingerprint."
+    },
+    "runs": [],
+    "producer_commit": "a0bda62bb8fba70320310b063da8c7898ddaf441",
+    "result": {
+      "complete": true,
+      "execution_integrity_accepted": true,
+      "random_rule_superiority_proven": false,
+      "comparison_path": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/seven_arm_comparison.json",
+      "comparison_sha256": "32529e04a241af22044567bf6720c5af4afa8cbc2876e68373f93d69dd92cf46",
+      "fraction20_40_query": {
+        "assets": 20000,
+        "updates": 420,
+        "input_frames": 263608,
+        "targets": 75065,
+        "F1": 0.7140051228677848,
+        "non52_F1": 0.6307932596570485,
+        "failures": 65,
+        "exact_count_fraction": 0.4560546875,
+        "update_seconds": 7502.80663740891,
+        "checkpoint_sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
+      },
+      "four_query": {
+        "assets": 20000,
+        "updates": 420,
+        "input_frames": 263608,
+        "targets": 77920,
+        "F1": 0.7042420365220934,
+        "non52_F1": 0.6236589340444709,
+        "failures": 78,
+        "exact_count_fraction": 0.4296875,
+        "update_seconds": 7115.967267001397,
+        "checkpoint_sha256": "f64ba563ae5df03e58b763e2592d495ff59e8e3003e6ae5a1ecc61031cfad07a"
+      },
+      "small_artifacts_primary_rehashed": 36,
+      "new_full_checkpoints_durably_mirrored": 8,
+      "checkpoint_payloads_primary_rehashed": false
+    },
+    "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler checkpoints on NVMe with verified durable mirrors for both new arms.",
+    "durable_root": "/home/wangyy/evorig/outputs/query_density_followup_20k_20261026",
+    "end_policy": "Stop each arm at20k and fixed128x8 evaluation; no100k or additional arms.",
+    "CPU_tests_passed": 5,
+    "monitor": {
+      "directory": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/monitor",
+      "status": "completed_exit0_receipt_passed",
+      "owned_by": "primary",
+      "extra_agents": 0
+    }
+  },
+  "architecture_contract": {
+    "input": "Unchanged complete2..24-frame inputs, noV, legacy decoder and normalization.",
+    "supervision": "fraction20_40_query:K=max(2,floor(T*(0.2+0.2*U)));four_query:K=min(4,T). Distinct uniform frames per asset visit; private SHA-seeded RNG.",
+    "loss": "Mean selected frames per asset, then mean assets; unchanged proven ragged decoder path.",
+    "initialization": "Fresh same official initialization independently for each arm, not a continuation of any20k checkpoint.",
+    "LR": "Unchanged100k horizon; stop at20k."
+  },
+  "previous_completed_result": {
+    "document": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
+    "full_record": "model_training/state/archive/query_density20k_completed_20261026.json",
+    "git_source": "379cd901b5265d4eb9415f7edd4f84edc940135d",
+    "execution_authority": false,
+    "comparison": {
+      "path": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/five_arm_comparison.json",
+      "sha256": "8e2085cc59d69b34b8043c50edcf73402a11d0c5dfa250f9b092793399c3f0ef"
+    }
+  },
+  "next_research_authorization": {
+    "explicit_human_authorized": true,
+    "requested_utc": "2026-10-26T19:42:50Z",
+    "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
+    "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
+    "compute_status": "CPU design and implementation authorized; no new GPU launch until exact config, tests, resource lifetime and state gates are ready."
+  },
+  "next_required_result": "Implement and test the bounded reference-skeleton XYZ pilot, then admit it under its own exact guarded contract; do not rerun or extend completed density arms."
+}

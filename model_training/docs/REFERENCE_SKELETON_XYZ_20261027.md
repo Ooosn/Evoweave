@@ -228,8 +228,8 @@ This is one seed,64train/32valid balanced diagnostic, frozen donor and800head
 updates. It neither proves learned corrections unnecessary in general nor
 decides joint training, unmatched/remeshed input, arbitrary correspondence or
 full population performance. The next reviewed experiment must address learned
-conditional generation and conditioning capacity. No additional run is queued;
-the completed diagnostic stage gates are closed.
+conditional generation and conditioning capacity. These completed diagnostic
+stage gates remain closed; the later generative authorization is separate below.
 
 ## Conditional Autoregressive Learning Check
 

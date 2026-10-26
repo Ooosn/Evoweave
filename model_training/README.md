@@ -22,6 +22,9 @@ the main method; these are diagnostic controls, not completion of that goal.
 Frozen-feature results do not settle joint training. See the
 [reference XYZ result](docs/REFERENCE_SKELETON_XYZ_20261027.md#completed-rigid-residual-result).
 Completed stage gates are closed; checkpoints and the original grant are retained.
+The newly authorized conditional AR generator has passed full-generation capacity
+checks; its isolated8train/32valid learning diagnostic is admitted separately.
+See the [generative protocol](docs/REFERENCE_SKELETON_XYZ_20261027.md#conditional-autoregressive-learning-check).
 
 The single-target/all-frame comparison is complete with unchanged multi-frame
 input, no virtual path and the same20kasset budget. F1 is0.66660single versus

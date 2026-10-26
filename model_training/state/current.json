@@ -67,7 +67,7 @@
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
-    "code_commit": "08f7244881a747d4d42953491b477e6e12e57a5c",
+    "code_commit": "ba0b284433684a700704462ae4951e001729291b",
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
     "gpu_work_allowed": true,
@@ -77,16 +77,23 @@
     "acceptance_basis": "33 focused CPU tests passed: readout geometry/graph/permutation/padding/gradient/synthetic fit, exact pilot/cohort/position metrics, new family and existing scheduler/supervisor regressions. Donor checkpoint, data and normalization contracts are pinned; real dual-GPU capacity/gradient check still required.",
     "runs": [
       {
-        "stage": "capacity_v11",
+        "stage": "capacity_v12",
         "mode": "capacity",
         "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json",
         "config_sha256": "029729e65f6b60dbc70f89814a0bac4bdb910e82d3f36370c5d89ebc0db4830c",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v11"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v12"
       }
     ],
     "CPU_tests_passed": 33,
-    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/integration_tests_v2_result.json",
+    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/integration_tests_v3_result.json",
+    "prior_capacity_attempt": {
+      "stage": "capacity_v11",
+      "compute_started": false,
+      "cause": "Lifetime guard incorrectly matched the historical submit_cmd h_rt in addition to the current hard_resource_list. Fixed to parse only the current resource field, with regression coverage.",
+      "keeper_preserved": true,
+      "GPUs_idle_after_failure": true
+    },
     "checkpoint_policy": "Read donor train_v9 without modification. Retain new head400/800 full optimizer/RNG checkpoints and SHA-verified durable mirrors. Derived frozen caches stay on verified NVMe.",
     "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/frozen_pilot_v1",
     "end_policy": "Capacity only now. Release the bounded800-update frozen pilot only after accepted real capacity results. No automatic100k or open-ended search.",
@@ -121,5 +128,5 @@
     "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
     "compute_status": "CPU design and implementation authorized; no new GPU launch until exact config, tests, resource lifetime and state gates are ready."
   },
-  "next_required_result": "Run and inspect capacity_v11; then explicitly admit train_v11 for the bounded800-update reference-XYZ pilot."
+  "next_required_result": "Run and inspect capacity_v12; then explicitly admit train_v11 for the bounded800-update reference-XYZ pilot."
 }

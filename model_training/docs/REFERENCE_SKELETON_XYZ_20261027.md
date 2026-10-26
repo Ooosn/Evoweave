@@ -96,4 +96,7 @@ The keeper's fixed launcher now dispatches this explicit new family to its own
 trainer; all existing membership, UUID, affinity, RAM and GPU guards remain.
 The48h allocation extension must be verified live before launch. No new GPU
 allocation or release is requested. The donor remains train_v9; new outputs are
-capacity_v11 and train_v11, never overwrites of earlier arms.
+capacity_v12 and train_v11, never overwrites of earlier arms. The initial
+capacity_v11 attempt was blocked before computation because the lifetime guard
+also matched historical submit arguments; its corrected parser reads only the
+current hard_resource_list, with a regression test. The failed receipt is retained.

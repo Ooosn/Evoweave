@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "two_query20k_capacity_verified_formal_training_admitted_20261026",
-  "updated_at": "2026-10-26T04:32:32.953Z",
+  "state_id": "two_query20k_formal_running_startup_verified_20261026",
+  "updated_at": "2026-10-26T04:49:32.404Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -52,17 +52,17 @@
     ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "status": "capacity_complete_pending_fresh_formal_admission",
-    "payload_processes_alive": false,
+    "status": "formal_train_v4_running_startup_verified",
+    "payload_processes_alive": true,
     "keeper_pid": 1098441,
     "expiry_utc": "2026-10-26T10:33:29.625Z",
     "policy": "Reuse retained scheduler grant only after fresh stage-boundary checks; no new allocation, release, concurrent model payload or automatic continuation.",
     "live_check_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/runs/capacity_v3/resources.json",
-    "last_observed_utc": "2026-10-26T04:29:06.966642Z"
+    "last_observed_utc": "2026-10-26T04:47:31.711272+00:00"
   },
   "active_operation": {
     "label": "real_query_two_target_5k_20261026_v1",
-    "status": "capacity_v3_primary_accepted_train_v4_admitted",
+    "status": "formal_running_first3_updates_primary_accepted",
     "operation": "train",
     "mode": "two_target_vs_retained_single_and_all_frames",
     "complete": false,
@@ -85,24 +85,6 @@
     "expected_supervised_frames": 40000,
     "initialization": "Fresh same official initialization, not old20k/capacity weights.",
     "runs": [
-      {
-        "mode": "audit",
-        "stage": "audit_v10",
-        "approved": false,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
-        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v10",
-        "status": "completed_primary_accepted"
-      },
-      {
-        "mode": "capacity",
-        "stage": "capacity_v3",
-        "approved": false,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
-        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3",
-        "status": "completed_primary_accepted"
-      },
       {
         "mode": "train",
         "stage": "train_v4",
@@ -134,10 +116,28 @@
       "profile_weights_discarded": true
     },
     "monitor": {
-      "status": "prepared_not_started_wait_actual_PIDs",
+      "status": "running_primary_startup_accepted",
       "directory": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor",
       "offline_tests_passed": 25,
-      "primary_code_reviewed": true
+      "primary_code_reviewed": true,
+      "pid": 134840,
+      "script": "monitor_two_query.py"
+    },
+    "producer_source": "9df5d29eb96cf02658184069f4d7e5293ec5fed5",
+    "actual_payload_pids": [
+      347854,
+      347958,
+      358755,
+      358756
+    ],
+    "startup": {
+      "accepted": true,
+      "path": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor/startup_verification.json",
+      "sha256": "8d1900375b7f3bed18e61ca6c622aacae2e66ef315aa2fd14821b4bd5e9923d3",
+      "observed_utc": "2026-10-26T04:47:31.711272+00:00",
+      "assets_verified": 144,
+      "input_frames_verified": 1920,
+      "supervised_frames_verified": 288
     }
   },
   "architecture_contract": {
@@ -166,7 +166,7 @@
     "model_quality_accepted": false,
     "local_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026"
   },
-  "next_required_result": "Launch only fresh train_v4, verify first3 updates against retained inputs and exact2target policy, then continue to20k and fixed128x8 evaluation.",
+  "next_required_result": "Continue this one run to20k, retain four full checkpoints, evaluate fixed128x8 originalGT and compare against both retained controls. Report only completion or actionable failure; no additional experiments.",
   "previous_completed_result": {
     "label": "real_query_single_target_5k_20261026_v1",
     "document": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",

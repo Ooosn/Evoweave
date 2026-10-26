@@ -67,6 +67,10 @@ Capacity_v3 completed04:29UTC, six cases/twelve optimizer updates per rank, fini
 positive active gradients, no virtual gradients, correct two-target counts.
 Maximum reserved GPU memory42.1016GiB; peak host-tree RSS11603755008bytes.
 Receipt SHA `ca58f108f9be724314b720ab09e117e687126b9499fff78e4d64aca315295dcf`.
-Profile weights are discarded. Fresh train_v4 is now admitted, with actual
-startup verification pending. Runtime code remains pinned to
+Profile weights are discarded. Fresh train_v4 startup was independently verified
+04:47:31UTC: first3updates/144assets/1920inputs/288targets, same retained inputs,
+GT hashes, LR/beta and initial state; two-target selection independently replayed.
+Actual producer `9df5d29eb96cf02658184069f4d7e5293ec5fed5` stays immutable while
+training runs. A read-only monitor continues to terminal after primary startup
+acceptance. Runtime code remains pinned to
 `f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a`.

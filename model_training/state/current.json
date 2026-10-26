@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "two_query20k_implementation_CPU_validation_20261026",
-  "updated_at": "2026-10-26T03:49:04.508Z",
+  "state_id": "two_query20k_CPU_audit_admitted_20261026",
+  "updated_at": "2026-10-26T03:49:34.803Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -65,13 +65,13 @@
   },
   "active_operation": {
     "label": "real_query_two_target_5k_20261026_v1",
-    "status": "implementation_reviewed_109_CPU_tests_passed",
+    "status": "CPU_only_audit_v10_admitted",
     "operation": "train",
     "mode": "two_target_vs_retained_single_and_all_frames",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User approved fixed two distinct random targets per asset at20k.",
-    "code_commit": "162975c",
+    "code_commit": "f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
     "contract": "model_training/docs/TWO_QUERY_SUPERVISION_20261026.md",
     "config": "model_training/experiments/real_query_two_target_5k_20261026_v1.json",
@@ -87,7 +87,32 @@
     "expected_input_frames": 263608,
     "expected_supervised_frames": 40000,
     "initialization": "Fresh same official initialization, not old20k/capacity weights.",
-    "runs": [],
+    "runs": [
+      {
+        "mode": "audit",
+        "stage": "audit_v10",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
+        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v10"
+      },
+      {
+        "mode": "capacity",
+        "stage": "capacity_v3",
+        "approved": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
+        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3"
+      },
+      {
+        "mode": "train",
+        "stage": "train_v4",
+        "approved": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
+        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v4"
+      }
+    ],
     "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler on NVMe and SHA-verified durable mirror.",
     "durable_root": "/home/wangyy/evorig/outputs/two_query_20k_20261026",
     "end_policy": "Stop after20k and fixed128x8 evaluation. No automatic4-target,100k or reference-XYZ run.",
@@ -119,7 +144,7 @@
     "model_quality_accepted": false,
     "local_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026"
   },
-  "next_required_result": "Fresh no-CUDA initialization/selector audit, then primary-reviewed two-target capacity before formal20k.",
+  "next_required_result": "Review fresh CPUaudit_v10 initialization, input/RNG and two-target plan. GPUcapacity and formaltraining remain blocked.",
   "previous_completed_result": {
     "label": "real_query_single_target_5k_20261026_v1",
     "document": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",

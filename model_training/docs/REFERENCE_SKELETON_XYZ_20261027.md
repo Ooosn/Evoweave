@@ -157,3 +157,10 @@ gradients, actual cache loading/tamper rejection, both evaluation variants and
 existing scheduler guards. capacity_v14 must pass3updates/rank on each rank's
 largest cached skeleton and clean resource completion before train_v13 is
 released. This is a bounded follow-up, not a full second encoder or100k run.
+
+capacity_v14 passed and exited cleanly; observer at2026-10-26T21:40:07Z verified
+both GPUs idle and keeper retained.126/171joints,8poses,batch2per rank, all four
+gradient groups present; peak allocated tensors0.583/0.676GB. All reused payload
+digests passed. Producer:efec0bd9e4f0e93a11938fc44e4a83d7a0629161.
+Result SHA256:544b80e894573860bb75873ef9ad39d25185b14a4733c9d9460cf7d1cc42bde2.
+The capacity head is discarded; train_v13 starts fresh with unchanged code/config.

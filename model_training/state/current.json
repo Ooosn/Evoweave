@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "two_query20k_CPU_audit_admitted_20261026",
-  "updated_at": "2026-10-26T03:49:34.803Z",
+  "state_id": "two_query20k_CPU_verified_capacity_admitted_20261026",
+  "updated_at": "2026-10-26T04:10:10.127Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -33,11 +33,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -52,7 +52,7 @@
     ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "status": "retained_grant_live_idle_fresh_admission_required",
+    "status": "CPU_audit_complete_idle_capacity_admitted",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -61,11 +61,12 @@
     "keeper_pid": 1098441,
     "expiry_utc": "2026-10-26T10:33:29.625Z",
     "policy": "Reuse retained scheduler grant only after fresh stage-boundary checks; no new allocation, release, concurrent model payload or automatic continuation.",
-    "live_check_evidence": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/preparation/inspect_live.sh"
+    "live_check_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/runs/audit_v10/resources.json",
+    "last_observed_utc": "2026-10-26T04:07:21.532573Z"
   },
   "active_operation": {
     "label": "real_query_two_target_5k_20261026_v1",
-    "status": "CPU_only_audit_v10_admitted",
+    "status": "CPU_v10_primary_accepted_pending_capacity_v3",
     "operation": "train",
     "mode": "two_target_vs_retained_single_and_all_frames",
     "complete": false,
@@ -76,9 +77,9 @@
     "contract": "model_training/docs/TWO_QUERY_SUPERVISION_20261026.md",
     "config": "model_training/experiments/real_query_two_target_5k_20261026_v1.json",
     "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "train_assets": 5000,
     "target_exposures_per_variant": 20000,
@@ -91,15 +92,16 @@
       {
         "mode": "audit",
         "stage": "audit_v10",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
         "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v10"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v10",
+        "status": "completed_primary_accepted"
       },
       {
         "mode": "capacity",
         "stage": "capacity_v3",
-        "approved": false,
+        "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
         "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3"
@@ -116,7 +118,15 @@
     "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler on NVMe and SHA-verified durable mirror.",
     "durable_root": "/home/wangyy/evorig/outputs/two_query_20k_20261026",
     "end_policy": "Stop after20k and fixed128x8 evaluation. No automatic4-target,100k or reference-XYZ run.",
-    "CPU_tests_passed": 109
+    "CPU_tests_passed": 109,
+    "CPU_audit": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v10/result.json",
+      "sha256": "6cdc598b88089ba034c8e7c05239556edba854ad3f5949c485490e78b7283082",
+      "initialization_exact_both_retained_controls": true,
+      "global_input_RNG_unchanged": true,
+      "independent_full20k_selector_plan_verified": true
+    }
   },
   "architecture_contract": {
     "main_decoder": "Unchanged full legacy UniRig decoder and codec.",
@@ -144,7 +154,7 @@
     "model_quality_accepted": false,
     "local_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026"
   },
-  "next_required_result": "Review fresh CPUaudit_v10 initialization, input/RNG and two-target plan. GPUcapacity and formaltraining remain blocked.",
+  "next_required_result": "Run fresh bounded two-target GPUcapacity/gradient checks; discard profiling weights. Formal20k remains blocked until primary review.",
   "previous_completed_result": {
     "label": "real_query_single_target_5k_20261026_v1",
     "document": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",

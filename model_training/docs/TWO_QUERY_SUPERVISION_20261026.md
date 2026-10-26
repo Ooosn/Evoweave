@@ -59,5 +59,9 @@ must not be overwritten. Local small evidence:
 
 Implementation reviewed;109CPU regression tests passed, including full20k
 input/selector replay, exact loss/gradient equivalence and checkpoint accounting.
-Evidence: local `preparation/tests_v2_result.json`. Fresh server CPU audit is
-next; no GPU stage or formal training admitted yet.
+Evidence: local `preparation/tests_v2_result.json`. Fresh CPUaudit_v10 completed
+04:07UTC, no CUDA/optimizer, exact initialization versus both controls, unchanged
+input RNG and independently verified40kselected targets on the20kinput plan.
+Receipt SHA `6cdc598b88089ba034c8e7c05239556edba854ad3f5949c485490e78b7283082`.
+Capacity_v3 is admitted; formal training is still blocked. Profile weights are
+discarded. Runtime code remains pinned to `f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a`.

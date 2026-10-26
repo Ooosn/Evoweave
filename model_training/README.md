@@ -16,9 +16,10 @@ Data production is owned by `data_processing/`.
 The reference-skeleton XYZ pilot has completed two matched800-update head runs.
 On32held-out assets with GT reference, normalized joint error is7.8203%for the
 copy-initialized learned head,0.5238%for local rigid transfer and0.5239%for rigid
-plus learned residual. Current learned heads are not quality upgrades. Prefer
-an appended geometric tracker under known surface correspondences, not a second
-full encoder. Frozen-feature results do not settle joint training. See the
+plus learned residual. Current learned heads are not quality upgrades. The user
+explicitly requires learned conditional generation, not geometric fitting as
+the main method; these are diagnostic controls, not completion of that goal.
+Frozen-feature results do not settle joint training. See the
 [reference XYZ result](docs/REFERENCE_SKELETON_XYZ_20261027.md#completed-rigid-residual-result).
 Completed stage gates are closed; checkpoints and the original grant are retained.
 

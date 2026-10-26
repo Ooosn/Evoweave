@@ -27,7 +27,8 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Seven density arms are complete. Start the newly authorized reference-skeleton XYZ research, preserving all completed controls and trained checkpoints."
+    "current_question": "Develop learned conditional generation of target-pose skeleton XYZ from a complete reference skeleton and observed posed meshes. Compare an appended shared-backbone generator with a separate learned model, not with replacing the requested method by geometric fitting.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted."
   },
   "allowed_operations": [
     "inspect",
@@ -62,7 +63,7 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "completed_no_learned_upgrade",
+    "status": "diagnostic_pilots_complete_generation_direction_required",
     "operation": "report",
     "complete": true,
     "quality_accepted": false,
@@ -75,7 +76,7 @@
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "acceptance_basis": "Both800-update pilots completed with clean exit0 and retained checkpoints. Independent aggregation verifies all24artifacts each, identical input/cache/baselines and1600rank-update asset/reference/LR sequence. Neither trained head is accepted as a quality upgrade over local rigid transfer. No further stage queued.",
+    "acceptance_basis": "Both800-update diagnostic pilots completed with clean exit0 and retained checkpoints. User then explicitly rejected promoting geometric fitting to the main route. The requested learned conditional generation objective is NOT complete; neither frozen pilot decides its architecture or joint-training feasibility. No further stage queued.",
     "capacity_evidence": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v14/result.json",
       "sha256": "544b80e894573860bb75873ef9ad39d25185b14a4733c9d9460cf7d1cc42bde2",
@@ -154,8 +155,8 @@
   "architecture_contract": {
     "input": "Existing noV shared real-frame features plus explicit corresponding anchor XYZ/normals; complete eight-pose inputs in this bounded pilot.",
     "reference": "Full reference XYZ, parent tree, joint mask and reference slot. No semantic joint-ID vocabulary or topology-only reference.",
-    "output": "Fixed local Kabsch transfer plus learned continuous XYZ residual for the same reference joints. Reference slot held fixed and excluded from losses/metrics. Only reference joints and corresponding observed surface anchors enter Kabsch.",
-    "training": "Frozen train_v9 backbone, new joint readout only.64train/32valid equal-size joint-count strata;800updates at4global assets/update after capacity acceptance.",
+    "output": "Required research route: learned conditional generation of target-pose XYZ for the complete reference skeleton. Do not produce the main output via Kabsch, registration, IK, per-instance fitting or learned correction of a fixed geometric solution. The complete reference joint identities/tree remain the condition.",
+    "training": "Completed diagnostic recipe was frozen train_v9,64train/32valid,800head updates. This is not the accepted final generation architecture. Any next generative recipe needs explicit reviewed code/config/capacity admission under the existing research authorization.",
     "evaluation": "GT reference is oracle; naturally predicted reference is separate end-to-end diagnostic. Copy and local Kabsch controls, normalized MPJPE/PCK for GT, J2J and edgeF1 for predicted references. No claim of joint-training performance."
   },
   "previous_completed_result": {
@@ -172,7 +173,7 @@
     "explicit_human_authorized": true,
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
-    "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
+    "starting_decision": "Preserve complete naturally decoded reference joints, then learn target-pose conditional generation using reference coordinates/tree and mesh evidence. Shared versus separate learned conditioning remains an experimental question. Generation is the user-required main route; geometry is a diagnostic control only.",
     "compute_status": "Copy-initialized train_v12 and rigid-residual train_v13 completed. Gates closed. Broader research authorization remains, but further compute needs a new reviewed exact configuration; no automatic100k or architecture sweep."
   },
   "completed_reference_pilots": [{
@@ -198,7 +199,7 @@
     "matched_input_reference_LR_and_baselines_verified": true,
     "head_0400_sha256": "e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85",
     "head_0800_sha256": "0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6",
-    "interpretation": "No useful increment over local rigid transfer. Recommend geometric tracking under known correspondence, preserve the learned implementation for future research; neither frozen pilot settles joint training."
+    "interpretation": "No useful increment over local rigid transfer in this frozen diagnostic. The user's later correction rejects geometric tracking as the main route; preserve results as controls and continue learned conditional generation. Neither frozen pilot settles joint training."
   }],
-  "next_required_result": "Report both completed pilots and the correspondence/GT-reference limitations. A subsequent reviewed study should expand matched geometry/end-to-end evaluation before a second full model; no additional compute is currently admitted."
+  "next_required_result": "Return to learned conditional generation: a complete reference skeleton/mesh plus other observed poses condition target XYZ generation. Revisit the generator/conditioning and shared-versus-separate design; do not continue geometric-fit/residual optimization or call its strong control score completion of the requested task. No additional compute is admitted yet."
 }

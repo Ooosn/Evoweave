@@ -208,17 +208,25 @@ largest GT static-copy error. Selection does not depend on predicted quality.
 
 ### Current Decision And Limits
 
-Do not add a second complete encoder/model based on this pilot. For meshes with
-the established surface correspondences, append explicit geometric transfer
-to the reference skeleton first. It preserves reference count/tree by design;
-it cannot repair a wrong reference topology. Retain the shared-backbone head
-as a research implementation, but do not promote either trained head as a
-quality upgrade. GT-reference and natural-reference gaps motivate investigating
-stage-one errors as well as residual localization; they do not isolate one cause.
+The user explicitly corrected the direction after these pilots: use learned
+generation, not an optimization/fitting solution. The prior recommendation to
+promote local rigid tracking to the main method is withdrawn. Keep Kabsch and
+rigid-residual measurements only as controls; do not continue that experiment
+line or interpret its strong score as a reason to replace the requested method.
+
+The main task remains: fully decode a real reference skeleton, then condition
+a learned target-pose XYZ generator on that skeleton, reference mesh and other
+observed meshes. Shared-backbone appended generator versus separate learned
+model is still an experimental question. Do not silently select AR, diffusion
+or direct continuous generation based on the word generation alone; separate
+that architecture decision from the clear prohibition on a fitting-led route.
+The short frozen direct-readout pilot is not proof that generative modeling or
+jointly trained conditioning fails. Neither trained head is accepted as an
+upgrade. The requested generative research objective is not yet complete.
 
 This is one seed,64train/32valid balanced diagnostic, frozen donor and800head
 updates. It neither proves learned corrections unnecessary in general nor
 decides joint training, unmatched/remeshed input, arbitrary correspondence or
-full population performance. A useful next reviewed experiment is a larger
-matched geometric/end-to-end evaluation before spending on another full model.
-No additional run is queued; the completed stage gates are closed.
+full population performance. The next reviewed experiment must address learned
+conditional generation and conditioning capacity. No additional run is queued;
+the completed diagnostic stage gates are closed.

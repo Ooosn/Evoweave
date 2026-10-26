@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "state_id": "query_density20k_completed_five_arm_comparison_20261026",
-  "updated_at": "2026-10-26T14:20:00Z",
+  "state_id": "fraction20_40_then_four20k_authorized_20261026",
+  "updated_at": "2026-10-26T14:46:00Z",
   "module": "model_training",
-  "human_context": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
+  "human_context": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md"
+    "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md"
   ],
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -27,14 +27,14 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Five-arm20k comparison completed. Three is the strongest selected-target point estimate at similar cost to two; fractional10%-30% does not show a clear advantage. No further run authorized."
+    "current_question": "First fresh20%-40% minimum2-target supervision, then fresh fixed4-target supervision at20k. Retain all five previous controls without rerunning."
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "preflight",
     "submit",
     "matched_eval"
@@ -51,7 +51,7 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "both_runs_complete_payloads_absent_GPUs_idle_at_cleanup",
+    "status": "reuse_existing_extended_allocation_new_payloads_pending",
     "expiry_utc": "2026-10-26T22:33:29.625Z",
     "policy": "Same granted GPUs and16CPUs. Native qalter -when now extended h_rt from24h to36h; keeper and allocation preserved. Unused pending request130589725 canceled, never granted.",
     "last_observed_utc": "2026-10-26T14:15:15.047489Z",
@@ -62,23 +62,19 @@
   },
   "active_operation": {
     "label": "real_query_density_5k_20261026_v1",
-    "status": "completed_verified_three_and_fraction20k",
+    "status": "fraction20_40_then_four_approved_start_pending",
     "operation": "train",
-    "complete": true,
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User explicitly requested fixed three-frame and random10%-30%,minimum1-frame supervision follow-ups on2026-10-26, continuing the same20k comparison.",
+    "authorization": "User explicitly requested20%-40%,minimum2-target supervision, followed after completion by a4-frame decoder-supervision run, on2026-10-26. Same fresh20k comparison contract.",
+    "code_commit": "382fbfb1652fbb667e504c3e63ccef9eb3ee8be0",
     "required_entrypoint": "model_training/rigweave/scripts/train_virtual_pair.py",
-    "contract": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
-    "gpu_work_allowed": false,
-    "formal_training_allowed": false,
+    "contract": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "acceptance_basis": "Reuse pinned all-frame CPU initialization/data/loader evidence and measured all-frame capacity; focused new selector/ragged-loss tests before formal launch. No standalone repeat audit/capacity jobs.",
-    "runs": [],
-    "checkpoint_policy": "Keep full5k/10k/15k/20k checkpoints and verified durable mirrors for both new arms.",
-    "durable_root": "/home/wangyy/evorig/outputs/query_density_20k_20261026",
-    "end_policy": "Stop both arms at20k and evaluate fixed128x8. No100k or additional new arms.",
-    "CPU_tests_passed": 66,
+    "acceptance_basis": "Only selector/variant rules changed. Five focused CPU tests passed. Reuse established ragged decoder/loss and pinned all-frame initialization/data/capacity evidence; no new audit or capacity stage.",
     "inherited_evidence": {
       "CPU_audit": {
         "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v7/result.json",
@@ -90,165 +86,57 @@
       },
       "description": "Immutable all-frame receipts reused; local bound-config check passed without model construction, CUDA, optimizer updates or a new audit job. Runtime compares every actual official initialization to the inherited fingerprint."
     },
-    "monitor": {
-      "directory": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/monitor",
-      "status": "completed_verified_exit0",
-      "owned_by": "primary",
-      "extra_agents": 0,
-      "receipt_sha256": "cff6490aee5c34a025cdce7a1249f2bda7434f51175c30138920b44da62fde05"
-    },
-    "code_commit": "6b55970e4d34abc376e6b0d18163b5937c2f377a",
-    "failed_admissions": [
+    "runs": [
       {
-        "stages": [
-          "train_v5",
-          "train_v6"
-        ],
-        "reason": "Missing code_commit metadata; launcher rejected both before any model/optimizer work.",
-        "updates": 0,
-        "outputs_overwritten": false
+        "stage": "train_v9",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_fraction20_40_min2_5k_20261026_v1.json",
+        "config_sha256": "53c03ec4052abc2f811a00641b7ceaaf1a625250de7a89fbecde294580d98324",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9",
+        "variant": "fraction20_40_query",
+        "expected_supervised_frames": 75065,
+        "launch_policy": "first"
+      },
+      {
+        "stage": "train_v10",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_four_target_5k_20261026_v1.json",
+        "config_sha256": "dcd5bcd9441c77e3d6d7fb78e229f3832d4c126f539784037bd2b306a0cef8bb",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v10",
+        "variant": "four_query",
+        "expected_supervised_frames": 77920,
+        "launch_policy": "only_after_train_v9_successful_completion"
       }
     ],
-    "producer_source": "2279b2157fbbf559f0f980dd9cc617f823253c7b",
-    "finished_utc": "2026-10-26T14:13:43.795712Z",
-    "full100k_training_complete": false,
-    "execution_integrity_accepted": true,
-    "counts_per_arm": {
-      "assets": 20000,
-      "updates": 420,
-      "input_frames": 263608,
-      "complete_passes": 4,
-      "supervised_frames": {
-        "three_query": 59416,
-        "fraction_query": 45936
-      }
-    },
-    "checkpoint_retention": {
-      "full_checkpoints": 8,
-      "both_copies_verified": true,
-      "independent_payload_rehash": false,
-      "verification": "Producer SHA plus independent copy size/type and equal receipt checks.",
-      "final_sha256": {
-        "three_query": "9ef70f5716de5c6e1f274303f510bd35508db2895d876dc87353a32b872d9d65",
-        "fraction_query": "fc348a54857fd55dfeb0f1452e5f4cd45ff7c160dc5d9f089b614cd31bbd38e6"
-      }
+    "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler checkpoints on NVMe with verified durable mirrors for both new arms.",
+    "durable_root": "/home/wangyy/evorig/outputs/query_density_followup_20k_20261026",
+    "end_policy": "Stop each arm at20k and fixed128x8 evaluation; no100k or additional arms.",
+    "CPU_tests_passed": 5,
+    "monitor": {
+      "directory": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/monitor",
+      "status": "offline_tests_passed_not_started",
+      "owned_by": "primary",
+      "extra_agents": 0
     }
   },
   "architecture_contract": {
-    "input": "Same complete2..24-frame input stream and normalization.",
-    "supervision": "Three=min(3,T); fraction=max(1,floor(T*(0.1+0.2*U))),U~Uniform[0,1) per asset visit; distinct uniform frame subset.",
-    "loss": "Mean selected frames within each asset, then mean assets.",
-    "initialization": "Fresh same official initialization separately per arm; no fine-tuning from prior checkpoints.",
-    "learning_rate": "Unchanged100k horizon; stop at20k."
+    "input": "Unchanged complete2..24-frame inputs, noV, legacy decoder and normalization.",
+    "supervision": "fraction20_40_query:K=max(2,floor(T*(0.2+0.2*U)));four_query:K=min(4,T). Distinct uniform frames per asset visit; private SHA-seeded RNG.",
+    "loss": "Mean selected frames per asset, then mean assets; unchanged proven ragged decoder path.",
+    "initialization": "Fresh same official initialization independently for each arm, not a continuation of any20k checkpoint.",
+    "LR": "Unchanged100k horizon; stop at20k."
   },
   "previous_completed_result": {
-    "label": "real_query_two_target_5k_20261026_v1",
-    "document": "model_training/docs/TWO_QUERY_SUPERVISION_20261026.md",
-    "full_record": "model_training/state/archive/two_query20k_completed_20261026.json",
-    "git_source": "7ebd16d92e7050cddd66518cc544752bac9a00ae",
-    "execution_authority": false
-  },
-  "retained_controls": {
-    "all_frames": {
-      "evaluation": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v2/virtual_off/evaluation_020000/summary.json",
-      "sha256": "9a06a30846c3bc987598f8de24146ff511cd3098fedc8e6494071b40c456c9b5",
-      "checkpoint_sha256": "338aeeb0fee74d3dea28f2719bfe3eff2e2915fe1d21dd58530610fc93463416",
-      "f1": 0.7110814050960641
-    },
-    "single_query": {
-      "directory": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v3/single_query/evaluation_020000",
-      "checkpoint_sha256": "23c2ffc659f19a73456bfd8cc236bf8eff6a74f50391ad751a940ec47083ab82",
-      "f1": 0.666595437675587,
-      "accepted_terminal_receipt": "D:/evoweave/server_ops/outputs/single_query_20k_20261026/monitor/receipt.json",
-      "accepted_terminal_receipt_sha256": "95475fcac5d4156f714e1b4c2df41bf0ab825ab38c229382f3a93398d7196e23"
-    }
-  },
-  "next_required_result": "Report the completed five-arm comparison with uncertainty and count-accuracy tradeoff. Retain all checkpoints/allocation. Await explicit new experimental authorization.",
-  "result": {
-    "complete": true,
-    "metric": "Original continuous-GT edge F1; failed views score zero.",
-    "validation_assets": 128,
-    "views_per_asset": 8,
-    "arms": {
-      "single_query": {
-        "f1": 0.666595437675587,
-        "failures": 110,
-        "exact_count_fraction": 0.41796875,
-        "non52_f1": 0.5873106924323785,
-        "supervised_frames": 20000,
-        "update_seconds": 6376.567991115036
-      },
-      "two_query": {
-        "f1": 0.6995819754485613,
-        "failures": 71,
-        "exact_count_fraction": 0.4638671875,
-        "non52_f1": 0.6172047872218583,
-        "supervised_frames": 40000,
-        "update_seconds": 6952.551191987237
-      },
-      "three_query": {
-        "f1": 0.7062355019296291,
-        "failures": 68,
-        "exact_count_fraction": 0.45703125,
-        "non52_f1": 0.6222865678753745,
-        "supervised_frames": 59416,
-        "update_seconds": 7001.643459204002
-      },
-      "fraction_query": {
-        "f1": 0.6994360634380317,
-        "failures": 62,
-        "exact_count_fraction": 0.396484375,
-        "non52_f1": 0.6186892118849262,
-        "supervised_frames": 45936,
-        "update_seconds": 6832.721139560686
-      },
-      "all_frames": {
-        "f1": 0.7110814050960641,
-        "failures": 57,
-        "exact_count_fraction": 0.4775390625,
-        "non52_f1": 0.6282007947855305,
-        "supervised_frames": 263608,
-        "update_seconds": 9007.6895867188
-      }
-    },
-    "differences": {
-      "three_query_minus_all_frames": {
-        "f1": -0.004845903166434954,
-        "asset_bootstrap_95pct": [
-          -0.023123316387560697,
-          0.014447215703511521
-        ]
-      },
-      "three_query_minus_two_query": {
-        "f1": 0.006653526481067875,
-        "asset_bootstrap_95pct": [
-          -0.006960115723088152,
-          0.021542488875317744
-        ]
-      },
-      "fraction_query_minus_all_frames": {
-        "f1": -0.011645341658032531,
-        "asset_bootstrap_95pct": [
-          -0.032920069268264504,
-          0.00999487079107881
-        ]
-      },
-      "fraction_query_minus_two_query": {
-        "f1": -0.00014591201052970102,
-        "asset_bootstrap_95pct": [
-          -0.01868168967790469,
-          0.019210943167249143
-        ]
-      }
-    },
-    "quality_equivalence_to_all_frames_established": false,
-    "reference_promotion_accepted": false,
-    "interpretation": "Three-frame point-estimate F1 improves two by0.00665 at0.7%more update time, but its95%interval includes zero. Fractional supervision has nearly identical F1 to two and lower exact joint-count accuracy. Both new arms improve single; all-frame remains highest point-estimate F1.",
-    "limitations": "One training seed at20k on the unchanged100k LR horizon. Per-view continuous-GT F1 is producer-computed; aggregation and paired intervals are independently recomputed. Update times exclude initialization, checkpointing and evaluation; runs are sequential, not a controlled hardware benchmark.",
-    "comparison_report": {
+    "document": "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
+    "full_record": "model_training/state/archive/query_density20k_completed_20261026.json",
+    "git_source": "379cd901b5265d4eb9415f7edd4f84edc940135d",
+    "execution_authority": false,
+    "comparison": {
       "path": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/five_arm_comparison.json",
       "sha256": "8e2085cc59d69b34b8043c50edcf73402a11d0c5dfa250f9b092793399c3f0ef"
-    },
-    "terminal_receipt": "D:/evoweave/server_ops/outputs/query_density_20k_20261026/monitor/receipt.json"
-  }
+    }
+  },
+  "next_required_result": "Launch train_v9 only; after its successful20k completion launch train_v10 on the same grant. Compare both against the five retained controls."
 }

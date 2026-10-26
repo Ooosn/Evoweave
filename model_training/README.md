@@ -22,9 +22,11 @@ the main method; these are diagnostic controls, not completion of that goal.
 Frozen-feature results do not settle joint training. See the
 [reference XYZ result](docs/REFERENCE_SKELETON_XYZ_20261027.md#completed-rigid-residual-result).
 Completed stage gates are closed; checkpoints and the original grant are retained.
-The newly authorized conditional AR generator has passed full-generation capacity
-checks; its isolated8train/32valid learning diagnostic is admitted separately.
-See the [generative protocol](docs/REFERENCE_SKELETON_XYZ_20261027.md#conditional-autoregressive-learning-check).
+The conditional AR generator completed8asset/800update and64asset/6400update
+trials. Correct-reference held-out error improves from16.71%to5.55%at the64asset
+midpoint, then worsens to6.95%at the end despite near-perfect training fit.
+Generalization remains open; geometric fitting is not the main solution.
+See the [generative result](docs/REFERENCE_SKELETON_XYZ_20261027.md#completed-scaling-result).
 
 The single-target/all-frame comparison is complete with unchanged multi-frame
 input, no virtual path and the same20kasset budget. F1 is0.66660single versus

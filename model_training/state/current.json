@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "reference_xyz_conditional_ar64_training_authorized_20261027",
-  "updated_at": "2026-10-26T22:18:16Z",
+  "state_id": "reference_xyz_conditional_generation_pilots_completed_20261027",
+  "updated_at": "2026-10-26T22:46:52Z",
   "module": "model_training",
   "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
@@ -32,10 +32,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "submit",
     "matched_eval"
@@ -52,10 +52,10 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "eight_asset_AR_completed_keeper_retained_scaling_pending",
+    "status": "conditional_generation_pilots_completed_GPUs_idle_keeper_retained",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-26T22:13:25.470966Z",
+    "last_observed_utc": "2026-10-26T22:39:54.793154Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -63,39 +63,30 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "conditional_AR64_training_pending",
-    "operation": "train",
-    "complete": false,
+    "status": "completed_learning_and_scaling_generalization_unresolved",
+    "operation": "report",
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User required learned generation rather than fitting, confirmed the complete-reference conditioned target-XYZ direction, and explicitly said to begin.",
     "code_commit": "866319c5c747e7446b5f5e254bfac37e1335da53",
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "acceptance_basis": "The8asset generator learned training poses near the quantization floor but failed held-out assets even under teacher forcing. Primary explicitly reviewed fresh64asset/6400update scaling,400average visits/asset.45CPU regressions pass; capacity_v15 already covers the exact unchanged model and all64/32cached assets.",
+    "acceptance_basis": "Both conditional-AR stages completed cleanly. Independent analyses rehashed30artifacts each, matched initial validation generation/cache/control rows and replayed all rank random sequences.64asset generalization improves over8assets but degrades from3200to6400; final training is at quantization floor. No production quality upgrade or independent-encoder conclusion claimed.",
     "CPU_tests_passed": 45,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/coordinate_generator_expanded_tests_v1_result.json",
-    "runs": [
-      {
-        "stage": "train_v15",
-        "mode": "train",
-        "approved": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_ar_64assets_20261027_v1.json",
-        "config_sha256": "3256c1b8f764f2f6fa2b1505e676c3d12b503b99879191de5b9ae207bca400a1",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v15"
-      }
-    ],
+    "runs": [],
     "checkpoint_policy": "Preserve all old stages. New full AR head/optimizer/RNG checkpoints3200/6400 get SHA-verified durable mirrors; reuse source caches read-only.",
     "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/conditional_ar_64assets_v1",
-    "end_policy": "Train one fresh64asset6400update conditional generator; save3200/6400heads and inspect free/teacher train-valid gaps. No automatic later stage or geometric fitting.",
+    "end_policy": "Both admitted generative trials complete; no extension or new stage queued. Preserve3200and6400checkpoints and the original allocation. Further experiments must remain learned generation and need a separately reviewed exact recipe.",
     "monitor": {
       "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
       "extra_agents": 0,
-      "status": "train_v15_pending"
+      "status": "train_v15_complete_observer_exit0"
     },
     "capacity_evidence": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v15/result.json",
@@ -112,13 +103,14 @@
         1162105856
       ],
       "source_compatibility": "Reuse capacity_v15: generator/conditioner/forward/backward/KV generation/optimizer/resource code unchanged. Runtime edits only half/final checkpoint and example timing; cohort64 is the capacity-tested source population, including largest171joints."
-    }
+    },
+    "quality_accepted": false
   },
   "architecture_contract": {
     "input": "Existing noV shared real-frame features plus explicit corresponding anchor XYZ/normals; complete eight-pose inputs in this bounded pilot.",
     "reference": "Full reference XYZ, parent tree, joint mask and reference slot. No semantic joint-ID vocabulary or topology-only reference.",
     "output": "Conditional AR coordinate generator emits exactly3J XYZ tokens given complete reference joints/tree and mesh-derived conditions.256levels[-1,1],greedy own-prefix generation; no target GT or geometric fitting at inference; reference held exact.",
-    "training": "Same conditional AR architecture and frozen donor/cache. All64train/32valid,6400updates=25600visits=400average/trainasset. Fresh seed-matched initialization, no8asset checkpoint warm start;8xcompute,not fixed-compute data ablation.",
+    "training": "Completed frozen-backbone conditional generation checks:8train/800updates and64train/6400updates,400average visits/asset,32unchanged validation assets. Shared-versus-independent encoder has not been compared.",
     "evaluation": "Free generation with GT and natural references separately; teacher-forcedCE/accuracy/MPJPE are diagnostics, not free quality. Report quantized-GT error floor; continuous originalGT metrics; failed natural referencesF1zero."
   },
   "previous_completed_result": {
@@ -136,7 +128,7 @@
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "starting_decision": "Preserve complete naturally decoded reference joints, then learn target-pose conditional generation using reference coordinates/tree and mesh evidence. Shared versus separate learned conditioning remains an experimental question. Generation is the user-required main route; geometry is a diagnostic control only.",
-    "compute_status": "8asset conditional generation diagnostic completed; explicit reviewed64asset/6400update scaling train_v15 alone is released. Existing capacity covers unchanged graph and source population."
+    "compute_status": "Both conditional generation pilots completed. No active payload or queued follow-up. Broad research direction remains learned conditional generation, not geometric fitting."
   },
   "completed_reference_pilots": [
     {
@@ -206,8 +198,40 @@
       "head_0400_sha256": "6b4b028bfaf16546e241e90c0f87e97dee2fae2868772bd386e420dcdf5984ad",
       "head_0800_sha256": "3d14e1063f3b8e803cd02e5c658cc29a71c802f52a0242bc8d19fcdb0834cf05",
       "interpretation": "Small training set learned; poor held-out performance under both true-prefix and free decoding. Current main limitation is not explained by autoregressive rollout alone. Scale data without changing the learned-generation route."
+    },
+    {
+      "stage": "train_v15",
+      "source": "f3dab6ca270538408cb46cf3a42b0b61618bdaa3",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 6400,
+      "train_assets": 64,
+      "valid_assets": 32,
+      "result_sha256": "5d1554723f4242da09f83907a5581d193722095a1ab130772d9e5adc09723f5d",
+      "config_sha256": "3256c1b8f764f2f6fa2b1505e676c3d12b503b99879191de5b9ae207bca400a1",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v15_analysis.json",
+      "analysis_sha256": "c89ca4653d95914e589a185d4d167702deb917ecdb2a6eb2487ded6c58a6f87a",
+      "GT_normalized_MPJPE": {
+        "train_free_final": 0.0017909141272736764,
+        "valid_free_midpoint": 0.055452564207371324,
+        "valid_free_final": 0.06953680317175374,
+        "valid_teacher_midpoint": 0.05663412206922658,
+        "valid_teacher_final": 0.06984345472301356,
+        "train_quantized_GT": 0.0017883209784486098
+      },
+      "predicted_reference_F1": {
+        "midpoint": 0.39093519404495863,
+        "final": 0.34745991607994103
+      },
+      "head_3200_sha256": "d93eac6b264c82cda900c27a88ba2139619e9bc33764b0a318164c68c8c8566d",
+      "head_6400_sha256": "a177ea86bc8e7689f890aedd2fd2db168435daa0de52ed4c9625af1b1a65228d",
+      "better_observed_checkpoint": 3200,
+      "selection_uses_same_validation_panel": true,
+      "interpretation": "Generation learns training poses and benefits from expanded data/budget, but overfits. True-prefix errors remain similar to free errors, so rollout alone is not the main explanation. Shared versus separate model not decided."
     }
   ],
-  "next_required_result": "Complete freshtrain_v15 at6400updates, assess whether64asset coverage improves held-out generation while tracking teacher/free gaps. Do not conflate8xcompute scaling with equal-budget architecture evidence.",
+  "next_required_result": "Report completed learned-generation pilots, distinguish train/validation and teacher/free errors, retain the better observed3200checkpoint without claiming independent-test selection. Further reviewed work should address generalization and conditioning, not revert to geometric fitting; no more compute currently admitted.",
   "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json"
 }

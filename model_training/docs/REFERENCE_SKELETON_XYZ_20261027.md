@@ -329,3 +329,64 @@ capacity_v15, which already loaded all64/32assets and tested their largest
 code is unchanged; runtime edits only generalize half/final checkpoint and
 example timing.45focusedCPU regressions pass. This explicit next stage is
 train_v15; the old stages stay closed, and no subsequent run is automatic.
+
+### Completed Scaling Result
+
+train_v15 completed6400updates/25600asset visits/179200nonreference targets.
+Producerf3dab6ca270538408cb46cf3a42b0b61618bdaa3;
+result SHA2565d1554723f4242da09f83907a5581d193722095a1ab130772d9e5adc09723f5d.
+Supervisor exit0, cleanup complete, both GPUs idle and original keeper retained
+at2026-10-26T22:39:54Z. Peak process-tree RAM5.889GB. A shared-library demand-load
+stall occurred before training: one read-only, one-CPU sequential library probe
+read436MB in0.374s and the original launcher then progressed. No restart,
+environment rewrite or training configuration change was made; this is not
+counted as model learning time and its precise storage/cache cause is not proven.
+
+| Metric |3200updates|6400updates|
+| --- | ---: | ---: |
+| Train GT free normalized MPJPE |0.00304193|0.00179091|
+| Valid GT free normalized MPJPE |0.05545256|0.06953680|
+| Valid GT teacher-forced normalized MPJPE |0.05663412|0.06984345|
+| Valid GT free edge F1 |0.45031001|0.40322079|
+| Valid GT PCK@0.05 |0.72081610|0.66206810|
+| Valid natural-reference free edge F1 |0.39093519|0.34745992|
+| Valid natural-reference successful-only J2J |0.03806851|0.04289243|
+
+Final training token accuracy99.8876%; quantized-GT train error floor0.00178832,
+almost identical to free generation0.00179091. Held-out error improves greatly
+over the8asset trial, but worsens from3200to6400while training fits essentially
+perfectly. This supports overfitting, not further blind optimization of training
+loss. Teacher-forced held-out error remains similar to free error, so rollout
+accumulation alone does not explain the remaining gap. Conditioning, data
+diversity and representation generalization are not isolated by this experiment.
+
+Final64minus8asset valid error=-0.09751898, stratified paired-asset95%CI
+[-0.10786234,-0.08781315]. This combines8xdata and8xupdates at fixed average
+visits/asset, not a fixed-compute data-only claim. All four count strata improve;
+final errors low/mid/exact52/high are0.09787/0.06513/0.04898/0.06617. Training
+joint-count coverage expands18..54 to6..171; validation covers5..77. Count
+extrapolation was not the sole problem: low/mid/exact52 also improve substantially.
+
+Independent analysis rehashed30small artifacts, replayed12800rank-update random
+asset/reference choices, verified identical original cache/control rows, and
+verified exact equality of initial validation generation across the two AR runs.
+Analysis:D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v15_analysis.json
+SHA256c89ca4653d95914e589a185d4d167702deb917ecdb2a6eb2487ded6c58a6f87a.
+Head3200SHA256d93eac6b264c82cda900c27a88ba2139619e9bc33764b0a318164c68c8c8566d;
+head6400SHA256a177ea86bc8e7689f890aedd2fd2db168435daa0de52ed4c9625af1b1a65228d.
+Both104633850byte checkpoints have producer-verified durable SHA-identical copies
+and observer-checked sizes.3200is the better of the two scored trained checkpoints
+on this validation panel, not an independently tested production selection.
+
+The learned-generation route is implemented and learns the training poses;
+generalization is not solved. Preserve both AR checkpoints, prefer3200for the
+next diagnostic, and do not promote the final checkpoint just because its loss
+is lower. Shared versus independent encoder has not been compared. Further work
+must remain learned conditional generation and address held-out generalization;
+the geometric controls do not replace the requested method. No new run is queued.
+
+Visual:D:/evoweave/server_ops/outputs/reference_xyz_20261027/conditional_generation_examples.png
+shows one fixed training and one fixed held-out asset, identical cameras and
+target poses, comparing the8and64asset final free generators. Examples are
+selected by cached order/GT motion, not predicted quality; population metrics
+above remain the primary evidence.

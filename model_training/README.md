@@ -49,6 +49,15 @@ archive permissions are never active.
 
 ## Code Entry Points
 
+The seven-arm density comparison is complete. Random20%-40%, minimum2 targets,
+has F1 0.71401; fixed4 has0.70424; all-frame has0.71108. The new random rule uses
+16.7%less update time than all-frame, but paired intervals do not establish
+superiority over four, three or all. See the [seven-arm result](docs/QUERY_DENSITY_FOLLOWUP_20261026.md#completed-result).
+The user now authorizes reference-skeleton to posed-mesh XYZ research after
+this completion. Historical statements about no further authorization apply
+to their own completed runs, not this new research request. New compute remains
+gated by a separate exact configuration in state/current.json.
+
 - Current training: [train_virtual_pair.py](rigweave/scripts/train_virtual_pair.py).
 - Current launcher: [launch_virtual_pair.py](jobs/launch_virtual_pair.py).
 - Original baseline training: [train_dynamic_rig.py](rigweave/scripts/train_dynamic_rig.py).

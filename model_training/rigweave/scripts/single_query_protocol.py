@@ -22,16 +22,20 @@ THREE_VARIANT = 'three_query'
 FRACTION_VARIANT = 'fraction_query'
 THREE_SELECTOR = 'sha256_python_random_sample_min3_v1'
 FRACTION_SELECTOR = 'sha256_python_random_uniform10_30_floor_sample_v1'
+FOUR_VARIANT = 'four_query'
+FRACTION2_VARIANT = 'fraction20_40_query'
+FOUR_SELECTOR = 'sha256_python_random_sample_min4_v1'
+FRACTION2_SELECTOR = 'sha256_python_random_uniform20_40_floor_min2_sample_v1'
 
 
 def select_density_target_frames(requests: Iterable[FrameSampleRequest], seed: Integral,
                                  algorithm: str) -> list[list[int]]:
     """Draw distinct targets per asset visit, independently of the input RNG.
 
-    Fixed-three uses min(3,T). Fractional supervision draws p uniformly in
-    [0.1,0.3), then K=max(1,floor(p*T)), followed by one unordered K-subset.
+    Fixed policies cap K at T. Fractional policies draw p before sampling an
+    unordered K-subset, with the minimum and interval encoded in the selector.
     """
-    if algorithm not in (THREE_SELECTOR, FRACTION_SELECTOR):
+    if algorithm not in (THREE_SELECTOR, FRACTION_SELECTOR, FOUR_SELECTOR, FRACTION2_SELECTOR):
         raise ValueError('unknown density target selector')
     outer_seed = _nonnegative_integer(seed, 'seed')
     selected = []
@@ -43,7 +47,12 @@ def select_density_target_frames(requests: Iterable[FrameSampleRequest], seed: I
             raise ValueError('request.frames must be within 2..24')
         payload = f'{algorithm}|{outer_seed}|{index}|{sampling_seed}|{frames}'.encode('ascii')
         rng = random.Random(int.from_bytes(hashlib.sha256(payload).digest(), 'big'))
-        count = min(3, frames) if algorithm == THREE_SELECTOR else max(1, int((.1 + .2 * rng.random()) * frames))
+        if algorithm in (THREE_SELECTOR, FOUR_SELECTOR):
+            count = min(3 if algorithm == THREE_SELECTOR else 4, frames)
+        elif algorithm == FRACTION2_SELECTOR:
+            count = max(2, int((.2 + .2 * rng.random()) * frames))
+        else:
+            count = max(1, int((.1 + .2 * rng.random()) * frames))
         selected.append(sorted(rng.sample(range(frames), count)))
     return selected
 

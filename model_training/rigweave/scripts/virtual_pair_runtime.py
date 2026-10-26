@@ -28,7 +28,8 @@ from virtual_pair_guard import ROOT, SCOPE, deadline_due
 from virtual_pair_loading import OrderedAssetPrefetch
 from single_query_protocol import (SINGLE_SCOPE, SINGLE_VARIANT, SELECTOR, TWO_SCOPE,
     TWO_VARIANT, TWO_SELECTOR, DENSITY_SCOPE, THREE_VARIANT, FRACTION_VARIANT,
-    THREE_SELECTOR, FRACTION_SELECTOR, select_density_target_frames,
+    THREE_SELECTOR, FRACTION_SELECTOR, FOUR_VARIANT, FRACTION2_VARIANT,
+    FOUR_SELECTOR, FRACTION2_SELECTOR, select_density_target_frames,
     select_target_frames, select_two_target_frames, supervised_count)
 from virtual_query_xyz_runtime import build_model as build_base, fixed_dataset, read_entries, sha256
 
@@ -41,7 +42,8 @@ VALID_SHA = 'fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a'
 def variants(config):
     if config.get('family') == DENSITY_SCOPE:
         algorithm = config['pair'].get('target_selection', {}).get('algorithm')
-        return {THREE_SELECTOR: (THREE_VARIANT,), FRACTION_SELECTOR: (FRACTION_VARIANT,)}.get(algorithm, ())
+        return {THREE_SELECTOR: (THREE_VARIANT,), FRACTION_SELECTOR: (FRACTION_VARIANT,),
+                FOUR_SELECTOR: (FOUR_VARIANT,), FRACTION2_SELECTOR: (FRACTION2_VARIANT,)}.get(algorithm, ())
     return {SINGLE_SCOPE: (SINGLE_VARIANT,), TWO_SCOPE: (TWO_VARIANT,)}.get(config.get('family'), VARIANTS)
 
 
@@ -94,7 +96,8 @@ def validate_config(config):
     if single:
         selector = TWO_SELECTOR if config.get('family') == TWO_SCOPE else SELECTOR
         if config.get('family') == DENSITY_SCOPE:
-            selector = {THREE_VARIANT: THREE_SELECTOR, FRACTION_VARIANT: FRACTION_SELECTOR}[variants(config)[0]]
+            selector = {THREE_VARIANT: THREE_SELECTOR, FRACTION_VARIANT: FRACTION_SELECTOR,
+                        FOUR_VARIANT: FOUR_SELECTOR, FRACTION2_VARIANT: FRACTION2_SELECTOR}[variants(config)[0]]
         if (config['pair'].get('target_selection') != {'algorithm': selector, 'seed': 20261026}
                 or config['runtime'].get('execution_mode') != 'scheduler_job'
                 or operation_target(config) != 20000

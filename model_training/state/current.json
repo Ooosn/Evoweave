@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "reference_xyz_two_frozen_pilots_completed_20261027",
-  "updated_at": "2026-10-26T21:46:00Z",
+  "state_id": "reference_xyz_conditional_ar_capacity_authorized_20261027",
+  "updated_at": "2026-10-26T22:04:22Z",
   "module": "model_training",
   "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
@@ -32,10 +32,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -63,101 +63,47 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "diagnostic_pilots_complete_generation_direction_required",
-    "operation": "report",
-    "complete": true,
-    "quality_accepted": false,
+    "status": "conditional_ar_capacity_pending",
+    "operation": "preflight",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
-    "code_commit": "419da3078d2873d1a260a859dbb3de5b0c35a9cf",
+    "authorization": "User required learned generation rather than fitting, confirmed the complete-reference conditioned target-XYZ direction, and explicitly said to begin.",
+    "code_commit": "cf9185a8be4163604f4d7a244819c0468e465ef8",
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "acceptance_basis": "Both800-update diagnostic pilots completed with clean exit0 and retained checkpoints. User then explicitly rejected promoting geometric fitting to the main route. The requested learned conditional generation objective is NOT complete; neither frozen pilot decides its architecture or joint-training feasibility. No further stage queued.",
-    "capacity_evidence": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v14/result.json",
-      "sha256": "544b80e894573860bb75873ef9ad39d25185b14a4733c9d9460cf7d1cc42bde2",
-      "source": "efec0bd9e4f0e93a11938fc44e4a83d7a0629161",
-      "complete": true, "supervisor_exit_code": 0, "payload_cleanup_complete": true,
-      "gradient_groups_passed": true, "head_discarded_before_pilot": true,
-      "peak_allocated_bytes_per_rank": [582514176, 676188672]
-    },
-    "runs": [],
-    "CPU_tests_passed": 37,
-    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/rigid_residual_tests_v1_result.json",
-    "checkpoint_policy": "Read donor train_v9 without modification. Retain new head400/800 full optimizer/RNG checkpoints and SHA-verified durable mirrors. Derived frozen caches stay on verified NVMe.",
-    "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/frozen_rigid_residual_v1",
-    "end_policy": "Stop the frozen readout pilot at800updates, save400/800 head+optimizer+RNG checkpoints, scoreGT and natural predicted references againstcopy/localrigid, then assess. No automatic100k or further architecture sweep.",
+    "capacity_accepted": false,
+    "acceptance_basis": "45focusedCPU tests pass. Only capacity_v15 is admitted; full free generation and gradients on largest cached skeletons must finish cleanly before an800update8train/32valid AR learning diagnostic.",
+    "CPU_tests_passed": 45,
+    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/coordinate_generator_tests_v2_result.json",
+    "runs": [
+      {
+        "stage": "capacity_v15",
+        "mode": "capacity",
+        "approved": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_ar_fit_20261027_v1.json",
+        "config_sha256": "bda4a0d272c2ad0396b092d23233c2664212d3597649e68c259bc50f37c9a726",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v15"
+      }
+    ],
+    "checkpoint_policy": "Read the existing immutable train_v12 caches and train_v9 donor binding. Preserve previous checkpoints. Save new AR head400/800 optimizer/RNG bindings with verified durable mirrors.",
+    "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/conditional_ar_fit_v1",
+    "end_policy": "After clean capacity, train one800-update8train/32valid learning diagnostic and compare teacher-forced/free generation. No geometric-solution baseline in model outputs; no automatic larger run.",
     "monitor": {
       "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
       "extra_agents": 0,
-      "status": "train_v13_complete_observer_exit0"
-    },
-    "prior_capacity_attempts": [
-      {
-        "stage": "capacity_v11",
-        "compute_started": false,
-        "cause": "Lifetime guard incorrectly matched the historical submit_cmd h_rt in addition to the current hard_resource_list. Fixed to parse only the current resource field, with regression coverage.",
-        "keeper_preserved": true,
-        "GPUs_idle_after_failure": true
-      },
-      {
-        "stage": "capacity_v12",
-        "numerical_capacity_passed": true,
-        "completion_accepted": false,
-        "cause": "Supervisor observed root cgroups after the numerical result but before worker exit became visible. Changed monitoring to allow only bounded confirmation of actual exit, never accept a still-live root-cgroup process.",
-        "payload_cleanup_complete": true,
-        "peak_allocated_bytes_per_rank": [
-          4232252928,
-          4232247808
-        ]
-      }
-    ],
-    "prior_copy_pilot_capacity_evidence": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v13/result.json",
-      "sha256": "6ac00c49117f97db44f1199e4acdd12f869a6427afa44901548cb15554108376",
-      "source": "cc1d4300fa989ec29625e1ad40d1ddb82680f0d4",
-      "complete": true,
-      "supervisor_exit_code": 0,
-      "payload_cleanup_complete": true,
-      "gradient_groups_passed": true,
-      "peak_allocated_bytes_per_rank": [
-        4232252928,
-        4232247808
-      ],
-      "head_discarded_before_pilot": true,
-      "source_compatibility": "Retain v13 capacity acceptance: only natural-reference helper import/parent extraction and focused CPU tests changed. Readout forward/backward, frozen donor loading, optimizer and resource supervisor are unchanged."
-    },
-    "prior_pilot_attempts": [
-      {
-        "stage": "train_v11",
-        "updates": 0,
-        "head_checkpoints_created": 0,
-        "failed_before_head_training": true,
-        "payload_cleanup_complete": true,
-        "cause": "Natural-reference generation imported the vocabulary helper from an evaluation script instead of its actual model module. Fixed the import and exercised natural generation plus the fullGT/predicted evaluation path on CPU."
-      }
-    ],
-    "additional_CPU_tests": {
-      "count": 8,
-      "command": "python -B -m unittest test_reference_xyz_runtime -v",
-      "passed": true,
-      "new_cases": [
-        "natural reference generation and invalid tree",
-        "complete GT/predicted evaluation and failed-reference accounting"
-      ]
+      "status": "capacity_v15_pending"
     }
   },
   "architecture_contract": {
     "input": "Existing noV shared real-frame features plus explicit corresponding anchor XYZ/normals; complete eight-pose inputs in this bounded pilot.",
     "reference": "Full reference XYZ, parent tree, joint mask and reference slot. No semantic joint-ID vocabulary or topology-only reference.",
-    "output": "Required research route: learned conditional generation of target-pose XYZ for the complete reference skeleton. Do not produce the main output via Kabsch, registration, IK, per-instance fitting or learned correction of a fixed geometric solution. The complete reference joint identities/tree remain the condition.",
-    "training": "Completed diagnostic recipe was frozen train_v9,64train/32valid,800head updates. This is not the accepted final generation architecture. Any next generative recipe needs explicit reviewed code/config/capacity admission under the existing research authorization.",
-    "evaluation": "GT reference is oracle; naturally predicted reference is separate end-to-end diagnostic. Copy and local Kabsch controls, normalized MPJPE/PCK for GT, J2J and edgeF1 for predicted references. No claim of joint-training performance."
+    "output": "Conditional AR coordinate generator emits exactly3J XYZ tokens given complete reference joints/tree and mesh-derived conditions.256levels[-1,1],greedy own-prefix generation; no target GT or geometric fitting at inference; reference held exact.",
+    "training": "Frozen retained backbone cache; train the graph/mesh conditioner and fresh4layer256wideOPT coordinate decoder. First2assets per countstratum=8train;32valid;800updates after capacity acceptance.",
+    "evaluation": "Free generation with GT and natural references separately; teacher-forcedCE/accuracy/MPJPE are diagnostics, not free quality. Report quantized-GT error floor; continuous originalGT metrics; failed natural referencesF1zero."
   },
   "previous_completed_result": {
     "document": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
@@ -174,32 +120,54 @@
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "starting_decision": "Preserve complete naturally decoded reference joints, then learn target-pose conditional generation using reference coordinates/tree and mesh evidence. Shared versus separate learned conditioning remains an experimental question. Generation is the user-required main route; geometry is a diagnostic control only.",
-    "compute_status": "Copy-initialized train_v12 and rigid-residual train_v13 completed. Gates closed. Broader research authorization remains, but further compute needs a new reviewed exact configuration; no automatic100k or architecture sweep."
+    "compute_status": "User said to begin conditional generation. Only capacity_v15 currently released; train_v14 needs clean capacity acceptance."
   },
-  "completed_reference_pilots": [{
-    "stage": "train_v12", "source": "f124566541a03c970a2f7ac9edd2063c1690fc99",
-    "complete": true, "quality_accepted": false, "updates": 800,
-    "result_sha256": "b59a89eca06f5cec390d6848c693e1982bc1f94120d823b490d131c72f20c5b8",
-    "supervisor_exit_code": 0, "payload_cleanup_complete": true,
-    "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v12_analysis.json",
-    "analysis_sha256": "aec887bb775412672a300c23a615ecebed2a49d0d0aa85d67921624efce4c1dd",
-    "GT_valid_normalized_MPJPE": {"copy": 0.09860526660512343, "local_rigid": 0.005237562837862697, "learned": 0.07820311308803087},
-    "interpretation": "Copy-initialized learned head improves over static copy but is much worse than geometric transfer. Reuse its exact frozen caches for a matched rigid-residual pilot; preserve all original outputs."
-  }, {
-    "stage": "train_v13", "source": "979acbe03a015fd16e4e3a31b9c9999e953a9645",
-    "complete": true, "quality_accepted": false, "updates": 800,
-    "config": "model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
-    "config_sha256": "ed05b301b97e5b73d1bba056a087e1d6a510f65f168349563899a5e3dcd54520",
-    "result_sha256": "33b8ba3b3c974161895bf3e5df4357acab7c9d8ea9d3229365f9ef61982fa9cb",
-    "supervisor_exit_code": 0, "payload_cleanup_complete": true,
-    "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v13_analysis.json",
-    "analysis_sha256": "aa8806f26294cbdf7301e2fee9d7d2537589a7923ad13f523cb11ddc529df724",
-    "GT_valid_normalized_MPJPE": {"local_rigid": 0.005237562837862697, "learned": 0.0052391125733005795},
-    "predicted_reference_F1": {"local_rigid": 0.6113965356542218, "learned": 0.6125576294270997},
-    "matched_input_reference_LR_and_baselines_verified": true,
-    "head_0400_sha256": "e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85",
-    "head_0800_sha256": "0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6",
-    "interpretation": "No useful increment over local rigid transfer in this frozen diagnostic. The user's later correction rejects geometric tracking as the main route; preserve results as controls and continue learned conditional generation. Neither frozen pilot settles joint training."
-  }],
-  "next_required_result": "Return to learned conditional generation: a complete reference skeleton/mesh plus other observed poses condition target XYZ generation. Revisit the generator/conditioning and shared-versus-separate design; do not continue geometric-fit/residual optimization or call its strong control score completion of the requested task. No additional compute is admitted yet."
+  "completed_reference_pilots": [
+    {
+      "stage": "train_v12",
+      "source": "f124566541a03c970a2f7ac9edd2063c1690fc99",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 800,
+      "result_sha256": "b59a89eca06f5cec390d6848c693e1982bc1f94120d823b490d131c72f20c5b8",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v12_analysis.json",
+      "analysis_sha256": "aec887bb775412672a300c23a615ecebed2a49d0d0aa85d67921624efce4c1dd",
+      "GT_valid_normalized_MPJPE": {
+        "copy": 0.09860526660512343,
+        "local_rigid": 0.005237562837862697,
+        "learned": 0.07820311308803087
+      },
+      "interpretation": "Copy-initialized learned head improves over static copy but is much worse than geometric transfer. Reuse its exact frozen caches for a matched rigid-residual pilot; preserve all original outputs."
+    },
+    {
+      "stage": "train_v13",
+      "source": "979acbe03a015fd16e4e3a31b9c9999e953a9645",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 800,
+      "config": "model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
+      "config_sha256": "ed05b301b97e5b73d1bba056a087e1d6a510f65f168349563899a5e3dcd54520",
+      "result_sha256": "33b8ba3b3c974161895bf3e5df4357acab7c9d8ea9d3229365f9ef61982fa9cb",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v13_analysis.json",
+      "analysis_sha256": "aa8806f26294cbdf7301e2fee9d7d2537589a7923ad13f523cb11ddc529df724",
+      "GT_valid_normalized_MPJPE": {
+        "local_rigid": 0.005237562837862697,
+        "learned": 0.0052391125733005795
+      },
+      "predicted_reference_F1": {
+        "local_rigid": 0.6113965356542218,
+        "learned": 0.6125576294270997
+      },
+      "matched_input_reference_LR_and_baselines_verified": true,
+      "head_0400_sha256": "e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85",
+      "head_0800_sha256": "0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6",
+      "interpretation": "No useful increment over local rigid transfer in this frozen diagnostic. The user's later correction rejects geometric tracking as the main route; preserve results as controls and continue learned conditional generation. Neither frozen pilot settles joint training."
+    }
+  ],
+  "next_required_result": "Accept capacity_v15 full free-generation/gradient/resource completion, then run the bounded conditional-AR8train/32valid learning check. Explain teacher-prefix versus free generation, not geometric-fit performance.",
+  "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json"
 }

@@ -102,8 +102,8 @@ class JointMeshBlock(nn.Module):
         return joints.masked_fill(~mask[:, :, None], 0.)
 
 
-class ReferenceSkeletonXYZ(nn.Module):
-    """An appended readout, not another surface encoder or a new AR vocabulary."""
+class ReferenceJointConditioner(nn.Module):
+    """Reference graph/coordinates and observed meshes to per-pose joint features."""
     def __init__(self, config=ReferenceXYZConfig()):
         super().__init__()
         self.config = config
@@ -115,9 +115,6 @@ class ReferenceSkeletonXYZ(nn.Module):
         self.joint_geometry = nn.Sequential(nn.Linear(7, dim), nn.GELU(), nn.Linear(dim, dim))
         self.reference_blocks = nn.ModuleList([JointMeshBlock(config) for _ in range(config.reference_depth)])
         self.target_blocks = nn.ModuleList([JointMeshBlock(config) for _ in range(config.target_depth)])
-        self.output = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, dim), nn.GELU(), nn.Linear(dim, 3))
-        nn.init.zeros_(self.output[-1].weight)
-        nn.init.zeros_(self.output[-1].bias)
 
     def forward(self, frame_features, anchor_points, anchor_normals,
                 reference_xyz, parents, joint_mask, reference_frame):
@@ -159,7 +156,28 @@ class ReferenceSkeletonXYZ(nn.Module):
         distance_all = distance2[:, None].expand(-1, frames, -1, -1).reshape(batch * frames, count, anchors)
         for block in self.target_blocks:
             joints = block(joints, memory, relation_all, mask_all, distance_all)
-        delta = self.output(joints).reshape(batch, frames, count, 3).float()
+        return joints.reshape(batch, frames, count, -1)
+
+    def configuration(self):
+        return asdict(self.config)
+
+
+class ReferenceSkeletonXYZ(ReferenceJointConditioner):
+    """Original continuous-offset diagnostic, retained without behavioral changes."""
+    def __init__(self, config=ReferenceXYZConfig()):
+        super().__init__(config)
+        self.output = nn.Sequential(nn.LayerNorm(config.dim), nn.Linear(config.dim, config.dim),
+                                    nn.GELU(), nn.Linear(config.dim, 3))
+        nn.init.zeros_(self.output[-1].weight)
+        nn.init.zeros_(self.output[-1].bias)
+
+    def forward(self, frame_features, anchor_points, anchor_normals,
+                reference_xyz, parents, joint_mask, reference_frame):
+        joints = super().forward(frame_features, anchor_points, anchor_normals,
+                                  reference_xyz, parents, joint_mask, reference_frame)
+        frames = frame_features.shape[1]
+        xyz = reference_xyz.masked_fill(~joint_mask[:, :, None], 0.)
+        delta = self.output(joints).float()
         is_reference = torch.arange(frames, device=reference_frame.device)[None] == reference_frame[:, None]
         prediction = xyz[:, None].float() + delta.masked_fill(is_reference[:, :, None, None], 0.)
         return prediction.masked_fill(~joint_mask[:, None, :, None], 0.)

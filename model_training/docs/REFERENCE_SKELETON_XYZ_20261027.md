@@ -230,3 +230,51 @@ decides joint training, unmatched/remeshed input, arbitrary correspondence or
 full population performance. The next reviewed experiment must address learned
 conditional generation and conditioning capacity. No additional run is queued;
 the completed diagnostic stage gates are closed.
+
+## Conditional Autoregressive Learning Check
+
+After the explicit generation-only correction, the user said to begin. The
+first new implementation is an appended conditional AR coordinate generator;
+this is an engineering starting choice, not a claim that AR must beat direct
+continuous generation or diffusion. First-stage legacy AR and its complete
+detokenization/branch merging remain unchanged. Given the resulting complete
+reference joints/tree, the second stage generates exactly3J coordinate tokens
+in the supplied parent-before-child joint order. It does not emit new IDs,
+branches or topology; coincident generated coordinates do not merge identities.
+
+The shared graph/mesh conditioner produces target-pose joint features. A fresh
+four-layer,256-wide OPT decoder receives these features as a prefix plus the
+current joint/axis condition and previous coordinate tokens. Causal next-token
+cross-entropy trains it; greedy decoding with a KV cache uses only its own prior
+tokens at inference. There is no Kabsch/registration/IK solution or fitted XYZ
+baseline in generation. Geometric rows in evaluation remain controls only.
+
+Second-stage coordinates use256uniform levels including endpoints[-1,1], nearest
+level rounding and no clipping. This is a declared second-stage coordinate
+format, not a change to the first-stage legacy tokenizer. Score generated XYZ
+against original continuous GT, and separately record the quantized-GT error
+floor so discretization is not confused with model error. Preserve the given
+reference frame exactly and exclude it from loss/metrics; padding is masked.
+
+Recipe:reference_skeleton_xyz_ar_fit_20261027_v1.json. Reuse the exact completed
+frozen feature/natural-reference cache and donor. Choose the first2training
+assets per joint-count stratum from the already SHA-ordered64asset panel:
+8train total, independent of observed quality; retain all32valid assets. Use
+800updates,2assets/rank x2ranks, all8poses, uniformly random reference per visit,
+same3e-4 peak LR/20warmup/cosine/weight decay/clip as the previous bounded pilots.
+This is a small-data learning diagnostic, not an equal-cohort comparison with
+the preceding64training-asset runs or evidence of population generalization.
+
+At0/400/800evaluate free generation with GT and natural references separately.
+Also report teacher-forced coordinate-token accuracy, CE and position error
+for GT references. Teacher forcing is diagnostic only, never free-generation
+quality. These separate weak conditioning/learning from autoregressive error
+accumulation. Save new checkpoints to conditional_ar_fit_v1, not prior roots.
+
+45focusedCPU tests pass, including future-label causality, cached/full-prefix
+generation equivalence, reference/padding preservation, conditioning gradients,
+synthetic complete-token learning/free generation, complete metric path and
+existing head/scheduler regressions. A new capacity_v15 must test3real updates
+and complete free generation on the largest cached skeletons126/171joints;
+natural predicted references in the retained panel have at most54joints. Only
+clean capacity completion releases train_v14. No later run is automatically queued.

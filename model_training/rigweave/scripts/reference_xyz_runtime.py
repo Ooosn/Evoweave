@@ -171,6 +171,39 @@ def forward_head(head, packed, reference, config):
     return compose_prediction(raw, xyz, rigid, packed['mask'], reference, baseline)
 
 
+def create_head(config, device):
+    if 'generator' in config:
+        from rigweave.dynamic_rig.reference_coordinate_generator import ReferenceCoordinateGenerator, CoordinateGeneratorConfig
+        return ReferenceCoordinateGenerator(ReferenceXYZConfig(**config['architecture']),
+                    CoordinateGeneratorConfig(**config['generator'])).to(device)
+    return ReferenceSkeletonXYZ(ReferenceXYZConfig(**config['architecture'])).to(device)
+
+
+def training_loss(head, packed, reference, config):
+    if 'generator' in config:
+        result = head(packed['features'], packed['points'], packed['normals'],
+            reference_slots(packed['targets'], reference), packed['parents'], packed['mask'], reference,
+            targets=packed['targets'])
+        return result['loss_per_asset'].mean(), {'teacher_forced_accuracy': float(result['teacher_forced_accuracy'].mean().detach())}
+    prediction = forward_head(head, packed, reference, config)
+    return localization_loss(prediction, packed['targets'], packed['mask'], reference).mean(), {}
+
+
+def select_generator_cohort(caches, selection, config, rank, world):
+    selected, filtered = {}, {}
+    for split in ('train', 'valid'):
+        count = config['pilot'][f'{split}_assets']
+        if count % 4:
+            raise ValueError('generator cohort needs four equal count strata')
+        selected[split] = [row for group in ('low', 'mid', 'gt52', 'high')
+                           for row in [r for r in selection[split] if r['stratum'] == group][:count // 4]]
+        if len(selected[split]) != count:
+            raise ValueError('insufficient cached generator assets')
+        by_id = {r['asset_id']: r for r in caches[split]}
+        filtered[split] = [by_id[row['asset_id']] for row in selected[split][rank::world]]
+    return filtered, selected
+
+
 def load_reused_cache(config, output, source, rank, world):
     spec = config['reuse_cache']
     root = Path(spec['root']).resolve(strict=True)
@@ -192,7 +225,8 @@ def load_reused_cache(config, output, source, rank, world):
         raise ValueError('reused cache coverage differs')
     all_ids, all_paths = set(), set()
     for split in ('train', 'valid'):
-        if len(selection[split]) != config['pilot'][f'{split}_assets']:
+        expected_count = {'train': 64, 'valid': 32}[split] if 'generator' in config else config['pilot'][f'{split}_assets']
+        if len(selection[split]) != expected_count:
             raise ValueError('reused cache cohort count differs')
         for item in selection[split]:
             if item['asset_id'] in all_ids or item['path'] in all_paths:
@@ -256,7 +290,7 @@ def capacity(config, output, source, device, rank, world):
         record = extract_asset(backbone, tokenizer, dataset[0], base_config, config, predicted_references=False)
     packed = pack([record] * config['pilot']['batch_per_rank'], device)
     torch.manual_seed(config['pilot']['seed'])
-    head = ReferenceSkeletonXYZ(ReferenceXYZConfig(**config['architecture'])).to(device)
+    head = create_head(config, device)
     wrapped = DistributedDataParallel(head, device_ids=[device.index])
     optimizer = torch.optim.AdamW(head.parameters(), lr=config['pilot']['learning_rate'])
     reference = torch.zeros(config['pilot']['batch_per_rank'], dtype=torch.long, device=device)
@@ -264,22 +298,33 @@ def capacity(config, output, source, device, rank, world):
     for _ in range(3):
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast('cuda', dtype=torch.bfloat16):
-            prediction = forward_head(wrapped, packed, reference, config)
-            loss = localization_loss(prediction, packed['targets'], packed['mask'], reference).mean()
+            loss, _ = training_loss(wrapped, packed, reference, config)
         if not bool(torch.isfinite(loss)):
             raise ValueError('nonfinite capacity loss')
         loss.backward()
         norm = torch.nn.utils.clip_grad_norm_(head.parameters(), 1., error_if_nonfinite=True)
         optimizer.step()
         losses.append(float(loss.detach()))
+    condition = head.conditioner if 'generator' in config else head
+    modules = [('reference', condition.reference_blocks), ('target', condition.target_blocks),
+               ('geometry', condition.target_geometry), ('output', head.decoder if 'generator' in config else head.output)]
     gradients = {name: any(p.grad is not None and bool(p.grad.abs().sum() > 0) for p in module.parameters())
-                 for name, module in (('reference', head.reference_blocks), ('target', head.target_blocks),
-                                      ('geometry', head.target_geometry), ('output', head.output))}
+                 for name, module in modules}
     if not all(gradients.values()) or (backbone is not None and any(p.grad is not None for p in backbone.parameters())):
         raise ValueError('readout gradient or frozen-backbone contract failed')
+    free_generation = None
+    if 'generator' in config:
+        head.eval()
+        with torch.autocast('cuda', dtype=torch.bfloat16):
+            generated = head.generate(packed['features'], packed['points'], packed['normals'],
+                reference_slots(packed['targets'], reference), packed['parents'], packed['mask'], reference)
+        if generated.shape != packed['targets'].shape or not bool(torch.isfinite(generated).all()):
+            raise ValueError('capacity free generation failed')
+        free_generation = {'passed': True, 'tokens_per_target': 3 * meta['joint_count'], 'KV_cache': True,
+                           'shape': list(generated.shape), 'no_geometric_baseline': True}
     record = {'rank': rank, 'asset_id': row['asset_id'], 'joints': meta['joint_count'],
               'frames': config['pilot']['frames'], 'batch': config['pilot']['batch_per_rank'],
-              'losses': losses, 'gradient_groups': gradients, 'last_gradient_norm': float(norm),
+              'losses': losses, 'gradient_groups': gradients, 'free_generation': free_generation, 'last_gradient_norm': float(norm),
               'peak_allocated_bytes': torch.cuda.max_memory_allocated(device),
               'peak_reserved_bytes': torch.cuda.max_memory_reserved(device)}
     reports = gather(record, world)
@@ -307,6 +352,7 @@ def evaluate(head, caches, config, device, rank, world, step, output):
     head.eval()
     rows = []
     examples = []
+    teacher_rows = []
     for split, records in caches.items():
         for record in records:
             packed = pack([record], device)
@@ -329,11 +375,28 @@ def evaluate(head, caches, config, device, rank, world, step, output):
                     parents = incoming['parents'][None].to(device)
                     mask = torch.ones_like(parents, dtype=torch.bool)
                     with torch.autocast('cuda', dtype=torch.bfloat16):
-                        predicted = head(packed['features'], packed['points'], packed['normals'], xyz, parents, mask, reference)
+                        if 'generator' in config:
+                            predicted = head.generate(packed['features'], packed['points'], packed['normals'], xyz, parents, mask, reference)
+                            if reference_kind == 'GT':
+                                teacher = head(packed['features'], packed['points'], packed['normals'], xyz, parents, mask, reference,
+                                               targets=packed['targets'], return_predictions=True)
+                                selected = torch.arange(config['pilot']['frames']) != frame
+                                errors = torch.linalg.vector_norm(teacher['teacher_prediction'][0].float().cpu() - record['targets'], dim=-1)
+                                normalized = errors / record['diagonal'][:, None]
+                                from rigweave.dynamic_rig.reference_coordinate_generator import quantize_xyz, dequantize_xyz
+                                quantized = dequantize_xyz(quantize_xyz(record['targets'], config['generator']['bins']), config['generator']['bins'])
+                                floor = torch.linalg.vector_norm(quantized - record['targets'], dim=-1) / record['diagonal'][:, None]
+                                teacher_rows.append({**common, 'teacher_forced_CE': float(teacher['loss_per_asset'][0]),
+                                    'teacher_forced_accuracy': float(teacher['teacher_forced_accuracy'][0]),
+                                    'teacher_forced_normalized_mpjpe': float(normalized[selected].mean()),
+                                    'quantized_GT_normalized_mpjpe': float(floor[selected].mean())})
+                        else:
+                            predicted = head(packed['features'], packed['points'], packed['normals'], xyz, parents, mask, reference)
                     rigid, degenerate = local_rigid_transfer(xyz, packed['points'], reference,
                         neighbors=config['pilot']['local_rigid_neighbors'])
-                    predicted = compose_prediction(predicted, xyz, rigid, mask, reference,
-                        config['pilot'].get('output_baseline', 'copy'))
+                    if 'generator' not in config:
+                        predicted = compose_prediction(predicted, xyz, rigid, mask, reference,
+                            config['pilot'].get('output_baseline', 'copy'))
                     methods = {'learned': predicted[0], 'copy': xyz[0, None].expand(config['pilot']['frames'], -1, -1),
                                'local_rigid': rigid[0]}
                     if step == 800 and record is records[0]:
@@ -354,9 +417,12 @@ def evaluate(head, caches, config, device, rank, world, step, output):
                                 **scores})
     path = output / f'evaluation_{step:04d}_rank_{rank}.json'
     write_json(path, rows)
+    if teacher_rows:
+        write_json(output / f'evaluation_{step:04d}_teacher_rank_{rank}.json', teacher_rows)
     if examples:
         write_json(output / f'examples_{step:04d}_rank_{rank}.json', examples)
     all_rows = [row for part in gather(rows, world) for row in part]
+    all_teacher = [row for part in gather(teacher_rows, world) for row in part]
     if rank == 0:
         groups = {}
         for split, reference in (('train', 'GT'), ('valid', 'GT'), ('valid', 'predicted')):
@@ -378,6 +444,9 @@ def evaluate(head, caches, config, device, rank, world, step, output):
             'pck_threshold': .05, 'selection_distribution': 'equal low<=20,mid21..51,exact52,high>=53 strata',
             'frozen_readout_pilot_not_joint_training': True,
             'output_baseline': config['pilot'].get('output_baseline', 'copy'),
+            'teacher_forced': {split: {metric: float(np.mean([r[metric] for r in all_teacher if r['split'] == split]))
+                for metric in ('teacher_forced_CE', 'teacher_forced_accuracy', 'teacher_forced_normalized_mpjpe', 'quantized_GT_normalized_mpjpe')}
+                for split in ('train', 'valid')} if all_teacher else None,
             'row_artifacts': [{'path': str(output / f'evaluation_{step:04d}_rank_{r}.json'),
                                'sha256': sha256(output / f'evaluation_{step:04d}_rank_{r}.json')} for r in range(world)]})
         print(json.dumps({'event': 'evaluation', 'updates': step,
@@ -454,8 +523,12 @@ def train(config, output, source, device, rank, world):
         caches, selection, initial = load_reused_cache(config, output, source, rank, world)
     else:
         caches, selection, initial = extract_caches(config, output, source, device, rank, world)
+    if 'generator' in config:
+        caches, selection = select_generator_cohort(caches, selection, config, rank, world)
+        if rank == 0:
+            write_json(output / 'selection.json', selection)
     torch.manual_seed(config['pilot']['seed'])
-    head = ReferenceSkeletonXYZ(ReferenceXYZConfig(**config['architecture'])).to(device)
+    head = create_head(config, device)
     wrapped = DistributedDataParallel(head, device_ids=[device.index])
     optimizer = torch.optim.AdamW(head.parameters(), lr=config['pilot']['learning_rate'],
                                   weight_decay=config['pilot']['weight_decay'])
@@ -476,8 +549,7 @@ def train(config, output, source, device, rank, world):
             group['lr'] = lr
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast('cuda', dtype=torch.bfloat16):
-            prediction = forward_head(wrapped, packed, reference, config)
-            loss = localization_loss(prediction, packed['targets'], packed['mask'], reference).mean()
+            loss, training_metrics = training_loss(wrapped, packed, reference, config)
         if not bool(torch.isfinite(loss)):
             raise ValueError('nonfinite pilot loss')
         loss.backward()
@@ -485,7 +557,7 @@ def train(config, output, source, device, rank, world):
         optimizer.step()
         row = {'step': step, 'loss': float(loss.detach()), 'lr': lr, 'gradient_norm': float(norm),
                'asset_ids': [r['asset_id'] for r in records], 'reference_slots': reference.tolist(),
-               'local_asset_visits': step * len(records), 'elapsed_seconds': time.monotonic() - started}
+               'local_asset_visits': step * len(records), 'elapsed_seconds': time.monotonic() - started, **training_metrics}
         with trace.open('a') as handle:
             handle.write(json.dumps(row) + '\n')
         if step <= 3 or step % 50 == 0:

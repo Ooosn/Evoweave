@@ -41,17 +41,24 @@ def validate_config(config):
                 'backbone_mode': 'frozen', 'loss': 'continuous_L1_nonreference_mean_per_asset',
                 'evaluation_reference_slots': [0, 4], 'local_rigid_neighbors': 32,
                 'coordinate_clipping': False}
+    generative = 'generator' in config
+    if generative:
+        expected.update(train_assets=8, loss='coordinate_token_CE_nonreference_mean_per_asset')
+        if config['generator'] != {'bins': 256, 'decoder_layers': 4}:
+            raise ValueError('unreviewed coordinate generator')
     for key, value in expected.items():
         if type(pilot.get(key)) is not type(value) or pilot[key] != value:
             raise ValueError(f'pilot contract differs: {key}')
     if pilot.get('learning_rate') != .0003 or pilot.get('weight_decay') != .0001:
         raise ValueError('unreviewed head optimizer')
     baseline = pilot.get('output_baseline', 'copy')
-    if baseline not in ('copy', 'local_rigid'):
+    if baseline not in ('copy', 'local_rigid', 'generated_xyz'):
         raise ValueError('unreviewed output baseline')
-    if baseline == 'local_rigid':
+    if generative != (baseline == 'generated_xyz'):
+        raise ValueError('direct generation must not use a geometric coordinate baseline')
+    if baseline in ('local_rigid', 'generated_xyz'):
         if config.get('reuse_cache') != REUSE_CACHE:
-            raise ValueError('residual pilot must reuse the exact completed frozen cache')
+            raise ValueError('pilot must reuse the exact completed frozen cache')
     elif 'reuse_cache' in config:
         raise ValueError('the original copy pilot must retain its extraction path')
     if config['backbone']['checkpoint']['sha256'] != '9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888':

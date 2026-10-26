@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "reference_xyz_frozen_pilot_capacity_authorized_20261027",
-  "updated_at": "2026-10-26T21:07:00Z",
+  "state_id": "reference_xyz_frozen_pilot_training_authorized_20261027",
+  "updated_at": "2026-10-26T21:09:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
   "required_context": [
@@ -32,10 +32,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
-    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -51,10 +51,10 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "existing_grant_extended_48h_reference_capacity_pending",
+    "status": "capacity_completed_keeper_retained_pilot_pending",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-26T20:48:38Z",
+    "last_observed_utc": "2026-10-26T21:08:06.688291Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -62,8 +62,8 @@
   },
   "active_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",
-    "status": "CPU_tests_passed_capacity_pending",
-    "operation": "capacity",
+    "status": "capacity_accepted_train_pending",
+    "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
@@ -71,30 +71,30 @@
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
     "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
-    "acceptance_basis": "8 unchanged head tests previously passed;35 targeted protocol/runtime/scheduler/cleanup tests now pass, including delayed exit confirmation and rejection of persistent live cgroup escape.43 unique tests across these focused runs. Real capacity/gradient numerical check passed in v12, but supervisor completion failed; clean repeat remains required.",
+    "capacity_accepted": true,
+    "acceptance_basis": "43 unique focused CPU tests passed across head and protocol/supervisor suites. capacity_v13 completed three real updates per rank,8poses,batch2,max171joints,all gradient groups and frozen donor verified,clean exit0 and both GPUs idle. Pilot uses the same unchanged code/config and a freshly initialized head.",
     "runs": [
       {
-        "stage": "capacity_v13",
-        "mode": "capacity",
+        "stage": "train_v11",
+        "mode": "train",
         "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json",
         "config_sha256": "029729e65f6b60dbc70f89814a0bac4bdb910e82d3f36370c5d89ebc0db4830c",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v13"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v11"
       }
     ],
     "CPU_tests_passed": 43,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/supervisor_tests_v4_result.json",
     "checkpoint_policy": "Read donor train_v9 without modification. Retain new head400/800 full optimizer/RNG checkpoints and SHA-verified durable mirrors. Derived frozen caches stay on verified NVMe.",
     "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/frozen_pilot_v1",
-    "end_policy": "Capacity only now. Release the bounded800-update frozen pilot only after accepted real capacity results. No automatic100k or open-ended search.",
+    "end_policy": "Stop the frozen readout pilot at800updates, save400/800 head+optimizer+RNG checkpoints, scoreGT and natural predicted references againstcopy/localrigid, then assess. No automatic100k or further architecture sweep.",
     "monitor": {
       "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
       "owned_by": "primary",
       "extra_agents": 0,
-      "status": "preparing"
+      "status": "capacity_completed_exit0_pilot_pending"
     },
     "prior_capacity_attempts": [
       {
@@ -115,7 +115,21 @@
           4232247808
         ]
       }
-    ]
+    ],
+    "capacity_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v13/result.json",
+      "sha256": "6ac00c49117f97db44f1199e4acdd12f869a6427afa44901548cb15554108376",
+      "source": "cc1d4300fa989ec29625e1ad40d1ddb82680f0d4",
+      "complete": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "gradient_groups_passed": true,
+      "peak_allocated_bytes_per_rank": [
+        4232252928,
+        4232247808
+      ],
+      "head_discarded_before_pilot": true
+    }
   },
   "architecture_contract": {
     "input": "Existing noV shared real-frame features plus explicit corresponding anchor XYZ/normals; complete eight-pose inputs in this bounded pilot.",
@@ -139,7 +153,7 @@
     "requested_utc": "2026-10-26T19:42:50Z",
     "scope": "After four-frame completion, begin experiments on a known reference skeleton/mesh to skeleton XYZ in other observed poses; decide shared appended module versus separate model along the prior discussion.",
     "starting_decision": "Shared surface/motion backbone plus a reference-XYZ/topology-aware joint localization head. Distinguish fixed-feature readout, joint learning, GT-reference and predicted-reference results.",
-    "compute_status": "CPU design and implementation authorized; no new GPU launch until exact config, tests, resource lifetime and state gates are ready."
+    "compute_status": "Bounded800-update frozen readout pilot released after primary acceptance of capacity_v13. No old density stages reopened."
   },
-  "next_required_result": "Run and inspect capacity_v13 including clean process completion; then admit the bounded800-update train_v11 pilot."
+  "next_required_result": "Run train_v11 to800updates; collect and independently assess position errors and GT-versus-predicted-reference results before choosing a subsequent joint-training experiment."
 }

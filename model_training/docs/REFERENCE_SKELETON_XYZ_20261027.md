@@ -96,7 +96,17 @@ The keeper's fixed launcher now dispatches this explicit new family to its own
 trainer; all existing membership, UUID, affinity, RAM and GPU guards remain.
 The48h allocation extension must be verified live before launch. No new GPU
 allocation or release is requested. The donor remains train_v9; new outputs are
-capacity_v12 and train_v11, never overwrites of earlier arms. The initial
+capacity_v13 and train_v11, never overwrites of earlier arms. The initial
 capacity_v11 attempt was blocked before computation because the lifetime guard
 also matched historical submit arguments; its corrected parser reads only the
 current hard_resource_list, with a regression test. The failed receipt is retained.
+
+capacity_v12 completed its numerical checks but failed process-completion monitoring
+during root-cgroup teardown. The supervisor now ignores this only after bounded,
+demonstrated process exit; persistent live mismatches still fail. The repeated
+capacity_v13 passed numerical checks and clean exit0 at2026-10-26T21:07:37Z.
+It tested171/126joints,8poses,batch2on each rank, with all head gradient groups
+present and the donor frozen. Peak allocated tensors were4.23GB/rank, reserved
+4.45/4.43GB; observed total process RAM peaked6.18GB. The capacity head was discarded.
+Result SHA256:6ac00c49117f97db44f1199e4acdd12f869a6427afa44901548cb15554108376.
+The800-update pilot is now released; it starts a fresh head on the same donor.

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Reuse the bounded, whole-process-tree HGC resource supervisor."""
 import os
+import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -19,6 +21,12 @@ def bootstrap_site_environment():
 
 if __name__ == '__main__':
     bootstrap_site_environment()
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--config', type=Path, required=True)
+    known, _ = parser.parse_known_args()
+    family = json.loads(known.config.read_text()).get('family')
+    trainer = ('train_reference_xyz.py' if family == 'reference_skeleton_xyz_20261027_v1'
+               else 'train_virtual_pair.py')
     main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
-         trainer_script='train_virtual_pair.py', modes=('audit', 'capacity', 'train'), cpu_modes=('audit',))
+         trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',))

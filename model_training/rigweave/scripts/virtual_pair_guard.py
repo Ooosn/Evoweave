@@ -11,6 +11,7 @@ import sys
 
 from train_legacy_single_target import file_sha256, verify_exception_keeper
 from single_query_protocol import SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE
+from reference_xyz_protocol import SCOPE as REFERENCE_SCOPE, ENTRYPOINT as REFERENCE_ENTRYPOINT
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -41,9 +42,10 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
-    if op.get('required_entrypoint') != ENTRYPOINT:
+    expected_entrypoint = REFERENCE_ENTRYPOINT if op.get('label') == REFERENCE_SCOPE else ENTRYPOINT
+    if op.get('required_entrypoint') != expected_entrypoint:
         raise RuntimeError('state is not bound to the matched-pair trainer')
     return op
 
@@ -82,7 +84,7 @@ def execution_cpu_binding(config, exception, allowed_cpus):
 
 def scheduler_runtime(config):
     runtime = config['runtime']
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 16), ('world_size', 2)):
@@ -145,6 +147,12 @@ def verify_allocation(config, grant):
             if (not separator or host != runtime['host'] or len(devices.split()) != len(expected)
                     or set(devices.split()) != expected):
                 raise RuntimeError('live scheduler GPU devices differ')
+        required_time = runtime.get('required_h_rt_seconds')
+        if required_time is not None:
+            limits = re.findall(r'\bh_rt=(\d+)\b', grant)
+            if (type(required_time) is not int or required_time <= 0
+                    or len(limits) != 1 or int(limits[0]) < required_time):
+                raise RuntimeError('live scheduler lifetime is shorter than the declared pilot')
         return
     if ('pcg01i: /dev/nvidia5 /dev/nvidia6' not in grant
             or not re.search(r'job_state\s+\d+:\s+r\b', grant)
@@ -254,7 +262,7 @@ def verify_launch(args, config):
         raise RuntimeError('allocation handoff deadline reached')
     requested = 'report' if cpu else 'train' if args.mode == 'train' else 'preflight'
     subprocess.run([sys.executable, str(ROOT / 'model_training/tools/agent_work_guard.py'),
-        'check', '--operation', requested, '--entrypoint', ENTRYPOINT], check=True, stdout=subprocess.DEVNULL)
+        'check', '--operation', requested, '--entrypoint', op['required_entrypoint']], check=True, stdout=subprocess.DEVNULL)
     if subprocess.check_output(['git', '-C', str(ROOT), 'status', '--porcelain'], text=True).strip():
         raise RuntimeError('source must be clean and committed')
     source = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()

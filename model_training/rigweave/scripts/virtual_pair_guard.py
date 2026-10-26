@@ -149,7 +149,12 @@ def verify_allocation(config, grant):
                 raise RuntimeError('live scheduler GPU devices differ')
         required_time = runtime.get('required_h_rt_seconds')
         if required_time is not None:
-            limits = re.findall(r'\bh_rt=(\d+)\b', grant)
+            resource_lines = re.findall(r'^hard_resource_list:[ \t]*(.+?)[ \t]*$', grant, re.MULTILINE)
+            limits = []
+            if len(resource_lines) == 1:
+                limits = [value for field in resource_lines[0].split(',')
+                          for key, separator, value in [field.strip().partition('=')]
+                          if separator and key == 'h_rt' and value.isdigit()]
             if (type(required_time) is not int or required_time <= 0
                     or len(limits) != 1 or int(limits[0]) < required_time):
                 raise RuntimeError('live scheduler lifetime is shorter than the declared pilot')

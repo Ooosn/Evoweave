@@ -74,7 +74,7 @@ class ReferenceRuntimeTest(unittest.TestCase):
     def test_extended_lifetime_is_required_when_declared(self):
         config, _, _ = scheduler_tests.fixture()
         config['runtime']['required_h_rt_seconds'] = 172800
-        grant = scheduler_tests.grant_text(config)
+        grant = scheduler_tests.grant_text(config) + 'submit_cmd: qrsh -l h_rt=24:00:00\n'
         guard.verify_allocation(config, grant + 'hard_resource_list: h100=2,h_rt=172800,mem_req=4G\n')
         for missing in ('', 'hard_resource_list: h100=2,h_rt=129600,mem_req=4G\n'):
             with self.assertRaises(RuntimeError):

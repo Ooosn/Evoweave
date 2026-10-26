@@ -70,7 +70,75 @@ Receipt SHA `ca58f108f9be724314b720ab09e117e687126b9499fff78e4d64aca315295dcf`.
 Profile weights are discarded. Fresh train_v4 startup was independently verified
 04:47:31UTC: first3updates/144assets/1920inputs/288targets, same retained inputs,
 GT hashes, LR/beta and initial state; two-target selection independently replayed.
-Actual producer `9df5d29eb96cf02658184069f4d7e5293ec5fed5` stays immutable while
-training runs. A read-only monitor continues to terminal after primary startup
-acceptance. Runtime code remains pinned to
+Actual producer `9df5d29eb96cf02658184069f4d7e5293ec5fed5` remained immutable
+through completion. The read-only monitor exited successfully after terminal
+verification. Runtime code remains pinned to
 `f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a`.
+
+## Completed Result
+
+Formal training/evaluation ended2026-10-26T07:22:00.643871UTC; independent
+terminal verification completed07:22:57UTC. Both ranks completed420updates,
+four full5000asset passes,263608input frames and40000supervised frames. The
+100kLR horizon was preserved, not completed. All22collected small files passed
+transfer SHA verification and primary rechecking. Execution and comparison are
+accepted; no additional run or reference-model promotion is authorized.
+
+| Metric | One target | Two targets | All targets |
+| --- | ---: | ---: | ---: |
+| Original-GT edge F1 | 0.66659544 | 0.69958198 | 0.71108141 |
+| Non52 F1 | 0.58731069 | 0.61720479 | 0.62820079 |
+| GT52 F1 | 0.81283175 | 0.85152212 | 0.86395009 |
+| Failed views /1024 | 110 | 71 | 57 |
+| Exact joint-count fraction | 0.41796875 | 0.46386719 | 0.47753906 |
+| Supervised frames | 20000 | 40000 | 263608 |
+| Update seconds | 6376.567991 | 6952.551192 | 9007.689587 |
+| Update minutes | 106.2761 | 115.8759 | 150.1282 |
+
+| Group | Two minus one F1 |95%paired asset interval| Two minus all F1 |95%paired asset interval|
+| --- | ---: | --- | ---: | --- |
+| All128assets | +0.03298654 | [+0.01360304,+0.05076125] | -0.01149943 | [-0.03152234,+0.00831841] |
+| Non52,83assets | +0.02989409 | [+0.00337048,+0.05613875] | -0.01099601 | [-0.04046881,+0.01855740] |
+| GT52,45assets | +0.03869038 | [+0.01674572,+0.05916814] | -0.01242796 | [-0.02874466,+0.00554633] |
+
+Two targets improve one-target quality under this matched20krecipe, with9.03%
+more recorded update time. They cost22.82%less update time than all targets,
+while their F1 point estimate is lower by0.01150. Treat two-target supervision
+as a low-cost candidate, not proven equivalent to all-frame supervision:
+the interval contains zero but permits a meaningful deficit; no equivalence
+margin was predeclared. No four-target follow-up was started automatically.
+
+Intervals use2000paired asset resamples with seed20261025; all eight views of
+an asset stay together. This is validation-asset uncertainty for one training
+seed, not training-seed variability or a100kconvergence claim. Each update's
+time is the slower rank's value; totals exclude initialization, checkpoint
+and evaluation and are not controlled hardware benchmarks. Common multi-frame
+encoding remains, so target-count reductions do not translate linearly into
+overall speedup. This study does not identify anchor bone semantics.
+
+Per-view continuous-GT F1 is producer-computed. The independent observer and
+primary posthoc calculation checked immutable row hashes, complete coverage,
+GT/pose/normalization/token identity, aggregate scores, failures and intervals;
+continuous GT geometry was not recomputed from saved rows. The selected-target
+token hashes are producer evidence, with gather semantics separately unit-tested.
+
+### Completion Evidence
+
+- Local comparison: `server_ops/outputs/two_query_20k_20261026/three_arm_comparison.json`,
+  SHA`875c5df10f47ab9fc1199b037ed95a96b77bc75f6d2c2ca7b108aec8e8114e32`.
+- Terminal monitor receipt SHA`0f7583ff46df0e219baac3236672c4148727108a6333854f5ea7bf27fdfe8649`.
+- Native result SHA`ac180e5f13db63df123d8cbfdcc904ba7ac14e7d45d49131808bd6640af5c411`.
+- Native paired report SHA`0dcb19d2809161074c79e8979f30be16b493e508ad75a6b6dcb9966a90b4b8af`.
+- Resources SHA`a1f13cb0bde676ccb26bed42dbb46350c92da9234dabde02ba44dec5f043e0f8`;
+  exit0, peak host-tree RSS24.7521GiB, cleanup confirmed.
+- Final full checkpoint: `outputs/train_v4/two_query/checkpoint_020000.pt`
+  under the remote run root,8181910586bytes,
+  SHA`5a7b432ab6013e5fd9a4260e7878b9a4d038662cd10e39c04f7bd8a45b6ce8dc`.
+  Its durable mirror and all earlier5k/10k/15kfull checkpoints are retained.
+  Producer hashes plus independent file-size/receipt checks passed; weights
+  were not downloaded or independently rehashed.
+- At07:22:57UTC all four payload PIDs were absent, both allocated GPUs had0MiB
+  and no compute process, and keeper1098441/job130494177 were retained.
+
+Current permissions are inspect/report only. No additional experiment,
+100kextension, architecture change, allocation or release is authorized.

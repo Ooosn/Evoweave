@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "two_query20k_formal_running_startup_verified_20261026",
-  "updated_at": "2026-10-26T04:49:32.404Z",
+  "state_id": "two_query20k_completed_low_cost_candidate_20261026",
+  "updated_at": "2026-10-26T07:32:00.849Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -27,16 +27,16 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Fixed uniform two-target20k supervision quality/cost against retained single/all controls.",
-    "authorization": "2026-10-26 human: ok start, following the fixed-two proposal.",
+    "current_question": "Completed fixed-two versus retained single/all supervision at20k. Two improves single and is a lower-cost candidate; equality with all-frame quality is not established.",
+    "authorization": "Approved fixed-two20k phase completed. No further training authorized.",
     "next_design": "Reference-skeleton XYZ remains a later proposal; not part of this experiment."
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "submit",
     "matched_eval"
@@ -52,20 +52,24 @@
     ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "status": "formal_train_v4_running_startup_verified",
-    "payload_processes_alive": true,
+    "status": "experiment_complete_payloads_absent_GPUs_idle_at_cleanup",
+    "payload_processes_alive": false,
     "keeper_pid": 1098441,
     "expiry_utc": "2026-10-26T10:33:29.625Z",
-    "policy": "Reuse retained scheduler grant only after fresh stage-boundary checks; no new allocation, release, concurrent model payload or automatic continuation.",
+    "policy": "Retain allocation and all checkpoints. No automatic further experiment, new allocation or release.",
     "live_check_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/runs/capacity_v3/resources.json",
-    "last_observed_utc": "2026-10-26T04:47:31.711272+00:00"
+    "last_observed_utc": "2026-10-26T07:22:57.628513Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ]
   },
   "active_operation": {
     "label": "real_query_two_target_5k_20261026_v1",
-    "status": "formal_running_first3_updates_primary_accepted",
+    "status": "completed_verified_two_target_tradeoff",
     "operation": "train",
     "mode": "two_target_vs_retained_single_and_all_frames",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User approved fixed two distinct random targets per asset at20k.",
     "code_commit": "f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a",
@@ -73,27 +77,12 @@
     "contract": "model_training/docs/TWO_QUERY_SUPERVISION_20261026.md",
     "config": "model_training/experiments/real_query_two_target_5k_20261026_v1.json",
     "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "train_assets": 5000,
-    "target_exposures_per_variant": 20000,
-    "scientific_schedule_horizon_assets": 100000,
-    "expected_updates": 420,
-    "expected_input_frames": 263608,
-    "expected_supervised_frames": 40000,
     "initialization": "Fresh same official initialization, not old20k/capacity weights.",
-    "runs": [
-      {
-        "mode": "train",
-        "stage": "train_v4",
-        "approved": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
-        "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v4"
-      }
-    ],
+    "runs": [],
     "checkpoint_policy": "Retain full5k/10k/15k/20k model/Adam/RNG/sampler on NVMe and SHA-verified durable mirror.",
     "durable_root": "/home/wangyy/evorig/outputs/two_query_20k_20261026",
     "end_policy": "Stop after20k and fixed128x8 evaluation. No automatic4-target,100k or reference-XYZ run.",
@@ -116,28 +105,31 @@
       "profile_weights_discarded": true
     },
     "monitor": {
-      "status": "running_primary_startup_accepted",
+      "status": "completed_verified_exit0",
       "directory": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor",
-      "offline_tests_passed": 25,
-      "primary_code_reviewed": true,
-      "pid": 134840,
-      "script": "monitor_two_query.py"
+      "receipt_sha256": "0f7583ff46df0e219baac3236672c4148727108a6333854f5ea7bf27fdfe8649"
     },
     "producer_source": "9df5d29eb96cf02658184069f4d7e5293ec5fed5",
-    "actual_payload_pids": [
-      347854,
-      347958,
-      358755,
-      358756
-    ],
-    "startup": {
-      "accepted": true,
-      "path": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor/startup_verification.json",
-      "sha256": "8d1900375b7f3bed18e61ca6c622aacae2e66ef315aa2fd14821b4bd5e9923d3",
-      "observed_utc": "2026-10-26T04:47:31.711272+00:00",
-      "assets_verified": 144,
-      "input_frames_verified": 1920,
-      "supervised_frames_verified": 288
+    "completion_scope": "20000 exposures and matched128x8 evaluation",
+    "full100k_training_complete": false,
+    "finished_utc": "2026-10-26T07:22:00.643871+00:00",
+    "execution_integrity_accepted": true,
+    "paired_comparison_accepted": true,
+    "counts": {
+      "train_assets": 5000,
+      "complete_passes": 4,
+      "asset_exposures": 20000,
+      "optimizer_updates": 420,
+      "input_frames": 263608,
+      "supervised_frames": 40000,
+      "LR_horizon": 100000
+    },
+    "checkpoint_retention": {
+      "checkpoints": 4,
+      "both_copies_verified": true,
+      "final_sha256": "5a7b432ab6013e5fd9a4260e7878b9a4d038662cd10e39c04f7bd8a45b6ce8dc",
+      "final_bytes": 8181910586,
+      "verification": "Producer SHA plus independent presence/size/receipt checks; no independent weight-payload rehash."
     }
   },
   "architecture_contract": {
@@ -162,11 +154,66 @@
     "evaluation": "Original continuous GT, failures zero; two-minus-all and two-minus-single F1/asset-bootstrap95%CI for one training seed."
   },
   "result": {
-    "complete": false,
-    "model_quality_accepted": false,
-    "local_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026"
+    "complete": true,
+    "metric": "original continuous GT edge F1; failed views score zero",
+    "validation_assets": 128,
+    "views_per_asset": 8,
+    "arms": {
+      "two_query": {
+        "f1": 0.6995819754485613,
+        "failures": 71,
+        "exact_count_fraction": 0.4638671875,
+        "non52_f1": 0.6172047872218583,
+        "supervised_frames": 40000,
+        "update_seconds": 6952.551191987237
+      },
+      "single_query": {
+        "f1": 0.666595437675587,
+        "failures": 110,
+        "exact_count_fraction": 0.41796875,
+        "non52_f1": 0.5873106924323785,
+        "supervised_frames": 20000,
+        "update_seconds": 6376.567991115036
+      },
+      "all_frames": {
+        "f1": 0.7110814050960641,
+        "failures": 57,
+        "exact_count_fraction": 0.4775390625,
+        "non52_f1": 0.6282007947855305,
+        "supervised_frames": 263608,
+        "update_seconds": 9007.6895867188
+      }
+    },
+    "differences": {
+      "two_minus_all_frames": {
+        "f1": -0.011499429647502831,
+        "asset_bootstrap_95pct": [
+          -0.031522336953953914,
+          0.008318412116882943
+        ]
+      },
+      "two_minus_single_query": {
+        "f1": 0.032986537772974264,
+        "asset_bootstrap_95pct": [
+          0.013603043608018056,
+          0.05076125071899265
+        ]
+      }
+    },
+    "quality_equivalence_to_all_frames_established": false,
+    "reference_promotion_accepted": false,
+    "interpretation": "Two targets improve single-target F1 with about9%more update time and save about23%update time versus all frames. The two/all interval includes zero; this is not proof of equivalence.",
+    "limitations": "One training seed,20kpoint on100kLRhorizon,unequal decoder compute. Bootstrap covers validation assets, not seed variability. Update times exclude initialization/checkpoint/evaluation and are not controlled hardware benchmarks. Continuous-GT per-view F1 is producer-computed.",
+    "comparison_report": {
+      "path": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/three_arm_comparison.json",
+      "sha256": "875c5df10f47ab9fc1199b037ed95a96b77bc75f6d2c2ca7b108aec8e8114e32"
+    },
+    "terminal_verification": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor/receipt.json",
+    "result_sha256": "ac180e5f13db63df123d8cbfdcc904ba7ac14e7d45d49131808bd6640af5c411",
+    "resources_sha256": "a1f13cb0bde676ccb26bed42dbb46350c92da9234dabde02ba44dec5f043e0f8",
+    "paired_report_sha256": "0dcb19d2809161074c79e8979f30be16b493e508ad75a6b6dcb9966a90b4b8af"
   },
-  "next_required_result": "Continue this one run to20k, retain four full checkpoints, evaluate fixed128x8 originalGT and compare against both retained controls. Report only completion or actionable failure; no additional experiments.",
+  "next_required_result": "Report completed three-arm tradeoff. Keep two-target as a low-cost candidate, not an established all-frame equivalent. No automatic4-target,100k or reference-XYZ experiment.",
   "previous_completed_result": {
     "label": "real_query_single_target_5k_20261026_v1",
     "document": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "two_query20k_CPU_verified_capacity_admitted_20261026",
-  "updated_at": "2026-10-26T04:10:10.127Z",
+  "state_id": "two_query20k_capacity_verified_formal_training_admitted_20261026",
+  "updated_at": "2026-10-26T04:32:32.953Z",
   "module": "model_training",
   "human_context": "model_training/docs/CURRENT_MODEL_CONTEXT.md",
   "required_context": [
@@ -34,10 +34,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
-    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -52,21 +52,17 @@
     ],
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
-    "status": "CPU_audit_complete_idle_capacity_admitted",
-    "last_observed_gpu_used_mib": [
-      0,
-      0
-    ],
+    "status": "capacity_complete_pending_fresh_formal_admission",
     "payload_processes_alive": false,
     "keeper_pid": 1098441,
     "expiry_utc": "2026-10-26T10:33:29.625Z",
     "policy": "Reuse retained scheduler grant only after fresh stage-boundary checks; no new allocation, release, concurrent model payload or automatic continuation.",
-    "live_check_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/runs/audit_v10/resources.json",
-    "last_observed_utc": "2026-10-26T04:07:21.532573Z"
+    "live_check_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/runs/capacity_v3/resources.json",
+    "last_observed_utc": "2026-10-26T04:29:06.966642Z"
   },
   "active_operation": {
     "label": "real_query_two_target_5k_20261026_v1",
-    "status": "CPU_v10_primary_accepted_pending_capacity_v3",
+    "status": "capacity_v3_primary_accepted_train_v4_admitted",
     "operation": "train",
     "mode": "two_target_vs_retained_single_and_all_frames",
     "complete": false,
@@ -78,9 +74,9 @@
     "config": "model_training/experiments/real_query_two_target_5k_20261026_v1.json",
     "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "train_assets": 5000,
     "target_exposures_per_variant": 20000,
     "scientific_schedule_horizon_assets": 100000,
@@ -101,15 +97,16 @@
       {
         "mode": "capacity",
         "stage": "capacity_v3",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
         "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3",
+        "status": "completed_primary_accepted"
       },
       {
         "mode": "train",
         "stage": "train_v4",
-        "approved": false,
+        "approved": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/real_query_two_target_5k_20261026_v1.json",
         "config_sha256": "8dfa166a193ad08ec0e446994ea6562a3d939455bc3b0ca866fea0310ed41e18",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v4"
@@ -126,6 +123,21 @@
       "initialization_exact_both_retained_controls": true,
       "global_input_RNG_unchanged": true,
       "independent_full20k_selector_plan_verified": true
+    },
+    "capacity": {
+      "accepted": true,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v3/result.json",
+      "sha256": "ca58f108f9be724314b720ab09e117e687126b9499fff78e4d64aca315295dcf",
+      "cases": 6,
+      "optimizer_updates_per_rank": 12,
+      "max_reserved_bytes": 45206208512,
+      "profile_weights_discarded": true
+    },
+    "monitor": {
+      "status": "prepared_not_started_wait_actual_PIDs",
+      "directory": "D:/evoweave/server_ops/outputs/two_query_20k_20261026/monitor",
+      "offline_tests_passed": 25,
+      "primary_code_reviewed": true
     }
   },
   "architecture_contract": {
@@ -154,7 +166,7 @@
     "model_quality_accepted": false,
     "local_evidence": "D:/evoweave/server_ops/outputs/two_query_20k_20261026"
   },
-  "next_required_result": "Run fresh bounded two-target GPUcapacity/gradient checks; discard profiling weights. Formal20k remains blocked until primary review.",
+  "next_required_result": "Launch only fresh train_v4, verify first3 updates against retained inputs and exact2target policy, then continue to20k and fixed128x8 evaluation.",
   "previous_completed_result": {
     "label": "real_query_single_target_5k_20261026_v1",
     "document": "model_training/docs/SINGLE_QUERY_SUPERVISION_20261026.md",

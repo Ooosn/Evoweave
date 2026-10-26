@@ -63,5 +63,10 @@ Evidence: local `preparation/tests_v2_result.json`. Fresh CPUaudit_v10 completed
 04:07UTC, no CUDA/optimizer, exact initialization versus both controls, unchanged
 input RNG and independently verified40kselected targets on the20kinput plan.
 Receipt SHA `6cdc598b88089ba034c8e7c05239556edba854ad3f5949c485490e78b7283082`.
-Capacity_v3 is admitted; formal training is still blocked. Profile weights are
-discarded. Runtime code remains pinned to `f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a`.
+Capacity_v3 completed04:29UTC, six cases/twelve optimizer updates per rank, finite
+positive active gradients, no virtual gradients, correct two-target counts.
+Maximum reserved GPU memory42.1016GiB; peak host-tree RSS11603755008bytes.
+Receipt SHA `ca58f108f9be724314b720ab09e117e687126b9499fff78e4d64aca315295dcf`.
+Profile weights are discarded. Fresh train_v4 is now admitted, with actual
+startup verification pending. Runtime code remains pinned to
+`f877619c2f9a01d2bd458f3fcbbed4f3288bdb0a`.

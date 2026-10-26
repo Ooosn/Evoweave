@@ -399,7 +399,7 @@ def evaluate(head, caches, config, device, rank, world, step, output):
                             config['pilot'].get('output_baseline', 'copy'))
                     methods = {'learned': predicted[0], 'copy': xyz[0, None].expand(config['pilot']['frames'], -1, -1),
                                'local_rigid': rigid[0]}
-                    if step == 800 and record is records[0]:
+                    if step == config['pilot'].get('updates', 800) and record is records[0]:
                         examples.append({**common, 'anchor_points': record['points'].tolist(),
                             'truth_xyz': record['targets'].tolist(), 'truth_parents': record['parents'].tolist(),
                             'reference_xyz': incoming['xyz'].tolist(), 'reference_parents': incoming['parents'].tolist(),
@@ -565,7 +565,7 @@ def train(config, output, source, device, rank, world):
                 'observed_utc': datetime.now(timezone.utc).isoformat()})
             if rank == 0:
                 print(json.dumps({'event': 'update', **row}), flush=True)
-        if step in (400, 800):
+        if step in (steps // 2, steps):
             save_head(head, optimizer, generator, config, selection, step, source, output, rank, world)
             evaluate(head, caches, config, device, rank, world, step, output)
     result = {'complete': True, 'passed': True, 'mode': 'train', 'updates': steps,

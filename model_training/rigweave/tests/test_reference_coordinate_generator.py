@@ -128,6 +128,11 @@ class CoordinateGeneratorTest(unittest.TestCase):
     def test_generator_contract_excludes_geometric_baseline(self):
         config = json.loads((ROOT / 'model_training/experiments/reference_skeleton_xyz_ar_fit_20261027_v1.json').read_text())
         validate_config(config)
+        expanded = json.loads((ROOT / 'model_training/experiments/reference_skeleton_xyz_ar_64assets_20261027_v1.json').read_text())
+        validate_config(expanded)
+        expanded['pilot']['updates'] = 800
+        with self.assertRaisesRegex(ValueError, 'updates'):
+            validate_config(expanded)
         config['pilot']['output_baseline'] = 'local_rigid'
         with self.assertRaisesRegex(ValueError, 'geometric'):
             validate_config(config)

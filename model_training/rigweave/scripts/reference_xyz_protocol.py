@@ -44,6 +44,8 @@ def validate_config(config):
     generative = 'generator' in config
     if generative:
         expected.update(train_assets=8, loss='coordinate_token_CE_nonreference_mean_per_asset')
+        if pilot.get('train_assets') == 64:
+            expected.update(train_assets=64, updates=6400)
         if config['generator'] != {'bins': 256, 'decoder_layers': 4}:
             raise ValueError('unreviewed coordinate generator')
     for key, value in expected.items():

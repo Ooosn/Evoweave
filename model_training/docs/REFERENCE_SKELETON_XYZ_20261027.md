@@ -285,3 +285,47 @@ capacity_v15 completed3updates/rank and full378/513token free generation on
 keeper retained at2026-10-26T22:09:04Z. Producer19cf0de4d61076b85c58992e902713217e43dc7e;
 result SHA25687bd4b2ea8d69ed6d13cb66152244b3724d7ed93fee51a5b966b81bbaad66bd7.
 The capacity model is discarded before the newly admitted train_v14 starts.
+
+### Completed Eight-Asset Learning Check
+
+train_v14 finished800updates with clean exit0; observer22:13:25UTC verified idle
+GPUs and keeper. Producer9b579ff3690e9a5e920b3442d79eb84263b9b1b8;
+result SHA25676e9acc3081829d9073fc1d7e23a8059dd5b07dbf9c06f154855f8447136d523.
+Independent analysis rehashed30artifacts, replayed1600rank-update asset/reference
+sequences, and matched every unchanged control row. Report:
+D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v14_analysis.json
+SHA256cc26ac964768f47075d0144654e866fdb1c73cad413ac4be689a7ccae9013417.
+
+| Metric at800updates | Train8 | Valid32 |
+| --- | ---: | ---: |
+| Free-generation normalized MPJPE |0.00228255|0.16705578|
+| Teacher-forced normalized MPJPE |0.00224487|0.16639219|
+| Teacher-forced token accuracy |0.97409942|0.02792698|
+| Quantized-GT normalized MPJPE floor |0.00177838|0.00179966|
+| Free-generation edge F1, GT reference |0.97910353|0.11032859|
+
+Train error fell from0.44711 atinitialization and0.01412 at400updates to0.00228;
+validation was0.15012 at400 and worsened to0.16706 at800. Thus the model can
+learn/free-generate the small training set, but does not generalize acceptably.
+The small teacher/free gap, especially high teacher-forced validation error,
+does not support autoregressive rollout accumulation as the main current issue.
+This is evidence of strong small-set overfitting, not proof of its unique cause.
+Natural predicted-reference validation F1=0.08843027, successful-only J2J=0.09399050;
+the same4of64reference failures contribute28zero-F1 views. No quality promotion.
+
+### Sixty-Four-Asset Scaling Check
+
+Keep generator architecture, initial seed, frozen caches and32validation assets
+unchanged. Freshly initialize a new generator; do not continue the overfitted
+eight-asset weights. Train all64cached training assets for6400updates, keeping
+400average visits per training asset (25600total) as in the eight-asset check.
+This uses8xupdates and scales the cosine horizon accordingly; it is a practical
+data/budget scaling check, not a fixed-compute causal data ablation. Record
+0/3200/6400free/teacher metrics and preserve3200/6400full head checkpoints.
+
+Exact recipe:reference_skeleton_xyz_ar_64assets_20261027_v1.json. Reuse accepted
+capacity_v15, which already loaded all64/32assets and tested their largest
+126/171joint skeletons. Model forward/backward/generation/optimizer/resource
+code is unchanged; runtime edits only generalize half/final checkpoint and
+example timing.45focusedCPU regressions pass. This explicit next stage is
+train_v15; the old stages stay closed, and no subsequent run is automatic.

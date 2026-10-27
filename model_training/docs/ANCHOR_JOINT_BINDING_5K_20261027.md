@@ -306,3 +306,43 @@ artifact/trace manifests. Content10kfull checkpoint SHA:
 2379dd9a3a31b0f0cd14d5db1adf545ba33d7ce192622b513b9a49ebf0d31bc8.
 No mid-run model/loss/data/schedule change was made. Continue both arms to the
 common40k/60k horizon and retain separate final967/nonselection839checks.
+
+## Matched20k Interim Comparison (2026-10-28JST)
+
+Each arm completed four full5000passes/420updates and257,920input-frame
+visits. The bounded actual-trace audit again verifies identical initialization,
+microbatches, assets, raw poses, references and AR slots, with training disjoint
+from the128selection assets. Terminal and heldout-pose checks remain pending.
+
+| Metric | Reference transport | Target-content reader | Transport minus reader95%paired interval |
+| --- | ---: | ---: | --- |
+| Normalized known-ID MPJPE | 0.02305132 | 0.02781462 | [-0.00629610,-0.00336539] |
+| PCK at5% diagonal | 0.88658784 | 0.83537068 | [0.03808838,0.06400164] |
+| Nearest-mapped edge F1 | 0.71800090 | 0.71013218 | [0.00059081,0.01513009] |
+| Normalized J2J | 0.01828115 | 0.02174776 | [-0.00433462,-0.00257082] |
+| Normalized target bone-vector error | 0.01255571 | 0.01421156 | [-0.00222208,-0.00109822] |
+
+Transport has17.1%lower MPJPE, with100/128assets better, and5.12percentage-point
+higher PCK. The F1 advantage is now only0.00787. All intervals are2000paired
+asset resamples from ONE matched training seed; they are not seed uncertainty
+or multiplicity-adjusted evidence. The smaller differences than10k warrant
+retaining the learning-speed hypothesis rather than asserting final superiority.
+
+All128mean cross-reference disagreement is0.020760vs0.023906, ideal0.
+On8saved assets/two references, median articulation-variation amplitude over
+GT is1.106vs0.823 and direction cosine0.980vs0.973. These subset diagnostics
+confirm motion following, NOT all-asset accuracy. They suggest remaining
+over/under-response respectively, not a proven global error mechanism.
+The fixed arm case visually improves; the fixed seated case retains foot
+offsets. All panels retain identical camera/scale and explicit reference/target
+surfaces. No post-hoc alignment or geometric fitting is used.
+
+Evidence: review_evaluation_020000.json, trace_prefix_audit_020000.json,
+response_diagnostic_{reference_transport,target_content}_020000.json and
+pair_examples_evaluation_020000.png under the local inspection root. Small
+artifacts were rehashed against the server. Each full checkpoint has
+8,278,607,570bytes; both copies are producer-hash-verified and independently
+size-checked, not independently rehashed during this local review.
+Transport checkpoint SHA:8b7aa0c896c02d19fa1860ef8cb1580b0c65f7e4be64d09bacdb9d3f260173ae.
+Content checkpoint SHA:3faaa4e72090ea13bdf530254016d6333879e427e02a17fee2c0e2116f3a87fc.
+The live source remains9db222d; no training code or protocol was changed.

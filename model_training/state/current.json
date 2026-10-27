@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T16:00:00Z",
+  "updated_at": "2026-10-27T18:10:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -206,7 +206,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "matched10k_metrics_initialization_actual_traces_verified_unchanged_training_continues"
+      "status": "matched20k_metrics_initialization_actual_traces_verified_unchanged_training_continues"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -436,8 +436,8 @@
       }
     },
     "interim_interpretation": {
-      "measured": "Both arms show conditional motion by10k. The reference-transport arm is ahead on all five128-panel metrics under independently verified matched consumed data and initialization. Saved examples still show local distortions/overshoot; not every pose/metric favors transport.",
-      "inference": "Current evidence supports an early learning advantage of transferring reference associations, not proof of final superiority. Preserve the complete matched training/evaluation plan; do not apply the previously deferred readout proposal.",
+      "measured": "At20k both arms show conditional motion. Transport has17.1percent lower128-panel MPJPE and5.12percentage-point higher PCK; all five paired-asset intervals favor it, but F1 difference is now only0.00787. Actual consumed data and initialization remain matched through4passes. Saved examples retain local offsets and amplitude error; neither arm is reference invariant.",
+      "inference": "The common20k result retains a transport advantage but its difference from the content reader is smaller than at10k. This may be a learning-speed difference, not final superiority. Preserve the complete matched training/evaluation plan; do not apply the previously deferred readout proposal.",
       "unimplemented_proposal": "A target-minus-reference decoder readout was considered to cancel pose-invariant corrections, but is deferred and has NOT changed the running model.",
       "visualization": "Chinese explicit reference-GT/reference-surface, target-GT/target-surface, predictions/same-target-surface; same camera/axes, raw frame IDs, no ambiguous reference-copy panel in main figures."
     },
@@ -460,6 +460,44 @@
       "edge_f1_delta": 0.04360757487564294,
       "scope": "One matched training seed, fixed128selection panel at10k visits/arm; early learning advantage, not final quality/convergence/seed-robustness acceptance.",
       "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_010000.png"
+    },
+    "matched_20000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_evaluation_020000.json",
+      "trace_audit": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/trace_prefix_audit_020000.json",
+      "independent_aggregation_passed": true,
+      "copy_controls_identical": true,
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "full5000passes_per_arm": 4,
+      "updates_per_arm": 420,
+      "input_frames_per_arm": 257920,
+      "training_validation128_disjoint": true,
+      "terminal_trace_audit_complete": false,
+      "heldout_pose_audit_complete": false,
+      "all_five_metric_paired_intervals_favor_transport": true,
+      "reference_transport": {
+        "normalized_mpjpe": 0.023051317443657484,
+        "pck_005": 0.886587839617796,
+        "edge_f1": 0.7180008982189982,
+        "normalized_j2j": 0.01828115444890356,
+        "normalized_bone_vector_error": 0.012555710672133156,
+        "normalized_cross_reference_difference": 0.020760063170200738,
+        "checkpoint_sha256": "8b7aa0c896c02d19fa1860ef8cb1580b0c65f7e4be64d09bacdb9d3f260173ae"
+      },
+      "target_content": {
+        "normalized_mpjpe": 0.027814619921368182,
+        "pck_005": 0.8353706792800796,
+        "edge_f1": 0.7101321755041893,
+        "normalized_j2j": 0.02174775642514948,
+        "normalized_bone_vector_error": 0.014211558235888124,
+        "normalized_cross_reference_difference": 0.023906185051600914,
+        "checkpoint_sha256": "3faaa4e72090ea13bdf530254016d6333879e427e02a17fee2c0e2116f3a87fc"
+      },
+      "checkpoint_bytes_each": 8278607570,
+      "both_copies_producer_verified": true,
+      "independent_full_weights_hash": false,
+      "scope": "One matched training seed, fixed128selection panel at20k visits/arm; not final quality/convergence/seed-robustness acceptance. Earlier interim_evidence records10k; this block is the latest matched milestone.",
+      "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_020000.png"
     }
   },
   "previous_completed_result": {
@@ -469,5 +507,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Continue immutable formal source9db through next matched20k/30k/40k checkpoints; inspect local pose errors and reference dependence. Apply preregistered common40k/60k extension only, then full967/nonselection839 and complete-trace/heldout/permutation review. No overall acceptance from current128-panel early advantage."
+  "next_required_result": "Continue immutable formal source9db through next matched30k/40k checkpoints; inspect local pose errors and reference dependence. Apply preregistered common40k/60k extension only, then full967/nonselection839 and complete-trace/heldout/permutation review. No overall acceptance from current128-panel early advantage."
 }

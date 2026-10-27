@@ -130,7 +130,8 @@
     "warmup_assets": 1000,
     "head_lr_multiplier": 3,
     "reference": "uniform_GT_complete_tree_per_asset_visit",
-    "optimizer": "retain_backbone_Adam_add_head_group"
+    "optimizer": "retain_backbone_Adam_add_head_group",
+    "gradient_clip": "separate_backbone_and_head_norm1"
   },
   "evaluation": {
     "seed": 20261028,
@@ -153,8 +154,17 @@
   "capacity": {
     "optimizer_steps_per_case": 2,
     "accumulation_microbatches": 2,
+    "profile": "clipping_followup",
+    "stress_group": "largest_joints",
+    "frames": [6, 12, 24],
     "both_variants_all_stress_cases": true,
-    "coordinate_only_gradient_check": true
+    "coordinate_only_gradient_check": true,
+    "prior_full_capacity": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17/result.json",
+      "sha256": "e268bc7f93c2a6c6ff0b3297cf05a3f0a6876b8873c2c0b8abe800290388c898",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17_resources.json",
+      "compatibility": "Forward, parameters, data, objective and shapes unchanged; only independent branch clipping, extra gradient diagnostics and checkpoint example artifacts changed. Repeat maxJ6/12/24poses for both modes and isolated coordinate gradients for both."
+    }
   },
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/anchor_joint_binding_5k_20261027/v1",

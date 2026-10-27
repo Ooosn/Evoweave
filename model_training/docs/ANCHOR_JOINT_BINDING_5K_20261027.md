@@ -156,3 +156,33 @@ the both-controller kernel check is unchanged. Initial bindinglinear:16was
 also corrected while pending after the installed AGE manual established that
 the amount is per PE task, not total. These are recorded provisioning errors,
 not model experiments or a reason to weaken CPU accounting.
+
+## Pre-Formal Optimization Correction
+
+The old retained job130494177 ended at2026-10-27 19:33JST because the
+scheduler enforced its48hour h_rt; qacct records deleted_byNONE. It was not
+manually released. Replacement native job130675914 retains2H100/16CPU with
+both kernel controllers verified; deadline is2026-10-28 19:55JST.
+
+Full architecture capacity_v17 completed cleanly:36updates/rank, both modes,
+nine stress cases each,24pose free inference, peak28.50GBtreeRSS and46.30GB
+GPU reserved memory. This is capacity evidence, not quality. The coordinate-only
+gradient check there covered target_content only; the followup covers both.
+
+Measured full gradient norms12.55to76.15were dominated by the new head.
+Global norm1 clipping therefore also scaled the pretrained backbone's
+gradient. Before any formal training, split clipping into backbone norm1 and
+head norm1. This preserves the combined objective's direction inside the
+backbone while removing cross-branch clipping coupling. It is a design
+correction, not evidence of improved predictive quality. Both arms use it.
+
+Followup capacity_v18 verifies both modes on maximum-joint assets at6/12/24
+poses, two optimizer steps each (12updates/rank), isolated coordinate-only
+gradient flow for both modes, and24pose free inference. It requires the
+SHA-verified36-case capacity_v17artifact and clean supervisor exit. Forward
+code, parameters, input data, losses and shapes are unchanged, so that earlier
+architecture/memory evidence remains applicable. The12-pass CPU data audit
+also remains applicable; no loader or sampler changed. Runtime records
+preclip norms and clip scales separately. Formal training remains blocked
+until this followup passes. Examples are now retained at every evaluation,
+including initialization, without changing evaluation inputs or predictions.

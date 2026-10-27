@@ -4,13 +4,15 @@ import copy
 import gc
 import hashlib
 import json
+import math
 import time
 
 import numpy as np
 import torch
 import torch.distributed as dist
 
-from anchor_joint_protocol import VARIANTS, load_backbone_config, sample_seed, scientific_sha, sha256, should_extend
+from anchor_joint_protocol import (VARIANTS, load_backbone_config, sample_seed, scientific_sha,
+    sha256, should_extend, validate_prior_capacity)
 from fit_cohort_selection import _joint_count
 from id_xyz_stages import preserve_random
 from reference_flow_runtime import ar_indices, audit, mirror, norm_of, read_all, save, summarize
@@ -89,6 +91,14 @@ def load_model(config, device, rank, world, resume=None):
     return model, optimizer, tokenizer, codec, base, initial, stream, samples, frames, step
 
 
+def clip_branch_gradients(model):
+    norms = {name: float(torch.nn.utils.clip_grad_norm_(getattr(model, name).parameters(),
+        1., error_if_nonfinite=True)) for name in ('backbone', 'head')}
+    return {'gradient_norm': math.hypot(*norms.values()),
+        'gradient_norms_before_clip': norms,
+        'gradient_clip_scales': {name: min(1., 1. / (value + 1e-6)) for name, value in norms.items()}}
+
+
 def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, config,
            samples, device, world, *, prefetch=None, check_groups=False):
     model.train()
@@ -132,7 +142,7 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
     if check_groups:
         groups = check_gradient_groups(model.backbone, 'fraction20_40_query')
         groups['head'] = norm_of(model.head)
-    norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True))
+    clipping = clip_branch_gradients(model)
     optimizer.step()
     torch.cuda.synchronize(device)
     peak = torch.cuda.max_memory_reserved(device)
@@ -142,7 +152,7 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
         'ar_loss': float(totals[0] / assets), 'xyz_loss': float(totals[1] / assets),
         'bone_loss': float(totals[2] / assets), 'ar_accuracy': float(totals[3] / assets),
         'coordinate_weight': weight, 'lr': lr, 'head_lr': optimizer.param_groups[-1]['lr'], 'beta1': beta,
-        'gradient_norm': norm, 'gradient_groups': groups, 'seconds': time.monotonic() - start,
+        **clipping, 'gradient_groups': groups, 'seconds': time.monotonic() - start,
         'max_allocated_bytes': torch.cuda.max_memory_allocated(device), 'max_reserved_bytes': peak,
         'microbatches': records}
 
@@ -155,6 +165,7 @@ def variant_config(config, variant):
 
 
 def capacity(config, output, source, device, rank, world):
+    prior = validate_prior_capacity(config)
     base, entries = read_all(config)
     groups, _ = load_capacity_selection(base, entries['train'])
     counts = [_joint_count(r)[0] for r in entries['train']]
@@ -165,21 +176,30 @@ def capacity(config, output, source, device, rank, world):
     request = [FrameSampleRequest(groups['largest_joints'][rank], 2, 90000 + rank)]
     surface, _, geometry = prepare(dataset, request, base, tokenizer, codec, device)
     reference = reference_indices(request, config, device)
-    with torch.autocast('cuda', dtype=torch.bfloat16):
-        features, _ = model.backbone.encode(surface)
-        prediction = model.head(features, surface['query_points'], surface['query_normals'],
-            reference_slots(geometry['frame_target_joints'], reference), geometry['target_parents'], geometry['joint_mask'], reference)
-        loss = coordinate_objective(prediction, geometry['frame_target_joints'], geometry['target_parents'],
-            geometry['joint_mask'], reference)['loss_per_asset'].sum()
-    loss.backward()
-    gradients = {'surface': norm_of(model.backbone.surface_tokenizer),
-        'motion': norm_of(model.backbone.motion_encoder), 'head': norm_of(model.head)}
-    if any(p.grad is not None for p in model.backbone.xyz_decoder.parameters()):
-        raise RuntimeError('coordinate-only loss unexpectedly traversed AR decoder')
-    del surface, geometry, features, prediction, loss
+    if initial != prior['initialization']:
+        raise RuntimeError('followup capacity initialization differs from full architecture profile')
+    gradients = {}
+    for mode in VARIANTS:
+        model.head.mode = mode
+        optimizer.zero_grad(set_to_none=True)
+        with torch.autocast('cuda', dtype=torch.bfloat16):
+            features, _ = model.backbone.encode(surface)
+            prediction = model.head(features, surface['query_points'], surface['query_normals'],
+                reference_slots(geometry['frame_target_joints'], reference), geometry['target_parents'], geometry['joint_mask'], reference)
+            loss = coordinate_objective(prediction, geometry['frame_target_joints'], geometry['target_parents'],
+                geometry['joint_mask'], reference)['loss_per_asset'].sum()
+        loss.backward()
+        gradients[mode] = {'surface': norm_of(model.backbone.surface_tokenizer),
+            'motion': norm_of(model.backbone.motion_encoder), 'head': norm_of(model.head)}
+        if not all(math.isfinite(v) and v > 0 for v in gradients[mode].values()):
+            raise RuntimeError('coordinate-only gradient absent or nonfinite')
+        if any(p.grad is not None for p in model.backbone.xyz_decoder.parameters()):
+            raise RuntimeError('coordinate-only loss unexpectedly traversed AR decoder')
+        del features, prediction, loss
+    del surface, geometry
     optimizer.zero_grad(set_to_none=True)
     wrapped = wrap(model, device, world)
-    cases = copy.deepcopy(base['capacity']['cases']) + [dict(stress_group='largest_joints', frames=t,
+    cases = [dict(stress_group='largest_joints', frames=t,
         batch_per_rank=base['training']['frame_policy'][str(t)]) for t in (6, 12, 24)]
     records = []
     for mode in VARIANTS:
@@ -215,7 +235,9 @@ def capacity(config, output, source, device, rank, world):
     ranks = gather({'rank': rank, 'coordinate_only_gradients': gradients, 'cases': records, 'free_inference': free}, world)
     return {'complete': True, 'passed': True, 'source': source, 'initialization': initial,
         'scientific_sha256': scientific_sha(config), 'ranks': ranks,
-        'profile_weights_discarded': True, 'not_model_quality': True}
+        'profile_weights_discarded': True, 'not_model_quality': True,
+        'prior_full_capacity': config['capacity']['prior_full_capacity'],
+        'profile': 'clipping_followup'}
 
 
 def joint_metrics(prediction, truth, parents, diagonal):
@@ -285,7 +307,7 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
                             'target_slot': frame, 'target_raw_frame': raw[frame], 'method': method,
                             'reference_success': True, 'joint_count': len(parents),
                             **joint_metrics(values[frame], target[frame], parents.tolist(), float(diagonals[frame]))})
-                if final and split == 'valid' and len(examples) < 8:
+                if split == 'valid' and len(examples) < 8:
                     examples.append({'asset_id': batch['asset_id'], 'reference_slot': ref,
                         'reference_kind': 'GT', 'prediction': prediction.cpu(), 'reference_xyz': target[ref].cpu(),
                         'truth': target.cpu(), 'parents': parents.cpu(), 'points': surface['query_points'][0].cpu(), 'raw_frames': raw})
@@ -315,8 +337,9 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
     valid = [v for v in all_rows if v['split'] == 'valid' and v['method'] == 'head']
     if len(valid) != expected * 14 or len({v['asset_id'] for v in valid}) != expected:
         raise RuntimeError('evaluation coverage differs')
-    if final:
-        torch.save(examples, directory / f'examples_rank_{rank}.pt')
+    example_path = directory / f'examples_rank_{rank}.pt'
+    torch.save(examples, example_path)
+    mirror(example_path, directory.name + '/' + example_path.name, config)
     if rank == 0:
         for name, data in (('rows.json', all_rows), ('reference_consistency.json', all_consistency), ('summary.json', summary)):
             write_json(directory / name, data)

@@ -200,3 +200,66 @@ Expiry is2026-10-31 11:55UTC, training stop10:55UTC. The only change after
 accepted capacity is runtime lifetime/deadline and a guarded resource-management
 script; model/data/objective/scientific identity are unchanged. Formal train_v17
 is released only for the exact new config hash in current.json.
+
+## Interim Reference-Transport Learning Evidence
+
+Formal source remains pinned at9db222d0070122b08c6d5dde3329f3be69d46c16.
+At10k new visits (two complete5000passes,210updates), the reference-transport
+arm improved on the fixed128selection panel. This is not yet a between-arm
+result or final967/nonselection839 acceptance. Independent asset-macro
+aggregation and2000paired-asset bootstrap checks passed locally.
+
+| Metric | Copy reference | Transport5k | Transport10k |
+| --- | ---: | ---: | ---: |
+| Normalized known-ID MPJPE | 0.09266244 | 0.09229042 | 0.04472532 |
+| PCK at5% target mesh diagonal | 0.53927101 | 0.54340580 | 0.70473408 |
+| Spatial nearest-mapped edge F1 | 0.56117406 | 0.55272799 | 0.59815582 |
+| Normalized symmetric nearest J2J | 0.06179935 | 0.06189210 | 0.03426620 |
+| Normalized target bone-vector error | 0.02504090 | 0.02502127 | 0.02197576 |
+
+The10k minus-copy95%paired intervals exclude zero in the favorable direction
+for all five metrics. They describe asset sampling uncertainty for one training
+seed, not repeat-run uncertainty. F1 uses nearest-joint mapped directed-edge
+agreement with no distance threshold; since the GT tree is given, it is not
+evidence that the model generated the topology. Do not equate it with PCK.
+
+At5k, the saved8fixed assets (two GT references each, reference slot excluded)
+had a median pose-specific correction energy fraction of0.04986. After removing
+whole-skeleton translation, predicted articulation variation amplitude was only
+0.00209times GT. At10k, these became0.56442and1.01534; articulation direction
+cosine rose from0.19714to0.84067. These are subset motion diagnostics, not
+all128estimates or accuracy percentages. Together with visible pose changes,
+they reject the claim that10k improvements are only a reference-invariant
+correction. Limb overshoot and local position errors remain visible.
+
+Across all128assets, mean normalized disagreement between predictions made
+using reference0versus4fell from0.08219at initialization to0.07980at5k and
+0.04203at10k. Reference dependence is reduced, not solved. Splitting the128by
+copy-reference motion into near-equal thirds shows10k position improvements in
+all groups, with strongest gains on high-motion assets; low-motion F1's paired
+interval still includes zero.
+
+An anchored decoder difference (target readout minus reference readout) was
+considered as a way to cancel pose-invariant corrections, but **not implemented**.
+The10k evidence changes the diagnosis: the current architecture can learn
+conditional articulation after the initially copy-like phase. Preserve the
+running comparison and assess the matched content-reader arm before selecting
+any architecture or loss change.
+
+Local evidence: review_single_reference_transport_evaluation_005000.json,
+review_single_reference_transport_evaluation_010000.json and corresponding
+response_diagnostic_reference_transport files under the local inspection root.
+10k full checkpoint SHA: fa3c55bf41ab7c3a268a41c3eaaf4d68366a9917f5a50b42e1d84bd9061f3d90;
+8,278,607,378bytes, producer verified both SSD and durable copies. Local review
+rehashes small artifacts and checks both full-checkpoint sizes, but does not
+independently stream/hash the entire8GBcheckpoint.
+
+### Visualization Contract
+
+Reference GT must be shown on its OWN reference-frame point cloud, not silently
+overlaid on a target pose. Show target GT and predictions on identical target
+geometry with shared camera/axes. Use Chinese labels and explicit raw frame IDs.
+The primary visual comparison omits the confusing copy-baseline panel; its
+metrics remain in the quantitative tables. Bone lines remain visible over the
+point cloud. The earlier ambiguous English copy-baseline figure is retained as
+a historical artifact, not reused as the presentation template.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T13:36:00Z",
+  "updated_at": "2026-10-27T13:43:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -74,13 +74,13 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_allocation_retained_formal_pair_approved",
+    "status": "native_96hour_retained_full5k_pair_running",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-27T13:34:41.382537Z",
+    "last_observed_utc": "2026-10-27T13:42:01.566185Z",
     "last_observed_gpu_used_mib": [
-      0,
-      0
+      12389,
+      12389
     ],
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
@@ -95,7 +95,7 @@
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "full5k_matched_formal_training_approved",
+    "status": "full5k_matched_formal_training_running",
     "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
@@ -206,7 +206,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "formal_train_v17_approved_admission_next"
+      "status": "formal_running_initial_reference_transport128_evaluation_complete_no_trained_quality_yet"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -282,7 +282,7 @@
     },
     "optimizer_adjustment": {
       "reason": "Measured head gradients dominate global clip norm (total12.55to76.15), scaling pretrained backbone gradients along with the head despite retained Adam state. Separate backbone/head norm1 clipping preserves mixed-objective direction within the backbone without cross-branch clipping coupling. This is an optimization design correction, not measured proof of better quality.",
-      "formal_training_started": false,
+      "formal_training_started": true,
       "required_followup": "Before formal train, test changed clipping on CPU and targeted capacity_v18 with maxJ at6/12/24poses,both modes,two optimizer steps,isolated coordinate gradients BOTH modes. Reuse full36-case architecture/memory evidence only with unchanged forward/parameters/data and explicit compatibility.",
       "implemented": true,
       "clipping": "separate_backbone_and_head_norm1",
@@ -359,7 +359,17 @@
       "observed_utc": "2026-10-27T13:34:41.382537Z",
       "same_job_keeper_start_devices_slots_verified": true
     },
-    "capacity_source_compatibility": "After accepted capacity18ee813, no rigweave code changed (verified empty diff fromb925f0c). Only the versioned scheduler-lifetime management script and runtime96hour limit/stop time plus state/docs changed. Scientific SHA remains eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6."
+    "capacity_source_compatibility": "After accepted capacity18ee813, no rigweave code changed (verified empty diff fromb925f0c). Only the versioned scheduler-lifetime management script and runtime96hour limit/stop time plus state/docs changed. Scientific SHA remains eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6.",
+    "launched_source": "9db222d0070122b08c6d5dde3329f3be69d46c16",
+    "launched_config_sha256": "f42270b095f5df2e15ccaadc1aeb10d7aa42dac309aefc8202399259003239a6",
+    "launch": {
+      "stage": "train_v17",
+      "queued_utc": "2026-10-27T13:37:47.819966Z",
+      "started_utc": "2026-10-27T13:37:48.815456Z",
+      "supervisor_pid": 1685206,
+      "kernel_scheduler_membership": true,
+      "source_checkout_pinned_during_run": true
+    }
   },
   "previous_completed_result": {
     "label": "shared_reference_flow_5k_20261027_v1",

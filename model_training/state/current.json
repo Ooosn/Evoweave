@@ -55,7 +55,7 @@
     "status": "conditional_generation_pilots_completed_GPUs_idle_keeper_retained",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-26T22:39:54.793154Z",
+    "last_observed_utc": "2026-10-27T05:25:29.517727Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -106,14 +106,14 @@
         "mode": "audit",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
         "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_flow_v1",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v11",
         "approved": true
       },
       {
         "mode": "capacity",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
         "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_flow_v1",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v16",
         "approved": true
       }
     ],

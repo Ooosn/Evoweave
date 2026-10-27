@@ -1,0 +1,148 @@
+# GT-Reference Joint-Anchor Binding On Full5000
+
+Status: implementation and preflight, 2026-10-27. No new quality claim.
+The previous shared-flow trial is retained, not resumed or overwritten.
+
+## Question And Explicit Input Contract
+
+The user clarified that stage2 receives the asset's complete GT skeleton at
+one observed reference pose. It should exploit the already-trained mesh/anchor
+representation to locate those same joints in the other observed poses.
+Stage1 sampling, predicted/GT tree matching, joint names and predicted-reference
+robustness are NOT part of this experiment. GT target coordinates enter only
+the loss/scoring path. Neither head.forward nor inference accepts target GT.
+
+Each pose's1024real anchor features come from the existing shared surface and
+motion encoders. Their same-index correspondence is within one asset across
+poses, never an assumed semantic correspondence between different assets.
+All existing root-RT alignment, input-mesh-union normalization, complete trees,
+2to24pose sampling,5000training assets and967validation assets remain unchanged.
+No joint/frame pruning, coordinate clipping or geometric fitting is introduced.
+
+## The Controlled Architectural Difference
+
+Both arms have exactly the same parameter names, dimensions, initialization,
+donor, optimizer states, data stream, reference sampling and objectives.
+
+1. Encode reference GT XYZ, parent offset and root flag as joint tokens.
+2. Two graph/mesh attention blocks read the reference frame's anchor tokens.
+3. Project joint queries Q and anchor keys/values K,V. Association logits are
+   scaled QK products plus a learned soft reference-coordinate distance prior.
+4. reference_transport computes association A from reference anchor keys,
+   then reads each pose's SAME-INDEX anchor values with A. target_content
+   instead computes the association against that target pose's keys. This
+   key/distance source selection is the only architectural difference.
+5. Four identical graph/target-mesh/pose-set attention blocks refine the
+   resulting joint features. A shared XYZ head predicts a learned displacement
+   from the reference coordinates. This is a neural prediction, not a fitted
+   rigid transform or an interpolated surface position. Reference XYZ is
+   clamped exactly and is excluded from target loss/scoring.
+
+The target memory contains that pose's feature, anchor position and normal.
+It does NOT also receive an explicit paired-reference displacement channel,
+which would hand the target-content control the same correspondence through
+a second route. Both arms still inherit the existing backbone's multi-pose
+information; this is not a comparison against a model with no correspondence
+anywhere. Width256,8heads, reference depth2, target depth4, graph-hop cap8 and
+maximum512complete joints are shared. No pose-index encoding or diffusion
+noise is used. Head initialization is near the copy-reference control.
+
+## Objective And Optimization
+
+L = L_AR + lambda * (L_XYZ_L1 + 0.25 * L_target_bone_vector_L1).
+
+The L1 terms average coordinate components, valid nonreference poses/joints
+or edges, then equally over assets. Bone vectors are compared with TARGET GT,
+not forced to equal reference bone length. Root-only trees have zero bone
+loss. Lambda ramps to10over1000new asset visits. This scale is an engineering
+choice, not an established optimum; both arms share it. Capacity checks must
+measure actual finite head-only gradients to surface/motion encoders and
+absence of that loss's gradient in the AR decoder.
+
+The donor is fraction20_40_query checkpoint020000, SHA256
+9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888.
+Its full model and backbone Adam state are retained. The original100kone-cycle
+schedule resumes at20000; only new head parameters/Adam states are initialized.
+Head LR is3times backbone LR. The original AR20%-40%, minimum2pose objective
+remains, with one shared differentiable backbone encode per batch. Head-only
+loss can update the shared encoder, not magically backpropagate through a
+discrete sampled skeleton. The sampler/head seed is20261028for BOTH arms.
+
+Global batch48, physical batches24/12/6per rank for2-6/7-12/13-24poses initially.
+These sizes require fresh CPU-loader and real GPU acceptance. Any reduction
+must preserve effective batch48and be recorded before formal launch.
+
+## Training Horizon And Decision Rule
+
+Train each arm on all5000assets for at least8complete passes (40000new visits,
+840updates), not another420-update conclusion. Save complete model, Adam,
+per-rank RNG and consumed sampler state every5000visits, with SHA-verified
+durable mirrors. Arms run sequentially on the same two GPUs, never competing
+for resources. Match actual asset/raw-pose/reference/AR-target traces afterward.
+
+Only the fixed128validation panel controls extension. Compare each arm's30k
+and40kpanel results. Extend BOTH to60k(12passes,1260updates) if either arm's
+MPJPE improves at least1%relative, or PCK/F1 rises at least0.005absolute.
+Otherwise stop both at40k. These are budget scheduling triggers, not quality
+acceptance thresholds or proof of convergence. If still improving at60k,
+explicitly report that the budget cap was reached without established convergence.
+Finite/runtime failures stop for diagnosis; no silently changed loss or model
+within an arm. No results from the remaining839assets influence this rule.
+
+## Comparisons And Diagnostics
+
+- At0and every5000visits: fixed128assets,8poses, GT references0and4, score
+  the other7poses. Save all per-pose rows, not only a scalar loss.
+- At the common final horizon: all967validation assets, plus separate839
+  nonselection-asset results. These839were not used by THIS stopping rule;
+  they are not claimed to be a never-before-inspected dataset.
+- Report identity-paired MPJPE, PCK@5%, symmetric J2J, edge F1 and target bone
+  vector error. Distances use each target mesh's bbox DIAGONAL. Aggregate
+  per asset before averaging. Parent trees are supplied; position-induced
+  nearest-joint correspondence errors can lower edge F1 without changing a tree.
+- Matched reference-copy controls for every asset/reference. Report paired
+  between-arm differences, paired-asset bootstrap intervals, per-asset wins
+  and low/high reference-motion strata. One seed is not run-to-run uncertainty.
+- On the128panel, permute target anchor tokens/positions/normals together at
+  the stage2 interface while leaving reference tokens unchanged. This preserves
+  each target's set of evidence but breaks reference-to-target indexing.
+  Target-content output should be invariant up to floating-point error;
+  transport sensitivity measures reliance on this explicit association route.
+  Backbone features are not recomputed, so do not call this removal of ALL
+  backbone correspondence or assume sensitivity itself proves usefulness.
+- Compare predictions made using GT reference0versus4on their common targets.
+  Lower reference dependence is useful only alongside accuracy, not by collapse.
+- 32training assets: eligible raw poses and strictly heldout raw poses. Compare
+  to actual training traces before calling any raw pose 'seen'. No blanket
+  overfitting/underfitting diagnosis from these means alone.
+- Fixed artifact-order visual examples with shared cameras/limits and no
+  alignment; inspect failures and stretched bones, not cherry-picked successes.
+
+A distance gain with worse local accuracy/edge matching is a tradeoff, not an
+overall success. A null between-arm difference does not invalidate learned
+mesh-to-joint decoding: it says the explicit transferred association has not
+shown an increment over the matched target-content reader under this recipe.
+There is no AR-only continuation arm, so no causal claim about improving the
+original AR task. Historical flow results are context, not an isolated ablation
+of the new binding because the head/objective/training horizon differ.
+
+## Execution And Retention
+
+The prior native allocation is no longer active. A new native HGC job may be
+requested:2H100s,16CPU slots,64GiBwhole-tree RSS, GPU memory below85%,24hours,
+on pcg01i to reuse verified SSD artifacts. The preparation observation showed
+84free CPU slots and2available H100s there. Recheck before submission.
+Bind exact grant, devices, CPU affinity and deadline only after allocation;
+the checked-in initial runtime is deliberately unbound and cannot train.
+
+Expected isolated stages: audit_v12, capacity_v17, train_v17. Source/state
+must be committed and pushed before reservation and before each released
+stage. Formal training remains blocked until primary acceptance of all20new
+CPUtests, existing regressions, full-data loader audit and both-arm GPU stress.
+No new raw dataset copy. Preserve all previous checkpoints and the new native
+allocation after completion unless the user explicitly requests release.
+
+Durable result root:
+/home/wangyy/evorig/outputs/anchor_joint_binding_5k_20261027/v1
+Local inspection/review root:
+D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027

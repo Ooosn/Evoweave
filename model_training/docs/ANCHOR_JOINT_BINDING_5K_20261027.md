@@ -263,3 +263,46 @@ The primary visual comparison omits the confusing copy-baseline panel; its
 metrics remain in the quantitative tables. Bone lines remain visible over the
 point cloud. The earlier ambiguous English copy-baseline figure is retained as
 a historical artifact, not reused as the presentation template.
+
+## Matched10k Interim Comparison (2026-10-28JST)
+
+Both arms completed two complete5000passes/210updates. Independent bounded
+trace-prefix inspection confirms identical actual microbatches, asset indices,
+raw poses, references and AR-supervision slots; both consumed130,200input
+frames. Actual initialization records match, including head hash93dfca71...
+and retained backbone optimizer source. The checked training assets are disjoint
+from the128selection assets. This prefix audit does NOT certify terminal
+completion or heldout-raw-pose exclusion; those checks remain in final review.
+
+| Metric | Reference transport | Target-content reader | Transport minus reader95%paired interval |
+| --- | ---: | ---: | --- |
+| Normalized known-ID MPJPE | 0.04472532 | 0.05824034 | [-0.01606724,-0.01094363] |
+| PCK at5% diagonal | 0.70473408 | 0.62533986 | [0.06555747,0.09304293] |
+| Nearest-mapped edge F1 | 0.59815582 | 0.55454824 | [0.03539978,0.05194265] |
+| Normalized J2J | 0.03426620 | 0.04178895 | [-0.00881712,-0.00621135] |
+| Normalized target bone-vector error | 0.02197576 | 0.02442684 | [-0.00303874,-0.00185068] |
+
+Transport has23.2%lower position error,7.94percentage-point higher PCK and
+0.04361higher F1 at this common training budget. This supports an early
+learning advantage of the current transported-association recipe; it does
+not establish final/converged superiority, seed robustness, or that every
+possible target-content reader is worse. The five matched5kmetrics differed
+only slightly, and PCK/F1 intervals there included zero.
+
+Both arms now exhibit target-dependent motion. On the same8saved assets,
+median articulation-variation amplitude relative to GT is1.015for transport
+versus0.614for content reading; direction cosine is0.841versus0.745. These
+subset amplitude ratios are NOT accuracies. Mean normalized cross-reference
+disagreement on all128assets is0.04203versus0.04987; neither is reference
+invariant. Fixed visual examples show remaining overshoot and local distortions.
+In the highlighted arm case(raw25reference to raw4target), transport has lower
+position error but worse bone-vector error/F1 than content reading, so aggregate
+improvement is not a uniform win on every pose or metric.
+
+Evidence under the local inspection root: review_evaluation_010000.json,
+trace_prefix_audit_010000.json, response_diagnostic_target_content_010000.json,
+pair_examples_evaluation_010000.png (visually verified), plus their exact
+artifact/trace manifests. Content10kfull checkpoint SHA:
+2379dd9a3a31b0f0cd14d5db1adf545ba33d7ce192622b513b9a49ebf0d31bc8.
+No mid-run model/loss/data/schedule change was made. Continue both arms to the
+common40k/60k horizon and retain separate final967/nonselection839checks.

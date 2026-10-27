@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T14:55:00Z",
+  "updated_at": "2026-10-27T16:00:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -206,7 +206,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "transport10k_verified_real_pose_response_emerged_matched_content_comparison_pending"
+      "status": "matched10k_metrics_initialization_actual_traces_verified_unchanged_training_continues"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -407,13 +407,59 @@
         },
         "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_single_reference_transport_evaluation_010000.json",
         "motion_diagnostic": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/response_diagnostic_reference_transport_010000.json"
+      },
+      "target_content": {
+        "last_verified_additional_visits": 10000,
+        "updates": 210,
+        "full_passes": 2,
+        "evaluation_assets": 128,
+        "selection_panel_only": true,
+        "not_final_quality_acceptance": true,
+        "at5000": {
+          "normalized_mpjpe": 0.0930602521293622,
+          "pck_005": 0.5418065830981248,
+          "edge_f1": 0.5508090454212662
+        },
+        "at10000": {
+          "normalized_mpjpe": 0.05824034494928908,
+          "pck_005": 0.6253398629633422,
+          "edge_f1": 0.5545482425843267,
+          "normalized_j2j": 0.041788946408720676,
+          "normalized_bone_vector_error": 0.024426839755862347
+        },
+        "checkpoint": {
+          "sha256": "2379dd9a3a31b0f0cd14d5db1adf545ba33d7ce192622b513b9a49ebf0d31bc8",
+          "bytes": 8278607378,
+          "both_copies_producer_verified": true
+        },
+        "motion_diagnostic": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/response_diagnostic_target_content_010000.json"
       }
     },
     "interim_interpretation": {
-      "measured": "At5k, saved8assets showed almost no conditional articulation; at10k their articulation amplitude approaches GT and direction cosine improves, alongside all128 metrics. Visible local pose/position errors and reference dependence remain.",
-      "inference": "A persistent copy-only collapse is not supported by10k evidence. Current architecture has started learning target-conditioned articulation; next compare matched target-content reader before selecting changes.",
+      "measured": "Both arms show conditional motion by10k. The reference-transport arm is ahead on all five128-panel metrics under independently verified matched consumed data and initialization. Saved examples still show local distortions/overshoot; not every pose/metric favors transport.",
+      "inference": "Current evidence supports an early learning advantage of transferring reference associations, not proof of final superiority. Preserve the complete matched training/evaluation plan; do not apply the previously deferred readout proposal.",
       "unimplemented_proposal": "A target-minus-reference decoder readout was considered to cancel pose-invariant corrections, but is deferred and has NOT changed the running model.",
       "visualization": "Chinese explicit reference-GT/reference-surface, target-GT/target-surface, predictions/same-target-surface; same camera/axes, raw frame IDs, no ambiguous reference-copy panel in main figures."
+    },
+    "matched_10000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_evaluation_010000.json",
+      "trace_audit": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/trace_prefix_audit_010000.json",
+      "independent_aggregation_passed": true,
+      "copy_controls_identical": true,
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "full5000passes_per_arm": 2,
+      "updates_per_arm": 210,
+      "input_frames_per_arm": 130200,
+      "training_validation128_disjoint": true,
+      "terminal_trace_audit_complete": false,
+      "heldout_pose_audit_complete": false,
+      "all_five_metric_paired_intervals_favor_transport": true,
+      "normalized_mpjpe_delta": -0.01351502373394656,
+      "pck_delta": 0.07939422200238805,
+      "edge_f1_delta": 0.04360757487564294,
+      "scope": "One matched training seed, fixed128selection panel at10k visits/arm; early learning advantage, not final quality/convergence/seed-robustness acceptance.",
+      "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_010000.png"
     }
   },
   "previous_completed_result": {
@@ -423,5 +469,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Follow unchanged formal source9db222d. Compare both arms at matching5000/10000+visits as content arm reaches them, inspect conditional motion and corrected Chinese visual panels. Continue common40k/60k and final967/nonselection839 trace audit. Do not implement the deferred readout proposal based on the obsolete5k-only diagnosis."
+  "next_required_result": "Continue immutable formal source9db through next matched20k/30k/40k checkpoints; inspect local pose errors and reference dependence. Apply preregistered common40k/60k extension only, then full967/nonselection839 and complete-trace/heldout/permutation review. No overall acceptance from current128-panel early advantage."
 }

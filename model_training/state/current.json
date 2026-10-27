@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T12:12:00Z",
+  "updated_at": "2026-10-27T13:05:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -74,10 +74,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_grant_retained_CPU_audit_complete_GPU_capacity_next",
+    "status": "native_allocation_idle_retained_before_clipping_followup",
     "expiry_utc": "2026-10-28T11:55:38Z",
     "stop_before_utc": "2026-10-28T10:55:00Z",
-    "last_observed_utc": "2026-10-27T11:58:13.606167Z",
+    "last_observed_utc": "2026-10-27T13:04:55.265251Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -94,7 +94,7 @@
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "CPU_audit_accepted_both_arm_GPU_capacity_released",
+    "status": "full_architecture_capacity_complete_optimizer_clipping_adjustment_pending",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
@@ -105,12 +105,12 @@
       "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
-    "CPU_tests_passed": 100,
+    "CPU_tests_passed": 104,
     "CPU_test_record": "20new anchor/model/protocol tests,42reference regressions,38virtual-pair regressions; all exit0. Runtime imports pass. Synthetic unit tests are not real-data quality experiments.",
     "input_manifest": {
       "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
@@ -173,7 +173,7 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
         "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17",
-        "approved": true
+        "approved": false
       },
       {
         "mode": "train",
@@ -198,7 +198,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "audit_v12_complete_exit0_capacity_v17_next"
+      "status": "capacity_v17_complete_exit0_optimization_followup_next"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -223,6 +223,59 @@
       "global_RNG_unchanged": true,
       "CUDA_initialized": false,
       "finished_utc": "2026-10-27T12:10:05.382707Z"
+    },
+    "supplemental_CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/preparation/driver_test_result.json;4mocked orchestration tests passed for interleaving/resume/common extension/incomplete deadline/initialization rejection.",
+    "full_architecture_capacity_evidence": {
+      "stage": "capacity_v17",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17/result.json",
+      "sha256": "e268bc7f93c2a6c6ff0b3297cf05a3f0a6876b8873c2c0b8abe800290388c898",
+      "source": "f8906467208431b6b4f894c03ad24dd44e738f5d",
+      "scientific_sha256": "7e3e7013de2037e979426d0b0e02f31fa60f13e73801c5fb7ffa2a469f76127a",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "updates_per_rank": 36,
+      "variants": 2,
+      "stress_cases_per_variant": 9,
+      "free_inference_frames": 24,
+      "free_inference_joints": [
+        234,
+        230
+      ],
+      "all_combined_gradient_groups_positive": true,
+      "coordinate_only_GPU_check_mode": "target_content",
+      "coordinate_only_gradients": [
+        {
+          "surface": 0.059983882908502116,
+          "motion": 0.12364867183969352,
+          "head": 5.501193326988642
+        },
+        {
+          "surface": 0.023901338051102,
+          "motion": 0.052683105113891855,
+          "head": 2.830957077585563
+        }
+      ],
+      "head_initial_sha256": "93dfca718d9c2130a390a172fa391433652c41c4001d36bdad680cb6da8066e9",
+      "head_parameters": 8042283,
+      "peak_tree_rss_bytes": 28495101952,
+      "peak_reserved_bytes_per_rank": [
+        46303019008,
+        45883588608
+      ],
+      "unclipped_total_gradient_norm_range": [
+        12.551079750061035,
+        76.14742279052734
+      ],
+      "finished_utc": "2026-10-27T12:59:01.113920Z"
+    },
+    "optimizer_adjustment": {
+      "reason": "Measured head gradients dominate global clip norm (total12.55to76.15), scaling pretrained backbone gradients along with the head despite retained Adam state. Separate backbone/head norm1 clipping preserves mixed-objective direction within the backbone without cross-branch clipping coupling. This is an optimization design correction, not measured proof of better quality.",
+      "formal_training_started": false,
+      "required_followup": "Before formal train, test changed clipping on CPU and targeted capacity_v18 with maxJ at6/12/24poses,both modes,two optimizer steps,isolated coordinate gradients BOTH modes. Reuse full36-case architecture/memory evidence only with unchanged forward/parameters/data and explicit compatibility."
     }
   },
   "previous_completed_result": {
@@ -232,5 +285,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Run admitted capacity_v17 in the same native allocation; verify36updates/rank across both arms and all9stresscases, coordinate-only shared gradients,24pose maxJ inference,resource limits and clean exit. Formal paired training remains blocked."
+  "next_required_result": "Implement and test separate branch clipping without changing model/data/objective; record new exact source/config and targeted capacity_v18 approval before GPU work. Formal paired train_v17 remains blocked."
 }

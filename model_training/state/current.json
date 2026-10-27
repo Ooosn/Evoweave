@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T13:34:00Z",
+  "updated_at": "2026-10-27T13:36:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -34,10 +34,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "submit",
     "matched_eval"
   ],
@@ -74,10 +74,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_idle_retained_96hour_extension_pending",
-    "expiry_utc": "2026-10-28T11:55:38Z",
-    "stop_before_utc": "2026-10-28T10:55:00Z",
-    "last_observed_utc": "2026-10-27T13:31:47.018643Z",
+    "status": "native_96hour_allocation_retained_formal_pair_approved",
+    "expiry_utc": "2026-10-31T11:55:38Z",
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "last_observed_utc": "2026-10-27T13:34:41.382537Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -90,24 +90,24 @@
       "status": "canceled_before_any_payload",
       "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
-    }
+    },
+    "h_rt_seconds": 345600
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "capacity_accepted_native_lifetime_extension_approved",
-    "operation": "preflight",
+    "status": "full5k_matched_formal_training_approved",
+    "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "2026-10-27 user asked to design and start full5k testing of GT-reference skeleton/mesh-token interaction, reuse existing trained structure, employ meaningful comparisons and act adaptively toward the research purpose rather than stopping after an arbitrary run.",
-    "code_commit": "b925f0cce9c6e9fb7b5e3497ecb3c358306faf9b",
+    "code_commit": "d0a6b13915d1ae8c6cb19ecc05729f711e83699b",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_joint.py",
     "operation_entrypoints": {
-      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh",
-      "preflight": "model_training/jobs/extend_anchor_joint_native_20261027.sh"
+      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "gpu_work_allowed": false,
-    "formal_training_allowed": false,
+    "gpu_work_allowed": true,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
@@ -127,7 +127,7 @@
       "GPUs": 2,
       "CPU_slots": 16,
       "host": "pcg01i",
-      "h_rt_seconds": 86400,
+      "h_rt_seconds": 345600,
       "mem_req_per_slot": "4G",
       "rss_limit_bytes": 68719476736,
       "gpu_memory_fraction_limit": 0.85,
@@ -179,9 +179,9 @@
       {
         "mode": "train",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
-        "config_sha256": "dc1973d180b5f2d6437ae5085b367cb9ceb8e561518d2b41c016b91ab1cad3f9",
+        "config_sha256": "f42270b095f5df2e15ccaadc1aeb10d7aa42dac309aefc8202399259003239a6",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17",
-        "approved": false
+        "approved": true
       },
       {
         "approved": false,
@@ -206,7 +206,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "capacity_complete_exit0_extend_same_allocation_then_formal"
+      "status": "formal_train_v17_approved_admission_next"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -338,7 +338,7 @@
     },
     "allocation_lifetime_extension": {
       "approved": true,
-      "complete": false,
+      "complete": true,
       "allocation": 130675914,
       "keeper_pid": 1108368,
       "current_h_rt_seconds": 86400,
@@ -353,8 +353,13 @@
         "status": "guard_rejected_before_qalter",
         "reason": "Generic preflight check omitted a dedicated resource-management entrypoint and defaulted to the trainer binding. No scheduler mutation occurred. Bind and invoke the versioned extension entrypoint explicitly; keep all checks.",
         "source": "f74acc204baa23eb882560130f8a31ee57bead63"
-      }
-    }
+      },
+      "passed": true,
+      "accepted_h_rt_seconds": 345600,
+      "observed_utc": "2026-10-27T13:34:41.382537Z",
+      "same_job_keeper_start_devices_slots_verified": true
+    },
+    "capacity_source_compatibility": "After accepted capacity18ee813, no rigweave code changed (verified empty diff fromb925f0c). Only the versioned scheduler-lifetime management script and runtime96hour limit/stop time plus state/docs changed. Scientific SHA remains eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6."
   },
   "previous_completed_result": {
     "label": "shared_reference_flow_5k_20261027_v1",
@@ -363,5 +368,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Execute approved native lifetime extension to96hours preserving job/keeper/devices. Verify actual accepted limit before updating runtime/deadline and approving formal train_v17. Do not start formal training under unverified requested lifetime."
+  "next_required_result": "Admit exacttrain_v17source/config into retained nativekeeper. Follow matched10k segments and5k evaluations/examples throughcommon40k or curve-triggered60k, inspect learning/failure cases and independently verify final967/nonselection839/traces. No model-quality acceptance until matched evidence. Retain allocation and all checkpoints."
 }

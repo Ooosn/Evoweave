@@ -186,3 +186,17 @@ also remains applicable; no loader or sampler changed. Runtime records
 preclip norms and clip scales separately. Formal training remains blocked
 until this followup passes. Examples are now retained at every evaluation,
 including initialization, without changing evaluation inputs or predictions.
+
+Capacity_v18 completed at2026-10-27 13:31UTC with clean supervisor exit,
+12updates/rank, both coordinate-only gradient paths, separate clipping and
+24pose free inference passed. Peak treeRSS24.99GB and GPU reserved45.67GB.
+The original36-case capacity plus this12-case followup are accepted for launch;
+neither is model-quality evidence. All24current anchor/model/protocol and
+4driver CPU checks pass, with80unchanged earlier regressions retained.
+
+At13:34:41UTC the same job130675914 was extended in place to h_rt345600
+(96hours), with unchanged keeper1108368, start time,2GPUs and16CPU slots.
+Expiry is2026-10-31 11:55UTC, training stop10:55UTC. The only change after
+accepted capacity is runtime lifetime/deadline and a guarded resource-management
+script; model/data/objective/scientific identity are unchanged. Formal train_v17
+is released only for the exact new config hash in current.json.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T11:59:00Z",
+  "updated_at": "2026-10-27T12:12:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -74,7 +74,7 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_qrsh_grant_verified_CPU_audit_next",
+    "status": "native_grant_retained_CPU_audit_complete_GPU_capacity_next",
     "expiry_utc": "2026-10-28T11:55:38Z",
     "stop_before_utc": "2026-10-28T10:55:00Z",
     "last_observed_utc": "2026-10-27T11:58:13.606167Z",
@@ -94,7 +94,7 @@
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "native_grant_bound_CPU_audit_released",
+    "status": "CPU_audit_accepted_both_arm_GPU_capacity_released",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
@@ -105,9 +105,9 @@
       "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
     "CPU_tests_passed": 100,
@@ -173,7 +173,7 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
         "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17",
-        "approved": false
+        "approved": true
       },
       {
         "mode": "train",
@@ -198,9 +198,32 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "audit_v12_next_capacity_and_training_blocked"
+      "status": "audit_v12_complete_exit0_capacity_v17_next"
     },
-    "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released."
+    "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
+    "CPU_audit_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v12/result.json",
+      "sha256": "798dafe36af565c7bec61c9c5d80cb415fcc4368a22beb655dedbeee51f2350c",
+      "source": "4f8e2bd3f22ccb1b0e97ddc3e320a876d1d7d6f4",
+      "scientific_sha256": "7e3e7013de2037e979426d0b0e02f31fa60f13e73801c5fb7ffa2a469f76127a",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "train_assets": 5000,
+      "valid_assets": 967,
+      "complete_passes_checked": 12,
+      "input_frame_exposures": 787504,
+      "maximum_train_joints": 234,
+      "loader_cases": 6,
+      "all_CPU_fields_bitwise_equal": true,
+      "two_rank_prefetch_checked": true,
+      "loader_peak_rss_bytes": 17371451392,
+      "supervisor_peak_rss_bytes": 15677116416,
+      "global_RNG_unchanged": true,
+      "CUDA_initialized": false,
+      "finished_utc": "2026-10-27T12:10:05.382707Z"
+    }
   },
   "previous_completed_result": {
     "label": "shared_reference_flow_5k_20261027_v1",
@@ -209,5 +232,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Run exact native audit_v12 and record primary acceptance; then release both-arm capacity_v17. No formal training until CPU audit and all capacity checks pass cleanly."
+  "next_required_result": "Run admitted capacity_v17 in the same native allocation; verify36updates/rank across both arms and all9stresscases, coordinate-only shared gradients,24pose maxJ inference,resource limits and clean exit. Formal paired training remains blocked."
 }

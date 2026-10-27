@@ -378,8 +378,8 @@ def train_segment(config, output, source, device, rank, world, end, resume):
 def train(config, output, source, device, rank, world):
     results, resumes = {v: [] for v in VARIANTS}, {v: None for v in VARIANTS}
     decision, horizon = None, config['training']['minimum_assets']
-    for end in (40000, 60000):
-        if end == 60000 and not decision['extend_both_to']:
+    for end in range(config['training']['comparison_interval_assets'], 60001, config['training']['comparison_interval_assets']):
+        if end > 40000 and not decision['extend_both_to']:
             break
         for variant in VARIANTS:
             run = variant_config(config, variant)
@@ -395,7 +395,8 @@ def train(config, output, source, device, rank, world):
             raise RuntimeError('matched arms did not start from identical parameters/optimizer source')
         horizon = end
         if end == 40000:
-            curves = {v: {n: next(g for g in results[v][0]['evaluations'][n]['groups']
+            curves = {v: {n: next(g for segment in results[v] if n in segment['evaluations']
+                for g in segment['evaluations'][n]['groups']
                 if g['split'] == 'valid' and g['method'] == 'head') for n in (30000, 40000)} for v in VARIANTS}
             decision = should_extend(curves)
             if rank == 0:

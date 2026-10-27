@@ -14,7 +14,7 @@ def validate_config(config):
             or train['additional_assets'] != 60000 or train['minimum_assets'] != 40000
             or train['checkpoint_assets'] != list(range(5000, 60001, 5000))
             or train['variants'] != list(VARIANTS) or train.get('variant') is not None
-            or train['effective_assets_per_update'] != 48
+            or train['effective_assets_per_update'] != 48 or train['comparison_interval_assets'] != 10000
             or train['loss'] != 'AR_plus_GT_XYZ_L1_plus_target_bone_vector_L1'
             or train['coordinate_weight'] != 10. or train['bone_weight'] != .25
             or train['warmup_assets'] != 1000 or train['head_lr_multiplier'] != 3.

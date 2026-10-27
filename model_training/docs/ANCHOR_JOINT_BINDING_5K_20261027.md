@@ -77,8 +77,10 @@ must preserve effective batch48and be recorded before formal launch.
 Train each arm on all5000assets for at least8complete passes (40000new visits,
 840updates), not another420-update conclusion. Save complete model, Adam,
 per-rank RNG and consumed sampler state every5000visits, with SHA-verified
-durable mirrors. Arms run sequentially on the same two GPUs, never competing
-for resources. Match actual asset/raw-pose/reference/AR-target traces afterward.
+durable mirrors. Arms alternate every10000visits on the same two GPUs, never
+competing for resources. Full checkpoint/RNG/stream restores preserve each
+arm's trajectory and expose matched intermediate results sooner. Match actual
+asset/raw-pose/reference/AR-target traces afterward.
 
 Only the fixed128validation panel controls extension. Compare each arm's30k
 and40kpanel results. Extend BOTH to60k(12passes,1260updates) if either arm's

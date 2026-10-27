@@ -22,10 +22,12 @@ Three-frame and random10%-30% follow-ups are also complete at20k: F1 is0.70624
 and0.69944, respectively. Three uses116.7update minutes versus two115.9 and
 all150.1; the three/two confidence interval includes zero. Fractional supervision
 has lower exact joint-count accuracy. Eight new full checkpoints are retained.
-Reference-conditioned generation diagnostics are complete; the user now
-authorized full5000shared-backbone conditional flow with an added joint-training
-loss. The implementation is entering CPU/capacity acceptance, not yet a
-model-quality result. Read
+The full5000shared-backbone conditional-flow trial is complete: four passes,
+20000new visits and420updates. On967validation assets, GT-reference normalized
+MPJPE improves fromcopy0.09046toflow0.06545, but PCK and edge F1 decline;
+natural AR references show the same distance/F1tradeoff. This is a measured
+position benefit, not overall quality acceptance. Four complete checkpoints
+are retained; no follow-on compute is admitted. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
 [five-arm result](model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md#completed-result).
 Exact execution permissions are in `model_training/state/current.json`.

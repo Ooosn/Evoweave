@@ -1,7 +1,9 @@
 # Shared Reference-Conditioned Flow On Full5000
 
-Status: implementation and acceptance checks, 2026-10-27. This document does
-not claim training or generation quality. Execution authority is current.json.
+Status: completed and independently reviewed, 2026-10-27 08:35 UTC. Full5000
+training and final evaluation finished cleanly. Mean position error improves,
+but local joint accuracy and edge F1 remain below reference-copy controls;
+this is not an overall quality acceptance. Execution authority is current.json.
 
 ## Decision And Scope
 
@@ -97,3 +99,121 @@ Training loss is not generation quality. A first-stage before/after change is
 not the causal effect of flow loss: no matched AR-only continuation is included
 in this first trial. Likewise this does not settle shared versus independent
 encoders or establish superiority over the older smaller-data experiments.
+
+## Completed Result
+
+Formal stage `train_v16` ran from06:02:34to08:31:27UTC with source
+`433173ed5963a3647521bafaee5677bfb3f0a1b9` (model implementation87e9e22).
+Both rank traces independently confirm four passes of exactly5000unique assets,
+20000additional visits,420optimizer updates and249440input-pose exposures.
+The backbone has40000cumulative asset visits; the new flow branch has20000.
+Update time was7004.87seconds (116.75minutes); total stage time148.88minutes
+also includes initial/final evaluations and checkpointing. No deadline stop.
+
+All80CPUtests, full-data loader audit and actual-GPU capacity checks passed.
+Flow-only gradients reached both the shared surface and motion encoders, while
+the AR decoder had no flow-only gradients. This verifies joint optimization,
+not semantic understanding or a causal benefit from each conditioning input.
+The formal process stayed in the native16CPU/two-H100allocation, peaked at
+26,396,168,192bytes whole-tree RSS, and exited0with payload cleanup complete.
+At08:32:44UTC the original keeper was idle, both allocated GPUs used0MiB,
+and the original allocation was retained. No follow-on training was queued.
+
+### Full Validation And Natural References
+
+All distance values below are fractions of the target mesh bbox diagonal.
+Lower distances and higher PCK/F1 are better. These are asset-macro means.
+
+| Reference / assets | Method | Normalized MPJPE | Symmetric J2J | PCK@5% | Edge F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| GT /967 | Copy reference |0.090459|0.059916|0.545260|0.564022|
+| GT /967 | Shared flow |0.065447|0.046462|0.496806|0.394268|
+| Natural AR /128 | Copy same AR reference |n/a|0.069772|n/a|0.438512|
+| Natural AR /128 | Shared flow |n/a|0.050648|n/a|0.321888|
+
+GT-reference mean joint error falls27.65%relative to copy;613of967assets
+improve. However, PCK falls4.85percentage points and edge F1 falls0.16975.
+The natural-reference condition has the same tradeoff: lower symmetric
+distance but worse edge F1. Distances there cover127assets with at least one
+successful reference,250/256references; failed references count as zero F1
+over the full128assets. Identity-paired MPJPE is not defined for AR trees.
+
+PCK@5% measures the proportion of joints within5%of the target mesh diagonal.
+Edge F1 uses nearest-joint correspondence followed by directed-edge overlap,
+with no spatial-distance threshold. The flow retains the supplied parent tree:
+its lower F1 reflects coordinate-induced correspondence errors, not an edited
+tree. A lower mean error does not imply more joints are within the5%tolerance.
+The source of this tradeoff is not isolated by the present experiment.
+
+The first-stage AR reference F1 rose from0.709829to0.745049, with successful
+references237/256to250/256. Conditional J2J changed0.016048to0.016560, over
+121and127assets respectively, so these distance means have different coverage.
+There is no matched AR-only continuation: this before/after change must not
+be attributed causally to the added flow loss.
+
+### Matched Learning Curve
+
+Use the same128validation assets and exact same GT-reference copy controls
+at every checkpoint, including when final evaluation expands to967assets.
+
+| New asset visits | Flow normalized MPJPE | Flow PCK@5% | Flow edge F1 |
+| ---: | ---: | ---: | ---: |
+|0(random new branch)|0.789459|not a trained baseline|0.003884|
+|5000|0.179159|0.082511|0.101183|
+|10000|0.153523|0.073406|0.120059|
+|15000|0.095006|0.259801|0.259873|
+|20000|0.064802|0.485141|0.395485|
+|Copy control at every checkpoint|0.092662|0.539271|0.561174|
+
+At20k,84/128assets improve in paired MPJPE. The flow-minus-copy mean is
+-0.027860, paired-asset bootstrap95%interval[-0.036310,-0.019885],2000resamples
+with seed20261027. This estimates asset-sampling uncertainty for one training
+run, not variation across training seeds. Independent row aggregation matches
+the producer, and matched GT-copy rows are unchanged exactly.
+
+### Training-Asset Diagnostics
+
+For32training assets, normalized MPJPE is0.064772(flow) versus0.084292(copy)
+on poses selected from the training-eligible pool, and0.062739versus0.074410
+on strictly heldout raw poses. The corresponding flow/copy F1 is0.443249/
+0.596723and0.449082/0.616432. The eligible-pool diagnostic is not a pure
+memorization test:90.625%of scored target occurrences and87.5%of reference
+occurrences were actually consumed during the four passes. Every heldout
+target/reference raw frame is absent from actual training traces; validation
+asset IDs are also disjoint. Similar aggregate training/validation error alone
+does not prove or disprove underfitting.
+
+### Artifacts And Judgment
+
+All four8,312,818,770-byte complete checkpoints retain model, optimizer,
+RNG and consumed data-stream state. SSD root:
+`/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v16`.
+SHA-verified durable mirror:
+`/home/wangyy/evorig/outputs/shared_reference_flow_5k_20261027/v1`.
+
+| Checkpoint | SHA256 |
+| --- | --- |
+|checkpoint_005000.pt|5315753cca3a6061b64f82ce26e3cf9b77cc0782f7303c52058854531728f7c9|
+|checkpoint_010000.pt|c823fe9ce01bec78fdf0f89e3f7fb80d6dee9b397e7a3630a80ba1d400755f8b|
+|checkpoint_015000.pt|d18d210475874fef818a62fb7bbd20bba51d11a19a6a62be56903e88a818c6ad|
+|checkpoint_020000.pt|9749a57f47ac3b5a3499e28cc06f98fd4475b454b906d8a3f7eaedada2e3cae0|
+
+Result JSON SHA256:
+`94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693`.
+Local independently rehashed rows, reference records, example tensors and
+traces are under`D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/artifacts`.
+The independent review is`review_020000.json` in its parent directory,
+SHA256`686929f648a8431190adebc49d049f74ab23e91e543f0bace9b038629c4e14f4`.
+The visually checked`flow_examples_020000.png` shows the first two eligible
+GT-reference examples from each rank, not best-performing selections; all
+columns in each row share coordinates, camera and limits without alignment.
+These four examples differ from the earlier128-panel figures and are not a
+matched visual learning curve. Some final examples still have misplaced
+joints and severely stretched edges.
+
+The bounded full5ktrial is complete. Shared learned generation is working
+and has a measurable mean-position benefit, but this checkpoint is not an
+overall replacement for the copy control. Continued training, a different
+noise scale/path or stronger structural constraints are hypotheses to test,
+not established fixes. No new variant or extension is authorized by this
+completion record; preserve this run as the full5kbaseline.

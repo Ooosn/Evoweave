@@ -44,7 +44,7 @@
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
     "server": "HGC",
-    "status": "previous_grant_no_longer_active_new_native_reservation_only_authorized",
+    "status": "qsub_attempt_failed_kernel_CPU_admission_replace_unused_reservation_with_native_qrsh",
     "previous_job": 130494177,
     "requested_gpus": 2,
     "requested_CPU_slots": 16,
@@ -55,20 +55,21 @@
     "available_CPU_slots_observed": 84,
     "available_H100s_observed": 2,
     "require_fresh_check_before_submission": true,
-    "pending_job_id": 130674849,
+    "rejected_reservation_job_id": 130674849,
+    "rejected_reservation_evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
     "pending_binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "code_and_CPU_tests_passed_native_reservation_next",
+    "status": "code_and_CPU_tests_passed_native_qrsh_reservation_next",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "2026-10-27 user asked to design and start full5k testing of GT-reference skeleton/mesh-token interaction, reuse existing trained structure, employ meaningful comparisons and act adaptively toward the research purpose rather than stopping after an arbitrary run.",
-    "code_commit": "69cc7945e6807e42af6565dc2f22721eb0a58227",
+    "code_commit": "9210a5b8c933c3be2480e952f7cf27ceaab6be93",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_joint.py",
     "operation_entrypoints": {
-      "submit": "model_training/jobs/hold_anchor_joint_20261027.sh"
+      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
     "gpu_work_allowed": false,
@@ -97,11 +98,11 @@
       "rss_limit_bytes": 68719476736,
       "gpu_memory_fraction_limit": 0.85,
       "scheduler_membership_required": true,
-      "binding": "linear:1_per_PE_task_16_tasks"
+      "binding": "native_scheduler_cpuset_no_extra_binding_flag; record_actual_grant_before_CPU_or_GPU_payload"
     },
-    "allocation_script": "model_training/jobs/hold_anchor_joint_20261027.sh",
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_20261027",
-    "allocation_script_shared_path": "/home/wangyy/jobs/anchor_joint_binding_20261027/hold_anchor_joint_20261027.sh",
+    "allocation_script": "model_training/jobs/hold_anchor_joint_native_20261027.sh",
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
+    "allocation_script_shared_path": "/home/wangyy/jobs/anchor_joint_binding_20261027/hold_anchor_joint_native_20261027.sh",
     "runs": [],
     "planned_stages": {
       "audit": "audit_v12",

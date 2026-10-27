@@ -148,3 +148,11 @@ Durable result root:
 /home/wangyy/evorig/outputs/anchor_joint_binding_5k_20261027/v1
 Local inspection/review root:
 D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027
+
+Reservation130674849(qsub) was not admitted: it had the job's devices cgroup
+but cpuset:/, although affinity was set. No experiment payload ran. Its unused
+reservation is canceled and replaced by native qrsh, retaining2H100/16slots;
+the both-controller kernel check is unchanged. Initial bindinglinear:16was
+also corrected while pending after the installed AGE manual established that
+the amount is per PE task, not total. These are recorded provisioning errors,
+not model experiments or a reason to weaken CPU accounting.

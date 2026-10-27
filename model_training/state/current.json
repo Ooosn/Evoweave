@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T13:18:00Z",
+  "updated_at": "2026-10-27T13:32:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -74,10 +74,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_allocation_retained_reuse_for_capacity_v18",
+    "status": "native_idle_retained_96hour_extension_pending",
     "expiry_utc": "2026-10-28T11:55:38Z",
     "stop_before_utc": "2026-10-28T10:55:00Z",
-    "last_observed_utc": "2026-10-27T13:12:10.618002Z",
+    "last_observed_utc": "2026-10-27T13:31:47.018643Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -94,7 +94,7 @@
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "clipping_followup_capacity_approved_formal_training_blocked",
+    "status": "capacity_accepted_native_lifetime_extension_approved",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
@@ -105,10 +105,10 @@
       "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "quality_accepted": false,
     "CPU_tests_passed": 108,
     "CPU_test_record": "24current anchor/model/protocol tests pass,4orchestration mock tests pass;80unchanged reference/virtual-pair regressions previously pass. Postclip proof includes isolated gradient clipping, nonfinite rejection, prior-capacity completeness, identical full12pass stream and paired driver resume/extension.",
@@ -183,7 +183,7 @@
         "approved": false
       },
       {
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
         "config_sha256": "dc1973d180b5f2d6437ae5085b367cb9ceb8e561518d2b41c016b91ab1cad3f9",
         "mode": "capacity",
@@ -205,7 +205,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "clipping_followup_approved_not_yet_queued"
+      "status": "capacity_complete_exit0_extend_same_allocation_then_formal"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -290,6 +290,63 @@
     "CPU_audit_compatibility": {
       "retained": true,
       "reason": "No data, sampler, loader, prefetch, backbone/head forward, parameters, objective or shapes changed. Only post-backward clipping and diagnostics/artifact saving changed; source diff of rigweave/src and generic data/runtime helpers against full audit/capacity source is empty. The new scientific hash records clipping and does not relabel the prior audit as a rerun."
+    },
+    "capacity_evidence": {
+      "stage": "capacity_v18",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v18/result.json",
+      "sha256": "aebfa9ab520d803924f1cc83ea17057244ab0ac3943accb80985eec6eaf059e8",
+      "source": "18ee813af51de81804a095ba44baf6f41a19fbde",
+      "scientific_sha256": "eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "updates_per_rank": 12,
+      "variants": 2,
+      "stress_frames": [
+        6,
+        12,
+        24
+      ],
+      "maximum_joints_per_rank": [
+        234,
+        230
+      ],
+      "coordinate_only_both_modes_positive_surface_motion_head": true,
+      "coordinate_only_AR_decoder_gradients_absent": true,
+      "all_combined_gradient_groups_positive": true,
+      "free_inference_frames": 24,
+      "separate_clipping_logged_and_verified": true,
+      "backbone_preclip_gradient_norm_range": [
+        0.9128485918045044,
+        2.9098315238952637
+      ],
+      "head_preclip_gradient_norm_range": [
+        16.675168991088867,
+        67.57074737548828
+      ],
+      "peak_tree_rss_bytes": 24986832896,
+      "peak_reserved_bytes_per_rank": [
+        45608861696,
+        45671776256
+      ],
+      "finished_utc": "2026-10-27T13:31:08.226988Z",
+      "uses_full_architecture_capacity_stage": "capacity_v17"
+    },
+    "allocation_lifetime_extension": {
+      "approved": true,
+      "complete": false,
+      "allocation": 130675914,
+      "keeper_pid": 1108368,
+      "current_h_rt_seconds": 86400,
+      "requested_h_rt_seconds": 345600,
+      "queue_max_h_rt_seconds": 345600,
+      "reason": "User highlighted96hour queue maximum and prior early48hour expiry. Preserve the same native allocation and request96hours now, within verified queue limit. Capacity stress timings also show full matched40k/60k training plus evaluations may exceed original remaining24hour grant. No new allocation, GPU or CPU increase.",
+      "command": "qalter -when now -l h100=2,h_rt=96:00:00,mem_req=4G 130675914",
+      "entrypoint": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/preparation/extend_native_lifetime.sh",
+      "verification": "Same job130675914,keeper1108368,start time,pcg01i:16,bothnativecontrollers,GPUs3/4; accepted h_rt345600. Only after live success update runtime deadline and formally approve train_v17."
     }
   },
   "previous_completed_result": {
@@ -299,5 +356,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Fresh native-idle admission and capacity_v18 only; record exact source/config request and all12/rank plus both isolated gradient results/clean exit before approving train_v17."
+  "next_required_result": "Execute approved native lifetime extension to96hours preserving job/keeper/devices. Verify actual accepted limit before updating runtime/deadline and approving formal train_v17. Do not start formal training under unverified requested lifetime."
 }

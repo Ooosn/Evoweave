@@ -54,7 +54,9 @@
     "gpu_memory_fraction_limit": 0.85,
     "available_CPU_slots_observed": 84,
     "available_H100s_observed": 2,
-    "require_fresh_check_before_submission": true
+    "require_fresh_check_before_submission": true,
+    "pending_job_id": 130674849,
+    "pending_binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
@@ -94,7 +96,8 @@
       "mem_req_per_slot": "4G",
       "rss_limit_bytes": 68719476736,
       "gpu_memory_fraction_limit": 0.85,
-      "scheduler_membership_required": true
+      "scheduler_membership_required": true,
+      "binding": "linear:1_per_PE_task_16_tasks"
     },
     "allocation_script": "model_training/jobs/hold_anchor_joint_20261027.sh",
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_20261027",

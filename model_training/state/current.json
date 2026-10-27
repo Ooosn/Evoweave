@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_reference_flow_full5k_acceptance_20261027",
-  "updated_at": "2026-10-27T05:24:00Z",
+  "updated_at": "2026-10-27T05:35:16Z",
   "module": "model_training",
   "human_context": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
   "required_context": [
@@ -52,7 +52,7 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "conditional_generation_pilots_completed_GPUs_idle_keeper_retained",
+    "status": "native_original_allocation_retained_shared_flow_capacity_next",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
     "last_observed_utc": "2026-10-27T05:25:29.517727Z",
@@ -63,7 +63,7 @@
   },
   "active_operation": {
     "label": "shared_reference_flow_5k_20261027_v1",
-    "status": "CPU_audit_and_GPU_capacity_pending",
+    "status": "CPU_audit_accepted_GPU_capacity_pending",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
@@ -73,7 +73,7 @@
     "contract": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
     "CPU_tests_passed": 80,
@@ -124,9 +124,30 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/monitor",
-      "status": "preparing_acceptance"
+      "status": "audit_v11_complete_exit0_capacity_v16_next"
     },
-    "end_policy": "Target20000newvisits over all5000fourpasses, no subset quality experiment. Stop updates09:55UTC and save consumed progress; preserve allocation. No quality acceptance without free-generation evaluation."
+    "end_policy": "Target20000newvisits over all5000fourpasses, no subset quality experiment. Stop updates09:55UTC and save consumed progress; preserve allocation. No quality acceptance without free-generation evaluation.",
+    "CPU_audit_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v11/result.json",
+      "sha256": "a412060e43e6daed0068bc335e1940c16792f53ce61fb2598083a8649a384381",
+      "source": "40537c550e348eabb0a4019b45cb567b52f205e7",
+      "scientific_sha256": "4998e43f2de660f5afadb05fcc0e26226070f6f391bb9c74b6b0385812070be7",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "full5000_every_pass": true,
+      "train_assets": 5000,
+      "valid_assets": 967,
+      "maximum_train_joints": 234,
+      "input_frame_exposures": 249440,
+      "loader_CPU_fields_bitwise_equal": true,
+      "serial_parallel_loader_cases": 6,
+      "two_rank_full_prefetch_queue_checked": true,
+      "loader_process_peak_rss_bytes": 17276473344,
+      "supervisor_peak_tree_rss_bytes": 16310083584,
+      "CUDA_initialized": false
+    }
   },
   "architecture_contract": {
     "input": "One differentiable shared pretrained real-mesh/anchor encoder over2to24observed poses; no new independent mesh encoder.",
@@ -251,7 +272,7 @@
       "interpretation": "Generation learns training poses and benefits from expanded data/budget, but overfits. True-prefix errors remain similar to free errors, so rollout alone is not the main explanation. Shared versus separate model not decided."
     }
   ],
-  "next_required_result": "Complete CPU audit and fresh full-model capacity; record accepted/rejected artifacts and primary approval before full5000joint training. Report free-generation results, not losses, with unmatched comparisons marked.",
+  "next_required_result": "Run the newly reviewed full-model capacity stage, reject any memory/gradient failure, and record primary acceptance before formal full5000joint training.",
   "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json",
   "previous_conditional_generation_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",

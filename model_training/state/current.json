@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "shared_reference_flow_full5k_acceptance_20261027",
-  "updated_at": "2026-10-27T05:35:16Z",
+  "updated_at": "2026-10-27T06:01:30Z",
   "module": "model_training",
   "human_context": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
   "required_context": [
@@ -33,10 +33,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "submit",
     "matched_eval"
   ],
@@ -52,10 +52,10 @@
     "cpu_slots": 16,
     "total_host_memory_bytes": 68719476736,
     "keeper_pid": 1098441,
-    "status": "native_original_allocation_retained_shared_flow_capacity_next",
+    "status": "native_original_allocation_retained_shared_flow_training_next",
     "expiry_utc": "2026-10-27T10:33:29.625Z",
     "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
-    "last_observed_utc": "2026-10-27T05:25:29.517727Z",
+    "last_observed_utc": "2026-10-27T06:00:58.168122Z",
     "last_observed_gpu_used_mib": [
       0,
       0
@@ -63,8 +63,8 @@
   },
   "active_operation": {
     "label": "shared_reference_flow_5k_20261027_v1",
-    "status": "CPU_audit_accepted_GPU_capacity_pending",
-    "operation": "preflight",
+    "status": "CPU_and_GPU_accepted_full5k_training_admitted",
+    "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "2026-10-27 user explicitly asked to choose and test the preferred generation scheme on full5k, preferably reuse trained mesh/anchor tokens with an extra joint loss; independent model also permitted. Selected shared continuous flow, not another small-cohort trial.",
@@ -72,9 +72,9 @@
     "required_entrypoint": "model_training/rigweave/scripts/train_reference_flow.py",
     "contract": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
     "gpu_work_allowed": true,
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "quality_accepted": false,
     "CPU_tests_passed": 80,
     "CPU_test_record": "Local unittest test_reference*.py42 plus test_virtual_pair*.py38, exit0;16new focused flow/protocol tests included.",
@@ -115,6 +115,13 @@
         "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v16",
         "approved": true
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
+        "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v16",
+        "approved": true
       }
     ],
     "acceptance_test": "CPU full5000perpass/replay/disjointness and parallel-loader audit; actual flow-only shared surface+motion gradients; finite combined gradients and two optimizer steps per stresscase across6/12/24poses and complete largest trees;32step free generation; GPU85percent,whole-tree64GiB,16CPU; clean payload exit. Primary must record acceptance before formal train.",
@@ -124,7 +131,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/monitor",
-      "status": "audit_v11_complete_exit0_capacity_v16_next"
+      "status": "audit_v11_and_capacity_v16_complete_exit0_train_v16_next"
     },
     "end_policy": "Target20000newvisits over all5000fourpasses, no subset quality experiment. Stop updates09:55UTC and save consumed progress; preserve allocation. No quality acceptance without free-generation evaluation.",
     "CPU_audit_evidence": {
@@ -147,6 +154,32 @@
       "loader_process_peak_rss_bytes": 17276473344,
       "supervisor_peak_tree_rss_bytes": 16310083584,
       "CUDA_initialized": false
+    },
+    "capacity_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v16/result.json",
+      "sha256": "0b04ce9e331ae9cfe34ec4cf0be20b3e03eb64a6b843b8ef41e1af02fcbf969e",
+      "source": "1a04059b1b2fe3e3d694c5a6e7613cfd07e2d909",
+      "scientific_sha256": "4998e43f2de660f5afadb05fcc0e26226070f6f391bb9c74b6b0385812070be7",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "kernel_scheduler_membership": true,
+      "supervisor_peak_tree_rss_bytes": 28473278464,
+      "completed_updates_per_rank": 18,
+      "cases_per_rank": 9,
+      "all_gradient_groups_positive": true,
+      "flow_only_gradient_norms_per_rank": [
+        {"surface": 0.029936905956693724, "motion": 0.06499811412524086, "flow": 3.867050494855933},
+        {"surface": 0.011756616488703728, "motion": 0.0240236796753415, "flow": 1.6573851896171816}
+      ],
+      "flow_only_AR_decoder_gradients_absent": true,
+      "peak_allocated_bytes_per_rank": [42194360832, 42194360832],
+      "peak_reserved_bytes_per_rank": [45929725952, 46242201600],
+      "free_generation": {"frames": 24, "joint_counts": [234, 230], "steps": 32, "finite_both_ranks": true},
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "finished_utc": "2026-10-27T06:00:59.483014Z"
     }
   },
   "architecture_contract": {
@@ -272,7 +305,7 @@
       "interpretation": "Generation learns training poses and benefits from expanded data/budget, but overfits. True-prefix errors remain similar to free errors, so rollout alone is not the main explanation. Shared versus separate model not decided."
     }
   ],
-  "next_required_result": "Run the newly reviewed full-model capacity stage, reject any memory/gradient failure, and record primary acceptance before formal full5000joint training.",
+  "next_required_result": "Run admitted train_v16 from the unchanged donor on full5000assets, monitor joint losses and full checkpoints, then review free generation on GT and natural references. Respect09:55UTC save deadline and preserve original allocation.",
   "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json",
   "previous_conditional_generation_operation": {
     "label": "reference_skeleton_xyz_20261027_v1",

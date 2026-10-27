@@ -17,12 +17,15 @@ completed at20k on fixed5000assets; all-frame F1 was higher. Multi-frame motion
 input was preserved; its established benefit was not retested. The fixed random
 two-target20k follow-up is also complete: F1 is0.69958, above single0.66660 and
 below all0.71108 in point estimate, with22.8%less update time than all frames.
-Quality equivalence is not established. No further compute is authorized.
+Quality equivalence is not established. Exact new compute permissions are in current.json.
 Three-frame and random10%-30% follow-ups are also complete at20k: F1 is0.70624
 and0.69944, respectively. Three uses116.7update minutes versus two115.9 and
 all150.1; the three/two confidence interval includes zero. Fractional supervision
 has lower exact joint-count accuracy. Eight new full checkpoints are retained.
-The proposed real-reference-skeleton/XYZ design has not started. Read
+Reference-conditioned generation diagnostics are complete; the user now
+authorized full5000shared-backbone conditional flow with an added joint-training
+loss. The implementation is entering CPU/capacity acceptance, not yet a
+model-quality result. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
 [five-arm result](model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md#completed-result).
 Exact execution permissions are in `model_training/state/current.json`.

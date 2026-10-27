@@ -25,8 +25,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=Path, required=True)
     known, _ = parser.parse_known_args()
     family = json.loads(known.config.read_text()).get('family')
-    trainer = ('train_reference_xyz.py' if family == 'reference_skeleton_xyz_20261027_v1'
-               else 'train_virtual_pair.py')
+    trainer = {'reference_skeleton_xyz_20261027_v1': 'train_reference_xyz.py',
+               'shared_reference_flow_5k_20261027_v1': 'train_reference_flow.py'}.get(family, 'train_virtual_pair.py')
     main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
          trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',))

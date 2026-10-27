@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T13:32:00Z",
+  "updated_at": "2026-10-27T13:34:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -102,7 +102,8 @@
     "code_commit": "b925f0cce9c6e9fb7b5e3497ecb3c358306faf9b",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_joint.py",
     "operation_entrypoints": {
-      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
+      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh",
+      "preflight": "model_training/jobs/extend_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
     "gpu_work_allowed": false,
@@ -345,8 +346,14 @@
       "queue_max_h_rt_seconds": 345600,
       "reason": "User highlighted96hour queue maximum and prior early48hour expiry. Preserve the same native allocation and request96hours now, within verified queue limit. Capacity stress timings also show full matched40k/60k training plus evaluations may exceed original remaining24hour grant. No new allocation, GPU or CPU increase.",
       "command": "qalter -when now -l h100=2,h_rt=96:00:00,mem_req=4G 130675914",
-      "entrypoint": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/preparation/extend_native_lifetime.sh",
-      "verification": "Same job130675914,keeper1108368,start time,pcg01i:16,bothnativecontrollers,GPUs3/4; accepted h_rt345600. Only after live success update runtime deadline and formally approve train_v17."
+      "entrypoint": "model_training/jobs/extend_anchor_joint_native_20261027.sh",
+      "verification": "Same job130675914,keeper1108368,start time,pcg01i:16,bothnativecontrollers,GPUs3/4; accepted h_rt345600. Only after live success update runtime deadline and formally approve train_v17.",
+      "shared_script": "/home/wangyy/jobs/anchor_joint_binding_20261027/extend_anchor_joint_native_20261027.sh",
+      "first_attempt": {
+        "status": "guard_rejected_before_qalter",
+        "reason": "Generic preflight check omitted a dedicated resource-management entrypoint and defaulted to the trainer binding. No scheduler mutation occurred. Bind and invoke the versioned extension entrypoint explicitly; keep all checks.",
+        "source": "f74acc204baa23eb882560130f8a31ee57bead63"
+      }
     }
   },
   "previous_completed_result": {

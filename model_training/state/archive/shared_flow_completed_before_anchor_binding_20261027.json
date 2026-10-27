@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "state_id": "shared_reference_flow_full5k_completed_20261027",
+  "updated_at": "2026-10-27T08:35:00Z",
+  "module": "model_training",
+  "human_context": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "Develop learned conditional generation of target-pose skeleton XYZ from a complete reference skeleton and observed posed meshes. Compare an appended shared-backbone generator with a separate learned model, not with replacing the requested method by geometric fitting.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "preflight",
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130494177,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "cpu_slots": 16,
+    "total_host_memory_bytes": 68719476736,
+    "keeper_pid": 1098441,
+    "status": "native_original_allocation_retained_idle_after_shared_flow_completion",
+    "expiry_utc": "2026-10-27T10:33:29.625Z",
+    "policy": "Native qalter -when now extended the same job from36h to48h after both density runs completed. Original keeper, two GPUs,16CPU and64GiB retained; no new allocation or release.",
+    "last_observed_utc": "2026-10-27T08:32:44.298586Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ]
+  },
+  "active_operation": {
+    "label": "shared_reference_flow_5k_20261027_v1",
+    "status": "complete_mean_position_improves_but_local_accuracy_and_edge_F1_below_copy",
+    "operation": "report",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "2026-10-27 user explicitly asked to choose and test the preferred generation scheme on full5k, preferably reuse trained mesh/anchor tokens with an extra joint loss; independent model also permitted. Selected shared continuous flow, not another small-cohort trial.",
+    "code_commit": "87e9e22a3d189b814d81b06848a08ae6ff6751b9",
+    "required_entrypoint": "model_training/rigweave/scripts/train_reference_flow.py",
+    "contract": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "quality_accepted": false,
+    "CPU_tests_passed": 80,
+    "CPU_test_record": "Local unittest test_reference*.py42 plus test_virtual_pair*.py38, exit0;16new focused flow/protocol tests included.",
+    "input_manifest": {
+      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
+      "rows": 5000
+    },
+    "source_checkpoint": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888",
+      "backbone_asset_exposures": 20000
+    },
+    "resource_request": {
+      "allocation": 130494177,
+      "host": "pcg01i",
+      "GPUs": 2,
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "CPU_slots": 16,
+      "rss_limit_bytes": 68719476736,
+      "gpu_memory_fraction_limit": 0.85,
+      "scheduler_membership_required": true
+    },
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
+        "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v11",
+        "approved": true
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
+        "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v16",
+        "approved": true
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
+        "config_sha256": "7cda78b0e613aa6a7921ad5ace8a7161e35d7503838d988b66c2f94546ad3bae",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v16",
+        "approved": true
+      }
+    ],
+    "acceptance_test": "CPU full5000perpass/replay/disjointness and parallel-loader audit; actual flow-only shared surface+motion gradients; finite combined gradients and two optimizer steps per stresscase across6/12/24poses and complete largest trees;32step free generation; GPU85percent,whole-tree64GiB,16CPU; clean payload exit. Primary must record acceptance before formal train.",
+    "checkpoint_policy": "Preserve donor and all previous work;full shared model+two Adam groups+rank RNG+sampler every5000newvisits, SHA-verified durable mirror.",
+    "durable_root": "/home/wangyy/evorig/outputs/shared_reference_flow_5k_20261027/v1",
+    "monitor": {
+      "owned_by": "primary",
+      "extra_agents": 0,
+      "directory": "D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/monitor",
+      "status": "train_v16_complete_exit0_independent_terminal_review_passed_no_active_observer"
+    },
+    "end_policy": "Completed20000newvisits over all5000fourpasses and all final evaluations before deadline. All four full checkpoints and original allocation retained. No continuation or new variant queued; further compute needs a separately reviewed exact recipe.",
+    "CPU_audit_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v11/result.json",
+      "sha256": "a412060e43e6daed0068bc335e1940c16792f53ce61fb2598083a8649a384381",
+      "source": "40537c550e348eabb0a4019b45cb567b52f205e7",
+      "scientific_sha256": "4998e43f2de660f5afadb05fcc0e26226070f6f391bb9c74b6b0385812070be7",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "full5000_every_pass": true,
+      "train_assets": 5000,
+      "valid_assets": 967,
+      "maximum_train_joints": 234,
+      "input_frame_exposures": 249440,
+      "loader_CPU_fields_bitwise_equal": true,
+      "serial_parallel_loader_cases": 6,
+      "two_rank_full_prefetch_queue_checked": true,
+      "loader_process_peak_rss_bytes": 17276473344,
+      "supervisor_peak_tree_rss_bytes": 16310083584,
+      "CUDA_initialized": false
+    },
+    "capacity_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v16/result.json",
+      "sha256": "0b04ce9e331ae9cfe34ec4cf0be20b3e03eb64a6b843b8ef41e1af02fcbf969e",
+      "source": "1a04059b1b2fe3e3d694c5a6e7613cfd07e2d909",
+      "scientific_sha256": "4998e43f2de660f5afadb05fcc0e26226070f6f391bb9c74b6b0385812070be7",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "kernel_scheduler_membership": true,
+      "supervisor_peak_tree_rss_bytes": 28473278464,
+      "completed_updates_per_rank": 18,
+      "cases_per_rank": 9,
+      "all_gradient_groups_positive": true,
+      "flow_only_gradient_norms_per_rank": [
+        {"surface": 0.029936905956693724, "motion": 0.06499811412524086, "flow": 3.867050494855933},
+        {"surface": 0.011756616488703728, "motion": 0.0240236796753415, "flow": 1.6573851896171816}
+      ],
+      "flow_only_AR_decoder_gradients_absent": true,
+      "peak_allocated_bytes_per_rank": [42194360832, 42194360832],
+      "peak_reserved_bytes_per_rank": [45929725952, 46242201600],
+      "free_generation": {"frames": 24, "joint_counts": [234, 230], "steps": 32, "finite_both_ranks": true},
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "finished_utc": "2026-10-27T06:00:59.483014Z"
+    },
+    "training_evidence": {
+      "stage": "train_v16",
+      "source": "433173ed5963a3647521bafaee5677bfb3f0a1b9",
+      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v16/result.json",
+      "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
+      "finished_utc": "2026-10-27T08:31:27.281369Z",
+      "complete": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "stopped_for_deadline": false,
+      "train_assets": 5000,
+      "complete_passes": 4,
+      "additional_asset_exposures": 20000,
+      "global_backbone_asset_exposures": 40000,
+      "optimizer_updates": 420,
+      "input_frame_exposures": 249440,
+      "actual_full5000_passes_verified_from_both_rank_traces": true,
+      "train_validation_asset_disjointness_verified": true,
+      "heldout_raw_pose_exclusion_verified_from_actual_trace": true,
+      "train_seen_target_raw_actually_seen_fraction": 0.90625,
+      "train_seen_reference_raw_actually_seen_fraction": 0.875,
+      "all_loss_gradient_and_LR_records_finite": true,
+      "update_seconds": 7004.8670788524905,
+      "peak_tree_rss_bytes": 26396168192,
+      "kernel_scheduler_membership": true,
+      "execution_cpu_budget": 16,
+      "independent_review_path": "D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/review_020000.json",
+      "independent_review_sha256": "686929f648a8431190adebc49d049f74ab23e91e543f0bace9b038629c4e14f4",
+      "independent_aggregation_passed": true,
+      "matched_GT_copy_control_identical": true,
+      "evaluation_summary_sha256": "97d8638c965d497fd57cfb57ba07280f8ba18aa936d2544e3bce619ea03cc8ce",
+      "GT_valid967": {
+        "normalized_MPJPE": {"copy": 0.0904594820264285, "flow": 0.06544728844605022},
+        "normalized_J2J": {"copy": 0.059915945636821774, "flow": 0.04646194097921827},
+        "PCK_005": {"copy": 0.5452600280273784, "flow": 0.4968064150283918},
+        "edge_F1": {"copy": 0.5640224612815131, "flow": 0.3942680220900613},
+        "assets_with_lower_flow_MPJPE": 613
+      },
+      "GT_matched128": {
+        "normalized_MPJPE": {"copy": 0.0926624429025161, "flow": 0.06480225024694976},
+        "flow_minus_copy": -0.027860192655566336,
+        "paired_asset_bootstrap_95_interval": [-0.03630963188135213, -0.01988548068885141],
+        "assets_with_lower_flow_MPJPE": 84,
+        "uncertainty_scope": "2000paired asset resamples, one training seed; not run-to-run uncertainty"
+      },
+      "natural_reference128": {
+        "successful_references": 250,
+        "attempted_references": 256,
+        "distance_scored_assets": 127,
+        "F1_scored_assets": 128,
+        "normalized_J2J": {"copy": 0.0697719692520797, "flow": 0.05064819679781238},
+        "edge_F1": {"copy": 0.43851198940150415, "flow": 0.3218881885440083},
+        "first_stage_AR_F1_before": 0.7098292630775842,
+        "first_stage_AR_F1_after": 0.7450485721904367,
+        "matched_AR_only_continuation_control": false
+      },
+      "full_checkpoints": [
+        {"samples": 5000, "sha256": "5315753cca3a6061b64f82ce26e3cf9b77cc0782f7303c52058854531728f7c9"},
+        {"samples": 10000, "sha256": "c823fe9ce01bec78fdf0f89e3f7fb80d6dee9b397e7a3630a80ba1d400755f8b"},
+        {"samples": 15000, "sha256": "d18d210475874fef818a62fb7bbd20bba51d11a19a6a62be56903e88a818c6ad"},
+        {"samples": 20000, "sha256": "9749a57f47ac3b5a3499e28cc06f98fd4475b454b906d8a3f7eaedada2e3cae0"}
+      ],
+      "checkpoint_bytes_each": 8312818770,
+      "all_checkpoint_durable_copies_SHA_verified": true,
+      "final_visual": "D:/evoweave/server_ops/outputs/reference_flow_5k_20261027/flow_examples_020000.png",
+      "final_visual_inspected": true,
+      "interpretation": "Measured position improvement with shared learned generation, but GT PCK and both GT/natural-reference edge F1 remain below matched reference-copy controls; no overall quality acceptance. Conditional semantic understanding and the cause of the tradeoff are not isolated. No causal claim about flow helping AR without an AR-only continuation control."
+    }
+  },
+  "architecture_contract": {
+    "input": "One differentiable shared pretrained real-mesh/anchor encoder over2to24observed poses; no new independent mesh encoder.",
+    "reference": "Complete GT XYZ+tree for training, uniformly chosen pose; separate natural AR references for evaluation.",
+    "output": "Continuous flow velocity over all nonreference XYZ jointly, graph+mesh+pose-set attention, Gaussian generation32Euler steps, exact reference clamp, no geometric fit or coordinate clipping.",
+    "training": "Retain AR20to40percentmin2pose CE, add flowMSE ramp0to1over1000newvisits. Retain backboneAdam and global100kLR schedule at20000; train additional20000visits/full5000fourpasses/effective48.",
+    "evaluation": "GTreference final967valid;natural reference fixed128valid;copycontrol same refs; reference excluded. Final32trainseen+heldout;one seeded sample, no GTbestofN. No matched AR-only continuation control."
+  },
+  "previous_completed_result": {
+    "document": "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+    "full_record": "model_training/state/archive/seven_density20k_completed_20261027.json",
+    "git_source": "8abd772",
+    "execution_authority": false,
+    "comparison": {
+      "path": "D:/evoweave/server_ops/outputs/query_density_followup_20k_20261026/seven_arm_comparison.json",
+      "sha256": "32529e04a241af22044567bf6720c5af4afa8cbc2876e68373f93d69dd92cf46"
+    }
+  },
+  "next_research_authorization": {
+    "status": "bounded_full5000_trial_complete_no_follow_on_compute_admitted",
+    "formal_stage_requires_primary_acceptance": true
+  },
+  "completed_reference_pilots": [
+    {
+      "stage": "train_v12",
+      "source": "f124566541a03c970a2f7ac9edd2063c1690fc99",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 800,
+      "result_sha256": "b59a89eca06f5cec390d6848c693e1982bc1f94120d823b490d131c72f20c5b8",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v12_analysis.json",
+      "analysis_sha256": "aec887bb775412672a300c23a615ecebed2a49d0d0aa85d67921624efce4c1dd",
+      "GT_valid_normalized_MPJPE": {
+        "copy": 0.09860526660512343,
+        "local_rigid": 0.005237562837862697,
+        "learned": 0.07820311308803087
+      },
+      "interpretation": "Copy-initialized learned head improves over static copy but is much worse than geometric transfer. Reuse its exact frozen caches for a matched rigid-residual pilot; preserve all original outputs."
+    },
+    {
+      "stage": "train_v13",
+      "source": "979acbe03a015fd16e4e3a31b9c9999e953a9645",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 800,
+      "config": "model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
+      "config_sha256": "ed05b301b97e5b73d1bba056a087e1d6a510f65f168349563899a5e3dcd54520",
+      "result_sha256": "33b8ba3b3c974161895bf3e5df4357acab7c9d8ea9d3229365f9ef61982fa9cb",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v13_analysis.json",
+      "analysis_sha256": "aa8806f26294cbdf7301e2fee9d7d2537589a7923ad13f523cb11ddc529df724",
+      "GT_valid_normalized_MPJPE": {
+        "local_rigid": 0.005237562837862697,
+        "learned": 0.0052391125733005795
+      },
+      "predicted_reference_F1": {
+        "local_rigid": 0.6113965356542218,
+        "learned": 0.6125576294270997
+      },
+      "matched_input_reference_LR_and_baselines_verified": true,
+      "head_0400_sha256": "e95533a4bdf1d54fa40fbdf590c256f305d60cb4452ab11c2c4f80845166ab85",
+      "head_0800_sha256": "0f7997308a6484c967d2c6df164d9bdd9b2b77c61b7322c51a51aa654b55e4a6",
+      "interpretation": "No useful increment over local rigid transfer in this frozen diagnostic. The user's later correction rejects geometric tracking as the main route; preserve results as controls and continue learned conditional generation. Neither frozen pilot settles joint training."
+    },
+    {
+      "stage": "train_v14",
+      "source": "9b579ff3690e9a5e920b3442d79eb84263b9b1b8",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 800,
+      "train_assets": 8,
+      "valid_assets": 32,
+      "result_sha256": "76e9acc3081829d9073fc1d7e23a8059dd5b07dbf9c06f154855f8447136d523",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v14_analysis.json",
+      "analysis_sha256": "cc26ac964768f47075d0144654e866fdb1c73cad413ac4be689a7ccae9013417",
+      "GT_normalized_MPJPE": {
+        "train_free": 0.0022825452979304828,
+        "valid_free": 0.16705577859621762,
+        "train_teacher": 0.0022448692834586836,
+        "valid_teacher": 0.16639218910131603,
+        "train_quantized_GT": 0.0017783792645786889
+      },
+      "head_0400_sha256": "6b4b028bfaf16546e241e90c0f87e97dee2fae2868772bd386e420dcdf5984ad",
+      "head_0800_sha256": "3d14e1063f3b8e803cd02e5c658cc29a71c802f52a0242bc8d19fcdb0834cf05",
+      "interpretation": "Small training set learned; poor held-out performance under both true-prefix and free decoding. Current main limitation is not explained by autoregressive rollout alone. Scale data without changing the learned-generation route."
+    },
+    {
+      "stage": "train_v15",
+      "source": "f3dab6ca270538408cb46cf3a42b0b61618bdaa3",
+      "complete": true,
+      "quality_accepted": false,
+      "updates": 6400,
+      "train_assets": 64,
+      "valid_assets": 32,
+      "result_sha256": "5d1554723f4242da09f83907a5581d193722095a1ab130772d9e5adc09723f5d",
+      "config_sha256": "3256c1b8f764f2f6fa2b1505e676c3d12b503b99879191de5b9ae207bca400a1",
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "analysis_path": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/train_v15_analysis.json",
+      "analysis_sha256": "c89ca4653d95914e589a185d4d167702deb917ecdb2a6eb2487ded6c58a6f87a",
+      "GT_normalized_MPJPE": {
+        "train_free_final": 0.0017909141272736764,
+        "valid_free_midpoint": 0.055452564207371324,
+        "valid_free_final": 0.06953680317175374,
+        "valid_teacher_midpoint": 0.05663412206922658,
+        "valid_teacher_final": 0.06984345472301356,
+        "train_quantized_GT": 0.0017883209784486098
+      },
+      "predicted_reference_F1": {
+        "midpoint": 0.39093519404495863,
+        "final": 0.34745991607994103
+      },
+      "head_3200_sha256": "d93eac6b264c82cda900c27a88ba2139619e9bc33764b0a318164c68c8c8566d",
+      "head_6400_sha256": "a177ea86bc8e7689f890aedd2fd2db168435daa0de52ed4c9625af1b1a65228d",
+      "better_observed_checkpoint": 3200,
+      "selection_uses_same_validation_panel": true,
+      "interpretation": "Generation learns training poses and benefits from expanded data/budget, but overfits. True-prefix errors remain similar to free errors, so rollout alone is not the main explanation. Shared versus separate model not decided."
+    }
+  ],
+  "next_required_result": "Report the completed full5000shared-flow trial with its measured distance/PCK/F1 tradeoff and retained artifacts. Preserve the original allocation; no further compute before an exact follow-on recipe is reviewed and recorded.",
+  "previous_diagnostic_state": "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json",
+  "previous_conditional_generation_operation": {
+    "label": "reference_skeleton_xyz_20261027_v1",
+    "status": "completed_learning_and_scaling_generalization_unresolved",
+    "operation": "report",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "User required learned generation rather than fitting, confirmed the complete-reference conditioned target-XYZ direction, and explicitly said to begin.",
+    "code_commit": "866319c5c747e7446b5f5e254bfac37e1335da53",
+    "required_entrypoint": "model_training/rigweave/scripts/train_reference_xyz.py",
+    "contract": "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "acceptance_basis": "Both conditional-AR stages completed cleanly. Independent analyses rehashed30artifacts each, matched initial validation generation/cache/control rows and replayed all rank random sequences.64asset generalization improves over8assets but degrades from3200to6400; final training is at quantization floor. No production quality upgrade or independent-encoder conclusion claimed.",
+    "CPU_tests_passed": 45,
+    "CPU_test_record": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/preparation/coordinate_generator_expanded_tests_v1_result.json",
+    "runs": [],
+    "checkpoint_policy": "Preserve all old stages. New full AR head/optimizer/RNG checkpoints3200/6400 get SHA-verified durable mirrors; reuse source caches read-only.",
+    "durable_root": "/home/wangyy/evorig/outputs/reference_xyz_20261027/conditional_ar_64assets_v1",
+    "end_policy": "Both admitted generative trials complete; no extension or new stage queued. Preserve3200and6400checkpoints and the original allocation. Further experiments must remain learned generation and need a separately reviewed exact recipe.",
+    "monitor": {
+      "directory": "D:/evoweave/server_ops/outputs/reference_xyz_20261027/monitor",
+      "owned_by": "primary",
+      "extra_agents": 0,
+      "status": "train_v15_complete_observer_exit0"
+    },
+    "capacity_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v15/result.json",
+      "sha256": "87bd4b2ea8d69ed6d13cb66152244b3724d7ed93fee51a5b966b81bbaad66bd7",
+      "source": "19cf0de4d61076b85c58992e902713217e43dc7e",
+      "complete": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "gradient_groups_passed": true,
+      "free_generation_passed": true,
+      "head_discarded_before_pilot": true,
+      "peak_allocated_bytes_per_rank": [
+        950601728,
+        1162105856
+      ],
+      "source_compatibility": "Reuse capacity_v15: generator/conditioner/forward/backward/KV generation/optimizer/resource code unchanged. Runtime edits only half/final checkpoint and example timing; cohort64 is the capacity-tested source population, including largest171joints."
+    },
+    "quality_accepted": false
+  }
+}

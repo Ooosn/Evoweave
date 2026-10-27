@@ -27,7 +27,11 @@ The full5000shared-backbone conditional-flow trial is complete: four passes,
 MPJPE improves fromcopy0.09046toflow0.06545, but PCK and edge F1 decline;
 natural AR references show the same distance/F1tradeoff. This is a measured
 position benefit, not overall quality acceptance. Four complete checkpoints
-are retained; no follow-on compute is admitted. Read
+are retained; that stage is closed. The user's subsequent clarification
+requires GT reference skeletons for stage2. A new full5000matched comparison
+of reference joint-anchor association transport versus target-content reading
+is in preflight, with identical training recipes and a common curve-based
+extension rule. No formal training is released before fresh acceptance. Read
 [research status](model_training/docs/CURRENT_MODEL_CONTEXT.md) and the
 [five-arm result](model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md#completed-result).
 Exact execution permissions are in `model_training/state/current.json`.

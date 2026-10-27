@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_joint_binding_full5k_preflight_20261027",
-  "updated_at": "2026-10-27T11:35:00Z",
+  "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
+  "updated_at": "2026-10-27T11:59:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -34,34 +34,67 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "submit"
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
+    "submit",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
     "server": "HGC",
-    "status": "qsub_attempt_failed_kernel_CPU_admission_replace_unused_reservation_with_native_qrsh",
-    "previous_job": 130494177,
-    "requested_gpus": 2,
-    "requested_CPU_slots": 16,
-    "requested_host": "pcg01i",
-    "requested_h_rt_seconds": 86400,
+    "qlogin_job_id": 130675914,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_slots": 16,
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "keeper_pid": 1108368,
+    "status": "native_qrsh_grant_verified_CPU_audit_next",
+    "expiry_utc": "2026-10-28T11:55:38Z",
+    "stop_before_utc": "2026-10-28T10:55:00Z",
+    "last_observed_utc": "2026-10-27T11:58:13.606167Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ],
+    "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
-    "gpu_memory_fraction_limit": 0.85,
-    "available_CPU_slots_observed": 84,
-    "available_H100s_observed": 2,
-    "require_fresh_check_before_submission": true,
-    "rejected_reservation_job_id": 130674849,
-    "rejected_reservation_evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
-    "pending_binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
+    "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
+    "rejected_previous_reservation": {
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
+    }
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "code_and_CPU_tests_passed_native_qrsh_reservation_next",
+    "status": "native_grant_bound_CPU_audit_released",
     "operation": "preflight",
     "complete": false,
     "explicit_human_authorized": true,
@@ -98,19 +131,65 @@
       "rss_limit_bytes": 68719476736,
       "gpu_memory_fraction_limit": 0.85,
       "scheduler_membership_required": true,
-      "binding": "native_scheduler_cpuset_no_extra_binding_flag; record_actual_grant_before_CPU_or_GPU_payload"
+      "binding": "native_scheduler_cpuset_no_extra_binding_flag; record_actual_grant_before_CPU_or_GPU_payload",
+      "allocation": 130675914,
+      "keeper_pid": 1108368,
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_affinity": [
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        14,
+        15,
+        61,
+        63,
+        64,
+        65,
+        74,
+        76,
+        77,
+        78
+      ]
     },
     "allocation_script": "model_training/jobs/hold_anchor_joint_native_20261027.sh",
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
     "allocation_script_shared_path": "/home/wangyy/jobs/anchor_joint_binding_20261027/hold_anchor_joint_native_20261027.sh",
-    "runs": [],
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v12",
+        "approved": true
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17",
+        "approved": false
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17",
+        "approved": false
+      }
+    ],
     "planned_stages": {
       "audit": "audit_v12",
       "capacity": "capacity_v17",
       "train": "train_v17"
     },
     "planned_config": "model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
-    "runtime_unbound": true,
+    "runtime_unbound": false,
     "acceptance_test": "Full5000perpass audit up to12passes; actual two-rank CPU loader and prefetch parity; coordinate-only shared surface/motion gradients with no AR decoder gradient; both variants9stresscases×2updates/rank+24pose maxJ free inference; GPU85percent,tree64GiB,native16CPU,clean exit. Primary must record acceptance before formal training.",
     "comparison": "Exactly matched reference_transport and target_content parameters/init/data/reference/loss/LR. GT references only. Min40k per arm; common extension to60k if128selection-panel curve improves by preregistered rule. Final967including separate nonselection839; copy controls,correspondence permutation,cross-reference consistency,train/heldout diagnostics.",
     "checkpoint_policy": "All full checkpoints every5000visits per arm,model+optimizer+rankRNG+consumedstream,SHA-verified durable mirrors. Preserve all previous runs.",
@@ -119,7 +198,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "preflight_no_compute_running"
+      "status": "audit_v12_next_capacity_and_training_blocked"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released."
   },
@@ -130,5 +209,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Reserve only the reviewed native2H100/16CPU job after fresh availability check; bind exact grant/config in committed state, then CPU audit and both-arm GPU capacity before releasing the matched full5000pair."
+  "next_required_result": "Run exact native audit_v12 and record primary acceptance; then release both-arm capacity_v17. No formal training until CPU audit and all capacity checks pass cleanly."
 }

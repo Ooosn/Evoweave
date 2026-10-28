@@ -788,4 +788,3 @@ uses unmodified greedy EOS behavior, mesh-only inputs and BOS/articulationxl.
 Compare donor, joint+10/20/30/40/80k, stage2-only+80k, and AR-only+10/20/30/40k.
 No historical BF16 generation result is reused. Match input/GT/normalization hashes
 per asset/frame and report paired-asset intervals with common-success geometry.
-

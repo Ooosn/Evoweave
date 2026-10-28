@@ -346,3 +346,132 @@ size-checked, not independently rehashed during this local review.
 Transport checkpoint SHA:8b7aa0c896c02d19fa1860ef8cb1580b0c65f7e4be64d09bacdb9d3f260173ae.
 Content checkpoint SHA:3faaa4e72090ea13bdf530254016d6333879e427e02a17fee2c0e2116f3a87fc.
 The live source remains9db222d; no training code or protocol was changed.
+
+## Completed60k Result (2026-10-28JST)
+
+Both arms completed60,000additional asset visits:12full5000passes,
+1,260optimizer updates and787,504input-frame visits each. The30to40k change
+passed all three preregistered improvement triggers for BOTH arms, extending
+the common budget to60k. No source/config/loss/data/schedule change occurred.
+The native16CPU/2H100 supervisor exited0at11:33JST with payload cleanup
+complete and peak whole-tree RSS33,185,140,736bytes. At11:46JST, the same
+keeper/job/cgroups/96hour grant remained, the supervisor was absent and both
+allocated GPUs showed0MiB. The allocation was NOT released.
+
+### Full Validation
+
+Each967asset contributes14nonreference target predictions:8poses with GT
+references0and4, excluding the reference itself. Aggregate within each asset,
+then equally across assets; all13,538rows/method succeeded. Distances below
+are divided by the TARGET mesh bounding-box diagonal, not world-unit errors.
+
+| Metric | Copy reference | Reference transport | Target-content reader | Transport minus reader95%paired interval |
+| --- | ---: | ---: | ---: | --- |
+| Known-ID MPJPE | 0.09045948 | 0.00708115 | 0.00971083 | [-0.00308635,-0.00227372] |
+| PCK@5% diagonal | 0.54526003 | 0.99189920 | 0.98263627 | [0.00725920,0.01167803] |
+| Nearest-mapped edge F1 | 0.56402246 | 0.89008395 | 0.84601169 | [0.04072181,0.04713084] |
+| Symmetric J2J | 0.05991595 | 0.00623647 | 0.00773343 | [-0.00166048,-0.00135753] |
+| Target bone-vector error | 0.02508391 | 0.00607974 | 0.00810355 | [-0.00240713,-0.00174636] |
+
+Transport has27.1%lower MPJPE, with898/967assets better;734have higher edge
+F1 and913have lower bone-vector error. On the839assets NOT used by this
+run's stopping rule, MPJPE is0.00713242vs0.00981637, PCK0.99151074vs0.98193841
+and F10.88932394vs0.84509768; all five paired intervals favor transport.
+The839are not claimed to be historically pristine. Intervals use2000paired
+asset resamples from ONE training seed, not run-to-run uncertainty or a
+multiplicity-adjusted collection of tests.
+
+PCK is the fraction of known-ID joints within5%diagonal, not a claim that
+99%of rigs are production-ready. Edge F1 uses bidirectional nearest-joint-mapped
+directed-edge agreement without a distance threshold. The tree is supplied,
+so this is NOT generated-topology accuracy. Bone-vector error compares the
+target GT vectors, not a requirement to preserve reference bone lengths.
+
+### Mechanism And Generalization Checks
+
+On128selection assets, coherently permuting target features/points/normals
+at the stage2 interface preserves their set but breaks reference-to-target
+indexing. Transport MPJPE rises from0.00674510to0.17905045; content-reader
+MPJPE changes from0.0090190166to0.0090189741, within floating-point variation.
+Thresholded edge/PCK scores can vary slightly with these tiny numeric changes.
+Together with the controlled accuracy gain, this supports use and usefulness
+of the explicit transfer route under this recipe. Sensitivity alone would
+not establish usefulness. Backbone features were NOT recomputed, so this is
+not an ablation of every source of correspondence in the shared backbone.
+
+Full traces verify all12pass boundaries, matched actual initialization and
+microbatches/raw poses/reference/AR slots, training-vs967asset disjointness,
+and exclusion of the heldout raw poses from training. Of the32asset eligible
+diagnostic rows,99.330%of target frames and98.438%of reference frames actually
+appeared in training; do not label every eligible row as seen.
+
+| 32same training assets | Transport MPJPE | Content-reader MPJPE |
+| --- | ---: | ---: |
+| Training-eligible raw poses | 0.00584432 | 0.00756991 |
+| Strictly heldout raw poses | 0.00568283 | 0.00746476 |
+
+Each group has448target rows. These comparable means support the checked
+heldout-pose behavior, but pose difficulty differs and they do not alone
+rule out overfitting. On all967assets, changing the GT reference produces
+mean prediction disagreement0.00762433vs0.00990077, ideal0. Accuracy improved
+alongside lower disagreement, but reference dependence is not eliminated.
+
+### Remaining Errors And Budget Limit
+
+Transport/content asset-mean MPJPE medians are0.00583223/0.00749615;95th
+percentiles0.01589519/0.02170462. There are23/62assets above2%diagonal and
+3/11above5%;13/23assets have edge F1below0.5. These are descriptive diagnostic
+thresholds, not preregistered quality cutoffs. The largest errors remain
+0.05251293/0.14192521. Exact worst-asset IDs are retained in the additional
+analysis for targeted follow-up; the tail cannot be declared solved from
+the fixed saved visual examples.
+
+Splitting967assets by copy-reference motion into near-equal thirds gives
+transport/content MPJPE0.00373078/0.00459431(low),0.00653987/0.00863308(medium),
+0.01098320/0.01592100(high). Thresholds are0.04925789and0.10957884in baseline
+MPJPE. High-motion edge F1is0.79807vs0.71750: motion remains a useful failure
+stratum despite the advantage. These are post-training descriptive groups.
+
+At the same128selection panel,50to60k MPJPE still improves19.056%for transport
+and12.283%for content. Thus this is a BUDGET-CAPPED result, not demonstrated
+convergence or the final asymptotic ranking. The preferred current candidate
+is reference_transport. Next work should inspect the residual23large-error
+assets/reference dependence and choose a new declared common longer budget
+or seed replication, not revert the architecture because its first pass
+was nearly a copy. No further compute stage has been launched.
+
+Primary acceptance is limited to this GT-reference stage2 comparison. There
+is no predicted-reference test, stage1 free-AR retention test, AR-only
+continuation control or random-backbone control. No isolated pretraining
+benefit, improvement of original AR generation, seed-robust superiority or
+all-case accuracy is claimed. The producer's immutable quality_accepted=false
+means awaiting primary review; the separate scoped primary acceptance is
+recorded in current.json without rewriting that producer artifact.
+
+### Retained Evidence
+
+Local inspection root: D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027.
+Primary review:review_final_060000.json, SHA256
+1af7513d14986a31ae6e8bac504174bf2a9903c56fe8d7c5e82f18fca72a91d3.
+Independent train/heldout aggregates, tails and checked milestone curve:
+final_additional_analysis_060000.json, SHA256
+11374822c8f2610b3a8250a31ab27d8d29a677e69e773bba169e6ff9d088cd4a.
+Formal result SHA256:a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a.
+Collection manifest SHA256:70efc5d63445dedacd62db17e4b0d546dfc34de4e7aca9153fdfb458c2528b31.
+
+All small artifacts were independently rehashed. Full checkpoints were
+producer-hash-verified in both copies and independently size-checked here,
+not independently rehashed during local inspection. Transport60k checkpoint:
+cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016,
+8,278,607,634bytes. Content60k checkpoint:
+82932dbda86f4b73e842c2379d205b130c0656e3e19dd8018a2db5704e1e9824,
+8,278,607,570bytes. They remain under train_v17/{variant}/checkpoint_060000.pt
+and /home/wangyy/evorig/outputs/anchor_joint_binding_5k_20261027/v1/{variant}.
+
+Both pair_examples_evaluation_060000.png (same earlier128-panel cases) and
+pair_examples_final_060000.png (predetermined full-panel artifact-order
+cases) were visually checked. They use explicit reference-GT/reference
+surface and target-GT/predictions on the SAME target surface, common camera
+and scale, with no fitting or alignment. Their case sets differ by evaluation
+panel, not by selecting favorable outcomes. Remote source stayed pinned to
+9db222d0070122b08c6d5dde3329f3be69d46c16 through the entire run and inspection.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
-  "updated_at": "2026-10-27T18:10:00Z",
+  "updated_at": "2026-10-28T02:46:31Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
   "required_context": [
@@ -34,12 +34,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight",
-    "train"
+    "preflight"
   ],
   "blocked_operations": [
     "submit",
-    "matched_eval"
+    "matched_eval",
+    "train"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
@@ -74,13 +74,13 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_retained_full5k_pair_running",
+    "status": "native_96hour_retained_idle_after_clean_completed_pair",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-27T13:42:01.566185Z",
+    "last_observed_utc": "2026-10-28T02:46:31.278656Z",
     "last_observed_gpu_used_mib": [
-      12389,
-      12389
+      0,
+      0
     ],
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
@@ -95,9 +95,9 @@
   },
   "active_operation": {
     "label": "anchor_joint_binding_5k_20261027_v1",
-    "status": "full5k_matched_formal_training_running",
+    "status": "completed_full5k_GT_reference_stage2_comparison_accepted_with_limits",
     "operation": "train",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "2026-10-27 user asked to design and start full5k testing of GT-reference skeleton/mesh-token interaction, reuse existing trained structure, employ meaningful comparisons and act adaptively toward the research purpose rather than stopping after an arbitrary run.",
     "code_commit": "d0a6b13915d1ae8c6cb19ecc05729f711e83699b",
@@ -106,11 +106,12 @@
       "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
     },
     "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "quality_accepted": false,
+    "quality_accepted": true,
+    "quality_acceptance_scope": "Primary review accepts this single-seed, common60k GT-reference stage2 comparison: transport improves all five967and839metrics, uses the explicit association route and generalizes to checked heldout poses. This is NOT convergence, all-asset perfection, stage1 free-AR retention, predicted-reference performance or seed-robust superiority. Producer result quality_accepted=false is intentionally retained as the automated pending-review record; this separate primary decision does not alter that immutable artifact.",
     "CPU_tests_passed": 108,
     "CPU_test_record": "24current anchor/model/protocol tests pass,4orchestration mock tests pass;80unchanged reference/virtual-pair regressions previously pass. Postclip proof includes isolated gradient clipping, nonfinite rejection, prior-capacity completeness, identical full12pass stream and paired driver resume/extension.",
     "input_manifest": {
@@ -206,7 +207,7 @@
       "owned_by": "primary",
       "extra_agents": 0,
       "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
-      "status": "matched20k_metrics_initialization_actual_traces_verified_unchanged_training_continues"
+      "status": "final60k_metrics_initialization_full_actual_traces_heldout_permutation_and_resources_verified"
     },
     "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
     "CPU_audit_evidence": {
@@ -368,7 +369,12 @@
       "started_utc": "2026-10-27T13:37:48.815456Z",
       "supervisor_pid": 1685206,
       "kernel_scheduler_membership": true,
-      "source_checkout_pinned_during_run": true
+      "source_checkout_pinned_during_run": true,
+      "complete": true,
+      "exit_code": 0,
+      "finished_utc": "2026-10-28T02:33:31.023264Z",
+      "payload_cleanup_complete": true,
+      "supervisor_absent_after_completion": true
     },
     "interim_evidence": {
       "reference_transport": {
@@ -498,6 +504,75 @@
       "independent_full_weights_hash": false,
       "scope": "One matched training seed, fixed128selection panel at20k visits/arm; not final quality/convergence/seed-robustness acceptance. Earlier interim_evidence records10k; this block is the latest matched milestone.",
       "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_020000.png"
+    },
+    "final_60000_evidence": {
+      "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_final_060000.json",
+      "report_sha256": "1af7513d14986a31ae6e8bac504174bf2a9903c56fe8d7c5e82f18fca72a91d3",
+      "additional_analysis": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/final_additional_analysis_060000.json",
+      "additional_analysis_sha256": "11374822c8f2610b3a8250a31ab27d8d29a677e69e773bba169e6ff9d088cd4a",
+      "collection_manifest_sha256": "70efc5d63445dedacd62db17e4b0d546dfc34de4e7aca9153fdfb458c2528b31",
+      "full5000passes_per_arm": 12,
+      "updates_per_arm": 1260,
+      "input_frames_per_arm": 787504,
+      "common_samples_per_arm": 60000,
+      "extension": "Both arms passed all three preregistered30to40k improvement rules; both continued to60k without changing source/config/data/loss/schedule.",
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "terminal_trace_audit_complete": true,
+      "heldout_pose_exclusion_verified": true,
+      "train_validation967_disjoint": true,
+      "eligible_target_actually_consumed_fraction": 0.9933035714285714,
+      "eligible_reference_actually_consumed_fraction": 0.984375,
+      "valid_assets": 967,
+      "valid_target_rows_per_method": 13538,
+      "nonselection_assets": 839,
+      "all_five967_and839_paired_intervals_favor_transport": true,
+      "reference_transport": {
+        "normalized_mpjpe": 0.007081149523807553,
+        "pck_005": 0.9918992010908891,
+        "edge_f1": 0.8900839472187035,
+        "normalized_j2j": 0.006236469187263321,
+        "normalized_bone_vector_error": 0.0060797416119543445,
+        "nonselection839_mpjpe": 0.007132418477450203,
+        "normalized_cross_reference_difference": 0.007624327682249774,
+        "heldout32_mpjpe": 0.005682825686562865,
+        "permuted128_mpjpe": 0.17905045253740223,
+        "paired_normal128_mpjpe": 0.006745097554227998,
+        "last10000_relative_mpjpe_reduction": 0.1905616257679651,
+        "assets_mean_mpjpe_above0p02": 23,
+        "checkpoint_sha256": "cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016",
+        "checkpoint_bytes": 8278607634
+      },
+      "target_content": {
+        "normalized_mpjpe": 0.009710829513204434,
+        "pck_005": 0.9826362651474487,
+        "edge_f1": 0.8460116926020189,
+        "normalized_j2j": 0.007733428004983431,
+        "normalized_bone_vector_error": 0.008103547042969832,
+        "nonselection839_mpjpe": 0.009816374273274728,
+        "normalized_cross_reference_difference": 0.009900770807594703,
+        "heldout32_mpjpe": 0.007464758066687084,
+        "permuted128_mpjpe": 0.009018974119823855,
+        "paired_normal128_mpjpe": 0.009019016593681175,
+        "last10000_relative_mpjpe_reduction": 0.12283119957122846,
+        "assets_mean_mpjpe_above0p02": 62,
+        "checkpoint_sha256": "82932dbda86f4b73e842c2379d205b130c0656e3e19dd8018a2db5704e1e9824",
+        "checkpoint_bytes": 8278607570
+      },
+      "transport_better_mpjpe_assets": 898,
+      "both_checkpoint_copies_producer_hash_verified": true,
+      "independent_full_weight_rehash": false,
+      "small_artifacts_independently_rehashed": true,
+      "resource_clean_exit": true,
+      "peak_tree_rss_bytes": 33185140736,
+      "budget_capped_not_converged": true,
+      "stage1_free_generation_retention_tested": false,
+      "visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_060000.png",
+        "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_final_060000.png"
+      ],
+      "interpretation": "Reference transport is the preferred current GT-reference stage2 candidate. Paired accuracy gains plus coherent target-index permutation sensitivity support use and utility of this explicit route under this recipe. Not an isolated pretrained-backbone benefit or universal architecture claim. Retain all checkpoints and native allocation; no automatic new training stage is admitted."
     }
   },
   "previous_completed_result": {
@@ -507,5 +582,5 @@
     "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
     "execution_authority": false
   },
-  "next_required_result": "Continue immutable formal source9db through next matched30k/40k checkpoints; inspect local pose errors and reference dependence. Apply preregistered common40k/60k extension only, then full967/nonselection839 and complete-trace/heldout/permutation review. No overall acceptance from current128-panel early advantage."
+  "next_required_result": "Current common60k comparison is complete and independently reviewed. Retain reference_transport as the GT-reference stage2 candidate. Future work should diagnose the23assets with mean error>2percent and residual reference dependence, and decide a new fixed longer paired budget or seed replication; stage1 free-generation retention is required before broader shared-model acceptance. No unrecorded restart or new compute stage; preserve allocation unless explicitly released."
 }

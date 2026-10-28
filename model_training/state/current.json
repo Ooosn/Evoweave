@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_checkpoint_replay_native_20261029",
-  "updated_at": "2026-10-28T22:08:56Z",
+  "state_id": "ar_only_feedback_native_20261029",
+  "updated_at": "2026-10-28T22:34:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -28,9 +28,9 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Test standalone stage2 outside the pretrained skeleton-generation framework, separating continued AR objective from pretrained weights/Adam warm start. Keep the preferred reference_transport head and unchanged multi-frame inputs.",
+    "current_question": "Does stage2 supervision improve stage1 free skeleton generation? Compare donor, stage2-only, joint, and the explicitly requested matched AR-only continuation.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
-    "reference_input": "Latest user explicitly requires GT reference skeleton for this functionality. No natural stage1 predictions or predicted/GT joint matching in this experiment."
+    "reference_input": "GT reference remains the contract for the completed stage2 tests only. Stage1 feedback evaluation must have NO GT reference or teacher-forced prefix; use only mesh and BOS/class."
   },
   "allowed_operations": [
     "inspect",
@@ -97,125 +97,14 @@
     ]
   },
   "active_operation": {
-    "label": "anchor_integration_5k_20261028_v1",
-    "status": "checkpoint_replay_completed_followups_pending",
-    "operation": "preflight",
-    "complete": true,
-    "explicit_human_authorized": true,
-    "authorization": "Validation of the user-authorized common80k comparison. Resolve observed selection replay discrepancy with two retained cases and zero optimizer updates before AR-only followup. No new training or GPUs.",
-    "code_commit": "53ceb46b72212f80e3f9fdf4ebf4af7625b38c52",
-    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_integration.py",
+    "label": "ar_only_feedback_5k_20261029_v1",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "gpu_work_allowed": false,
-    "formal_training_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "quality_accepted": false,
-    "runtime_unbound": false,
-    "CPU_tests_passed": 34,
-    "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/replay_tests_result.json",
-    "source_checkpoint": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19/pretrained_stage2/checkpoint_080000.pt",
-      "durable_path": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1/pretrained_stage2/checkpoint_080000.pt",
-      "sha256": "3ea27d7537852a42aab043938fbd7f341aaf3127a2edba907b5648506950e701",
-      "bytes": 8278609298,
-      "additional_asset_exposures": 80000,
-      "global_backbone_asset_exposures": 100000,
-      "complete": true,
-      "both_copies_verified": true,
-      "code_commit": "7dd6f3cb2a276bf40928d49f1e96a417f2fdec26"
-    },
-    "input_manifest": {
-      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
-      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
-      "rows": 5000
-    },
-    "completed_common80_archive": "model_training/state/archive/anchor_integration_common80k_20261029.json",
-    "phase": "checkpoint_replay",
-    "profile": "checkpoint_replay_20261029_v1",
-    "runs": [
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_checkpoint_replay_20261029_v1.json",
-        "config_sha256": "37276f649cf196ccb1e56f9440b628db34f1a431f5d539ba63c42253ee64b074",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v20",
-        "approved": false
-      }
-    ],
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
-    "admission": {
-      "status": "live_plan_passed_request_queued",
-      "observed_utc": "2026-10-28T21:52:09.405124+00:00",
-      "plan_sha256": "01bf31610af1ea498cc37b2fe82e7056d1370ec92de36083c202a089d91264be",
-      "source": "4574c35251df17e7ed6f00178eb743e91ad09cbf",
-      "queued_utc": "2026-10-28T21:53:06.466141+00:00",
-      "actual_donor_to_stage2_weights": {
-        "shared_tensors": 508,
-        "shared_changed": 500,
-        "nonshared_tensors": 447,
-        "nonshared_changed": 0,
-        "comparison": "All parameters and buffers in the complete backbone state dictionaries; bytewise equality. CPU inspection did not initialize CUDA."
-      },
-      "CPU_validation": "34CPU tests, unchanged full model and immutable data; two8-frame cases below accepted24-frame memory capacity. FP32 forward remains under monitored85percent VRAM/RSS limit. No optimizer steps.",
-      "live_plan": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/artifacts/replay_v20_admission.json",
-      "must_check": "idle keeper, native cgroups/16CPU/UUIDs, no pending children/apps, old terminal receipts, exact source/config/checkpoint/examples, unused outputs, free storage and deadline; record plan before one request"
-    },
-    "stage1_feedback_question": {
-      "human_clarification_date_jst": "2026-10-29",
-      "question": "Does the stage2 loss, through updates to the shared surface/motion encoders and their attention, improve stage1 generated skeletons? Evaluate improvement as well as retention, not just stage2 metrics or teacher-forced AR loss.",
-      "measured": false,
-      "primary_comparison": [
-        "Original pretrained donor before stage2",
-        "Pretrained-stage2-only checkpoint at the same chosen endpoint",
-        "Joint-pretrained checkpoint at that identical endpoint"
-      ],
-      "interpretation": "Stage2-only versus donor directly tests the effect of stage2-trained shared features on the unchanged stage1 generation branch, after verifying its weights are identical. Joint versus donor measures overall first-stage change, not the isolated causal contribution of stage2, because AR also continued. Joint versus stage2-only isolates adding the continued AR objective under matched stage2 exposure.",
-      "required_protocol": "Same fixed128 assets and raw frames, normalization, tokenizer and greedy generation; no GT skeleton input or teacher-forced prefixes for generation. Score original-GT edgeF1, generation success, joint-count accuracy and matched geometry metrics; failures remain in denominators. Verify unchanged nonshared AR-branch weights for the stage2-only arm, and retain paired examples/asset intervals. Reuse donor outputs only if exact checkpoint/input/GT/decoding identities match.",
-      "execution_boundary": "Prepare local evaluation while train_v19 runs; do not change its source, interrupt it or launch overlapping GPU evaluation. Evaluation needs separate exact admission after the current payload finishes. This record does not authorize extra training or an AR-only training run.",
-      "local_preparation": {
-        "status": "helper_components_CPU_tested_not_execution_ready",
-        "module": "model_training/rigweave/scripts/stage1_feedback.py",
-        "tests": "model_training/rigweave/tests/test_stage1_feedback.py",
-        "CPU_tests_passed": 17,
-        "test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/replay_tests_result.json",
-        "test_log": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/replay_tests.log",
-        "source_deployed": false,
-        "GPU_compute_started": false,
-        "scope": "Strict complete backbone extraction from density/anchor state dictionaries; bytewise shared/nonshared parameter and buffer comparison; existing V-minus free decoder with only mesh surface and BOS/class; original-GT topology and normalized symmetric nearest-joint geometry; zero failure quality with null failure distance and explicit success-conditioned denominators. Tests include real tiny V-minus model with no teacher forward, no state/RNG mutation and no CUDA initialization.",
-        "remaining": "Bind exact donor/joint/stage2 checkpoint identities, fixed input/raw-frame/normalization identities and retained baseline outputs; build guarded evaluation orchestration with resource/deadline/capacity checks, paired-asset analysis and fixed visuals. Validate on actual checkpoints after train_v19 clean completion, then obtain exact evaluation admission. No actual stage1 output or unchanged-decoder assertion is established by synthetic tests. AR-only trainer/configuration is still unimplemented.",
-        "combined_regression_tests_passed": 36,
-        "explicit_precision_API": "generate_asset accepts precision='bf16' or 'fp32'; FP32 disables TF32 and restores the prior setting. CPU tested, not full AR GPU-capacity accepted."
-      },
-      "actual_nonshared_weight_evidence": {
-        "checkpoint": {
-          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19/pretrained_stage2/checkpoint_080000.pt",
-          "durable_path": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1/pretrained_stage2/checkpoint_080000.pt",
-          "sha256": "3ea27d7537852a42aab043938fbd7f341aaf3127a2edba907b5648506950e701",
-          "bytes": 8278609298,
-          "additional_asset_exposures": 80000,
-          "global_backbone_asset_exposures": 100000,
-          "complete": true,
-          "both_copies_verified": true,
-          "code_commit": "7dd6f3cb2a276bf40928d49f1e96a417f2fdec26"
-        },
-        "comparison": {
-          "shared": {
-            "tensors": 508,
-            "changed_tensors": 500,
-            "all_unchanged": false
-          },
-          "nonshared": {
-            "tensors": 447,
-            "changed_tensors": 0,
-            "all_unchanged": true
-          }
-        },
-        "record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/artifacts/replay_v20_admission.json",
-        "measured_on_CPU": true,
-        "not_output_quality": true
-      }
-    },
-    "queued_ar_only_control": {
+    "operation": "preflight",
+    "phase": "CPU_audit",
+    "status": "local_tests_passed_CPU_audit_admitted",
+    "complete": false,
+    "explicit_human_authorized": true,
+    "authorization": {
       "human_authorized": true,
       "human_authorization_date_jst": "2026-10-29",
       "exact_execution_admitted": false,
@@ -273,100 +162,97 @@
       "parent_completion_review": "common80k ended cleanly; all data/execution checks accepted with the BF16 numerical-repeatability caveat and two-case zero-update diagnostic. No need to wait for train_v19 again.",
       "evaluation_precision_plan": "For stage1 free generation, implement a common explicit FP32/noTF32 evaluation contract and profile the complete autoregressive decoder before GPU admission. Apply it uniformly to donor/joint/stage2-only/AR-only checkpoints. Historical BF16 generation artifacts are not automatically reusable. Preserve original BF16 training, architecture, optimizer and LR. No AR-only training is launched by this resolution."
     },
-    "end_policy": "Preserve GPU grant and all checkpoints. Interpret diagnostic differences; no automatic training. Followups are not complete until matched AR-only and stage1 feedback analysis finish.",
-    "completion": {
-      "exit_code": 0,
-      "finished_utc": "2026-10-28T21:58:02.879814+00:00",
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "kernel_scheduler_membership": true,
-      "optimizer_updates": 0,
-      "peak_tree_rss_bytes": 25032437760,
-      "max_GPU_reserved_bytes_per_rank": 16378757120,
-      "result_sha256": "3d1abc14b271124cf958fc992fb76e21572aa05562d38aad23ce7756a18ea6bb",
-      "collection": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/replay_v20_collection.json"
+    "required_entrypoint": "model_training/rigweave/scripts/train_ar_only.py",
+    "code_commit": "810366fb3bf75d1e8a533fc8355c76f126dc859d",
+    "input_manifest": {
+      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
+      "rows": 5000
     },
-    "review_resolution": {
-      "path": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_common80_resolution.json",
-      "scope": "The original expanded report's passed=false/exact-replay mismatch is preserved. Execution, full coverage, matched inputs/GT controls, independent aggregates and strictly reserved raw-pose checks are accepted. Report the existing uniform-BF16 enlarged comparison with a numerical-repeatability caveat; do not claim perfect per-frame replay, re-score it in a different precision, or accept first-stage quality from it.",
-      "rank_summaries": [
-        {
-          "rank": 0,
-          "asset_id": "oxl_2aa3c8aa648c6cba21fb",
-          "inputs": 1,
-          "weights": 1,
-          "features": {
-            "bf16": 4,
-            "fp32": 4
-          },
-          "rng": true,
-          "retained_queries": true,
-          "repeat": {
-            "bf16": {
-              "bitwise_equal": false,
-              "max_abs": 0.00390625,
-              "mean_abs": 0.00023759280641873678
-            },
-            "fp32": {
-              "bitwise_equal": false,
-              "max_abs": 8.940696716308594e-8,
-              "mean_abs": 1.2432186243434748e-8
-            }
-          },
-          "reload": {
-            "bf16": {
-              "bitwise_equal": false,
-              "max_abs": 0.00390625,
-              "mean_abs": 0.00020328288276990256
-            },
-            "fp32": {
-              "bitwise_equal": false,
-              "max_abs": 1.7881393432617188e-7,
-              "mean_abs": 1.3998942449688911e-8
-            }
-          },
-          "max_reserved_bytes": 16378757120
-        },
-        {
-          "rank": 1,
-          "asset_id": "oxl_24e8e5621802f809e815",
-          "inputs": 1,
-          "weights": 1,
-          "features": {
-            "bf16": 4,
-            "fp32": 4
-          },
-          "rng": true,
-          "retained_queries": true,
-          "repeat": {
-            "bf16": {
-              "bitwise_equal": false,
-              "max_abs": 0.00390625,
-              "mean_abs": 0.00024775950615072535
-            },
-            "fp32": {
-              "bitwise_equal": false,
-              "max_abs": 1.1920928955078125e-7,
-              "mean_abs": 1.4681843042905842e-8
-            }
-          },
-          "reload": {
-            "bf16": {
-              "bitwise_equal": false,
-              "max_abs": 0.00390625,
-              "mean_abs": 0.00022946719920063124
-            },
-            "fp32": {
-              "bitwise_equal": false,
-              "max_abs": 1.7881393432617188e-7,
-              "mean_abs": 1.5896235016130264e-8
-            }
-          },
-          "max_reserved_bytes": 16378757120
-        }
+    "source_checkpoint": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
+    },
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "quality_accepted": false,
+    "runtime_unbound": false,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
+    "previous_complete_archives": [
+      "model_training/state/archive/anchor_integration_common80k_20261029.json",
+      "model_training/state/archive/anchor_checkpoint_replay_20261029.json"
+    ],
+    "CPU_tests_passed": 62,
+    "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/ar_tests_result.json",
+    "evaluation_protocol": "All11 checkpoints use FP32/noTF32 eager OPT with unchanged architecture and weights. Training remains original BF16/FlashAttention. Fixed128assets x8raw frames; noGT reference/teacher prefix. Original-GT topology/count/success, geometry only on success; paired geometry only on common successes.",
+    "stage1_feedback_question": {
+      "human_clarification_date_jst": "2026-10-29",
+      "question": "Does the stage2 loss, through updates to the shared surface/motion encoders and their attention, improve stage1 generated skeletons? Evaluate improvement as well as retention, not just stage2 metrics or teacher-forced AR loss.",
+      "measured": false,
+      "primary_comparison": [
+        "Original pretrained donor before stage2",
+        "Pretrained-stage2-only checkpoint at the same chosen endpoint",
+        "Joint-pretrained checkpoint at that identical endpoint"
       ],
-      "main_inference": "The two original fixed cases have identical complete mesh-surface input hashes, identical backbone/head state hashes, matching retained query points/raw frames/GT, and unchanged CUDA RNG. Prediction variation occurs even without reloading. BF16 coordinate maximum changes are0.00390625 in the model's selected-input-normalized coordinates; FP32(noTF32) maxima are8.94e-8 to1.79e-7. This isolates precision-sensitive numerical computation as a source of replay differences, not changed weights or inputs in these cases. Exact CUDA kernel is not localized and FP32 is not bitwise exact either. Do not generalize the two-case bound to all967assets."
-    }
+      "interpretation": "Stage2-only versus donor directly tests the effect of stage2-trained shared features on the unchanged stage1 generation branch, after verifying its weights are identical. Joint versus donor measures overall first-stage change, not the isolated causal contribution of stage2, because AR also continued. Joint versus stage2-only isolates adding the continued AR objective under matched stage2 exposure.",
+      "required_protocol": "Same fixed128 assets and raw frames, normalization, tokenizer and greedy generation; no GT skeleton input or teacher-forced prefixes for generation. Score original-GT edgeF1, generation success, joint-count accuracy and matched geometry metrics; failures remain in denominators. Verify unchanged nonshared AR-branch weights for the stage2-only arm, and retain paired examples/asset intervals. Reuse donor outputs only if exact checkpoint/input/GT/decoding identities match.",
+      "execution_boundary": "Prepare local evaluation while train_v19 runs; do not change its source, interrupt it or launch overlapping GPU evaluation. Evaluation needs separate exact admission after the current payload finishes. This record does not authorize extra training or an AR-only training run.",
+      "local_preparation": {
+        "status": "helper_components_CPU_tested_not_execution_ready",
+        "module": "model_training/rigweave/scripts/stage1_feedback.py",
+        "tests": "model_training/rigweave/tests/test_stage1_feedback.py",
+        "CPU_tests_passed": 17,
+        "test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/replay_tests_result.json",
+        "test_log": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/replay_tests.log",
+        "source_deployed": false,
+        "GPU_compute_started": false,
+        "scope": "Strict complete backbone extraction from density/anchor state dictionaries; bytewise shared/nonshared parameter and buffer comparison; existing V-minus free decoder with only mesh surface and BOS/class; original-GT topology and normalized symmetric nearest-joint geometry; zero failure quality with null failure distance and explicit success-conditioned denominators. Tests include real tiny V-minus model with no teacher forward, no state/RNG mutation and no CUDA initialization.",
+        "remaining": "Bind exact donor/joint/stage2 checkpoint identities, fixed input/raw-frame/normalization identities and retained baseline outputs; build guarded evaluation orchestration with resource/deadline/capacity checks, paired-asset analysis and fixed visuals. Validate on actual checkpoints after train_v19 clean completion, then obtain exact evaluation admission. No actual stage1 output or unchanged-decoder assertion is established by synthetic tests. AR-only trainer/configuration is still unimplemented.",
+        "combined_regression_tests_passed": 36,
+        "explicit_precision_API": "generate_asset accepts precision='bf16' or 'fp32'; FP32 disables TF32 and restores the prior setting. CPU tested, not full AR GPU-capacity accepted."
+      },
+      "actual_nonshared_weight_evidence": {
+        "checkpoint": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19/pretrained_stage2/checkpoint_080000.pt",
+          "durable_path": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1/pretrained_stage2/checkpoint_080000.pt",
+          "sha256": "3ea27d7537852a42aab043938fbd7f341aaf3127a2edba907b5648506950e701",
+          "bytes": 8278609298,
+          "additional_asset_exposures": 80000,
+          "global_backbone_asset_exposures": 100000,
+          "complete": true,
+          "both_copies_verified": true,
+          "code_commit": "7dd6f3cb2a276bf40928d49f1e96a417f2fdec26"
+        },
+        "comparison": {
+          "shared": {
+            "tensors": 508,
+            "changed_tensors": 500,
+            "all_unchanged": false
+          },
+          "nonshared": {
+            "tensors": 447,
+            "changed_tensors": 0,
+            "all_unchanged": true
+          }
+        },
+        "record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/artifacts/replay_v20_admission.json",
+        "measured_on_CPU": true,
+        "not_output_quality": true
+      }
+    },
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/ar_only_feedback_5k_20261029_v1.json",
+        "config_sha256": "f29305045536b551f45addc5f694a508045709490131bc434f4c1af14ece1c39",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v21",
+        "approved": true
+      }
+    ],
+    "acceptance": "Exact donor+Adam/RNG, fresh joint-phase stream, all840actual update traces versus joint prefix,8passes,40000additional/60000cumulative visits,527856inputframes. Full CPU data audit, native twoGPU capacity incl maximum2048-token FP32 decode, then separately admit training. No stage2 forward/optimizer. Exit0/resource/cleanup and dual checkpoint copies required. Evaluation identities and paired-asset analysis plus fixed visuals before quality conclusions.",
+    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs."
   },
   "previous_completed_result": {
     "label": "anchor_joint_binding_5k_20261027_v1",
@@ -375,5 +261,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Common80k and capacity_v20 replay are DONE. Do not rerun, restart, or re-notify these reports. See review_common80_resolution.json for accepted execution/data checks and documented precision-sensitive numerical variation: identical input/weights/RNG in two cases, BF16 max coordinate delta0.00390625 versus FP32 <=1.79e-7. No first-stage output conclusion yet. NEXT implement and test the user-approved AR-only continuation, not another stage2 experiment: same20k donor+Adam/RNG, fresh joint-phase seed20261028 stream, +40000visits/840updates/527856input-frame visits; save cumulative30/40/50/60k corresponding to joint+10/20/30/40k. Keep original100kLR schedule and training BF16, norms and batches. Prepare matched FP32(noTF32) stage1 free evaluation across all checkpoints, validate full decoder capacity and exact baseline identities; oldBF16 outputs cannot be assumed reusable. Separately admit CPU/capacity and training/evaluation configurations through the preserved native grant after live checks. Current GPU gates are CLOSED; queued human intent is not exact execution permission. Keep automation active until AR-only and feedback analysis finish."
+  "next_required_result": "Run exact CPU audit_v21 via existing native keeper after dry-run. GPU gates CLOSED. Then review real audit, separately bind capacity configuration, run full AR training and FP32/eager maximum decoder resource profile. After accepted capacity, admit train_v21 with only40000new visits. Training saves cumulative30/40/50/60k; independent FP32/eager evaluations of donor, joint+10/20/30/40/80k, stage2-only+80k, and AR+10/20/30/40k. Keep automation until analysis/fixed examples complete."
 }

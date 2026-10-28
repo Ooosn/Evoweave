@@ -771,3 +771,21 @@ are not automatically identity-matched baselines. generate_asset now exposes
 an explicit precision argument, preserves the prior default, and passes17CPU
 component tests(36including integration/replay regression). No actual stage1
 free-output quality comparison or new AR-only training has been executed.
+# AR-only Execution Followup, 2026-10-29
+
+Implementation source: 810366fb3bf75d1e8a533fc8355c76f126dc859d.
+Local validation: 62 CPU tests passed, including complete donor Adam restoration,
+the two-rank40k prefix against the original60k plan, exact840updates/527856input-frame
+visits, actual trace mismatch rejection, and paired failure/geometry denominators.
+Only the separate CPU audit_v21 is admitted initially; no GPU run is implied.
+
+The original OPT uses FlashAttention2 for BF16 training. All11 first-stage comparison
+checkpoints instead use the same explicit FP32/noTF32 eager-attention evaluation
+constructor with identical parameter keys and architecture. The training backend
+is unchanged. Profile the complete2048-token decoder separately before admission;
+the capacity-only forced non-EOS output is never scored as quality. Normal scoring
+uses unmodified greedy EOS behavior, mesh-only inputs and BOS/articulationxl.
+Compare donor, joint+10/20/30/40/80k, stage2-only+80k, and AR-only+10/20/30/40k.
+No historical BF16 generation result is reused. Match input/GT/normalization hashes
+per asset/frame and report paired-asset intervals with common-success geometry.
+

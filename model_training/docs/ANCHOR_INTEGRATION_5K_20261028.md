@@ -108,3 +108,15 @@ Durable outputs:/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1.
 Local inspection:D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028.
 All datasets/weights/artifacts remain outside Git. Code/config/diagnostic
 summaries may be published to the already-authorized branch.
+
+## Admission Progress
+
+Local108tests passed:38current anchor/integration tests,70regressions. Native
+CPU audit_v13finished2026-10-28 12:42JST with clean exit0, no CUDA initialized,
+16complete5000passes and1,043,152planned input-frame visits. The60kprefix and
+completed-stream extension match exactly. All6loader cases have bitwise equal
+CPU fields, exercised both rank prefetch queues and preserve global RNG.
+Maximum training joints234; peak process-tree RSS17,276,526,592bytes.
+Result SHA256:4494b15f5afc1dd922cfba60a5db411fc1f0abe996139ac8a53fb1b63624de56.
+Scientific SHA256:8e0467089d886766aa94b1ae6b6002f7ea03f1d2bff27ce161acef1c1b752da1.
+Capacity_v19is admitted next; formal training is not yet released.

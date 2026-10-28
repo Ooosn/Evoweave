@@ -47,7 +47,7 @@
     "gpu_memory_fraction_limit": 0.85,
     "execution_mode": "scheduler_job",
     "require_scheduler_membership": true,
-    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "stop_before_utc": "2026-10-28T22:30:00Z",
     "data_workers_per_rank": 6,
     "prefetch_microbatches": 2,
     "required_h_rt_seconds": 345600

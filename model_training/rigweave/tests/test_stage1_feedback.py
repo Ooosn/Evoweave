@@ -129,6 +129,16 @@ class GenerationTests(unittest.TestCase):
                                self.tokenizer, frame_indices=[0])
 
     @patch('stage1_feedback.original_xyz_vocabulary_processor', return_value=None)
+    def test_explicit_fp32_route_preserves_free_prompt(self, processor):
+        result = generate_asset(self.model, self.surface, self.tokenizer, frame_indices=[0], precision='fp32')
+        self.assertEqual(result[0]['tokens'], [1, 7, 2])
+        self.assertTrue(self.model.training)
+
+    def test_unknown_generation_precision_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'precision'):
+            generate_asset(self.model, self.surface, self.tokenizer, frame_indices=[0], precision='auto')
+
+    @patch('stage1_feedback.original_xyz_vocabulary_processor', return_value=None)
     def test_real_Vminus_wrapper_uses_original_free_decoder_without_teacher(self, processor):
         from test_virtual_path_ablation import make_base, make_surface
         from rigweave.dynamic_rig.virtual_path_ablation import VirtualPathAblationRig

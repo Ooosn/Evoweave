@@ -58,7 +58,7 @@ def compare_backbone_weights(donor, current, *, require_unchanged_nonshared=Fals
 
 
 @torch.inference_mode()
-def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2048):
+def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2048, precision='bf16'):
     """Only mesh input and the original BOS/class prompt reach generation."""
     if getattr(model, 'virtual_enabled', None) is not False:
         raise ValueError('feedback comparison requires the established V- backbone')
@@ -73,10 +73,16 @@ def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2
         raise ValueError('invalid or duplicate generation frame slots')
     if type(max_new_tokens) is not int or max_new_tokens <= 0:
         raise ValueError('token budget must be a positive integer')
+    if precision not in ('bf16', 'fp32'):
+        raise ValueError('generation precision must be explicitly bf16 or fp32')
     was_training = model.training
+    tf32 = torch.backends.cuda.matmul.allow_tf32
     model.eval()
     try:
-        context = torch.autocast('cuda', dtype=torch.bfloat16) if points.is_cuda else nullcontext()
+        if points.is_cuda and precision == 'fp32':
+            torch.backends.cuda.matmul.allow_tf32 = False
+        context = (torch.autocast('cuda', dtype=torch.bfloat16, enabled=precision == 'bf16')
+                   if points.is_cuda else nullcontext())
         with context:
             real, virtual = model.encode(surface)
             conditions = model.conditions(real, virtual)
@@ -91,6 +97,8 @@ def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2
                     logits_processor=original_xyz_vocabulary_processor(tokenizer, start))
         return output
     finally:
+        if points.is_cuda:
+            torch.backends.cuda.matmul.allow_tf32 = tf32
         model.train(was_training)
 
 

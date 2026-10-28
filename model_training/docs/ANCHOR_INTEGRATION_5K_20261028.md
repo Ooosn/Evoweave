@@ -701,3 +701,73 @@ and GPU RNG. Its configuration cannot enter train/audit mode. Thirty-four CPU
 tests including integration regression and stage1 components pass. Execute only
 after committed exact state, fresh native resource checks and a recorded dry-run.
 No AR-only launch or acceptance of first-stage quality is implied.
+
+At06:52JST the exact live plan passed on idle native130675914, both cgroups,
+16CPU slots and the original GPU UUIDs. Read-only checkpoint inspection ran
+separately under a four-CPU affinity/one Torch thread with CUDA hidden; it was
+not represented as scheduler membership. Actual donor versus stage2-only80k
+backbone comparison found500changed tensors among508shared, and ZERO changed
+tensors among447nonshared parameters/buffers. The latter establishes the
+unchanged generation-branch weights needed for the feedback interpretation,
+but says nothing yet about generated-output improvement.
+
+The plan is preserved as artifacts/replay_v20_admission.json, SHA256
+01bf31610af1ea498cc37b2fe82e7056d1370ec92de36083c202a089d91264be.
+Exactly one capacity_v20 request was queued at06:53:06JST using source
+4574c35251df17e7ed6f00178eb743e91ad09cbf and config SHA256
+37276f649cf196ccb1e56f9440b628db34f1a431f5d539ba63c42253ee64b074.
+The diagnostic has a separate22:30UTC payload cutoff, without shortening the
+retained allocation. Use preparation/observe_replay_v20.sh, not the old training
+observer (whose experiment-name filter excludes this new diagnostic config).
+No subsequent local edits may be deployed while this payload is active.
+
+## Replay Result And Scoped80k Review Resolution
+
+capacity_v20 completed at2026-10-29 06:58:02JST with exit0, passed resources/
+cleanup,16native CPU slots, and ZERO optimizer updates. Peak process-tree RSS
+was25,032,437,760bytes and peak reserved GPU memory was16,378,757,120bytes/rank.
+All receipts and predictions are hashed and retained by replay_v20_collection.json;
+result SHA256:3d1abc14b271124cf958fc992fb76e21572aa05562d38aad23ce7756a18ea6bb.
+
+For both original fixed cases, all complete surface-input hashes are identical
+across independent preparation and two model loads. Backbone/head hashes are
+identical; GT/raw frames and retained query points match; CUDA RNG does not
+change during inference. Nevertheless SAME-LOAD BF16 replay has maximum XYZ
+change0.00390625 in selected-input-normalized model coordinates, before dividing
+by any target bbox diagonal. FP32/no-TF32 maxima are8.94e-8/1.19e-7for same-load
+repeats and1.79e-7for reloads. Feature hashes also vary in both precisions.
+Thus numerical computation is a demonstrated precision-sensitive source of
+variation; checkpoint reload is not necessary to trigger it. This does not
+identify the individual CUDA kernel or prove a universal bound over967assets.
+FP32 is NOT bytewise exact, and BF16-versus-FP32 differences are not model gains.
+
+The original expanded report with passed=false is preserved, not weakened or
+rewritten. review_common80_resolution.json records the resolution: execution,
+data, paired inputs, independent aggregates and strict reserved-pose checks are
+accepted; existing uniform-BF16 aggregate stage2comparisons are reportable with
+the numerical-repeatability caveat. Perfect per-frame score equality is not
+claimed. This is not overall model-quality acceptance or stage1 evidence.
+
+On967assets, pretrained-stage2 MPJPE is7.0451%lower than joint. The joint-minus-
+pretrained95%paired-asset interval is[0.00037771,0.00049738]; edge F1difference
+is-0.00736129with interval[-0.00871651,-0.00602390]. All5metrics favor pretrained
+stage2on967and839, including PCK; the latter was inconclusive on the128panel.
+839are outside the selection panel, not historically untouched test assets.
+On32training assets, heldout-pose MPJPE is0.00496330/0.00461038/0.01086734;
+these are new poses of known assets, not unseen-asset generalization.
+Permuting anchor correspondence at the head interface increases selection128
+MPJPE to0.177990/0.161139/0.241177from0.005849/0.005467/0.013556. This verifies
+dependence at that interface, not a whole-model causal or topology-generation
+claim. All metrics use supplied GT reference skeletons.
+
+Both finished execution gates are closed; do not rerun or restart them. The
+required next work is the already human-authorized AR-only continuation, SAME
+20kdonor+Adam/RNG, only+40knew visits, cumulative30/40/50/60k compared with joint
+additional10/20/30/40k. Its implementation and exact admission remain pending.
+Keep training BF16 and the original100kLR horizon. Prepare uniform FP32/no-TF32
+stage1 free evaluation across donor/joint/stage2-only/AR-only, with a full AR
+generation capacity check before admission. Existing BF16 generation artifacts
+are not automatically identity-matched baselines. generate_asset now exposes
+an explicit precision argument, preserves the prior default, and passes17CPU
+component tests(36including integration/replay regression). No actual stage1
+free-output quality comparison or new AR-only training has been executed.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "ar_only_feedback_native_20261029",
-  "updated_at": "2026-10-28T22:31:19Z",
+  "updated_at": "2026-10-28T22:39:22Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,10 +34,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -100,8 +100,8 @@
     "label": "ar_only_feedback_5k_20261029_v1",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "operation": "preflight",
-    "phase": "CPU_audit",
-    "status": "local_tests_passed_CPU_audit_admitted",
+    "phase": "capacity",
+    "status": "CPU_audit_passed_capacity_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": {
@@ -173,9 +173,9 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
       "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
     },
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
     "runtime_unbound": false,
@@ -248,11 +248,34 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/ar_only_feedback_5k_20261029_v1.json",
         "config_sha256": "f29305045536b551f45addc5f694a508045709490131bc434f4c1af14ece1c39",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v21",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/ar_only_feedback_5k_20261029_v1.json",
+        "config_sha256": "77d5b0a59b701b6ff318d9ba4ef20ac31a0009b523f89d07218f5ae6e9bb3590",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v21",
         "approved": true
       }
     ],
     "acceptance": "Exact donor+Adam/RNG, fresh joint-phase stream, all840actual update traces versus joint prefix,8passes,40000additional/60000cumulative visits,527856inputframes. Full CPU data audit, native twoGPU capacity incl maximum2048-token FP32 decode, then separately admit training. No stage2 forward/optimizer. Exit0/resource/cleanup and dual checkpoint copies required. Evaluation identities and paired-asset analysis plus fixed visuals before quality conclusions.",
-    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs."
+    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs.",
+    "audit_completion": {
+      "finished_utc": "2026-10-28T22:38:14.779538+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "collection": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/ar_only_audit_v21_collection.json",
+      "result_sha256": "53782e90e05179d0fc11c4921a9edf8810d68e0bcd25ba661a8132944f200fa4",
+      "passes": 8,
+      "matched_updates": 840,
+      "input_frame_exposures": 527856,
+      "maximum_train_joints": 234,
+      "loader_cases": 6,
+      "all_fields_bitwise_equal": true,
+      "global_RNG_unchanged": true,
+      "cuda_initialized": false
+    }
   },
   "previous_completed_result": {
     "label": "anchor_joint_binding_5k_20261027_v1",
@@ -261,5 +284,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Run exact CPU audit_v21 via existing native keeper after dry-run. GPU gates CLOSED. Then review real audit, separately bind capacity configuration, run full AR training and FP32/eager maximum decoder resource profile. After accepted capacity, admit train_v21 with only40000new visits. Training saves cumulative30/40/50/60k; independent FP32/eager evaluations of donor, joint+10/20/30/40/80k, stage2-only+80k, and AR+10/20/30/40k. Keep automation until analysis/fixed examples complete."
+  "next_required_result": "Run native capacity_v21 after new exact dry-run:18BF16 AR optimizer updates per rank across6/12/24frame and length/geometry/joint stress groups, then discard profiling weights and run pureFP32/noTF32/eager max2048-token decode with24inputframes. Capacity EOS suppression is not quality. Check full process-tree resources/clean exit; only then separately admit train_v21. CPUaudit completed and accepted; don't repeat it. Formal training still blocked."
 }

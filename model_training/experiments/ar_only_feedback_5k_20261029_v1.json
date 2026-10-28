@@ -190,7 +190,11 @@
   "execution": {
     "matched_joint_trace_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17/reference_transport",
     "resume": null,
-    "CPU_audit": null,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v21/result.json",
+      "sha256": "53782e90e05179d0fc11c4921a9edf8810d68e0bcd25ba661a8132944f200fa4",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v21_resources.json"
+    },
     "capacity": null
   }
 }

@@ -124,14 +124,21 @@ def coordinate_objective(prediction, target, parents, mask, reference, bone_weig
 
 
 class SharedAnchorJointRig(nn.Module):
-    def __init__(self, backbone, head):
+    def __init__(self, backbone, head, *, ar_enabled=True):
         super().__init__()
+        if type(ar_enabled) is not bool:
+            raise ValueError('ar_enabled must be a boolean')
         self.backbone, self.head = backbone, head
+        self.ar_enabled = ar_enabled
 
     def forward(self, surface, targets, geometry, indices, index_mask, reference, weight, bone_weight):
         features, virtual = self.backbone.encode(surface)
-        ar = self.backbone.forward_encoded(features, virtual, targets, auxiliary_weight=0.,
-            target_frame_indices=indices, target_frame_mask=index_mask)
+        if self.ar_enabled:
+            ar = self.backbone.forward_encoded(features, virtual, targets, auxiliary_weight=0.,
+                target_frame_indices=indices, target_frame_mask=index_mask)
+        else:
+            ar = {'loss_per_asset': features.new_zeros(features.shape[0]),
+                  'main_accuracy': features.new_zeros(())}
         xyz = reference_slots(geometry['frame_target_joints'], reference)
         prediction = self.head(features, surface['query_points'], surface['query_normals'], xyz,
             geometry['target_parents'], geometry['joint_mask'], reference)

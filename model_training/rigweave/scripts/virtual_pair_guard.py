@@ -14,6 +14,7 @@ from single_query_protocol import SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE
 from reference_xyz_protocol import SCOPE as REFERENCE_SCOPE, ENTRYPOINT as REFERENCE_ENTRYPOINT
 from reference_flow_protocol import SCOPE as FLOW_SCOPE, ENTRYPOINT as FLOW_ENTRYPOINT
 from anchor_joint_protocol import SCOPE as ANCHOR_SCOPE, ENTRYPOINT as ANCHOR_ENTRYPOINT
+from anchor_integration_protocol import SCOPE as INTEGRATION_SCOPE, ENTRYPOINT as INTEGRATION_ENTRYPOINT
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -44,9 +45,10 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
-    expected_entrypoint = {REFERENCE_SCOPE: REFERENCE_ENTRYPOINT, FLOW_SCOPE: FLOW_ENTRYPOINT, ANCHOR_SCOPE: ANCHOR_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
+    expected_entrypoint = {REFERENCE_SCOPE: REFERENCE_ENTRYPOINT, FLOW_SCOPE: FLOW_ENTRYPOINT,
+        ANCHOR_SCOPE: ANCHOR_ENTRYPOINT, INTEGRATION_SCOPE: INTEGRATION_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
     if op.get('required_entrypoint') != expected_entrypoint:
         raise RuntimeError('state is not bound to the matched-pair trainer')
     return op
@@ -86,7 +88,7 @@ def execution_cpu_binding(config, exception, allowed_cpus):
 
 def scheduler_runtime(config):
     runtime = config['runtime']
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 16), ('world_size', 2)):

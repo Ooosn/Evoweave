@@ -34,13 +34,18 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def build_model(config, device):
+def build_model(config, device, *, load_official_weights=True, initialization_seed=None):
     import yaml
     from transformers import OPTConfig, OPTForCausalLM
     from src.model.michelangelo.get_model import get_encoder_simplified
     from train_dynamic_rig import build_tokenizer
 
+    if type(load_official_weights) is not bool:
+        raise ValueError('load_official_weights must be a boolean')
     initial, runtime = config['initialization'], config['runtime']
+    seed = initial['seed'] if initialization_seed is None else initialization_seed
+    if type(seed) is not int or not 0 <= seed < 2**31:
+        raise ValueError('invalid model initialization seed')
     upstream = runtime['unirig_root']
     revision = subprocess.check_output(['git', '-C', upstream, 'rev-parse', 'HEAD'], text=True).strip()
     dirty = subprocess.check_output(['git', '-C', upstream, 'status', '--porcelain'], text=True).strip()
@@ -48,19 +53,20 @@ def build_model(config, device):
         raise ValueError('official upstream implementation is not the declared clean revision')
     if Path(initial['checkpoint']).resolve() != Path(initial['official_checkpoint']).resolve():
         raise ValueError('only the official upstream checkpoint may initialize this route')
-    if sha256(initial['checkpoint']) != initial['sha256']:
+    if load_official_weights and sha256(initial['checkpoint']) != initial['sha256']:
         raise ValueError('official initialization checkpoint hash changed')
     if sha256(initial['model_config']) != initial['model_config_sha256']:
         raise ValueError('published original XYZ model configuration hash changed')
     if sha256(runtime['tokenizer_config']) != runtime['tokenizer_config_sha256']:
         raise ValueError('published original XYZ tokenizer configuration hash changed')
-    random.seed(initial['seed'])
-    np.random.seed(initial['seed'] % 2**32)
-    torch.manual_seed(initial['seed'])
+    random.seed(seed)
+    np.random.seed(seed % 2**32)
+    torch.manual_seed(seed)
     tokenizer = build_tokenizer(Path(runtime['tokenizer_config']))
     upstream_config = yaml.safe_load(Path(initial['model_config']).read_text())
-    payload = torch.load(initial['checkpoint'], map_location='cpu', mmap=True, weights_only=False)
-    state = {key.removeprefix('model.'): value for key, value in payload['state_dict'].items()}
+    if load_official_weights:
+        payload = torch.load(initial['checkpoint'], map_location='cpu', mmap=True, weights_only=False)
+        state = {key.removeprefix('model.'): value for key, value in payload['state_dict'].items()}
     lm_args = dict(upstream_config['llm'])
     lm_args.pop('pretrained_model_name_or_path')
     lm_args['vocab_size'] = tokenizer.vocab_size
@@ -73,19 +79,24 @@ def build_model(config, device):
     surface_args = dict(upstream_config['mesh_encoder'])
     if surface_args.pop('__target__') != 'michelangelo_encoder':
         raise ValueError('unexpected upstream surface encoder')
+    if not load_official_weights and surface_args.get('pretrained_path') is not None:
+        raise ValueError('random initialization cannot use an encoder checkpoint')
     surface = get_encoder_simplified(**surface_args)
     projection = nn.Linear(surface.width, lm_config.hidden_size)
     report, loaded = {}, set()
-    for prefix, module in [('transformer.', main), ('mesh_encoder.', surface), ('output_proj.', projection)]:
-        selected = {k[len(prefix):]: v for k, v in state.items() if k.startswith(prefix)}
-        module.load_state_dict(selected, strict=True)
-        loaded.update(k for k in state if k.startswith(prefix))
-        report[prefix] = {'strict': True, 'tensors': len(selected),
-                          'parameters': sum(v.numel() for v in selected.values())}
-    if 'transformer.lm_head.weight' not in loaded or 'transformer.model.decoder.embed_tokens.weight' not in loaded:
-        raise ValueError('full XYZ input embedding and output head must both load')
-    report['unused_upstream_keys'] = sorted(set(state)-loaded)
-    del payload, state, selected
+    if load_official_weights:
+        for prefix, module in [('transformer.', main), ('mesh_encoder.', surface), ('output_proj.', projection)]:
+            selected = {k[len(prefix):]: v for k, v in state.items() if k.startswith(prefix)}
+            module.load_state_dict(selected, strict=True)
+            loaded.update(k for k in state if k.startswith(prefix))
+            report[prefix] = {'strict': True, 'tensors': len(selected),
+                              'parameters': sum(v.numel() for v in selected.values())}
+        if 'transformer.lm_head.weight' not in loaded or 'transformer.model.decoder.embed_tokens.weight' not in loaded:
+            raise ValueError('full XYZ input embedding and output head must both load')
+        report['unused_upstream_keys'] = sorted(set(state)-loaded)
+        del payload, state, selected
+    else:
+        report = {'random_constructor_initialization': True, 'checkpoint_tensors_loaded': 0}
     for module in main.modules():
         if isinstance(module, nn.Dropout):
             module.p = 0.
@@ -98,14 +109,14 @@ def build_model(config, device):
     if architecture.query_tokens != 1024 or architecture.motion_depth != 12:
         raise ValueError('real runtime must use the approved 1024-slot, 12-block architecture')
     codec = AuxSkeletonTokens(**config['auxiliary_codec'])
-    torch.manual_seed(initial['seed'])
+    torch.manual_seed(seed)
     model = VirtualQueryXYZRig(FixedQuerySurfaceTokenizer(surface, projection), main, architecture,
                                auxiliary_vocab_size=codec.vocab_size, auxiliary_pad=codec.pad)
     model.to(device)
-    initialization = {'source_commit': revision, 'checkpoint_sha256': initial['sha256'],
+    initialization = {'source_commit': revision, 'checkpoint_sha256': initial['sha256'] if load_official_weights else None,
                       'model_config_sha256': sha256(initial['model_config']),
                       'tokenizer_config_sha256': sha256(runtime['tokenizer_config']),
-                      'seed': initial['seed'], 'load_report': report, 'architecture': asdict(architecture),
+                      'seed': seed, 'load_report': report, 'architecture': asdict(architecture),
                       'groups': {name: sum(p.numel() for p in getattr(model, name).parameters() if p.requires_grad)
                                  for name in ('surface_tokenizer', 'motion_encoder', 'frame_fusion', 'xyz_decoder', 'auxiliary')},
                       'old_method_trained_weights_loaded': False,

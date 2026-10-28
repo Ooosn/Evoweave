@@ -304,14 +304,15 @@ def save(model, optimizer, stream, config, output, initial, source, samples, fra
             raise RuntimeError('refuse to overwrite full checkpoint')
         payload = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'rank_states': ranks,
             'optimizer_parameter_names': parameter_names(model), 'initialization': initial,
-            'additional_asset_exposures': samples, 'global_backbone_asset_exposures': 20000 + samples,
+            'additional_asset_exposures': samples,
+            'global_backbone_asset_exposures': config['training'].get('backbone_exposure_offset', 20000) + samples,
             'input_frame_exposures': frames, 'step': step, 'configuration': config,
             'scientific_sha256': scientific_sha(config), 'code_commit': source}
         temp = path.with_suffix('.pt.tmp')
         torch.save(payload, temp)
         temp.replace(path)
         spec = {**mirror(path, path.name, config), 'additional_asset_exposures': samples,
-            'global_backbone_asset_exposures': 20000 + samples, 'complete': True,
+            'global_backbone_asset_exposures': config['training'].get('backbone_exposure_offset', 20000) + samples, 'complete': True,
             'both_copies_verified': True, 'code_commit': source}
         write_json(path.with_suffix('.json'), spec)
         write_json(Path(spec['durable_path']).with_suffix('.json'), spec)

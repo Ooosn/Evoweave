@@ -45,29 +45,50 @@ def head_digest(head):
 
 def load_model(config, device, rank, world, resume=None):
     base, spec = load_backbone_config(config), config['backbone']['checkpoint']
+    regime = config['training'].get('regime')
+    scratch = regime == 'scratch_stage2'
+    if regime not in (None, 'joint_pretrained', 'pretrained_stage2', 'scratch_stage2'):
+        raise ValueError('unrecognized integration regime')
+    if regime is not None and (config['training']['ar_enabled'] != (regime == 'joint_pretrained')
+            or config['training']['backbone_initialization'] != ('random' if scratch else 'pretrained')):
+        raise ValueError('integration initialization/objective switches differ from regime')
     if rank == 0 and sha256(spec['path']) != spec['sha256']:
         raise ValueError('donor digest changed')
     dist.barrier(device_ids=[device.index])
-    original, tokenizer, codec, official = build_model(base, device)
+    original, tokenizer, codec, official = (build_model(base, device,
+        load_official_weights=False, initialization_seed=config['training']['scratch_seed'])
+        if scratch else build_model(base, device))
     backbone = VirtualPathAblationRig(original, virtual_enabled=False)
     payload = torch.load(spec['path'], map_location='cpu', mmap=True, weights_only=False)
     if (payload['variant'] != 'fraction20_40_query' or payload['asset_exposures'] != 20000
             or payload['code_commit'] != 'a0bda62bb8fba70320310b063da8c7898ddaf441'
             or payload['optimizer_parameter_names'] != parameter_names(backbone)):
         raise ValueError('donor identity changed')
-    backbone.load_state_dict(payload['model'], strict=True)
+    if not scratch:
+        backbone.load_state_dict(payload['model'], strict=True)
     optimizer = optimizer_for(backbone, base)
-    optimizer.load_state_dict(payload['optimizer'])
+    if not scratch:
+        optimizer.load_state_dict(payload['optimizer'])
     with torch.random.fork_rng(devices=[device.index]):
         torch.manual_seed(config['training']['head_seed'])
         head = AnchorJointBinding(AnchorJointConfig(**config['architecture']), config['training']['variant']).to(device)
-    model = SharedAnchorJointRig(backbone, head)
+    model = SharedAnchorJointRig(backbone, head,
+        ar_enabled=config['training'].get('ar_enabled', True))
     optimizer.add_param_group({'params': list(head.parameters())})
     apply_rng(payload['rank_states'][rank])
     initial = {'donor': spec, 'strict_complete_backbone_load': True, 'backbone_optimizer_retained': True,
         'head_optimizer_new': True, 'head_initial_sha256': head_digest(head),
         'head_parameters': sum(p.numel() for p in head.parameters()),
         'constructor_official_sha256': official['checkpoint_sha256']}
+    if regime is not None:
+        initial.update(regime=regime, strict_complete_backbone_load=not scratch,
+            backbone_optimizer_retained=not scratch, constructor_official_weights_loaded=not scratch,
+            scratch_seed=config['training']['scratch_seed'] if scratch else None,
+            donor_sampling_RNG_only=scratch,
+            active_encoder_initial_sha256={name: head_digest(getattr(backbone, name))
+                for name in ('surface_tokenizer', 'motion_encoder')})
+        if scratch and (optimizer.state or official['load_report'].get('checkpoint_tensors_loaded') != 0):
+            raise RuntimeError('scratch arm inherited learned weights or optimizer states')
     del payload
     stream, samples, frames, step = make_stream(base, rank, world), 0, 0, 0
     if resume:
@@ -75,18 +96,31 @@ def load_model(config, device, rank, world, resume=None):
             raise ValueError('resume digest changed')
         dist.barrier(device_ids=[device.index])
         saved = torch.load(resume['path'], map_location='cpu', mmap=True, weights_only=False)
-        if (saved['scientific_sha256'] != scientific_sha(config)
+        kind = 'same_science'
+        if regime is not None:
+            from anchor_integration_protocol import resume_kind
+            kind = resume_kind(config, saved, resume)
+        if ((regime is None and saved['scientific_sha256'] != scientific_sha(config))
                 or saved['optimizer_parameter_names'] != parameter_names(model)
                 or len(saved['rank_states']) != world):
             raise ValueError('resume science/parameters/ranks changed')
         model.load_state_dict(saved['model'], strict=True)
         optimizer.load_state_dict(saved['optimizer'])
-        stream = make_stream(base, rank, world, saved['rank_states'][rank]['stream'])
+        if kind == 'declared_parent':
+            from virtual_fusion_normal_runtime import MatchedFrameStream
+            stream = MatchedFrameStream.extend_completed(range(5000), saved['rank_states'][rank]['stream'],
+                target_assets=config['training']['additional_assets'],
+                update_boundaries=config['training']['checkpoint_assets'])
+        else:
+            stream = make_stream(base, rank, world, saved['rank_states'][rank]['stream'])
         apply_rng(saved['rank_states'][rank])
         samples, frames, step = (saved[k] for k in ('additional_asset_exposures', 'input_frame_exposures', 'step'))
         if stream.cursor * world != samples:
             raise ValueError('resume consumed stream differs')
         initial = saved['initialization']
+        if kind == 'declared_parent':
+            initial = {**initial, 'regime': regime, 'parent_continuation': config['training']['parent_continuation'],
+                'parent_full_model_optimizer_RNG_loaded': True, 'parent_sampler_prefix_verified': True}
         del saved
     return model, optimizer, tokenizer, codec, base, initial, stream, samples, frames, step
 
@@ -103,7 +137,7 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
            samples, device, world, *, prefetch=None, check_groups=False):
     model.train()
     optimizer.zero_grad(set_to_none=True)
-    lr, beta = set_lr(optimizer, 20000 + samples, base)
+    lr, beta = set_lr(optimizer, config['training'].get('learning_rate_asset_offset', 20000) + samples, base)
     optimizer.param_groups[-1]['lr'] = lr * config['training']['head_lr_multiplier']
     goal = sum(map(len, batches)) * world
     weight = config['training']['coordinate_weight'] * min(1., (samples + goal) / config['training']['warmup_assets'])
@@ -140,7 +174,14 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
             p.grad.mul_(world / assets)
     groups = None
     if check_groups:
-        groups = check_gradient_groups(model.backbone, 'fraction20_40_query')
+        if model.ar_enabled:
+            groups = check_gradient_groups(model.backbone, 'fraction20_40_query')
+        else:
+            groups = {name: norm_of(getattr(model.backbone, name)) for name in ('surface_tokenizer', 'motion_encoder')}
+            inactive = [model.backbone.xyz_decoder, model.backbone.frame_fusion, model.backbone.condition_norm]
+            if any(p.grad is not None for module in inactive for p in module.parameters()):
+                raise RuntimeError('stage2-only loss traversed the skeleton-generation branch')
+            groups['AR_branch_gradients_absent'] = True
         groups['head'] = norm_of(model.head)
     clipping = clip_branch_gradients(model)
     optimizer.step()
@@ -148,7 +189,9 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
     peak = torch.cuda.max_memory_reserved(device)
     if peak > config['runtime']['gpu_memory_fraction_limit'] * torch.cuda.get_device_properties(device).total_memory:
         raise RuntimeError('GPU memory limit exceeded')
-    return {'assets_in_update': assets, 'frames_in_update': int(totals[5]), 'ar_targets': int(totals[6]),
+    return {'assets_in_update': assets, 'frames_in_update': int(totals[5]),
+        'ar_targets': int(totals[6]) if model.ar_enabled else 0,
+        'planned_ar_targets': int(totals[6]), 'ar_supervision_applied': model.ar_enabled,
         'ar_loss': float(totals[0] / assets), 'xyz_loss': float(totals[1] / assets),
         'bone_loss': float(totals[2] / assets), 'ar_accuracy': float(totals[3] / assets),
         'coordinate_weight': weight, 'lr': lr, 'head_lr': optimizer.param_groups[-1]['lr'], 'beta1': beta,
@@ -323,6 +366,8 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
     summary = {'complete': True, 'samples': samples, 'final': final, 'variant': model.head.mode,
         'groups': summarize(all_rows), 'reference': 'GT_only', 'scientific_sha256': scientific_sha(config),
         'diagnostic_scope': 'anchor permutation at stage2 interface only; backbone features kept, not a whole-model causal ablation'}
+    if config['training'].get('regime') is not None:
+        summary['regime'] = config['training']['regime']
     if final:
         summary['nonselection839_groups'] = summarize([v for v in all_rows
             if v['split'] == 'valid' and not v['selection_panel']])
@@ -375,6 +420,9 @@ def train_segment(config, output, source, device, rank, world, end, resume):
                 step += 1
                 value.update(step=step, additional_asset_exposures=samples, input_frame_exposures=frames,
                     variant=model.head.mode, code_commit=source)
+                if config['training'].get('regime') is not None:
+                    value['regime'] = config['training']['regime']
+                    value['learning_rate_asset_position'] = config['training']['learning_rate_asset_offset'] + samples - goal
                 with (output / f'updates_rank_{rank}.jsonl').open('a') as handle:
                     handle.write(json.dumps(value) + '\n')
                 progress = {k: v for k, v in value.items() if k != 'microbatches'}

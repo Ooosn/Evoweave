@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "family": "anchor_integration_5k_20261028_v1",
+  "runtime": {
+    "repo": "/work/wangyy/virtual_query_matched_5k_20261025/code",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "tokenizer_config": "/home/wangyy/evorig/model_assets/UniRig/configs/tokenizer/tokenizer_parts_articulationxl_256.yaml",
+    "tokenizer_config_sha256": "20ad7eb9b9dfec8a3d2943e8c28223adbc16da3bdb65bd94aa38d92527f51109",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 130675914,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "keeper_pid": 1108368,
+    "output_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs",
+    "world_size": 2,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.85,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "data_workers_per_rank": 6,
+    "prefetch_microbatches": 2,
+    "required_h_rt_seconds": 345600
+  },
+  "backbone": {
+    "config": {
+      "relative_path": "model_training/experiments/real_query_fraction20_40_min2_5k_20261026_v1.json",
+      "sha256": "53c03ec4052abc2f811a00641b7ceaaf1a625250de7a89fbecde294580d98324"
+    },
+    "checkpoint": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
+    },
+    "source_asset_exposures": 20000
+  },
+  "architecture": {
+    "input_dim": 1024,
+    "dim": 256,
+    "heads": 8,
+    "reference_depth": 2,
+    "target_depth": 4,
+    "max_joints": 512,
+    "max_hop": 8,
+    "gradient_checkpointing": true
+  },
+  "training": {
+    "minimum_assets": 60000,
+    "comparison_interval_assets": 10000,
+    "additional_assets": 80000,
+    "checkpoint_assets": [
+      5000,
+      10000,
+      15000,
+      20000,
+      25000,
+      30000,
+      35000,
+      40000,
+      45000,
+      50000,
+      55000,
+      60000,
+      65000,
+      70000,
+      75000,
+      80000
+    ],
+    "variant": "reference_transport",
+    "effective_assets_per_update": 48,
+    "frame_policy": {
+      "2": 24,
+      "3": 24,
+      "4": 24,
+      "5": 24,
+      "6": 24,
+      "7": 12,
+      "8": 12,
+      "9": 12,
+      "10": 12,
+      "11": 12,
+      "12": 12,
+      "13": 6,
+      "14": 6,
+      "15": 6,
+      "16": 6,
+      "17": 6,
+      "18": 6,
+      "19": 6,
+      "20": 6,
+      "21": 6,
+      "22": 6,
+      "23": 6,
+      "24": 6
+    },
+    "stream_seed": 20261028,
+    "head_seed": 20261028,
+    "loss": "matched_coordinate_objective_with_regime_controlled_AR",
+    "coordinate_weight": 10,
+    "bone_weight": 0.25,
+    "warmup_assets": 1000,
+    "head_lr_multiplier": 3,
+    "reference": "uniform_GT_complete_tree_per_asset_visit",
+    "optimizer": "retain_pretrained_Adam_or_fresh_scratch_Adam",
+    "gradient_clip": "separate_backbone_and_head_norm1",
+    "comparison_assets": 60000,
+    "regimes": [
+      "joint_pretrained",
+      "pretrained_stage2",
+      "scratch_stage2"
+    ],
+    "regime": null,
+    "scratch_seed": 20261028,
+    "learning_rate_asset_offset": 20000,
+    "parent_continuation": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17/reference_transport/checkpoint_060000.pt",
+      "sha256": "cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016",
+      "code_commit": "9db222d0070122b08c6d5dde3329f3be69d46c16",
+      "scientific_sha256": "0a3f889063f52c0e7687b10b47fca109d2987a1bcca1ad1729bd8b1c653430b9",
+      "additional_asset_exposures": 60000,
+      "input_frame_exposures": 787504,
+      "step": 1260
+    }
+  },
+  "evaluation": {
+    "seed": 20261028,
+    "input_frames": 8,
+    "reference_slots": [
+      0,
+      4
+    ],
+    "selection_assets": 128,
+    "final_assets": 967,
+    "reference_kind": "GT_only",
+    "train_diagnostic_assets": 32,
+    "heldout_frames_disjoint": true,
+    "diagnostics": [
+      "broken_anchor_correspondence_at_head_interface",
+      "cross_reference_consistency"
+    ],
+    "extension_rule": "First stop the two new controls at60k for primary comparison against the completed joint60k arm on the fixed128 panel. The declared common80k phase requires a separate exact admission after review; no automatic extension from a loss scalar."
+  },
+  "capacity": {
+    "optimizer_steps_per_case": 2,
+    "accumulation_microbatches": 2,
+    "stress_group": "largest_joints",
+    "frames": [
+      6,
+      12,
+      24
+    ],
+    "all_regimes": true,
+    "parent60k_resume": true,
+    "profile_weights_discarded": true
+  },
+  "artifacts": {
+    "durable_root": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1",
+    "preserve_all_checkpoints": true
+  },
+  "execution": {
+    "formal_target_is_full5000": true,
+    "no_small_data_quality_pilot": true,
+    "runtime_unbound_until_new_native_grant": false,
+    "phase": "controls_to60k"
+  }
+}

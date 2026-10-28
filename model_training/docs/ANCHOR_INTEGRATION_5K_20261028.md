@@ -133,3 +133,10 @@ Maximum reserved GPU bytes45,797,605,376/45,147,488,256; peak tree RSS25,253,093
 Result SHA256:be38458a228d1e89611b94db8bcd46c65347b259372cf2f8df860e9db3c91179.
 Profile weights are discarded; this is capacity evidence, not quality.
 Formal train_v18controls_to60k is now admitted. No80kphase is yet admitted.
+
+Formal train_v18started2026-10-28 13:06:47JST, native supervisor3629610,
+source8b5cb9afa415c19781fb348fa1cdfcded2c96a1e. At13:19JST the pretrained-stage2
+arm had1,920visits/40updates with finite losses and AR supervision disabled.
+Configuration SHA419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4.
+Pin this deployed source for the whole phase. Later local state/documentation
+commits must not be checked out remotely while its payload is active.

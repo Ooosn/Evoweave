@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_integration_full5k_native_20261028",
-  "updated_at": "2026-10-28T04:02:55Z",
+  "updated_at": "2026-10-28T04:19:46Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -75,13 +75,13 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_retained_integration_formal_controls_ready",
+    "status": "native_96hour_retained_integration_controls_running",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-28T04:02:55.570557Z",
+    "last_observed_utc": "2026-10-28T04:19:46.104116Z",
     "last_observed_gpu_used_mib": [
-      0,
-      0
+      44635,
+      44513
     ],
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
@@ -96,7 +96,7 @@
   },
   "active_operation": {
     "label": "anchor_integration_5k_20261028_v1",
-    "status": "CPU_and_native_capacity_accepted_formal_controls_ready",
+    "status": "full5k_integration_controls_to60k_running",
     "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
@@ -109,6 +109,23 @@
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
+    "launched_source": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e",
+    "launched_config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
+    "launch": {
+      "stage": "train_v18",
+      "phase": "controls_to60k",
+      "started_utc": "2026-10-28T04:06:47.811521Z",
+      "supervisor_pid": 3629610,
+      "kernel_scheduler_membership": true,
+      "source_checkout_pinned_during_run": true,
+      "observed_utc": "2026-10-28T04:19:46.104116Z",
+      "first_regime": "pretrained_stage2",
+      "first_regime_observed_visits": 1920,
+      "first_regime_observed_updates": 40,
+      "AR_supervision_applied": false,
+      "observed_losses_finite": true,
+      "peak_tree_rss_bytes": 26264928256
+    },
     "capacity_evidence": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v19/result.json",
       "sha256": "be38458a228d1e89611b94db8bcd46c65347b259372cf2f8df860e9db3c91179",
@@ -240,5 +257,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Launch admitted train_v18 controls_to60k with unchanged scientific config/source implementation. Pin deployed source for the entire phase. Compare both new controls to archived joint60k using matched intermediate checkpoints; validate actual traces, initialization and learning curves. Stop at control60k for primary review; common80k requires separate exact admission."
+  "next_required_result": "Continue running train_v18 controls_to60k. Remote source8b5cb9a is PINNED for the entire payload; do not deploy later local state/docs commits mid-run. Compare both controls to archived joint training at matched10k/20k/etc checkpoints, with actual trace/init/LR validation. Stop at control60k for primary review; common80k requires separate exact admission."
 }

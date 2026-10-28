@@ -75,12 +75,16 @@ def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2
         raise ValueError('token budget must be a positive integer')
     if precision not in ('bf16', 'fp32'):
         raise ValueError('generation precision must be explicitly bf16 or fp32')
+    decoder_config = getattr(getattr(model, 'xyz_decoder', None), 'config', None)
+    if precision == 'fp32' and getattr(decoder_config, '_attn_implementation', None) == 'flash_attention_2':
+        raise ValueError('FP32 generation requires an explicit FP32-capable decoder backend')
     was_training = model.training
-    tf32 = torch.backends.cuda.matmul.allow_tf32
+    tf32 = torch.backends.cuda.matmul.allow_tf32, torch.backends.cudnn.allow_tf32
     model.eval()
     try:
         if points.is_cuda and precision == 'fp32':
             torch.backends.cuda.matmul.allow_tf32 = False
+            torch.backends.cudnn.allow_tf32 = False
         context = (torch.autocast('cuda', dtype=torch.bfloat16, enabled=precision == 'bf16')
                    if points.is_cuda else nullcontext())
         with context:
@@ -98,7 +102,7 @@ def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2
         return output
     finally:
         if points.is_cuda:
-            torch.backends.cuda.matmul.allow_tf32 = tf32
+            torch.backends.cuda.matmul.allow_tf32, torch.backends.cudnn.allow_tf32 = tf32
         model.train(was_training)
 
 

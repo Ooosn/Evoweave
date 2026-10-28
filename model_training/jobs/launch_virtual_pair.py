@@ -28,7 +28,8 @@ if __name__ == '__main__':
     trainer = {'reference_skeleton_xyz_20261027_v1': 'train_reference_xyz.py',
                'shared_reference_flow_5k_20261027_v1': 'train_reference_flow.py',
                'anchor_joint_binding_5k_20261027_v1': 'train_anchor_joint.py',
-               'anchor_integration_5k_20261028_v1': 'train_anchor_integration.py'}.get(family, 'train_virtual_pair.py')
+               'anchor_integration_5k_20261028_v1': 'train_anchor_integration.py',
+               'ar_only_feedback_5k_20261029_v1': 'train_ar_only.py'}.get(family, 'train_virtual_pair.py')
     main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
          trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',))

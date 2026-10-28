@@ -120,3 +120,16 @@ Maximum training joints234; peak process-tree RSS17,276,526,592bytes.
 Result SHA256:4494b15f5afc1dd922cfba60a5db411fc1f0abe996139ac8a53fb1b63624de56.
 Scientific SHA256:8e0467089d886766aa94b1ae6b6002f7ea03f1d2bff27ce161acef1c1b752da1.
 Capacity_v19is admitted next; formal training is not yet released.
+
+Capacity_v19subsequently completed2026-10-28 13:02JST, exit0and clean payload
+cleanup. All18updates/rank completed across3regimes x6/12/24poses x2steps.
+Active encoder/head gradients were positive/finite; stage2-only AR gradients
+were absent. Pretrained encoders match exactly, random encoders differ and
+all initial heads have SHA93dfca718d9c2130a390a172fa391433652c41c4001d36bdad680cb6da8066e9.
+Each regime passed free24pose inference at234/230joints. Parent60k restoration
+preserved model/Adam/RNG and counters60000/787504/1260with a verified sampler
+extension; both ranks' parent head SHAis68d30f1e7562b12574307e6b3dd6e8da791edc85a97f9ef6f7225178fe9f21aa.
+Maximum reserved GPU bytes45,797,605,376/45,147,488,256; peak tree RSS25,253,093,376.
+Result SHA256:be38458a228d1e89611b94db8bcd46c65347b259372cf2f8df860e9db3c91179.
+Profile weights are discarded; this is capacity evidence, not quality.
+Formal train_v18controls_to60k is now admitted. No80kphase is yet admitted.

@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "state_id": "anchor_joint_binding_full5k_native_audit_20261027",
+  "updated_at": "2026-10-28T02:46:31Z",
+  "module": "model_training",
+  "human_context": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "GT-reference stage2: associate complete reference joints with pretrained reference mesh/anchor features, exploit same-index cross-pose anchors and decode the SAME joints' target XYZ. Controlled reference-transport vs target-content read on full5000.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "reference_input": "Latest user explicitly requires GT reference skeleton for this functionality. No natural stage1 predictions or predicted/GT joint matching in this experiment."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report",
+    "preflight"
+  ],
+  "blocked_operations": [
+    "submit",
+    "matched_eval",
+    "train"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130675914,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_slots": 16,
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "keeper_pid": 1108368,
+    "status": "native_96hour_retained_idle_after_clean_completed_pair",
+    "expiry_utc": "2026-10-31T11:55:38Z",
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "last_observed_utc": "2026-10-28T02:46:31.278656Z",
+    "last_observed_gpu_used_mib": [
+      0,
+      0
+    ],
+    "kernel_cpuset_and_devices_membership": true,
+    "rss_limit_bytes": 68719476736,
+    "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
+    "rejected_previous_reservation": {
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
+    },
+    "h_rt_seconds": 345600
+  },
+  "active_operation": {
+    "label": "anchor_joint_binding_5k_20261027_v1",
+    "status": "completed_full5k_GT_reference_stage2_comparison_accepted_with_limits",
+    "operation": "train",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "2026-10-27 user asked to design and start full5k testing of GT-reference skeleton/mesh-token interaction, reuse existing trained structure, employ meaningful comparisons and act adaptively toward the research purpose rather than stopping after an arbitrary run.",
+    "code_commit": "d0a6b13915d1ae8c6cb19ecc05729f711e83699b",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_joint.py",
+    "operation_entrypoints": {
+      "submit": "model_training/jobs/hold_anchor_joint_native_20261027.sh"
+    },
+    "contract": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "quality_accepted": true,
+    "quality_acceptance_scope": "Primary review accepts this single-seed, common60k GT-reference stage2 comparison: transport improves all five967and839metrics, uses the explicit association route and generalizes to checked heldout poses. This is NOT convergence, all-asset perfection, stage1 free-AR retention, predicted-reference performance or seed-robust superiority. Producer result quality_accepted=false is intentionally retained as the automated pending-review record; this separate primary decision does not alter that immutable artifact.",
+    "CPU_tests_passed": 108,
+    "CPU_test_record": "24current anchor/model/protocol tests pass,4orchestration mock tests pass;80unchanged reference/virtual-pair regressions previously pass. Postclip proof includes isolated gradient clipping, nonfinite rejection, prior-capacity completeness, identical full12pass stream and paired driver resume/extension.",
+    "input_manifest": {
+      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
+      "rows": 5000
+    },
+    "source_checkpoint": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888",
+      "backbone_asset_exposures": 20000
+    },
+    "resource_request": {
+      "GPUs": 2,
+      "CPU_slots": 16,
+      "host": "pcg01i",
+      "h_rt_seconds": 345600,
+      "mem_req_per_slot": "4G",
+      "rss_limit_bytes": 68719476736,
+      "gpu_memory_fraction_limit": 0.85,
+      "scheduler_membership_required": true,
+      "binding": "native_scheduler_cpuset_no_extra_binding_flag; record_actual_grant_before_CPU_or_GPU_payload",
+      "allocation": 130675914,
+      "keeper_pid": 1108368,
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_affinity": [
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        14,
+        15,
+        61,
+        63,
+        64,
+        65,
+        74,
+        76,
+        77,
+        78
+      ]
+    },
+    "allocation_script": "model_training/jobs/hold_anchor_joint_native_20261027.sh",
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
+    "allocation_script_shared_path": "/home/wangyy/jobs/anchor_joint_binding_20261027/hold_anchor_joint_native_20261027.sh",
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v12",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "663c30a2e3b497ebdbd2f9e0ee01dba8f3d6c8099eecd5bbfce50a4d80e4f1f5",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17",
+        "approved": false
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "f42270b095f5df2e15ccaadc1aeb10d7aa42dac309aefc8202399259003239a6",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17",
+        "approved": true
+      },
+      {
+        "approved": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+        "config_sha256": "dc1973d180b5f2d6437ae5085b367cb9ceb8e561518d2b41c016b91ab1cad3f9",
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v18"
+      }
+    ],
+    "planned_stages": {
+      "audit": "audit_v12",
+      "capacity": "capacity_v18",
+      "train": "train_v17"
+    },
+    "planned_config": "model_training/experiments/anchor_joint_binding_5k_20261027_v1.json",
+    "runtime_unbound": false,
+    "acceptance_test": "Reuse SHA-verified clean36-case/rank capacity_v17 architecture evidence; capacity_v18 must pass12updates/rank=maxJ6/12/24poses x2modes x2steps with separate norm1 clipping, positive isolated coordinate-only surface/motion/head gradients and no AR decoder gradients BOTH modes,24pose maxJfree inference,85percentGPU,64GiBtree,16CPU,native cpuset+devices and clean exit. Primary records acceptance before formal.",
+    "comparison": "Exactly matched reference_transport and target_content parameters/init/data/reference/loss/LR. GT references only. Min40k per arm; common extension to60k if128selection-panel curve improves by preregistered rule. Final967including separate nonselection839; copy controls,correspondence permutation,cross-reference consistency,train/heldout diagnostics.",
+    "checkpoint_policy": "All full checkpoints every5000visits per arm,model+optimizer+rankRNG+consumedstream,SHA-verified durable mirrors. Preserve all previous runs.",
+    "durable_root": "/home/wangyy/evorig/outputs/anchor_joint_binding_5k_20261027/v1",
+    "monitor": {
+      "owned_by": "primary",
+      "extra_agents": 0,
+      "directory": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027",
+      "status": "final60k_metrics_initialization_full_actual_traces_heldout_permutation_and_resources_verified"
+    },
+    "end_policy": "Do not treat a single loss decrease or mean-position improvement as overall success. Analyze matched multi-metric results and condition diagnostics, inspect failure cases, distinguish budget cap from convergence. Preserve allocation unless explicitly released.",
+    "CPU_audit_evidence": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v12/result.json",
+      "sha256": "798dafe36af565c7bec61c9c5d80cb415fcc4368a22beb655dedbeee51f2350c",
+      "source": "4f8e2bd3f22ccb1b0e97ddc3e320a876d1d7d6f4",
+      "scientific_sha256": "7e3e7013de2037e979426d0b0e02f31fa60f13e73801c5fb7ffa2a469f76127a",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "train_assets": 5000,
+      "valid_assets": 967,
+      "complete_passes_checked": 12,
+      "input_frame_exposures": 787504,
+      "maximum_train_joints": 234,
+      "loader_cases": 6,
+      "all_CPU_fields_bitwise_equal": true,
+      "two_rank_prefetch_checked": true,
+      "loader_peak_rss_bytes": 17371451392,
+      "supervisor_peak_rss_bytes": 15677116416,
+      "global_RNG_unchanged": true,
+      "CUDA_initialized": false,
+      "finished_utc": "2026-10-27T12:10:05.382707Z"
+    },
+    "supplemental_CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/preparation/driver_test_result.json;4mocked orchestration tests passed for interleaving/resume/common extension/incomplete deadline/initialization rejection.",
+    "full_architecture_capacity_evidence": {
+      "stage": "capacity_v17",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v17/result.json",
+      "sha256": "e268bc7f93c2a6c6ff0b3297cf05a3f0a6876b8873c2c0b8abe800290388c898",
+      "source": "f8906467208431b6b4f894c03ad24dd44e738f5d",
+      "scientific_sha256": "7e3e7013de2037e979426d0b0e02f31fa60f13e73801c5fb7ffa2a469f76127a",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "updates_per_rank": 36,
+      "variants": 2,
+      "stress_cases_per_variant": 9,
+      "free_inference_frames": 24,
+      "free_inference_joints": [
+        234,
+        230
+      ],
+      "all_combined_gradient_groups_positive": true,
+      "coordinate_only_GPU_check_mode": "target_content",
+      "coordinate_only_gradients": [
+        {
+          "surface": 0.059983882908502116,
+          "motion": 0.12364867183969352,
+          "head": 5.501193326988642
+        },
+        {
+          "surface": 0.023901338051102,
+          "motion": 0.052683105113891855,
+          "head": 2.830957077585563
+        }
+      ],
+      "head_initial_sha256": "93dfca718d9c2130a390a172fa391433652c41c4001d36bdad680cb6da8066e9",
+      "head_parameters": 8042283,
+      "peak_tree_rss_bytes": 28495101952,
+      "peak_reserved_bytes_per_rank": [
+        46303019008,
+        45883588608
+      ],
+      "unclipped_total_gradient_norm_range": [
+        12.551079750061035,
+        76.14742279052734
+      ],
+      "finished_utc": "2026-10-27T12:59:01.113920Z"
+    },
+    "optimizer_adjustment": {
+      "reason": "Measured head gradients dominate global clip norm (total12.55to76.15), scaling pretrained backbone gradients along with the head despite retained Adam state. Separate backbone/head norm1 clipping preserves mixed-objective direction within the backbone without cross-branch clipping coupling. This is an optimization design correction, not measured proof of better quality.",
+      "formal_training_started": true,
+      "required_followup": "Before formal train, test changed clipping on CPU and targeted capacity_v18 with maxJ at6/12/24poses,both modes,two optimizer steps,isolated coordinate gradients BOTH modes. Reuse full36-case architecture/memory evidence only with unchanged forward/parameters/data and explicit compatibility.",
+      "implemented": true,
+      "clipping": "separate_backbone_and_head_norm1",
+      "CPU_verified": true
+    },
+    "CPU_audit_compatibility": {
+      "retained": true,
+      "reason": "No data, sampler, loader, prefetch, backbone/head forward, parameters, objective or shapes changed. Only post-backward clipping and diagnostics/artifact saving changed; source diff of rigweave/src and generic data/runtime helpers against full audit/capacity source is empty. The new scientific hash records clipping and does not relabel the prior audit as a rerun."
+    },
+    "capacity_evidence": {
+      "stage": "capacity_v18",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v18/result.json",
+      "sha256": "aebfa9ab520d803924f1cc83ea17057244ab0ac3943accb80985eec6eaf059e8",
+      "source": "18ee813af51de81804a095ba44baf6f41a19fbde",
+      "scientific_sha256": "eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6",
+      "complete": true,
+      "passed": true,
+      "supervisor_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "profile_weights_discarded": true,
+      "not_model_quality": true,
+      "updates_per_rank": 12,
+      "variants": 2,
+      "stress_frames": [
+        6,
+        12,
+        24
+      ],
+      "maximum_joints_per_rank": [
+        234,
+        230
+      ],
+      "coordinate_only_both_modes_positive_surface_motion_head": true,
+      "coordinate_only_AR_decoder_gradients_absent": true,
+      "all_combined_gradient_groups_positive": true,
+      "free_inference_frames": 24,
+      "separate_clipping_logged_and_verified": true,
+      "backbone_preclip_gradient_norm_range": [
+        0.9128485918045044,
+        2.9098315238952637
+      ],
+      "head_preclip_gradient_norm_range": [
+        16.675168991088867,
+        67.57074737548828
+      ],
+      "peak_tree_rss_bytes": 24986832896,
+      "peak_reserved_bytes_per_rank": [
+        45608861696,
+        45671776256
+      ],
+      "finished_utc": "2026-10-27T13:31:08.226988Z",
+      "uses_full_architecture_capacity_stage": "capacity_v17"
+    },
+    "allocation_lifetime_extension": {
+      "approved": true,
+      "complete": true,
+      "allocation": 130675914,
+      "keeper_pid": 1108368,
+      "current_h_rt_seconds": 86400,
+      "requested_h_rt_seconds": 345600,
+      "queue_max_h_rt_seconds": 345600,
+      "reason": "User highlighted96hour queue maximum and prior early48hour expiry. Preserve the same native allocation and request96hours now, within verified queue limit. Capacity stress timings also show full matched40k/60k training plus evaluations may exceed original remaining24hour grant. No new allocation, GPU or CPU increase.",
+      "command": "qalter -when now -l h100=2,h_rt=96:00:00,mem_req=4G 130675914",
+      "entrypoint": "model_training/jobs/extend_anchor_joint_native_20261027.sh",
+      "verification": "Same job130675914,keeper1108368,start time,pcg01i:16,bothnativecontrollers,GPUs3/4; accepted h_rt345600. Only after live success update runtime deadline and formally approve train_v17.",
+      "shared_script": "/home/wangyy/jobs/anchor_joint_binding_20261027/extend_anchor_joint_native_20261027.sh",
+      "first_attempt": {
+        "status": "guard_rejected_before_qalter",
+        "reason": "Generic preflight check omitted a dedicated resource-management entrypoint and defaulted to the trainer binding. No scheduler mutation occurred. Bind and invoke the versioned extension entrypoint explicitly; keep all checks.",
+        "source": "f74acc204baa23eb882560130f8a31ee57bead63"
+      },
+      "passed": true,
+      "accepted_h_rt_seconds": 345600,
+      "observed_utc": "2026-10-27T13:34:41.382537Z",
+      "same_job_keeper_start_devices_slots_verified": true
+    },
+    "capacity_source_compatibility": "After accepted capacity18ee813, no rigweave code changed (verified empty diff fromb925f0c). Only the versioned scheduler-lifetime management script and runtime96hour limit/stop time plus state/docs changed. Scientific SHA remains eff8c2f2d395ff40a73b81cb77d4c1009374e2b4e68fa37bc2def4f52b613bd6.",
+    "launched_source": "9db222d0070122b08c6d5dde3329f3be69d46c16",
+    "launched_config_sha256": "f42270b095f5df2e15ccaadc1aeb10d7aa42dac309aefc8202399259003239a6",
+    "launch": {
+      "stage": "train_v17",
+      "queued_utc": "2026-10-27T13:37:47.819966Z",
+      "started_utc": "2026-10-27T13:37:48.815456Z",
+      "supervisor_pid": 1685206,
+      "kernel_scheduler_membership": true,
+      "source_checkout_pinned_during_run": true,
+      "complete": true,
+      "exit_code": 0,
+      "finished_utc": "2026-10-28T02:33:31.023264Z",
+      "payload_cleanup_complete": true,
+      "supervisor_absent_after_completion": true
+    },
+    "interim_evidence": {
+      "reference_transport": {
+        "last_verified_additional_visits": 10000,
+        "updates": 210,
+        "full_passes": 2,
+        "evaluation_assets": 128,
+        "selection_panel_only": true,
+        "not_final_quality_acceptance": true,
+        "not_between_arm_comparison": true,
+        "copy_metrics": {
+          "normalized_mpjpe": 0.0926624429025161,
+          "pck_005": 0.5392710099601702,
+          "edge_f1": 0.5611740635141671
+        },
+        "at5000": {
+          "normalized_mpjpe": 0.09229041748169818,
+          "pck_005": 0.5434057968800081,
+          "edge_f1": 0.5527279887758328
+        },
+        "at10000": {
+          "normalized_mpjpe": 0.04472532121534251,
+          "pck_005": 0.7047340849657303,
+          "edge_f1": 0.5981558174599697,
+          "normalized_j2j": 0.03426619850378728,
+          "normalized_bone_vector_error": 0.021975757229478293
+        },
+        "independent_asset_macro_recomputation_passed": true,
+        "paired_asset_bootstrap_draws": 2000,
+        "all_five_10000_vs_copy_intervals_favor_head": true,
+        "checkpoint": {
+          "sha256": "fa3c55bf41ab7c3a268a41c3eaaf4d68366a9917f5a50b42e1d84bd9061f3d90",
+          "bytes": 8278607378,
+          "both_copies_producer_verified": true,
+          "independent_full_weights_hash": false
+        },
+        "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_single_reference_transport_evaluation_010000.json",
+        "motion_diagnostic": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/response_diagnostic_reference_transport_010000.json"
+      },
+      "target_content": {
+        "last_verified_additional_visits": 10000,
+        "updates": 210,
+        "full_passes": 2,
+        "evaluation_assets": 128,
+        "selection_panel_only": true,
+        "not_final_quality_acceptance": true,
+        "at5000": {
+          "normalized_mpjpe": 0.0930602521293622,
+          "pck_005": 0.5418065830981248,
+          "edge_f1": 0.5508090454212662
+        },
+        "at10000": {
+          "normalized_mpjpe": 0.05824034494928908,
+          "pck_005": 0.6253398629633422,
+          "edge_f1": 0.5545482425843267,
+          "normalized_j2j": 0.041788946408720676,
+          "normalized_bone_vector_error": 0.024426839755862347
+        },
+        "checkpoint": {
+          "sha256": "2379dd9a3a31b0f0cd14d5db1adf545ba33d7ce192622b513b9a49ebf0d31bc8",
+          "bytes": 8278607378,
+          "both_copies_producer_verified": true
+        },
+        "motion_diagnostic": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/response_diagnostic_target_content_010000.json"
+      }
+    },
+    "interim_interpretation": {
+      "measured": "At20k both arms show conditional motion. Transport has17.1percent lower128-panel MPJPE and5.12percentage-point higher PCK; all five paired-asset intervals favor it, but F1 difference is now only0.00787. Actual consumed data and initialization remain matched through4passes. Saved examples retain local offsets and amplitude error; neither arm is reference invariant.",
+      "inference": "The common20k result retains a transport advantage but its difference from the content reader is smaller than at10k. This may be a learning-speed difference, not final superiority. Preserve the complete matched training/evaluation plan; do not apply the previously deferred readout proposal.",
+      "unimplemented_proposal": "A target-minus-reference decoder readout was considered to cancel pose-invariant corrections, but is deferred and has NOT changed the running model.",
+      "visualization": "Chinese explicit reference-GT/reference-surface, target-GT/target-surface, predictions/same-target-surface; same camera/axes, raw frame IDs, no ambiguous reference-copy panel in main figures."
+    },
+    "matched_10000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_evaluation_010000.json",
+      "trace_audit": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/trace_prefix_audit_010000.json",
+      "independent_aggregation_passed": true,
+      "copy_controls_identical": true,
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "full5000passes_per_arm": 2,
+      "updates_per_arm": 210,
+      "input_frames_per_arm": 130200,
+      "training_validation128_disjoint": true,
+      "terminal_trace_audit_complete": false,
+      "heldout_pose_audit_complete": false,
+      "all_five_metric_paired_intervals_favor_transport": true,
+      "normalized_mpjpe_delta": -0.01351502373394656,
+      "pck_delta": 0.07939422200238805,
+      "edge_f1_delta": 0.04360757487564294,
+      "scope": "One matched training seed, fixed128selection panel at10k visits/arm; early learning advantage, not final quality/convergence/seed-robustness acceptance.",
+      "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_010000.png"
+    },
+    "matched_20000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_evaluation_020000.json",
+      "trace_audit": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/trace_prefix_audit_020000.json",
+      "independent_aggregation_passed": true,
+      "copy_controls_identical": true,
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "full5000passes_per_arm": 4,
+      "updates_per_arm": 420,
+      "input_frames_per_arm": 257920,
+      "training_validation128_disjoint": true,
+      "terminal_trace_audit_complete": false,
+      "heldout_pose_audit_complete": false,
+      "all_five_metric_paired_intervals_favor_transport": true,
+      "reference_transport": {
+        "normalized_mpjpe": 0.023051317443657484,
+        "pck_005": 0.886587839617796,
+        "edge_f1": 0.7180008982189982,
+        "normalized_j2j": 0.01828115444890356,
+        "normalized_bone_vector_error": 0.012555710672133156,
+        "normalized_cross_reference_difference": 0.020760063170200738,
+        "checkpoint_sha256": "8b7aa0c896c02d19fa1860ef8cb1580b0c65f7e4be64d09bacdb9d3f260173ae"
+      },
+      "target_content": {
+        "normalized_mpjpe": 0.027814619921368182,
+        "pck_005": 0.8353706792800796,
+        "edge_f1": 0.7101321755041893,
+        "normalized_j2j": 0.02174775642514948,
+        "normalized_bone_vector_error": 0.014211558235888124,
+        "normalized_cross_reference_difference": 0.023906185051600914,
+        "checkpoint_sha256": "3faaa4e72090ea13bdf530254016d6333879e427e02a17fee2c0e2116f3a87fc"
+      },
+      "checkpoint_bytes_each": 8278607570,
+      "both_copies_producer_verified": true,
+      "independent_full_weights_hash": false,
+      "scope": "One matched training seed, fixed128selection panel at20k visits/arm; not final quality/convergence/seed-robustness acceptance. Earlier interim_evidence records10k; this block is the latest matched milestone.",
+      "visual": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_020000.png"
+    },
+    "final_60000_evidence": {
+      "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
+      "report": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/review_final_060000.json",
+      "report_sha256": "1af7513d14986a31ae6e8bac504174bf2a9903c56fe8d7c5e82f18fca72a91d3",
+      "additional_analysis": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/final_additional_analysis_060000.json",
+      "additional_analysis_sha256": "11374822c8f2610b3a8250a31ab27d8d29a677e69e773bba169e6ff9d088cd4a",
+      "collection_manifest_sha256": "70efc5d63445dedacd62db17e4b0d546dfc34de4e7aca9153fdfb458c2528b31",
+      "full5000passes_per_arm": 12,
+      "updates_per_arm": 1260,
+      "input_frames_per_arm": 787504,
+      "common_samples_per_arm": 60000,
+      "extension": "Both arms passed all three preregistered30to40k improvement rules; both continued to60k without changing source/config/data/loss/schedule.",
+      "initialization_records_identical": true,
+      "actual_microbatches_identical": true,
+      "terminal_trace_audit_complete": true,
+      "heldout_pose_exclusion_verified": true,
+      "train_validation967_disjoint": true,
+      "eligible_target_actually_consumed_fraction": 0.9933035714285714,
+      "eligible_reference_actually_consumed_fraction": 0.984375,
+      "valid_assets": 967,
+      "valid_target_rows_per_method": 13538,
+      "nonselection_assets": 839,
+      "all_five967_and839_paired_intervals_favor_transport": true,
+      "reference_transport": {
+        "normalized_mpjpe": 0.007081149523807553,
+        "pck_005": 0.9918992010908891,
+        "edge_f1": 0.8900839472187035,
+        "normalized_j2j": 0.006236469187263321,
+        "normalized_bone_vector_error": 0.0060797416119543445,
+        "nonselection839_mpjpe": 0.007132418477450203,
+        "normalized_cross_reference_difference": 0.007624327682249774,
+        "heldout32_mpjpe": 0.005682825686562865,
+        "permuted128_mpjpe": 0.17905045253740223,
+        "paired_normal128_mpjpe": 0.006745097554227998,
+        "last10000_relative_mpjpe_reduction": 0.1905616257679651,
+        "assets_mean_mpjpe_above0p02": 23,
+        "checkpoint_sha256": "cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016",
+        "checkpoint_bytes": 8278607634
+      },
+      "target_content": {
+        "normalized_mpjpe": 0.009710829513204434,
+        "pck_005": 0.9826362651474487,
+        "edge_f1": 0.8460116926020189,
+        "normalized_j2j": 0.007733428004983431,
+        "normalized_bone_vector_error": 0.008103547042969832,
+        "nonselection839_mpjpe": 0.009816374273274728,
+        "normalized_cross_reference_difference": 0.009900770807594703,
+        "heldout32_mpjpe": 0.007464758066687084,
+        "permuted128_mpjpe": 0.009018974119823855,
+        "paired_normal128_mpjpe": 0.009019016593681175,
+        "last10000_relative_mpjpe_reduction": 0.12283119957122846,
+        "assets_mean_mpjpe_above0p02": 62,
+        "checkpoint_sha256": "82932dbda86f4b73e842c2379d205b130c0656e3e19dd8018a2db5704e1e9824",
+        "checkpoint_bytes": 8278607570
+      },
+      "transport_better_mpjpe_assets": 898,
+      "both_checkpoint_copies_producer_hash_verified": true,
+      "independent_full_weight_rehash": false,
+      "small_artifacts_independently_rehashed": true,
+      "resource_clean_exit": true,
+      "peak_tree_rss_bytes": 33185140736,
+      "budget_capped_not_converged": true,
+      "stage1_free_generation_retention_tested": false,
+      "visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_evaluation_060000.png",
+        "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/pair_examples_final_060000.png"
+      ],
+      "interpretation": "Reference transport is the preferred current GT-reference stage2 candidate. Paired accuracy gains plus coherent target-index permutation sensitivity support use and utility of this explicit route under this recipe. Not an isolated pretrained-backbone benefit or universal architecture claim. Retain all checkpoints and native allocation; no automatic new training stage is admitted."
+    }
+  },
+  "previous_completed_result": {
+    "label": "shared_reference_flow_5k_20261027_v1",
+    "document": "model_training/docs/SHARED_REFERENCE_FLOW_5K_20261027.md",
+    "full_record": "model_training/state/archive/shared_flow_completed_before_anchor_binding_20261027.json",
+    "result_sha256": "94f98d42f9e11e76fb1ef6c13bed6e35079d6740f329e2fcf5a45398f9891693",
+    "execution_authority": false
+  },
+  "next_required_result": "Current common60k comparison is complete and independently reviewed. Retain reference_transport as the GT-reference stage2 candidate. Future work should diagnose the23assets with mean error>2percent and residual reference dependence, and decide a new fixed longer paired budget or seed replication; stage1 free-generation retention is required before broader shared-model acceptance. No unrecorded restart or new compute stage; preserve allocation unless explicitly released."
+}

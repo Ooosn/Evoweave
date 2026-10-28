@@ -195,6 +195,10 @@
       "sha256": "53782e90e05179d0fc11c4921a9edf8810d68e0bcd25ba661a8132944f200fa4",
       "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v21_resources.json"
     },
-    "capacity": null
+    "capacity": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v21/result.json",
+      "sha256": "24f1bebe0dff39d6ae93979606faac69e4bc582b316f67093e05e2076b2409ef",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v21_resources.json"
+    }
   }
 }

@@ -788,3 +788,19 @@ uses unmodified greedy EOS behavior, mesh-only inputs and BOS/articulationxl.
 Compare donor, joint+10/20/30/40/80k, stage2-only+80k, and AR-only+10/20/30/40k.
 No historical BF16 generation result is reused. Match input/GT/normalization hashes
 per asset/frame and report paired-asset intervals with common-success geometry.
+
+CPU audit_v21 finished2026-10-28T22:38:14Z with exit0, native16CPU provenance,
+all8passes/840updates/527856inputframes, matching actual joint sample/AR-slot plans,
+and six serial/prefetch equality cases. No CUDA initialization. Result SHA256:
+53782e90e05179d0fc11c4921a9edf8810d68e0bcd25ba661a8132944f200fa4.
+Capacity_v21 finished2026-10-28T23:00:03Z with exit0 and clean resource release
+inside the retained allocation. Both ranks completed18BF16 updates and full2048-token
+FP32 eager decode with24inputframes; training/decode maximum reserved bytes were
+45541752832/10739515392, tree RSS peak27746340864. Adam fingerprint on both ranks:
+25bce929174500695f3d055f0f7b0e266528eff83fc9978c3a361e71be412245.
+Capacity result SHA256:24f1bebe0dff39d6ae93979606faac69e4bc582b316f67093e05e2076b2409ef.
+The exact train_v21 configuration is now admitted after a fresh live dry-run.
+CPU/capacity artifacts and the independent review/render tools are retained locally.
+No first-stage quality conclusion yet; profile weights and forced-EOS-suppressed
+outputs are discarded. EdgeF1 uses directed edges after nearest-joint correspondence
+in both directions, not a geometry-free graph isomorphism measure.

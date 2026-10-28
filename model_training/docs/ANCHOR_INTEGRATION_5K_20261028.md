@@ -140,3 +140,39 @@ arm had1,920visits/40updates with finite losses and AR supervision disabled.
 Configuration SHA419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4.
 Pin this deployed source for the whole phase. Later local state/documentation
 commits must not be checked out remotely while its payload is active.
+
+## Matched10k Interim Evidence
+
+The new controls completed10k each. Independent actual-prefix inspection
+matches all3arms' initialization head, consumed assets/raw poses/references,
+planned AR slots and LR trajectory through2fullpasses/210updates/130,200input
+frames. Only the joint arm applies AR supervision. The new pretrained donor
+matches the old joint source; scratch applies neither pretrained weights nor
+Adam state. Training is disjoint from128selection assets; GT-copy controls
+are identical and row-to-asset aggregation was independently recomputed.
+
+| Metric | Joint pretrained | Pretrained stage2 only | Scratch stage2 only |
+| --- | ---: | ---: | ---: |
+| Normalized MPJPE | 0.04472532 | 0.04913710 | 0.09238944 |
+| PCK@5% | 0.70473408 | 0.67950518 | 0.53762169 |
+| Edge F1 | 0.59815582 | 0.60357186 | 0.54887951 |
+| Symmetric J2J | 0.03426620 | 0.03766356 | 0.06185848 |
+| Target bone-vector error | 0.02197576 | 0.02086930 | 0.02501458 |
+
+Pretrained-stage2 minus scratch MPJPE is-0.04325235, paired95%interval
+[-0.04990214,-0.03660175]; all5metric intervals favor the warm start. Joint
+minus pretrained-stage2 MPJPE is-0.00441177, interval[-0.00566570,-0.00320955],
+but bone-vector error is+0.00110646, interval[0.00052018,0.00172046]. Edge F1
+difference-0.00541604 has interval[-0.01425795,0.00379260]. Thus joint has an
+early position advantage with a local-bone tradeoff, not a comprehensive win.
+Scratch remains near the copy baseline; this early point does not establish
+its eventual ability or a final integration benefit. Keep the run unchanged.
+
+The same previous arm/leg cases were rendered and inspected, with input GT
+on its own surface, target GT separately, and all3predictions on the same
+target surface. Both fixed examples currently favor pretrained-stage2 over
+joint despite the latter's better aggregate position score. Their displayed
+numbers are per-target-frame errors, not the128means. Use the readable_v2
+figures, not the retained first layout with cramped title spacing.
+Evidence:review_controls_010000.json, trace_prefixes/010000, and
+fixed_case_{2,3}_010000_v2.png under the local inspection root.

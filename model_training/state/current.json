@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_integration_full5k_native_20261028",
-  "updated_at": "2026-10-28T04:19:46Z",
+  "updated_at": "2026-10-28T06:00:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -109,6 +109,41 @@
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
+    "matched10000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_010000.json",
+      "scope": "One matched seed, fixed128selection panel, first2fullpasses only. No final quality conclusion.",
+      "actual_data_references_planned_AR_slots_and_LR_match_all3": true,
+      "initial_heads_identical": true,
+      "pretrained_source_matches_retained_joint_arm": true,
+      "scratch_learned_weights_and_Adam_not_loaded": true,
+      "controls_apply_no_AR_supervision": true,
+      "train_validation128_disjoint": true,
+      "updates_per_arm": 210,
+      "input_frames_per_arm": 130200,
+      "joint_pretrained": {
+        "normalized_mpjpe": 0.04472532121534251,
+        "pck_005": 0.7047340849657303,
+        "edge_f1": 0.5981558174599697,
+        "normalized_bone_vector_error": 0.021975757229478293
+      },
+      "pretrained_stage2": {
+        "normalized_mpjpe": 0.04913709615201307,
+        "pck_005": 0.6795051773769754,
+        "edge_f1": 0.6035718583131726,
+        "normalized_bone_vector_error": 0.020869295711653076
+      },
+      "scratch_stage2": {
+        "normalized_mpjpe": 0.0923894431264541,
+        "pck_005": 0.5376216924956693,
+        "edge_f1": 0.5488795100528511,
+        "normalized_bone_vector_error": 0.025014576098555976
+      },
+      "interpretation": "Pretrained-stage2 beats scratch on all5paired asset intervals at10k. Joint improves position/PCK/J2J vs pretrained-stage2 but worsens bone-vector error; edge-F1 interval includes zero. Stronger early warm-start evidence than evidence for a comprehensive ongoing-AR benefit. Scratch remains near-copy at this early point; do not conclude it cannot learn.",
+      "fixed_case_visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_010000_v2.png",
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_010000_v2.png"
+      ]
+    },
     "launched_source": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e",
     "launched_config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
     "launch": {

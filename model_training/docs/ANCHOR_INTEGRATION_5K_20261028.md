@@ -402,9 +402,9 @@ deadline, disk space, clean committed source and exact unused output path.
 
 Joint resumes its retained train_v17/reference_transport60k checkpoint,
 SHA cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016.
-Pretrained-stage2 resumes train_v18/pretrained_stage260k, SHA
+Pretrained-stage2 resumes train_v18/pretrained_stage2/checkpoint_060000.pt, SHA
 3624030132d0ae5b907a0d0641601604e220f3b28f8fd201bb063a03a8e8df3a;
-scratch resumes train_v18/scratch_stage260k, SHA
+scratch resumes train_v18/scratch_stage2/checkpoint_060000.pt, SHA
 be8eb4d12917d52d8761c9c1223384c4441deea0dd1037bc88d6df5aefb1a50b.
 Model/Adam/RNG/counters and consumed sampler prefix must be retained. The
 shared global80k target is1,680updates and1,043,152input-frame visits per arm,
@@ -417,3 +417,287 @@ source was clean and train_v19paths were unused. Free workspace was about
 2.97TB, with ample durable space. Current admission is pending the final
 committed-source plan and actual launch confirmation, not evidence of a
 running80k payload. Expanded evaluation and stage1retention remain required.
+
+The final plan subsequently passed at2026-10-29 00:15:37JST. It directly
+inspected all3actual60k checkpoint containers, finding head Adam step1260,
+pretrained encoder step1680and scratch encoder step1260. Both rank RNG
+records exist; the declared parent stream extends correctly, both control
+streams restore normally, and all3arms' next microbatches match per rank.
+All6samplers have plan SHA
+92078ff94a9c88ff665a3b458e2f3c95c7ec5747d9c6e5cf4d919d73f5452556.
+The plan initializes no CUDA and accurately records its short CPU inspection
+outside the scheduler job; compute still starts only as a native keeper child.
+Remaining time before stop was67.66hours, exceeding the conservative12hour
+continuation/evaluation planning window. Plan SHA256:
+8bde861a58eb9aec45ab50e99683ca35291d142cbe2b1e68e48f40da166582a4;
+retained locally as artifacts/common80_admission.json. A diagnostic-only
+NamedTuple formatting error was corrected before this successful plan;
+no training code, checkpoint or scientific setting changed.
+
+Exactly one train_v19request was then accepted. The original native keeper
+started supervisor1206189at00:16:03JST, pinned source
+7dd6f3cb2a276bf40928d49f1e96a417f2fdec26. At00:21JST the joint arm's first
+real update was1261/60,048visits/787,792input-frame visits on BOTH ranks.
+AR supervision is active; AR/XYZ/bone losses are finite. LRposition is80,000,
+backbone LR1.34638223e-5and head LR4.03914669e-5, preserving the existing
+schedule. Native membership and16CPU enforcement remain verified; observed
+GPU use was42,341/42,361MiB, peak process-tree RSS26,002,509,824bytes.
+
+The70k/80k local reviewer must concatenate the verified60k prefixes from
+train_v17joint/train_v18controls with train_v19suffixes, respecting old and
+new source identities and cumulative counters. The existing controls reviewer
+is60k-only; do not blindly pass70k or overwrite retained earlier reviews.
+Do not deploy later local status/documentation commits during this payload.
+
+## First-Stage Feedback Question Clarified By The User
+
+On2026-10-29JST the user explicitly asked whether stage2 gradients through
+the shared encoders/attention IMPROVE the first-stage skeleton output. The
+question is not whether stage1 predictions feed stage2, and not merely
+whether stage2 accuracy improves. It is currently UNMEASURED. Teacher-forced
+AR loss and GT-reference stage2 scores cannot answer it.
+
+Use three matched evaluation conditions: the original pretrained donor,
+pretrained-stage2-only after training, and joint-pretrained at the SAME
+endpoint. Stage2-only versus donor directly measures the effect of learned
+shared features on the unchanged AR branch, conditional on an actual tensor
+identity check of the nonshared generation branch. Joint versus donor is the
+overall first-stage change; it cannot alone attribute improvement to stage2
+because additional AR training also occurred. Joint versus stage2-only tests
+the added continued AR objective under matched stage2 exposure. Do not
+silently add a new AR-only training experiment to answer this question.
+
+Reuse the existing free-generation evaluator, fixed128asset membership and
+identical raw-frame/normalization/tokenizer/greedy settings. Generation must
+not take a GT reference skeleton or GT token prefixes beyond the ordinary
+BOS/class prompt. Measure original-GT edgeF1, generation success, joint-count
+accuracy and matched geometry metrics, with failures retained in denominators,
+paired asset intervals and the same examples. Donor results may be reused
+only when checkpoint, input, target and decoding identities match exactly.
+The old backbone-only checkpoint schema and the full shared-head checkpoint
+schema need explicit strict extraction/loading; never silently skip keys.
+
+Prepare this evaluation locally without touching the active train_v19source
+or GPU workload. Execute only after its payload finishes and after separate
+exact evaluation admission. Report improvement, unchanged performance or
+degradation based on actual generated skeletons; no claim is available yet.
+
+## Newly Authorized AR-Only Continuation
+
+On2026-10-29JST, the user explicitly requested an AR-only randomized-frame
+continuation AFTER the active experiment finishes, to compare first-stage
+generation with the retained joint checkpoints. The user clarified that
+30k/40k/50k/60k means TOTAL visits including the original20k, not additional
+stage2visits. Therefore add only40kvisits/8fullpasses/840updates, matching
+527,856new input-frame visits under the existing joint stream.
+
+| Cumulative AR backbone visits | New comparison-phase visits | Retained joint checkpoint |
+| ---: | ---: | --- |
+| 30000 | 10000 | train_v17/reference_transport/checkpoint_010000.pt |
+| 40000 | 20000 | train_v17/reference_transport/checkpoint_020000.pt |
+| 50000 | 30000 | train_v17/reference_transport/checkpoint_030000.pt |
+| 60000 | 40000 | train_v17/reference_transport/checkpoint_040000.pt |
+
+Randomized means the established20%-40%/minimum2AR target-frame policy, NOT
+random model initialization. Start from the same train_v9/fraction20_40_query
+checkpoint_020000.pt, SHA
+9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888.
+
+The user specifically conditioned optimizer inheritance on what the ORIGINAL
+20k-to-joint transition actually did, not the later60k-to80k resume. Exact
+source9db222d0070122b08c6d5dde3329f3be69d46c16loads the donor model AND full
+optimizer state before adding the new head and before any update. The actual
+train_v17initialization receipt records backbone_optimizer_retained=true and
+head_optimizer_new=true. The latter only concerns the newly created stage2
+head. Independently inspected joint60k Adam counters are1680for the encoder
+and1260for the new head, consistent with420inherited backbone updates.
+Accordingly the new AR-only control MUST retain the same backbone Adam
+moments/counters/groups and starting per-rank RNG; it must not reset Adam.
+
+Match the joint phase's new stream seed20261028and actual data/raw-frame
+requests, randomized AR targets,2..24input poses, normalization, effective48
+batch, physical24/12/6and backbone norm1clipping. Keep LRposition
+20000+additional_visits on the original100kcycle. Do not continue the donor's
+different old data cursor, restart warmup, or shorten the LRcycle to end at
+cumulative60k. The treatment is removal of stage2forward/loss/optimization,
+not another architecture or initialization change. Independently audit actual
+consumed prefixes against the retained joint runs.
+
+At each requested node, compare first-stage FREE generation on identical
+assets/raw frames/normalization/tokenizer/greedy decoding, with original-GT
+edgeF1, success, joint-count accuracy, clearly scoped geometry metrics and
+paired-asset intervals/fixed examples. Failed generation is zero for
+F1/success/count; never report zero geometric distance for failed cases.
+This added matched AR-only control directly tests the incremental contribution
+of stage2training to stage1, unlike a simple joint-before/after comparison.
+
+This is explicit human authorization of a queued experiment, NOT exact
+execution admission. Do not interrupt or overlap train_v19or deploy code
+while it is active. After its complete built-in evaluations and clean exit,
+prepare/test/profile a separately guarded exact AR-only configuration, then
+admit and launch through the retained native grant. No new GPU allocation,
+GPU release or AR-only training beyond cumulative60k is authorized here.
+The follow-up is not complete until this new comparison is analyzed.
+
+## Local70k/80k Reviewer Ready
+
+On2026-10-29 02:07JST, preparation/review_controls.py was extended locally
+to support70k and80k using the same invoke_review.ps1. It verifies the retained
+60kprefix bytes/hash against the accepted60kmanifest, reads a stable resumed
+suffix, and concatenates only the exact210/420updates required. Source changes
+at update1261are explicit. Every step, asset/input-frame counter, effective
+batch and resumed LRposition is checked; actual data/reference/LR/initialization
+and metrics are still compared across all3arms by the existing analysis.
+
+Ten targeted tests pass, covering all3regimes at70k/80k, legacy nodes, changed
+prefix hashes/lengths, truncated records, reset/gapped counters, wrong source,
+wrong AR switch/LRposition and incomplete terminal receipts. All6retained real
+60k traces and the clean controls terminal receipts pass compatibility checks.
+No historical comparison report was regenerated. Terminal readiness is checked
+BEFORE retaining receipts, preventing incomplete mutable files from blocking
+a later retry; reports are created exclusively, never overwritten.
+
+A live read-only joint70k probe verifies both ranks at1,470updates/70,000visits/
+915,016input frames, with first resumed update1261/60,048visits/LRposition80k.
+Its preserved combined prefixes can be reused by the eventual full comparison.
+This probe is not a3arm quality result. Evidence:continuation_live_probe.json,
+preparation/continuation_tests_result.json and the two retained joint70k traces.
+No GPU calculation, training change or remote source deployment occurred.
+
+When all3arms reach70k, run invoke_review.ps1 -Samples70000 -Examples with
+normal separate PowerShell argv tokens. At80k use -Samples80000 -Examples
+-Terminal only after all built-in expanded evaluations and clean payload exit;
+the script refuses a nonterminal80k review. The subsequent independent expanded
+evaluation analysis and first-stage/AR-only comparisons are still required.
+
+## Verified Common70k Comparison
+
+At2026-10-29 04:16JST the independent local review completed and retained
+review_controls_070000.json. Every arm has1,470updates,70,000asset visits
+(14complete passes over the same5,000assets) and915,016input-frame visits.
+The hashed60k prefixes plus210resumed updates are continuous on both ranks.
+Actual assets, raw poses, reference poses, planned AR slots and LR trajectories
+match; standalone controls apply no AR loss. All128selection assets are
+disjoint from the consumed training identities. Both checkpoint copies have
+producer hash verification and independently checked sizes; small artifacts
+are independently hashed, not another full-weight rehash.
+
+| Regime | Normalized MPJPE | PCK@0.05 | Edge F1 | Normalized J2J | Bone-vector error |
+|---|---:|---:|---:|---:|---:|
+| Joint pretrained | 0.00613435 | 0.99520149 | 0.90501139 | 0.00554239 | 0.00538451 |
+| Pretrained stage2-only | 0.00576649 | 0.99543027 | 0.91415867 | 0.00518700 | 0.00514534 |
+| Scratch stage2-only | 0.01435333 | 0.95532654 | 0.79730635 | 0.01138198 | 0.01080300 |
+
+Each arm has1,792reference-target rows across128assets; metrics average within
+each asset first, then weight assets equally. Normalized distances use the
+target mesh bounding-box diagonal. Relative MPJPE reductions from60k are
+9.03%/11.74%/12.92%, respectively. Pretrained stage2-only is about6.00%lower
+than joint in MPJPE; joint-minus-pretrained paired95%interval is
+[0.00021104,0.00051721]. Its edge F1 difference interval is
+[-0.01262240,-0.00599688]. J2J and bone-vector intervals also favor stage2-only;
+PCK includes zero. Intervals use2,000paired asset bootstrap resamples, NOT
+multiple training seeds. Both warm-start arms still beat scratch across all
+five intervals; the warm-start package includes weights AND Adam history.
+
+The original fixed cases2and3 were rendered with identical input/raw frames,
+view and scale, then visually inspected for readable labels and geometry.
+Files:fixed_case_2_070000_v2.png, fixed_case_3_070000_v2.png and
+visual_selection_070000_v2.json. Case2 uses reference25/target4; MPJPE is
+0.00634978/0.00530701/0.01409289. Case3 uses reference39/target3; MPJPE is
+0.00509075/0.00353924/0.00920715. These are fixed examples, not population
+evidence or outcome-selected cases.
+
+These scores concern stage2with a supplied GT reference skeleton. They do NOT
+answer whether shared-encoder updates improve first-stage free generation.
+The running common80k payload and remote source were unchanged. Do not repeat
+this review or notification. Next inspect the full80k terminal state including
+built-in enlarged evaluations, then complete the separately admitted stage1
+feedback and AR-only work. No additional GPU load was launched by this review.
+
+## Local Stage1 Feedback Components
+
+On2026-10-29 05:18JST, added scripts/stage1_feedback.py and15focused CPU tests
+in tests/test_stage1_feedback.py. This is a local library, not a launcher or
+new execution permission. No running remote source or GPU workload changed.
+
+The helper extracts the complete V-minus backbone from either the original
+density checkpoint or an anchor checkpoint with an explicitly declared layout.
+All keys/shapes/dtypes must match the target model. Weight checks compare every
+parameter and buffer bytewise, separating surface/motion encoders from ALL
+nonshared tensors. Requiring unchanged nonshared tensors will reject a changed
+decoder, condition branch or auxiliary buffer; synthetic success does not
+establish that the actual trained checkpoint satisfies this check.
+
+Free generation takes only the canonical mesh-surface fields, rejects target
+or reference fields, and uses the existing greedy decoder with BOS/class and
+the existing vocabulary processor. It never invokes teacher forcing. Scoring
+then uses original GT, the established nearest-joint edge F1 and symmetric
+nearest-joint distance divided by the target mesh bbox diagonal. Distance is
+not paired-ID MPJPE and no extra geometric alignment is performed. Failed or
+invalid generations have zero F1/success/count accuracy and null geometry.
+Aggregates weight assets equally and expose success-only geometry denominators.
+
+Tests include actual tiny V-minus architecture/decoder execution on CPU with
+no teacher forward, model-state/RNG mutation or CUDA initialization. The test
+record/log are preparation/stage1_tests_result.json and stage1_tests.log.
+Full evaluation still needs exact checkpoint/input/raw-frame/normalization
+bindings, baseline-reuse identity checks, guarded distributed orchestration,
+resource/capacity/deadline validation, paired intervals and fixed visuals.
+The AR-only training implementation/configuration is also still outstanding.
+Do not describe these component tests as a first-stage quality measurement.
+
+## Common80k Completion And Replay Review
+
+train_v19 finished at2026-10-29 06:23:20JST with exit0, passed native16CPU
+resources and payload cleanup. The peak process-tree RSS was39,492,255,744bytes.
+The original dual-H100 reservation remains; a06:27JST check verified idle keeper,
+no approved-GPU compute processes, original cpuset/devices membership and clean
+source7dd6f3cb2a276bf40928d49f1e96a417f2fdec26. Its old train permission is closed.
+Terminal result SHA256:52b45b6108fb415fa972695d62dcd8360ff13e03abe54f5fce4470ad58eff4cb.
+
+review_controls_080000.json independently verifies1,680updates,80,000asset
+visits and1,043,152input-frame visits per arm, the full16passes over5,000assets,
+actual matched input/reference/LR traces, initialization and AR switches,
+checkpoint mirror metadata/sizes, and complete terminal resource receipts.
+Fixed cases2/3were retained at80k and visually checked. Individual case errors
+need not improve monotonically: case3pretrained and both scratch examples are
+slightly worse than their70k examples despite improved aggregate MPJPE.
+
+The new local read-only expanded reviewer passes9focused tests. It independently
+checks all967validation assets,839outside the panel,32train assets in eligible
+and reserved modes, all30,660rows/arm, aggregation, GT copy controls and reference
+consistency. It reads NPZ array headers for the32train assets and reconstructs
+their reserved8frame pools; all heldout inputs exactly match those pools and
+never appeared in the actual80k training traces. Eligible targets were actually
+consumed in99.7768%of evaluation pairs, references98.4375%; do not call every
+eligible frame previously seen. The source read was header-only, not a dataset
+copy. Producer per-regime science hashes are checked against regime_config,
+separately from the overall experiment hash.
+
+Observed full967metrics (NOT final acceptance while replay is unresolved):
+
+| Regime | Normalized MPJPE | PCK@0.05 | Edge F1 |
+|---|---:|---:|---:|
+| Joint pretrained | 0.00620920 | 0.99290604 | 0.90529186 |
+| Pretrained stage2-only | 0.00577176 | 0.99373965 | 0.91265314 |
+| Scratch stage2-only | 0.01414770 | 0.95677643 | 0.80086366 |
+
+review_expanded_080000.json is complete as a diagnostic record but passed=false:
+the final128panel has the SAME raw-frame metadata and EXACT GT-copy metrics,
+yet head predictions differ from the inline80k evaluation on1,792/1,792/1,680
+rows, respectively. MPJPE asset-mean deltas are-2.1786e-7/+1.9483e-6/-1.1311e-6;
+max per-row edge-F1changes are0.17143/0.09148/0.09524. Do not silently replace
+an exact replay check with a tolerance or call this a training failure. Surface
+sampling, checkpoint reconstruction, and numerical precision remain hypotheses.
+All raw evidence and partial audits are retained; no inference was rerun yet.
+
+A separately guarded capacity-profile diagnostic is prepared locally in
+anchor_checkpoint_replay_20261029_v1.json: the SAME pretrained-stage2 80k
+checkpoint, original fixed cases2/3, two fresh model loads, two independently
+prepared inputs per load, BF16 and FP32(no TF32), at most900seconds, ZERO
+optimizer updates. It compares complete backbone/head hashes, input/feature/
+prediction hashes, original query points/GT/raw frames, repeat/reload differences
+and GPU RNG. Its configuration cannot enter train/audit mode. Thirty-four CPU
+tests including integration regression and stage1 components pass. Execute only
+after committed exact state, fresh native resource checks and a recorded dry-run.
+No AR-only launch or acceptance of first-stage quality is implied.

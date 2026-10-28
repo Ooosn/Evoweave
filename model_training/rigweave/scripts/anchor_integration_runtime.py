@@ -47,6 +47,9 @@ def release():
 
 
 def capacity(config, output, source, device, rank, world):
+    if config['capacity'].get('profile') is not None:
+        from anchor_replay_runtime import run
+        return run(config, output, source, device, rank, world)
     base, entries = read_all(config)
     counts = [_joint_count(r)[0] for r in entries['train']]
     selected = sorted(range(5000), key=lambda i: (-counts[i], i))[:3]

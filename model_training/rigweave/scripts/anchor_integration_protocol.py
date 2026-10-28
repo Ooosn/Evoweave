@@ -12,6 +12,9 @@ PARENT_SHA = 'cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016'
 
 
 def validate_config(config):
+    if config.get('capacity', {}).get('profile') is not None:
+        from anchor_replay_protocol import validate_replay
+        validate_replay(config)
     train = config['training']
     if (config.get('family') != SCOPE or config.get('schema_version') != 1
             or config['backbone']['checkpoint']['sha256'] != DONOR_SHA

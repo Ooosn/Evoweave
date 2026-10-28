@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_integration_full5k_native_20261028",
-  "updated_at": "2026-10-28T15:04:00Z",
+  "updated_at": "2026-10-28T21:33:29.879621+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,11 +34,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -75,10 +75,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_retained_idle_common80_admitted",
+    "status": "native_96hour_retained_idle",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-28T15:04:00.938189Z",
+    "last_observed_utc": "2026-10-28T21:27:30.007978Z",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -89,20 +89,24 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "No compute processes on granted UUIDs and keeper child list empty; physical used-memory amount not measured by this idle probe."
+    "last_observation_note": "Keeper idle with no pending child or compute app on either approved UUID; native cpuset/devices membership and16CPU grant verified. Old source7dd6f3c remains clean.",
+    "last_observed_gpu_used_mib": [
+      1069,
+      1109
+    ]
   },
   "active_operation": {
     "label": "anchor_integration_5k_20261028_v1",
-    "status": "common80k_admitted_pending_final_plan",
+    "status": "common80k_completed_replay_review_pending",
     "operation": "train",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "2026-10-28 user requested standalone comparison outside the already-trained skeleton-generation system, continued analysis/optimization, and longer training such as80k if appropriate. Preserve GT reference input.",
     "code_commit": "6c671e82af52a2dfb00f85743794d559c75dc5fe",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_integration.py",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
@@ -230,6 +234,141 @@
     "runtime_unbound": false,
     "end_policy": "Retain checkpoints and native allocation. No blind restart or source change during a payload. Do not claim the matched scratch recipe is the best standalone model or attribute all warm-start differences to joint training.",
     "phase": "common80k",
+    "common80_completion": {
+      "finished_utc": "2026-10-28T21:23:20.941470+00:00",
+      "source": "7dd6f3cb2a276bf40928d49f1e96a417f2fdec26",
+      "result_sha256": "52b45b6108fb415fa972695d62dcd8360ff13e03abe54f5fce4470ad58eff4cb",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "peak_tree_rss_bytes": 39492255744,
+      "independent_review": "Data, trace, checkpoint and resource checks pass; selection replay score discrepancy remains open.",
+      "followups_complete": false
+    },
+    "stage1_feedback_question": {
+      "human_clarification_date_jst": "2026-10-29",
+      "question": "Does the stage2 loss, through updates to the shared surface/motion encoders and their attention, improve stage1 generated skeletons? Evaluate improvement as well as retention, not just stage2 metrics or teacher-forced AR loss.",
+      "measured": false,
+      "primary_comparison": [
+        "Original pretrained donor before stage2",
+        "Pretrained-stage2-only checkpoint at the same chosen endpoint",
+        "Joint-pretrained checkpoint at that identical endpoint"
+      ],
+      "interpretation": "Stage2-only versus donor directly tests the effect of stage2-trained shared features on the unchanged stage1 generation branch, after verifying its weights are identical. Joint versus donor measures overall first-stage change, not the isolated causal contribution of stage2, because AR also continued. Joint versus stage2-only isolates adding the continued AR objective under matched stage2 exposure.",
+      "required_protocol": "Same fixed128 assets and raw frames, normalization, tokenizer and greedy generation; no GT skeleton input or teacher-forced prefixes for generation. Score original-GT edgeF1, generation success, joint-count accuracy and matched geometry metrics; failures remain in denominators. Verify unchanged nonshared AR-branch weights for the stage2-only arm, and retain paired examples/asset intervals. Reuse donor outputs only if exact checkpoint/input/GT/decoding identities match.",
+      "execution_boundary": "Prepare local evaluation while train_v19 runs; do not change its source, interrupt it or launch overlapping GPU evaluation. Evaluation needs separate exact admission after the current payload finishes. This record does not authorize extra training or an AR-only training run.",
+      "local_preparation": {
+        "status": "helper_components_CPU_tested_not_execution_ready",
+        "module": "model_training/rigweave/scripts/stage1_feedback.py",
+        "tests": "model_training/rigweave/tests/test_stage1_feedback.py",
+        "CPU_tests_passed": 15,
+        "test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/stage1_tests_result.json",
+        "test_log": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/stage1_tests.log",
+        "source_deployed": false,
+        "GPU_compute_started": false,
+        "scope": "Strict complete backbone extraction from density/anchor state dictionaries; bytewise shared/nonshared parameter and buffer comparison; existing V-minus free decoder with only mesh surface and BOS/class; original-GT topology and normalized symmetric nearest-joint geometry; zero failure quality with null failure distance and explicit success-conditioned denominators. Tests include real tiny V-minus model with no teacher forward, no state/RNG mutation and no CUDA initialization.",
+        "remaining": "Bind exact donor/joint/stage2 checkpoint identities, fixed input/raw-frame/normalization identities and retained baseline outputs; build guarded evaluation orchestration with resource/deadline/capacity checks, paired-asset analysis and fixed visuals. Validate on actual checkpoints after train_v19 clean completion, then obtain exact evaluation admission. No actual stage1 output or unchanged-decoder assertion is established by synthetic tests. AR-only trainer/configuration is still unimplemented."
+      }
+    },
+    "local_continuation_reviewer": {
+      "ready": true,
+      "entrypoint": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/invoke_review.ps1",
+      "supported_new_nodes": [
+        70000,
+        80000
+      ],
+      "usage": "The common70k review is complete and retained in matched70000_evidence; do not rerun it. Use -Samples 80000 -Examples -Terminal only after the full80k payload and expanded evaluations have cleanly finished. Preserve all earlier reports.",
+      "continuity_helper": "preparation/continuation_trace.py",
+      "targeted_tests_passed": 10,
+      "test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/continuation_tests_result.json",
+      "live_probe": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/continuation_live_probe.json",
+      "live_probe_observed_utc": "2026-10-28T17:07:03.955357Z",
+      "live_joint70k_both_ranks": {
+        "updates": 1470,
+        "samples": 70000,
+        "input_frames": 915016
+      },
+      "live_probe_scope": "Actual joint70k trace only; not an all3arms quality comparison. Reused hashed60k prefixes plus stable210update suffixes, validated sources/counters/LR position. No GPU computation or remote source changes.",
+      "terminal_safety": "Peek and require complete exit/resource/cleanup/result before retaining terminal receipts; do not freeze mutable unfinished receipts. Final reports use exclusive creation."
+    },
+    "queued_ar_only_control": {
+      "human_authorized": true,
+      "human_authorization_date_jst": "2026-10-29",
+      "exact_execution_admitted": false,
+      "start_only_after": "train_v19 common80k payload including built-in expanded evaluations has finished cleanly and its terminal state has been checked. Do not interrupt or overlap the active run.",
+      "question": "Does adding stage2 supervision improve stage1 generated skeletons beyond the same amount of continued randomized-frame AR-only training?",
+      "random_means": "The existing randomized20to40percent/min2 target-frame selection, NOT random weight initialization.",
+      "source_checkpoint": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
+        "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888",
+        "cumulative_asset_visits": 20000
+      },
+      "budget_semantics_explicitly_confirmed": "User selected TOTAL cumulative30k/40k/50k/60k, including the original20k. Add only40k visits, not60k or80k.",
+      "comparison_nodes": [
+        {
+          "cumulative_visits": 30000,
+          "additional_visits": 10000,
+          "matched_joint_checkpoint": "train_v17/reference_transport/checkpoint_010000.pt"
+        },
+        {
+          "cumulative_visits": 40000,
+          "additional_visits": 20000,
+          "matched_joint_checkpoint": "train_v17/reference_transport/checkpoint_020000.pt"
+        },
+        {
+          "cumulative_visits": 50000,
+          "additional_visits": 30000,
+          "matched_joint_checkpoint": "train_v17/reference_transport/checkpoint_030000.pt"
+        },
+        {
+          "cumulative_visits": 60000,
+          "additional_visits": 40000,
+          "matched_joint_checkpoint": "train_v17/reference_transport/checkpoint_040000.pt"
+        }
+      ],
+      "initial_optimizer_policy": {
+        "retain_backbone_Adam": true,
+        "reason": "The human requires matching the ACTUAL original20k-to-joint initialization, retaining Adam only if joint retained it. It did.",
+        "verified_launch_source": "9db222d0070122b08c6d5dde3329f3be69d46c16",
+        "verified_code": "anchor_joint_runtime.load_model calls backbone.load_state_dict(payload['model']) and optimizer.load_state_dict(payload['optimizer']) before adding the fresh stage2 head group and before any update.",
+        "initialization_receipt": "D:/evoweave/server_ops/outputs/anchor_joint_binding_5k_20261027/artifacts/result.json: results.reference_transport[0].initialization.backbone_optimizer_retained=true; head_optimizer_new=true",
+        "independent_counter_evidence": "Actual retained joint60k checkpoint has encoder Adam step1680 and head step1260, consistent with inherited420backbone updates; verified in artifacts/common80_admission.json.",
+        "preserve": "Full backbone weights, Adam moments/step/parameter-group state and per-rank RNG at the original20k donor. The new stage2 head had no pre-existing optimizer state; do not confuse that with resetting the backbone."
+      },
+      "matched_recipe": "Match the existing joint experiment's5000assets, actual new-phase asset/raw-frame stream seed20261028,2to24input frames, randomized20to40percent/min2 AR targets, normalization, effective48batch, physical24/12/6, separate backbone norm1 clipping and LRposition20000+additional_visits on the ORIGINAL100k schedule. Do not continue the donor's unrelated old data cursor or retime the LRcycle to end at cumulative60k. Validate actual traces against joint prefixes.",
+      "treatment": "Only AR generation objective; do not execute/optimize the stage2 branch or introduce another architecture/initialization change. Implement and test a separately guarded exact AR-only recipe rather than bypassing the active common80k validator.",
+      "new_training_budget": {
+        "additional_asset_visits": 40000,
+        "complete5000passes": 8,
+        "additional_updates": 840,
+        "additional_input_frame_visits": 527856,
+        "final_cumulative_asset_visits": 60000
+      },
+      "evaluation": "At each requested cumulative node, compare AR-only and the matching retained joint checkpoint by first-stage FREE skeleton generation on identical fixed assets/raw frames/normalization/tokenizer/greedy policy, not teacher-forced loss or GT-reference stage2 scores. Use original-GT edgeF1, success, joint-count accuracy, clearly scoped geometry metrics, paired-asset intervals and fixed visuals. Failures score zero for F1/success/count, never zero distance as a fake success. Reuse exact matching baseline artifacts where proven identical.",
+      "required_before_launch": "After current payload completion, prepare new code/config, targeted tests and CPU/resource/capacity validation appropriate to changes, then exact state/config/output admission and dry-run using the existing native grant. No GPU release, extra GPU allocation or training beyond cumulative60k is implied."
+    },
+    "launched_source": "7dd6f3cb2a276bf40928d49f1e96a417f2fdec26",
+    "launched_config_sha256": "af4c48f43254658ecd635f0f815aa248edae4ae66f1b035ea9d3e67ab9656cfb",
+    "launch": {
+      "stage": "train_v19",
+      "phase": "common80k",
+      "started_utc": "2026-10-28T15:16:03.893730Z",
+      "supervisor_pid": 1206189,
+      "kernel_scheduler_membership": true,
+      "source_checkout_pinned_during_run": true,
+      "observed_utc": "2026-10-28T15:21:04.264790Z",
+      "first_regime": "joint_pretrained",
+      "first_observed_update": 1261,
+      "first_observed_visits": 60048,
+      "first_observed_input_frames": 787792,
+      "both_rank_first_trace_counters_match": true,
+      "AR_supervision_applied": true,
+      "observed_losses_finite": true,
+      "learning_rate_asset_position": 80000,
+      "backbone_lr": 0.00001346382228717008,
+      "head_lr": 0.00004039146686151024,
+      "peak_tree_rss_bytes": 26002509824
+    },
     "matched60000_evidence": {
       "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_060000.json",
       "observed_utc": "2026-10-28T14:58:44.444515+00:00",
@@ -281,6 +420,89 @@
       "fixed_case_visuals_checked": [
         "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_060000_v2.png",
         "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_060000_v2.png"
+      ]
+    },
+    "matched70000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_070000.json",
+      "observed_utc": "2026-10-28T19:16:48.834460+00:00",
+      "scope": "Interim matched70k comparison; one training seed, fixed128selection assets, GT reference. Not enlarged-set or stage1 free-generation acceptance.",
+      "trace_audit": {
+        "updates_per_arm": 1470,
+        "full_pass_boundaries": [
+          5000,
+          10000,
+          15000,
+          20000,
+          25000,
+          30000,
+          35000,
+          40000,
+          45000,
+          50000,
+          55000,
+          60000,
+          65000,
+          70000
+        ],
+        "input_frames_per_arm": 915016,
+        "actual_data_refs_and_planned_AR_slots_match": true,
+        "same_LR_trajectory": true,
+        "controls_apply_no_AR_loss": true,
+        "train_validation128_disjoint": true,
+        "resumed60k_prefix_suffix_continuity_verified": true
+      },
+      "joint_pretrained": {
+        "normalized_mpjpe": 0.006134351345573512,
+        "pck_005": 0.995201492166288,
+        "edge_f1": 0.9050113874523926,
+        "normalized_j2j": 0.005542394964687144,
+        "normalized_bone_vector_error": 0.005384509175398254
+      },
+      "pretrained_stage2": {
+        "normalized_mpjpe": 0.0057664939472813,
+        "pck_005": 0.9954302721716126,
+        "edge_f1": 0.9141586653966964,
+        "normalized_j2j": 0.005186995846031476,
+        "normalized_bone_vector_error": 0.0051453379758493985
+      },
+      "scratch_stage2": {
+        "normalized_mpjpe": 0.014353330244960359,
+        "pck_005": 0.9553265425899603,
+        "edge_f1": 0.7973063481902907,
+        "normalized_j2j": 0.011381977276835159,
+        "normalized_bone_vector_error": 0.010802999561185566
+      },
+      "relative_MPJPE_improvement_from60000_percent": {
+        "joint_pretrained": 9.030173914713558,
+        "pretrained_stage2": 11.735861050488817,
+        "scratch_stage2": 12.920548831129109
+      },
+      "joint_minus_pretrained_paired95": {
+        "normalized_mpjpe": [
+          0.00021104476499707352,
+          0.0005172128700686634
+        ],
+        "pck_005": [
+          -0.0014717353395431933,
+          0.0009280149320371635
+        ],
+        "edge_f1": [
+          -0.012622397674266905,
+          -0.005996876409418199
+        ],
+        "normalized_j2j": [
+          0.0002503526833998243,
+          0.0004686677715612952
+        ],
+        "normalized_bone_vector_error": [
+          0.00011806812438340601,
+          0.0003449587144952362
+        ]
+      },
+      "interpretation": "Pretrained-stage2 has about6.00percent lower MPJPE than joint; MPJPE/edgeF1/J2J/bone-vector paired intervals favor pretrained-stage2, while PCK includes zero. All3improve from60k. This does not measure stage1 generation or isolate weights from inherited Adam history.",
+      "fixed_case_visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_070000_v2.png",
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_070000_v2.png"
       ]
     },
     "controls60k_completion": {
@@ -348,11 +570,306 @@
       "reason": "All3matched50to60k MPJPE slopes remain positive: joint19.1%, pretrained-stage2 16.8%, scratch24.3% relative improvement. Continue declared sampler/LR prefix to common80k without a recipe change; complete the existing100kLR position horizon.",
       "reuse_verified_gates": "The same scientific hash and byte-identical model/job/tool code retain the completed16pass CPU audit, 3regime native capacity and parent60k restoration checks. Do not repeat unchanged full audits merely because the execution phase changed.",
       "required_final_plan": "Before writing exactly one train_v19 request, verify idle native keeper/devices, no pending payload, terminal controls receipts, exact committed source/config/output, all actual60k resume identities/counters/RNG/Adam and matching continuation streams. Plan must pass before execute.",
+      "final_plan_evidence": {
+        "passed": true,
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19_admission.json",
+        "local_copy": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/artifacts/common80_admission.json",
+        "sha256": "8bde861a58eb9aec45ab50e99683ca35291d142cbe2b1e68e48f40da166582a4",
+        "observed_utc": "2026-10-28T15:15:37.973053Z",
+        "actual60k_checkpoint_counters_and_Adam_verified": true,
+        "both_rank_RNG_present": true,
+        "next_microbatches_match_all3": true,
+        "sampler_plan_sha256": "92078ff94a9c88ff665a3b458e2f3c95c7ec5747d9c6e5cf4d919d73f5452556",
+        "CUDA_initialized": false,
+        "CPU_inspection_outside_job_not_claimed_native": true,
+        "native_keeper_idle_and_GPU_free_verified_before_request": true,
+        "remaining_hours_before_stop": 67.65692602083334
+      },
       "final_visits_per_arm": 80000,
       "final_updates_per_arm": 1680,
       "final_input_frames_per_arm": 1043152,
       "additional_updates_per_arm": 420,
       "evaluation": "At80k evaluate fixed128, full967 and separately839, training32eligible/strictly-heldout raw poses, consistency/permutation diagnostics. Independently verify actual consumed traces. Stage1 free-AR retention still required before broad shared-model claims."
+    },
+    "matched80000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_080000.json",
+      "observed_utc": "2026-10-28T21:24:18.055767+00:00",
+      "trace_audit": {
+        "updates_per_arm": 1680,
+        "full_pass_boundaries": [
+          5000,
+          10000,
+          15000,
+          20000,
+          25000,
+          30000,
+          35000,
+          40000,
+          45000,
+          50000,
+          55000,
+          60000,
+          65000,
+          70000,
+          75000,
+          80000
+        ],
+        "input_frames_per_arm": 1043152,
+        "actual_data_refs_and_planned_AR_slots_match": true,
+        "same_LR_trajectory": true,
+        "controls_apply_no_AR_loss": true,
+        "train_validation128_disjoint": true,
+        "resumed60k_prefix_suffix_continuity_verified": true
+      },
+      "fixed_case_visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_080000_v2.png",
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_080000_v2.png"
+      ],
+      "metrics": {
+        "joint_pretrained": {
+          "normalized_mpjpe": 0.005849629512145579,
+          "pck_005": 0.995406252651797,
+          "edge_f1": 0.9105402432855518,
+          "normalized_j2j": 0.005300900868432664,
+          "normalized_bone_vector_error": 0.005235469025216692
+        },
+        "pretrained_stage2": {
+          "normalized_mpjpe": 0.005465065084471072,
+          "pck_005": 0.9957016217111168,
+          "edge_f1": 0.9202976069428899,
+          "normalized_j2j": 0.004939759923457826,
+          "normalized_bone_vector_error": 0.004987784866800463
+        },
+        "scratch_stage2": {
+          "normalized_mpjpe": 0.013556916789249434,
+          "pck_005": 0.9603701367730898,
+          "edge_f1": 0.8029798119483865,
+          "normalized_j2j": 0.01080776530150792,
+          "normalized_bone_vector_error": 0.010374720806587955
+        }
+      }
+    },
+    "expanded80000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_expanded_080000.json",
+      "observed_utc": "2026-10-28T21:33:29.879621+00:00",
+      "passed": false,
+      "acceptance": "pending_selection_replay_discrepancy",
+      "audits": {
+        "joint_pretrained": {
+          "valid_assets": 967,
+          "nonselection_assets": 839,
+          "train_diagnostic_assets": 32,
+          "rows": 30660,
+          "unique_complete_reference_target_coverage": true,
+          "reserved_holdout_pool_independently_reconstructed_from_NPZ_headers": true,
+          "heldout_raw_frames_absent_from_actual_training": true,
+          "eligible_target_actually_consumed_fraction": 0.9977678571428571,
+          "eligible_reference_actually_consumed_fraction": 0.984375
+        },
+        "pretrained_stage2": {
+          "valid_assets": 967,
+          "nonselection_assets": 839,
+          "train_diagnostic_assets": 32,
+          "rows": 30660,
+          "unique_complete_reference_target_coverage": true,
+          "reserved_holdout_pool_independently_reconstructed_from_NPZ_headers": true,
+          "heldout_raw_frames_absent_from_actual_training": true,
+          "eligible_target_actually_consumed_fraction": 0.9977678571428571,
+          "eligible_reference_actually_consumed_fraction": 0.984375
+        },
+        "scratch_stage2": {
+          "valid_assets": 967,
+          "nonselection_assets": 839,
+          "train_diagnostic_assets": 32,
+          "rows": 30660,
+          "unique_complete_reference_target_coverage": true,
+          "reserved_holdout_pool_independently_reconstructed_from_NPZ_headers": true,
+          "heldout_raw_frames_absent_from_actual_training": true,
+          "eligible_target_actually_consumed_fraction": 0.9977678571428571,
+          "eligible_reference_actually_consumed_fraction": 0.984375
+        }
+      },
+      "metrics": {
+        "joint_pretrained": {
+          "valid967": {
+            "normalized_mpjpe": 0.006209200982713387,
+            "pck_005": 0.9929060375766723,
+            "edge_f1": 0.905291855189516,
+            "normalized_j2j": 0.00553000953105624,
+            "normalized_bone_vector_error": 0.00560290318468558
+          },
+          "nonselection839": {
+            "normalized_mpjpe": 0.006264091369275495,
+            "pck_005": 0.9925140938921004,
+            "edge_f1": 0.9045071020515997,
+            "normalized_j2j": 0.0055651389627599905,
+            "normalized_bone_vector_error": 0.005659124146131915
+          },
+          "selection128": {
+            "normalized_mpjpe": 0.005849411652044572,
+            "pck_005": 0.9954751059466391,
+            "edge_f1": 0.9104356667732021,
+            "normalized_j2j": 0.005299747084185558,
+            "normalized_bone_vector_error": 0.005234392351455307
+          },
+          "train_eligible32": {
+            "normalized_mpjpe": 0.0051506142708603875,
+            "pck_005": 0.9975073416932988,
+            "edge_f1": 0.904364803119096,
+            "normalized_j2j": 0.004913660431499769,
+            "normalized_bone_vector_error": 0.005144640058689741
+          },
+          "train_heldout32": {
+            "normalized_mpjpe": 0.004963299174570628,
+            "pck_005": 0.9965720218187132,
+            "edge_f1": 0.9089099464734414,
+            "normalized_j2j": 0.004687586294023603,
+            "normalized_bone_vector_error": 0.004680364448005194
+          }
+        },
+        "pretrained_stage2": {
+          "valid967": {
+            "normalized_mpjpe": 0.005771759138014854,
+            "pck_005": 0.9937396543112983,
+            "edge_f1": 0.9126531426243,
+            "normalized_j2j": 0.00515115030974382,
+            "normalized_bone_vector_error": 0.005310958496220715
+          },
+          "nonselection839": {
+            "normalized_mpjpe": 0.005818251930222605,
+            "pck_005": 0.993448122465927,
+            "edge_f1": 0.9115577769610823,
+            "normalized_j2j": 0.0051832639329278864,
+            "normalized_bone_vector_error": 0.005360367130711691
+          },
+          "selection128": {
+            "normalized_mpjpe": 0.005467013414090616,
+            "pck_005": 0.9956505544540061,
+            "edge_f1": 0.9198329222449221,
+            "normalized_j2j": 0.004940655545279511,
+            "normalized_bone_vector_error": 0.004987100337330646
+          },
+          "train_eligible32": {
+            "normalized_mpjpe": 0.004717256038410207,
+            "pck_005": 0.9978949926439681,
+            "edge_f1": 0.9103332721180446,
+            "normalized_j2j": 0.0045249876014002224,
+            "normalized_bone_vector_error": 0.004873983396216849
+          },
+          "train_heldout32": {
+            "normalized_mpjpe": 0.004610377768975533,
+            "pck_005": 0.997514365592955,
+            "edge_f1": 0.9137346548673265,
+            "normalized_j2j": 0.004349781218946705,
+            "normalized_bone_vector_error": 0.00450573281962437
+          }
+        },
+        "scratch_stage2": {
+          "valid967": {
+            "normalized_mpjpe": 0.01414770234379735,
+            "pck_005": 0.9567764254464196,
+            "edge_f1": 0.8008636579784857,
+            "normalized_j2j": 0.011102830696113345,
+            "normalized_bone_vector_error": 0.010695296340924584
+          },
+          "nonselection839": {
+            "normalized_mpjpe": 0.014238006675484645,
+            "pck_005": 0.9562454613505121,
+            "edge_f1": 0.8004661141452732,
+            "normalized_j2j": 0.011147952751571585,
+            "normalized_bone_vector_error": 0.01074415789690527
+          },
+          "selection128": {
+            "normalized_mpjpe": 0.013555785669690781,
+            "pck_005": 0.9602567291688133,
+            "edge_f1": 0.8034694335727455,
+            "normalized_j2j": 0.010807069723226901,
+            "normalized_bone_vector_error": 0.010375024110707426
+          },
+          "train_eligible32": {
+            "normalized_mpjpe": 0.01140613899172292,
+            "pck_005": 0.9767070018561772,
+            "edge_f1": 0.8247292425788977,
+            "normalized_j2j": 0.00988477310581778,
+            "normalized_bone_vector_error": 0.009914524364630849
+          },
+          "train_heldout32": {
+            "normalized_mpjpe": 0.010867339725207006,
+            "pck_005": 0.9781670236506013,
+            "edge_f1": 0.8293419595576845,
+            "normalized_j2j": 0.009311425294432114,
+            "normalized_bone_vector_error": 0.009045014766685951
+          }
+        }
+      },
+      "selection_replay": {
+        "joint_pretrained": {
+          "exact": false,
+          "changed_head_rows": 1792,
+          "changed_assets": 128,
+          "raw_frame_metadata_and_copy_metrics_identical": true,
+          "max_absolute_row_change": {
+            "normalized_mpjpe": 0.000318087637424469,
+            "pck_005": 0.020408163265306145,
+            "edge_f1": 0.17142857142857143,
+            "normalized_j2j": 0.0002729920505596716,
+            "normalized_bone_vector_error": 0.00048098461248521907
+          },
+          "final_minus_interim_asset_mean": {
+            "normalized_mpjpe": -2.1786010100718206e-7,
+            "pck_005": 0.00006885329484207503,
+            "edge_f1": -0.00010457651234974108,
+            "normalized_j2j": -0.0000011537842471058893,
+            "normalized_bone_vector_error": -0.0000010766737613852537
+          },
+          "interpretation": "Mismatch is retained as an unresolved repeatability gate, not silently tolerated. Raw frames/GT copy match; sampled surface identity and numerical/model-state cause are not yet established."
+        },
+        "pretrained_stage2": {
+          "exact": false,
+          "changed_head_rows": 1792,
+          "changed_assets": 128,
+          "raw_frame_metadata_and_copy_metrics_identical": true,
+          "max_absolute_row_change": {
+            "normalized_mpjpe": 0.00025241170078516006,
+            "pck_005": 0.024390243902439046,
+            "edge_f1": 0.09148004593741033,
+            "normalized_j2j": 0.0002928928351341141,
+            "normalized_bone_vector_error": 0.0003979995165864659
+          },
+          "final_minus_interim_asset_mean": {
+            "normalized_mpjpe": 0.000001948329619543346,
+            "pck_005": -0.00005106725711068183,
+            "edge_f1": -0.00046468469796778766,
+            "normalized_j2j": 8.956218216851775e-7,
+            "normalized_bone_vector_error": -6.845294698177434e-7
+          },
+          "interpretation": "Mismatch is retained as an unresolved repeatability gate, not silently tolerated. Raw frames/GT copy match; sampled surface identity and numerical/model-state cause are not yet established."
+        },
+        "scratch_stage2": {
+          "exact": false,
+          "changed_head_rows": 1680,
+          "changed_assets": 120,
+          "raw_frame_metadata_and_copy_metrics_identical": true,
+          "max_absolute_row_change": {
+            "normalized_mpjpe": 0.00040088407695293427,
+            "pck_005": 0.08333333333333326,
+            "edge_f1": 0.09523809523809523,
+            "normalized_j2j": 0.0004604270585142761,
+            "normalized_bone_vector_error": 0.0007442488377486546
+          },
+          "final_minus_interim_asset_mean": {
+            "normalized_mpjpe": -0.0000011311195586526102,
+            "pck_005": -0.00011340760427647201,
+            "edge_f1": 0.0004896216243589491,
+            "normalized_j2j": -6.955782810187661e-7,
+            "normalized_bone_vector_error": 3.0330411947103453e-7
+          },
+          "interpretation": "Mismatch is retained as an unresolved repeatability gate, not silently tolerated. Raw frames/GT copy match; sampled surface identity and numerical/model-state cause are not yet established."
+        }
+      },
+      "analyzer": "preparation/review_expanded.py",
+      "CPU_tests_passed": 9,
+      "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/expanded_tests_result.json"
     }
   },
   "previous_completed_result": {
@@ -362,5 +879,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Finish exact plan and launch common80k train_v19 once under the retained native keeper. Three groups resume their own60k states; no fresh heads/Adam or LR restart. Controls60k phase is complete and archived; reviews10k/30k/40k/50k/60k are retained and must not be rerun. After launch pin its committed source and compare common70k/80k, then independently audit enlarged final evaluations and stage1 retention. Do not release the GPU grant."
+  "next_required_result": "Common80k training and built-in validation ended cleanly at2026-10-28T21:23:20Z. Matched80k trace/checkpoint/resource audit and enlarged coverage/aggregation/reserved-frame checks are retained. Do not repeat. Resolve small mean but nonzero individual selection-replay prediction discrepancies with a separately admitted TWO-CASE inference-only checkpoint replay; no optimizer updates or retraining. AR-only is not released until this review issue is assessed. Then prepare/admit +40000 AR-only visits from the same20k donor/Adam, compare cumulative30/40/50/60k to joint+10/20/30/40k with matched stage1 free generation. Preserve native grant; overall followups remain incomplete."
 }

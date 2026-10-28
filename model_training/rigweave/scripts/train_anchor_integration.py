@@ -20,6 +20,9 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     validate_config(config)
+    if config['capacity'].get('profile') is not None:
+        from anchor_replay_protocol import validate_replay
+        validate_replay(config, args.mode)
     source = verify_launch(args, config)
     config['_config_sha256'] = sha256(args.config)
     sys.path.insert(0, str(ROOT/'model_training/rigweave/src'))

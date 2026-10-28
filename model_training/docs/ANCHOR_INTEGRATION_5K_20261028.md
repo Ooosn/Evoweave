@@ -176,3 +176,244 @@ numbers are per-target-frame errors, not the128means. Use the readable_v2
 figures, not the retained first layout with cramped title spacing.
 Evidence:review_controls_010000.json, trace_prefixes/010000, and
 fixed_case_{2,3}_010000_v2.png under the local inspection root.
+
+## Matched30k Interim Evidence And Follow-Up Recovery
+
+At2026-10-28 18:47JST, fresh HGC evidence confirmed job130675914and the original
+train_v18supervisor3629610still running in the native16CPU allocation. The
+pretrained-stage2arm reached32,352visits; scratch reached30,000. Both30k
+checkpoints have verified scratch/durable copies. No training stop, restart,
+duplicate submission, remote source update or GPU release was performed.
+The conversation interruption had interrupted follow-up, not server training.
+The unfinished resource receipt's passed=false is provisional, not a terminal
+failure: complete=false, exit_code=null and native membership remain intact.
+
+The independently collected30k artifacts and consumed trace prefixes pass
+all matching checks: six complete5000passes,630updates and394,280input-frame
+visits per arm; identical actual assets/raw poses/references/planned AR slots
+and LR trajectory; matched head initialization, correct warm starts and no
+AR supervision in the two controls. All128selection assets remain disjoint
+from training; GT-copy rows and independently recomputed aggregates agree.
+
+| Metric | Joint pretrained | Pretrained stage2 only | Scratch stage2 only |
+| --- | ---: | ---: | ---: |
+| Normalized MPJPE | 0.01213245 | 0.01146367 | 0.09155911 |
+| PCK@5% | 0.97704979 | 0.98053687 | 0.51809039 |
+| Edge F1 | 0.81258312 | 0.82593031 | 0.53556209 |
+| Symmetric J2J | 0.01004071 | 0.00957377 | 0.06178304 |
+| Target bone-vector error | 0.00882835 | 0.00825481 | 0.02576529 |
+
+Joint minus pretrained-stage2 MPJPE is+0.00066878, paired95%interval
+[0.00038494,0.00100746]; edge F1difference is-0.01334720, interval
+[-0.01862209,-0.00831084]. All5paired intervals favor pretrained-stage2.
+This reverses the10k position ordering: continued AR has NOT demonstrated
+a stage2benefit at this matched point. The warm-start package still beats
+scratch on all5intervals; MPJPE difference is-0.08009544, interval
+[-0.08942357,-0.07099276]. Scratch remains close to the copy solution, but
+this one matched recipe/seed is not a tuned best standalone system.
+
+The same fixed arm/leg figures were rendered and visually checked. Both
+pretrained routes now follow the target pose; scratch remains close to the
+reference. These two fixed examples favor joint, contrary to the128mean
+ordering. Retain them and distinguish per-frame results from aggregate
+claims; do not cherry-pick new examples to fit the mean result.
+
+Evidence:review_controls_030000.json, trace_prefixes/030000, and
+fixed_case_{2,3}_030000_v2.png under the local inspection root. Continue the
+existing phase unchanged, compare future common40k/50k/60k nodes, then review
+at60k before separately admitting80k under the existing human authorization.
+Retained10k/30k reviews must not be overwritten or rerun. This remains an
+interim single-seed selection128result, not final quality acceptance.
+
+## Optimizer Continuity Check
+
+On2026-10-28 19:29JST, read-only CPU inspection of the actual10k/20k/30k
+checkpoints confirmed complete model/Adam/rank-state saving and cumulative
+optimizer counters. Both control heads' representative Adam steps are
+210/420/630; pretrained surface/motion representatives are630/840/1050,
+retaining420prior updates, while scratch surface/motion are210/420/630.
+All existing optimizer states in these modules contain exp_avg and exp_avg_sq;
+the inspected head-output moments are nonzero at every checkpoint. These
+are representative per-parameter counters, not an assertion that every
+conditional parameter has the same step count.
+
+The inactive pretrained AR decoder retains its420step state; scratch has no
+AR decoder optimizer states, as expected because that branch never executes.
+Both ranks retain torch/CUDA/NumPy/Python RNG and sampler state. Per-rank
+stream cursors are5000/10000/15000, matching global10k/20k/30k visits. Backbone
+LRs at those checkpoints are8.85449718e-5/7.55118492e-5/5.95222359e-5, with
+head LR3x; the schedule continues from accumulated visits rather than
+restarting warmup. All six checkpoint metadata records confirm two verified
+copies. Diagnostic CUDA initialization was false; no training was modified.
+
+At segment switches, the optimizer Python object is reconstructed and then
+its full saved state is loaded BEFORE any update, along with model/RNG/stream
+and counters. Each regime uses its own last checkpoint, not the other arm's
+optimizer. Only initial construction creates a fresh head state and, for
+scratch, a fresh entire optimizer. This check is not a new bitwise comparison
+of uninterrupted versus resumed training. Evidence:
+optimizer_continuity_20261028.json under the local inspection root.
+
+## Matched40k Interim Evidence
+
+The common40k review completed2026-10-28 20:54JST. All3arms' actual traces,
+references, initialization and LR match through8full5000passes,840updates
+and527,856input-frame visits. The controls apply no AR supervision. Producer
+metrics were independently reaggregated from rows;128selection assets are
+disjoint from training. Checkpoint mirrors and artifact identity checks pass.
+
+| Metric | Joint pretrained | Pretrained stage2 only | Scratch stage2 only |
+| --- | ---: | ---: | ---: |
+| Normalized MPJPE | 0.00959594 | 0.00959109 | 0.04389107 |
+| PCK@5% | 0.98777276 | 0.98743794 | 0.71056187 |
+| Edge F1 | 0.84749777 | 0.84828114 | 0.59497495 |
+| Symmetric J2J | 0.00819387 | 0.00812393 | 0.03343135 |
+| Target bone-vector error | 0.00725581 | 0.00703994 | 0.02103794 |
+
+Joint minus pretrained-stage2 MPJPE is+0.0000048461, paired95%interval
+[-0.00025630,0.00026315]; edge F1difference is-0.00078336, interval
+[-0.00567861,0.00407063]. PCK and J2J intervals also include zero. Only
+bone-vector error still favors pretrained-stage2: difference+0.00021587,
+interval[0.00006302,0.00037529]. Do not retain the30k all5metric superiority
+claim as the current result, and do not mistake no detected difference for
+a formal equivalence finding. Ongoing AR has no demonstrated incremental
+stage2benefit at this node; first-stage preservation remains untested.
+
+Scratch MPJPE improves from0.09155911at30k to0.04389107at40k, a52.1%relative
+reduction, with PCK rising51.81%to71.06%and edge F1from0.53556to0.59497.
+Warm-start benefits persist on all5paired intervals: pretrained-stage2 minus
+scratch MPJPE is-0.03429998, interval[-0.03727274,-0.03141853], with lower
+MPJPE on all128assets. But scratch is now visibly learning, not simply stuck
+at copying. Preserve the unchanged recipe to60k and assess its later slope
+before deciding about80k or any separately controlled optimization changes.
+
+The same arm/leg cases were rendered and checked. Scratch now lowers the
+raised arm and bends the leg toward the target, but still under-responds;
+both pretrained routes closely follow the target. The two fixed cases still
+slightly favor joint despite the aggregate near-tie. No cases were replaced.
+Evidence:review_controls_040000.json, trace_prefixes/040000 and
+fixed_case_{2,3}_040000_v2.png under the local inspection root.
+
+Fresh20:53JST evidence showed the original train_v18supervisor and native
+job130675914still running: pretrained-stage2 at45,816visits, scratch40,000.
+Latest checkpoint copies are verified at45k/40k respectively. No training
+restart, source deployment, configuration change or allocation release.
+Next common review is50k, then terminal60k; all interim single-seed/GT-reference
+and selection128limitations continue to apply.
+
+## Matched50k Interim Evidence
+
+The common50k review completed2026-10-28 23:00JST. Actual data/reference/AR-slot
+and LR traces, initializations, no-AR controls, checkpoint identity/mirrors
+and independent row aggregation all pass. Each arm has10complete5000passes,
+1,050updates and657,368input-frame visits; selection128remains train-disjoint.
+
+| Metric | Joint pretrained | Pretrained stage2 only | Scratch stage2 only |
+| --- | ---: | ---: | ---: |
+| Normalized MPJPE | 0.00833082 | 0.00784938 | 0.02178393 |
+| PCK@5% | 0.99085268 | 0.99275764 | 0.89604011 |
+| Edge F1 | 0.86648285 | 0.87630217 | 0.73392139 |
+| Symmetric J2J | 0.00727791 | 0.00688910 | 0.01687654 |
+| Target bone-vector error | 0.00641413 | 0.00608844 | 0.01406114 |
+
+Joint minus pretrained-stage2 MPJPE is+0.00048143, paired95%interval
+[0.00023450,0.00075344]; edge F1difference is-0.00981932, interval
+[-0.01466965,-0.00511780]. J2J and bone-vector intervals also favor
+pretrained-stage2, but PCK difference-0.00190497 has interval
+[-0.00415636,0.00005304] and does not exclude zero. The current result is
+modest superiority on4metrics, not every metric or final-budget evidence.
+
+Scratch MPJPE falls another50.4%relative to40k, to0.02178393; PCK rises
+71.06%to89.60%and edge F1from0.59497to0.73392. Pretrained-stage2 remains
+better on all5paired intervals; its MPJPE difference versus scratch is
+-0.01393455, interval[-0.01557306,-0.01232112], with127/128assets better.
+The persistent warm-start benefit and rapidly improving scratch curve
+must both be reported. Do not extrapolate eventual equality or failure.
+
+The unchanged arm/leg cases were rendered and checked. Scratch now follows
+the target substantially, with per-frame errors1.52%and1.60%, although it
+still underperforms both pretrained routes. The arm case favors pretrained
+stage2 while the leg case favors joint. Evidence:review_controls_050000.json,
+trace_prefixes/050000 and fixed_case_{2,3}_050000_v2.png under the local root.
+
+Fresh22:58JST evidence showed train_v18and native job130675914still running:
+pretrained-stage2 at59,368visits, scratch50,000; latest verified checkpoint
+copies at55k/50k. Continue unchanged until both60k controls finish, then
+verify terminal exit/resources/cleanup/counters and the matched primary
+comparison before separately admitting any80kcontinuation. The existing
+human authorization does not replace exact per-phase admission. No source
+deployment, restart, optimizer reset, recipe change or GPU release occurred.
+
+## Completed60k Primary Comparison And80k Decision
+
+Controls train_v18finished2026-10-28 23:57:07JST with exit0, native scheduler
+membership, passed resource receipt and complete payload cleanup. Each arm
+ended at60,000visits/1,260updates/787,504input-frame visits. Both checkpoint
+copies are verified; actual prefixes/init/reference/LR/no-AR controls and
+independent row aggregation all pass. The retained joint arm is matched at
+the same counters. Terminal result SHA256:
+8dbd444c39bedf8e501105bb1581fb61c13cac78857a6706f3264be8f2788534.
+
+| Metric | Joint pretrained | Pretrained stage2 only | Scratch stage2 only |
+| --- | ---: | ---: | ---: |
+| Normalized MPJPE | 0.00674328 | 0.00653322 | 0.01648303 |
+| PCK@5% | 0.99430256 | 0.99434555 | 0.93769481 |
+| Edge F1 | 0.89501710 | 0.90136931 | 0.78042397 |
+| Symmetric J2J | 0.00600785 | 0.00579236 | 0.01291642 |
+| Target bone-vector error | 0.00574855 | 0.00547103 | 0.01174753 |
+
+Joint minus pretrained-stage2 MPJPE is+0.00021006, paired95%interval
+[0.00003600,0.00038602]; edge F1difference is-0.00635221, interval
+[-0.01090435,-0.00220918]. J2J and bone-vector intervals also favor the
+stage2-only warm-start arm, but PCK difference-0.00004299 has interval
+[-0.00133002,0.00123971]. Continued AR does not demonstrate incremental
+stage2benefit at60k. Warm-start package benefits persist across all5intervals:
+MPJPE pretrained-stage2 minus scratch is-0.00994980, interval
+[-0.01124970,-0.00869978]. These are single-seed selection128/GT-reference
+results, not enlarged-set or first-stage-retention acceptance.
+
+All3arms still improve from50k to60k by approximately19.1%/16.8%/24.3%in
+MPJPE. This sustained decline, including continuing scratch improvement,
+justifies the already-authorized common80k continuation WITHOUT a model,
+loss, data, LRcycle, initialization or optimizer change. Fixed cases2/3were
+rendered and checked; pretrained-stage2 wins both at this node, but scratch's
+arm example is slightly worse than50k despite aggregate improvement. Preserve
+all fixed cases and do not equate the aggregate curve with every pose.
+
+Evidence:review_controls_060000.json, trace_prefixes/060000,
+artifacts/controls_{launch,resources,result}.json and
+fixed_case_{2,3}_060000_v2.png. The completed phase state and its prior interim
+reviews are archived at model_training/state/archive/
+anchor_integration_controls60k_20261029.json, with execution authority off.
+
+### Exact80k Continuation Admission
+
+Candidate stage train_v19uses
+model_training/experiments/anchor_integration_common80k_20261028_v1.json,
+SHA256 af4c48f43254658ecd635f0f815aa248edae4ae66f1b035ea9d3e67ab9656cfb.
+Only execution.phase and the two exact control resumes differ from the
+original configuration. Scientific SHA256 remains
+8e0467089d886766aa94b1ae6b6002f7ea03f1d2bff27ce161acef1c1b752da1;
+model/jobs/tools code is unchanged. Reuse the verified16pass audit and
+three-regime native capacity checks, including declared joint60k restoration,
+rather than rerunning unchanged gates. Final startup plan must still verify
+the actual completed control states, native keeper/grant/GPU identities,
+deadline, disk space, clean committed source and exact unused output path.
+
+Joint resumes its retained train_v17/reference_transport60k checkpoint,
+SHA cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016.
+Pretrained-stage2 resumes train_v18/pretrained_stage260k, SHA
+3624030132d0ae5b907a0d0641601604e220f3b28f8fd201bb063a03a8e8df3a;
+scratch resumes train_v18/scratch_stage260k, SHA
+be8eb4d12917d52d8761c9c1223384c4441deea0dd1037bc88d6df5aefb1a50b.
+Model/Adam/RNG/counters and consumed sampler prefix must be retained. The
+shared global80k target is1,680updates and1,043,152input-frame visits per arm,
+adding420updates/20kvisits per arm. Three regimes alternate to70k then80k;
+the LRposition reaches the existing100kcycle end without restarting it.
+
+At00:04JST onOctober29, the native keeper had no children, no granted-GPU
+compute processes were present, all earlier requests were complete, the old
+source was clean and train_v19paths were unused. Free workspace was about
+2.97TB, with ample durable space. Current admission is pending the final
+committed-source plan and actual launch confirmation, not evidence of a
+running80k payload. Expanded evaluation and stage1retention remain required.

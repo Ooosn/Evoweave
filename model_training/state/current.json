@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "anchor_integration_full5k_native_20261028",
-  "updated_at": "2026-10-28T06:00:00Z",
+  "updated_at": "2026-10-28T15:04:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -75,14 +75,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_retained_integration_controls_running",
+    "status": "native_96hour_retained_idle_common80_admitted",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-28T04:19:46.104116Z",
-    "last_observed_gpu_used_mib": [
-      44635,
-      44513
-    ],
+    "last_observed_utc": "2026-10-28T15:04:00.938189Z",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -92,11 +88,12 @@
       "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
-    "h_rt_seconds": 345600
+    "h_rt_seconds": 345600,
+    "last_observation_note": "No compute processes on granted UUIDs and keeper child list empty; physical used-memory amount not measured by this idle probe."
   },
   "active_operation": {
     "label": "anchor_integration_5k_20261028_v1",
-    "status": "full5k_integration_controls_to60k_running",
+    "status": "common80k_admitted_pending_final_plan",
     "operation": "train",
     "complete": false,
     "explicit_human_authorized": true,
@@ -109,58 +106,6 @@
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
-    "matched10000_evidence": {
-      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_010000.json",
-      "scope": "One matched seed, fixed128selection panel, first2fullpasses only. No final quality conclusion.",
-      "actual_data_references_planned_AR_slots_and_LR_match_all3": true,
-      "initial_heads_identical": true,
-      "pretrained_source_matches_retained_joint_arm": true,
-      "scratch_learned_weights_and_Adam_not_loaded": true,
-      "controls_apply_no_AR_supervision": true,
-      "train_validation128_disjoint": true,
-      "updates_per_arm": 210,
-      "input_frames_per_arm": 130200,
-      "joint_pretrained": {
-        "normalized_mpjpe": 0.04472532121534251,
-        "pck_005": 0.7047340849657303,
-        "edge_f1": 0.5981558174599697,
-        "normalized_bone_vector_error": 0.021975757229478293
-      },
-      "pretrained_stage2": {
-        "normalized_mpjpe": 0.04913709615201307,
-        "pck_005": 0.6795051773769754,
-        "edge_f1": 0.6035718583131726,
-        "normalized_bone_vector_error": 0.020869295711653076
-      },
-      "scratch_stage2": {
-        "normalized_mpjpe": 0.0923894431264541,
-        "pck_005": 0.5376216924956693,
-        "edge_f1": 0.5488795100528511,
-        "normalized_bone_vector_error": 0.025014576098555976
-      },
-      "interpretation": "Pretrained-stage2 beats scratch on all5paired asset intervals at10k. Joint improves position/PCK/J2J vs pretrained-stage2 but worsens bone-vector error; edge-F1 interval includes zero. Stronger early warm-start evidence than evidence for a comprehensive ongoing-AR benefit. Scratch remains near-copy at this early point; do not conclude it cannot learn.",
-      "fixed_case_visuals_checked": [
-        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_010000_v2.png",
-        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_010000_v2.png"
-      ]
-    },
-    "launched_source": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e",
-    "launched_config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
-    "launch": {
-      "stage": "train_v18",
-      "phase": "controls_to60k",
-      "started_utc": "2026-10-28T04:06:47.811521Z",
-      "supervisor_pid": 3629610,
-      "kernel_scheduler_membership": true,
-      "source_checkout_pinned_during_run": true,
-      "observed_utc": "2026-10-28T04:19:46.104116Z",
-      "first_regime": "pretrained_stage2",
-      "first_regime_observed_visits": 1920,
-      "first_regime_observed_updates": 40,
-      "AR_supervision_applied": false,
-      "observed_losses_finite": true,
-      "peak_tree_rss_bytes": 26264928256
-    },
     "capacity_evidence": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v19/result.json",
       "sha256": "be38458a228d1e89611b94db8bcd46c65347b259372cf2f8df860e9db3c91179",
@@ -170,7 +115,11 @@
       "passed": true,
       "optimizer_updates_per_rank": 18,
       "regimes_checked": 3,
-      "frames_checked": [6, 12, 24],
+      "frames_checked": [
+        6,
+        12,
+        24
+      ],
       "steps_per_regime_frame": 2,
       "active_encoder_and_head_gradients_positive_finite": true,
       "stage2_only_AR_branch_gradients_absent": true,
@@ -182,13 +131,23 @@
       "pretrained_motion_sha256": "94003598d43e1ec1a5fd7049671f32c7290da3b539960af99e0969bceff49cfe",
       "random_surface_sha256": "a01c3f44f2d017ce67141a2ee1095b7aad6af3cb068a44426eed3443edccc899",
       "random_motion_sha256": "57a24fc195747a325dc52f4ef2e83015a4b545370c54b7dafad64aa76f265dac",
-      "free24pose_max_joint_counts": [234, 230],
+      "free24pose_max_joint_counts": [
+        234,
+        230
+      ],
       "free_inference_finite_exact_reference": true,
       "parent_model_optimizer_RNG_loaded": true,
       "parent_sampler_prefix_verified": true,
-      "parent_counters": {"samples": 60000, "input_frames": 787504, "updates": 1260},
+      "parent_counters": {
+        "samples": 60000,
+        "input_frames": 787504,
+        "updates": 1260
+      },
       "parent_head_sha256": "68d30f1e7562b12574307e6b3dd6e8da791edc85a97f9ef6f7225178fe9f21aa",
-      "maximum_reserved_bytes_by_rank": [45797605376, 45147488256],
+      "maximum_reserved_bytes_by_rank": [
+        45797605376,
+        45147488256
+      ],
       "peak_tree_rss_bytes": 25253093376,
       "native_kernel_scheduler_membership": true,
       "execution_cpu_budget": 16,
@@ -261,29 +220,140 @@
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
     "runs": [
       {
-        "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_integration_5k_20261028_v1.json",
-        "config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v13",
-        "approved": true
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_integration_5k_20261028_v1.json",
-        "config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v19",
-        "approved": true
-      },
-      {
         "mode": "train",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_integration_5k_20261028_v1.json",
-        "config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v18",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_integration_common80k_20261028_v1.json",
+        "config_sha256": "af4c48f43254658ecd635f0f815aa248edae4ae66f1b035ea9d3e67ab9656cfb",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19",
         "approved": true
       }
     ],
     "runtime_unbound": false,
-    "end_policy": "Retain checkpoints and native allocation. No blind restart or source change during a payload. Do not claim the matched scratch recipe is the best standalone model or attribute all warm-start differences to joint training."
+    "end_policy": "Retain checkpoints and native allocation. No blind restart or source change during a payload. Do not claim the matched scratch recipe is the best standalone model or attribute all warm-start differences to joint training.",
+    "phase": "common80k",
+    "matched60000_evidence": {
+      "report": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_controls_060000.json",
+      "observed_utc": "2026-10-28T14:58:44.444515+00:00",
+      "scope": "Primary matched60k comparison, single seed/fixed128selection assets/GT reference; not final enlarged-set or stage1 retention acceptance.",
+      "trace_audit": {
+        "updates_per_arm": 1260,
+        "full_pass_boundaries": [
+          5000,
+          10000,
+          15000,
+          20000,
+          25000,
+          30000,
+          35000,
+          40000,
+          45000,
+          50000,
+          55000,
+          60000
+        ],
+        "input_frames_per_arm": 787504,
+        "actual_data_refs_and_planned_AR_slots_match": true,
+        "same_LR_trajectory": true,
+        "controls_apply_no_AR_loss": true,
+        "train_validation128_disjoint": true
+      },
+      "joint_pretrained": {
+        "normalized_mpjpe": 0.006743281381919327,
+        "pck_005": 0.9943025594485535,
+        "edge_f1": 0.8950171016603292,
+        "normalized_j2j": 0.006007846995324229,
+        "normalized_bone_vector_error": 0.005748548476546725
+      },
+      "pretrained_stage2": {
+        "normalized_mpjpe": 0.006533224043096197,
+        "pck_005": 0.9943455525782848,
+        "edge_f1": 0.9013693073554498,
+        "normalized_j2j": 0.005792357813085707,
+        "normalized_bone_vector_error": 0.005471033524676152
+      },
+      "scratch_stage2": {
+        "normalized_mpjpe": 0.016483027915650643,
+        "pck_005": 0.9376948148107838,
+        "edge_f1": 0.7804239650104171,
+        "normalized_j2j": 0.012916424908097465,
+        "normalized_bone_vector_error": 0.011747525137867214
+      },
+      "interpretation": "Pretrained-stage2 modestly beats joint on MPJPE/edgeF1/J2J/bone-vector paired intervals, not PCK. Warm start beats scratch on all5intervals. All3improve from50k to60k; common80k continuation is justified without changing the recipe.",
+      "fixed_case_visuals_checked": [
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_2_060000_v2.png",
+        "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/fixed_case_3_060000_v2.png"
+      ]
+    },
+    "controls60k_completion": {
+      "phase": "controls_to60k",
+      "stage": "train_v18",
+      "source": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e",
+      "config_sha256": "419b381d6755b19f8880b418c9ae1bce1da4c99b34a13f7c37258595f0e2d3e4",
+      "finished_utc": "2026-10-28T14:57:07.553467Z",
+      "result_sha256": "8dbd444c39bedf8e501105bb1581fb61c13cac78857a6706f3264be8f2788534",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "native_kernel_scheduler_membership": true,
+      "execution_cpu_budget": 16,
+      "peak_tree_rss_bytes": 39724183552,
+      "visits_per_arm": 60000,
+      "updates_per_arm": 1260,
+      "input_frames_per_arm": 787504,
+      "whole_operation_complete": false,
+      "quality_accepted": false
+    },
+    "completed_controls_archive": "model_training/state/archive/anchor_integration_controls60k_20261029.json",
+    "resume_checkpoints": {
+      "joint_pretrained": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v17/reference_transport/checkpoint_060000.pt",
+        "sha256": "cfd446c1f6808304aa6a691884c2ed77d19db0f1850512dfd97b83e7eb0a0016",
+        "code_commit": "9db222d0070122b08c6d5dde3329f3be69d46c16",
+        "scientific_sha256": "0a3f889063f52c0e7687b10b47fca109d2987a1bcca1ad1729bd8b1c653430b9",
+        "additional_asset_exposures": 60000,
+        "input_frame_exposures": 787504,
+        "step": 1260
+      },
+      "pretrained_stage2": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v18/pretrained_stage2/checkpoint_060000.pt",
+        "durable_path": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1/pretrained_stage2/checkpoint_060000.pt",
+        "sha256": "3624030132d0ae5b907a0d0641601604e220f3b28f8fd201bb063a03a8e8df3a",
+        "bytes": 8278608274,
+        "additional_asset_exposures": 60000,
+        "global_backbone_asset_exposures": 80000,
+        "complete": true,
+        "both_copies_verified": true,
+        "code_commit": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e"
+      },
+      "scratch_stage2": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v18/scratch_stage2/checkpoint_060000.pt",
+        "durable_path": "/home/wangyy/evorig/outputs/anchor_integration_5k_20261028/v1/scratch_stage2/checkpoint_060000.pt",
+        "sha256": "be8eb4d12917d52d8761c9c1223384c4441deea0dd1037bc88d6df5aefb1a50b",
+        "bytes": 5765161026,
+        "additional_asset_exposures": 60000,
+        "global_backbone_asset_exposures": 60000,
+        "complete": true,
+        "both_copies_verified": true,
+        "code_commit": "8b5cb9afa415c19781fb348fa1cdfcded2c96a1e"
+      }
+    },
+    "common80_admission": {
+      "accepted": true,
+      "existing_human_authorization": true,
+      "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_integration_common80k_20261028_v1.json",
+      "config_sha256": "af4c48f43254658ecd635f0f815aa248edae4ae66f1b035ea9d3e67ab9656cfb",
+      "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v19",
+      "scientific_sha256": "8e0467089d886766aa94b1ae6b6002f7ea03f1d2bff27ce161acef1c1b752da1",
+      "only_execution_changed": true,
+      "runtime_source_unchanged": true,
+      "reason": "All3matched50to60k MPJPE slopes remain positive: joint19.1%, pretrained-stage2 16.8%, scratch24.3% relative improvement. Continue declared sampler/LR prefix to common80k without a recipe change; complete the existing100kLR position horizon.",
+      "reuse_verified_gates": "The same scientific hash and byte-identical model/job/tool code retain the completed16pass CPU audit, 3regime native capacity and parent60k restoration checks. Do not repeat unchanged full audits merely because the execution phase changed.",
+      "required_final_plan": "Before writing exactly one train_v19 request, verify idle native keeper/devices, no pending payload, terminal controls receipts, exact committed source/config/output, all actual60k resume identities/counters/RNG/Adam and matching continuation streams. Plan must pass before execute.",
+      "final_visits_per_arm": 80000,
+      "final_updates_per_arm": 1680,
+      "final_input_frames_per_arm": 1043152,
+      "additional_updates_per_arm": 420,
+      "evaluation": "At80k evaluate fixed128, full967 and separately839, training32eligible/strictly-heldout raw poses, consistency/permutation diagnostics. Independently verify actual consumed traces. Stage1 free-AR retention still required before broad shared-model claims."
+    }
   },
   "previous_completed_result": {
     "label": "anchor_joint_binding_5k_20261027_v1",
@@ -292,5 +362,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Continue running train_v18 controls_to60k. Remote source8b5cb9a is PINNED for the entire payload; do not deploy later local state/docs commits mid-run. Compare both controls to archived joint training at matched10k/20k/etc checkpoints, with actual trace/init/LR validation. Stop at control60k for primary review; common80k requires separate exact admission."
+  "next_required_result": "Finish exact plan and launch common80k train_v19 once under the retained native keeper. Three groups resume their own60k states; no fresh heads/Adam or LR restart. Controls60k phase is complete and archived; reviews10k/30k/40k/50k/60k are retained and must not be rerun. After launch pin its committed source and compare common70k/80k, then independently audit enlarged final evaluations and stage1 retention. Do not release the GPU grant."
 }

@@ -799,8 +799,17 @@ FP32 eager decode with24inputframes; training/decode maximum reserved bytes were
 45541752832/10739515392, tree RSS peak27746340864. Adam fingerprint on both ranks:
 25bce929174500695f3d055f0f7b0e266528eff83fc9978c3a361e71be412245.
 Capacity result SHA256:24f1bebe0dff39d6ae93979606faac69e4bc582b316f67093e05e2076b2409ef.
-The exact train_v21 configuration is now admitted after a fresh live dry-run.
+The exact train_v21 configuration was admitted and then passed a fresh live dry-run.
 CPU/capacity artifacts and the independent review/render tools are retained locally.
 No first-stage quality conclusion yet; profile weights and forced-EOS-suppressed
 outputs are discarded. EdgeF1 uses directed edges after nearest-joint correspondence
 in both directions, not a geometry-free graph isomorphism measure.
+
+train_v21 started2026-10-28T23:03:23Z under the retained native keeper, source
+d2dfff503923ff6a4038b7aa50eddc7aba8be4a7, config SHA256
+274d2e525f5bfb2ceb4a3c287eb1e7bdb43e64b1d72782072ef9915e326637f7.
+At23:06:14Z both ranks had5updates/240additional visits/2784inputframes; actual
+joint-prefix match passed, AR enabled, stage2 forward absent, finite loss0.880914.
+The fifth update used LRposition20192, LR9.693158533855326e-5. This is execution
+validation only. Keep server source fixed during this payload, including its later
+eleven first-stage evaluations. Local documentation updates must not be deployed.

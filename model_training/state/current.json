@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "ar_only_feedback_native_20261029",
-  "updated_at": "2026-10-28T23:02:03Z",
+  "updated_at": "2026-10-28T23:07:29Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -101,7 +101,7 @@
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "operation": "train",
     "phase": "ar_only_plus_stage1_feedback",
-    "status": "capacity_passed_formal_AR_continuation_admitted",
+    "status": "AR_training_running_initial_actual_trace_verified",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": {
@@ -312,6 +312,34 @@
       "invoke": "preparation/invoke_stage1_review.ps1",
       "render": "preparation/render_stage1_feedback.py",
       "local_test_record": "preparation/stage1_review_tests_result.json"
+    },
+    "admission": {
+      "source": "d2dfff503923ff6a4038b7aa50eddc7aba8be4a7",
+      "config_sha256": "274d2e525f5bfb2ceb4a3c287eb1e7bdb43e64b1d72782072ef9915e326637f7",
+      "plan_sha256": "9df851c7b79bd4bbc6c1c45a007a3d5cd23466d23dbcf8b6fbd67d5bfe7e0557",
+      "plan": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/ar_only_train_v21_admission.json",
+      "queued_utc": "2026-10-28T23:03:21.551969+00:00",
+      "started_utc": "2026-10-28T23:03:23.610655+00:00",
+      "supervisor_pid": 1582856,
+      "active_server_source_must_not_change": true
+    },
+    "initial_actual_training": {
+      "observed_utc": "2026-10-28T23:06:14.624644+00:00",
+      "both_ranks": {
+        "updates": 5,
+        "additional_asset_exposures": 240,
+        "cumulative_asset_exposures": 20240,
+        "input_frame_exposures": 2784,
+        "actual_joint_trace_matched": true,
+        "ar_supervision_applied": true,
+        "stage2_forward_applied": false,
+        "learning_rate_asset_position_for_last_update": 20192,
+        "learning_rate": 0.00009693158533855326,
+        "main_loss": 0.8809142708778381
+      },
+      "native_scheduler_membership": true,
+      "execution_cpu_budget": 16,
+      "no_terminal_result_expected_yet": true
     }
   },
   "previous_completed_result": {
@@ -321,5 +349,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Execute exact train_v21 dry-run then submit through existing native keeper. Only40000newvisits/840updates/527856inputframes; actual samples/rawframes/ARslots/LR checked online against both joint prefixes. Save every5k; compare cumulative30/40/50/60k. After training, evaluate11checkpoints in commonFP32/noTF32/eager on128assets x8frames withoutGTreference. Terminal exit0/resources/cleanup before invoke_stage1_review.ps1, then -Render and inspect images. Do not declare whole task complete until paired interpretation and fixed examples are reviewed. Keep grant and heartbeat."
+  "next_required_result": "train_v21 is running, initial5updates on both ranks match actual joint asset/rawframe/ARslot/LR prefixes. Do not restart or deploy local commits. Observe with bounded preparation/observe_ar_only.sh (waits+480visits/new evaluation/terminal). At40k newvisits, training stops and11FP32/eager first-stage evaluations run serially. Wait for all evaluations and clean exit; collect terminal receipts, run invoke_stage1_review.ps1 then -Render and inspect fixed images. Verify840updates/40000new/60000cumulative/527856inputframes and interpret7paired comparisons with success denominators. Keep grant and followup until analysis completes."
 }

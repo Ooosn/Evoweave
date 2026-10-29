@@ -476,7 +476,11 @@
     "recomputed_views": 1584,
     "canonical_surface": "materialize_once_serialize_then_reuse_exact_tensors"
   },
-  "audit_result": null,
+  "audit_result": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v22/result.json",
+    "sha256": "880283847aafdc59ec2e80aaa5a503e4925e5ae8fbaf854f9f603c27e951aabe",
+    "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v22_resources.json"
+  },
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/stage1_surface_repair_20261029/v1"
   }

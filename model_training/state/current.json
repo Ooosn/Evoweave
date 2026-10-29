@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "stage1_surface_repair_native_20261029",
-  "updated_at": "2026-10-29T08:47:23Z",
+  "updated_at": "2026-10-29T08:56:50Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,10 +34,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -99,8 +99,8 @@
   "active_operation": {
     "label": "stage1_surface_repair_20261029_v1",
     "operation": "preflight",
-    "phase": "CPU_audit",
-    "status": "bounded_input_repair_implemented_CPU_audit_admitted",
+    "phase": "canonical_input_repair",
+    "status": "repair_CPU_audit_accepted_zero_update_evaluation_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "Complete the already-authorized same-input first-stage evaluation after its strict surface gate failed. No new training or optimization. Cache one canonical input for each18affected assets; evaluate11checkpoints on those inputs, retain the110identity-matched assets per checkpoint. Preserve failed parent receipts. No input-gate relaxation.",
@@ -151,9 +151,9 @@
     "CPU_tests_passed": 56,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/repair_tests_result.json",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
-    "capacity_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
     "quality_accepted": false,
     "repair_scope": {
       "affected_assets": 18,
@@ -173,11 +173,39 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/stage1_surface_repair_20261029_v1.json",
         "config_sha256": "939b5b7610b6b332762a00978cad602d35084fabebf9e619b884edfb96406c9a",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v22",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/stage1_surface_repair_20261029_v1.json",
+        "config_sha256": "b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v22",
         "approved": true
       }
     ],
     "acceptance": "CPUaudit: pinned parent failure, all11complete snapshots, original checkpoint hashes, exact non-surface input identities, exactly18affected/110retained assets, unchanged inference implementation and inherited FP32capacity. Evaluation: native bounded resources; canonical serialized full tensors verified before every model; all18assets recomputed for all11models,110old assets retained unchanged; strict all128asset paired hashes and7bootstrap comparisons; exit0 and cleanup. Final independent reviewer must preserve original failed receipts and validate repair provenance before fixed visuals.",
-    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs."
+    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs.",
+    "audit_completion": {
+      "finished_utc": "2026-10-29T08:53:37.677802+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "cuda_initialized": false,
+      "affected_assets": 18,
+      "retained_assets": 110,
+      "all_checkpoint_hashes_verified": true,
+      "unchanged_inference_source_verified": true,
+      "collection": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/surface_repair_audit_v22_collection.json",
+      "result_sha256": "880283847aafdc59ec2e80aaa5a503e4925e5ae8fbaf854f9f603c27e951aabe"
+    },
+    "storage_verification": {
+      "observed_utc": "2026-10-29T08:49:25.977391+00:00",
+      "path": "/work",
+      "mount_source": "/dev/md0",
+      "filesystem": "xfs",
+      "layout": "RAID0 of nvme0n1 and nvme1n1, all ROTA=0",
+      "record": "artifacts/surface_repair_audit_v22_admission.json"
+    }
   },
   "previous_completed_result": {
     "label": "anchor_joint_binding_5k_20261027_v1",
@@ -186,5 +214,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Run exact native CPUaudit_v22 after live idle/resource/source dry-run. No GPU repair yet. If passed, separately admit zero-optimizer capacity_v22 as bounded inference-only repair: cache18full inputs once, recompute1584views across11checkpoints, retain110assets/checkpoint, merge then use original strict pairing. No retraining, no threshold relaxation. Parent failures stay immutable. Finish independent terminal review and fixed10figures; keep heartbeat and allocation."
+  "next_required_result": "Run fresh live dry-run and native keeper request for exact capacity_v22 (zero optimization, inference repair only). CPUaudit_v22 passed with all11checkpoints/oldrows and18affected/110retained, unchanged model/decoder source and inherited fullFP32capacity. Canonical cache on verified /work NVMe RAID0. Preservefailedtrain_v21 evidence; no retries oftraining. After repair, requireall11merged outputs, strictpairedinputhashes,7pairedanalyses andexit0/resource/cleanup. Use updated invoke_stage1_review.ps1 (review_surface_repair.py), then -Render and inspect10fixedimages. Keep heartbeat/grant until actualqualityanalysisdone."
 }

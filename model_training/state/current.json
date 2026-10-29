@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "predicted_reference_official_smoke_native_20261029",
-  "updated_at": "2026-10-29T14:18:33Z",
+  "state_id": "predicted_reference_visual12_native_20261029",
+  "updated_at": "2026-10-29T14:30:43Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -35,10 +35,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -100,32 +100,32 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "complete",
-    "status": "four_case_official_smoke_completed",
-    "complete": true,
+    "phase": "visual12_CPU_audit",
+    "status": "implementation_passed_audit_admitted",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User explicitly corrected actual inference to the previously chosen dynamic official beam sampling, excludes static fallback, and requests few tests to save time. Four preselected assets2,3,64,127, reference0 only, then7 target frames each.",
+    "authorization": "Latest user asks to run more cases, primarily for visualization. Twelve additional fixed cases spanning source and GT complexity; official dynamic beam sampling only, no static fallback. Keep old four; no full validation rerun or training.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
-    "code_commit": "7f90e665b25effc26a19c720cf68b2b4ccd06af4",
+    "code_commit": "7447cdf50d47cc5793fdf0872b89f0da755c5818",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
     "quality_accepted": false,
-    "CPU_tests_passed": 17,
+    "CPU_tests_passed": 18,
     "model_pair": {
       "stage1": "joint_080000",
       "stage2": "pretrained_stage2_080000"
     },
     "evaluation_scope": {
-      "assets": 4,
+      "assets": 12,
       "input_frames": 8,
       "reference_slots": [
         0
       ],
-      "references": 4,
-      "views_per_method": 28,
+      "references": 12,
+      "views_per_method": 84,
       "methods": [
         "GT_head",
         "GT_copy",
@@ -133,68 +133,47 @@
         "predicted_copy"
       ],
       "precision": "fp32_noTF32",
-      "optimizer_updates": 0
+      "optimizer_updates": 0,
+      "case_indices": [
+        5,
+        15,
+        23,
+        24,
+        30,
+        44,
+        54,
+        61,
+        70,
+        95,
+        105,
+        108
+      ],
+      "display_slots": [
+        0,
+        2,
+        4,
+        7
+      ]
     },
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
-        "config_sha256": "049e3870abcd2a053eae45b195bf081810bd330a5c6d9caafa26b14f82d59dec",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v24",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
-        "config_sha256": "73c4b630b63394b21b433d688a1bff367568fa43db930f3353b56b669d87349f",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v24",
-        "approved": false
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
+        "config_sha256": "488003310af51b17af40caa8185398b41ad88cf46a6ea6c3cec7ad71df1532ae",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v25",
+        "approved": true
       }
     ],
-    "acceptance": "Reuse only canonical mesh tensors from completed capacity_v23; no greedy output reused. CPU bind four cases and checkpoints; execute15beam full2048token capacity before four normal-EOS generations. Preserve failures and fixed denominator28views/method; no GT selection, repair, training, static fallback, or full128rerun.",
-    "end_policy": "Four-case descriptive smoke and visuals only. Do not expand, train or release allocation.",
-    "inherited_generation_capacity_accepted": false,
-    "audit_completion": {
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "cuda_initialized": false,
-      "finished_utc": "2026-10-29T14:10:57.353997+00:00",
-      "result_sha256": "a1f2cd971320b8965be4bf18dc422c0baa574251403182e7c0c57d0994777366",
-      "assets": 4,
-      "references": 4,
-      "views_per_method": 28
-    },
-    "descriptive_result_accepted": true,
-    "completion": {
-      "finished_utc": "2026-10-29T14:15:46.517545+00:00",
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "optimizer_updates": 0,
-      "references_valid": 4,
-      "views_per_method": 28,
-      "stage1_greedy_outputs_reused": 0,
-      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json",
-      "result_sha256": "aefd4fea56736bce2c2afb29b7ae702100afa030e44284321557cb48ef170af2",
-      "figures_reviewed": [
-        2,
-        3,
-        64,
-        127
-      ],
-      "predicted_head_j2j": 0.03522181610219503,
-      "predicted_copy_j2j": 0.08417466014782105,
-      "GT_head_j2j": 0.006840943001875482,
-      "matched_greedy_head_j2j": 0.02022850146405191,
-      "interpretation": "All four valid generated references can be transported; all four improve over copying. Counts remain wrong in all four. Case127 official predicts18/GT52, worse than paired greedy. Four fixed examples, one seed, not validation-set quality or evidence official is uniformly better."
-    }
+    "acceptance": "Bind preselected12cases and canonical8-frame inputs. Inherit completed15beam2048token FP32 capacity_v24 on exact decoder/checkpoints; do not repeat stress. Generate one normal-EOS reference per case, no GT selection/repair. All failures retained;84target views/method. Export4096surfacepoints/frame and reference plus3target poses; prediction-only main sheets and GT overlays separately.",
+    "end_policy": "Finish12case visuals including failures, interpret motion/placement without declaring count mismatch alone a failure. No training, extra random retries, full128run or grant release.",
+    "inherited_generation_capacity_accepted": true,
+    "descriptive_result_accepted": false
   },
   "previous_completed_result": {
-    "label": "predicted_reference_greedy_diagnostic_v23",
+    "label": "official_four_case_smoke",
     "execution_authority": false,
-    "full_record": "model_training/state/archive/predicted_reference_greedy_v23_20261029.json",
-    "execution": "exit0/native16CPU/resources/cleanup at2026-10-29T13:59:30Z; full independent score review failed strict CPU/GPU float equality, not accepted final quality; preserve originals."
+    "full_record": "model_training/state/archive/predicted_reference_official_smoke_completed_20261029.json",
+    "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json"
   },
-  "next_required_result": "No further work authorized for this smoke. User requested saving time: report the four-case result and stop testing. Greedy remains fast validation feedback; actual inference is dynamic official beam sampling with no static fallback. Preserve grant, checkpoints, input caches, old greedy diagnostics and all new figures."
+  "next_required_result": "Audit_v25 then exact capacity_v25 visual expansion; retain completed four-case work, reuse accepted beam capacity, render all12new assets with reference/target2/4/7 and separate GT overlays. Review all, no quality-based case filtering."
 }

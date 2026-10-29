@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "state_id": "predicted_reference_official_smoke_native_20261029",
+  "updated_at": "2026-10-29T14:18:33Z",
+  "module": "model_training",
+  "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
+    "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "Does stage2 supervision improve stage1 free skeleton generation? Compare donor, stage2-only, joint, and the explicitly requested matched AR-only continuation.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "reference_input": "GT reference remains the contract for the completed stage2 tests only. Stage1 feedback evaluation must have NO GT reference or teacher-forced prefix; use only mesh and BOS/class.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "preflight",
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130675914,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_slots": 16,
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "keeper_pid": 1108368,
+    "status": "native_96hour_retained_idle",
+    "expiry_utc": "2026-10-31T11:55:38Z",
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "last_observed_utc": "2026-10-29T14:18:33.373037Z",
+    "kernel_cpuset_and_devices_membership": true,
+    "rss_limit_bytes": 68719476736,
+    "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
+    "rejected_previous_reservation": {
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
+    },
+    "h_rt_seconds": 345600,
+    "last_observation_note": "After official four-case smoke and visual review, keeper idle, both GPUs unoccupied, native cpuset/devices and16CPU affinity verified. Remote source9aceaa5 retained; allocation not released.",
+    "last_gpu_memory_observed_utc": "2026-10-28T21:58:03.669814Z",
+    "last_observed_gpu_used_mib": [
+      959,
+      959
+    ]
+  },
+  "active_operation": {
+    "label": "predicted_reference_20261029_v1",
+    "operation": "preflight",
+    "phase": "complete",
+    "status": "four_case_official_smoke_completed",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "User explicitly corrected actual inference to the previously chosen dynamic official beam sampling, excludes static fallback, and requests few tests to save time. Four preselected assets2,3,64,127, reference0 only, then7 target frames each.",
+    "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "code_commit": "7f90e665b25effc26a19c720cf68b2b4ccd06af4",
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "quality_accepted": false,
+    "CPU_tests_passed": 17,
+    "model_pair": {
+      "stage1": "joint_080000",
+      "stage2": "pretrained_stage2_080000"
+    },
+    "evaluation_scope": {
+      "assets": 4,
+      "input_frames": 8,
+      "reference_slots": [
+        0
+      ],
+      "references": 4,
+      "views_per_method": 28,
+      "methods": [
+        "GT_head",
+        "GT_copy",
+        "predicted_head",
+        "predicted_copy"
+      ],
+      "precision": "fp32_noTF32",
+      "optimizer_updates": 0
+    },
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
+        "config_sha256": "049e3870abcd2a053eae45b195bf081810bd330a5c6d9caafa26b14f82d59dec",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v24",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
+        "config_sha256": "73c4b630b63394b21b433d688a1bff367568fa43db930f3353b56b669d87349f",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v24",
+        "approved": false
+      }
+    ],
+    "acceptance": "Reuse only canonical mesh tensors from completed capacity_v23; no greedy output reused. CPU bind four cases and checkpoints; execute15beam full2048token capacity before four normal-EOS generations. Preserve failures and fixed denominator28views/method; no GT selection, repair, training, static fallback, or full128rerun.",
+    "end_policy": "Four-case descriptive smoke and visuals only. Do not expand, train or release allocation.",
+    "inherited_generation_capacity_accepted": false,
+    "audit_completion": {
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "cuda_initialized": false,
+      "finished_utc": "2026-10-29T14:10:57.353997+00:00",
+      "result_sha256": "a1f2cd971320b8965be4bf18dc422c0baa574251403182e7c0c57d0994777366",
+      "assets": 4,
+      "references": 4,
+      "views_per_method": 28
+    },
+    "descriptive_result_accepted": true,
+    "completion": {
+      "finished_utc": "2026-10-29T14:15:46.517545+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "optimizer_updates": 0,
+      "references_valid": 4,
+      "views_per_method": 28,
+      "stage1_greedy_outputs_reused": 0,
+      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json",
+      "result_sha256": "aefd4fea56736bce2c2afb29b7ae702100afa030e44284321557cb48ef170af2",
+      "figures_reviewed": [
+        2,
+        3,
+        64,
+        127
+      ],
+      "predicted_head_j2j": 0.03522181610219503,
+      "predicted_copy_j2j": 0.08417466014782105,
+      "GT_head_j2j": 0.006840943001875482,
+      "matched_greedy_head_j2j": 0.02022850146405191,
+      "interpretation": "All four valid generated references can be transported; all four improve over copying. Counts remain wrong in all four. Case127 official predicts18/GT52, worse than paired greedy. Four fixed examples, one seed, not validation-set quality or evidence official is uniformly better."
+    }
+  },
+  "previous_completed_result": {
+    "label": "predicted_reference_greedy_diagnostic_v23",
+    "execution_authority": false,
+    "full_record": "model_training/state/archive/predicted_reference_greedy_v23_20261029.json",
+    "execution": "exit0/native16CPU/resources/cleanup at2026-10-29T13:59:30Z; full independent score review failed strict CPU/GPU float equality, not accepted final quality; preserve originals."
+  },
+  "next_required_result": "No further work authorized for this smoke. User requested saving time: report the four-case result and stop testing. Greedy remains fast validation feedback; actual inference is dynamic official beam sampling with no static fallback. Preserve grant, checkpoints, input caches, old greedy diagnostics and all new figures."
+}

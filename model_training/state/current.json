@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "predicted_reference_native_20261029",
-  "updated_at": "2026-10-29T13:45:33Z",
+  "updated_at": "2026-10-29T13:53:29Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,12 +34,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "preflight",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
@@ -99,8 +99,8 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "CPU_audit",
-    "status": "implemented_CPU_tests_passed_audit_only",
+    "phase": "bounded_inference",
+    "status": "CPU_audit_accepted_inference_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly asked to try stage1-predicted skeletons as references for the current best stage2 model. Evaluate a bounded primary pipeline with no training or architecture change; keep GT-reference and copy controls.",
@@ -108,8 +108,8 @@
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "code_commit": "a416674e56d6fe53de192d5db38edf63363d6d6d",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
     "CPU_tests_passed": 32,
@@ -142,18 +142,33 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
         "config_sha256": "3d9bba5dcfcca7bdfd1f0c6b2444fe2f281bf1656379c8a4e649e0fe50569609",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v23",
-        "approved": true
+        "approved": false
       },
       {
         "mode": "capacity",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
-        "config_sha256": "3d9bba5dcfcca7bdfd1f0c6b2444fe2f281bf1656379c8a4e649e0fe50569609",
+        "config_sha256": "21344b88338d870d019ea835fada215da69d8baf967dc25457cc31100bbec343",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v23",
-        "approved": false
+        "approved": true
       }
     ],
     "acceptance": "CPU: checkpoints/source rows, fixed128/raw-frame/GT/normalization identity, unmodified model code, inherited FP32 generation capacity. GPU: reuse stage1 only on exact surface identity; otherwise regenerate0/4 on shared canonical input. GT/predicted head/copy share inputs. Profile3largest actual trees/rank before scoring. Failures counted; no GT repair/alignment. Require exit0/native resources/cleanup and independent paired analysis/visuals.",
-    "end_policy": "No training or grant release. Preserve old evidence and all reference failures. Finish independent analysis and diverse case visualizations."
+    "end_policy": "No training or grant release. Preserve old evidence and all reference failures. Finish independent analysis and diverse case visualizations.",
+    "inherited_generation_capacity_accepted": true,
+    "audit_completion": {
+      "finished_utc": "2026-10-29T13:50:13.092749Z",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "cuda_initialized": false,
+      "reference_statuses": {
+        "valid": 255,
+        "generation_max_tokens": 1
+      },
+      "maximum_predicted_joints": 271,
+      "result_sha256": "c13b34870d9b3a7a7e7171fdf7de05e1fd38e2d60674c1dac721c1c719822d53",
+      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/predicted_reference_audit_v23_review.json"
+    }
   },
   "previous_completed_result": {
     "label": "stage1_feedback_completed_20261029",
@@ -161,5 +176,5 @@
     "full_record": "model_training/state/archive/stage1_feedback_completed_20261029.json",
     "execution_authority": false
   },
-  "next_required_result": "Run exact audit_v23 admission on retained native grant. No GPU work before audit acceptance and capacity_v23 admission. Complete predicted-reference pipeline:1792views/method,4controls,FP32/noTF32,zero updates. Verify exact cache identities, report failures and paired metrics, inspect varied new cases."
+  "next_required_result": "Run fresh capacity_v23 plan and execute once under retained native16CPU/GPU3,4. Cache all inputs; reuse only exact-input first-stage references; profile max actual GT/predicted trees before full128evaluation. No training, GT repair or old-output overwrite. After exit0/resource/cleanup, independent final review and diverse visualizations."
 }

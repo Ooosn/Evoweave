@@ -129,7 +129,11 @@
     },
     "profile_assets_per_rank": 3
   },
-  "audit_result": null,
+  "audit_result": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v23/result.json",
+    "sha256": "c13b34870d9b3a7a7e7171fdf7de05e1fd38e2d60674c1dac721c1c719822d53",
+    "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v23_resources.json"
+  },
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/predicted_reference_20261029/v1"
   }

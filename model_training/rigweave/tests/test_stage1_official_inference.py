@@ -25,6 +25,16 @@ class Tokenizer:
 
 
 class OfficialInferenceTests(unittest.TestCase):
+    def test_visual_expansion_keeps_recipe_and_requires_inherited_capacity(self):
+        config = json.loads((ROOT/'model_training/experiments/predicted_reference_visual12_20261029.json').read_text())
+        validate_config(config, 'capacity')
+        self.assertEqual(config['evaluation']['assets'], 12)
+        self.assertFalse(set(config['official_smoke']['case_indices']) & {2, 3, 64, 127})
+        self.assertFalse(config['official_smoke']['full_beam_capacity_first'])
+        config['official_smoke']['inherited_official_capacity'] = None
+        with self.assertRaises(ValueError):
+            validate_config(config, 'capacity')
+
     def test_real_beam_sampling_prompt_rng_and_capacity(self):
         torch.set_num_threads(1)
         decoder = OPTForCausalLM(OPTConfig(vocab_size=16, hidden_size=16, word_embed_proj_dim=16,

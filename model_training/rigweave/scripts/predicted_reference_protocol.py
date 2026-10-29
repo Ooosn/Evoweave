@@ -43,12 +43,15 @@ def validate_config(config, mode):
     if 'official_smoke' in config:
         from stage1_official_inference import OFFICIAL_OPTIONS, POLICY
         smoke = config['official_smoke']
-        expected.update(assets=4, reference_slots=[0], payload_limit_seconds=1800,
+        expanded = smoke['case_indices'] == [5, 15, 23, 24, 30, 44, 54, 61, 70, 95, 105, 108]
+        expected.update(assets=12 if expanded else 4, reference_slots=[0], payload_limit_seconds=1800,
                         stage1_cache_policy='regenerate_all_official_no_greedy_reuse')
-        if (smoke['case_indices'] != [2, 3, 64, 127] or smoke['policy'] != POLICY
+        if ((not expanded and smoke['case_indices'] != [2, 3, 64, 127]) or smoke['policy'] != POLICY
                 or smoke['generation_kwargs'] != OFFICIAL_OPTIONS or smoke['base_seed'] != 20261029
-                or smoke['static_fallback'] or not smoke['full_beam_capacity_first']):
+                or smoke['static_fallback'] or smoke['full_beam_capacity_first'] != (not expanded)):
             raise ValueError('unreviewed official inference recipe')
+        if expanded and (not smoke.get('inherited_official_capacity') or smoke.get('visual_point_limit') != 4096):
+            raise ValueError('expanded visual run needs accepted official capacity and fixed export size')
     if mode not in ('audit', 'capacity') or config.get('family') != SCOPE or config.get('evaluation') != expected:
         raise ValueError('unreviewed predicted-reference evaluation')
     profiles = 0 if 'official_smoke' in config else 3

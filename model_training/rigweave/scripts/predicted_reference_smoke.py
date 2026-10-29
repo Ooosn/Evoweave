@@ -1,4 +1,4 @@
-"""Four fixed examples, one official dynamic reference each, no training."""
+"""Preselected visual examples, one official dynamic reference each, no training."""
 import gc
 import json
 from pathlib import Path
@@ -46,26 +46,49 @@ def load_records(config, rank=None):
         for record in torch.load(cache['path'], map_location='cpu', mmap=True, weights_only=True):
             if record['asset_id'] in selected:
                 validate_canonical(record, previous)
-                records.append(record)
+                records.append(dict(record, panel_index=selected[record['asset_id']]))
     expected = {asset for asset, i in selected.items() if rank is None or i % 2 == rank}
     if {r['asset_id'] for r in records} != expected or len(records) != len(expected):
         raise ValueError('fixed smoke cases missing or duplicated')
     return sorted(records, key=lambda r: selected[r['asset_id']])
 
 
+def inherited_capacity(config):
+    spec = config['official_smoke'].get('inherited_official_capacity')
+    if spec is None:
+        return None
+    for item in spec.values():
+        if sha256(item['path']) != item['sha256']:
+            raise ValueError('official beam capacity provenance changed')
+    result = json.loads(Path(spec['result']['path']).read_text())
+    resources = json.loads(Path(spec['resources']['path']).read_text())
+    if (not result['passed'] or not result['complete'] or not resources['passed']
+            or resources['exit_code'] != 0 or not resources['payload_cleanup_complete']
+            or result['checkpoints'] != config['checkpoints']
+            or result['policy']['generation_kwargs'] != config['official_smoke']['generation_kwargs']):
+        raise ValueError('official capacity contract differs')
+    profiles = {x['rank']: dict(x['beam_capacity'], inherited_from=spec['result']) for x in result['artifacts']}
+    if set(profiles) != {0, 1} or any(not p['passed'] or (p['new_tokens'], p['num_beams'], p['input_frames']) != (2048, 15, 8) for p in profiles.values()):
+        raise ValueError('inherited full beam stress missing')
+    return profiles
+
+
 def audit(config, output, source):
     records = load_records(config)
+    capacity = inherited_capacity(config)
     for spec in config['checkpoints'].values():
         if sha256(spec['path']) != spec['sha256']:
             raise ValueError('pipeline checkpoint changed')
     subprocess.run(['git', '-C', str(ROOT), 'diff', '--quiet', config['prior_source'], source, '--',
         'model_training/rigweave/src', 'model_training/rigweave/scripts/ar_only_runtime.py',
-        'model_training/rigweave/scripts/stage1_feedback.py'], check=True)
+        'model_training/rigweave/scripts/stage1_feedback.py',
+        'model_training/rigweave/scripts/stage1_official_inference.py'], check=True)
     if torch.cuda.is_initialized():
         raise RuntimeError('CPU audit initialized CUDA')
     result = {'complete': True, 'passed': True, 'source': source,
         'scientific_sha256': scientific_sha(config), 'optimizer_updates': 0,
-        'assets': [r['asset_id'] for r in records], 'references': 4, 'views_per_method': 28,
+        'assets': [r['asset_id'] for r in records], 'references': len(records), 'views_per_method': len(records)*7,
+        'inherited_official_capacity': capacity,
         'cuda_initialized': False, 'stage1_greedy_outputs_reused': 0,
         'policy': config['official_smoke'], 'quality_accepted': False}
     write_json(output/'result.json', result)
@@ -91,7 +114,8 @@ def run(config, output, source, device, rank, world):
     records = load_records(config, rank)
     model, tokenizer = load_evaluation_model(original, device, config['checkpoints']['stage1'])
     references = {}
-    profile = None
+    inherited = inherited_capacity(config)
+    profile = inherited[rank] if inherited else None
     for record in records:
         boundary()
         asset = record['asset_id']
@@ -159,9 +183,17 @@ def run(config, output, source, device, rank, world):
                         reference_raw_frame=record['raw_frames'][0], stage1_cache_reused=False)
                     rows.append(row)
                     asset_rows.append(row)
-        examples.append({'asset_id': asset, 'raw_frames': record['raw_frames'],
+        example = {'asset_id': asset, 'raw_frames': record['raw_frames'], 'panel_index': record['panel_index'],
             'points': record['surface']['query_points'][0], 'truth': record['truth'],
-            'parents': record['parents'], 'rows': asset_rows, 'reference': references[asset]})
+            'parents': record['parents'], 'rows': asset_rows, 'reference': references[asset]}
+        if config['official_smoke'].get('visual_point_limit'):
+            dense = record['surface']['dense_points'][0]
+            if dense.ndim != 3 or dense.shape[0] != 8:
+                raise ValueError('visual surface frame layout differs')
+            limit = config['official_smoke']['visual_point_limit']
+            step = max(1, (dense.shape[1]+limit-1)//limit)
+            example['visual_points'] = dense[:, ::step].clone()
+        examples.append(example)
         del features, surface, truth, prediction
     row_path, example_path = output/f'rows_rank_{rank}.json', output/f'examples_rank_{rank}.pt'
     write_json(row_path, rows)
@@ -175,12 +207,12 @@ def run(config, output, source, device, rank, world):
         groups = {m: [r for r in all_rows if r['method'] == m] for m in METHODS}
         expected = {(a, t) for a in audit_result['assets'] for t in range(1, 8)}
         for group in groups.values():
-            if len(group) != 28 or {(r['asset_id'], r['target_slot']) for r in group} != expected:
+            if len(group) != config['evaluation']['assets']*7 or {(r['asset_id'], r['target_slot']) for r in group} != expected:
                 raise ValueError('smoke denominator changed')
         result = {'complete': True, 'passed': True, 'source': source, 'scientific_sha256': scientific_sha(config),
             'optimizer_updates': 0, 'checkpoints': config['checkpoints'], 'policy': config['official_smoke'],
             'summaries': {m: summarize(v) for m, v in groups.items()}, 'artifacts': receipts,
-            'scope': 'Four preselected assets, one reference each; descriptive smoke only, not validation-set quality.',
+            'scope': f"{config['evaluation']['assets']} preselected assets, one reference each; descriptive visual inspection, not validation-set quality.",
             'seconds': time.monotonic()-started, 'quality_accepted': False}
         write_json(output/'result.json', result)
         mirror(output/'result.json', 'result.json', config)

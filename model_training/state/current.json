@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "predicted_reference_visual12_native_20261029",
-  "updated_at": "2026-10-29T14:30:43Z",
+  "updated_at": "2026-10-29T14:35:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -100,8 +100,8 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "visual12_CPU_audit",
-    "status": "implementation_passed_audit_admitted",
+    "phase": "visual12_bounded_inference",
+    "status": "CPU_audit_passed_inherited_capacity_accepted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "Latest user asks to run more cases, primarily for visualization. Twelve additional fixed cases spanning source and GT complexity; official dynamic beam sampling only, no static fallback. Keep old four; no full validation rerun or training.",
@@ -109,9 +109,9 @@
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "code_commit": "7447cdf50d47cc5793fdf0872b89f0da755c5818",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
-    "capacity_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
     "quality_accepted": false,
     "CPU_tests_passed": 18,
     "model_pair": {
@@ -161,13 +161,30 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
         "config_sha256": "488003310af51b17af40caa8185398b41ad88cf46a6ea6c3cec7ad71df1532ae",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v25",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
+        "config_sha256": "a132a564bd6bc477b9fc76b2cbb5ff4c5c5f4dc8fd4e8ee51afb8e31e90ead23",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v25",
         "approved": true
       }
     ],
     "acceptance": "Bind preselected12cases and canonical8-frame inputs. Inherit completed15beam2048token FP32 capacity_v24 on exact decoder/checkpoints; do not repeat stress. Generate one normal-EOS reference per case, no GT selection/repair. All failures retained;84target views/method. Export4096surfacepoints/frame and reference plus3target poses; prediction-only main sheets and GT overlays separately.",
     "end_policy": "Finish12case visuals including failures, interpret motion/placement without declaring count mismatch alone a failure. No training, extra random retries, full128run or grant release.",
     "inherited_generation_capacity_accepted": true,
-    "descriptive_result_accepted": false
+    "descriptive_result_accepted": false,
+    "audit_completion": {
+      "finished_utc": "2026-10-29T14:32:44.909235+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "cuda_initialized": false,
+      "result_sha256": "1e9b712e915e45f6a86bd31773d8db788cfb2fbf8877de1f3ff25e108ced4bfc",
+      "references": 12,
+      "views_per_method": 84
+    }
   },
   "previous_completed_result": {
     "label": "official_four_case_smoke",

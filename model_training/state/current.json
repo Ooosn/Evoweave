@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_training_admitted_20261030",
-  "updated_at": "2026-10-29T20:03:12.948Z",
+  "state_id": "anchor_full_300k_running_20261030",
+  "updated_at": "2026-10-29T20:12:35.367519+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
@@ -75,10 +75,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_96hour_retained_idle",
+    "status": "native_full300k_training_running",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-29T14:40:26.304373Z",
+    "last_observed_utc": "2026-10-29T20:12:35.367519+00:00",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -89,24 +89,24 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "After capacity_v25 and all12visuals reviewed, keeper idle, GPU_occupied=false, native membership verified; sourcec6860ee, grant retained.",
-    "last_gpu_memory_observed_utc": "2026-10-28T21:58:03.669814Z",
+    "last_observation_note": "Formal train_v26 verified on both ranks; official initialization, empty Adam, actual full-data prefix and native membership checked. Do not alter the live checkout or release the allocation.",
+    "last_gpu_memory_observed_utc": "2026-10-29T20:12:35.367519+00:00",
     "last_observed_gpu_used_mib": [
-      959,
-      959
+      44455,
+      44553
     ]
   },
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "operation": "train",
     "phase": "full300k",
-    "status": "primary_CPU_and_GPU_checks_passed_formal_fresh_training_admitted",
+    "status": "running_verified_both_ranks_fresh_official_full_data",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
     "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
-    "code_commit": "d87690446306da2bb5458f6f8eaa38cb29cb631c",
+    "code_commit": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
     "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": true,
@@ -219,6 +219,23 @@
       "model_Adam_RNG_sampler_roundtrip_exact": true,
       "official_model_initial_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
       "profile_weights_are_not_formal_initialization": true
+    },
+    "source_commit_actual": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
+    "supervisor_pid": 1964286,
+    "started_utc": "2026-10-29T20:04:40.762707+00:00",
+    "startup_verification": {
+      "passed": true,
+      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_training_start.json",
+      "observed_utc": "2026-10-29T20:12:35.367519+00:00",
+      "optimizer_updates_per_rank": 17,
+      "asset_visits": 816,
+      "input_frame_visits": 10032,
+      "verified_unique_asset_prefix": 816,
+      "maximum_actual_manifest_index": 17995,
+      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "project_checkpoint_loaded": false,
+      "project_optimizer_loaded": false,
+      "native_membership": true
     }
   },
   "last_operation": {
@@ -226,5 +243,5 @@
     "label": "predicted_reference_20261029_v1",
     "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "Start the exact fresh official-UniRig full300k run in the native grant; verify both ranks' initial counters, actual updates and resource monitor. Observe validation without adding new arms."
+  "next_required_result": "Read live train_v26 progress/resources; first fixed128 validation at10000visits, free AR validation each50000, full final XYZ967at300000. Preserve native grant; no concurrent GPU work or live source changes."
 }

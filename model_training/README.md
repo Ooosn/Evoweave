@@ -3,6 +3,11 @@
 This module owns model architecture, training, generation, and evaluation.
 Data production is owned by `data_processing/`.
 
+Current execution: user-approved full18,002-asset joint training from official
+UniRig for300kasset visits. See [the full-data protocol](docs/ANCHOR_FULL_300K_20261030.md)
+and `state/current.json`; historical closed5k permissions below do not authorize
+or prohibit this separate run.
+
 ## Research Entry Points
 
 | Layer | Document | Purpose |

@@ -1,15 +1,14 @@
 {
   "schema_version": 1,
-  "state_id": "predicted_reference_visual12_native_20261029",
-  "updated_at": "2026-10-29T14:40:26Z",
+  "state_id": "anchor_full_300k_preparation_20261030",
+  "updated_at": "2026-10-29T18:20:17.357Z",
   "module": "model_training",
-  "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
+  "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md"
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md"
   ],
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -28,9 +27,9 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Does stage2 supervision improve stage1 free skeleton generation? Compare donor, stage2-only, joint, and the explicitly requested matched AR-only continuation.",
+    "current_question": "Train the main joint model on all18002assets from official UniRig for300000asset visits; not a matched5k prior ablation.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
-    "reference_input": "GT reference remains the contract for the completed stage2 tests only. Stage1 feedback evaluation must have NO GT reference or teacher-forced prefix; use only mesh and BOS/class.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
   },
   "allowed_operations": [
@@ -98,135 +97,27 @@
     ]
   },
   "active_operation": {
-    "label": "predicted_reference_20261029_v1",
+    "label": "anchor_full_20261030_v1",
     "operation": "preflight",
-    "phase": "complete",
-    "status": "visual12_inference_and_visual_review_completed",
-    "complete": true,
+    "phase": "preparation",
+    "status": "implementation_tests_and_exact_cleanup_plan_pending",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "Latest user asks to run more cases, primarily for visualization. Twelve additional fixed cases spanning source and GT complexity; official dynamic beam sampling only, no static fallback. Keep old four; no full validation rerun or training.",
-    "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
-    "code_commit": "7447cdf50d47cc5793fdf0872b89f0da755c5818",
+    "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
+    "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
+    "code_commit": "c6860ee70815b1c160cb1e756cf1d8809932dfb7",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "quality_accepted": false,
-    "CPU_tests_passed": 18,
-    "model_pair": {
-      "stage1": "joint_080000",
-      "stage2": "pretrained_stage2_080000"
-    },
-    "evaluation_scope": {
-      "assets": 12,
-      "input_frames": 8,
-      "reference_slots": [
-        0
-      ],
-      "references": 12,
-      "views_per_method": 84,
-      "methods": [
-        "GT_head",
-        "GT_copy",
-        "predicted_head",
-        "predicted_copy"
-      ],
-      "precision": "fp32_noTF32",
-      "optimizer_updates": 0,
-      "case_indices": [
-        5,
-        15,
-        23,
-        24,
-        30,
-        44,
-        54,
-        61,
-        70,
-        95,
-        105,
-        108
-      ],
-      "display_slots": [
-        0,
-        2,
-        4,
-        7
-      ]
-    },
-    "runs": [
-      {
-        "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
-        "config_sha256": "488003310af51b17af40caa8185398b41ad88cf46a6ea6c3cec7ad71df1532ae",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v25",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
-        "config_sha256": "a132a564bd6bc477b9fc76b2cbb5ff4c5c5f4dc8fd4e8ee51afb8e31e90ead23",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v25",
-        "approved": false
-      }
-    ],
-    "acceptance": "Bind preselected12cases and canonical8-frame inputs. Inherit completed15beam2048token FP32 capacity_v24 on exact decoder/checkpoints; do not repeat stress. Generate one normal-EOS reference per case, no GT selection/repair. All failures retained;84target views/method. Export4096surfacepoints/frame and reference plus3target poses; prediction-only main sheets and GT overlays separately.",
-    "end_policy": "Finish12case visuals including failures, interpret motion/placement without declaring count mismatch alone a failure. No training, extra random retries, full128run or grant release.",
-    "inherited_generation_capacity_accepted": true,
-    "descriptive_result_accepted": true,
-    "audit_completion": {
-      "finished_utc": "2026-10-29T14:32:44.909235+00:00",
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "cuda_initialized": false,
-      "result_sha256": "1e9b712e915e45f6a86bd31773d8db788cfb2fbf8877de1f3ff25e108ced4bfc",
-      "references": 12,
-      "views_per_method": 84
-    },
-    "completion": {
-      "finished_utc": "2026-10-29T14:37:38.213806+00:00",
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "optimizer_updates": 0,
-      "references_valid": 12,
-      "views_per_method": 84,
-      "case_indices": [
-        5,
-        15,
-        23,
-        24,
-        30,
-        44,
-        54,
-        61,
-        70,
-        95,
-        105,
-        108
-      ],
-      "display_slots": [
-        0,
-        2,
-        4,
-        7
-      ],
-      "stage1_greedy_outputs_reused": 0,
-      "inherited_capacity_reused": true,
-      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/visual12_review.json",
-      "result_sha256": "1edfbcdadec67affa84c769ec9105705c37d289b53f7b89360cc626caab9fda0",
-      "visual_review": "All3prediction contact sheets and3GT-overlay sheets viewed; all12cases retained, no score-based filtering. Individual prediction and GT sheets also saved. Major pose following visible in15/24/54/95. Case23 adds fine joints while following main body. Cases70/105 omit upper/extra branches;108 has extra branches off the shape, not merely an alternate joint count. Selected poses are not consecutive animation.",
-      "predicted_head_j2j": 0.024393796545870636,
-      "predicted_copy_j2j": 0.06977648335812232
-    }
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "runs": [],
+    "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained."
   },
-  "previous_completed_result": {
-    "label": "official_four_case_smoke",
-    "execution_authority": false,
-    "full_record": "model_training/state/archive/predicted_reference_official_smoke_completed_20261029.json",
-    "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json"
+  "last_operation": {
+    "archive": "model_training/state/archive/current_before_full_20261030.json",
+    "label": "predicted_reference_20261029_v1",
+    "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "No pending work: deliver all12additional visual cases (prediction-only contact sheets plus GT-overlay alternatives), keeping old4. Do not expand or retrain without a new user request. Distinguish count/granularity changes from missing or off-mesh branches; do not call sampled poses a consecutive animation."
+  "next_required_result": "Pass tests, review exact cache/cleanup scope, bind native CPU audit; then admit full-data GPU capacity."
 }

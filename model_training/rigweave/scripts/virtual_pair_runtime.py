@@ -56,7 +56,7 @@ def selected_supervision(config):
 
 
 def target_selection(config, requests):
-    if config.get('family') == DENSITY_SCOPE:
+    if config.get('family') in (DENSITY_SCOPE, 'anchor_full_backbone_20261030_v1'):
         spec = config['pair']['target_selection']
         return select_density_target_frames(requests, spec['seed'], spec['algorithm'])
     selector = select_two_target_frames if config.get('family') == TWO_SCOPE else select_target_frames
@@ -483,10 +483,10 @@ def audit(config, entries, output, source):
         'all_frame_reference_initialization_exact': single}
 
 
-def audit_loader(config, entries, groups):
+def audit_loader(config, entries, groups, *, file_resolver=None):
     import resource
     from rigweave.dynamic_rig.frame_batch_sampler import FrameSampleRequest
-    dataset = fixed_dataset(entries['train'], config, 2, mode='train')
+    dataset = fixed_dataset(entries['train'], config, 2, mode='train', file_resolver=file_resolver)
     workers = config['runtime']['data_workers_per_rank']
     before = tree_fingerprint({'torch': torch.get_rng_state(), 'numpy': np.random.get_state(),
         'python': random.getstate()})

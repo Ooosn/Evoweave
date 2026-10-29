@@ -29,6 +29,7 @@ if __name__ == '__main__':
                'shared_reference_flow_5k_20261027_v1': 'train_reference_flow.py',
                'anchor_joint_binding_5k_20261027_v1': 'train_anchor_joint.py',
                'anchor_integration_5k_20261028_v1': 'train_anchor_integration.py',
+               'anchor_full_20261030_v1': 'train_anchor_full.py',
                'ar_only_feedback_5k_20261029_v1': 'train_ar_only.py',
                'stage1_surface_repair_20261029_v1': 'evaluate_stage1_surface_repair.py',
                'predicted_reference_20261029_v1': 'evaluate_predicted_reference.py'}.get(family, 'train_virtual_pair.py')

@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "family": "anchor_full_backbone_20261030_v1",
+  "initialization": {
+    "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+    "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+    "model_config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+    "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+    "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+    "seed": 20261030
+  },
+  "architecture": {
+    "dim": 1024,
+    "heads": 8,
+    "query_tokens": 1024,
+    "register_tokens": 96,
+    "motion_depth": 12,
+    "fusion_depth": 1,
+    "auxiliary_depth": 2,
+    "auxiliary_max_tokens": 1024,
+    "max_frames": 24,
+    "dropout": 0,
+    "motion_evidence_fusion": "bias",
+    "motion_evidence_heads": 8,
+    "gradient_checkpointing": true,
+    "temporal_chunk_size": 4096,
+    "fusion_mode": "real_queries_virtual"
+  },
+  "auxiliary_codec": {
+    "max_joints": 256,
+    "max_sequence_tokens": 1024
+  },
+  "surface_sampling": {
+    "surface_samples": 65536,
+    "vertex_samples": 8192,
+    "query_tokens": 1024
+  },
+  "data": {
+    "frame_seed": 20261013,
+    "surface_seed": 20260529,
+    "heldout_frames": 8,
+    "max_main_tokens": 2048,
+    "normalization": "input_sequence_mesh_bbox",
+    "global_rt_removal": true,
+    "coordinate_clipping": false,
+    "manifests": {
+      "train": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "rows": 18002,
+        "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    },
+    "frames_min": 2,
+    "frames_max": 24,
+    "stream_seed": 20261030
+  },
+  "optimization": {
+    "schedule": "onecycle",
+    "peak_lr": 0.0001,
+    "warmup_fraction": 0.1,
+    "div_factor": 5,
+    "final_div_factor": 10,
+    "weight_decay": 0,
+    "schedule_samples": 300000,
+    "clip_grad_norm": 1,
+    "auxiliary_weight": 0
+  },
+  "training": {
+    "target_assets": 300000,
+    "effective_assets_per_update": 48,
+    "checkpoint_assets": [
+      10000,
+      20000,
+      30000,
+      40000,
+      50000,
+      60000,
+      70000,
+      80000,
+      90000,
+      100000,
+      110000,
+      120000,
+      130000,
+      140000,
+      150000,
+      160000,
+      170000,
+      180000,
+      190000,
+      200000,
+      210000,
+      220000,
+      230000,
+      240000,
+      250000,
+      260000,
+      270000,
+      280000,
+      290000,
+      300000
+    ],
+    "frame_policy": {
+      "2": 24,
+      "3": 24,
+      "4": 24,
+      "5": 24,
+      "6": 24,
+      "7": 12,
+      "8": 12,
+      "9": 12,
+      "10": 12,
+      "11": 12,
+      "12": 12,
+      "13": 6,
+      "14": 6,
+      "15": 6,
+      "16": 6,
+      "17": 6,
+      "18": 6,
+      "19": 6,
+      "20": 6,
+      "21": 6,
+      "22": 6,
+      "23": 6,
+      "24": 6
+    }
+  },
+  "evaluation": {
+    "valid_assets": 128,
+    "seed": 20261014,
+    "input_frames": 8,
+    "frame_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "max_new_tokens": 2048,
+    "selection": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_selection.json",
+      "sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
+    }
+  },
+  "pair": {
+    "variants": [
+      "fraction20_40_query"
+    ],
+    "auxiliary_weight": 0,
+    "consistency_weight": 0,
+    "all_real_frames_supervised": false,
+    "target_selection": {
+      "algorithm": "sha256_python_random_uniform20_40_floor_min2_sample_v1",
+      "seed": 20261030
+    }
+  },
+  "capacity": {
+    "cases": [
+      {
+        "frames": 6,
+        "batch_per_rank": 24,
+        "stress_group": "largest_joints"
+      },
+      {
+        "frames": 6,
+        "batch_per_rank": 24,
+        "stress_group": "largest_geometry"
+      },
+      {
+        "frames": 12,
+        "batch_per_rank": 12,
+        "stress_group": "largest_joints"
+      },
+      {
+        "frames": 12,
+        "batch_per_rank": 12,
+        "stress_group": "largest_geometry"
+      },
+      {
+        "frames": 24,
+        "batch_per_rank": 6,
+        "stress_group": "largest_joints"
+      },
+      {
+        "frames": 24,
+        "batch_per_rank": 6,
+        "stress_group": "largest_geometry"
+      }
+    ]
+  }
+}
+

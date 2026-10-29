@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "predicted_reference_official_smoke_native_20261029",
-  "updated_at": "2026-10-29T14:08:00Z",
+  "updated_at": "2026-10-29T14:12:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -100,8 +100,8 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "official_smoke_CPU_audit",
-    "status": "CPU_implementation_tested_audit_admitted",
+    "phase": "official_smoke_bounded_inference",
+    "status": "four_case_CPU_audit_passed_official_inference_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly corrected actual inference to the previously chosen dynamic official beam sampling, excludes static fallback, and requests few tests to save time. Four preselected assets2,3,64,127, reference0 only, then7 target frames each.",
@@ -109,8 +109,8 @@
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "code_commit": "7f90e665b25effc26a19c720cf68b2b4ccd06af4",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "quality_accepted": false,
     "CPU_tests_passed": 17,
@@ -141,12 +141,30 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
         "config_sha256": "049e3870abcd2a053eae45b195bf081810bd330a5c6d9caafa26b14f82d59dec",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v24",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
+        "config_sha256": "73c4b630b63394b21b433d688a1bff367568fa43db930f3353b56b669d87349f",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v24",
         "approved": true
       }
     ],
     "acceptance": "Reuse only canonical mesh tensors from completed capacity_v23; no greedy output reused. CPU bind four cases and checkpoints; execute15beam full2048token capacity before four normal-EOS generations. Preserve failures and fixed denominator28views/method; no GT selection, repair, training, static fallback, or full128rerun.",
     "end_policy": "Four-case descriptive smoke and visuals only. Do not expand, train or release allocation.",
-    "inherited_generation_capacity_accepted": false
+    "inherited_generation_capacity_accepted": false,
+    "audit_completion": {
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "cuda_initialized": false,
+      "finished_utc": "2026-10-29T14:10:57.353997+00:00",
+      "result_sha256": "a1f2cd971320b8965be4bf18dc422c0baa574251403182e7c0c57d0994777366",
+      "assets": 4,
+      "references": 4,
+      "views_per_method": 28
+    }
   },
   "previous_completed_result": {
     "label": "predicted_reference_greedy_diagnostic_v23",

@@ -11,7 +11,7 @@ import torch.distributed as dist
 
 from anchor_full_data import CachedFiles, audit_plan, make_stream, planned_microbatches, stage_cache, stress_groups
 from anchor_full_cleanup import execute_legacy
-from anchor_full_evaluation import eager_backbone, evaluate
+from anchor_full_evaluation import canonical_input, eager_backbone, evaluate
 from anchor_full_protocol import (full_checkpoints_to_keep, scientific_sha, sha256,
     source_hashes, validate_config, validate_resume)
 from anchor_joint_runtime import head_digest, reference_indices, update
@@ -299,6 +299,27 @@ def capacity(config, output, source, device, rank, world):
     inference = {'frames': 24, 'joints': int(geometry['joint_mask'].sum()),
         'precision': 'fp32_noTF32', 'generation_status': generated[0]['status'],
         'generated_tokens': len(generated[0]['tokens']), 'XYZ_finite': True, 'teacher_prefix': prefix_contract}
+    validation_inputs = []
+    for rows, mode in [(evaluation_rows(base, entries), 'seen_eval'),
+                       ([entries['train'][i] for i in groups['largest_joints']], 'heldout_eval')]:
+        fixed = fixed_dataset(rows, base, 8, mode=mode, file_resolver=resolver)
+        record, input_spec = canonical_input(fixed, rank, base, config, mode, device)
+        repeated, repeated_spec = canonical_input(fixed, rank, base, config, mode, device)
+        if tree_fingerprint(record) != tree_fingerprint(repeated) or input_spec != repeated_spec:
+            raise RuntimeError('canonical validation input replay changed')
+        with torch.no_grad():
+            fixed_surface = {k: v.to(device) for k, v in record['surface'].items()}
+            fixed_features, _ = eager.encode(fixed_surface)
+            fixed_parents = record['parents'].to(device)[None]
+            fixed_prediction = model.head(fixed_features, fixed_surface['query_points'], fixed_surface['query_normals'],
+                record['truth'][0:1].to(device), fixed_parents, torch.ones_like(fixed_parents, dtype=torch.bool),
+                torch.tensor([0], device=device))
+            if not torch.isfinite(fixed_prediction).all():
+                raise RuntimeError('canonical FP32 validation forward is nonfinite')
+        validation_inputs.append({'mode': mode, 'asset_id': record['asset_id'], 'input_sha256': input_spec['sha256'],
+            'raw_frames': record['raw_frames'], 'bitwise_replay': True})
+        del record, repeated, fixed_surface, fixed_features, fixed_prediction
+    inference['canonical_validation_inputs'] = validation_inputs
     del model, wrapped, optimizer, eager, surface, targets, geometry, features, xyz, prediction, generated
     release()
     model, optimizer, tokenizer, codec, base, initial, stream, samples, frames, step, best = load_model(config, device, rank, world)

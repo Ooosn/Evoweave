@@ -210,7 +210,11 @@
   "execution": {
     "phase": "full300k",
     "CPU_audit": null,
-    "capacity": null
+    "capacity": null,
+    "cleanup_plan": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
+      "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
+    }
   }
 }
 

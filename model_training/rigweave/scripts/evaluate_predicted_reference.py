@@ -24,6 +24,8 @@ def main():
     import torch
     import torch.distributed as dist
     from predicted_reference_runtime import audit, run, write_json
+    if 'official_smoke' in config:
+        from predicted_reference_smoke import audit, run
     torch.set_num_threads(1)
     if args.mode == 'audit':
         args.output.mkdir(parents=True, exist_ok=False)

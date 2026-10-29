@@ -20,7 +20,10 @@ PAIR_FIELDS = ('surface_sha256', 'normalization_sha256', 'raw_frame_index',
 def scientific_sha(config):
     keys = ('family', 'parent_config', 'stage2_config', 'checkpoints', 'stage1_source',
             'canonical_source', 'evaluation', 'capacity', 'prior_source')
-    return hashlib.sha256(json.dumps({k: config[k] for k in keys}, sort_keys=True).encode()).hexdigest()
+    values = {k: config[k] for k in keys}
+    if 'official_smoke' in config:
+        values['official_smoke'] = config['official_smoke']
+    return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
 
 
 def bound_config(spec):
@@ -37,9 +40,19 @@ def validate_config(config, mode):
         'optimizer_updates': 0, 'bootstrap_seed': 20261029, 'bootstrap_repeats': 10000,
         'stage1_cache_policy': 'reuse_only_when_all_input_identities_match_else_generate_same_surface',
         'fitting': False, 'GT_reference_repair': False, 'payload_limit_seconds': 5400}
+    if 'official_smoke' in config:
+        from stage1_official_inference import OFFICIAL_OPTIONS, POLICY
+        smoke = config['official_smoke']
+        expected.update(assets=4, reference_slots=[0], payload_limit_seconds=1800,
+                        stage1_cache_policy='regenerate_all_official_no_greedy_reuse')
+        if (smoke['case_indices'] != [2, 3, 64, 127] or smoke['policy'] != POLICY
+                or smoke['generation_kwargs'] != OFFICIAL_OPTIONS or smoke['base_seed'] != 20261029
+                or smoke['static_fallback'] or not smoke['full_beam_capacity_first']):
+            raise ValueError('unreviewed official inference recipe')
     if mode not in ('audit', 'capacity') or config.get('family') != SCOPE or config.get('evaluation') != expected:
         raise ValueError('unreviewed predicted-reference evaluation')
-    if set(config['checkpoints']) != {'stage1', 'stage2'} or config['capacity']['profile_assets_per_rank'] != 3:
+    profiles = 0 if 'official_smoke' in config else 3
+    if set(config['checkpoints']) != {'stage1', 'stage2'} or config['capacity']['profile_assets_per_rank'] != profiles:
         raise ValueError('checkpoint or profile scope differs')
     if config['checkpoints']['stage1']['label'] != 'joint_080000' or config['checkpoints']['stage2']['label'] != 'pretrained_stage2_080000':
         raise ValueError('primary pipeline model selection differs')

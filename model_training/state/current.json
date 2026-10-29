@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_CPU_audit_admitted_20261030",
-  "updated_at": "2026-10-29T18:38:08.771Z",
+  "state_id": "anchor_full_300k_capacity_admitted_20261030",
+  "updated_at": "2026-10-29T19:35:01.752Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
@@ -34,10 +34,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -99,17 +99,17 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "operation": "preflight",
-    "phase": "CPU_audit",
-    "status": "native_full_data_and_checkpoint_cleanup_audit_admitted",
+    "phase": "capacity",
+    "status": "CPU_audit_and_cleanup_passed_native_GPU_capacity_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
     "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
-    "code_commit": "3a14a3b0e305478005badaa4f0d061867f202d98",
+    "code_commit": "d87690446306da2bb5458f6f8eaa38cb29cb631c",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "runs": [
       {
@@ -117,13 +117,20 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
         "config_sha256": "6c5fed9f8e74c8759e9af1c032bb7bbb84c96f7df28828e662ac1c3ad12a8fcc",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "cf7f45d5f69e743b962ccdb5a4539efecbc4646ab70e2b38d4dc5377f5a3c759",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26",
         "approved": true
       }
     ],
     "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained.",
     "local_tests": {
       "passed": true,
-      "new_tests": 19,
+      "new_tests": 20,
       "unchanged_regressions": 108
     },
     "cleanup_plan": {
@@ -134,6 +141,55 @@
       "keep_full": 7,
       "compact_model": 52,
       "remove_intermediate": 45
+    },
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26/result.json",
+      "sha256": "6798243c4ff452af60cbd72f3fd0a86ea4e96b430ca5252caaef2437845edff7",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26_resources.json",
+      "resources_sha256": "fea7f3782ade37a0517f7a40ecca33463ad9f0d967727e971c1c028bfb608911"
+    },
+    "initialization_verified": {
+      "project_checkpoint_loaded": false,
+      "project_optimizer_loaded": false,
+      "optimizer_initial_state_entries": 0,
+      "initial_asset_exposures": 0,
+      "learning_rate_asset_offset": 0,
+      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "head_initial_sha256": "596315cd6f2edf6b87cb50e75840a4f419e1dd0c9b797b919915383d5edbfaa3"
+    },
+    "full_data_plan": {
+      "assets": 300000,
+      "updates": 6270,
+      "input_frame_visits": 3919984,
+      "complete_passes": 16,
+      "partial_pass_assets": 11968,
+      "unique_assets": 18002,
+      "plan_sha256": "e1a5939f00a4aa6afc7892a9c579b0e4f8d1e7dd5026f60d2e7cb9300192dc1c",
+      "all_full_passes_cover_every_asset_once": true,
+      "rank_resume_roundtrip": true
+    },
+    "legacy_cleanup": {
+      "complete": true,
+      "plan": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
+        "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
+      },
+      "retired_checkpoints": 97,
+      "net_bytes_freed": 1229121897170,
+      "kept_full": [
+        "train_v17/reference_transport/checkpoint_060000.pt",
+        "train_v17/target_content/checkpoint_060000.pt",
+        "train_v19/joint_pretrained/checkpoint_080000.pt",
+        "train_v19/pretrained_stage2/checkpoint_080000.pt",
+        "train_v19/scratch_stage2/checkpoint_080000.pt",
+        "train_v21/checkpoint_040000.pt",
+        "train_v9/fraction20_40_query/checkpoint_020000.pt"
+      ],
+      "journal": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_20261030.jsonl",
+      "replacement_roots": [
+        "/work/wangyy/virtual_query_matched_5k_20261025/retained_models_20261030",
+        "/home/wangyy/evorig/outputs/retained_models_20261030"
+      ]
     }
   },
   "last_operation": {
@@ -141,5 +197,5 @@
     "label": "predicted_reference_20261029_v1",
     "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "Primary native CPU audit: exact full-data cache/stream/initialization/loader and completed verified legacy retirement. No GPU work yet."
+  "next_required_result": "Pass native full-manifest max-density capacity, FP32 validation, representative timing and exact full checkpoint roundtrip. No formal training until accepted."
 }

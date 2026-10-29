@@ -209,7 +209,12 @@
   },
   "execution": {
     "phase": "full300k",
-    "CPU_audit": null,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26/result.json",
+      "sha256": "6798243c4ff452af60cbd72f3fd0a86ea4e96b430ca5252caaef2437845edff7",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26_resources.json",
+      "resources_sha256": "fea7f3782ade37a0517f7a40ecca33463ad9f0d967727e971c1c028bfb608911"
+    },
     "capacity": null,
     "cleanup_plan": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",

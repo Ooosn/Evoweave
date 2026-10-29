@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "predicted_reference_official_smoke_native_20261029",
-  "updated_at": "2026-10-29T14:12:00Z",
+  "updated_at": "2026-10-29T14:18:33Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -35,10 +35,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -79,7 +79,7 @@
     "status": "native_96hour_retained_idle",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-29T10:35:33.670649Z",
+    "last_observed_utc": "2026-10-29T14:18:33.373037Z",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -90,7 +90,7 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "After capacity_v22 and final independent review, keeper1108368 is idle with no pending child/request or compute app on either approved UUID; native cpuset/devices membership and16CPU grant verified. Remote sourcecf4c9fe remains clean and unchanged. Grant and checkpoints retained.",
+    "last_observation_note": "After official four-case smoke and visual review, keeper idle, both GPUs unoccupied, native cpuset/devices and16CPU affinity verified. Remote source9aceaa5 retained; allocation not released.",
     "last_gpu_memory_observed_utc": "2026-10-28T21:58:03.669814Z",
     "last_observed_gpu_used_mib": [
       959,
@@ -100,18 +100,18 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "official_smoke_bounded_inference",
-    "status": "four_case_CPU_audit_passed_official_inference_admitted",
-    "complete": false,
+    "phase": "complete",
+    "status": "four_case_official_smoke_completed",
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User explicitly corrected actual inference to the previously chosen dynamic official beam sampling, excludes static fallback, and requests few tests to save time. Four preselected assets2,3,64,127, reference0 only, then7 target frames each.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "code_commit": "7f90e665b25effc26a19c720cf68b2b4ccd06af4",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "quality_accepted": false,
     "CPU_tests_passed": 17,
     "model_pair": {
@@ -148,7 +148,7 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
         "config_sha256": "73c4b630b63394b21b433d688a1bff367568fa43db930f3353b56b669d87349f",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v24",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance": "Reuse only canonical mesh tensors from completed capacity_v23; no greedy output reused. CPU bind four cases and checkpoints; execute15beam full2048token capacity before four normal-EOS generations. Preserve failures and fixed denominator28views/method; no GT selection, repair, training, static fallback, or full128rerun.",
@@ -164,6 +164,30 @@
       "assets": 4,
       "references": 4,
       "views_per_method": 28
+    },
+    "descriptive_result_accepted": true,
+    "completion": {
+      "finished_utc": "2026-10-29T14:15:46.517545+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "optimizer_updates": 0,
+      "references_valid": 4,
+      "views_per_method": 28,
+      "stage1_greedy_outputs_reused": 0,
+      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json",
+      "result_sha256": "aefd4fea56736bce2c2afb29b7ae702100afa030e44284321557cb48ef170af2",
+      "figures_reviewed": [
+        2,
+        3,
+        64,
+        127
+      ],
+      "predicted_head_j2j": 0.03522181610219503,
+      "predicted_copy_j2j": 0.08417466014782105,
+      "GT_head_j2j": 0.006840943001875482,
+      "matched_greedy_head_j2j": 0.02022850146405191,
+      "interpretation": "All four valid generated references can be transported; all four improve over copying. Counts remain wrong in all four. Case127 official predicts18/GT52, worse than paired greedy. Four fixed examples, one seed, not validation-set quality or evidence official is uniformly better."
     }
   },
   "previous_completed_result": {
@@ -172,5 +196,5 @@
     "full_record": "model_training/state/archive/predicted_reference_greedy_v23_20261029.json",
     "execution": "exit0/native16CPU/resources/cleanup at2026-10-29T13:59:30Z; full independent score review failed strict CPU/GPU float equality, not accepted final quality; preserve originals."
   },
-  "next_required_result": "Run only official-smoke audit_v24 then capacity_v24 (four cases, one reference each), with exact hashes and retained native grant. No further full-panel evaluation. Inspect four-case output and visuals; label as descriptive smoke."
+  "next_required_result": "No further work authorized for this smoke. User requested saving time: report the four-case result and stop testing. Greedy remains fast validation feedback; actual inference is dynamic official beam sampling with no static fallback. Preserve grant, checkpoints, input caches, old greedy diagnostics and all new figures."
 }

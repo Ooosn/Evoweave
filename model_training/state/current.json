@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "stage1_surface_repair_native_20261029",
-  "updated_at": "2026-10-29T09:05:01Z",
+  "state_id": "stage1_feedback_completed_20261029",
+  "updated_at": "2026-10-29T10:36:07Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,13 +34,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "matched_eval"
+    "matched_eval",
+    "preflight"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
@@ -78,7 +78,7 @@
     "status": "native_96hour_retained_idle",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-28T22:08:56.832788Z",
+    "last_observed_utc": "2026-10-29T10:35:33.670649Z",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -89,7 +89,7 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "After capacity_v20, keeper is idle with no pending child/request or compute app on either approved UUID; native cpuset/devices membership and16CPU grant verified. Remote source4574c35 is clean before closure publication.",
+    "last_observation_note": "After capacity_v22 and final independent review, keeper1108368 is idle with no pending child/request or compute app on either approved UUID; native cpuset/devices membership and16CPU grant verified. Remote sourcecf4c9fe remains clean and unchanged. Grant and checkpoints retained.",
     "last_gpu_memory_observed_utc": "2026-10-28T21:58:03.669814Z",
     "last_observed_gpu_used_mib": [
       959,
@@ -98,10 +98,10 @@
   },
   "active_operation": {
     "label": "stage1_surface_repair_20261029_v1",
-    "operation": "preflight",
-    "phase": "canonical_input_repair",
-    "status": "canonical_cache_complete_bounded_surface_repair_running",
-    "complete": false,
+    "operation": "report",
+    "phase": "completed",
+    "status": "stage1_feedback_independent_review_and_fixed_visuals_complete",
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "Complete the already-authorized same-input first-stage evaluation after its strict surface gate failed. No new training or optimization. Cache one canonical input for each18affected assets; evaluate11checkpoints on those inputs, retain the110identity-matched assets per checkpoint. Preserve failed parent receipts. No input-gate relaxation.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
@@ -151,10 +151,10 @@
     "CPU_tests_passed": 56,
     "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/repair_tests_result.json",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "quality_accepted": false,
+    "quality_accepted": true,
     "repair_scope": {
       "affected_assets": 18,
       "retained_assets": 110,
@@ -180,11 +180,11 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/stage1_surface_repair_20261029_v1.json",
         "config_sha256": "b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v22",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance": "CPUaudit: pinned parent failure, all11complete snapshots, original checkpoint hashes, exact non-surface input identities, exactly18affected/110retained assets, unchanged inference implementation and inherited FP32capacity. Evaluation: native bounded resources; canonical serialized full tensors verified before every model; all18assets recomputed for all11models,110old assets retained unchanged; strict all128asset paired hashes and7bootstrap comparisons; exit0 and cleanup. Final independent reviewer must preserve original failed receipts and validate repair provenance before fixed visuals.",
-    "end_policy": "Keep native grant and all checkpoints. No old80k extension. Continue until matched AR-only and first-stage feedback analysis complete; then pause heartbeat but retain GPUs.",
+    "end_policy": "All requested AR-only and stage1 feedback work, independent statistics and fixed visual interpretations are complete. Pause heartbeat, retain native grant and all checkpoints, do not archive chat. No additional compute authorized. quality_accepted means evidence accepted, not that stage2 helped stage1.",
     "audit_completion": {
       "finished_utc": "2026-10-29T08:53:37.677802+00:00",
       "exit_code": 0,
@@ -213,7 +213,7 @@
       "queued_utc": "2026-10-29T08:57:57.083689+00:00",
       "started_utc": "2026-10-29T08:57:58.172285+00:00",
       "supervisor_pid": 2969895,
-      "active_source_locked": true
+      "active_source_locked": false
     },
     "live_repair_progress": {
       "observed_utc": "2026-10-29T09:03:00.456739+00:00",
@@ -235,6 +235,30 @@
       "artifact_directory": "artifacts/stage1_surface_repair_v22",
       "final_report": "review_ar_only_stage1.json",
       "render_command": "invoke_stage1_review.ps1 -Render"
+    },
+    "completion_review": {
+      "finished_utc": "2026-10-29T10:01:35.111771Z",
+      "wrapper_exit_code": 0,
+      "resource_exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "result_sha256": "a59d3146ae5cc3b4d46e822c51d504622fca19258797bcfa5e7b025290e070c6",
+      "independent_review_utc": "2026-10-29T10:34:04.893977Z",
+      "independent_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_ar_only_stage1.json",
+      "review_sha256": "4a09c28891da657cc13b0aa6e3899012d374565f7d0b3cbdeba2f1424cc993f8",
+      "all128_same_surface_GT_frame_normalization_paired": true,
+      "checkpoints": 11,
+      "paired_comparisons": 7,
+      "optimizer_updates": 0,
+      "recomputed_assets_per_checkpoint": 18,
+      "unchanged_assets_per_checkpoint": 110,
+      "parent_failure_preserved": true,
+      "fixed_figures_individually_inspected": 10,
+      "visual_manifest": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/stage1_fixed_visuals.json",
+      "visual_manifest_sha256": "b7d04631af1099169ed1d3a971dcd9d6a6541e968fd8e5e2a99c1f4806709101",
+      "visual_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/stage1_visual_review.json",
+      "interpretation": "Stage2-only+80k sharply worsens stage1 despite unchanged nonshared tensors. Joint+80k improves over donor but does not isolate stage2 benefit. All matched cumulative30/40/50/60k joint-minus-AR F1/success/pairedgeometry intervals include zero; no established stable positive transfer, not an equivalence result. Cumulative40k count accuracy favors AR at an unadjusted pointwise95CI. One training seed; no AR-only cumulative100k control.",
+      "all_requested_followups_complete": true
     }
   },
   "previous_completed_result": {
@@ -244,5 +268,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "capacity_v22 is running at fixedsourcecf4c9fe;18canonical cachefiles exist and donor reconstruction has begun on bothranks. Do not deploy laterlocalcommits or restart. Use observe_surface_repair.sh bounded waits. Requireall11mergedoutputs+strict128x8inputchecks+7pairedstats andexit0/resources/cleanup, then invoke_stage1_review.ps1 (review_surface_repair.py) and -Render; inspect10fixedfigures. Parent training andfailedpairing evidence unchanged. No furthertraining. Keep heartbeat/grant until fullreviewandinterpretation complete."
+  "next_required_result": "No outstanding work in the authorized AR-only/stage1-feedback comparison. Accepted review, seven paired comparisons and ten fixed-case visual interpretations are complete and documented. Pause completed heartbeat; retain grant/checkpoints and both failed-parent and repaired evidence. Do not repeat training, audits, inference or render. Any new scientific experiment requires a new explicit scope and admission."
 }

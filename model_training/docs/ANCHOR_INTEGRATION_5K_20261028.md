@@ -848,3 +848,137 @@ At09:03Z all18canonical archives existed and donor repair had begun. /work was
 verified as NVMe RAID0 withROTA=0. Keep source fixed and preserve original failure.
 Final review is invoke_stage1_review.ps1 (now review_surface_repair.py), then
 -Render and inspect10fixed figures. The overall question remains unfinished.
+
+## Accepted Stage1 Feedback Result, 2026-10-29
+
+This section supersedes the unfinished status above. The authorized AR-only,
+stage1 feedback analysis, and fixed-case review are complete. No further training
+or evaluation is admitted. All artifacts below are under
+`D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028`.
+
+`capacity_v22` finished at 10:01:35Z with wrapper/resource exit 0, passed native
+16CPU/GPU3,4 membership and whole-tree constraints, and completed payload cleanup.
+Source stayed `cf4c9fedfe35bc9be0512c6a53430efba06b8c61`; result SHA256 is
+`a59d3146ae5cc3b4d46e822c51d504622fca19258797bcfa5e7b025290e070c6`.
+The independent review passed at 10:34:04Z. It verified both copies of all 18
+canonical archives, all 11 checkpoint identities, 110 unchanged asset outputs
+per checkpoint, the 18 recomputed assets using the shared cache, the complete
+128x8 raw-frame/GT/surface/normalization identities, and all seven recomputed
+paired comparisons. The repair made ZERO optimizer updates. The original
+train_v21 failure is preserved, not relabeled as a successful run.
+
+Accepted evidence is `review_ar_only_stage1.json`, SHA256
+`4a09c28891da657cc13b0aa6e3899012d374565f7d0b3cbdeba2f1424cc993f8`,
+with raw evidence in `artifacts/stage1_surface_repair_v22`. The previously
+accepted 840-update/40k-added/60k-cumulative training evidence remains valid.
+
+### Evaluation Scope
+
+All models receive the identical mesh input plus BOS/class, never a GT reference
+or teacher-forced prefix. They use FP32/no-TF32/eager and normal greedy EOS.
+Each group has 128 assets and 1,024 views, eight raw frames per asset. F1,
+generation success, and exact joint-count accuracy include failures as zero;
+success means parseable normal termination, not a correct skeleton. Assets have
+equal weight. Edge F1 uses directed edges after bidirectional nearest-joint
+mapping; it is not a pure graph-isomorphism score.
+
+Geometry is symmetric nearest-joint distance / target mesh bbox diagonal, with
+no alignment or fitting; it is not MPJPE. Only identical views successful in
+BOTH compared arms enter paired geometry, averaged within asset and then equally
+over eligible assets. Never subtract success-conditioned arm means with different
+denominators. Intervals are 10,000 paired-asset bootstrap percentile 95% intervals,
+pointwise and unadjusted for multiple comparisons. They represent asset sampling,
+not variability across training seeds. This is one seed and a fixed validation
+panel, not evidence from an untouched test population.
+
+### Aggregate Measurements
+
+Visits include the 20k donor. Joint and stage2-only +80k therefore mean cumulative
+100k; the requested 30/40/50/60k nodes add only 10/20/30/40k.
+
+| Model | Cumulative visits | F1 | Success | Exact count |
+|---|---:|---:|---:|---:|
+| Donor | 20k | 0.714568 | 94.04% | 46.00% |
+| Joint | 100k | 0.776399 | 98.83% | 57.81% |
+| Stage2 only | 100k | 0.173636 | 45.61% | 2.54% |
+| Joint | 30k | 0.709680 | 93.36% | 46.97% |
+| AR only | 30k | 0.710162 | 93.65% | 44.92% |
+| Joint | 40k | 0.738352 | 97.17% | 46.39% |
+| AR only | 40k | 0.743703 | 96.29% | 50.00% |
+| Joint | 50k | 0.748757 | 98.63% | 52.44% |
+| AR only | 50k | 0.754598 | 98.83% | 51.95% |
+| Joint | 60k | 0.762038 | 97.95% | 57.62% |
+| AR only | 60k | 0.762678 | 97.95% | 57.81% |
+
+### Paired Interpretation
+
+Stage2-only +80k minus donor: F1 -0.540933, CI [-0.585225, -0.497913]; success
+-48.44 percentage points, CI [-54.49, -42.58]; count accuracy -43.46 points,
+CI [-51.27, -35.74]. Even on jointly successful views, geometry worsens by
+5.105 percentage points of bbox diagonal, CI [4.673, 5.548], across 460 views
+from 103 assets. Thus the deterioration is not just a higher failure rate.
+`artifacts/replay_v20_admission.json` independently establishes that all 447
+nonshared tensors are unchanged and 500/508 shared tensors changed. Combined
+with matched outputs, this supports detrimental feedback through the shared
+part in this run. Feature/decoder mismatch is a plausible explanation, not a
+measured gradient-conflict mechanism or a universal claim about stage2 training.
+
+Joint +80k minus donor: F1 +0.061830, CI [0.046257, 0.077802]; success +4.79
+points, CI [1.95, 8.01]; count accuracy +11.82 points, CI [6.35, 17.48]. Paired
+geometry improves by 0.207 percentage points of bbox diagonal, CI improvement
+[0.070, 0.324], across 959 views from 125 assets. This establishes improvement
+of the complete joint procedure, not improvement attributable to the stage2
+objective alone. Joint minus stage2-only has F1 +0.602763, CI
+[0.559293, 0.646870]; its geometry pair contains 465 views from 104 assets.
+
+| Cumulative visits | Joint minus AR F1 | 95% interval | Geometry delta (bbox percentage points) | Geometry 95% interval | Paired geometry views/assets |
+|---|---:|---|---:|---|---:|
+| 30k | -0.000483 | [-0.012134, 0.012336] | +0.0253 | [-0.0597, 0.1106] | 937/125 |
+| 40k | -0.005350 | [-0.016335, 0.005229] | +0.0434 | [-0.0378, 0.1311] | 969/127 |
+| 50k | -0.005840 | [-0.018129, 0.006883] | +0.0461 | [-0.0345, 0.1279] | 999/128 |
+| 60k | -0.000640 | [-0.009241, 0.008393] | +0.0403 | [-0.0409, 0.1209] | 986/128 |
+
+All four F1, success, and paired-geometry intervals include zero. There is no
+stable measured stage1 benefit from adding stage2 over matched AR continuation
+at these budgets. This is NOT an equivalence test and does not prove zero
+effect. At cumulative40k only, joint count accuracy is lower by 3.61 points,
+nominal CI [-6.93, -0.59]; treat it as an isolated, unadjusted signal, not a
+general AR-superiority claim. There is no AR-only cumulative100k control, so do
+not extrapolate the matched60k result to the joint100k endpoint.
+
+### Fixed Cases
+
+`stage1_fixed_visuals.json` records all ten figures and exact scores; SHA256
+`b7d04631af1099169ed1d3a971dcd9d6a6541e968fd8e5e2a99c1f4806709101`.
+All ten were individually inspected using the same predefined cases2/3 and
+target slot7 (raw frames4/3 respectively). `stage1_visual_review.json` binds the
+inspected PNGs. Inputs, camera and scale match within each comparison; no plots
+were selected or replaced according to performance. Stage2-only generation
+fails in both fixed cases and is explicitly labeled, with distance unscored.
+
+- Case2: GT has12 joints, while donor, all matched joint/AR nodes and joint100k
+  have34. They reproduce a broadly human-shaped but over-detailed skeleton with
+  extra spine/hand structure and different hip connections. At cumulative60k,
+  joint and AR both score F1 0.267943, distances4.053%/4.036%; donor F1 is0.145455
+  and distance4.014%. Improved F1 here does not repair the wrong joint count or
+  imply improved geometry. Joint100k F1 is also0.267943, distance4.081%.
+- Case3: GT has28 joints, matched joint/AR models all output52, and joint100k
+  outputs53. The gross bent-leg pose is similar, but the topology/count remains
+  wrong. At cumulative60k joint/AR F1 is0.669856/0.628995 and distance
+  1.4375%/1.4879%; donor is0.696274 and1.5200%. Joint100k F1 falls to0.610514
+  and distance is1.5538%. This fixed counterexample shows that aggregate
+  improvement does not imply every case improves, and local geometry and F1
+  need not rank models identically. Earlier30/40/50k joint-versus-AR rankings
+  also change, so these two examples cannot replace the full paired panel.
+
+The justified conclusion is: AR supervision preserves stage1 functionality
+while shared features are updated; this run does not establish useful positive
+stage2-to-stage1 transfer at the matched30-60k nodes. Do not call the failure of
+stage2-only a proof that sharing itself is inherently wrong. Isolating shared
+features or measuring gradients would be a NEW experiment requiring admission,
+not an action authorized by these completed comparisons.
+
+At10:35:33Z the native keeper was verified idle, with no compute application on
+the two granted GPU UUIDs, native cpuset/devices membership, and unchanged remote
+source. Keep grant130675914, checkpoints, and all successful/failed evidence.
+Pause this completed follow-up without archiving the chat or releasing the grant.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_preparation_20261030",
-  "updated_at": "2026-10-29T18:20:17.357Z",
+  "state_id": "anchor_full_300k_CPU_audit_admitted_20261030",
+  "updated_at": "2026-10-29T18:38:08.771Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
@@ -99,25 +99,47 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "operation": "preflight",
-    "phase": "preparation",
-    "status": "implementation_tests_and_exact_cleanup_plan_pending",
+    "phase": "CPU_audit",
+    "status": "native_full_data_and_checkpoint_cleanup_audit_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
     "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
-    "code_commit": "c6860ee70815b1c160cb1e756cf1d8809932dfb7",
+    "code_commit": "3a14a3b0e305478005badaa4f0d061867f202d98",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
     "capacity_accepted": false,
-    "runs": [],
-    "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained."
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "6c5fed9f8e74c8759e9af1c032bb7bbb84c96f7df28828e662ac1c3ad12a8fcc",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26",
+        "approved": true
+      }
+    ],
+    "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained.",
+    "local_tests": {
+      "passed": true,
+      "new_tests": 19,
+      "unchanged_regressions": 108
+    },
+    "cleanup_plan": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
+      "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
+    },
+    "cleanup_counts": {
+      "keep_full": 7,
+      "compact_model": 52,
+      "remove_intermediate": 45
+    }
   },
   "last_operation": {
     "archive": "model_training/state/archive/current_before_full_20261030.json",
     "label": "predicted_reference_20261029_v1",
     "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "Pass tests, review exact cache/cleanup scope, bind native CPU audit; then admit full-data GPU capacity."
+  "next_required_result": "Primary native CPU audit: exact full-data cache/stream/initialization/loader and completed verified legacy retirement. No GPU work yet."
 }

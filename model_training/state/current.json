@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "predicted_reference_visual12_native_20261029",
-  "updated_at": "2026-10-29T14:35:00Z",
+  "updated_at": "2026-10-29T14:40:26Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -35,10 +35,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -79,7 +79,7 @@
     "status": "native_96hour_retained_idle",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-29T14:18:33.373037Z",
+    "last_observed_utc": "2026-10-29T14:40:26.304373Z",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -90,7 +90,7 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "After official four-case smoke and visual review, keeper idle, both GPUs unoccupied, native cpuset/devices and16CPU affinity verified. Remote source9aceaa5 retained; allocation not released.",
+    "last_observation_note": "After capacity_v25 and all12visuals reviewed, keeper idle, GPU_occupied=false, native membership verified; sourcec6860ee, grant retained.",
     "last_gpu_memory_observed_utc": "2026-10-28T21:58:03.669814Z",
     "last_observed_gpu_used_mib": [
       959,
@@ -100,16 +100,16 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "visual12_bounded_inference",
-    "status": "CPU_audit_passed_inherited_capacity_accepted",
-    "complete": false,
+    "phase": "complete",
+    "status": "visual12_inference_and_visual_review_completed",
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "Latest user asks to run more cases, primarily for visualization. Twelve additional fixed cases spanning source and GT complexity; official dynamic beam sampling only, no static fallback. Keep old four; no full validation rerun or training.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "code_commit": "7447cdf50d47cc5793fdf0872b89f0da755c5818",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
@@ -168,13 +168,13 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_visual12_20261029.json",
         "config_sha256": "a132a564bd6bc477b9fc76b2cbb5ff4c5c5f4dc8fd4e8ee51afb8e31e90ead23",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v25",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance": "Bind preselected12cases and canonical8-frame inputs. Inherit completed15beam2048token FP32 capacity_v24 on exact decoder/checkpoints; do not repeat stress. Generate one normal-EOS reference per case, no GT selection/repair. All failures retained;84target views/method. Export4096surfacepoints/frame and reference plus3target poses; prediction-only main sheets and GT overlays separately.",
     "end_policy": "Finish12case visuals including failures, interpret motion/placement without declaring count mismatch alone a failure. No training, extra random retries, full128run or grant release.",
     "inherited_generation_capacity_accepted": true,
-    "descriptive_result_accepted": false,
+    "descriptive_result_accepted": true,
     "audit_completion": {
       "finished_utc": "2026-10-29T14:32:44.909235+00:00",
       "exit_code": 0,
@@ -184,6 +184,42 @@
       "result_sha256": "1e9b712e915e45f6a86bd31773d8db788cfb2fbf8877de1f3ff25e108ced4bfc",
       "references": 12,
       "views_per_method": 84
+    },
+    "completion": {
+      "finished_utc": "2026-10-29T14:37:38.213806+00:00",
+      "exit_code": 0,
+      "resource_passed": true,
+      "payload_cleanup_complete": true,
+      "optimizer_updates": 0,
+      "references_valid": 12,
+      "views_per_method": 84,
+      "case_indices": [
+        5,
+        15,
+        23,
+        24,
+        30,
+        44,
+        54,
+        61,
+        70,
+        95,
+        105,
+        108
+      ],
+      "display_slots": [
+        0,
+        2,
+        4,
+        7
+      ],
+      "stage1_greedy_outputs_reused": 0,
+      "inherited_capacity_reused": true,
+      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/visual12_review.json",
+      "result_sha256": "1edfbcdadec67affa84c769ec9105705c37d289b53f7b89360cc626caab9fda0",
+      "visual_review": "All3prediction contact sheets and3GT-overlay sheets viewed; all12cases retained, no score-based filtering. Individual prediction and GT sheets also saved. Major pose following visible in15/24/54/95. Case23 adds fine joints while following main body. Cases70/105 omit upper/extra branches;108 has extra branches off the shape, not merely an alternate joint count. Selected poses are not consecutive animation.",
+      "predicted_head_j2j": 0.024393796545870636,
+      "predicted_copy_j2j": 0.06977648335812232
     }
   },
   "previous_completed_result": {
@@ -192,5 +228,5 @@
     "full_record": "model_training/state/archive/predicted_reference_official_smoke_completed_20261029.json",
     "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/capacity_v24_official_smoke_review.json"
   },
-  "next_required_result": "Audit_v25 then exact capacity_v25 visual expansion; retain completed four-case work, reuse accepted beam capacity, render all12new assets with reference/target2/4/7 and separate GT overlays. Review all, no quality-based case filtering."
+  "next_required_result": "No pending work: deliver all12additional visual cases (prediction-only contact sheets plus GT-overlay alternatives), keeping old4. Do not expand or retrain without a new user request. Distinguish count/granularity changes from missing or off-mesh branches; do not call sampled poses a consecutive animation."
 }

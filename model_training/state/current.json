@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "predicted_reference_native_20261029",
-  "updated_at": "2026-10-29T13:53:29Z",
+  "state_id": "predicted_reference_official_smoke_native_20261029",
+  "updated_at": "2026-10-29T14:08:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -30,7 +30,8 @@
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
     "current_question": "Does stage2 supervision improve stage1 free skeleton generation? Compare donor, stage2-only, joint, and the explicitly requested matched AR-only continuation.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
-    "reference_input": "GT reference remains the contract for the completed stage2 tests only. Stage1 feedback evaluation must have NO GT reference or teacher-forced prefix; use only mesh and BOS/class."
+    "reference_input": "GT reference remains the contract for the completed stage2 tests only. Stage1 feedback evaluation must have NO GT reference or teacher-forced prefix; use only mesh and BOS/class.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
   },
   "allowed_operations": [
     "inspect",
@@ -99,34 +100,32 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "preflight",
-    "phase": "bounded_inference",
-    "status": "CPU_audit_accepted_inference_admitted",
+    "phase": "official_smoke_CPU_audit",
+    "status": "CPU_implementation_tested_audit_admitted",
     "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User explicitly asked to try stage1-predicted skeletons as references for the current best stage2 model. Evaluate a bounded primary pipeline with no training or architecture change; keep GT-reference and copy controls.",
+    "authorization": "User explicitly corrected actual inference to the previously chosen dynamic official beam sampling, excludes static fallback, and requests few tests to save time. Four preselected assets2,3,64,127, reference0 only, then7 target frames each.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
-    "code_commit": "a416674e56d6fe53de192d5db38edf63363d6d6d",
+    "code_commit": "7f90e665b25effc26a19c720cf68b2b4ccd06af4",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
-    "CPU_audit_accepted": true,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": false,
     "capacity_accepted": false,
     "quality_accepted": false,
-    "CPU_tests_passed": 32,
-    "subtests_passed": 3,
+    "CPU_tests_passed": 17,
     "model_pair": {
       "stage1": "joint_080000",
       "stage2": "pretrained_stage2_080000"
     },
     "evaluation_scope": {
-      "assets": 128,
+      "assets": 4,
       "input_frames": 8,
       "reference_slots": [
-        0,
-        4
+        0
       ],
-      "references": 256,
-      "views_per_method": 1792,
+      "references": 4,
+      "views_per_method": 28,
       "methods": [
         "GT_head",
         "GT_copy",
@@ -139,42 +138,21 @@
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
-        "config_sha256": "3d9bba5dcfcca7bdfd1f0c6b2444fe2f281bf1656379c8a4e649e0fe50569609",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v23",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
-        "config_sha256": "21344b88338d870d019ea835fada215da69d8baf967dc25457cc31100bbec343",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v23",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_official_smoke_20261029.json",
+        "config_sha256": "049e3870abcd2a053eae45b195bf081810bd330a5c6d9caafa26b14f82d59dec",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v24",
         "approved": true
       }
     ],
-    "acceptance": "CPU: checkpoints/source rows, fixed128/raw-frame/GT/normalization identity, unmodified model code, inherited FP32 generation capacity. GPU: reuse stage1 only on exact surface identity; otherwise regenerate0/4 on shared canonical input. GT/predicted head/copy share inputs. Profile3largest actual trees/rank before scoring. Failures counted; no GT repair/alignment. Require exit0/native resources/cleanup and independent paired analysis/visuals.",
-    "end_policy": "No training or grant release. Preserve old evidence and all reference failures. Finish independent analysis and diverse case visualizations.",
-    "inherited_generation_capacity_accepted": true,
-    "audit_completion": {
-      "finished_utc": "2026-10-29T13:50:13.092749Z",
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "cuda_initialized": false,
-      "reference_statuses": {
-        "valid": 255,
-        "generation_max_tokens": 1
-      },
-      "maximum_predicted_joints": 271,
-      "result_sha256": "c13b34870d9b3a7a7e7171fdf7de05e1fd38e2d60674c1dac721c1c719822d53",
-      "review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/predicted_reference_audit_v23_review.json"
-    }
+    "acceptance": "Reuse only canonical mesh tensors from completed capacity_v23; no greedy output reused. CPU bind four cases and checkpoints; execute15beam full2048token capacity before four normal-EOS generations. Preserve failures and fixed denominator28views/method; no GT selection, repair, training, static fallback, or full128rerun.",
+    "end_policy": "Four-case descriptive smoke and visuals only. Do not expand, train or release allocation.",
+    "inherited_generation_capacity_accepted": false
   },
   "previous_completed_result": {
-    "label": "stage1_feedback_completed_20261029",
-    "document": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "full_record": "model_training/state/archive/stage1_feedback_completed_20261029.json",
-    "execution_authority": false
+    "label": "predicted_reference_greedy_diagnostic_v23",
+    "execution_authority": false,
+    "full_record": "model_training/state/archive/predicted_reference_greedy_v23_20261029.json",
+    "execution": "exit0/native16CPU/resources/cleanup at2026-10-29T13:59:30Z; full independent score review failed strict CPU/GPU float equality, not accepted final quality; preserve originals."
   },
-  "next_required_result": "Run fresh capacity_v23 plan and execute once under retained native16CPU/GPU3,4. Cache all inputs; reuse only exact-input first-stage references; profile max actual GT/predicted trees before full128evaluation. No training, GT repair or old-output overwrite. After exit0/resource/cleanup, independent final review and diverse visualizations."
+  "next_required_result": "Run only official-smoke audit_v24 then capacity_v24 (four cases, one reference each), with exact hashes and retained native grant. No further full-panel evaluation. Inspect four-case output and visuals; label as descriptive smoke."
 }

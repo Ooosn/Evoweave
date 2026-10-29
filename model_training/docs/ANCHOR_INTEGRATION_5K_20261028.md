@@ -813,3 +813,13 @@ joint-prefix match passed, AR enabled, stage2 forward absent, finite loss0.88091
 The fifth update used LRposition20192, LR9.693158533855326e-5. This is execution
 validation only. Keep server source fixed during this payload, including its later
 eleven first-stage evaluations. Local documentation updates must not be deployed.
+
+At2026-10-29T03:36:50Z the full AR training prefix was independently accepted in
+review_ar_training_040000.json: both840-update traces match the retained joint
+prefix for actual assets/rawframes/ARslots/LR; exactly8complete5000asset passes,
+40000additional/60000cumulative visits and527856inputframes. All8checkpoint dual
+save receipts and scratch/durable file sizes were checked. This is NOT terminal
+acceptance of train_v21: the admitted stage1 evaluations continue in that payload.
+At03:37:52Z donor evaluation was complete and joint+10k was in progress; no matched
+quality conclusion is accepted yet. New local launch gates are closed without
+interrupting or changing the already-admitted server process/source.

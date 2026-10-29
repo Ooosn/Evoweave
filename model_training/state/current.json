@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "ar_only_feedback_native_20261029",
-  "updated_at": "2026-10-28T23:07:29Z",
+  "updated_at": "2026-10-29T03:39:23Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -34,11 +34,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "preflight",
+    "train",
     "submit",
     "matched_eval"
   ],
@@ -100,8 +100,8 @@
     "label": "ar_only_feedback_5k_20261029_v1",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
     "operation": "train",
-    "phase": "ar_only_plus_stage1_feedback",
-    "status": "AR_training_running_initial_actual_trace_verified",
+    "phase": "stage1_evaluation_running",
+    "status": "AR_budget_complete_independently_verified_evaluations_pending",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": {
@@ -174,7 +174,7 @@
       "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
     },
     "gpu_work_allowed": true,
-    "formal_training_allowed": true,
+    "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "quality_accepted": false,
@@ -211,7 +211,7 @@
         "CPU_tests_passed": 62,
         "independent_review_tests_passed": 3,
         "source_deployed": true,
-        "remaining": "Launch admitted train_v21, validate actual trace and terminal receipts, collect/recompute11stage1 outputs and7paired comparisons, render/check10fixed case figures. No stage1 quality measured yet.",
+        "remaining": "AR training has completed and both840-update traces/checkpoint receipts are independently accepted. Complete11FP32/eager evaluations, all7paired comparisons, terminal resource/cleanup review and10fixed figures. Donor output exists but is not a matched quality conclusion.",
         "review_entrypoint": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/invoke_stage1_review.ps1"
       },
       "actual_nonshared_weight_evidence": {
@@ -263,7 +263,7 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/ar_only_feedback_5k_20261029_v1.json",
         "config_sha256": "274d2e525f5bfb2ceb4a3c287eb1e7bdb43e64b1d72782072ef9915e326637f7",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v21",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance": "Exact donor+Adam/RNG, fresh joint-phase stream, all840actual update traces versus joint prefix,8passes,40000additional/60000cumulative visits,527856inputframes. Full CPU data audit, native twoGPU capacity incl maximum2048-token FP32 decode, then separately admit training. No stage2 forward/optimizer. Exit0/resource/cleanup and dual checkpoint copies required. Evaluation identities and paired-asset analysis plus fixed visuals before quality conclusions.",
@@ -340,6 +340,35 @@
       "native_scheduler_membership": true,
       "execution_cpu_budget": 16,
       "no_terminal_result_expected_yet": true
+    },
+    "existing_payload_authorization": "The already-running train_v21 remains authorized to finish its admitted11 free evaluations and paired analysis under server source d2dfff503923ff6a4038b7aa50eddc7aba8be4a7. Local new-launch gates are closed now that40000newvisits are complete; do not deploy this local state into the active server checkout or interrupt the process.",
+    "training_completion": {
+      "observed_utc": "2026-10-29T03:36:50.859683+00:00",
+      "training_complete": true,
+      "whole_payload_complete": false,
+      "independent_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_ar_training_040000.json",
+      "additional_asset_visits": 40000,
+      "cumulative_asset_visits": 60000,
+      "updates": 840,
+      "input_frame_visits": 527856,
+      "complete5000passes": 8,
+      "actual_both_rank_trajectory_verified": true,
+      "checkpoint_dual_save_hashes_and_sizes_verified": true,
+      "checkpoint_count": 8,
+      "no_training_extension": true
+    },
+    "stage1_progress": {
+      "observed_utc": "2026-10-29T03:37:52.597379+00:00",
+      "completed": [
+        "donor"
+      ],
+      "running": "joint_010000",
+      "running_local_assets": [
+        6,
+        5
+      ],
+      "native_membership": true,
+      "quality_interpretation_pending": true
     }
   },
   "previous_completed_result": {
@@ -349,5 +378,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "train_v21 is running, initial5updates on both ranks match actual joint asset/rawframe/ARslot/LR prefixes. Do not restart or deploy local commits. Observe with bounded preparation/observe_ar_only.sh (waits+480visits/new evaluation/terminal). At40k newvisits, training stops and11FP32/eager first-stage evaluations run serially. Wait for all evaluations and clean exit; collect terminal receipts, run invoke_stage1_review.ps1 then -Render and inspect fixed images. Verify840updates/40000new/60000cumulative/527856inputframes and interpret7paired comparisons with success denominators. Keep grant and followup until analysis completes."
+  "next_required_result": "AR training budget is DONE and independently verified; do not restart or extend it. Existing train_v21 is now executing its11 admitted stage1 evaluations under source d2dfff5; keep server source fixed and grant alive. Local new-launch gates closed, existing evaluation remains authorized. Wait for all11outputs and7paired analyses plus clean exit. Then invoke_stage1_review.ps1 and -Render, inspect10fixed images, interpret matched changes and denominators. Training review already retained at review_ar_training_040000.json; do not overwrite or repeat its notification. Keep heartbeat until the full feedback analysis completes."
 }

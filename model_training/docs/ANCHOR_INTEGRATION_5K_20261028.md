@@ -982,3 +982,39 @@ At10:35:33Z the native keeper was verified idle, with no compute application on
 the two granted GPU UUIDs, native cpuset/devices membership, and unchanged remote
 source. Keep grant130675914, checkpoints, and all successful/failed evidence.
 Pause this completed follow-up without archiving the chat or releasing the grant.
+
+## Predicted-Reference Pipeline, 2026-10-29
+
+The user explicitly requested the end-to-end reference test after reviewing the
+architecture and GT-reference gallery. This is a NEW zero-update evaluation, not
+an extension or rerun of the completed training comparisons. Use joint+80k for
+stage1 and pretrained-stage2+80k for stage2. Both checkpoints stay immutable;
+models are loaded separately, never use the degraded stage2-only AR branch.
+
+The fixed128panel has8inputframes and references0/4. Each reference predicts the
+other7frames, giving256reference attempts and1792targets for EACH of GT_head,
+GT_copy,predicted_head,predicted_copy. Uniform FP32/noTF32 is a fresh matched
+control; do not compare this panel numerically to the old967asset BF16 average.
+Reuse prior stage1 coordinates only with complete exact input identity. For an
+input that cannot be matched, generate only references0/4 from the same serialized
+surface later used by every stage2 control. Reuse the18old canonical caches where
+available. Save the new full inputs as two large rank archives on verified /work
+NVMe and mirror those archives, not a new high-small-file-count HDD workload.
+
+No GT topology or count repair, fitting, alignment or prediction-based dropping.
+Strict tree-interface failures are explicit failures. Wrong-count valid trees
+remain valid inputs. Score original-GT nearest-mapped edgeF1, exact count,
+success and symmetric nearest-joint/bbox distance; only GT arms have known-ID
+MPJPE. Failed predictions get zero F1/count/success and null geometry. Geometry
+comparisons use common successful views, then equal-weight assets; bootstrap
+10000assets. Compare predicted_head to GT_head and predicted_copy, plus the
+GT_head/GT_copy motion control. These tests do not establish multiple-seed or
+out-of-distribution reliability.
+
+32CPU tests and3subtests passed, including a real tiny head with variable joint
+counts, no mutation/gradients, failed/invalid references, no predicted-ID MPJPE,
+strict input pairing and launcher regressions. audit_v23 is separately admitted.
+capacity_v23 must bind the accepted CPUaudit and inherited24frame/2048token FP32
+generation capacity; profile3largest actual trees/rank before stage2 scoring.
+Keep native grant130675914/16CPU/GPU3,4. No optimizer is created or stepped.
+Independent terminal review and varied new case figures remain required.

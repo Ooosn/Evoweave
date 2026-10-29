@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "stage1_feedback_completed_20261029",
-  "updated_at": "2026-10-29T10:36:07Z",
+  "state_id": "predicted_reference_native_20261029",
+  "updated_at": "2026-10-29T13:45:33Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -39,8 +39,8 @@
   "blocked_operations": [
     "train",
     "submit",
-    "matched_eval",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
@@ -97,176 +97,69 @@
     ]
   },
   "active_operation": {
-    "label": "stage1_surface_repair_20261029_v1",
-    "operation": "report",
-    "phase": "completed",
-    "status": "stage1_feedback_independent_review_and_fixed_visuals_complete",
-    "complete": true,
+    "label": "predicted_reference_20261029_v1",
+    "operation": "preflight",
+    "phase": "CPU_audit",
+    "status": "implemented_CPU_tests_passed_audit_only",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "Complete the already-authorized same-input first-stage evaluation after its strict surface gate failed. No new training or optimization. Cache one canonical input for each18affected assets; evaluate11checkpoints on those inputs, retain the110identity-matched assets per checkpoint. Preserve failed parent receipts. No input-gate relaxation.",
+    "authorization": "User explicitly asked to try stage1-predicted skeletons as references for the current best stage2 model. Evaluate a bounded primary pipeline with no training or architecture change; keep GT-reference and copy controls.",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "required_entrypoint": "model_training/rigweave/scripts/evaluate_stage1_surface_repair.py",
-    "code_commit": "cc25316715f4f82da7638a4f3d96e91cb387c671",
-    "runtime_unbound": false,
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261027",
-    "input_manifest": {
-      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
-      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
-      "rows": 5000
-    },
-    "source_checkpoint": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
-      "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
-    },
-    "parent_operation_archive": "model_training/state/archive/ar_only_generation_surface_failure_20261029.json",
-    "parent_failure": {
-      "finished_utc": "2026-10-29T08:13:26.826119+00:00",
-      "wrapper_exit_code": 0,
-      "torchrun_exit_code": 1,
-      "resource_passed": false,
-      "payload_cleanup_complete": true,
-      "reason": "paired inputs differ: surface_sha256",
-      "failure_evidence": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/ar_only_final_analysis_failure.json",
-      "completed_generation_checkpoints": 11,
-      "normalization_GT_rawframes_diagonal_and_count_match": true,
-      "per_comparator_surface_mismatch_assets_min": 7,
-      "per_comparator_surface_mismatch_assets_max": 10,
-      "not_accepted_as_final_paired_result": true
-    },
-    "training_completion": {
-      "observed_utc": "2026-10-29T03:36:50.859683+00:00",
-      "training_complete": true,
-      "whole_payload_complete": false,
-      "independent_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_ar_training_040000.json",
-      "additional_asset_visits": 40000,
-      "cumulative_asset_visits": 60000,
-      "updates": 840,
-      "input_frame_visits": 527856,
-      "complete5000passes": 8,
-      "actual_both_rank_trajectory_verified": true,
-      "checkpoint_dual_save_hashes_and_sizes_verified": true,
-      "checkpoint_count": 8,
-      "no_training_extension": true
-    },
-    "CPU_tests_passed": 56,
-    "CPU_test_record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/repair_tests_result.json",
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "code_commit": "a416674e56d6fe53de192d5db38edf63363d6d6d",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "quality_accepted": true,
-    "repair_scope": {
-      "affected_assets": 18,
-      "retained_assets": 110,
-      "checkpoints": 11,
-      "new_asset_model_pairs": 198,
-      "new_generated_views": 1584,
-      "optimizer_updates": 0
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "quality_accepted": false,
+    "CPU_tests_passed": 32,
+    "subtests_passed": 3,
+    "model_pair": {
+      "stage1": "joint_080000",
+      "stage2": "pretrained_stage2_080000"
     },
-    "inherited_capacity": {
-      "record": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/artifacts/ar_only_capacity_v21_result.json",
-      "reason": "Identical architecture/weights interface/FP32 eager helper/tokenizer;8inputframes <=24profiled and same2048token maximum. Only reuse materialized tensors. CPUaudit must prove common inference source unchanged."
+    "evaluation_scope": {
+      "assets": 128,
+      "input_frames": 8,
+      "reference_slots": [
+        0,
+        4
+      ],
+      "references": 256,
+      "views_per_method": 1792,
+      "methods": [
+        "GT_head",
+        "GT_copy",
+        "predicted_head",
+        "predicted_copy"
+      ],
+      "precision": "fp32_noTF32",
+      "optimizer_updates": 0
     },
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/stage1_surface_repair_20261029_v1.json",
-        "config_sha256": "939b5b7610b6b332762a00978cad602d35084fabebf9e619b884edfb96406c9a",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v22",
-        "approved": false
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
+        "config_sha256": "3d9bba5dcfcca7bdfd1f0c6b2444fe2f281bf1656379c8a4e649e0fe50569609",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v23",
+        "approved": true
       },
       {
         "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/stage1_surface_repair_20261029_v1.json",
-        "config_sha256": "b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v22",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/predicted_reference_20261029_v1.json",
+        "config_sha256": "3d9bba5dcfcca7bdfd1f0c6b2444fe2f281bf1656379c8a4e649e0fe50569609",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v23",
         "approved": false
       }
     ],
-    "acceptance": "CPUaudit: pinned parent failure, all11complete snapshots, original checkpoint hashes, exact non-surface input identities, exactly18affected/110retained assets, unchanged inference implementation and inherited FP32capacity. Evaluation: native bounded resources; canonical serialized full tensors verified before every model; all18assets recomputed for all11models,110old assets retained unchanged; strict all128asset paired hashes and7bootstrap comparisons; exit0 and cleanup. Final independent reviewer must preserve original failed receipts and validate repair provenance before fixed visuals.",
-    "end_policy": "All requested AR-only and stage1 feedback work, independent statistics and fixed visual interpretations are complete. Pause heartbeat, retain native grant and all checkpoints, do not archive chat. No additional compute authorized. quality_accepted means evidence accepted, not that stage2 helped stage1.",
-    "audit_completion": {
-      "finished_utc": "2026-10-29T08:53:37.677802+00:00",
-      "exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "cuda_initialized": false,
-      "affected_assets": 18,
-      "retained_assets": 110,
-      "all_checkpoint_hashes_verified": true,
-      "unchanged_inference_source_verified": true,
-      "collection": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/surface_repair_audit_v22_collection.json",
-      "result_sha256": "880283847aafdc59ec2e80aaa5a503e4925e5ae8fbaf854f9f603c27e951aabe"
-    },
-    "storage_verification": {
-      "observed_utc": "2026-10-29T08:49:25.977391+00:00",
-      "path": "/work",
-      "mount_source": "/dev/md0",
-      "filesystem": "xfs",
-      "layout": "RAID0 of nvme0n1 and nvme1n1, all ROTA=0",
-      "record": "artifacts/surface_repair_audit_v22_admission.json"
-    },
-    "admission": {
-      "source": "cf4c9fedfe35bc9be0512c6a53430efba06b8c61",
-      "config_sha256": "b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde",
-      "plan_sha256": "0681566b845f9dff5a84c5ca3004d608068104be44a3049794ec753cc9c7eaec",
-      "queued_utc": "2026-10-29T08:57:57.083689+00:00",
-      "started_utc": "2026-10-29T08:57:58.172285+00:00",
-      "supervisor_pid": 2969895,
-      "active_source_locked": false
-    },
-    "live_repair_progress": {
-      "observed_utc": "2026-10-29T09:03:00.456739+00:00",
-      "canonical_cache_files": 18,
-      "first_evaluation": "donor",
-      "local_recomputed_assets": [
-        1,
-        1
-      ],
-      "native_scheduler_membership": true,
-      "execution_cpu_budget": 16,
-      "not_quality_acceptance": true
-    },
-    "local_review": {
-      "entrypoint": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/invoke_stage1_review.ps1",
-      "implementation": "review_surface_repair.py",
-      "tests_passed": 3,
-      "test_record": "preparation/surface_review_tests_result.json",
-      "artifact_directory": "artifacts/stage1_surface_repair_v22",
-      "final_report": "review_ar_only_stage1.json",
-      "render_command": "invoke_stage1_review.ps1 -Render"
-    },
-    "completion_review": {
-      "finished_utc": "2026-10-29T10:01:35.111771Z",
-      "wrapper_exit_code": 0,
-      "resource_exit_code": 0,
-      "resource_passed": true,
-      "payload_cleanup_complete": true,
-      "result_sha256": "a59d3146ae5cc3b4d46e822c51d504622fca19258797bcfa5e7b025290e070c6",
-      "independent_review_utc": "2026-10-29T10:34:04.893977Z",
-      "independent_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/review_ar_only_stage1.json",
-      "review_sha256": "4a09c28891da657cc13b0aa6e3899012d374565f7d0b3cbdeba2f1424cc993f8",
-      "all128_same_surface_GT_frame_normalization_paired": true,
-      "checkpoints": 11,
-      "paired_comparisons": 7,
-      "optimizer_updates": 0,
-      "recomputed_assets_per_checkpoint": 18,
-      "unchanged_assets_per_checkpoint": 110,
-      "parent_failure_preserved": true,
-      "fixed_figures_individually_inspected": 10,
-      "visual_manifest": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/stage1_fixed_visuals.json",
-      "visual_manifest_sha256": "b7d04631af1099169ed1d3a971dcd9d6a6541e968fd8e5e2a99c1f4806709101",
-      "visual_review": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/stage1_visual_review.json",
-      "interpretation": "Stage2-only+80k sharply worsens stage1 despite unchanged nonshared tensors. Joint+80k improves over donor but does not isolate stage2 benefit. All matched cumulative30/40/50/60k joint-minus-AR F1/success/pairedgeometry intervals include zero; no established stable positive transfer, not an equivalence result. Cumulative40k count accuracy favors AR at an unadjusted pointwise95CI. One training seed; no AR-only cumulative100k control.",
-      "all_requested_followups_complete": true
-    }
+    "acceptance": "CPU: checkpoints/source rows, fixed128/raw-frame/GT/normalization identity, unmodified model code, inherited FP32 generation capacity. GPU: reuse stage1 only on exact surface identity; otherwise regenerate0/4 on shared canonical input. GT/predicted head/copy share inputs. Profile3largest actual trees/rank before scoring. Failures counted; no GT repair/alignment. Require exit0/native resources/cleanup and independent paired analysis/visuals.",
+    "end_policy": "No training or grant release. Preserve old evidence and all reference failures. Finish independent analysis and diverse case visualizations."
   },
   "previous_completed_result": {
-    "label": "anchor_joint_binding_5k_20261027_v1",
-    "document": "model_training/docs/ANCHOR_JOINT_BINDING_5K_20261027.md",
-    "full_record": "model_training/state/archive/anchor_binding_completed_before_integration_20261028.json",
-    "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
+    "label": "stage1_feedback_completed_20261029",
+    "document": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
+    "full_record": "model_training/state/archive/stage1_feedback_completed_20261029.json",
     "execution_authority": false
   },
-  "next_required_result": "No outstanding work in the authorized AR-only/stage1-feedback comparison. Accepted review, seven paired comparisons and ten fixed-case visual interpretations are complete and documented. Pause completed heartbeat; retain grant/checkpoints and both failed-parent and repaired evidence. Do not repeat training, audits, inference or render. Any new scientific experiment requires a new explicit scope and admission."
+  "next_required_result": "Run exact audit_v23 admission on retained native grant. No GPU work before audit acceptance and capacity_v23 admission. Complete predicted-reference pipeline:1792views/method,4controls,FP32/noTF32,zero updates. Verify exact cache identities, report failures and paired metrics, inspect varied new cases."
 }

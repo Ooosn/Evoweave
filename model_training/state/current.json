@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "stage1_surface_repair_native_20261029",
-  "updated_at": "2026-10-29T08:56:50Z",
+  "updated_at": "2026-10-29T09:05:01Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -100,7 +100,7 @@
     "label": "stage1_surface_repair_20261029_v1",
     "operation": "preflight",
     "phase": "canonical_input_repair",
-    "status": "repair_CPU_audit_accepted_zero_update_evaluation_admitted",
+    "status": "canonical_cache_complete_bounded_surface_repair_running",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "Complete the already-authorized same-input first-stage evaluation after its strict surface gate failed. No new training or optimization. Cache one canonical input for each18affected assets; evaluate11checkpoints on those inputs, retain the110identity-matched assets per checkpoint. Preserve failed parent receipts. No input-gate relaxation.",
@@ -205,6 +205,36 @@
       "filesystem": "xfs",
       "layout": "RAID0 of nvme0n1 and nvme1n1, all ROTA=0",
       "record": "artifacts/surface_repair_audit_v22_admission.json"
+    },
+    "admission": {
+      "source": "cf4c9fedfe35bc9be0512c6a53430efba06b8c61",
+      "config_sha256": "b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde",
+      "plan_sha256": "0681566b845f9dff5a84c5ca3004d608068104be44a3049794ec753cc9c7eaec",
+      "queued_utc": "2026-10-29T08:57:57.083689+00:00",
+      "started_utc": "2026-10-29T08:57:58.172285+00:00",
+      "supervisor_pid": 2969895,
+      "active_source_locked": true
+    },
+    "live_repair_progress": {
+      "observed_utc": "2026-10-29T09:03:00.456739+00:00",
+      "canonical_cache_files": 18,
+      "first_evaluation": "donor",
+      "local_recomputed_assets": [
+        1,
+        1
+      ],
+      "native_scheduler_membership": true,
+      "execution_cpu_budget": 16,
+      "not_quality_acceptance": true
+    },
+    "local_review": {
+      "entrypoint": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/preparation/invoke_stage1_review.ps1",
+      "implementation": "review_surface_repair.py",
+      "tests_passed": 3,
+      "test_record": "preparation/surface_review_tests_result.json",
+      "artifact_directory": "artifacts/stage1_surface_repair_v22",
+      "final_report": "review_ar_only_stage1.json",
+      "render_command": "invoke_stage1_review.ps1 -Render"
     }
   },
   "previous_completed_result": {
@@ -214,5 +244,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "Run fresh live dry-run and native keeper request for exact capacity_v22 (zero optimization, inference repair only). CPUaudit_v22 passed with all11checkpoints/oldrows and18affected/110retained, unchanged model/decoder source and inherited fullFP32capacity. Canonical cache on verified /work NVMe RAID0. Preservefailedtrain_v21 evidence; no retries oftraining. After repair, requireall11merged outputs, strictpairedinputhashes,7pairedanalyses andexit0/resource/cleanup. Use updated invoke_stage1_review.ps1 (review_surface_repair.py), then -Render and inspect10fixedimages. Keep heartbeat/grant until actualqualityanalysisdone."
+  "next_required_result": "capacity_v22 is running at fixedsourcecf4c9fe;18canonical cachefiles exist and donor reconstruction has begun on bothranks. Do not deploy laterlocalcommits or restart. Use observe_surface_repair.sh bounded waits. Requireall11mergedoutputs+strict128x8inputchecks+7pairedstats andexit0/resources/cleanup, then invoke_stage1_review.ps1 (review_surface_repair.py) and -Render; inspect10fixedfigures. Parent training andfailedpairing evidence unchanged. No furthertraining. Keep heartbeat/grant until fullreviewandinterpretation complete."
 }

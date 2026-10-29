@@ -823,3 +823,28 @@ acceptance of train_v21: the admitted stage1 evaluations continue in that payloa
 At03:37:52Z donor evaluation was complete and joint+10k was in progress; no matched
 quality conclusion is accepted yet. New local launch gates are closed without
 interrupting or changing the already-admitted server process/source.
+
+Final-analysis failure and bounded repair (2026-10-29): all11generation outputs
+finished, but final pairing failed at08:13Z on surface_sha256. Torchrun exit1,
+resource passed=false, cleanup complete; the old wrapper incorrectly returned0.
+Original failure evidence is retained at ar_only_final_analysis_failure.json.
+The mismatch union covers18assets;110assets match across all11checkpoints. Raw
+frames, originalGT, normalization, bbox diagonals and counts match for all128.
+Saved query examples do not locate the dense-input cause; do not assume harmless
+output rounding or attribute the drift to a specific operator without evidence.
+
+Repair uses one serialized canonical full surface per affected asset, then all11
+models consume exactly those tensors;110old asset outputs remain unchanged.
+This is1584inference views and ZERO optimizer updates. Architecture, checkpoints,
+FP32/eager decoder and rawframe/GT contracts remain unchanged.56CPU tests passed,
+including cache roundtrip and launcher exit-code propagation; independent final
+reuse checks have3more tests. audit_v22 passed at08:53Z (SHA256
+880283847aafdc59ec2e80aaa5a503e4925e5ae8fbaf854f9f603c27e951aabe),
+accepting inherited full24frame/2048token FP32capacity after common-source checks.
+capacity_v22 started08:57:58Z under native16CPU/GPU3,4, source
+cf4c9fedfe35bc9be0512c6a53430efba06b8c61, config SHA256
+b3cb497499de317d5518992dc3cbaf030cd06d6ba794f78de970a82354699cde.
+At09:03Z all18canonical archives existed and donor repair had begun. /work was
+verified as NVMe RAID0 withROTA=0. Keep source fixed and preserve original failure.
+Final review is invoke_stage1_review.ps1 (now review_surface_repair.py), then
+-Render and inspect10fixed figures. The overall question remains unfinished.

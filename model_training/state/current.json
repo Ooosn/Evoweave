@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "state_id": "ar_only_feedback_native_20261029",
-  "updated_at": "2026-10-29T03:39:23Z",
+  "updated_at": "2026-10-29T08:33:36Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
   "required_context": [
@@ -99,9 +99,9 @@
   "active_operation": {
     "label": "ar_only_feedback_5k_20261029_v1",
     "contract": "model_training/docs/ANCHOR_INTEGRATION_5K_20261028.md",
-    "operation": "train",
-    "phase": "stage1_evaluation_running",
-    "status": "AR_budget_complete_independently_verified_evaluations_pending",
+    "operation": "inspect",
+    "phase": "surface_identity_diagnosis",
+    "status": "all11_generations_saved_final_pairing_rejected_surface_identity",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": {
@@ -173,7 +173,7 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v9/fraction20_40_query/checkpoint_020000.pt",
       "sha256": "9704b23a194ca65836c6dfacd6637ca27542dc4b0836b1d3611185f0339cc888"
     },
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "formal_training_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
@@ -341,7 +341,7 @@
       "execution_cpu_budget": 16,
       "no_terminal_result_expected_yet": true
     },
-    "existing_payload_authorization": "The already-running train_v21 remains authorized to finish its admitted11 free evaluations and paired analysis under server source d2dfff503923ff6a4038b7aa50eddc7aba8be4a7. Local new-launch gates are closed now that40000newvisits are complete; do not deploy this local state into the active server checkout or interrupt the process.",
+    "existing_payload_authorization": "train_v21 has ended; workload failed at final CPU pairing. No compute is currently admitted. Preserve failed receipts, all11 completed generation outputs and all trained checkpoints.",
     "training_completion": {
       "observed_utc": "2026-10-29T03:36:50.859683+00:00",
       "training_complete": true,
@@ -369,6 +369,20 @@
       ],
       "native_membership": true,
       "quality_interpretation_pending": true
+    },
+    "terminal_failure": {
+      "finished_utc": "2026-10-29T08:13:26.826119+00:00",
+      "wrapper_exit_code": 0,
+      "torchrun_exit_code": 1,
+      "resource_passed": false,
+      "payload_cleanup_complete": true,
+      "reason": "paired inputs differ: surface_sha256",
+      "failure_evidence": "D:/evoweave/server_ops/outputs/anchor_integration_5k_20261028/ar_only_final_analysis_failure.json",
+      "completed_generation_checkpoints": 11,
+      "normalization_GT_rawframes_diagonal_and_count_match": true,
+      "per_comparator_surface_mismatch_assets_min": 7,
+      "per_comparator_surface_mismatch_assets_max": 10,
+      "not_accepted_as_final_paired_result": true
     }
   },
   "previous_completed_result": {
@@ -378,5 +392,5 @@
     "result_sha256": "a4876b7b89f97c482dc55cc1d178ef61f29a865a0de362efa24d1c000504ab3a",
     "execution_authority": false
   },
-  "next_required_result": "AR training budget is DONE and independently verified; do not restart or extend it. Existing train_v21 is now executing its11 admitted stage1 evaluations under source d2dfff5; keep server source fixed and grant alive. Local new-launch gates closed, existing evaluation remains authorized. Wait for all11outputs and7paired analyses plus clean exit. Then invoke_stage1_review.ps1 and -Render, inspect10fixed images, interpret matched changes and denominators. Training review already retained at review_ar_training_040000.json; do not overwrite or repeat its notification. Keep heartbeat until the full feedback analysis completes."
+  "next_required_result": "All11 generation outputs exist, but final analysis FAILED because surface hashes differ for7to10assets per comparison to donor; all rawframes, GT, normalization, mesh diagonals/counts match. Preserve original failed result and do not run the terminal-success reviewer or bypass the strict input gate. Diagnose saved examples on CPU, determine union of affected assets, and plan a bounded evaluation-only exact-input repair using one serialized canonical surface per affected asset across all11 checkpoints while retaining identity-matched unaffected rows. No retraining. New repair GPU work needs CPU tests, exact state/config/source/resource/capacity admission. Also fix launcher propagation of nonzero supervisor return before any new launch. Current GPU gates CLOSED; retain grant and heartbeat."
 }

@@ -215,7 +215,12 @@
       "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26_resources.json",
       "resources_sha256": "fea7f3782ade37a0517f7a40ecca33463ad9f0d967727e971c1c028bfb608911"
     },
-    "capacity": null,
+    "capacity": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26/result.json",
+      "sha256": "f0ef35f588c8d21e06aeb2dead0d83ad3bbf93743a08dac92727e7a78984167b",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26_resources.json",
+      "resources_sha256": "2f9a18d468e9611ecdef8111e9ce568da51f61c1fa6f8781f7d953a49d69c5a5"
+    },
     "cleanup_plan": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
       "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"

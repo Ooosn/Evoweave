@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_capacity_admitted_20261030",
-  "updated_at": "2026-10-29T19:35:01.752Z",
+  "state_id": "anchor_full_300k_training_admitted_20261030",
+  "updated_at": "2026-10-29T20:03:12.948Z",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
@@ -35,10 +35,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "train"
   ],
   "blocked_operations": [
-    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -98,19 +98,19 @@
   },
   "active_operation": {
     "label": "anchor_full_20261030_v1",
-    "operation": "preflight",
-    "phase": "capacity",
-    "status": "CPU_audit_and_cleanup_passed_native_GPU_capacity_admitted",
+    "operation": "train",
+    "phase": "full300k",
+    "status": "primary_CPU_and_GPU_checks_passed_formal_fresh_training_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
     "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
     "code_commit": "d87690446306da2bb5458f6f8eaa38cb29cb631c",
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "runs": [
       {
         "mode": "audit",
@@ -124,6 +124,13 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
         "config_sha256": "cf7f45d5f69e743b962ccdb5a4539efecbc4646ab70e2b38d4dc5377f5a3c759",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26",
+        "approved": false
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "583b0032815d1cca616ec4e67dafcc22a1d38215fa586a6a6d31305cc5438128",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26",
         "approved": true
       }
     ],
@@ -190,6 +197,28 @@
         "/work/wangyy/virtual_query_matched_5k_20261025/retained_models_20261030",
         "/home/wangyy/evorig/outputs/retained_models_20261030"
       ]
+    },
+    "capacity": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26/result.json",
+      "sha256": "f0ef35f588c8d21e06aeb2dead0d83ad3bbf93743a08dac92727e7a78984167b",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26_resources.json",
+      "resources_sha256": "2f9a18d468e9611ecdef8111e9ce568da51f61c1fa6f8781f7d953a49d69c5a5"
+    },
+    "capacity_summary": {
+      "ranks": 2,
+      "stress_updates_per_rank": 13,
+      "representative_updates_per_rank": 12,
+      "mean_update_seconds": [
+        16.60922311673251,
+        16.609236317832256
+      ],
+      "max_reserved_GiB": [
+        42.869140625,
+        43.23828125
+      ],
+      "model_Adam_RNG_sampler_roundtrip_exact": true,
+      "official_model_initial_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "profile_weights_are_not_formal_initialization": true
     }
   },
   "last_operation": {
@@ -197,5 +226,5 @@
     "label": "predicted_reference_20261029_v1",
     "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "Pass native full-manifest max-density capacity, FP32 validation, representative timing and exact full checkpoint roundtrip. No formal training until accepted."
+  "next_required_result": "Start the exact fresh official-UniRig full300k run in the native grant; verify both ranks' initial counters, actual updates and resource monitor. Observe validation without adding new arms."
 }

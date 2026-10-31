@@ -152,3 +152,11 @@ a replacement. Admission permits only the new native allocation keeper:
 2H100/16CPUslots,4GiB per slot,24hours on gpuh.q@pcg01i. Observed availability
 was3H100 and76CPUslots. The new request directory is empty; no computation is
 queued automatically. The failed replay and its closed GPU gate are unchanged.
+
+Replacement131170166 was granted at2026-10-31T21:40:04.726+09:00 on pcg01i,
+physicalGPU3/4,16CPUslots,64GiB reservation and24hours. Keeper2268188 is in
+both /AGE/131170166.1/master cgroups. No child or pending request exists.
+Expiry is2026-11-01T21:40:04.726+09:00. Inherited affinity spans224logicalCPUs;
+this is NOT permission to consume224CPUs. Bind and record a fresh at-most16CPU
+execution subset before any later computation, and update job/keeper/deadline
+bindings. No training or inference was restarted by this allocation request.

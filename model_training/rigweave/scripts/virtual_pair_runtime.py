@@ -280,6 +280,12 @@ def parameter_names(model):
 
 def set_lr(optimizer, samples, config):
     p = config['optimization']
+    if p['schedule'] == 'hardcase_warmup_cosine':
+        from hardcase_adaptation_protocol import learning_rate
+        lr, beta = learning_rate(samples, p), .95
+        for group in optimizer.param_groups:
+            group['lr'], group['betas'] = lr, (beta, .999)
+        return lr, beta
     lr, beta = exposure_learning_rate(samples, p['schedule_samples'], peak=p['peak_lr'],
         warmup_fraction=p['warmup_fraction'], div_factor=p['div_factor'], final_div_factor=p['final_div_factor'])
     for group in optimizer.param_groups:
@@ -345,7 +351,8 @@ def evaluation_rows(config, entries):
         raise ValueError('matched validation selection changed')
     selected = json.loads(Path(spec['path']).read_text())['valid']
     lookup = {row['asset_id']: row for row in entries['valid']}
-    if len(selected) != 128 or len({r['asset_id'] for r in selected}) != 128:
+    expected = config['evaluation'].get('valid_assets', 128)
+    if len(selected) != expected or len({r['asset_id'] for r in selected}) != expected:
         raise ValueError('validation membership differs')
     for row in selected:
         actual = lookup[row['asset_id']]

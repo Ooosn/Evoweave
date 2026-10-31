@@ -84,6 +84,10 @@ def initialize(config, device):
     optimizer.add_param_group({'params': list(head.parameters())})
     if optimizer.state or len(optimizer.param_groups) != 2:
         raise RuntimeError('new full-data optimizer is not empty')
+    if config.get('family') == 'hardcase3608_20261101_v1':
+        from hardcase_adaptation_protocol import initialize_from_source
+        initial = initialize_from_source(config, model, optimizer)
+        return model, optimizer, tokenizer, codec, base, initial
     initial = {'official': official, 'project_checkpoint_loaded': False,
         'project_optimizer_loaded': False, 'optimizer_initial_state_entries': 0,
         'initial_asset_exposures': 0, 'learning_rate_asset_offset': 0,
@@ -126,9 +130,14 @@ def load_model(config, device, rank, world, resume=None):
 
 def audit(config, output, source):
     base, entries = read_all(config)
+    base = validate_config(config)
     groups, counts = stress_groups(entries['train'])
     panel = evaluation_rows(base, entries)
-    cache = stage_cache(config, base, entries, output)
+    if config.get('family') == 'hardcase3608_20261101_v1':
+        from hardcase_adaptation_protocol import audit_retained_cache
+        cache = audit_retained_cache(config, base)
+    else:
+        cache = stage_cache(config, base, entries, output)
     resolver = CachedFiles(config, base)
     plan = audit_plan(base)
     model, optimizer, _, _, _, initial = initialize(config, torch.device('cpu'))
@@ -137,7 +146,8 @@ def audit(config, output, source):
     loader = audit_loader(base, entries, groups, file_resolver=resolver)
     if torch.cuda.is_initialized():
         raise RuntimeError('full-data CPU audit initialized CUDA')
-    cleanup = execute_legacy(config['execution']['cleanup_plan'], output)
+    cleanup = ({'not_requested': True} if config.get('family') == 'hardcase3608_20261101_v1'
+        else execute_legacy(config['execution']['cleanup_plan'], output))
     result = {'complete': True, 'passed': True, 'source': source, 'source_sha256': source_hashes(),
         'scientific_sha256': scientific_sha(config), 'train_assets': len(entries['train']),
         'valid_assets': len(entries['valid']), 'validation_panel': len(panel),
@@ -172,7 +182,8 @@ def save_checkpoint(model, optimizer, stream, config, output, initial, source,
             raise RuntimeError('refuse to overwrite a full-run checkpoint')
         payload = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'rank_states': ranks,
             'optimizer_parameter_names': parameter_names(model), 'initialization': initial,
-            'additional_asset_exposures': samples, 'global_backbone_asset_exposures': samples,
+            'additional_asset_exposures': samples,
+            'global_backbone_asset_exposures': config['training'].get('backbone_exposure_offset', 0) + samples,
             'input_frame_exposures': frames, 'step': step, 'best': best,
             'configuration': config, 'scientific_sha256': scientific_sha(config),
             'code_commit': source, 'source_sha256': source_hashes()}
@@ -197,7 +208,9 @@ def export_weights(model, config, output, source, checkpoint):
     if path.exists():
         return json.loads(path.with_suffix('.json').read_text())
     state = {k: v.detach().cpu() for k, v in model.state_dict().items()}
-    payload = {'model': state, 'configuration': config, 'initialization': 'official_UniRig_then_full_joint',
+    payload = {'model': state, 'configuration': config, 'initialization': (
+        'full300k_then_hardcase3608' if config.get('family') == 'hardcase3608_20261101_v1'
+        else 'official_UniRig_then_full_joint'),
         'samples': checkpoint['samples'], 'scientific_sha256': scientific_sha(config),
         'code_commit': source, 'source_sha256': source_hashes(), 'model_only': True,
         'source_checkpoint_sha256': checkpoint['sha256']}
@@ -378,6 +391,11 @@ def train(config, output, source, device, rank, world):
     write_json(output/f'initialization_rank_{rank}.json', initial)
     wrapped = wrap(model, device, world)
     dataset = fixed_dataset(entries['train'], base, 2, mode='train', file_resolver=resolver)
+    if config.get('family') == 'hardcase3608_20261101_v1' and samples == 0:
+        with preserve_random():
+            baseline = evaluate(model, base, config, entries, output, 0, device, rank, world, include_ar=True)
+        if not baseline['complete']:
+            raise RuntimeError('matched full300k development baseline did not complete')
     stopped, last_checkpoint = False, None
     while samples < config['training']['additional_assets']:
         boundary = next(n for n in config['training']['checkpoint_assets'] if n > samples)
@@ -394,8 +412,9 @@ def train(config, output, source, device, rank, world):
                 frames += value['frames_in_update']
                 step += 1
                 value.update(step=step, additional_asset_exposures=samples,
-                    global_backbone_asset_exposures=samples, input_frame_exposures=frames,
-                    learning_rate_asset_position=samples-goal, regime='joint_official', code_commit=source)
+                    global_backbone_asset_exposures=config['training'].get('backbone_exposure_offset', 0)+samples,
+                    input_frame_exposures=frames, learning_rate_asset_position=samples-goal,
+                    regime=config['training']['regime'], code_commit=source)
                 with (output/f'updates_rank_{rank}.jsonl').open('a') as handle:
                     handle.write(json.dumps(value)+'\n')
                 progress = {k: v for k, v in value.items() if k != 'microbatches'}
@@ -442,12 +461,18 @@ def train(config, output, source, device, rank, world):
         best = gather(best if rank == 0 else None, world)[0]
         release()
     final = None
-    if not stopped:
+    if not stopped and config.get('family') != 'hardcase3608_20261101_v1':
         with preserve_random():
             final = evaluate(model, base, config, entries, output, samples, device, rank, world, final=True)
         stopped = not final['complete']
+    if not stopped and config.get('family') == 'hardcase3608_20261101_v1' and rank == 0:
+        from hardcase_adaptation_protocol import select_development_checkpoint
+        selection = select_development_checkpoint(output)
+        write_json(output/'development_selection_result.json', selection)
+        mirror(output/'development_selection_result.json', 'development_selection_result.json', config)
     return {'complete': not stopped, 'passed': not stopped, 'stopped_for_deadline': stopped,
         'samples': samples, 'input_frame_visits': frames, 'optimizer_updates': step,
         'scientific_sha256': scientific_sha(config), 'source_sha256': source_hashes(),
         'source': source, 'initialization': initial, 'last_checkpoint': last_checkpoint,
-        'best': best, 'final_evaluation': final}
+        'best': best, 'final_evaluation': final,
+        'locked_evaluation_pending': config.get('family') == 'hardcase3608_20261101_v1'}

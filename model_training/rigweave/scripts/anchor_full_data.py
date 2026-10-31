@@ -18,11 +18,15 @@ from virtual_query_xyz_runtime import write_json
 
 def make_stream(base, rank, world, state=None):
     spec = base['data']['manifests']['train']
+    order = None
+    if 'hardcase_sampling' in base:
+        from hardcase_adaptation_protocol import load_sampling
+        order = load_sampling(base['hardcase_sampling'])['exposure_order']
     return MatchedFrameStream(range(spec['rows']), rank=rank, world_size=world,
         seed=base['data']['stream_seed'], target_assets=base['training']['target_assets'],
         effective_assets=base['training']['effective_assets_per_update'],
         frame_policy=base['training']['frame_policy'], manifest_sha256=spec['sha256'],
-        state=state, update_boundaries=base['training']['checkpoint_assets'])
+        state=state, update_boundaries=base['training']['checkpoint_assets'], exposure_order=order)
 
 
 def planned_microbatches(base, stream, limit):
@@ -157,7 +161,7 @@ def audit_plan(base):
     streams = [make_stream(base, rank, 2) for rank in range(2)]
     first, samples, frame_visits, updates = streams[0], 0, 0, 0
     rows = base['data']['manifests']['train']['rows']
-    for start in range(0, len(first.order), rows):
+    for start in ([] if 'hardcase_sampling' in base else range(0, len(first.order), rows)):
         part = first.order[start:start+rows]
         if len(np.unique(part)) != len(part) or (len(part) == rows and not np.array_equal(np.sort(part), np.arange(rows))):
             raise ValueError('full-data exposure plan skipped or duplicated an asset within a pass')
@@ -179,6 +183,14 @@ def audit_plan(base):
             raise ValueError('two-rank stream does not implement the global exposure plan')
         samples += goal
         updates += 1
+    if 'hardcase_sampling' in base:
+        from hardcase_adaptation_protocol import load_sampling
+        selected = load_sampling(base['hardcase_sampling'])
+        if set(first.order.tolist()) != set(range(rows)):
+            raise ValueError('weighted adaptation did not cover every training asset')
+        return {'assets': samples, 'updates': updates, 'input_frame_visits': frame_visits,
+            'unique_assets': rows, 'plan_sha256': first.plan_sha256,
+            'rank_resume_roundtrip': True, 'sampling': selected['report']}
     return {'assets': samples, 'updates': updates, 'input_frame_visits': frame_visits,
         'complete_passes': samples // rows, 'partial_pass_assets': samples % rows,
         'unique_assets': int(np.unique(first.order).size), 'plan_sha256': first.plan_sha256,

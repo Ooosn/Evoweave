@@ -15,7 +15,7 @@ class MatchedFrameStream:
 
     def __init__(self, dataset, *, rank, world_size, seed, target_assets, effective_assets,
                  frame_policy, manifest_sha256, min_frames=2, max_frames=24, state=None,
-                 update_boundaries=None):
+                 update_boundaries=None, exposure_order=None):
         integers = (rank, world_size, seed, target_assets, effective_assets, min_frames, max_frames)
         if any(type(value) is not int for value in integers):
             raise ValueError('sampling counts and seeds must be integers, not booleans')
@@ -60,10 +60,19 @@ class MatchedFrameStream:
         permutations = [np.random.default_rng(np.random.SeedSequence([seed, epoch, 193])).permutation(len(dataset))
                         for epoch in range((target_assets + len(dataset) - 1) // len(dataset))]
         self.order = np.concatenate(permutations)[:target_assets].astype('<u4')
+        if exposure_order is not None:
+            order = np.asarray(exposure_order)
+            if (order.shape != (target_assets,) or order.dtype.kind not in 'iu'
+                    or np.any(order < 0) or np.any(order >= len(dataset))):
+                raise ValueError('explicit exposure order contains invalid asset indices')
+            self.order = order.astype('<u4', copy=True)
+            self.contract['exposure_order_sha256'] = hashlib.sha256(self.order.tobytes()).hexdigest()
         self.frame_counts = np.random.default_rng(np.random.SeedSequence([seed, 99011])).integers(
             min_frames, max_frames + 1, size=len(sizes), dtype=np.uint8)
         semantic = {key: self.contract[key] for key in ('seed', 'target_assets', 'effective_assets',
                     'dataset_rows', 'manifest_sha256', 'min_frames', 'max_frames', 'update_boundaries')}
+        if exposure_order is not None:
+            semantic['exposure_order_sha256'] = self.contract['exposure_order_sha256']
         digest = hashlib.sha256(json.dumps(semantic, sort_keys=True, separators=(',', ':')).encode())
         digest.update(self.order.tobytes())
         digest.update(self.frame_counts.tobytes())

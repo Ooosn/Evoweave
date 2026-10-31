@@ -15,6 +15,9 @@ OFFICIAL_SHA = 'd8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4
 
 
 def validate_config(config):
+    if config.get('family') == 'hardcase3608_20261101_v1':
+        from hardcase_adaptation_protocol import validate_config as validate_adaptation
+        return validate_adaptation(config)
     train, evaluation = config['training'], config['evaluation']
     if (config.get('family') != SCOPE or config.get('schema_version') != 1
             or config['backbone'].get('initialization') != 'official_UniRig_only'
@@ -85,11 +88,18 @@ def source_hashes():
         'virtual_pair_runtime.py', 'virtual_frame_runtime.py', 'virtual_pair_loading.py',
         'virtual_fusion_normal_runtime.py', 'train_virtual_query_xyz.py', 'stage1_feedback.py',
         'single_query_protocol.py', 'id_xyz_stages.py']
+    names += ['hardcase_adaptation_protocol.py', 'prepare_hardcase_adaptation.py',
+        'train_hardcase_adaptation.py', 'virtual_pair_guard.py']
     paths += [Path(__file__).with_name(name) for name in names]
+    paths += [root/'model_training/tools/hardcase_adaptation_ops.py',
+        root/'model_training/jobs/launch_virtual_pair.py']
     return {str(p.relative_to(root)): sha256(p) for p in sorted(paths)}
 
 
 def validate_resume(config, saved, names, sources, world=2):
+    if config.get('family') == 'hardcase3608_20261101_v1':
+        from hardcase_adaptation_protocol import validate_resume as validate_adaptation_resume
+        return validate_adaptation_resume(config, saved, names, sources, world)
     if (saved['scientific_sha256'] != scientific_sha(config)
             or saved['optimizer_parameter_names'] != names or saved['source_sha256'] != sources
             or saved['initialization'].get('project_checkpoint_loaded') is not False

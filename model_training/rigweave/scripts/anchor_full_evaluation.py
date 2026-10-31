@@ -183,11 +183,11 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         all_rows = sum(gather(rows, world), [])
         all_ar = sum(gather(ar_rows, world), [])
         all_inputs = sum(gather(input_specs, world), [])
-        expected_assets = 967 if final else 128
+        expected_assets = 967 if final else config['evaluation']['selection_assets']
         head_rows = [row for row in all_rows if row['split'] == 'valid' and row['method'] == 'head']
         if not stopped and (len(head_rows) != expected_assets*14
                 or len({r['asset_id'] for r in head_rows}) != expected_assets
-                or (include_ar and len(all_ar) != 128*8)):
+                or (include_ar and len(all_ar) != config['evaluation']['selection_assets']*8)):
             raise RuntimeError('full-run validation coverage differs')
         summary = {'complete': not stopped, 'stopped_for_deadline': stopped,
             'samples': samples, 'final': final, 'precision': 'fp32_noTF32', 'decoder_attention': 'eager',
@@ -196,6 +196,14 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
             'stage1_decoding': 'greedy_fast_validation_not_official_beam_inference',
             'stage1_GT_reference_or_teacher_prefix': False,
             'stage2_reference': 'GT_only', 'data_cache_index_sha256': resolver.index_sha256}
+        if config.get('family') == 'hardcase3608_20261101_v1':
+            from hardcase_adaptation_protocol import load_sampling
+            strata = load_sampling(config['sampling'])['validation_strata']
+            summary['stage1_strata'] = {name: summarize_rows([r for r in all_ar
+                if strata[r['asset_id']] == name]) for name in ('core', 'extension', 'background')}
+            summary['stage2_strata'] = {name: summarize([r for r in all_rows
+                if r['split'] == 'valid' and strata[r['asset_id']] == name])
+                for name in ('core', 'extension', 'background')}
         path = directory/f'examples_rank_{rank}.pt'
         torch.save(examples, path)
         mirror(path, directory.name+'/'+path.name, config)

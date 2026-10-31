@@ -61,6 +61,8 @@ def validate_config(config):
 def scientific_sha(config):
     fields = copy.deepcopy({k: config[k] for k in ('family', 'backbone', 'architecture', 'training', 'evaluation')})
     fields['training'].pop('resume', None)
+    if config.get('family') == 'hardcase3608_20261101_v1':
+        fields['sampling'] = copy.deepcopy(config['sampling'])
     return hashlib.sha256(json.dumps(fields, sort_keys=True).encode()).hexdigest()
 
 

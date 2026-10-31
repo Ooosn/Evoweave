@@ -55,3 +55,11 @@ tracked files were restored from the original HEAD; one missing Git blob was
 recovered by refetching the project repository. The checkout is clean. No
 data, weights or existing experiment outputs changed. Deployment may proceed
 after a fresh native-allocation check; training remains prohibited.
+
+Audit_v27 exited1 at14:58:03 JST before a payload/resource receipt was created:
+verify_launch still required world_size2 after the native subset was validated.
+The redundant check is corrected; non-scheduler paths still require two ranks,
+and scheduler_runtime strictly binds the single-card visual subset. Preserve
+the failure log. Replacement stages are audit_v28 and capacity_v28; no GPU
+inference or model update occurred in v27. Seventeen protocol and ten launcher
+tests passed after the correction.

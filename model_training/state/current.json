@@ -101,7 +101,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_only",
     "phase": "full300k_visual12_CPU_audit",
-    "status": "audit_approved_after_authorized_code_restoration",
+    "status": "audit_v28_approved_after_single_GPU_guard_repair",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
@@ -115,7 +115,7 @@
         "model_training/rigweave/scripts/evaluate_predicted_reference.py"
       ]
     },
-    "code_commit": "a42cf3f245e1928b975ebc22af7fa61b17268f9c",
+    "code_commit": "de58479737b9e7f42b9603944382e0e073062067",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
@@ -151,6 +151,16 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
         "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v27",
+        "approved": false,
+        "status": "failed_before_payload_host_CPU_GPU_guard",
+        "exit_code": 1,
+        "finished_utc": "2026-10-31T05:58:03.413362+00:00"
+      },
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
+        "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28",
         "approved": true
       }
     ],
@@ -175,5 +185,5 @@
     "label": "anchor_full_20261030_v1",
     "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "Restoration explicitly authorized and completed. Deploy committed visual code, repeat native idle admission, run audit_v27, then separately admit zero-update capacity_v27. Training remains closed."
+  "next_required_result": "audit_v27 failed before payload execution on an obsolete two-rank assertion; preserve its log. Deploy reviewed fix and run audit_v28, then separately admit zero-update capacity_v28 on idle GPU4/8CPU. Training remains closed."
 }

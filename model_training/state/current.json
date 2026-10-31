@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "paired_inference_diagnosis_restored_GPU_admitted_20261031",
-  "updated_at": "2026-10-31T10:23:37Z",
+  "state_id": "paired_inference_diagnosis_resumed_time_window_20261031",
+  "updated_at": "2026-10-31T11:06:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
@@ -79,8 +79,8 @@
     "keeper_pid": 1108368,
     "status": "native_idle_both_GPUs_at_last_observation_allocation_preserved",
     "expiry_utc": "2026-10-31T11:55:38Z",
-    "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-31T06:25:16.956013+00:00",
+    "stop_before_utc": "2026-10-31T11:45:00Z",
+    "last_observed_utc": "2026-10-31T11:05:50.869322+00:00",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -91,7 +91,7 @@
       "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
     },
     "h_rt_seconds": 345600,
-    "last_observation_note": "Formal train_v26 verified on both ranks; official initialization, empty Adam, actual full-data prefix and native membership checked. Do not alter the live checkout or release the allocation.",
+    "last_observation_note": "Native keeper has both job cgroups and no children. GPU4 is idle; GPU3 workload uses separate CPUs6,7,9,10. h_rt345600 and start2026-10-27T20:55:38.594+09:00 confirm expiry20:55:38JST. Permit the unchanged1800s diagnosis until20:45JST only, with fresh plan before20:15. Preserve allocation and other task.",
     "last_gpu_memory_observed_utc": "2026-10-29T20:12:35.367519+00:00",
     "last_observed_gpu_used_mib": [
       44455,
@@ -102,7 +102,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_diagnosis_only",
     "phase": "paired_diagnosis_gpu_comparison",
-    "status": "authorized18files_restored_GPU_comparison_released",
+    "status": "resumed_with_verified_time_window_waiting_native_plan",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 asked to find the cause, establish whether the new model is better, test improved inference, and consider difficult-skeleton fine-tuning. Admit only the bounded no-update diagnosis now; fine-tuning is not included.",
@@ -174,7 +174,7 @@
       {
         "mode": "capacity",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
-        "config_sha256": "3ffa5d11943f8f8a7dffe7cbfb099effc9e2068ed784b73a3046f30a84a0b667",
+        "config_sha256": "abc7296aa96e84107179f1e9dd661972a8ffb47c2ca8cbffea06d71e9375cd16",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v29",
         "approved": true,
         "status": "approved_waiting_native_dispatch"
@@ -246,5 +246,5 @@
     "optimizer_updates": 0,
     "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json"
   },
-  "next_required_result": "Fresh native plan and dispatch capacity_v29 only if enough time remains before10:55Z. Core inference code and accepted CPU scope unchanged. Require24exact baselines before testing strict sampling/deterministic beam; retain allfailures. Analyze branch omission and count/termination tendencies separately from averageF1. No training."
+  "next_required_result": "Fresh native plan and dispatch capacity_v29 before11:15Z with stop11:45Z, over10minutes before verified scheduler expiry11:55:38Z. Core inference code and accepted CPU scope unchanged. Require24exact baselines before testing strict sampling/deterministic beam; retain allfailures. Analyze branch omission and count/termination tendencies separately from averageF1. No training."
 }

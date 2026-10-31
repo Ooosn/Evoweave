@@ -109,3 +109,15 @@ CPU audit and core implementation are unchanged. Capacity_v29 is re-admitted
 subject to fresh live resource/time checks. The user's observation of reduced
 finger/wing/multi-branch coverage is a primary diagnostic question; early EOS,
 coarse topology preference and search effects remain hypotheses until tested.
+
+## Resumed Time Window
+
+The user requested continuation after the compaction interruption. The live
+scheduler at20:05JST reports start2026-10-27T20:55:38.594+09:00 and h_rt345600s,
+so the allocation expires2026-10-31T20:55:38.594+09:00. The earlier19:55 stop
+reserved an hour; it was not the scheduler expiry. Only this unused diagnosis
+config now stops at20:45JST, leaving over10minutes for cleanup. Its1800second
+payload limit, scientific fingerprint, checkpoints, cases and policies are
+unchanged. The accepted CPU audit remains applicable. GPU4, native keeper and
+the selected8CPUs were idle; the other task uses GPU3/CPUs6,7,9,10 and is kept.
+Require a fresh plan and dispatch before20:15JST; do not start after that gate.

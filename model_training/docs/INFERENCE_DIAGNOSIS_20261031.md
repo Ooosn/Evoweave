@@ -146,3 +146,9 @@ no new target-pose or alternative-policy result exists, and no validation-wide
 superiority or causal training claim is established. The report and figures
 are in official_reference_comparison.json and official_pair_gallery under the
 local inference_diagnosis_20261031 output directory.
+
+At21:36JST the previous H100 allocation was confirmed ended. The user requested
+a replacement. Admission permits only the new native allocation keeper:
+2H100/16CPUslots,4GiB per slot,24hours on gpuh.q@pcg01i. Observed availability
+was3H100 and76CPUslots. The new request directory is empty; no computation is
+queued automatically. The failed replay and its closed GPU gate are unchanged.

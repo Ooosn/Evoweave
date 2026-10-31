@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "paired_inference_replay_stopped_full105_20261031",
-  "updated_at": "2026-10-31T11:20:00Z",
+  "state_id": "h100_renewal_allocation_only_authorized_20261031",
+  "updated_at": "2026-10-31T12:40:00Z",
   "module": "model_training",
   "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
@@ -37,15 +37,16 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "submit"
   ],
   "blocked_operations": [
     "train",
-    "submit",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
   "compute_allocation": {
+    "status": "expired_previous_allocation",
     "server": "HGC",
     "qlogin_job_id": 130675914,
     "host": "pcg01i",
@@ -98,6 +99,23 @@
       44553
     ]
   },
+  "allocation_request": {
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "status": "authorized_not_yet_submitted",
+    "queue": "gpuh.q@pcg01i",
+    "gpus": 2,
+    "gpu_type": "H100",
+    "cpu_slots": 16,
+    "memory_per_slot": "4G",
+    "total_memory_reservation_GiB": 64,
+    "h_rt_seconds": 86400,
+    "observed_available_H100": 3,
+    "observed_available_CPU_slots": 76,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "persistent_session": "evoweave_h100_native_20261031",
+    "automatic_payload_allowed": false
+  },
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_diagnosis_only",
@@ -129,7 +147,8 @@
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "operation_entrypoints": {
       "report": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
-      "preflight": "model_training/rigweave/scripts/evaluate_predicted_reference.py"
+      "preflight": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+      "submit": "model_training/jobs/hold_evoweave_native_20261031.sh"
     },
     "code_commit": "67560bb6f14b980def5c60a933cd95efe4c98bed",
     "formal_training_allowed": false,

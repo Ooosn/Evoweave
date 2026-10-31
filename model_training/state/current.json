@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "paired_inference_diagnosis_GPU_admitted_20261031",
-  "updated_at": "2026-10-31T07:43:54Z",
+  "state_id": "paired_inference_diagnosis_source_hold_20261031",
+  "updated_at": "2026-10-31T07:58:06Z",
   "module": "model_training",
   "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
@@ -36,10 +36,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -102,7 +102,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_diagnosis_only",
     "phase": "paired_diagnosis_gpu_comparison",
-    "status": "CPU_audit_accepted_GPU_comparison_approved",
+    "status": "awaiting_restoration_permission_for_18_missing_sources",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 asked to find the cause, establish whether the new model is better, test improved inference, and consider difficult-skeleton fine-tuning. Admit only the bounded no-update diagnosis now; fine-tuning is not included.",
@@ -114,7 +114,7 @@
     },
     "code_commit": "67560bb6f14b980def5c60a933cd95efe4c98bed",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
@@ -176,8 +176,8 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
         "config_sha256": "3ffa5d11943f8f8a7dffe7cbfb099effc9e2068ed784b73a3046f30a84a0b667",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v29",
-        "approved": true,
-        "status": "approved_waiting_native_dispatch"
+        "approved": false,
+        "status": "deployment_held_before_GPU_start"
       }
     ],
     "prior_diagnosis": {
@@ -195,6 +195,36 @@
       "source": "b0157a70f7446a62681f9761d92429d3e90a3516",
       "local_review": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/audit_v29_review.json",
       "cuda_initialized": false
+    },
+    "source_integrity_issue": {
+      "observed_utc": "2026-10-31T07:47:14.742299+00:00",
+      "remote_HEAD": "b0157a70f7446a62681f9761d92429d3e90a3516",
+      "tracked_deleted_files": 18,
+      "other_change_types_observed": [],
+      "all_paths_in_prior_421_file_restoration": false,
+      "deletion_time_and_process": "Not established. Discovery after audit is not proof of deletion time.",
+      "restoration_permission_requested": true,
+      "files_restored_this_turn": false,
+      "GPU_inference_started": false,
+      "local_inspection_script": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/preparation/inspect_source_changes.sh"
+    },
+    "existing_evidence_review": {
+      "paired_assets": 114,
+      "paired_poses": 912,
+      "old_greedy_edge_F1": 0.7760685930403182,
+      "new_greedy_edge_F1": 0.7997814490531118,
+      "paired_asset_bootstrap95_delta": [
+        0.0058935563517779005,
+        0.041707522996124805
+      ],
+      "assets_improved": 68,
+      "assets_worsened": 38,
+      "assets_tied": 8,
+      "identity_exclusions": 14,
+      "report": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/paired_existing_stage1.json",
+      "gallery": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/existing_gallery.json",
+      "visual_inspection": "All six old/new paired sheets inspected. Top3 improvements and top3 regressions both retained. Standard52joint humanoid lost fingers in the worst regression; not only unusual skeletons.",
+      "scope": "Existing greedy stage1 diagnostics; not an official-policy end-to-end acceptance."
     }
   },
   "last_operation": {
@@ -205,5 +235,5 @@
     "optimizer_updates": 0,
     "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json"
   },
-  "next_required_result": "Execute admitted capacity_v29 through native keeper. Require exact24baseline replays before new policies. Collect all72references/1344targetrows, independently rescore and inspect fixed-case improvements/regressions. No training, retries or GT selection. Preserve other workload and allocation."
+  "next_required_result": "Await explicit restoration permission for18missing tracked sources, without overwriting other changes. CPU audit has passed; GPU comparison has NOT started. Restore only approved missing paths, recheck source/resources, re-admit capacity_v29 and run exact24baseline replays before alternatives. Keep all72references/1344targetrows if admitted. No training or policy adoption yet."
 }

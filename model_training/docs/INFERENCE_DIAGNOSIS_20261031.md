@@ -79,3 +79,24 @@ Capacity_v29 is now admitted with the primary CPU result bound; no source
 changes are permitted while the payload is active. Training remains prohibited.
 Local primary comparison and reviews live under
 D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/.
+
+## Source Integrity Hold And Existing Visual Evidence
+
+The GPU deployment was held before any generation:18tracked source/document
+paths are missing from the server checkout. No other change types were seen.
+They are not all within the earlier421file restoration authorization. The
+deleting process and time are not established; do not describe discovery time
+as deletion time or blame this observation for model-quality changes. Restore
+only with the requested human authorization, preserving all other changes.
+The accepted CPU audit remains recorded; GPU admission is closed during hold.
+
+Existing matched greedy examples were rendered using verified immutable inputs:
+the top3 positive and top3 negative asset-mean F1 differences, with fixed poses
+0/2/4/7, old/new common cameras and GT overlays. All six sheets were inspected.
+The gains are visually real, not only count changes. The worst regression is
+a normal52joint humanoid whose prediction drops to22joints and omits fingers;
+another shows pose-dependent hand/count changes. The sparse5joint case has
+extra branches. This does not support limiting every future hard-example
+intervention to unusual-looking shapes. Branch coverage, annotation granularity
+and repeated/invalid generation must be analyzed separately.
+Gallery: D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/gallery/.

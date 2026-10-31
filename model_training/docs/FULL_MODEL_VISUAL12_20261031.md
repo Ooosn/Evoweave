@@ -63,3 +63,10 @@ and scheduler_runtime strictly binds the single-card visual subset. Preserve
 the failure log. Replacement stages are audit_v28 and capacity_v28; no GPU
 inference or model update occurred in v27. Seventeen protocol and ten launcher
 tests passed after the correction.
+
+Audit_v28 completed at15:01:09 JST, exit0 and clean native resources. All12
+retained full-model canonical inputs and checkpoint identities passed; zero
+optimizer updates and no CUDA initialization. Its result hash is
+af6782b14d3fc609d8145199aad2ee1457885f376e5714c6620f1b4d63a08475.
+Capacity_v28 is now admitted for the single-GPU visual run, with this primary
+CPU result bound in the config. No source changes while the payload is active.

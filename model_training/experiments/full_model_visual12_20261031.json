@@ -119,7 +119,11 @@
     "profile_assets_per_rank": 0,
     "full_official_beam_decode_per_rank": 1
   },
-  "audit_result": null,
+  "audit_result": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28/result.json",
+    "sha256": "af6782b14d3fc609d8145199aad2ee1457885f376e5714c6620f1b4d63a08475",
+    "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28_resources.json"
+  },
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/anchor_full_20261030/visual12"
   },

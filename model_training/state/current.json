@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "full_model_visual12_audit_20261031",
-  "updated_at": "2026-10-31T05:16:08.672Z",
+  "state_id": "full_model_visual12_GPU_admitted_20261031",
+  "updated_at": "2026-10-31T06:01:57.859767+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
   "required_context": [
@@ -35,12 +35,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "preflight",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
@@ -100,8 +100,8 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_only",
-    "phase": "full300k_visual12_CPU_audit",
-    "status": "audit_v28_approved_after_single_GPU_guard_repair",
+    "phase": "full300k_visual12_official_inference",
+    "status": "CPU_audit_passed_GPU4_visual_inference_admitted",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
@@ -117,14 +117,23 @@
     },
     "code_commit": "de58479737b9e7f42b9603944382e0e073062067",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "native_execution_subset": {
       "scheduler_grant_unchanged": "2H100 and16CPUslots, job130675914",
       "physical_gpu": 4,
       "CPU_budget": 8,
-      "CPU_affinity": [11, 12, 14, 15, 61, 63, 64, 65],
+      "CPU_affinity": [
+        11,
+        12,
+        14,
+        15,
+        61,
+        63,
+        64,
+        65
+      ],
       "reason": "Anigroom is using GPU3 and CPUs6,7,9,10. Preserve it; use only the idle disjoint native subset for this zero-update visual task."
     },
     "checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/weights_300000.pt",
@@ -161,6 +170,15 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
         "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28",
+        "approved": false,
+        "status": "completed_passed",
+        "exit_code": 0
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
+        "config_sha256": "e4f52cf2b00f686f6395fea4c18c5b4f6592a234c81bb660d11cec9991907975",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28",
         "approved": true
       }
     ],
@@ -178,6 +196,14 @@
       "action": "Human explicitly authorized restoration. All421missing tracked files restored from original HEAD; one missing Git blob recovered by refetch. Checkout is clean. No data, weights or experiment outputs were changed.",
       "restoration_finished_utc": "2026-10-31T05:50:38.811701+00:00",
       "restoration_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/restore_missing_code_20261031.json"
+    },
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28/result.json",
+      "sha256": "af6782b14d3fc609d8145199aad2ee1457885f376e5714c6620f1b4d63a08475",
+      "resource_sha256": "e6446f7b31ee9701282b5f123a318efc39ea7a58933d046a256aa4554fff31fb",
+      "exit_code": 0,
+      "finished_utc": "2026-10-31T06:01:09.820837+00:00",
+      "optimizer_updates": 0
     }
   },
   "last_operation": {
@@ -185,5 +211,5 @@
     "label": "anchor_full_20261030_v1",
     "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "audit_v27 failed before payload execution on an obsolete two-rank assertion; preserve its log. Deploy reviewed fix and run audit_v28, then separately admit zero-update capacity_v28 on idle GPU4/8CPU. Training remains closed."
+  "next_required_result": "Run admitted capacity_v28 on native GPU4 and disjoint8CPU only; independently rescore and visually inspect all12cases. Retain failures and both prediction/GT-overlay figures. Do not change source while active; do not train."
 }

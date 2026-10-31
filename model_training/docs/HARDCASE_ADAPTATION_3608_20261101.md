@@ -72,7 +72,7 @@ at zero; original optimizer moments and step counters continue.
 | Backbone LR |2e-6at0visits; linear warmup to1e-5at1000; cosine to2e-6at30000|
 | Head LR |3times backbone LR|
 | AdamW |Retain moments; beta1=.95,beta2=.999,weight_decay=0|
-| Loss |Existing asset-normalized AR +10*XYZ +0.25*bone-vector loss|
+| Loss |Existing asset-normalized AR +10*(XYZ +0.25*bone-vector loss)|
 | XYZ warmup |Not restarted; weight10from the first adaptation update|
 | Gradient clipping |Separate backbone/head norm1|
 | Precision |Existing BF16 autocast training; FP32/noTF32 eager validation|
@@ -198,3 +198,28 @@ Durable checkpoint output is `/home/wangyy/evorig/outputs/hardcase3608_20261101/
 Never reuse a stage id after an error or launch a duplicate. Do not edit the
 live source while a stage payload is running. A gate failure is preserved and
 diagnosed; the reminder does not permit bypassing it or silently retrying.
+
+## Completed Preparation
+
+CPU audit_v30 finished2026-11-01 02:02:07JST, exit0, native job131170166,
+16CPU binding, peak process-tree RSS18,192,265,216bytes (16.94GiB), clean payload
+exit and no CUDA initialized. The full300k checkpoint and all1079Adam state
+entries imported with exact parameter/group compatibility. The weighted plan
+has30,000visits,628updates,392,704input-frame visits and all18,002train assets;
+both rank plans restore exactly. The112development assets and immutable967
+validation membership are verified. Six loader contract cases passed. Existing
+19,044file/419,101,379,008byte NVMe cache identity and sizes match accepted
+full-data evidence; it was not recopied or fully rehashed again.
+
+Primary CPU audit result SHA256:
+`f7a99c2897a929e475309f62b031f96ba6296977606dbb48f90c063432120a4d`.
+Native resource receipt SHA256:
+`bb68d750383f810e22bafc4c66e9af8387701d4a5d7031919dd961440842fd4d`.
+The passed audit is recorded in config/state and committed asf3fb20d.
+Local main review:
+`D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_review.json`.
+Tests:38passed plus20subtests, covering weighted sampling, full Adam import,
+scheduled GPU admission and existing full-data/input/replay behavior.
+GPU capacity, teacher-prefix and disk model/Adam/RNG recovery checks remain
+scheduled work. Formal training has not started. The heartbeat must reuse this
+CPU acceptance rather than starting the audit again.

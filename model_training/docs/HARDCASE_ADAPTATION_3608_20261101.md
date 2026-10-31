@@ -41,7 +41,8 @@ prefetch does not advance the consumed cursor.
 Frozen topology profile SHA256:
 `27666a73a6de586c23345b4d7a6d107eb8f29fb5fea3b30e9524a4e6ae4d6231`.
 Frozen sampling plan SHA256:
-`5d7ba950fc48461586317c436d7ecf0d4172e79552498c52e8a274c0526f31c6`.
+`df290696c9fd58fac2fae521537a335b0b62b499f82eba6e03e54dc0cfb093be`.
+Frozen generated JSON uses UTF-8 and LF on both Windows and Linux.
 Remote data preparation:
 `/work/wangyy/hardcase_adaptation_20261101/data/preparation.json`.
 Local review artifacts:

@@ -13,10 +13,10 @@ from hardcase_adaptation_protocol import (COUNTS, OPTIMIZATION, PROFILE_SHA, SCO
 def write_new(path, value):
     content = json.dumps(value, indent=2, sort_keys=True)+'\n'
     if path.exists():
-        if path.read_text() != content:
+        if path.read_bytes() != content.encode('utf-8'):
             raise RuntimeError('refuse to replace a frozen preparation artifact: '+str(path))
     else:
-        path.write_text(content)
+        path.write_text(content, encoding='utf-8', newline='\n')
 
 
 def build_plan(rows):

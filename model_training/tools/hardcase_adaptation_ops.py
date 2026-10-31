@@ -29,11 +29,11 @@ def digest(path):
 def write_new(path, value):
     content = json.dumps(value, indent=2, sort_keys=True)+'\n'
     if path.exists():
-        if path.read_text() != content:
+        if path.read_bytes() != content.encode('utf-8'):
             raise RuntimeError('refuse to overwrite an admission artifact: '+str(path))
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open('x') as handle:
+    with path.open('x',encoding='utf-8',newline='\n') as handle:
         handle.write(content)
 
 
@@ -116,7 +116,7 @@ def record(config, mode, stage):
         else 'Freshly plan and start train_v30 from full300k; never use the capacity checkpoint as initialization.')
     for path, content in ((CONFIG,config_text),(STATE,json.dumps(state,indent=2,sort_keys=True)+'\n')):
         temporary=path.with_suffix('.json.tmp')
-        temporary.write_text(content)
+        temporary.write_text(content,encoding='utf-8',newline='\n')
         temporary.replace(path)
     print(json.dumps({'recorded':key,'evidence':spec,'config_sha256':config_sha,
         'commit_and_push_state_and_config_before_next_dispatch':True},indent=2))

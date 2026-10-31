@@ -1,38 +1,138 @@
 {
-  "schema_version": 1,
-  "state_id": "hardcase3608_preparation_authorized_20261101",
-  "updated_at": "2026-10-31T16:53:46Z",
-  "module": "model_training",
-  "human_context": "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
-  "required_context": [
-    "PROJECT_MAP.md",
-    "DATASET_SOURCE_OF_TRUTH.md",
-    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
-    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
-    "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md"
-  ],
-  "publication_authorization": {
-    "status": "explicit_user_approved",
-    "destination": "https://github.com/Ooosn/Evoweave.git",
-    "branch": "codex/virtual-fusion-20261013",
-    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
-    "isolation_required": true,
-    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  "active_operation": {
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30_resources.json",
+      "resources_sha256": "bb68d750383f810e22bafc4c66e9af8387701d4a5d7031919dd961440842fd4d",
+      "sha256": "f7a99c2897a929e475309f62b031f96ba6296977606dbb48f90c063432120a4d"
+    },
+    "CPU_audit_accepted": true,
+    "CPU_binding_required": false,
+    "acceptance_test": "CPU no-CUDA audit of immutable splits/SSD cache, source checkpoint/Adam and exact3/2/1 plan; native two-rank capacity with model/Adam/RNG/weighted-sampler disk restoration;30k train visits/628updates and complete development baseline plus4checkpoints. Locked/official quality acceptance remains a separately recorded post-training phase. No CE-only acceptance.",
+    "additional_asset_exposures": 30000,
+    "authorization": "User2026-11-01 approved the3608candidate scope, per-asset weights3/2/1, complete training-plan preparation and waking this chat at04:00JST to start training. Implement the specified30k low-LR continuation with source Adam retained; CPU preparation now, native capacity and formal train no earlier than the stated time. No new or enlarged allocation and no automatic retry.",
+    "automation": {
+      "id": "evoweave-3608",
+      "kind": "heartbeat",
+      "scheduled_local": "2026-11-01T04:00:00+09:00",
+      "single_use": true
+    },
+    "capacity_accepted": false,
+    "code_commit": "58600f8abc4ac79e72bd1127a85e8fc9d2d032f6",
+    "complete": false,
+    "contract": "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
+    "development_assets": 112,
+    "effective_batch": 48,
+    "explicit_human_authorized": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": true,
+    "initialization": "full300k_complete_model_and_Adam; fresh weighted data/RNG and low-LR phase",
+    "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+    "label": "hardcase3608_20261101_v1",
+    "locked_validation_assets": 855,
+    "not_before_utc": "2026-10-31T19:00:00Z",
+    "operation": "hardcase_weighted_joint_adaptation",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
+      "report": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
+      "train": "model_training/rigweave/scripts/train_hardcase_adaptation.py"
+    },
+    "outputs": {
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1",
+      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30"
+    },
+    "phase": "capacity_ready_at_scheduled_time",
+    "preparation": {
+      "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_remote.json",
+      "local_verified_sampling": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/data_verified/sampling_plan.json",
+      "remote": "/work/wangyy/hardcase_adaptation_20261101/data/preparation.json",
+      "tests": "38passed+20subtests, including weighted coverage/rank resume, both Adam groups, old full-data and replay regression tests"
+    },
+    "production_acceptance_complete": false,
+    "required_entrypoint": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
+    "runs": [
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
+        "config_sha256": "1b4533a9575bfad10239afecfce15082403d5c8cf9831e421f99d19e06f6c467",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30_resources.json",
+          "resources_sha256": "bb68d750383f810e22bafc4c66e9af8387701d4a5d7031919dd961440842fd4d",
+          "sha256": "f7a99c2897a929e475309f62b031f96ba6296977606dbb48f90c063432120a4d"
+        },
+        "status": "completed_passed"
+      },
+      {
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
+        "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30",
+        "status": "pending_predecessor_evidence_and_scheduled_time"
+      },
+      {
+        "approved": false,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
+        "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
+        "mode": "train",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
+        "status": "pending_predecessor_evidence_and_scheduled_time"
+      }
+    ],
+    "sampling": {
+      "candidate_assets": 3608,
+      "counts": {
+        "background": 14394,
+        "core": 1860,
+        "extension": 1748
+      },
+      "plan": "/work/wangyy/hardcase_adaptation_20261101/data/sampling_plan.json",
+      "sha256": "df290696c9fd58fac2fae521537a335b0b62b499f82eba6e03e54dc0cfb093be",
+      "weights": {
+        "background": 1,
+        "core": 3,
+        "extension": 2
+      }
+    },
+    "source_checkpoint": {
+      "bytes": 8278702930,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/checkpoint_300000.pt",
+      "sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7"
+    },
+    "status": "preparation_authorized_not_GPU_started",
+    "unresolved_prior_diagnosis": {
+      "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
+      "cause_established": false,
+      "full105_exact_coordinate_replay_difference": true,
+      "no_automatic_rerun": true,
+      "original_gate_preserved": true
+    }
   },
-  "current_dataset_revision": {
-    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
-    "train_rows": 18002,
-    "valid_rows": 967,
-    "normalization": "input_sequence_mesh_bbox",
-    "contract": "DATASET_SOURCE_OF_TRUTH.md"
-  },
-  "established_research_decisions": {
-    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "User approved an independent3608-pool,3/2/1 weighted adaptation from full300k; freeze the complete plan, prepare now, then wake this chat and launch the gated training workflow at04:00JST on2026-11-01. Earlier exact105replay discrepancy remains unresolved and archived; it is not a demonstrated training cause.",
-    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
-    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
-    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced."
+  "allocation_request": {
+    "accepted_request_verified": true,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "automatic_payload_allowed": false,
+    "cpu_slots": 16,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "gpu_type": "H100",
+    "gpus": 2,
+    "h_rt_seconds": 86400,
+    "job_id": 131170166,
+    "memory_per_slot": "4G",
+    "observed_available_CPU_slots": 76,
+    "observed_available_H100": 3,
+    "persistent_session": "evoweave_h100_native_20261031",
+    "queue": "gpuh.q@pcg01i",
+    "status": "granted_native_keeper_verified_no_payload",
+    "total_memory_reservation_GiB": 64
   },
   "allowed_operations": [
     "inspect",
@@ -44,20 +144,9 @@
     "submit",
     "matched_eval"
   ],
-  "receipt_max_age_minutes": 240,
   "compute_allocation": {
-    "server": "HGC",
-    "qlogin_job_id": 131170166,
-    "host": "pcg01i",
-    "physical_gpus": [
-      3,
-      4
-    ],
-    "gpu_uuids": [
-      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
-      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
-    ],
-    "cpu_slots": 16,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
     "cpu_affinity": [
       6,
       7,
@@ -76,162 +165,87 @@
       77,
       78
     ],
-    "inherited_affinity_logical_CPU_count": 224,
-    "execution_CPU_binding_required_before_compute": true,
-    "keeper_pid": 2268188,
-    "status": "native_keeper_preserved_new_CPU_binding_pending_GPU3_other_workload_observed",
-    "started_utc": "2026-10-31T12:40:04.726Z",
-    "expiry_utc": "2026-11-01T12:40:04.726Z",
-    "stop_before_utc": "2026-11-01T11:40:04Z",
-    "last_observed_utc": "2026-10-31T12:40:21.066091+00:00",
-    "kernel_cpuset_and_devices_membership": true,
-    "rss_limit_bytes": 68719476736,
-    "policy": "Reuse this existing2H100/16CPUslot native grant only. Verify/bind the16CPU subset and actual ownership live. Preserve any other GPU workload. Capacity/training must not start before the authorized04:00JST time.",
-    "rejected_previous_reservation": {
-      "job_id": 130674849,
-      "status": "canceled_before_any_payload",
-      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
-      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
-    },
-    "h_rt_seconds": 86400,
-    "last_observation_note": "New native keeper and actual GPU3/4 UUIDs verified. No children and no request files. Accepted memory reservation64GiB. The previous inference failure remains unresolved; no automatic restart.",
-    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
-    "previous_allocation": {
-      "qlogin_job_id": 130675914,
-      "status": "expired",
-      "expiry_utc": "2026-10-31T11:55:38Z",
-      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398"
-    }
-  },
-  "allocation_request": {
-    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
-    "status": "granted_native_keeper_verified_no_payload",
-    "job_id": 131170166,
-    "accepted_request_verified": true,
-    "queue": "gpuh.q@pcg01i",
-    "gpus": 2,
-    "gpu_type": "H100",
     "cpu_slots": 16,
-    "memory_per_slot": "4G",
-    "total_memory_reservation_GiB": 64,
-    "h_rt_seconds": 86400,
-    "observed_available_H100": 3,
-    "observed_available_CPU_slots": 76,
-    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
-    "persistent_session": "evoweave_h100_native_20261031",
-    "automatic_payload_allowed": false
-  },
-  "active_operation": {
-    "label": "hardcase3608_20261101_v1",
-    "operation": "hardcase_weighted_joint_adaptation",
-    "phase": "CPU_preparation_and_audit",
-    "status": "preparation_authorized_not_GPU_started",
-    "complete": false,
-    "explicit_human_authorized": true,
-    "authorization": "User2026-11-01 approved the3608candidate scope, per-asset weights3/2/1, complete training-plan preparation and waking this chat at04:00JST to start training. Implement the specified30k low-LR continuation with source Adam retained; CPU preparation now, native capacity and formal train no earlier than the stated time. No new or enlarged allocation and no automatic retry.",
-    "not_before_utc": "2026-10-31T19:00:00Z",
-    "contract": "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
-    "required_entrypoint": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
-    "operation_entrypoints": {
-      "report": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
-      "preflight": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
-      "train": "model_training/rigweave/scripts/train_hardcase_adaptation.py"
-    },
-    "code_commit": "58600f8abc4ac79e72bd1127a85e8fc9d2d032f6",
-    "gpu_work_allowed": true,
-    "formal_training_allowed": false,
-    "CPU_audit_accepted": false,
-    "capacity_accepted": false,
-    "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
-    "source_checkpoint": {
-      "bytes": 8278702930,
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/checkpoint_300000.pt",
-      "sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7"
-    },
-    "additional_asset_exposures": 30000,
-    "effective_batch": 48,
-    "sampling": {
-      "candidate_assets": 3608,
-      "counts": {
-        "background": 14394,
-        "core": 1860,
-        "extension": 1748
-      },
-      "weights": {
-        "background": 1,
-        "core": 3,
-        "extension": 2
-      },
-      "plan": "/work/wangyy/hardcase_adaptation_20261101/data/sampling_plan.json",
-      "sha256": "df290696c9fd58fac2fae521537a335b0b62b499f82eba6e03e54dc0cfb093be"
-    },
-    "development_assets": 112,
-    "locked_validation_assets": 855,
-    "production_acceptance_complete": false,
-    "CPU_binding_required": true,
-    "initialization": "full300k_complete_model_and_Adam; fresh weighted data/RNG and low-LR phase",
-    "outputs": {
-      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
-      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1"
-    },
-    "preparation": {
-      "remote": "/work/wangyy/hardcase_adaptation_20261101/data/preparation.json",
-      "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_remote.json",
-      "local_verified_sampling": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/data_verified/sampling_plan.json",
-      "tests": "38passed+20subtests, including weighted coverage/rank resume, both Adam groups, old full-data and replay regression tests"
-    },
-    "automation": {
-      "id": "evoweave-3608",
-      "scheduled_local": "2026-11-01T04:00:00+09:00",
-      "kind": "heartbeat",
-      "single_use": true
-    },
-    "unresolved_prior_diagnosis": {
-      "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
-      "full105_exact_coordinate_replay_difference": true,
-      "cause_established": false,
-      "original_gate_preserved": true,
-      "no_automatic_rerun": true
-    },
-    "runs": [
-      {
-        "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
-        "config_sha256": "1b4533a9575bfad10239afecfce15082403d5c8cf9831e421f99d19e06f6c467",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v30",
-        "approved": true,
-        "complete": false,
-        "status": "ready_CPU_only"
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
-        "config_sha256": "1b4533a9575bfad10239afecfce15082403d5c8cf9831e421f99d19e06f6c467",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30",
-        "approved": false,
-        "complete": false,
-        "status": "pending_predecessor_evidence_and_scheduled_time"
-      },
-      {
-        "mode": "train",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
-        "config_sha256": "1b4533a9575bfad10239afecfce15082403d5c8cf9831e421f99d19e06f6c467",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
-        "approved": false,
-        "complete": false,
-        "status": "pending_predecessor_evidence_and_scheduled_time"
-      }
+    "execution_CPU_binding_required_before_compute": false,
+    "expiry_utc": "2026-11-01T12:40:04.726Z",
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
     ],
-    "acceptance_test": "CPU no-CUDA audit of immutable splits/SSD cache, source checkpoint/Adam and exact3/2/1 plan; native two-rank capacity with model/Adam/RNG/weighted-sampler disk restoration;30k train visits/628updates and complete development baseline plus4checkpoints. Locked/official quality acceptance remains a separately recorded post-training phase. No CE-only acceptance."
+    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
+    "h_rt_seconds": 86400,
+    "host": "pcg01i",
+    "inherited_affinity_logical_CPU_count": 224,
+    "keeper_pid": 2268188,
+    "kernel_cpuset_and_devices_membership": true,
+    "last_observation_note": "New native keeper and actual GPU3/4 UUIDs verified. No children and no request files. Accepted memory reservation64GiB. The previous inference failure remains unresolved; no automatic restart.",
+    "last_observed_utc": "2026-10-31T12:40:21.066091+00:00",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "policy": "Reuse this existing2H100/16CPUslot native grant only. Verify/bind the16CPU subset and actual ownership live. Preserve any other GPU workload. Capacity/training must not start before the authorized04:00JST time.",
+    "previous_allocation": {
+      "expiry_utc": "2026-10-31T11:55:38Z",
+      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
+      "qlogin_job_id": 130675914,
+      "status": "expired"
+    },
+    "qlogin_job_id": 131170166,
+    "rejected_previous_reservation": {
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload"
+    },
+    "rss_limit_bytes": 68719476736,
+    "server": "HGC",
+    "started_utc": "2026-10-31T12:40:04.726Z",
+    "status": "native_CPU_audit_passed_16CPU_binding_verified_GPU_recheck_required_before_capacity",
+    "stop_before_utc": "2026-11-01T11:40:04Z"
   },
+  "current_dataset_revision": {
+    "contract": "DATASET_SOURCE_OF_TRUTH.md",
+    "normalization": "input_sequence_mesh_bbox",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967
+  },
+  "established_research_decisions": {
+    "current_question": "User approved an independent3608-pool,3/2/1 weighted adaptation from full300k; freeze the complete plan, prepare now, then wake this chat and launch the gated training workflow at04:00JST on2026-11-01. Earlier exact105replay discrepancy remains unresolved and archived; it is not a demonstrated training cause.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
+  },
+  "human_context": "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
   "last_operation": {
-    "label": "predicted_reference_20261029_v1",
     "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
     "complete": false,
-    "status": "baseline_replay_stopped_full105_coordinate_token_difference",
-    "reason": "Prior inference diagnosis retained as unresolved evidence; replaced by the newly user-authorized independent adaptation preparation, not marked fixed."
+    "label": "predicted_reference_20261029_v1",
+    "reason": "Prior inference diagnosis retained as unresolved evidence; replaced by the newly user-authorized independent adaptation preparation, not marked fixed.",
+    "status": "baseline_replay_stopped_full105_coordinate_token_difference"
   },
-  "next_required_result": "Finish the native CPU-only audit_v30, review actual result/resources, record acceptance and publish exact config/state. At04:00JST the heartbeat must refresh GPU ownership/grant, run capacity_v30, review and admit train_v30. No duplicate launch and no early GPU work."
+  "module": "model_training",
+  "next_required_result": "At the authorized scheduled time, freshly plan and run capacity_v30, review its receipts, then record and commit admission before train_v30.",
+  "publication_authorization": {
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
+    "branch": "codex/virtual-fusion-20261013",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "isolation_required": true,
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "status": "explicit_user_approved"
+  },
+  "receipt_max_age_minutes": 240,
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
+    "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md"
+  ],
+  "schema_version": 1,
+  "state_id": "hardcase3608_CPU_ready_20261101",
+  "updated_at": "2026-10-31T17:03:58.410890+00:00"
 }

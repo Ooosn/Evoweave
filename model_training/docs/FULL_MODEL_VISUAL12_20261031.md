@@ -45,3 +45,9 @@ still exist with expected sizes. No audit or GPU inference was started.
 Human authorization to restore missing tracked code/docs has been requested.
 The local collection, independent rescoring and rendering scripts are prepared
 under D:/evoweave/server_ops/outputs/full_model_visual12_20261031/preparation.
+
+The user explicitly authorized restoration. At 14:50:38 JST all 421 missing
+tracked files were restored from the original HEAD; one missing Git blob was
+recovered by refetching the project repository. The checkout is clean. No
+data, weights or existing experiment outputs changed. Deployment may proceed
+after a fresh native-allocation check; training remains prohibited.

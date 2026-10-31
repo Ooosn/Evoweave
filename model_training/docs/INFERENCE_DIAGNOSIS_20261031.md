@@ -100,3 +100,12 @@ extra branches. This does not support limiting every future hard-example
 intervention to unusual-looking shapes. Branch coverage, annotation granularity
 and repeated/invalid generation must be analyzed separately.
 Gallery: D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/gallery/.
+
+The user explicitly authorized restoration and continuation. At19:23:37JST,
+exactly18missing tracked files were restored from the existingHEAD; every
+restored byte matched its Git blob and the checkout is clean. No existing
+files, data, checkpoints or experiment outputs were overwritten. The original
+CPU audit and core implementation are unchanged. Capacity_v29 is re-admitted
+subject to fresh live resource/time checks. The user's observation of reduced
+finger/wing/multi-branch coverage is a primary diagnostic question; early EOS,
+coarse topology preference and search effects remain hypotheses until tested.

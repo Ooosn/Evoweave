@@ -132,3 +132,17 @@ of the coordinate differences is unresolved; numerical/execution-order
 sensitivity is a hypothesis, not a finding. No alternative policy ran. Preserve
 the failed stage and do not retry or relax its24exact-reference requirement.
 Primary review: D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/baseline_replay_review.json.
+
+All24retained official references were independently rescored on CPU against
+hash-verified GT and input identities. On this fixed12case panel, old/full
+reference edgeF1 is0.699041/0.730558 with failures scoredzero; parse success is
+12/12 versus11/12, and3cases improve,4regress,5tie. Among11valid pairs only2
+have fewer full-model joints: case30 loses wing branches58to50 versusGT91;
+case108 reduces spurious26to13 versusGT5. Case70 stays52in both versusGT122.
+Case105 is not a short-output example: full emits828tokens versus old128,
+with repeated branches and an incomplete final branch. All four selected
+paired figures were visually reviewed. These are reference-only diagnostics;
+no new target-pose or alternative-policy result exists, and no validation-wide
+superiority or causal training claim is established. The report and figures
+are in official_reference_comparison.json and official_pair_gallery under the
+local inference_diagnosis_20261031 output directory.

@@ -55,9 +55,11 @@ def main():
             '-B', str(Path(__file__).resolve()), *sys.argv[1:]])
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('plan', 'execute', 'observe'))
-    parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27', 'audit_v28', 'capacity_v28'), required=True)
+    parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27', 'audit_v28', 'capacity_v28',
+        'audit_v29', 'capacity_v29'), required=True)
     args = parser.parse_args()
-    path = ROOT/'model_training/experiments/full_model_visual12_20261031.json'
+    filename = 'inference_diagnosis_20261031.json' if args.stage.endswith('_v29') else 'full_model_visual12_20261031.json'
+    path = ROOT/'model_training/experiments'/filename
     config = json.loads(path.read_text())
     setup(config)
     from predicted_reference_protocol import scientific_sha, validate_config

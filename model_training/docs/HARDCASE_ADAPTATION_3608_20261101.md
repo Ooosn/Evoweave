@@ -263,3 +263,27 @@ GPUs and the original native grant afresh; do not infer that the Anigroom jobs
 have ended. If idle, plan and execute capacity_v30, review/record and commit its
 acceptance, then plan and execute train_v30. If still occupied, preserve all
 workloads, report the specific blocker and do not automatically retry again.
+
+## Capacity Accepted, 05:26JST
+
+The05:00fresh check found both approved GPUs idle. Native capacity_v30 ran
+05:04:22..05:26:57JST and exited0 with clean payload cleanup, original job131170166
+and the16CPU binding. Each rank completed13stress updates and12representative
+weighted updates. Peak reserved device memory was42.79/42.73GiB and peak total
+host RSS26.22GiB. Both model/Adam/RNG/weighted-stream disk roundtrips were exact.
+CPU and GPU source initialization fingerprints agree. FP32 teacher-prefix
+maximum differences were6.20e-6/1.19e-5, below the predeclared1e-4tolerance.
+One stress free-decode reached the token cap; it is retained and this capacity
+result is not generation-quality acceptance. Representative updates averaged
+20.45seconds; the training mix and validation/checkpoint overhead can differ.
+
+Result SHA256 `aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed`;
+resources SHA256 `0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c`.
+Primary review is at
+`D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/capacity0500_review.json`.
+Acceptance/config/state were committed as6926da3. Formal train_v30 is admitted
+from the pinned full300k recovery point; the capacity checkpoint is disposable.
+First evaluate the unchanged full300k on the fixed112development assets, then
+verify real updates and actual weighted indices. Successful startup is recorded
+outside the immutable live checkout, and follow-up checks should remain quiet
+while healthy, reporting completion/failure or required action.

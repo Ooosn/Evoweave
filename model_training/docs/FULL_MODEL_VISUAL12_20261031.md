@@ -34,3 +34,14 @@ official-generation tests. The new binding does not alter the model, weights,
 training implementation or historical inference contracts.
 
 Current admission and completion evidence are recorded in state/current.json.
+
+## Deployment Hold
+
+At 2026-10-31 14:23 JST, the pre-deployment clean-checkout gate found 421
+tracked deletions in the existing remote checkout, including AGENTS.md and
+DATASET_SOURCE_OF_TRUTH.md. These changes predate this deployment attempt;
+no files were restored or overwritten. The 300k model and full checkpoint
+still exist with expected sizes. No audit or GPU inference was started.
+Human authorization to restore missing tracked code/docs has been requested.
+The local collection, independent rescoring and rendering scripts are prepared
+under D:/evoweave/server_ops/outputs/full_model_visual12_20261031/preparation.

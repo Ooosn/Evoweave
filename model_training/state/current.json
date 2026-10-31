@@ -101,7 +101,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_only",
     "phase": "full300k_visual12_CPU_audit",
-    "status": "audit_approved",
+    "status": "awaiting_user_decision_on_unrelated_remote_deletions",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
@@ -147,12 +147,24 @@
         "approved": true
       }
     ],
-    "acceptance_test": "Native exit0 and clean resources; exact frozen300k weights; all12 fixed canonical inputs; official15beam seed per asset; reference failures included;84 targets per method; independently recompute metrics and inspect every visual, with no quality-based case filtering."
+    "acceptance_test": "Native exit0 and clean resources; exact frozen300k weights; all12 fixed canonical inputs; official15beam seed per asset; reference failures included;84 targets per method; independently recompute metrics and inspect every visual, with no quality-based case filtering.",
+    "deployment_observation": {
+      "observed_utc": "2026-10-31T05:23:25.510189+00:00",
+      "remote_HEAD": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
+      "tracked_deleted_files": 421,
+      "other_change_types_observed": [],
+      "AGENTS_and_dataset_contract_missing": true,
+      "weights300k_and_full_checkpoint_exist_with_expected_sizes": true,
+      "deployment_not_performed": true,
+      "audit_not_started": true,
+      "GPU_inference_not_started": true,
+      "action": "Asked human whether to restore missing tracked code/docs; do not undo unrelated deletions without that authorization. Local collection/render scripts are prepared."
+    }
   },
   "last_operation": {
     "archive": "model_training/state/archive/anchor_full_completed_20261031.json",
     "label": "anchor_full_20261030_v1",
     "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "Execute audit_v27, verify primary artifacts and resources, then separately admit capacity_v27 zero-update visual inference. Preserve native allocation; never resume training."
+  "next_required_result": "Await human decision on421unrelated tracked deletions before touching the remote checkout. If restoration is authorized, preserve all other changes, restore only approved missing files, and repeat live admission before audit_v27. No GPU run has started; training remains closed."
 }

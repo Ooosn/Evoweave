@@ -223,3 +223,30 @@ scheduled GPU admission and existing full-data/input/replay behavior.
 GPU capacity, teacher-prefix and disk model/Adam/RNG recovery checks remain
 scheduled work. Formal training has not started. The heartbeat must reuse this
 CPU acceptance rather than starting the audit again.
+
+## Scheduled Start Check, 04:03JST
+
+The04:00heartbeat ran and confirmed current CPU acceptance, source/config
+identity, native keeper membership and16CPU binding. Both approved GPUs were
+occupied by separate Anigroom training processes under the same account:
+
+| GPU | PID | Used device memory | Separate run |
+|---|---:|---:|---|
+|3|51713|24312MiB|anigroom_original_weight_15k_20261101_r01|
+|4|4158809|24606MiB|anigroom_panda_white_20261101_r01|
+
+Observation time:2026-10-31T19:03:08.548950Z. The Evoweave native keeper had
+no children; only the completed audit request exists. Neither capacity_v30 nor
+train_v30 exists, and neither GPU stage was dispatched. All processes and the
+native allocation are preserved. The earlier read-only readiness transport
+timed out after printing its result; this independent short inspection
+confirmed the actual resource conflict without launching anything.
+
+Local/remote evidence:
+`D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/scheduled_start_gpu_conflict_0400.json`
+and `/work/wangyy/hardcase_adaptation_20261101/scheduled_start_gpu_conflict_0400.json`.
+The one-shot heartbeat was deleted after it fired and recorded this blocker.
+Current GPU admission is closed. CPU preparation and the original training
+authorization remain valid; resolve the existing GPU occupancy before a fresh
+admission. Do not stop the other jobs, change resources, repeat the CPU audit,
+or automatically retry this blocked scheduled attempt.

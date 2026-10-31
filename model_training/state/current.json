@@ -15,7 +15,9 @@
       "id": "evoweave-3608",
       "kind": "heartbeat",
       "scheduled_local": "2026-11-01T04:00:00+09:00",
-      "single_use": true
+      "single_use": true,
+      "status": "single_use_trigger_fired_deleted_after_recording_resource_block",
+      "deleted": true
     },
     "capacity_accepted": false,
     "code_commit": "58600f8abc4ac79e72bd1127a85e8fc9d2d032f6",
@@ -25,7 +27,7 @@
     "effective_batch": 48,
     "explicit_human_authorized": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "initialization": "full300k_complete_model_and_Adam; fresh weighted data/RNG and low-LR phase",
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "label": "hardcase3608_20261101_v1",
@@ -41,7 +43,7 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30"
     },
-    "phase": "capacity_ready_at_scheduled_time",
+    "phase": "waiting_for_GPU3_GPU4_occupancy_resolution",
     "preparation": {
       "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_remote.json",
       "local_verified_sampling": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/data_verified/sampling_plan.json",
@@ -68,13 +70,13 @@
         "status": "completed_passed"
       },
       {
-        "approved": true,
+        "approved": false,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
         "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30",
-        "status": "pending_predecessor_evidence_and_scheduled_time"
+        "status": "not_started_waiting_for_other_GPU_workloads_to_finish"
       },
       {
         "approved": false,
@@ -83,7 +85,7 @@
         "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
         "mode": "train",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
-        "status": "pending_predecessor_evidence_and_scheduled_time"
+        "status": "not_started_waiting_for_other_GPU_workloads_to_finish"
       }
     ],
     "sampling": {
@@ -106,13 +108,44 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/checkpoint_300000.pt",
       "sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7"
     },
-    "status": "preparation_authorized_not_GPU_started",
+    "status": "scheduled_0400_start_not_launched_other_training_on_both_GPUs",
     "unresolved_prior_diagnosis": {
       "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
       "cause_established": false,
       "full105_exact_coordinate_replay_difference": true,
       "no_automatic_rerun": true,
       "original_gate_preserved": true
+    },
+    "automatic_retry_allowed": false,
+    "scheduled_start_attempt": {
+      "scheduled_JST": "2026-11-01T04:00:00+09:00",
+      "observed_utc": "2026-10-31T19:03:08.548950+00:00",
+      "outcome": "not_launched_GPU3_and_GPU4_busy",
+      "evidence_local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/scheduled_start_gpu_conflict_0400.json",
+      "evidence_remote": "/work/wangyy/hardcase_adaptation_20261101/scheduled_start_gpu_conflict_0400.json",
+      "GPU_processes": [
+        {
+          "pid": 51713,
+          "physical_gpu": 3,
+          "owner": "wangyy",
+          "memory": "24312 MiB",
+          "cwd": "/work/wangyy/anigroom_original_weight_15k_20261101_r01/original/code",
+          "python_module": "tools.train_white_tiger_stage1"
+        },
+        {
+          "pid": 4158809,
+          "physical_gpu": 4,
+          "owner": "wangyy",
+          "memory": "24606 MiB",
+          "cwd": "/work/wangyy/anigroom_panda_white_20261101_r01/white/code",
+          "python_module": "tools.train_white_tiger_stage1"
+        }
+      ],
+      "keeper_children": [],
+      "capacity_dispatched": false,
+      "formal_train_dispatched": false,
+      "all_other_processes_preserved": true,
+      "inspection_wrapper_timeout": "The earlier read-only finalize_readiness helper printed its full current readiness JSON, then its60s transport timeout fired; an independent short inspection confirmed the actual GPU occupancy. No GPU task was launched."
     }
   },
   "allocation_request": {
@@ -136,10 +169,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -178,8 +211,8 @@
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "New native keeper and actual GPU3/4 UUIDs verified. No children and no request files. Accepted memory reservation64GiB. The previous inference failure remains unresolved; no automatic restart.",
-    "last_observed_utc": "2026-10-31T12:40:21.066091+00:00",
+    "last_observation_note": "At04:03JST both allocated GPUs were occupied by separate Anigroom training processes owned bywangyy. Evoweave keeper has no children, no capacity/train outputs or requests. Preserve every process and the allocation. No Evoweave GPU work dispatched.",
+    "last_observed_utc": "2026-10-31T19:03:08.548950+00:00",
     "physical_gpus": [
       3,
       4
@@ -201,7 +234,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "native_CPU_audit_passed_16CPU_binding_verified_GPU_recheck_required_before_capacity",
+    "status": "native_keeper_preserved_GPU3_and_GPU4_occupied_by_other_anigroom_training",
     "stop_before_utc": "2026-11-01T11:40:04Z"
   },
   "current_dataset_revision": {
@@ -227,7 +260,7 @@
     "status": "baseline_replay_stopped_full105_coordinate_token_difference"
   },
   "module": "model_training",
-  "next_required_result": "At the authorized scheduled time, freshly plan and run capacity_v30, review its receipts, then record and commit admission before train_v30.",
+  "next_required_result": "Resolve the other Anigroom workloads occupyingGPU3/4, then perform fresh live two-GPU idle admission before any capacity/train stage. CPU audit and the unchanged3608/3-2-1 training authorization remain valid. Do not repeat approval of the recipe, stop other jobs, change GPU count, automatically retry this blocked one-shot attempt, or rerun completed CPU preparation.",
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -246,6 +279,6 @@
     "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase3608_CPU_ready_20261101",
-  "updated_at": "2026-10-31T17:03:58.410890+00:00"
+  "state_id": "hardcase3608_scheduled_start_waiting_GPUs_20261101",
+  "updated_at": "2026-10-31T19:03:08.548950+00:00"
 }

@@ -13,14 +13,40 @@
     "host": "pcg01i",
     "hostname": "pcg01",
     "physical_gpus": [
-      3,
       4
     ],
     "gpu_uuids": [
-      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
       "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
     ],
     "cpu_affinity": [
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65
+    ],
+    "keeper_pid": 1108368,
+    "output_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs",
+    "world_size": 1,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 8,
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.85,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "data_workers_per_rank": 6,
+    "prefetch_microbatches": 2,
+    "required_h_rt_seconds": 345600,
+    "native_subset": "full_visual_gpu4_cpu8_v1",
+    "allocated_physical_gpus": [
+      3,
+      4
+    ],
+    "allocated_cpu_affinity": [
       6,
       7,
       9,
@@ -37,20 +63,7 @@
       76,
       77,
       78
-    ],
-    "keeper_pid": 1108368,
-    "output_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs",
-    "world_size": 2,
-    "cpu_slots": 16,
-    "execution_cpu_budget": 16,
-    "rss_limit_bytes": 68719476736,
-    "gpu_memory_fraction_limit": 0.85,
-    "execution_mode": "scheduler_job",
-    "require_scheduler_membership": true,
-    "stop_before_utc": "2026-10-31T10:55:00Z",
-    "data_workers_per_rank": 6,
-    "prefetch_microbatches": 2,
-    "required_h_rt_seconds": 345600
+    ]
   },
   "parent_config": {
     "relative_path": "model_training/experiments/anchor_full_20261030_v1.json",

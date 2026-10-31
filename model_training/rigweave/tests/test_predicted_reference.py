@@ -131,6 +131,27 @@ class PredictedReferenceTests(unittest.TestCase):
         changed['full_model_inputs']['rows']['sha256'] = '0'*64
         self.assertNotEqual(scientific_sha(config), scientific_sha(changed))
 
+    def test_native_subset_keeps_real_grant_and_restricts_execution(self):
+        from virtual_pair_guard import scheduler_runtime, allow_native_subset, verify_allocation
+        config = json.loads((ROOT / 'model_training/experiments/full_model_visual12_20261031.json').read_text())
+        runtime = scheduler_runtime(config)
+        self.assertEqual((runtime['cpu_slots'], runtime['execution_cpu_budget'], runtime['world_size']), (16, 8, 1))
+        self.assertTrue(allow_native_subset(config))
+        grant = 'job_number: 130675914\nowner: wangyy\njob_state 1: r\nexec_host_list 1: pcg01i:16\nhard_resource_list: h_rt=345600\n'
+        grant += ''.join(f'granted_devices 1,{i}: pcg01i: /dev/nvidia3 /dev/nvidia4\n' for i in range(16))
+        verify_allocation(config, grant)
+        with self.assertRaises(RuntimeError):
+            verify_allocation(config, grant.replace('/dev/nvidia3 /dev/nvidia4', '/dev/nvidia4'))
+        for key, value in [('world_size', 2), ('execution_cpu_budget', 4), ('physical_gpus', [3])]:
+            changed = copy.deepcopy(config)
+            changed['runtime'][key] = value
+            with self.assertRaises(RuntimeError):
+                scheduler_runtime(changed)
+        changed = copy.deepcopy(config)
+        del changed['full_model_inputs']
+        with self.assertRaises(RuntimeError):
+            scheduler_runtime(changed)
+
     def test_no_training_mode_and_exact_recipe(self):
         config = json.loads((ROOT / 'model_training/experiments/predicted_reference_20261029_v1.json').read_text())
         validate_config(config, 'audit')

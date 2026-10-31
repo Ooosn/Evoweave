@@ -121,7 +121,8 @@ def select_cpu_binding(checks, config, exception):
                 or any(type(cpu) is not int or cpu < 0 for cpu in binding)
                 or not binding <= allowed or type(budget) is not int
                 or len(binding) != budget
-                or (budget != runtime['cpu_slots'] and not exception)):
+                or (budget != runtime['cpu_slots'] and not exception
+                    and not getattr(checks, 'allow_native_subset', lambda value: False)(config))):
             raise RuntimeError('invalid or unauthorized execution CPU binding')
         return binding
     if exception:
@@ -224,7 +225,8 @@ def main(*, trainer_module_name='train_legacy_single_target',
         raise RuntimeError('refuse to overwrite a prior stage or resource receipt')
     command = [runtime['python']]
     if args.mode not in cpu_modes:
-        command += ['-m', 'torch.distributed.run', '--standalone', '--nnodes=1', '--nproc_per_node=2']
+        command += ['-m', 'torch.distributed.run', '--standalone', '--nnodes=1',
+                    '--nproc_per_node='+str(runtime.get('world_size', 2))]
     command += [str(root / 'model_training/rigweave/scripts' / trainer_script),
                 '--config', str(args.config), '--output', str(args.output), '--mode', args.mode]
     receipt = {'complete': False, 'passed': False, 'source': source, 'mode': args.mode,

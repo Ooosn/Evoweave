@@ -97,18 +97,28 @@ def scheduler_runtime(config):
     if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
-    for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 16), ('world_size', 2)):
+    subset = runtime.get('native_subset')
+    if subset is not None:
+        if (subset != 'full_visual_gpu4_cpu8_v1' or config.get('family') != PREDICTED_SCOPE
+                or 'full_model_inputs' not in config
+                or runtime.get('allocated_physical_gpus') != [3, 4]
+                or runtime.get('allocated_cpu_affinity') != [6, 7, 9, 10, 11, 12, 14, 15, 61, 63, 64, 65, 74, 76, 77, 78]
+                or runtime.get('cpu_affinity') != [11, 12, 14, 15, 61, 63, 64, 65]
+                or runtime.get('physical_gpus') != [4]
+                or runtime.get('gpu_uuids') != ['GPU-0544830a-4dac-9fe3-a099-95ddc2240b72']):
+            raise RuntimeError('unreviewed native visual resource subset')
+    for name, expected in (('cpu_slots', 16), ('execution_cpu_budget', 8 if subset else 16), ('world_size', 1 if subset else 2)):
         if type(runtime.get(name)) is not int or runtime[name] != expected:
             raise RuntimeError(f'scheduler resource binding differs: {name}')
     cpus, gpus, uuids = (runtime.get(name) for name in ('cpu_affinity', 'physical_gpus', 'gpu_uuids'))
-    for name, values, count in (('CPU affinity', cpus, 16), ('physical GPUs', gpus, 2)):
+    for name, values, count in (('CPU affinity', cpus, 8 if subset else 16), ('physical GPUs', gpus, 1 if subset else 2)):
         if (type(values) is not list or len(values) != count
                 or any(type(value) is not int or value < 0 for value in values)
                 or len(set(values)) != count):
             raise RuntimeError(f'invalid scheduler {name}')
-    if (type(uuids) is not list or len(uuids) != 2
+    if (type(uuids) is not list or len(uuids) != (1 if subset else 2)
             or any(not isinstance(value, str) or not value.strip() for value in uuids)
-            or len(set(uuids)) != 2):
+            or len(set(uuids)) != (1 if subset else 2)):
         raise RuntimeError('invalid scheduler GPU UUID binding')
     if (type(runtime.get('allocation')) is not int or runtime['allocation'] <= 0
             or not isinstance(runtime.get('host'), str) or not runtime['host'].strip()
@@ -119,6 +129,11 @@ def scheduler_runtime(config):
     if type(limit) not in (int, float) or not 0 < limit <= 1:
         raise RuntimeError('invalid scheduler GPU memory limit')
     return runtime
+
+
+def allow_native_subset(config):
+    runtime = scheduler_runtime(config)
+    return runtime.get('native_subset') == 'full_visual_gpu4_cpu8_v1'
 
 
 def gpu_selection(config):
@@ -151,7 +166,8 @@ def verify_allocation(config, grant):
                 or {(int(row[1]), int(row[2])) for row in records}
                 != {(1, slot) for slot in range(runtime['cpu_slots'])}):
             raise RuntimeError('live scheduler GPU slot records differ')
-        expected = {f'/dev/nvidia{gpu}' for gpu in runtime['physical_gpus']}
+        allocated = runtime['allocated_physical_gpus'] if runtime.get('native_subset') else runtime['physical_gpus']
+        expected = {f'/dev/nvidia{gpu}' for gpu in allocated}
         for row in records:
             host, separator, devices = row[3].partition(':')
             if (not separator or host != runtime['host'] or len(devices.split()) != len(expected)

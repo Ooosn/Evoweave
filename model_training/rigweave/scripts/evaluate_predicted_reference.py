@@ -32,8 +32,8 @@ def main():
         audit(config, args.output, source)
         return
     rank, world = int(os.environ['RANK']), int(os.environ['WORLD_SIZE'])
-    if world != 2 or torch.cuda.device_count() != 2:
-        raise RuntimeError('requires exact retained two-GPU grant')
+    if world != config['runtime']['world_size'] or torch.cuda.device_count() != world:
+        raise RuntimeError('visible GPU count differs from the admitted execution subset')
     device = torch.device('cuda', int(os.environ['LOCAL_RANK']))
     torch.cuda.set_device(device)
     torch.cuda.set_per_process_memory_fraction(config['runtime']['gpu_memory_fraction_limit'], device)

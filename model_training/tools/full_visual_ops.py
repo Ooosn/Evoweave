@@ -9,7 +9,42 @@ import subprocess
 import sys
 from types import SimpleNamespace
 
-from anchor_full_ops import ROOT, RUN, ALLOCATION, digest, setup, snapshot, write_new
+from anchor_full_ops import ROOT, RUN, ALLOCATION, command, digest, setup, write_new
+
+
+def snapshot(config, *, idle):
+    from virtual_pair_guard import scheduler_runtime, verify_allocation, require_job_membership
+    runtime = scheduler_runtime(config)
+    verify_allocation(config, command('qstat', '-j', str(runtime['allocation'])))
+    proc = Path('/proc')/str(runtime['keeper_pid'])
+    require_job_membership((proc/'cgroup').read_text(), runtime['allocation'])
+    assert sorted(os.sched_getaffinity(runtime['keeper_pid'])) == runtime['allocated_cpu_affinity']
+    children = (proc/'task'/str(runtime['keeper_pid'])/'children').read_text().split()
+    pending = [p.name for p in (ALLOCATION/'requests').glob('*.json')
+        if not (ALLOCATION/(p.stem+'_launch.json')).exists()
+        or not json.loads((ALLOCATION/(p.stem+'_launch.json')).read_text())['complete']]
+    apps = command('nvidia-smi', '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader')
+    selected, other = [], []
+    for line in apps.splitlines():
+        pid, uuid = line.split(',')
+        if uuid.strip() in runtime['gpu_uuids']:
+            selected.append(line)
+        elif uuid.strip() == 'GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7':
+            threads = [set(os.sched_getaffinity(int(p.name))) for p in (Path('/proc')/pid.strip()/'task').iterdir()]
+            if any(cpus & set(runtime['cpu_affinity']) for cpus in threads):
+                raise RuntimeError('other allocated-GPU workload overlaps the visual CPU subset')
+            other.append({'pid': int(pid), 'GPU': uuid.strip(), 'thread_CPU_union': sorted(set.union(*threads))})
+    if idle and (children or pending or selected):
+        raise RuntimeError('native keeper or selected GPU4 is occupied')
+    left = (datetime.fromisoformat(runtime['stop_before_utc'].replace('Z', '+00:00'))-datetime.now(timezone.utc)).total_seconds()
+    if idle and left < 1800:
+        raise RuntimeError('insufficient allocation time for visual inference')
+    return {'observed_utc': datetime.now(timezone.utc).isoformat(), 'job_id': runtime['allocation'],
+        'native_keeper_membership_verified': True, 'keeper_children': children, 'pending_stages': pending,
+        'selected_GPU_processes': selected, 'other_GPU_workloads_not_modified': other,
+        'seconds_before_saved_stop': left, 'scheduler_CPU_slots': 16, 'execution_CPU_budget': 8,
+        'physical_GPU_used': 4, 'GPU_memory': command('nvidia-smi', '-i', runtime['gpu_uuids'][0],
+            '--query-gpu=index,memory.used,memory.total,utilization.gpu', '--format=csv,noheader')}
 
 
 def main():

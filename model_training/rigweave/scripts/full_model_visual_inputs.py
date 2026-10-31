@@ -35,7 +35,7 @@ def load_records(config, rank=None):
     dataset = fixed_dataset(panel, base, 8, mode='seen_eval')
     records = []
     for index in config['official_smoke']['case_indices']:
-        if rank is not None and index % 2 != rank:
+        if rank is not None and index % config['runtime']['world_size'] != rank:
             continue
         row = panel[index]
         identity = {'asset_id': row['asset_id'], 'path': row['path'], 'root_rt': row['root_rt'],
@@ -47,7 +47,8 @@ def load_records(config, rank=None):
         record, _ = canonical_input(dataset, index, base, original, 'seen_eval', torch.device('cpu'))
         validate_canonical(record, rows)
         records.append(dict(record, panel_index=index))
-    expected = [i for i in config['official_smoke']['case_indices'] if rank is None or i % 2 == rank]
+    expected = [i for i in config['official_smoke']['case_indices']
+                if rank is None or i % config['runtime']['world_size'] == rank]
     if [r['panel_index'] for r in records] != expected:
         raise ValueError('fixed full-model visual case coverage differs')
     return records

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "paired_inference_diagnosis_resumed_time_window_20261031",
-  "updated_at": "2026-10-31T11:06:00Z",
+  "state_id": "paired_inference_replay_stopped_full105_20261031",
+  "updated_at": "2026-10-31T11:13:01Z",
   "module": "model_training",
   "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
@@ -102,7 +102,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_diagnosis_only",
     "phase": "paired_diagnosis_gpu_comparison",
-    "status": "resumed_with_verified_time_window_waiting_native_plan",
+    "status": "baseline_replay_stopped_full105_coordinate_token_difference",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 asked to find the cause, establish whether the new model is better, test improved inference, and consider difficult-skeleton fine-tuning. Admit only the bounded no-update diagnosis now; fine-tuning is not included.",
@@ -114,7 +114,7 @@
     },
     "code_commit": "67560bb6f14b980def5c60a933cd95efe4c98bed",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
@@ -176,8 +176,29 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
         "config_sha256": "abc7296aa96e84107179f1e9dd661972a8ffb47c2ca8cbffea06d71e9375cd16",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v29",
-        "approved": true,
-        "status": "approved_waiting_native_dispatch"
+        "approved": false,
+        "status": "stopped_at_exact_baseline_replay_gate",
+        "complete": true,
+        "exit_code": 1,
+        "finished_utc": "2026-10-31T11:13:01.292910+00:00",
+        "payload_cleanup_complete": true,
+        "review": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/baseline_replay_review.json",
+        "exact_tokens_and_status": 23,
+        "total_references": 24,
+        "all_statuses_reproduced": true,
+        "experimental_policies_run": false,
+        "mismatch": {
+          "model": "full",
+          "case": 105,
+          "asset_id": "e6f1dc3f6fed4222bc577d13a4dc5f71",
+          "saved_and_replayed_tokens": 828,
+          "changed_coordinate_tokens": 10,
+          "special_token_positions_and_values_identical": true,
+          "status": "invalid_eos_sequence",
+          "first_difference_zero_based": 271,
+          "same_seed_and_parameters": true,
+          "cause": "Not established; numerical or execution-order sensitivity remains a hypothesis. No retry or baseline replacement."
+        }
       }
     ],
     "prior_diagnosis": {
@@ -246,5 +267,5 @@
     "optimizer_updates": 0,
     "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json"
   },
-  "next_required_result": "Fresh native plan and dispatch capacity_v29 before11:15Z with stop11:45Z, over10minutes before verified scheduler expiry11:55:38Z. Core inference code and accepted CPU scope unchanged. Require24exact baselines before testing strict sampling/deterministic beam; retain allfailures. Analyze branch omission and count/termination tendencies separately from averageF1. No training."
+  "next_required_result": "Analyze all24 official references on CPU, preserving the failed full105 replay. Old12/12 and full11/12 token streams exact; all24 statuses exact. Full105 changes10coordinate tokens but retains828length, allspecial tokens and the same incomplete-branch EOS failure. No alternative-policy result exists. Establish the origin of its numerical/execution-order sensitivity before revising or re-admitting a GPU comparison; do not weaken the gate or silently retry. No training."
 }

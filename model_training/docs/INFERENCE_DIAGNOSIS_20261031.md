@@ -121,3 +121,14 @@ payload limit, scientific fingerprint, checkpoints, cases and policies are
 unchanged. The accepted CPU audit remains applicable. GPU4, native keeper and
 the selected8CPUs were idle; the other task uses GPU3/CPUs6,7,9,10 and is kept.
 Require a fresh plan and dispatch before20:15JST; do not start after that gate.
+
+At20:13:01JST capacity_v29 exited1 at the exact-replay gate, with native
+payload cleanup confirmed. Old12/12 and full11/12 token streams reproduced;
+all24statuses reproduced. Full case105 remains invalid_eos_sequence with828
+tokens. Ten coordinate tokens differ, first at zero-based271; all special
+token positions/values and the incomplete final branch are identical. This is
+not evidence that the deployment caused the structural regressions. The cause
+of the coordinate differences is unresolved; numerical/execution-order
+sensitivity is a hypothesis, not a finding. No alternative policy ran. Preserve
+the failed stage and do not retry or relax its24exact-reference requirement.
+Primary review: D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/baseline_replay_review.json.

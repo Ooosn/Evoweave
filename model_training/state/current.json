@@ -10,14 +10,15 @@
     "CPU_binding_required": false,
     "acceptance_test": "CPU no-CUDA audit of immutable splits/SSD cache, source checkpoint/Adam and exact3/2/1 plan; native two-rank capacity with model/Adam/RNG/weighted-sampler disk restoration;30k train visits/628updates and complete development baseline plus4checkpoints. Locked/official quality acceptance remains a separately recorded post-training phase. No CE-only acceptance.",
     "additional_asset_exposures": 30000,
-    "authorization": "User2026-11-01 approved the3608candidate scope, per-asset weights3/2/1, complete training-plan preparation and waking this chat at04:00JST to start training. Implement the specified30k low-LR continuation with source Adam retained; CPU preparation now, native capacity and formal train no earlier than the stated time. No new or enlarged allocation and no automatic retry.",
+    "authorization": "User2026-11-01 approved the3608candidate scope, per-asset weights3/2/1, complete training-plan preparation and waking this chat at04:00JST to start training. Implement the specified30k low-LR continuation with source Adam retained; CPU preparation now, native capacity and formal train no earlier than the stated time. No new or enlarged allocation and no automatic retry. Latest user instruction on2026-11-01 moves the next authorized launch attempt to05:00JST; supersedes the earlier04:00time and waiting-state admission closure only for this scheduled fresh check.",
     "automation": {
       "id": "evoweave-3608",
       "kind": "heartbeat",
-      "scheduled_local": "2026-11-01T04:00:00+09:00",
+      "scheduled_local": "2026-11-01T05:00:00+09:00",
       "single_use": true,
-      "status": "single_use_trigger_fired_deleted_after_recording_resource_block",
-      "deleted": true
+      "status": "ACTIVE",
+      "deleted": false,
+      "previous_0400_trigger": "Executed; GPU occupancy recorded; old one-shot deleted before this user-authorized reschedule."
     },
     "capacity_accepted": false,
     "code_commit": "58600f8abc4ac79e72bd1127a85e8fc9d2d032f6",
@@ -27,12 +28,12 @@
     "effective_batch": 48,
     "explicit_human_authorized": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "initialization": "full300k_complete_model_and_Adam; fresh weighted data/RNG and low-LR phase",
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "label": "hardcase3608_20261101_v1",
     "locked_validation_assets": 855,
-    "not_before_utc": "2026-10-31T19:00:00Z",
+    "not_before_utc": "2026-10-31T20:00:00Z",
     "operation": "hardcase_weighted_joint_adaptation",
     "operation_entrypoints": {
       "preflight": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
@@ -43,7 +44,7 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30"
     },
-    "phase": "waiting_for_GPU3_GPU4_occupancy_resolution",
+    "phase": "capacity_ready_at_rescheduled0500_pending_live_GPU_idle_check",
     "preparation": {
       "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_remote.json",
       "local_verified_sampling": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/data_verified/sampling_plan.json",
@@ -70,13 +71,13 @@
         "status": "completed_passed"
       },
       {
-        "approved": false,
+        "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
         "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30",
-        "status": "not_started_waiting_for_other_GPU_workloads_to_finish"
+        "status": "ready_at0500_pending_fresh_two_GPU_idle_check"
       },
       {
         "approved": false,
@@ -85,7 +86,7 @@
         "config_sha256": "56e78ad8a7369d95263cbd7dace1f81db16760f933965400dc21890f2b8e54bc",
         "mode": "train",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
-        "status": "not_started_waiting_for_other_GPU_workloads_to_finish"
+        "status": "pending_capacity_primary_acceptance"
       }
     ],
     "sampling": {
@@ -108,7 +109,7 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/checkpoint_300000.pt",
       "sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7"
     },
-    "status": "scheduled_0400_start_not_launched_other_training_on_both_GPUs",
+    "status": "rescheduled_0500_by_user_not_GPU_started",
     "unresolved_prior_diagnosis": {
       "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
       "cause_established": false,
@@ -146,6 +147,13 @@
       "formal_train_dispatched": false,
       "all_other_processes_preserved": true,
       "inspection_wrapper_timeout": "The earlier read-only finalize_readiness helper printed its full current readiness JSON, then its60s transport timeout fired; an independent short inspection confirmed the actual GPU occupancy. No GPU task was launched."
+    },
+    "rescheduled_start_authorization": {
+      "authorization": "User2026-11-01 after the blocked04:00attempt: wait until05:00and start. This authorizes one fresh scheduled attempt using the unchanged3608/3-2-1recipe; it does not authorize stopping the Anigroom jobs, changing GPUs or bypassing admission.",
+      "scheduled_local": "2026-11-01T05:00:00+09:00",
+      "not_before_utc": "2026-10-31T20:00:00Z",
+      "CPU_audit_reuse_required": true,
+      "new_automatic_retries_after_this_attempt": false
     }
   },
   "allocation_request": {
@@ -169,10 +177,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -217,7 +225,7 @@
       3,
       4
     ],
-    "policy": "Reuse this existing2H100/16CPUslot native grant only. Verify/bind the16CPU subset and actual ownership live. Preserve any other GPU workload. Capacity/training must not start before the authorized04:00JST time.",
+    "policy": "Reuse the existing2H100/16CPUslot native grant only. New user-authorized start attempt is05:00JST. Verify actual GPU3/4 idle state and16CPU binding then; preserve all other workloads and do not expand resources.",
     "previous_allocation": {
       "expiry_utc": "2026-10-31T11:55:38Z",
       "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
@@ -234,7 +242,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "native_keeper_preserved_GPU3_and_GPU4_occupied_by_other_anigroom_training",
+    "status": "native_keeper_preserved_pending_user_rescheduled0500_live_GPU_recheck",
     "stop_before_utc": "2026-11-01T11:40:04Z"
   },
   "current_dataset_revision": {
@@ -260,7 +268,7 @@
     "status": "baseline_replay_stopped_full105_coordinate_token_difference"
   },
   "module": "model_training",
-  "next_required_result": "Resolve the other Anigroom workloads occupyingGPU3/4, then perform fresh live two-GPU idle admission before any capacity/train stage. CPU audit and the unchanged3608/3-2-1 training authorization remain valid. Do not repeat approval of the recipe, stop other jobs, change GPU count, automatically retry this blocked one-shot attempt, or rerun completed CPU preparation.",
+  "next_required_result": "At05:00JST2026-11-01, run the re-created one-shot heartbeat: reuse CPU_audit_v30, inspect fresh native grant/CPU binding and GPU3/4 occupancy, plan/execute capacity_v30 if idle, review and record capacity, commit/sync and start train_v30 from full300k. If still occupied, report the actual blocker without stopping other jobs or automatically scheduling another retry. Unchanged recipe already authorized.",
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -279,6 +287,6 @@
     "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase3608_scheduled_start_waiting_GPUs_20261101",
-  "updated_at": "2026-10-31T19:03:08.548950+00:00"
+  "state_id": "hardcase3608_rescheduled_0500_authorized_20261101",
+  "updated_at": "2026-10-31T19:14:13Z"
 }

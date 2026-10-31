@@ -1,8 +1,9 @@
 # Hardcase3608 Joint Adaptation
 
 User decision, 2026-11-01: freeze the3608candidate scope and per-asset sampling
-weights3/2/1, finish preparation, and wake this chat at04:00Asia/Tokyo to start
-the reviewed training workflow. This authorizes the stated CPU audit, native
+weights3/2/1 and finish preparation. The initial04:00Asia/Tokyo start was blocked
+by other GPU workloads; the user has rescheduled the next attempt to05:00.
+This authorizes the stated CPU audit, native
 capacity/resume check and training; it does not authorize an early GPU start,
 another allocation, a larger run or automatic retries after a failed gate.
 
@@ -157,8 +158,8 @@ usingabout3.8GiB. Do not stop it. Identify ownership and require both approved
 GPUs to be idle before capacity/training. No GPU-count or allocation change is
 authorized by this plan.
 
-The single-use heartbeat `evoweave-3608` wakes this chat at04:00JST. Both
-capacity and training are guarded by `not_before_utc=2026-10-31T19:00:00Z`.
+The re-created single-use heartbeat `evoweave-3608` wakes this chat at05:00JST.
+Both capacity and training are guarded by `not_before_utc=2026-10-31T20:00:00Z`.
 CPU-only preparation/audit may run earlier with CUDA invisible.
 
 Executable config: `model_training/experiments/hardcase3608_20261101_v1.json`.
@@ -250,3 +251,15 @@ Current GPU admission is closed. CPU preparation and the original training
 authorization remain valid; resolve the existing GPU occupancy before a fresh
 admission. Do not stop the other jobs, change resources, repeat the CPU audit,
 or automatically retry this blocked scheduled attempt.
+
+## User Reschedule To05:00JST
+
+After the blocked04:00check, the user explicitly requested waiting until05:00
+to start. One new heartbeat was created for2026-11-01 05:00JST. The next native
+capacity stage is approved again, with a new05:00not-before guard; formal
+training still requires the real capacity result. Reuse accepted CPU_audit_v30
+and the unchanged sampling/config/checkpoint identities. At05:00inspect both
+GPUs and the original native grant afresh; do not infer that the Anigroom jobs
+have ended. If idle, plan and execute capacity_v30, review/record and commit its
+acceptance, then plan and execute train_v30. If still occupied, preserve all
+workloads, report the specific blocker and do not automatically retry again.

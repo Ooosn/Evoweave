@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_completed_20261031",
-  "updated_at": "2026-10-31T04:58:25.676616+00:00",
+  "state_id": "full_model_visual12_audit_20261031",
+  "updated_at": "2026-10-31T05:16:08.672Z",
   "module": "model_training",
-  "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+  "human_context": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
-    "model_training/docs/ANCHOR_FULL_300K_20261030.md"
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "model_training/docs/FULL_MODEL_VISUAL12_20261031.md"
   ],
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -27,7 +28,7 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Full18002 official-initialized joint300k run and declared evaluations completed. Review measured quality; no further GPU work authorized. This is not a matched5k causal ablation.",
+    "current_question": "Frozen full300k model: run12 preselected official15beam predicted-reference visual cases before experiment analysis; no training.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
@@ -38,8 +39,8 @@
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "submit",
+    "preflight",
     "matched_eval"
   ],
   "receipt_max_age_minutes": 240,
@@ -97,192 +98,61 @@
     ]
   },
   "active_operation": {
-    "label": "anchor_full_20261030_v1",
-    "operation": "train",
-    "phase": "full300k_completed",
-    "status": "completed_declared_evaluations_and_native_exit_verified",
-    "complete": true,
-    "passed": true,
+    "label": "predicted_reference_20261029_v1",
+    "operation": "inference_only",
+    "phase": "full300k_visual12_CPU_audit",
+    "status": "audit_approved",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
-    "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
-    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
-    "code_commit": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
-    "formal_training_allowed": true,
+    "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
+    "contract": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "operation_entrypoints": {
+      "report": [
+        "model_training/rigweave/scripts/evaluate_predicted_reference.py"
+      ],
+      "preflight": [
+        "model_training/rigweave/scripts/evaluate_predicted_reference.py"
+      ]
+    },
+    "code_commit": "9ec01038c0a01ad1515355094e89d028ba0dcd74",
+    "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/weights_300000.pt",
+    "checkpoint_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
+    "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+    "case_indices": [
+      5,
+      15,
+      23,
+      24,
+      30,
+      44,
+      54,
+      61,
+      70,
+      95,
+      105,
+      108
+    ],
+    "optimizer_updates": 0,
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
-        "config_sha256": "6c5fed9f8e74c8759e9af1c032bb7bbb84c96f7df28828e662ac1c3ad12a8fcc",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
-        "config_sha256": "cf7f45d5f69e743b962ccdb5a4539efecbc4646ab70e2b38d4dc5377f5a3c759",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26",
-        "approved": false
-      },
-      {
-        "mode": "train",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
-        "config_sha256": "583b0032815d1cca616ec4e67dafcc22a1d38215fa586a6a6d31305cc5438128",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
+        "config_sha256": "a6eeaccfea504f4ad5f25cd98674e6676b05f1fb5d195eef23c547ca24da933e",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v27",
         "approved": true
       }
     ],
-    "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained.",
-    "local_tests": {
-      "passed": true,
-      "new_tests": 20,
-      "unchanged_regressions": 108
-    },
-    "cleanup_plan": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
-      "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
-    },
-    "cleanup_counts": {
-      "keep_full": 7,
-      "compact_model": 52,
-      "remove_intermediate": 45
-    },
-    "CPU_audit": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26/result.json",
-      "sha256": "6798243c4ff452af60cbd72f3fd0a86ea4e96b430ca5252caaef2437845edff7",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26_resources.json",
-      "resources_sha256": "fea7f3782ade37a0517f7a40ecca33463ad9f0d967727e971c1c028bfb608911"
-    },
-    "initialization_verified": {
-      "project_checkpoint_loaded": false,
-      "project_optimizer_loaded": false,
-      "optimizer_initial_state_entries": 0,
-      "initial_asset_exposures": 0,
-      "learning_rate_asset_offset": 0,
-      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
-      "head_initial_sha256": "596315cd6f2edf6b87cb50e75840a4f419e1dd0c9b797b919915383d5edbfaa3"
-    },
-    "full_data_plan": {
-      "assets": 300000,
-      "updates": 6270,
-      "input_frame_visits": 3919984,
-      "complete_passes": 16,
-      "partial_pass_assets": 11968,
-      "unique_assets": 18002,
-      "plan_sha256": "e1a5939f00a4aa6afc7892a9c579b0e4f8d1e7dd5026f60d2e7cb9300192dc1c",
-      "all_full_passes_cover_every_asset_once": true,
-      "rank_resume_roundtrip": true
-    },
-    "legacy_cleanup": {
-      "complete": true,
-      "plan": {
-        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
-        "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
-      },
-      "retired_checkpoints": 97,
-      "net_bytes_freed": 1229121897170,
-      "kept_full": [
-        "train_v17/reference_transport/checkpoint_060000.pt",
-        "train_v17/target_content/checkpoint_060000.pt",
-        "train_v19/joint_pretrained/checkpoint_080000.pt",
-        "train_v19/pretrained_stage2/checkpoint_080000.pt",
-        "train_v19/scratch_stage2/checkpoint_080000.pt",
-        "train_v21/checkpoint_040000.pt",
-        "train_v9/fraction20_40_query/checkpoint_020000.pt"
-      ],
-      "journal": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_20261030.jsonl",
-      "replacement_roots": [
-        "/work/wangyy/virtual_query_matched_5k_20261025/retained_models_20261030",
-        "/home/wangyy/evorig/outputs/retained_models_20261030"
-      ]
-    },
-    "capacity": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26/result.json",
-      "sha256": "f0ef35f588c8d21e06aeb2dead0d83ad3bbf93743a08dac92727e7a78984167b",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26_resources.json",
-      "resources_sha256": "2f9a18d468e9611ecdef8111e9ce568da51f61c1fa6f8781f7d953a49d69c5a5"
-    },
-    "capacity_summary": {
-      "ranks": 2,
-      "stress_updates_per_rank": 13,
-      "representative_updates_per_rank": 12,
-      "mean_update_seconds": [
-        16.60922311673251,
-        16.609236317832256
-      ],
-      "max_reserved_GiB": [
-        42.869140625,
-        43.23828125
-      ],
-      "model_Adam_RNG_sampler_roundtrip_exact": true,
-      "official_model_initial_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
-      "profile_weights_are_not_formal_initialization": true
-    },
-    "source_commit_actual": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
-    "supervisor_pid": 1964286,
-    "started_utc": "2026-10-29T20:04:40.762707+00:00",
-    "startup_verification": {
-      "passed": true,
-      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_training_start.json",
-      "observed_utc": "2026-10-29T20:12:35.367519+00:00",
-      "optimizer_updates_per_rank": 17,
-      "asset_visits": 816,
-      "input_frame_visits": 10032,
-      "verified_unique_asset_prefix": 816,
-      "maximum_actual_manifest_index": 17995,
-      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
-      "project_checkpoint_loaded": false,
-      "project_optimizer_loaded": false,
-      "native_membership": true
-    },
-    "completion_verification": {
-      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_completion.json",
-      "snapshot": "D:/evoweave/server_ops/outputs/anchor_full_20261030/status_20261031_1356.json",
-      "finished_utc": "2026-10-31T04:55:04.045777+00:00",
-      "asset_exposures": 300000,
-      "optimizer_updates": 6270,
-      "input_frame_visits": 3919984,
-      "native_exit_code": 0,
-      "payload_cleanup_complete": true,
-      "source_files_verified": 59,
-      "metrics_reaggregated_from_primary_rows": true,
-      "all_six_stage1_nodes_same_inputs": true,
-      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/result.json",
-      "result_sha256": "6e2ea9986399649df3114913307655416dec13095d06e21dbdacd974e6878989",
-      "resource_receipt_sha256": "9265772aa9051c3dab221785c6b655978e5db1adeb0b77cec73dadbef6faa45f",
-      "stage1_greedy128": {
-        "assets": 128,
-        "views": 1024,
-        "edge_f1": 0.8072133752140208,
-        "success": 0.994140625,
-        "failures": 6,
-        "exact_joint_count": 0.615234375,
-        "summary_sha256": "cc40e768b2fb43489bfa213dc141c6f6a23d72ab48a60ba9cbfee493a8283d8a"
-      },
-      "stage2_GT_reference967": {
-        "assets": 967,
-        "rows": 13538,
-        "normalized_mpjpe": 0.0031794753099953174,
-        "copy_normalized_mpjpe": 0.0904594820264285,
-        "edge_f1": 0.9575986247345502,
-        "pck_005": 0.9977306584044808,
-        "summary_sha256": "3081b91a591ad6e576811f16c1e34889607ee25a042fd2b92aab954d6e7ef874"
-      },
-      "final_checkpoint_sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7",
-      "final_weights_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
-      "best_stage2_panel_exposures": 290000,
-      "retained_full_milestones": [100000, 200000, 300000],
-      "local_and_durable_checkpoint_copies_present": true,
-      "acceptance": "Execution and declared evaluations accepted. New full-model official15beam predicted-reference pipeline quality and causal superiority over separate training remain untested."
-    }
+    "acceptance_test": "Native exit0 and clean resources; exact frozen300k weights; all12 fixed canonical inputs; official15beam seed per asset; reference failures included;84 targets per method; independently recompute metrics and inspect every visual, with no quality-based case filtering."
   },
   "last_operation": {
-    "archive": "model_training/state/archive/current_before_full_20261030.json",
-    "label": "predicted_reference_20261029_v1",
-    "status": "visual12_inference_and_visual_review_completed"
+    "archive": "model_training/state/archive/anchor_full_completed_20261031.json",
+    "label": "anchor_full_20261030_v1",
+    "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "Report completed full300k measurements with stage1 greedy128 and stage2 GT-reference967 scopes separated. Preserve idle native allocation; no new training, inference, or matched evaluation without explicit authorization and fresh admission."
+  "next_required_result": "Execute audit_v27, verify primary artifacts and resources, then separately admit capacity_v27 zero-update visual inference. Preserve native allocation; never resume training."
 }

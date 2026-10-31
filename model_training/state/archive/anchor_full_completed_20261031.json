@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "state_id": "anchor_full_300k_completed_20261031",
+  "updated_at": "2026-10-31T04:58:25.676616+00:00",
+  "module": "model_training",
+  "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md"
+  ],
+  "publication_authorization": {
+    "status": "explicit_user_approved",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "branch": "codex/virtual-fusion-20261013",
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "isolation_required": true,
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan."
+  },
+  "current_dataset_revision": {
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967,
+    "normalization": "input_sequence_mesh_bbox",
+    "contract": "DATASET_SOURCE_OF_TRUTH.md"
+  },
+  "established_research_decisions": {
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "current_question": "Full18002 official-initialized joint300k run and declared evaluations completed. Review measured quality; no further GPU work authorized. This is not a matched5k causal ablation.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "train",
+    "preflight",
+    "submit",
+    "matched_eval"
+  ],
+  "receipt_max_age_minutes": 240,
+  "compute_allocation": {
+    "server": "HGC",
+    "qlogin_job_id": 130675914,
+    "host": "pcg01i",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_slots": 16,
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "keeper_pid": 1108368,
+    "status": "native_idle_allocation_preserved_after_full300k_completion",
+    "expiry_utc": "2026-10-31T11:55:38Z",
+    "stop_before_utc": "2026-10-31T10:55:00Z",
+    "last_observed_utc": "2026-10-31T04:56:35.998563+00:00",
+    "kernel_cpuset_and_devices_membership": true,
+    "rss_limit_bytes": 68719476736,
+    "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
+    "rejected_previous_reservation": {
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run."
+    },
+    "h_rt_seconds": 345600,
+    "last_observation_note": "Formal train_v26 verified on both ranks; official initialization, empty Adam, actual full-data prefix and native membership checked. Do not alter the live checkout or release the allocation.",
+    "last_gpu_memory_observed_utc": "2026-10-29T20:12:35.367519+00:00",
+    "last_observed_gpu_used_mib": [
+      44455,
+      44553
+    ]
+  },
+  "active_operation": {
+    "label": "anchor_full_20261030_v1",
+    "operation": "train",
+    "phase": "full300k_completed",
+    "status": "completed_declared_evaluations_and_native_exit_verified",
+    "complete": true,
+    "passed": true,
+    "explicit_human_authorized": true,
+    "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
+    "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
+    "code_commit": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
+    "formal_training_allowed": true,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "6c5fed9f8e74c8759e9af1c032bb7bbb84c96f7df28828e662ac1c3ad12a8fcc",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "cf7f45d5f69e743b962ccdb5a4539efecbc4646ab70e2b38d4dc5377f5a3c759",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26",
+        "approved": false
+      },
+      {
+        "mode": "train",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/anchor_full_20261030_v1.json",
+        "config_sha256": "583b0032815d1cca616ec4e67dafcc22a1d38215fa586a6a6d31305cc5438128",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26",
+        "approved": true
+      }
+    ],
+    "end_policy": "300000asset visits or saved deadline exit before2026-10-31T10:55Z. Keep native allocation. No extra arms/source data deletion; official weights and seven critical full checkpoints retained.",
+    "local_tests": {
+      "passed": true,
+      "new_tests": 20,
+      "unchanged_regressions": 108
+    },
+    "cleanup_plan": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
+      "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
+    },
+    "cleanup_counts": {
+      "keep_full": 7,
+      "compact_model": 52,
+      "remove_intermediate": 45
+    },
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26/result.json",
+      "sha256": "6798243c4ff452af60cbd72f3fd0a86ea4e96b430ca5252caaef2437845edff7",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v26_resources.json",
+      "resources_sha256": "fea7f3782ade37a0517f7a40ecca33463ad9f0d967727e971c1c028bfb608911"
+    },
+    "initialization_verified": {
+      "project_checkpoint_loaded": false,
+      "project_optimizer_loaded": false,
+      "optimizer_initial_state_entries": 0,
+      "initial_asset_exposures": 0,
+      "learning_rate_asset_offset": 0,
+      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "head_initial_sha256": "596315cd6f2edf6b87cb50e75840a4f419e1dd0c9b797b919915383d5edbfaa3"
+    },
+    "full_data_plan": {
+      "assets": 300000,
+      "updates": 6270,
+      "input_frame_visits": 3919984,
+      "complete_passes": 16,
+      "partial_pass_assets": 11968,
+      "unique_assets": 18002,
+      "plan_sha256": "e1a5939f00a4aa6afc7892a9c579b0e4f8d1e7dd5026f60d2e7cb9300192dc1c",
+      "all_full_passes_cover_every_asset_once": true,
+      "rank_resume_roundtrip": true
+    },
+    "legacy_cleanup": {
+      "complete": true,
+      "plan": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_plan_20261030.json",
+        "sha256": "91b1fa483b2d9b9bfa14ef196f09509e948d61ca7e02e3212b4445212b77db0f"
+      },
+      "retired_checkpoints": 97,
+      "net_bytes_freed": 1229121897170,
+      "kept_full": [
+        "train_v17/reference_transport/checkpoint_060000.pt",
+        "train_v17/target_content/checkpoint_060000.pt",
+        "train_v19/joint_pretrained/checkpoint_080000.pt",
+        "train_v19/pretrained_stage2/checkpoint_080000.pt",
+        "train_v19/scratch_stage2/checkpoint_080000.pt",
+        "train_v21/checkpoint_040000.pt",
+        "train_v9/fraction20_40_query/checkpoint_020000.pt"
+      ],
+      "journal": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/legacy_retirement_20261030.jsonl",
+      "replacement_roots": [
+        "/work/wangyy/virtual_query_matched_5k_20261025/retained_models_20261030",
+        "/home/wangyy/evorig/outputs/retained_models_20261030"
+      ]
+    },
+    "capacity": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26/result.json",
+      "sha256": "f0ef35f588c8d21e06aeb2dead0d83ad3bbf93743a08dac92727e7a78984167b",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v26_resources.json",
+      "resources_sha256": "2f9a18d468e9611ecdef8111e9ce568da51f61c1fa6f8781f7d953a49d69c5a5"
+    },
+    "capacity_summary": {
+      "ranks": 2,
+      "stress_updates_per_rank": 13,
+      "representative_updates_per_rank": 12,
+      "mean_update_seconds": [
+        16.60922311673251,
+        16.609236317832256
+      ],
+      "max_reserved_GiB": [
+        42.869140625,
+        43.23828125
+      ],
+      "model_Adam_RNG_sampler_roundtrip_exact": true,
+      "official_model_initial_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "profile_weights_are_not_formal_initialization": true
+    },
+    "source_commit_actual": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
+    "supervisor_pid": 1964286,
+    "started_utc": "2026-10-29T20:04:40.762707+00:00",
+    "startup_verification": {
+      "passed": true,
+      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_training_start.json",
+      "observed_utc": "2026-10-29T20:12:35.367519+00:00",
+      "optimizer_updates_per_rank": 17,
+      "asset_visits": 816,
+      "input_frame_visits": 10032,
+      "verified_unique_asset_prefix": 816,
+      "maximum_actual_manifest_index": 17995,
+      "initial_model_sha256": "f541c6c5f1af473a5a5267eb62a9f0ef5678cd2e1b8595b0a04caf550e079915",
+      "project_checkpoint_loaded": false,
+      "project_optimizer_loaded": false,
+      "native_membership": true
+    },
+    "completion_verification": {
+      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_completion.json",
+      "snapshot": "D:/evoweave/server_ops/outputs/anchor_full_20261030/status_20261031_1356.json",
+      "finished_utc": "2026-10-31T04:55:04.045777+00:00",
+      "asset_exposures": 300000,
+      "optimizer_updates": 6270,
+      "input_frame_visits": 3919984,
+      "native_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "source_files_verified": 59,
+      "metrics_reaggregated_from_primary_rows": true,
+      "all_six_stage1_nodes_same_inputs": true,
+      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/result.json",
+      "result_sha256": "6e2ea9986399649df3114913307655416dec13095d06e21dbdacd974e6878989",
+      "resource_receipt_sha256": "9265772aa9051c3dab221785c6b655978e5db1adeb0b77cec73dadbef6faa45f",
+      "stage1_greedy128": {
+        "assets": 128,
+        "views": 1024,
+        "edge_f1": 0.8072133752140208,
+        "success": 0.994140625,
+        "failures": 6,
+        "exact_joint_count": 0.615234375,
+        "summary_sha256": "cc40e768b2fb43489bfa213dc141c6f6a23d72ab48a60ba9cbfee493a8283d8a"
+      },
+      "stage2_GT_reference967": {
+        "assets": 967,
+        "rows": 13538,
+        "normalized_mpjpe": 0.0031794753099953174,
+        "copy_normalized_mpjpe": 0.0904594820264285,
+        "edge_f1": 0.9575986247345502,
+        "pck_005": 0.9977306584044808,
+        "summary_sha256": "3081b91a591ad6e576811f16c1e34889607ee25a042fd2b92aab954d6e7ef874"
+      },
+      "final_checkpoint_sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7",
+      "final_weights_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
+      "best_stage2_panel_exposures": 290000,
+      "retained_full_milestones": [100000, 200000, 300000],
+      "local_and_durable_checkpoint_copies_present": true,
+      "acceptance": "Execution and declared evaluations accepted. New full-model official15beam predicted-reference pipeline quality and causal superiority over separate training remain untested."
+    }
+  },
+  "last_operation": {
+    "archive": "model_training/state/archive/current_before_full_20261030.json",
+    "label": "predicted_reference_20261029_v1",
+    "status": "visual12_inference_and_visual_review_completed"
+  },
+  "next_required_result": "Report completed full300k measurements with stage1 greedy128 and stage2 GT-reference967 scopes separated. Preserve idle native allocation; no new training, inference, or matched evaluation without explicit authorization and fresh admission."
+}

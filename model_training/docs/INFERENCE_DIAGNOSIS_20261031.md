@@ -69,5 +69,13 @@ criteria, and keep the base checkpoint unchanged. Model/data strategy changes
 must be motivated by the completed diagnosis rather than selected good images.
 
 Current admission and completion evidence are recorded in state/current.json.
+Audit_v29 completed at16:41:43JST with native exit0 and clean resources. All24
+saved reference identities, frozen checkpoints and inherited full-beam capacity
+matched; the six diagnostic-policy CPU tests passed in the actual job runtime.
+CUDA was not initialized. The job loads project-specific Transformers4.46.1
+and Tokenizers0.20.3, not the bare interpreter's global5.4.0/0.22.2 packages.
+This is a current execution snapshot, not a recovered historical lockfile.
+Capacity_v29 is now admitted with the primary CPU result bound; no source
+changes are permitted while the payload is active. Training remains prohibited.
 Local primary comparison and reviews live under
 D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/.

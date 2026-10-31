@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "paired_inference_diagnosis_CPU_admission_20261031",
-  "updated_at": "2026-10-31T07:37:10Z",
+  "state_id": "paired_inference_diagnosis_GPU_admitted_20261031",
+  "updated_at": "2026-10-31T07:43:54Z",
   "module": "model_training",
   "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
@@ -36,10 +36,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -101,8 +101,8 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_diagnosis_only",
-    "phase": "paired_diagnosis_CPU_audit",
-    "status": "audit_approved",
+    "phase": "paired_diagnosis_gpu_comparison",
+    "status": "CPU_audit_accepted_GPU_comparison_approved",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 asked to find the cause, establish whether the new model is better, test improved inference, and consider difficult-skeleton fine-tuning. Admit only the bounded no-update diagnosis now; fine-tuning is not included.",
@@ -114,9 +114,9 @@
     },
     "code_commit": "67560bb6f14b980def5c60a933cd95efe4c98bed",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
-    "capacity_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "case_indices": [
       5,
@@ -166,16 +166,18 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
         "config_sha256": "256b3e4776d35e5ceee8d4f642e420b9224dfaf721e02220a700380535190d45",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v29",
-        "approved": true,
-        "status": "awaiting_native_CPU_audit"
+        "approved": false,
+        "status": "completed_passed",
+        "complete": true,
+        "exit_code": 0
       },
       {
         "mode": "capacity",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
-        "config_sha256": "256b3e4776d35e5ceee8d4f642e420b9224dfaf721e02220a700380535190d45",
+        "config_sha256": "3ffa5d11943f8f8a7dffe7cbfb099effc9e2068ed784b73a3046f30a84a0b667",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v29",
-        "approved": false,
-        "status": "awaiting_CPU_acceptance"
+        "approved": true,
+        "status": "approved_waiting_native_dispatch"
       }
     ],
     "prior_diagnosis": {
@@ -184,7 +186,16 @@
       "paired_greedy": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/paired_existing_stage1.json",
       "causal_attribution": "Unresolved until exact old/new token reproduction; no training-level cause established."
     },
-    "acceptance_test": "Native clean exit0; no updates; all24baseline token/status pairs exact before alternatives; all72references and1344targetrows retained, failures scoredzero; independent rescoring and visual review of improvements and regressions.12case diagnostics are not validation-wide acceptance."
+    "acceptance_test": "Native clean exit0; no updates; all24baseline token/status pairs exact before alternatives; all72references and1344targetrows retained, failures scoredzero; independent rescoring and visual review of improvements and regressions.12case diagnostics are not validation-wide acceptance.",
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v29/result.json",
+      "sha256": "24b0dc8e3983630ad768391ebd0020bbec13df6c081748246e21875fd28a618e",
+      "resources_sha256": "b3442e35ce367502347230e49ff3e2ef4f6c183b95818d597e8207a31b4b6d71",
+      "finished_utc": "2026-10-31T16:41:43.901806+09:00",
+      "source": "b0157a70f7446a62681f9761d92429d3e90a3516",
+      "local_review": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/audit_v29_review.json",
+      "cuda_initialized": false
+    }
   },
   "last_operation": {
     "archive": "model_training/state/archive/before_inference_diagnosis_20261031.json",
@@ -194,5 +205,5 @@
     "optimizer_updates": 0,
     "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json"
   },
-  "next_required_result": "Run and inspect audit_v29 via native keeper; validate immutable checkpoints, all input identities, original24references, capacity inheritance and actual-runtime CPU tests. Only after accepted CPU result bind it and admit capacity_v29. Preserve GPU3 task and allocation; no training."
+  "next_required_result": "Execute admitted capacity_v29 through native keeper. Require exact24baseline replays before new policies. Collect all72references/1344targetrows, independently rescore and inspect fixed-case improvements/regressions. No training, retries or GT selection. Preserve other workload and allocation."
 }

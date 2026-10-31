@@ -55,7 +55,7 @@ def main():
             '-B', str(Path(__file__).resolve()), *sys.argv[1:]])
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('plan', 'execute', 'observe'))
-    parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27'), required=True)
+    parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27', 'audit_v28', 'capacity_v28'), required=True)
     args = parser.parse_args()
     path = ROOT/'model_training/experiments/full_model_visual12_20261031.json'
     config = json.loads(path.read_text())

@@ -252,7 +252,8 @@ def verify_launch(args, config):
     binding = execution_cpu_binding(config, exception, affinity)
     devices = gpu_selection(config)
     if (socket.gethostname().split('.')[0] != expected_host or affinity != binding
-            or os.environ.get('CUDA_VISIBLE_DEVICES') != ('' if cpu else devices) or runtime['world_size'] != 2):
+            or os.environ.get('CUDA_VISIBLE_DEVICES') != ('' if cpu else devices)
+            or (not scheduler and runtime['world_size'] != 2)):
         raise RuntimeError('host/CPU/GPU binding differs')
     import resource
     if resource.getrlimit(resource.RLIMIT_AS)[0] != resource.RLIM_INFINITY:

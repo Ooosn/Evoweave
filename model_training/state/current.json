@@ -108,12 +108,8 @@
     "contract": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "operation_entrypoints": {
-      "report": [
-        "model_training/rigweave/scripts/evaluate_predicted_reference.py"
-      ],
-      "preflight": [
-        "model_training/rigweave/scripts/evaluate_predicted_reference.py"
-      ]
+      "report": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+      "preflight": "model_training/rigweave/scripts/evaluate_predicted_reference.py"
     },
     "code_commit": "de58479737b9e7f42b9603944382e0e073062067",
     "formal_training_allowed": false,

@@ -70,3 +70,40 @@ optimizer updates and no CUDA initialization. Its result hash is
 af6782b14d3fc609d8145199aad2ee1457885f376e5714c6620f1b4d63a08475.
 Capacity_v28 is now admitted for the single-GPU visual run, with this primary
 CPU result bound in the config. No source changes while the payload is active.
+
+## Completed Visual Review
+
+Capacity_v28 finished at 15:12:22 JST, exit 0, clean native resources, zero
+optimizer updates. GPU4 was idle afterward; Anigroom PID236865 on GPU3 and
+CPUs6/7/9/10 was unchanged. The full 15-beam/2048-token decode took 60.44 seconds
+and reserved at most 30,480,007,168 bytes. No training was resumed.
+
+All 12 fixed cases and 84 target slots per method are retained. Eleven references
+are valid; seven have the GT joint count. Primary rows were independently
+rescored locally. All 11 valid cases have lower normalized symmetric nearest-
+joint distance with the head than with copied reference positions: asset-equal
+means are 0.02075863179 versus 0.06756750377 across the same 11 assets/77 targets.
+The failed asset remains in all-case quality denominators. These are descriptive
+fixed-case results, not a validation-set generalization estimate.
+
+Visual inspection covered all six contact sheets, the enlarged GT sheets and
+individual cases 15/105/108. Thirty images are retained: prediction-only and
+GT-overlay views for every case plus three contact sheets in each mode. Display
+slots 0/2/4/7 are selected poses, not a consecutive animation. Camera/limits are
+fixed within each asset, with no clipping observed or failure hidden.
+
+- 5/15/24/44/54/61/95: matching joint counts, visible primary structure and pose
+  following close to the surface/GT in displayed views; not exact-topology proof.
+- 23: main body/limbs follow poses, but 52 predicted versus 22 GT joints include
+  extra hand/detail subdivision; do not declare topology equivalence by appearance.
+- 30: major lateral branches in GT are missing from the reference and outputs.
+- 70: a 52-joint human-like reference misses multiple branches of the 122-joint GT.
+- 108: 13 predicted versus 5 GT joints add branches and show substantial misalignment.
+- 105: no valid decoded reference. The 828-token sequence includes one terminal EOS,
+  but detokenization raised ValueError('all input arrays must have the same shape').
+  Root cause is not diagnosed; no retry, GT repair or case replacement occurred.
+
+Evidence: D:/evoweave/server_ops/outputs/full_model_visual12_20261031/
+visual12_review.json and visual_inspection.json. Images are under
+artifacts/capacity_v28. The frozen main model is unchanged. GPU authorization is
+closed; awaiting the user's visual review before additional inference/analysis.

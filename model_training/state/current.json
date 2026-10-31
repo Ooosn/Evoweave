@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "full_model_visual12_GPU_admitted_20261031",
-  "updated_at": "2026-10-31T06:01:57.859767+00:00",
+  "state_id": "full_model_visual12_completed_20261031",
+  "updated_at": "2026-10-31T06:23:57.167Z",
   "module": "model_training",
   "human_context": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
   "required_context": [
@@ -28,7 +28,7 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Frozen full300k model: run12 preselected official15beam predicted-reference visual cases before experiment analysis; no training.",
+    "current_question": "Frozen300k model selected. Requested official15beam12case visualizations complete and reviewed; await user review before further experiment analysis or inference.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
@@ -76,10 +76,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_idle_allocation_preserved_after_full300k_completion",
+    "status": "visual_task_finished_GPU4_idle_other_task_uses_GPU3",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-31T04:56:35.998563+00:00",
+    "last_observed_utc": "2026-10-31T06:13:13.920057+00:00",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -100,9 +100,9 @@
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_only",
-    "phase": "full300k_visual12_official_inference",
-    "status": "GPU_execution_complete_local_visual_review_pending",
-    "complete": false,
+    "phase": "full300k_visual12_complete",
+    "status": "visual12_inference_rescoring_and_visual_inspection_completed",
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
     "contract": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
@@ -215,6 +215,30 @@
       "exit_code": 0,
       "finished_utc": "2026-10-31T06:01:09.820837+00:00",
       "optimizer_updates": 0
+    },
+    "passed": true,
+    "visual_review": {
+      "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json",
+      "inspection": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual_inspection.json",
+      "figures": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/artifacts/capacity_v28",
+      "native_result_sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a",
+      "cases": 12,
+      "valid_references": 11,
+      "exact_reference_joint_count": 7,
+      "images": 30,
+      "prediction_head_J2J_valid11": 0.020758631787328338,
+      "prediction_copy_J2J_same11": 0.06756750377334947,
+      "all11_valid_cases_better_than_copy": true,
+      "all_cases_retained": true,
+      "failed_case": 105,
+      "failure_type": "detokenization_invalid_eos_sequence",
+      "failure_detail": "828tokens including terminal EOS; ValueError arrays must have same shape. Underlying cause not diagnosed; no repair/rerun.",
+      "major_structural_issues": [
+        30,
+        70,
+        108
+      ],
+      "scope": "Descriptive12fixed-case visual evidence, not full-validation end-to-end acceptance or a causal comparison."
     }
   },
   "last_operation": {
@@ -222,5 +246,5 @@
     "label": "anchor_full_20261030_v1",
     "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "GPU inference completed cleanly with11/12valid references. Collect and independently rescore all12cases, render and inspect prediction/GT-overlay figures including the failed case. No further GPU work authorized."
+  "next_required_result": "Show all fixed-case visual sets including failure105 and structural issues30/70/108. No training or additional inference authorized. Keep native allocation and other task unchanged."
 }

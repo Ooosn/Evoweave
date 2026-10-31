@@ -35,10 +35,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -101,7 +101,7 @@
     "label": "predicted_reference_20261029_v1",
     "operation": "inference_only",
     "phase": "full300k_visual12_official_inference",
-    "status": "CPU_audit_passed_GPU4_visual_inference_admitted",
+    "status": "GPU_execution_complete_local_visual_review_pending",
     "complete": false,
     "explicit_human_authorized": true,
     "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
@@ -113,9 +113,22 @@
     },
     "code_commit": "de58479737b9e7f42b9603944382e0e073062067",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
+    "execution_result": {
+      "complete": true,
+      "passed": true,
+      "exit_code": 0,
+      "payload_cleanup_complete": true,
+      "finished_utc": "2026-10-31T06:12:22.167436+00:00",
+      "source": "1bbdad7aa286384737c2e7ea5bd561a2da8e6a1c",
+      "optimizer_updates": 0,
+      "valid_references": 11,
+      "requested_references": 12,
+      "views_per_method": 84,
+      "beam_capacity_peak_bytes": 30480007168
+    },
     "native_execution_subset": {
       "scheduler_grant_unchanged": "2H100 and16CPUslots, job130675914",
       "physical_gpu": 4,
@@ -175,7 +188,9 @@
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
         "config_sha256": "e4f52cf2b00f686f6395fea4c18c5b4f6592a234c81bb660d11cec9991907975",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28",
-        "approved": true
+        "approved": false,
+        "complete": true,
+        "exit_code": 0
       }
     ],
     "acceptance_test": "Native exit0 and clean resources; exact frozen300k weights; all12 fixed canonical inputs; official15beam seed per asset; reference failures included;84 targets per method; independently recompute metrics and inspect every visual, with no quality-based case filtering.",
@@ -207,5 +222,5 @@
     "label": "anchor_full_20261030_v1",
     "status": "completed_declared_evaluations_and_native_exit_verified"
   },
-  "next_required_result": "Run admitted capacity_v28 on native GPU4 and disjoint8CPU only; independently rescore and visually inspect all12cases. Retain failures and both prediction/GT-overlay figures. Do not change source while active; do not train."
+  "next_required_result": "GPU inference completed cleanly with11/12valid references. Collect and independently rescore all12cases, render and inspect prediction/GT-overlay figures including the failed case. No further GPU work authorized."
 }

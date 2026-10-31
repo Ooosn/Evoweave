@@ -108,6 +108,29 @@ class PredictedReferenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare([self.row(), self.row()], [self.row(), self.row()])
 
+    def test_full_model_visual_recipe(self):
+        config = json.loads((ROOT / 'model_training/experiments/full_model_visual12_20261031.json').read_text())
+        for mode in ('audit', 'capacity'):
+            validate_config(config, mode)
+        for field, value in [('label', 'joint_080000'), ('sha256', '0'*64)]:
+            changed = copy.deepcopy(config)
+            changed['checkpoints']['stage1'][field] = value
+            with self.assertRaises(ValueError):
+                validate_config(changed, 'capacity')
+        changed = copy.deepcopy(config)
+        changed['official_smoke']['full_beam_capacity_first'] = False
+        with self.assertRaises(ValueError):
+            validate_config(changed, 'capacity')
+        with self.assertRaises(ValueError):
+            validate_config(config, 'train')
+
+    def test_full_model_inputs_are_scientifically_bound(self):
+        from predicted_reference_protocol import scientific_sha
+        config = json.loads((ROOT / 'model_training/experiments/full_model_visual12_20261031.json').read_text())
+        changed = copy.deepcopy(config)
+        changed['full_model_inputs']['rows']['sha256'] = '0'*64
+        self.assertNotEqual(scientific_sha(config), scientific_sha(changed))
+
     def test_no_training_mode_and_exact_recipe(self):
         config = json.loads((ROOT / 'model_training/experiments/predicted_reference_20261029_v1.json').read_text())
         validate_config(config, 'audit')

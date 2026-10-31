@@ -23,6 +23,8 @@ def scientific_sha(config):
     values = {k: config[k] for k in keys}
     if 'official_smoke' in config:
         values['official_smoke'] = config['official_smoke']
+    if 'full_model_inputs' in config:
+        values['full_model_inputs'] = config['full_model_inputs']
     return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
 
 
@@ -34,6 +36,7 @@ def bound_config(spec):
 
 
 def validate_config(config, mode):
+    full_model = 'full_model_inputs' in config
     expected = {'assets': 128, 'input_frames': 8, 'reference_slots': [0, 4],
         'methods': list(METHODS), 'precision': 'fp32', 'allow_tf32': False,
         'decoder_attention': 'eager', 'max_new_tokens': 2048, 'max_joints': 512,
@@ -48,16 +51,27 @@ def validate_config(config, mode):
                         stage1_cache_policy='regenerate_all_official_no_greedy_reuse')
         if ((not expanded and smoke['case_indices'] != [2, 3, 64, 127]) or smoke['policy'] != POLICY
                 or smoke['generation_kwargs'] != OFFICIAL_OPTIONS or smoke['base_seed'] != 20261029
-                or smoke['static_fallback'] or smoke['full_beam_capacity_first'] != (not expanded)):
+                or smoke['static_fallback'] or smoke['full_beam_capacity_first'] != (not expanded or full_model)):
             raise ValueError('unreviewed official inference recipe')
-        if expanded and (not smoke.get('inherited_official_capacity') or smoke.get('visual_point_limit') != 4096):
+        if expanded and ((not full_model and not smoke.get('inherited_official_capacity'))
+                         or smoke.get('visual_point_limit') != 4096):
             raise ValueError('expanded visual run needs accepted official capacity and fixed export size')
     if mode not in ('audit', 'capacity') or config.get('family') != SCOPE or config.get('evaluation') != expected:
         raise ValueError('unreviewed predicted-reference evaluation')
     profiles = 0 if 'official_smoke' in config else 3
     if set(config['checkpoints']) != {'stage1', 'stage2'} or config['capacity']['profile_assets_per_rank'] != profiles:
         raise ValueError('checkpoint or profile scope differs')
-    if config['checkpoints']['stage1']['label'] != 'joint_080000' or config['checkpoints']['stage2']['label'] != 'pretrained_stage2_080000':
+    if full_model:
+        specs = config['checkpoints']
+        expected_sha = 'bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d'
+        if ('official_smoke' not in config or not expanded
+                or specs['stage1'] != specs['stage2'] or specs['stage1']['label'] != 'full_joint_300000'
+                or specs['stage1']['sha256'] != expected_sha or specs['stage1']['layout'] != 'anchor'
+                or smoke.get('inherited_official_capacity') is not None
+                or config['capacity']['full_official_beam_decode_per_rank'] != 1
+                or config['parent_config'] != config['stage2_config']):
+            raise ValueError('full300k pipeline checkpoint or capacity contract differs')
+    elif config['checkpoints']['stage1']['label'] != 'joint_080000' or config['checkpoints']['stage2']['label'] != 'pretrained_stage2_080000':
         raise ValueError('primary pipeline model selection differs')
     bound_config(config['stage2_config'])
     return bound_config(config['parent_config'])

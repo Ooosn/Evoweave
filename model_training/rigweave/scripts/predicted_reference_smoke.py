@@ -22,6 +22,9 @@ from rigweave.dynamic_rig.anchor_joint_binding import AnchorJointBinding, Anchor
 
 
 def load_records(config, rank=None):
+    if 'full_model_inputs' in config:
+        from full_model_visual_inputs import load_records as load_full_records
+        return load_full_records(config, rank)
     spec = config['official_smoke']['input_run']
     for item in (spec['result'], spec['resources']):
         if sha256(item['path']) != item['sha256']:

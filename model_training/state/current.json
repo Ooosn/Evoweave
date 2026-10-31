@@ -76,10 +76,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "visual_task_finished_GPU4_idle_other_task_uses_GPU3",
+    "status": "native_idle_both_GPUs_at_last_observation_allocation_preserved",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-31T06:13:13.920057+00:00",
+    "last_observed_utc": "2026-10-31T06:25:16.956013+00:00",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",

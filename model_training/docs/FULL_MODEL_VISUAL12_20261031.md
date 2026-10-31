@@ -18,10 +18,14 @@ Retain GT-head and GT-copy diagnostics and predicted-copy control. GT is used
 for evaluation/display only, never to repair the generated primary reference.
 Failures and wrong joint counts stay in the denominator and visual set.
 
-Two native H100 ranks, 16 CPU slots and 64 GiB process-tree RAM reuse grant
-130675914. Stop before 2026-10-31T10:55:00Z; preserve the allocation. CPU audit
-v27 precedes GPU capacity_v27 admission. Recheck one 2048-token/15-beam capacity
-decode per rank with the new checkpoint, then run only the twelve cases.
+Reuse grant 130675914, which still grants two H100s and 16 CPU slots. Anigroom
+is now using GPU3 and CPUs6/7/9/10, so this visual task uses only GPU4 and CPUs
+11/12/14/15/61/63/64/65: one native rank, eight execution CPUs, 64 GiB RAM cap.
+The scheduler grant and real JOB_ID/NSLOTS remain unchanged. Validate kernel
+membership, actual selected GPU availability and disjoint CPU affinity; do not
+stop or modify the other workload. Stop before 2026-10-31T10:55:00Z and preserve
+the allocation. Audit_v27 precedes capacity_v27. Recheck one2048-token/15-beam
+capacity decode with the new checkpoint, then run only the twelve cases.
 
 Display selected poses 0/2/4/7, not a purported consecutive animation. Deliver
 prediction-only and GT-overlay contact sheets plus every individual case.
@@ -29,8 +33,8 @@ Inspect all sheets, expand ambiguous cases, and distinguish structural failure,
 pose-transfer failure and annotation-granularity differences. Descriptive
 12-case metrics are not a full validation estimate or proof of generalization.
 
-The shared official inference path passed 16 predicted-reference tests and four
-official-generation tests. The new binding does not alter the model, weights,
+The shared official inference path passed 17 predicted-reference tests, ten
+launcher tests and four official-generation tests. The binding does not alter the model, weights,
 training implementation or historical inference contracts.
 
 Current admission and completion evidence are recorded in state/current.json.

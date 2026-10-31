@@ -115,11 +115,18 @@
         "model_training/rigweave/scripts/evaluate_predicted_reference.py"
       ]
     },
-    "code_commit": "9ec01038c0a01ad1515355094e89d028ba0dcd74",
+    "code_commit": "a42cf3f245e1928b975ebc22af7fa61b17268f9c",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
     "capacity_accepted": false,
+    "native_execution_subset": {
+      "scheduler_grant_unchanged": "2H100 and16CPUslots, job130675914",
+      "physical_gpu": 4,
+      "CPU_budget": 8,
+      "CPU_affinity": [11, 12, 14, 15, 61, 63, 64, 65],
+      "reason": "Anigroom is using GPU3 and CPUs6,7,9,10. Preserve it; use only the idle disjoint native subset for this zero-update visual task."
+    },
     "checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/weights_300000.pt",
     "checkpoint_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
@@ -142,7 +149,7 @@
       {
         "mode": "audit",
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
-        "config_sha256": "a6eeaccfea504f4ad5f25cd98674e6676b05f1fb5d195eef23c547ca24da933e",
+        "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v27",
         "approved": true
       }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "state_id": "anchor_full_300k_running_20261030",
-  "updated_at": "2026-10-29T20:12:35.367519+00:00",
+  "state_id": "anchor_full_300k_completed_20261031",
+  "updated_at": "2026-10-31T04:58:25.676616+00:00",
   "module": "model_training",
   "human_context": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
   "required_context": [
@@ -27,17 +27,17 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Train the main joint model on all18002assets from official UniRig for300000asset visits; not a matched5k prior ablation.",
+    "current_question": "Full18002 official-initialized joint300k run and declared evaluations completed. Review measured quality; no further GPU work authorized. This is not a matched5k causal ablation.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "preflight",
     "submit",
     "matched_eval"
@@ -75,10 +75,10 @@
       78
     ],
     "keeper_pid": 1108368,
-    "status": "native_full300k_training_running",
+    "status": "native_idle_allocation_preserved_after_full300k_completion",
     "expiry_utc": "2026-10-31T11:55:38Z",
     "stop_before_utc": "2026-10-31T10:55:00Z",
-    "last_observed_utc": "2026-10-29T20:12:35.367519+00:00",
+    "last_observed_utc": "2026-10-31T04:56:35.998563+00:00",
     "kernel_cpuset_and_devices_membership": true,
     "rss_limit_bytes": 68719476736,
     "policy": "Preserve this native allocation. Native16slots with supervisor16logicalCPU affinity; no SSH compute exception.",
@@ -99,16 +99,17 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "operation": "train",
-    "phase": "full300k",
-    "status": "running_verified_both_ranks_fresh_official_full_data",
-    "complete": false,
+    "phase": "full300k_completed",
+    "status": "completed_declared_evaluations_and_native_exit_verified",
+    "complete": true,
+    "passed": true,
     "explicit_human_authorized": true,
     "authorization": "User explicitly approved starting full18002data, official-UniRig fresh initialization, joint300kvisits/30kwarmup, and verified useful-checkpoint cleanup.",
     "contract": "model_training/docs/ANCHOR_FULL_300K_20261030.md",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
     "code_commit": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
     "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "runs": [
@@ -236,6 +237,46 @@
       "project_checkpoint_loaded": false,
       "project_optimizer_loaded": false,
       "native_membership": true
+    },
+    "completion_verification": {
+      "local_report": "D:/evoweave/server_ops/outputs/anchor_full_20261030/review_completion.json",
+      "snapshot": "D:/evoweave/server_ops/outputs/anchor_full_20261030/status_20261031_1356.json",
+      "finished_utc": "2026-10-31T04:55:04.045777+00:00",
+      "asset_exposures": 300000,
+      "optimizer_updates": 6270,
+      "input_frame_visits": 3919984,
+      "native_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "source_files_verified": 59,
+      "metrics_reaggregated_from_primary_rows": true,
+      "all_six_stage1_nodes_same_inputs": true,
+      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/result.json",
+      "result_sha256": "6e2ea9986399649df3114913307655416dec13095d06e21dbdacd974e6878989",
+      "resource_receipt_sha256": "9265772aa9051c3dab221785c6b655978e5db1adeb0b77cec73dadbef6faa45f",
+      "stage1_greedy128": {
+        "assets": 128,
+        "views": 1024,
+        "edge_f1": 0.8072133752140208,
+        "success": 0.994140625,
+        "failures": 6,
+        "exact_joint_count": 0.615234375,
+        "summary_sha256": "cc40e768b2fb43489bfa213dc141c6f6a23d72ab48a60ba9cbfee493a8283d8a"
+      },
+      "stage2_GT_reference967": {
+        "assets": 967,
+        "rows": 13538,
+        "normalized_mpjpe": 0.0031794753099953174,
+        "copy_normalized_mpjpe": 0.0904594820264285,
+        "edge_f1": 0.9575986247345502,
+        "pck_005": 0.9977306584044808,
+        "summary_sha256": "3081b91a591ad6e576811f16c1e34889607ee25a042fd2b92aab954d6e7ef874"
+      },
+      "final_checkpoint_sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7",
+      "final_weights_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
+      "best_stage2_panel_exposures": 290000,
+      "retained_full_milestones": [100000, 200000, 300000],
+      "local_and_durable_checkpoint_copies_present": true,
+      "acceptance": "Execution and declared evaluations accepted. New full-model official15beam predicted-reference pipeline quality and causal superiority over separate training remain untested."
     }
   },
   "last_operation": {
@@ -243,5 +284,5 @@
     "label": "predicted_reference_20261029_v1",
     "status": "visual12_inference_and_visual_review_completed"
   },
-  "next_required_result": "Read live train_v26 progress/resources; first fixed128 validation at10000visits, free AR validation each50000, full final XYZ967at300000. Preserve native grant; no concurrent GPU work or live source changes."
+  "next_required_result": "Report completed full300k measurements with stage1 greedy128 and stage2 GT-reference967 scopes separated. Preserve idle native allocation; no new training, inference, or matched evaluation without explicit authorization and fresh admission."
 }

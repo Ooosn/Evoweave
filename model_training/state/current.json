@@ -1,15 +1,16 @@
 {
   "schema_version": 1,
-  "state_id": "full_model_visual12_completed_20261031",
-  "updated_at": "2026-10-31T06:23:57.167Z",
+  "state_id": "paired_inference_diagnosis_CPU_admission_20261031",
+  "updated_at": "2026-10-31T07:37:10Z",
   "module": "model_training",
-  "human_context": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
+  "human_context": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
   "required_context": [
     "PROJECT_MAP.md",
     "DATASET_SOURCE_OF_TRUTH.md",
     "model_training/docs/CURRENT_MODEL_CONTEXT.md",
     "model_training/docs/ANCHOR_FULL_300K_20261030.md",
-    "model_training/docs/FULL_MODEL_VISUAL12_20261031.md"
+    "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
+    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md"
   ],
   "publication_authorization": {
     "status": "explicit_user_approved",
@@ -28,10 +29,10 @@
   },
   "established_research_decisions": {
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "current_question": "Frozen300k model selected. Requested official15beam12case visualizations complete and reviewed; await user review before further experiment analysis or inference.",
+    "current_question": "Find the cause of official-policy failures, reproduce both frozen pipelines and evaluate predeclared inference alternatives. Consider targeted training only after diagnosis; do not present selected good examples as overall acceptance.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix.",
-    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke."
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced."
   },
   "allowed_operations": [
     "inspect",
@@ -99,54 +100,23 @@
   },
   "active_operation": {
     "label": "predicted_reference_20261029_v1",
-    "operation": "inference_only",
-    "phase": "full300k_visual12_complete",
-    "status": "visual12_inference_rescoring_and_visual_inspection_completed",
-    "complete": true,
+    "operation": "inference_diagnosis_only",
+    "phase": "paired_diagnosis_CPU_audit",
+    "status": "audit_approved",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User on2026-10-31 requested starting visualizations of the frozen model before experiment analysis; official non-greedy inference previously confirmed.",
-    "contract": "model_training/docs/FULL_MODEL_VISUAL12_20261031.md",
+    "authorization": "User on2026-10-31 asked to find the cause, establish whether the new model is better, test improved inference, and consider difficult-skeleton fine-tuning. Admit only the bounded no-update diagnosis now; fine-tuning is not included.",
+    "contract": "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "operation_entrypoints": {
       "report": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
       "preflight": "model_training/rigweave/scripts/evaluate_predicted_reference.py"
     },
-    "code_commit": "de58479737b9e7f42b9603944382e0e073062067",
+    "code_commit": "67560bb6f14b980def5c60a933cd95efe4c98bed",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "execution_result": {
-      "complete": true,
-      "passed": true,
-      "exit_code": 0,
-      "payload_cleanup_complete": true,
-      "finished_utc": "2026-10-31T06:12:22.167436+00:00",
-      "source": "1bbdad7aa286384737c2e7ea5bd561a2da8e6a1c",
-      "optimizer_updates": 0,
-      "valid_references": 11,
-      "requested_references": 12,
-      "views_per_method": 84,
-      "beam_capacity_peak_bytes": 30480007168
-    },
-    "native_execution_subset": {
-      "scheduler_grant_unchanged": "2H100 and16CPUslots, job130675914",
-      "physical_gpu": 4,
-      "CPU_budget": 8,
-      "CPU_affinity": [
-        11,
-        12,
-        14,
-        15,
-        61,
-        63,
-        64,
-        65
-      ],
-      "reason": "Anigroom is using GPU3 and CPUs6,7,9,10. Preserve it; use only the idle disjoint native subset for this zero-update visual task."
-    },
-    "checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/weights_300000.pt",
-    "checkpoint_sha256": "bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d",
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
     "case_indices": [
       5,
@@ -162,89 +132,67 @@
       105,
       108
     ],
+    "policies": [
+      "official",
+      "strict_sampling",
+      "strict_beam"
+    ],
+    "models": [
+      "old",
+      "full"
+    ],
     "optimizer_updates": 0,
+    "native_execution_subset": {
+      "job_id": 130675914,
+      "allocated_GPU_count": 2,
+      "allocated_CPU_slots": 16,
+      "physical_gpu": 4,
+      "CPU_budget": 8,
+      "CPU_affinity": [
+        11,
+        12,
+        14,
+        15,
+        61,
+        63,
+        64,
+        65
+      ],
+      "other_workload_preserved": true
+    },
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
-        "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v27",
-        "approved": false,
-        "status": "failed_before_payload_host_CPU_GPU_guard",
-        "exit_code": 1,
-        "finished_utc": "2026-10-31T05:58:03.413362+00:00"
-      },
-      {
-        "mode": "audit",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
-        "config_sha256": "2b97f6aece2350010cd11e5f2b0fa187f25e07b4752bdc446be35b715620296d",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28",
-        "approved": false,
-        "status": "completed_passed",
-        "exit_code": 0
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
+        "config_sha256": "256b3e4776d35e5ceee8d4f642e420b9224dfaf721e02220a700380535190d45",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v29",
+        "approved": true,
+        "status": "awaiting_native_CPU_audit"
       },
       {
         "mode": "capacity",
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/full_model_visual12_20261031.json",
-        "config_sha256": "e4f52cf2b00f686f6395fea4c18c5b4f6592a234c81bb660d11cec9991907975",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28",
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/inference_diagnosis_20261031.json",
+        "config_sha256": "256b3e4776d35e5ceee8d4f642e420b9224dfaf721e02220a700380535190d45",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v29",
         "approved": false,
-        "complete": true,
-        "exit_code": 0
+        "status": "awaiting_CPU_acceptance"
       }
     ],
-    "acceptance_test": "Native exit0 and clean resources; exact frozen300k weights; all12 fixed canonical inputs; official15beam seed per asset; reference failures included;84 targets per method; independently recompute metrics and inspect every visual, with no quality-based case filtering.",
-    "deployment_observation": {
-      "observed_utc": "2026-10-31T05:23:25.510189+00:00",
-      "remote_HEAD": "c9dade4e5e77cbd6cb5b093bf1102a5775f572a2",
-      "tracked_deleted_files": 421,
-      "other_change_types_observed": [],
-      "AGENTS_and_dataset_contract_missing": true,
-      "weights300k_and_full_checkpoint_exist_with_expected_sizes": true,
-      "deployment_not_performed": true,
-      "audit_not_started": true,
-      "GPU_inference_not_started": true,
-      "action": "Human explicitly authorized restoration. All421missing tracked files restored from original HEAD; one missing Git blob recovered by refetch. Checkout is clean. No data, weights or experiment outputs were changed.",
-      "restoration_finished_utc": "2026-10-31T05:50:38.811701+00:00",
-      "restoration_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/restore_missing_code_20261031.json"
+    "prior_diagnosis": {
+      "saved_decode": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/saved_decode_diagnosis.json",
+      "code_audit": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/inference_code_audit.json",
+      "paired_greedy": "D:/evoweave/server_ops/outputs/inference_diagnosis_20261031/paired_existing_stage1.json",
+      "causal_attribution": "Unresolved until exact old/new token reproduction; no training-level cause established."
     },
-    "CPU_audit": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v28/result.json",
-      "sha256": "af6782b14d3fc609d8145199aad2ee1457885f376e5714c6620f1b4d63a08475",
-      "resource_sha256": "e6446f7b31ee9701282b5f123a318efc39ea7a58933d046a256aa4554fff31fb",
-      "exit_code": 0,
-      "finished_utc": "2026-10-31T06:01:09.820837+00:00",
-      "optimizer_updates": 0
-    },
-    "passed": true,
-    "visual_review": {
-      "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json",
-      "inspection": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual_inspection.json",
-      "figures": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/artifacts/capacity_v28",
-      "native_result_sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a",
-      "cases": 12,
-      "valid_references": 11,
-      "exact_reference_joint_count": 7,
-      "images": 30,
-      "prediction_head_J2J_valid11": 0.020758631787328338,
-      "prediction_copy_J2J_same11": 0.06756750377334947,
-      "all11_valid_cases_better_than_copy": true,
-      "all_cases_retained": true,
-      "failed_case": 105,
-      "failure_type": "detokenization_invalid_eos_sequence",
-      "failure_detail": "828tokens including terminal EOS; ValueError arrays must have same shape. Underlying cause not diagnosed; no repair/rerun.",
-      "major_structural_issues": [
-        30,
-        70,
-        108
-      ],
-      "scope": "Descriptive12fixed-case visual evidence, not full-validation end-to-end acceptance or a causal comparison."
-    }
+    "acceptance_test": "Native clean exit0; no updates; all24baseline token/status pairs exact before alternatives; all72references and1344targetrows retained, failures scoredzero; independent rescoring and visual review of improvements and regressions.12case diagnostics are not validation-wide acceptance."
   },
   "last_operation": {
-    "archive": "model_training/state/archive/anchor_full_completed_20261031.json",
-    "label": "anchor_full_20261030_v1",
-    "status": "completed_declared_evaluations_and_native_exit_verified"
+    "archive": "model_training/state/archive/before_inference_diagnosis_20261031.json",
+    "label": "predicted_reference_20261029_v1",
+    "status": "completed_visual12_inference",
+    "complete": true,
+    "optimizer_updates": 0,
+    "local_report": "D:/evoweave/server_ops/outputs/full_model_visual12_20261031/visual12_review.json"
   },
-  "next_required_result": "Show all fixed-case visual sets including failure105 and structural issues30/70/108. No training or additional inference authorized. Keep native allocation and other task unchanged."
+  "next_required_result": "Run and inspect audit_v29 via native keeper; validate immutable checkpoints, all input identities, original24references, capacity inheritance and actual-runtime CPU tests. Only after accepted CPU result bind it and admit capacity_v29. Preserve GPU3 task and allocation; no training."
 }

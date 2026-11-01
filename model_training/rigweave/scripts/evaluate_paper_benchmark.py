@@ -98,8 +98,6 @@ def audit(config, output, source):
     from rigweave.dynamic_rig.virtual_frame_data import prepare_virtual_surface
     from stage1_surface_repair_runtime import canonical_record
     original = bound_config(config['parent_config'])
-    base, entries = read_all(original)
-    selected = select_rows(base, entries, config)
     output.mkdir(exist_ok=False)
     hashes = {}
     for name, spec in {'working_model': config['working_model'], **config['baseline_weights']}.items():
@@ -108,29 +106,53 @@ def audit(config, output, source):
             raise ValueError('weight digest differs: ' + name)
         hashes[name] = actual
     sources = validate_sources(config)
-    dataset = fixed_dataset(selected, base, 8, mode='seen_eval')
-    records = []
-    for i in range(len(selected)):
-        batch = dataset[i]
-        surface, geometry = prepare_virtual_surface([batch], torch.device('cpu'), **base['surface_sampling'])
-        record = canonical_record(batch, surface, geometry)
-        record['vertices'] = batch['frame_vertices'][0].cpu()
-        records.append(record)
-        write(output / 'progress.json', {'assets': i + 1, 'total': len(selected)})
+    auxiliary={}
+    if config['runtime'].get('paper_skin_qwen_config'):
+        path=str(Path(config['runtime']['paper_skin_qwen_config'])/'config.json')
+        auxiliary[path]=digest(path)
     cache = output / 'canonical.pt'
-    torch.save(records, cache)
-    selection = [{'asset_id': r['asset_id'], 'raw_frames': r['raw_frames'],
-                  'surface_sha256': r['surface_sha256'], 'normalization_sha256': r['normalization_sha256'],
-                  'joints': len(r['parents'])} for r in records]
+    inherited=config.get('inherit_prepared_inputs')
+    if inherited:
+        if digest(inherited['path'])!=inherited['sha256']:
+            raise ValueError('original prepared-input receipt changed')
+        prior=json.loads(Path(inherited['path']).read_text())
+        resources=json.loads(Path(inherited['resources_path']).read_text())
+        prior_root=Path(inherited['path']).parent
+        if (not prior['passed'] or not prior['complete'] or prior['assets']!=24
+                or not resources['passed'] or not resources['payload_cleanup_complete']
+                or digest(prior_root/'canonical.pt')!=prior['canonical_sha256']
+                or digest(prior_root/'selection.json')!=prior['selection_sha256']
+                or prior['weight_sha256']['working_model']!=config['working_model']['sha256']):
+            raise ValueError('prepared-input inheritance failed')
+        cache.hardlink_to(prior_root/'canonical.pt')
+        selection=json.loads((prior_root/'selection.json').read_text())
+    else:
+        base, entries = read_all(original)
+        selected = select_rows(base, entries, config)
+        dataset = fixed_dataset(selected, base, 8, mode='seen_eval')
+        records = []
+        for i in range(len(selected)):
+            batch = dataset[i]
+            surface, geometry = prepare_virtual_surface([batch], torch.device('cpu'), **base['surface_sampling'])
+            record = canonical_record(batch, surface, geometry)
+            record['vertices'] = batch['frame_vertices'][0].cpu()
+            records.append(record)
+            write(output / 'progress.json', {'assets': i + 1, 'total': len(selected)})
+        torch.save(records, cache)
+        selection = [{'asset_id': r['asset_id'], 'raw_frames': r['raw_frames'],
+                      'surface_sha256': r['surface_sha256'], 'normalization_sha256': r['normalization_sha256'],
+                      'joints': len(r['parents'])} for r in records]
     write(output / 'selection.json', selection)
     if torch.cuda.is_initialized():
         raise RuntimeError('CPU preparation initialized CUDA')
     result = {'complete': True, 'passed': True, 'source': source,
               'scientific_sha256': scientific_sha(config), 'optimizer_updates': 0,
-              'cuda_initialized': False, 'assets': len(records),
+              'cuda_initialized': False, 'assets': len(selection),
+              'prepared_inputs_inherited_without_resampling': inherited,
               'selection_sha256': digest(output / 'selection.json'),
               'canonical_sha256': digest(cache), 'baseline_revisions': sources,
               'weight_sha256': hashes,
+              'auxiliary_sha256': auxiliary,
               'evaluation_scope': 'nonselection_validation_subset_not_an_independent_test_set',
               'preprocessing': 'source_skeleton_metadata_root_RT_then_selected_input_mesh_normalization'}
     write(output / 'result.json', result)
@@ -155,20 +177,21 @@ def baseline(config, records, output, method):
     trace = {}
     if method == 'unirig_official':
         defer_official_annotations(source['path'])
-        import yaml
         from omegaconf import OmegaConf
         from src.model.parse import get_model
         from src.tokenizer.parse import get_tokenizer
+        from src.tokenizer.spec import TokenizerConfig
         model_config = OmegaConf.load('configs/model/unirig_ar_350m_1024_81920_float32.yaml')
         model_config.llm.pretrained_model_name_or_path = runtime['opt_config_root']
-        tokenizer = get_tokenizer(**yaml.safe_load(Path('configs/tokenizer/tokenizer_parts_articulationxl_256.yaml').read_text()))
+        tokenizer = get_tokenizer(TokenizerConfig.parse(OmegaConf.load(
+            'configs/tokenizer/tokenizer_parts_articulationxl_256.yaml')))
         model = get_model(**model_config, tokenizer=tokenizer)
         payload = torch.load(checkpoint, map_location='cpu', mmap=True, weights_only=False)
         state = {k.removeprefix('model.'): v for k, v in payload['state_dict'].items()}
         model.load_state_dict(state, strict=True)
         del payload, state
         model.to(device).eval()
-    else:
+    elif method == 'puppeteer_official':
         from types import SimpleNamespace
         os.chdir(Path(source['path']) / 'skeleton')
         sys.path.insert(0, str(Path.cwd()))
@@ -184,6 +207,21 @@ def baseline(config, records, output, method):
         model.load_state_dict(payload['model'], strict=True)
         del payload
         model.to(device).half().eval()
+    else:
+        from copy import deepcopy
+        from src.model.tokenrig import TokenRig
+        from transformers import StoppingCriteria, StoppingCriteriaList
+        payload=torch.load(checkpoint,map_location='cpu',mmap=True,weights_only=False)
+        cfg=deepcopy(payload['hyper_parameters']['model_config'])
+        cfg['pretrained_vae']=config['baseline_weights']['skintokens_vae']['path']
+        cfg['llm']['pretrained_model_name_or_path']=runtime['paper_skin_qwen_config']
+        del payload
+        model=TokenRig.load_from_system_checkpoint(checkpoint,model_config=cfg,strict=True).to(device).eval()
+        tokenizer=model.tokenizer
+        class SkeletonEnd(StoppingCriteria):
+            def __call__(self,input_ids,scores,**kwargs):
+                return input_ids[:,-1]==tokenizer.eos
+        skeleton_stop=StoppingCriteriaList([SkeletonEnd()])
     original_generate = model.transformer.generate
     def capture_generate(*args, **kwargs):
         ids = original_generate(*args, **kwargs)
@@ -203,15 +241,18 @@ def baseline(config, records, output, method):
             points = record['surface']['dense_points'][0, 0].float()
             normals = record['surface']['dense_normals'][0, 0].float()
             trace.clear()
-            if method == 'unirig_official':
+            if method in ('unirig_official','skintokens_official'):
                 center = .5 * (points.amin(0) + points.amax(0))
                 scale = 2. / (points.amax(0) - points.amin(0)).amax()
                 with torch.inference_mode(), torch.autocast('cuda', dtype=torch.bfloat16):
+                    extra={'only_ids':True,'stopping_criteria':skeleton_stop} if method=='skintokens_official' else {}
                     decoded = model.generate(vertices=((points-center)*scale).to(device),
-                        normals=normals.to(device), cls='articulationxl',
-                        max_new_tokens=2048, num_beams=1, do_sample=False)
+                        normals=normals.to(device), cls='articulation' if method=='skintokens_official' else 'articulationxl',
+                        max_new_tokens=2048, num_beams=1, do_sample=False,**extra)
                 if not trace['ids'][0] or trace['ids'][0][-1] != tokenizer.eos:
                     raise ValueError('max_tokens_without_EOS')
+                if method=='skintokens_official':
+                    decoded=tokenizer.detokenize(ids=decoded.output_ids.detach().cpu().numpy())
                 parents = decoded.parents if decoded.parents is not None else decoded._get_parents()
                 xyz = np.asarray(decoded.joints, dtype=np.float32) / float(scale) + center.numpy()
             else:
@@ -355,12 +396,82 @@ def run(config, output, source, config_path):
         'shared_GPU_timing_not_an_isolated_speed_benchmark': True})
 
 
+def complete_baselines(config, output, source, config_path):
+    """Retain completed generations; finish only the unstarted official baselines."""
+    receipt=config['audit_result']
+    if digest(receipt['path'])!=receipt['sha256']:
+        raise ValueError('prepared input receipt changed')
+    accepted=json.loads(Path(receipt['path']).read_text())
+    if not accepted['passed'] or accepted['scientific_sha256']!=scientific_sha(config):
+        raise ValueError('prepared input science differs')
+    cache=Path(receipt['path']).parent/'canonical.pt'
+    if digest(cache)!=accepted['canonical_sha256']:
+        raise ValueError('prepared canonical data changed')
+    records=torch.load(cache,map_location='cpu',weights_only=True)
+    expected={r['asset_id']:r['surface_sha256'] for r in records}
+    retained=config['runtime']['paper_completed_evoweave']
+    old_resources=json.loads(Path(retained['resources_path']).read_text())
+    if digest(retained['resources_path'])!=retained['resources_sha256']:
+        raise ValueError('original partial resource evidence changed')
+    if not old_resources['complete'] or not old_resources['payload_cleanup_complete'] or old_resources['exit_code']!=1:
+        raise ValueError('partial comparison did not exit cleanly after its adapter error')
+    saved={}
+    for name,spec in retained['files'].items():
+        if digest(spec['path'])!=spec['sha256']:
+            raise ValueError('retained completed prediction changed')
+        saved[name]=json.loads(Path(spec['path']).read_text())
+    rows=saved['evoweave330k_rows.json']
+    targets=saved['dynamic_rows.json']
+    target_keys={(r['asset_id'],r['frame'],r['method']) for r in targets}
+    wanted={(asset,frame,method) for asset in expected for frame in range(1,8)
+        for method in ('evoweave330k_head','evoweave330k_reference_copy')}
+    if (len(rows)!=24 or {r['asset_id']:r['input_surface_sha256'] for r in rows}!=expected
+            or len(targets)!=336 or target_keys!=wanted):
+        raise ValueError('retained generations do not cover the fixed24cohort')
+    validate_sources(config)
+    for name,spec in {'working_model':config['working_model'],**config['baseline_weights']}.items():
+        if digest(spec['path'])!=accepted['weight_sha256'][name]:
+            raise ValueError('audited model weights changed')
+    if any(digest(path)!=value for path,value in accepted.get('auxiliary_sha256',{}).items()):
+        raise ValueError('audited auxiliary model configuration changed')
+    output.mkdir(exist_ok=False)
+    for name,value in saved.items():write(output/name,value)
+    failures={}
+    for method in config['evaluation']['methods'][1:]:
+        command=[sys.executable,'-B',str(Path(__file__).resolve()),'--config',str(config_path),
+            '--output',str(output),'--mode','capacity','--baseline',method]
+        env=os.environ.copy()
+        if method=='skintokens_official':
+            env['PYTHONPATH']=config['runtime']['paper_skin_pythonpath']
+            env.pop('USE_FLASH3',None)
+        with (output/(method+'.log')).open('x') as log:
+            child=subprocess.run(command,env=env,stdout=log,stderr=subprocess.STDOUT,
+                timeout=config['evaluation']['payload_limit_seconds'])
+        if child.returncode:
+            failures[method]={'exit_code':child.returncode,'log':str(output/(method+'.log'))}
+    summaries={'evoweave330k':summarize(rows)}
+    for method in config['evaluation']['methods'][1:]:
+        path=output/(method+'_summary.json')
+        if path.exists():summaries[method]=json.loads(path.read_text())
+    for method in ('evoweave330k_head','evoweave330k_reference_copy'):
+        summaries[method]=summarize([r for r in targets if r['method']==method])
+    result={'complete':True,'passed':not failures,'source':source,'scientific_sha256':scientific_sha(config),
+        'optimizer_updates':0,'assets':24,'summaries':summaries,'setup_failures':failures,
+        'completed_Evoweave_not_regenerated':True,'retained_Evoweave':retained,
+        'GT_skeleton_given_to_predictors':False,'greedy_all_methods':True,
+        'Puppeteer_output':'raw_joint_tokens_without_geometric_postprocessing',
+        'SkinTokens_output':'released_GRPO1400_skeleton_prefix_only_no_skinning_or_GT_count',
+        'root_RT_from_dataset_metadata':True,'shared_GPU_timing_not_an_isolated_speed_benchmark':True}
+    write(output/'result.json',result)
+    if failures:raise RuntimeError('one or more official baseline setups failed; other results retained')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--mode', choices=('audit','capacity'), required=True)
-    parser.add_argument('--baseline', choices=('unirig_official','puppeteer_official'))
+    parser.add_argument('--baseline', choices=('unirig_official','puppeteer_official','skintokens_official'))
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     validate_config(config, args.mode)
@@ -374,11 +485,14 @@ def main():
             audit_path = Path(config['audit_result']['path'])
             records = torch.load(audit_path.parent/'canonical.pt', map_location='cpu', weights_only=True)
             baseline(config, records, args.output, args.baseline)
+        elif config['runtime'].get('paper_completed_evoweave'):
+            complete_baselines(config,args.output,source,args.config.resolve())
         else:
             run(config, args.output, source, args.config.resolve())
     except Exception as error:
         if args.output.exists():
-            write(args.output/'failure.json', {'complete': False, 'passed': False,
+            name='failure_'+args.baseline+'.json' if args.baseline else 'failure.json'
+            write(args.output/name, {'complete': False, 'passed': False,
                 'error': repr(error), 'traceback': traceback.format_exc()})
         raise
 

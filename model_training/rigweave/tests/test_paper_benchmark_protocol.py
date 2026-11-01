@@ -81,5 +81,13 @@ class PaperProtocolTests(unittest.TestCase):
         c['family']='hardcase3608_20261101_v1'
         with self.assertRaises(ValueError): P.shared_gpu_policy(c)
 
+    def test_baseline_extension_never_reprepares_inputs_or_regenerates_evoweave(self):
+        c=example();c['release_extension']='skintokens_skeleton_prefix_20261102_v1'
+        c['evaluation']['methods'].append('skintokens_official')
+        with self.assertRaises(ValueError):P.validate_config(c,'audit')
+        c['inherit_prepared_inputs']={'sha256':'bound'}
+        c['runtime']['paper_completed_evoweave']={'files':'bound'}
+        P.validate_config(c,'audit')
+
 
 if __name__ == '__main__': unittest.main()

@@ -15,7 +15,7 @@ RUN='/work/wangyy/virtual_query_matched_5k_20261025'
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--stage',choices=('audit_v36','audit_v37','capacity_v36'),required=True)
+    p.add_argument('--stage',choices=('audit_v36','audit_v37','audit_v38','capacity_v36','capacity_v38'),required=True)
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
     secret=read_dpapi_secret(DEFAULT_SECRET)

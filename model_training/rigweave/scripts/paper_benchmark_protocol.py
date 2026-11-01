@@ -70,6 +70,10 @@ def validate_config(config, mode):
                 'methods': ['evoweave330k', 'unirig_official', 'puppeteer_official'],
                 'retry_failed_generation': False, 'use_GT_reference': False,
                 'case_selection': 'hash_order_excluding_development128'}
+    if config.get('release_extension') == 'skintokens_skeleton_prefix_20261102_v1':
+        expected['methods'].append('skintokens_official')
+        if not config.get('inherit_prepared_inputs') or not config['runtime'].get('paper_completed_evoweave'):
+            raise ValueError('baseline extension must reuse prepared inputs and completed predictions')
     if config.get('evaluation') != expected:
         raise ValueError('unreviewed paper comparison protocol')
     runtime = config['runtime']

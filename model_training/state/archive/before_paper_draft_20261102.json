@@ -1,0 +1,525 @@
+{
+  "active_operation": {
+    "CPU_audit_accepted": true,
+    "CPU_audits": {
+      "v34": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34/result.json",
+        "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34_resources.json",
+        "resources_sha256": "021b906ef445386c60812efef5342ad7ca8b655ae3f67a4b302dc7bc2480fb5c",
+        "sha256": "d1695a67a4c4774f642a6116b6883900ba3e78efe0ca1e18a36e354aff82b463"
+      },
+      "v35": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35/result.json",
+        "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35_resources.json",
+        "resources_sha256": "2d386dcc29907335faf5a1e25aa0c2b93e2228f0c531b92b69a162d32406292c",
+        "sha256": "4cab79464e01ca2ebe3d420040d2a6a3081cec14672245371b28f34840b29dfa"
+      }
+    },
+    "acceptance_test": "Existing matched112asset896view valid only, exactly380kand390kpreselected before official inference. Each zero-update candidate12references/336targets, exact inputs/GT/normalization/seed, native131170166GPU4/8CPUsubset, inherited15beam2048token proof without stress. Independently rescore and visually inspect all12; apply frozen practical-benefit rule; publish one exact working checkpoint or330kand stop. No extra checkpoint, baseline regeneration, training, seed sweep or population-quality claim.",
+    "authorization": "User2026-11-02 authorizes two better intermediate checkpoints from existing330kto400kvalid, same12official cases, choose clearly better else330k, no further training.",
+    "automatic_retry_allowed": false,
+    "capacity_accepted": true,
+    "case_review": {
+      "GT_reference_controls_separate": true,
+      "all12_failure_zero_target_edgeF1": {
+        "330k": 0.7560105580176746,
+        "380k": 0.729235657432465,
+        "390k": 0.7540208321430079,
+        "400k": 0.7351737799102468
+      },
+      "all_input_GT_policy_seed_and_camera_matched": true,
+      "baseline_recomputed": false,
+      "candidate_assessments": {
+        "380000": {
+          "F1_gain_route": false,
+          "gates": {
+            "background_valid_preserved": true,
+            "complete_case_geometry": true,
+            "meaningful_paired_gain": false,
+            "no_large_case_regression": false,
+            "no_new_failures": true
+          },
+          "geometry_gain_route": false,
+          "qualifies": false,
+          "relative_j2j_change": 0.013292228920819937,
+          "target_edge_f1_gain": -0.026774900585209593
+        },
+        "390000": {
+          "F1_gain_route": false,
+          "gates": {
+            "background_valid_preserved": true,
+            "complete_case_geometry": true,
+            "meaningful_paired_gain": false,
+            "no_large_case_regression": true,
+            "no_new_failures": true
+          },
+          "geometry_gain_route": false,
+          "qualifies": false,
+          "relative_j2j_change": 0.09299026656181919,
+          "target_edge_f1_gain": -0.0019897258746667257
+        }
+      },
+      "cases": 12,
+      "evidence_archive": {
+        "all_uncompressed_members_verified": true,
+        "bytes": 30622624,
+        "comparison_review_sha256": "45998ae4d1681db69f2c0f22d44dd05665ceec161c65108fa939d0460101af24",
+        "complete": true,
+        "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1/comparison_evidence.tar.gz",
+        "local": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_evidence.tar.gz",
+        "members": 86,
+        "selected_total_visits": 330000,
+        "sha256": "c8b6910c9f5f667959544b0002dbff48e3314b2e826a173fa0c9e6fb2a4968cb",
+        "training_weights_or_dataset_not_copied": true,
+        "visual_inspection_sha256": "212289a2365ac0402c72117d16c04aac4ed5b097966a58df270b329cf6d993d1",
+        "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/checkpoint_selection_20261102/comparison_evidence.tar.gz",
+        "working_model_sha256": "f32efdc31c29f43258f4f78afd0e60fc4d9fff60b9bd2c8f8933a135fe2bd125"
+      },
+      "full105_exact_replay_unresolved": true,
+      "images_reviewed": 27,
+      "independent_new_reference_scores": 24,
+      "independent_new_target_scores": 672,
+      "independent_population_quality_accepted": false,
+      "local": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_review.json",
+      "local_report": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_report.html",
+      "new_training_or_stress": false,
+      "paired_geometry": {
+        "380k": {
+          "assets": 12,
+          "cases": [
+            5,
+            15,
+            23,
+            24,
+            30,
+            44,
+            54,
+            61,
+            70,
+            95,
+            105,
+            108
+          ],
+          "improved": 4,
+          "normalized_j2j": {
+            "330k": 0.01952829373595265,
+            "380k": 0.019787868286723947
+          },
+          "regressed": 8,
+          "views_per_model": 84
+        },
+        "390k": {
+          "assets": 12,
+          "cases": [
+            5,
+            15,
+            23,
+            24,
+            30,
+            44,
+            54,
+            61,
+            70,
+            95,
+            105,
+            108
+          ],
+          "improved": 2,
+          "normalized_j2j": {
+            "330k": 0.01952829373595265,
+            "390k": 0.021344234975956392
+          },
+          "regressed": 10,
+          "views_per_model": 84
+        }
+      },
+      "reference_valid_counts": {
+        "330k": 12,
+        "380k": 12,
+        "390k": 12,
+        "400k": 12
+      },
+      "reviewed_utc": "2026-11-01T18:30:11.334137+00:00",
+      "sha256": "45998ae4d1681db69f2c0f22d44dd05665ceec161c65108fa939d0460101af24",
+      "views_per_model_method": 84,
+      "visual_inspection_sha256": "212289a2365ac0402c72117d16c04aac4ed5b097966a58df270b329cf6d993d1"
+    },
+    "code_commit": "173cb110554ac9c86d3dd629e93c899e032f423d",
+    "complete": true,
+    "contract": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+    "decision_rule": {
+      "candidate_tie_break": "Among passing candidates, highest targetF1, then lowest pairedJ2J, then earlier checkpoint. If none passes,330kwithout another search.",
+      "fallback_total": 330000,
+      "max_relative_j2j_worsening_with_f1_gain": 0.01,
+      "max_single_case_absolute_j2j_loss": 0.01,
+      "max_target_edge_f1_loss_with_j2j_gain": 0.002,
+      "max_valid_background_f1_loss": 0.005,
+      "min_relative_j2j_gain": 0.05,
+      "min_target_edge_f1_gain": 0.01,
+      "quality_gate": "Either target edgeF1 gains1point with no more than1percent relative J2Jworsening, or J2J improves5percent with no more than0.2point F1loss. No new failures, no single-case1percent-of-diagonal geometry loss, and no more than0.5point background validF1loss.",
+      "require_no_new_reference_or_target_failures": true
+    },
+    "experiment_id": "hardcase_checkpoint_selection_20261102",
+    "explicit_human_authorized": true,
+    "fallback_total": 330000,
+    "final_working_choice": {
+      "checkpoint": {
+        "label": "hardcase3608_plus030000",
+        "layout": "anchor",
+        "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+        "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+      },
+      "definition": "model_training/state/working_model.json",
+      "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+      "no_further_training_or_search": true,
+      "population_quality_accepted": false,
+      "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+      "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+      "selected_total_visits": 330000,
+      "work_and_durable_SHA256_verified": true,
+      "working_choice_user_authorized": true
+    },
+    "formal_training_allowed": false,
+    "full105_exact_replay_unresolved": true,
+    "further_checkpoint_search_allowed": false,
+    "gpu_work_allowed": false,
+    "label": "predicted_reference_20261029_v1",
+    "model_quality_accepted": false,
+    "new_capacity_stress_permitted": false,
+    "operation": "two_intermediate_official12case_reviews_then_final_working_model_choice",
+    "optimizer_updates": 0,
+    "phase": "completed",
+    "population_quality_accepted": false,
+    "postrun_review": {
+      "all_own_payloads_cleaned": true,
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1/postrun_review.json",
+      "native_keeper_preserved": true,
+      "old_directories_preserved": true,
+      "selected_work_and_durable_SHA256_verified": true,
+      "sha256": "d976eca2d71b1e98f76d0e6e050bd1bee2a9bc94141b357ab9e11acc8334bcc1",
+      "training_results_unchanged": true,
+      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/checkpoint_selection_20261102/postrun_review.json"
+    },
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "retained400k": {
+      "resources": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33_resources.json",
+        "sha256": "7fb13ced52c265f44decc428bfbf2f1d37be547d75410b5d3aa4e49a6b030ff4"
+      },
+      "result": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/result.json",
+        "sha256": "68c1e534d3e7a8eb3f4d46a069036fca51f14f5bc089458a2c0571673f0fb2f3"
+      }
+    },
+    "retained_baseline330k": {
+      "resources": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
+        "sha256": "388895ab2fbbe562d78e5f21ce7351614ba3c74e09e2973dbf53edc8bac50735"
+      },
+      "result": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+        "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+      }
+    },
+    "runs": [
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase380k_visual12_20261102.json",
+        "config_sha256": "7e6ed9f7e0c2e62e7f1d9e0e1eb7d52ccbe7eec2ad79d607fdb26f4575c822dc",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34_resources.json",
+          "resources_sha256": "021b906ef445386c60812efef5342ad7ca8b655ae3f67a4b302dc7bc2480fb5c",
+          "sha256": "d1695a67a4c4774f642a6116b6883900ba3e78efe0ca1e18a36e354aff82b463",
+          "source": "d288f7a70bd780fbe1c33ffa58e44a0fb9a2c7d7"
+        },
+        "stage": "audit_v34",
+        "status": "CPU_audit_passed",
+        "total_visits": 380000
+      },
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase390k_visual12_20261102.json",
+        "config_sha256": "4c8a04dcda0daf668c343534d709ead54cb61b0fc61d26d02d66a0979dd7c80e",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35_resources.json",
+          "resources_sha256": "2d386dcc29907335faf5a1e25aa0c2b93e2228f0c531b92b69a162d32406292c",
+          "sha256": "4cab79464e01ca2ebe3d420040d2a6a3081cec14672245371b28f34840b29dfa",
+          "source": "f600de8c3cef199b62333cddb6786b158bcc5b79"
+        },
+        "stage": "audit_v35",
+        "status": "CPU_audit_passed",
+        "total_visits": 390000
+      },
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase380k_visual12_20261102.json",
+        "config_sha256": "2f2d0e7d0b65f7153466507081a515ccd43036191a0614df673f7d2036fcec9e",
+        "exit_code": 0,
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34_resources.json",
+          "resources_sha256": "1072b76713aa85ad8b821c8f7815db7bb272075ce3fe23e3d86a9ece22e4f77a",
+          "sha256": "48ead4b9b7c62b873127d861ed74e682d6ff0ed5b706f3def518847cc52be526",
+          "source": "8c7320e06310a7b82f0663bee98fa89b3af0b5c8"
+        },
+        "stage": "capacity_v34",
+        "status": "passed_pending_independent_case_review",
+        "total_visits": 380000
+      },
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase390k_visual12_20261102.json",
+        "config_sha256": "c7641f915d55217033a7cc4c7cea4679c94fc3c7a0d9d58bc9a4a20bd27c9d20",
+        "exit_code": 0,
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v35",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v35/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v35_resources.json",
+          "resources_sha256": "8e2de66a5d83c61e2d73497631cf9875bc9697f8b78b40b6d89c983a7c5a1b85",
+          "sha256": "94c08ee436af48f0976a53e5b48d3df2d8cbb5cdf614cddb807de0ced3470064",
+          "source": "864e2745767bfa59f8c31644895dcb7a65997b0c"
+        },
+        "stage": "capacity_v35",
+        "status": "passed_pending_independent_case_review",
+        "total_visits": 390000
+      }
+    ],
+    "selected_total_visits": 330000,
+    "selected_totals": [
+      380000,
+      390000
+    ],
+    "selection_manifest": {
+      "relative_path": "model_training/selections/hardcase_330k400k_20261102.json",
+      "sha256": "34653d80c4e0bd138b72bebf2f01df8d2018afb8bd26198589a9d23a821de151"
+    },
+    "source_deployment": {
+      "authorized": true,
+      "deployment_id": "hardcase_checkpoint_selection_20261102",
+      "do_not_restore_old_files": true,
+      "expected_old_source": "e145da7e70574fe739eda3c70370e5922aa62faa",
+      "implementation": "server_ops/hgc/deploy_stage_checkout.py",
+      "new_worktree_clean": true,
+      "old_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/old_checkout_before_d288f7a70bd7.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/old_checkout_before_d288f7a70bd7.tar.gz",
+        "sha256": "e396b50e5024a224a66c6b40cdce9d9f637c8f3f15c462f0ef9712464cb113e1"
+      },
+      "old_files_restored": 0,
+      "preserve_old_directory": true,
+      "preserved_old_directory": "/work/wangyy/virtual_query_matched_5k_20261025/code_preserved_e145da7e7057_before_d288f7a70bd7",
+      "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase_checkpoint_selection_20261102.json",
+      "receipt_sha256": "ef8cddae6aaaf975109e1d78643a58b4d6e61e60295328f8a05d67bf1b58dc18",
+      "source_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/source_d288f7a70bd780fbe1c33ffa58e44a0fb9a2c7d7.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/source_d288f7a70bd780fbe1c33ffa58e44a0fb9a2c7d7.tar.gz",
+        "sha256": "f6b63039637bbb043e2259bd8a2430c5d7e55f7955938715aa8246125ad34e5e"
+      },
+      "source_created_utc": "2026-11-01T18:10:25.359251+00:00",
+      "status": "completed_and_used_by_both_candidates",
+      "valid_until_before_UTC": "2026-11-06T18:10:25.359251+00:00"
+    },
+    "status": "completed_final330k_working_model_selected_no_further_training_or_search",
+    "working_model_selection_accepted": true,
+    "working_model_selection_authorized": true
+  },
+  "allocation_defaults": {
+    "explicit_user_required_for_shorter_lifetime": true,
+    "h_rt": "96:00:00",
+    "h_rt_seconds": 345600,
+    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
+    "save_stop_margin_seconds": 3600
+  },
+  "allocation_request": {
+    "accepted_request_verified": true,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "automatic_payload_allowed": false,
+    "cpu_slots": 16,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "gpu_type": "H100",
+    "gpus": 2,
+    "h_rt_seconds": 345600,
+    "job_id": 131170166,
+    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+    "memory_per_slot": "4G",
+    "observed_available_CPU_slots": 76,
+    "observed_available_H100": 3,
+    "original_h_rt_seconds": 86400,
+    "persistent_session": "evoweave_h100_native_20261031",
+    "queue": "gpuh.q@pcg01i",
+    "status": "granted_native_lifetime_extended_to96h",
+    "total_memory_reservation_GiB": 64
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "preflight",
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "compute_allocation": {
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "cpu_slots": 16,
+    "execution_CPU_binding_required_before_compute": false,
+    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
+    "h_rt_seconds": 345600,
+    "host": "pcg01i",
+    "inherited_affinity_logical_CPU_count": 224,
+    "keeper_pid": 2268188,
+    "kernel_cpuset_and_devices_membership": true,
+    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
+    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "policy": "Retain native131170166keeper2268188,96hours2H100/16CPU. User authorizes two intermediate zero-update12case comparisons onGPU4/8CPUsubset, no extra GPUs/release/training/stress. Stop2026-11-04T11:40:04Z.",
+    "previous_allocation": {
+      "expiry_utc": "2026-10-31T11:55:38Z",
+      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
+      "qlogin_job_id": 130675914,
+      "status": "expired"
+    },
+    "qlogin_job_id": 131170166,
+    "rejected_previous_reservation": {
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload"
+    },
+    "rss_limit_bytes": 68719476736,
+    "server": "HGC",
+    "started_utc": "2026-10-31T12:40:04.726Z",
+    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
+    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
+  },
+  "current_dataset_revision": {
+    "contract": "DATASET_SOURCE_OF_TRUTH.md",
+    "normalization": "input_sequence_mesh_bbox",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967
+  },
+  "current_working_model": {
+    "checkpoint": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "default_for_new_user_authorized_inference": true,
+    "definition": "model_training/state/working_model.json",
+    "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+    "historical_full300k_is_baseline_not_current_working_default": true,
+    "no_further_training_or_search": true,
+    "population_quality_accepted": false,
+    "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+    "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+    "selected_total_visits": 330000,
+    "work_and_durable_SHA256_verified": true,
+    "working_choice_user_authorized": true
+  },
+  "established_research_decisions": {
+    "current_question": "Final working model fixed to330kafter existing matched112assetvalid ranked380kand390kand both official12case reviews failed to beat330k. Same12asset targetF1:330k .7560105580,380k .7292356574,390k .7540208321; pairedJ2J .0195282937,.0197878683,.0213442350. Current default is the verified durable330kweights for both stages. Stop training/checkpoint search. Keep all checkpoints and historical300kbaseline;105old exact-token replay cause unresolved.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
+  },
+  "human_context": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+  "last_operation": {
+    "archive": "model_training/state/archive/before_checkpoint_selection_20261102.json",
+    "complete": true,
+    "experiment_id": "hardcase400k_visual12_20261102",
+    "label": "predicted_reference_20261029_v1",
+    "model_quality_accepted": false,
+    "status": "completed_fixed400k_diagnostic_new_user_authorizes_finite_intermediate_selection"
+  },
+  "module": "model_training",
+  "next_required_result": "Final delegated choice is330k. For future user-authorized inference use state/working_model.json and its verified durable checkpoint for BOTH pipeline stages. This finite selection is complete; do not add checkpoints, retrain, rerun baselines/stress or request resources. Preserve all older/newer outputs, source archives and native96h grant. Keep full300kas historical baseline only and105exact replay cause unresolved; do not claim independent population quality acceptance.",
+  "pending_user_authorized_continuation": {
+    "additional_asset_visits": 70000,
+    "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
+    "backbone_LR": 2e-06,
+    "current_total_asset_visits": 330000,
+    "further_training_authorized": false,
+    "head_multiplier": 3,
+    "restore_complete_checkpoint_and_Adam": true,
+    "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
+    "status": "completed70000new_visits_training",
+    "target_total_asset_visits": 400000,
+    "weights": {
+      "background": 1,
+      "core": 3,
+      "extension": 2
+    }
+  },
+  "publication_authorization": {
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
+    "branch": "codex/virtual-fusion-20261013",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "isolation_required": true,
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "status": "explicit_user_approved"
+  },
+  "receipt_max_age_minutes": 240,
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
+    "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
+    "model_training/docs/HARDCASE_VISUAL12_20261101.md",
+    "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
+    "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
+    "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+    "model_training/state/working_model.json"
+  ],
+  "schema_version": 1,
+  "state_id": "hardcase_checkpoint_selection_complete_working330k_20261102",
+  "updated_at": "2026-11-01T18:33:56.261997+00:00"
+}

@@ -113,6 +113,7 @@ def record(config, mode, stage):
         op['capacity_inherited']=config['execution']['capacity']
     if mode=='capacity' or continuation:
         op['formal_training_allowed']=True
+        op['gpu_work_allowed']=True
         state['allowed_operations']=['inspect','report','preflight','train']
         state['blocked_operations']=['submit','matched_eval']
     op['phase']='formal_training_ready' if continuation else 'capacity_ready_at_scheduled_time' if mode=='audit' else 'formal_training_ready'

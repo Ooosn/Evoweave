@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -15,6 +16,8 @@ from hardcase_adaptation_protocol import COUNTS,weighted_order
 from hardcase_continuation_protocol import (BOUNDARIES,NEW_SOURCE,restore_stream,source_compatible,validate_config)
 from virtual_fusion_normal_runtime import MatchedFrameStream
 from virtual_pair_runtime import next_update_batches,set_lr
+sys.path.insert(0,str(ROOT/'model_training/tools'))
+import hardcase_adaptation_ops as ops
 
 
 class ContinuationTests(unittest.TestCase):
@@ -97,6 +100,36 @@ class ContinuationTests(unittest.TestCase):
             self.assertEqual(lr,2e-6); self.assertEqual(beta,.95)
             for key,value in before[0].items():
                 torch.testing.assert_close(value,optimizer.state_dict()['state'][0][key],rtol=0,atol=0)
+
+    def test_CPU_acceptance_releases_only_the_exact_training_stage(self):
+        config=copy.deepcopy(self.config)
+        result={'complete':True,'passed':True,'scientific_sha256':'science','source_sha256':{'loader':'source'},
+            'cuda_initialized':False,'plan':{'assets':100000,'updates':2091,'unique_assets':18002},
+            'validation_panel':112,'initialization':{'project_optimizer_loaded':True}}
+        resources={'complete':True,'passed':True,'exit_code':0,'payload_cleanup_complete':True,
+            'kernel_scheduler_membership':True,'allocation':config['runtime']['allocation']}
+        state={'active_operation':{'label':config['family'],'gpu_work_allowed':False,
+            'formal_training_allowed':False,'CPU_audit_accepted':False,'capacity_accepted':False,
+            'runs':[{'mode':'audit','approved':True,'complete':False},
+                    {'mode':'train','approved':False,'complete':False}]}}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory); output=root/'outputs/audit_v32'; output.mkdir(parents=True)
+            (output/'result.json').write_text(json.dumps(result))
+            output.with_name('audit_v32_resources.json').write_text(json.dumps(resources))
+            state_path=root/'state.json'; state_path.write_text(json.dumps(state))
+            with patch.object(ops,'RUN',root),patch.object(ops,'STATE',state_path),\
+                    patch.object(ops,'CONFIG',root/'config.json'),\
+                    patch('anchor_full_protocol.scientific_sha',return_value='science'),\
+                    patch('anchor_full_protocol.source_hashes',return_value={'loader':'source'}),\
+                    patch('hardcase_continuation_protocol.inherited_capacity',return_value={'passed':True}) as proof,\
+                    patch('builtins.print'):
+                ops.record(config,'audit','audit_v32')
+            proof.assert_called_once_with(config)
+            op=json.loads(state_path.read_text())['active_operation']
+            self.assertTrue(all(op[key] for key in ('CPU_audit_accepted','capacity_accepted',
+                'gpu_work_allowed','formal_training_allowed')))
+            self.assertFalse(op['runs'][0]['approved']); self.assertTrue(op['runs'][0]['complete'])
+            self.assertTrue(op['runs'][1]['approved']); self.assertFalse(op['runs'][1]['complete'])
 
 if __name__=='__main__':
     torch.set_num_threads(1)

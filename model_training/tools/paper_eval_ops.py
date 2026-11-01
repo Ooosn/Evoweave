@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--stage', required=True)
     parser.add_argument('--config', type=Path, required=True)
     args = parser.parse_args()
-    if args.stage not in ('audit_v36','audit_v37','audit_v38','capacity_v36','capacity_v38'):
+    if args.stage not in ('audit_v36','audit_v37','audit_v38','audit_v39','capacity_v36','capacity_v38','capacity_v39'):
         raise ValueError('unrecorded paper stage')
     config = json.loads(args.config.read_text())
     setup(config)

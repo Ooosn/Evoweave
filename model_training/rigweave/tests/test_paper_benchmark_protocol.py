@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 import sys
 import tempfile
+import numpy as np
 
 PATH = Path(__file__).parents[1] / 'scripts/paper_benchmark_protocol.py'
 SPEC = importlib.util.spec_from_file_location('paper_protocol_test', PATH)
@@ -23,6 +24,22 @@ def example():
 
 
 class PaperProtocolTests(unittest.TestCase):
+    def test_puppeteer_normalization_matches_official_function_and_inverse(self):
+        points=np.array([[-2.,-1.,1.],[3.,2.,4.],[1.,0.,-2.]],dtype=np.float32)
+        normalized,center,scale,pc_center,pc_scale=P.puppeteer_normalization(points)
+        np.testing.assert_allclose(center,[.5,.5,1.])
+        self.assertAlmostEqual(scale,.9995/3,places=7)
+        np.testing.assert_allclose(normalized,(points-[.5,.5,1.])*(.9995/3),atol=1e-7)
+        self.assertAlmostEqual(float(np.abs(normalized).max()),.9995,places=6)
+        np.testing.assert_allclose(normalized/scale+center,points,atol=3e-7)
+
+    def test_adapter_revision_changes_science_and_requires_retention(self):
+        a=example();b=copy.deepcopy(a);b['baseline_adapter_revision']=P.ADAPTER_REVISION
+        self.assertNotEqual(P.scientific_sha(a),P.scientific_sha(b))
+        with self.assertRaises(ValueError):P.validate_config(b,'audit')
+        b['runtime']['paper_completed_baselines']={'unirig_official':{'rows_sha256':'bound'}}
+        P.validate_config(b,'audit')
+
     def test_audit(self):
         P.validate_config(example(),'audit')
 

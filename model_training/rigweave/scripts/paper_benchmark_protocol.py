@@ -9,6 +9,22 @@ import sys
 
 SCOPE = 'paper_benchmark_20261102_v1'
 ENTRYPOINT = 'model_training/rigweave/scripts/evaluate_paper_benchmark.py'
+ADAPTER_REVISION = 'official_puppeteer_unit_cube_skin_eager_bf16_20261102_v2'
+
+
+def puppeteer_normalization(points):
+    """Match the authors' normalize_to_unit_cube(scale_factor=0.9995)."""
+    import numpy as np
+    points = np.asarray(points, dtype=np.float32)
+    center = (points.min(0) + points.max(0)) * .5
+    extent = np.abs(points - center).max()
+    if not np.isfinite(points).all() or extent <= 0:
+        raise ValueError('invalid Puppeteer input surface')
+    scale = .9995 / extent
+    normalized = (points - center) * scale
+    pc_center = (normalized.min(0) + normalized.max(0)) * .5
+    pc_scale = (normalized.max(0) - normalized.min(0)).max() + 1e-5
+    return normalized, center, float(scale), pc_center, float(pc_scale)
 
 
 def defer_official_annotations(root):
@@ -80,6 +96,10 @@ def validate_config(config, mode):
             raise ValueError('baseline extension must reuse prepared inputs and completed predictions')
     if config.get('evaluation') != expected:
         raise ValueError('unreviewed paper comparison protocol')
+    revision = config.get('baseline_adapter_revision')
+    if revision is not None:
+        if revision != ADAPTER_REVISION or not config['runtime'].get('paper_completed_baselines'):
+            raise ValueError('adapter repair must bind and retain the completed UniRig generations')
     runtime = config['runtime']
     if (runtime['physical_gpus'] != [4] or runtime['execution_cpu_budget'] != 8
             or runtime['world_size'] != 1 or runtime['require_scheduler_membership'] is not True

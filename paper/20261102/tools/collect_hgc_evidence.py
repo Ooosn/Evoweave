@@ -15,7 +15,7 @@ RUN='/work/wangyy/virtual_query_matched_5k_20261025'
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--stage',choices=('audit_v36','audit_v37','audit_v38','capacity_v36','capacity_v38'),required=True)
+    p.add_argument('--stage',choices=('audit_v36','audit_v37','audit_v38','audit_v39','capacity_v36','capacity_v38','capacity_v39'),required=True)
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
     secret=read_dpapi_secret(DEFAULT_SECRET)
@@ -29,7 +29,7 @@ def main():
         ftp=compute.open_sftp();stack.callback(ftp.close)
         remote=f'{RUN}/outputs/{args.stage}'
         candidates=[(f'{remote}/{x.filename}',Path(args.stage)/x.filename) for x in ftp.listdir_attr(remote)
-            if x.filename.endswith(('.json','.log','.npz'))]
+            if x.filename.endswith(('.json','.log','.npz','.zip'))]
         candidates.extend([(f'{RUN}/outputs/{args.stage}_resources.json',Path(args.stage+'_resources.json')),
             (f'{RUN}/{args.stage}.log',Path(args.stage+'.log')),
             (f'{RUN}/allocation_binding_native_20261031/{args.stage}_launch.json',Path(args.stage+'_launch.json'))])

@@ -14,7 +14,8 @@ import traceback
 import numpy as np
 import torch
 
-from paper_benchmark_protocol import scientific_sha, validate_config, validate_sources, defer_official_annotations
+from paper_benchmark_protocol import (scientific_sha, validate_config, validate_sources,
+    defer_official_annotations, puppeteer_normalization, ADAPTER_REVISION)
 from virtual_pair_guard import ROOT, verify_launch, deadline_due
 
 
@@ -217,6 +218,9 @@ def baseline(config, records, output, method):
         cfg['llm']['pretrained_model_name_or_path']=runtime['paper_skin_qwen_config']
         del payload
         model=TokenRig.load_from_system_checkpoint(checkpoint,model_config=cfg,strict=True).to(device).eval()
+        if config.get('baseline_adapter_revision') == ADAPTER_REVISION:
+            model.to(dtype=torch.bfloat16)
+            model.transformer.set_attn_implementation('eager')
         tokenizer=model.tokenizer
         class SkeletonEnd(StoppingCriteria):
             def __call__(self,input_ids,scores,**kwargs):
@@ -257,11 +261,8 @@ def baseline(config, records, output, method):
                 xyz = np.asarray(decoded.joints, dtype=np.float32) / float(scale) + center.numpy()
             else:
                 points, normals = points[:8192], normals[:8192]
-                center = .5 * (points.amin(0) + points.amax(0))
-                scale = .9995 / (points.amax(0) - points.amin(0)).amax()
-                normalized = (points-center)*scale
-                pc_center = .5 * (normalized.amin(0) + normalized.amax(0))
-                pc_scale = (normalized.amax(0)-normalized.amin(0)).amax() + 1e-5
+                normalized, center, scale, pc_center, pc_scale = puppeteer_normalization(points.numpy())
+                normalized = torch.from_numpy(normalized)
                 with torch.inference_mode(), torch.autocast('cuda', dtype=torch.float16):
                     model.generate({'pc_normal': torch.cat((normalized,normals), -1)[None].to(device).half()})
                 ids = trace['ids'][0]
@@ -276,7 +277,7 @@ def baseline(config, records, output, method):
                 if (tokens[:, :3] < 0).any() or (tokens[:, :3] >= 128).any():
                     raise ValueError('invalid_coordinate_token')
                 xyz = (tokens[:, :3].astype(np.float32)/128. - .5)
-                xyz = (xyz * float(pc_scale) + pc_center.numpy()) / float(scale) + center.numpy()
+                xyz = (xyz * pc_scale + pc_center) / scale + center
                 parents = (tokens[:, 3] - 1).tolist()
             row = metrics(record, xyz, parents)
         except (ValueError, IndexError, TypeError, AssertionError) as error:
@@ -437,7 +438,23 @@ def complete_baselines(config, output, source, config_path):
     output.mkdir(exist_ok=False)
     for name,value in saved.items():write(output/name,value)
     failures={}
+    retained_baselines = {}
+    for method, spec in config['runtime'].get('paper_completed_baselines', {}).items():
+        if method != 'unirig_official' or digest(spec['rows_path']) != spec['rows_sha256']:
+            raise ValueError('only the validated unchanged UniRig generations can be retained')
+        prior_resources = json.loads(Path(spec['resources_path']).read_text())
+        if (digest(spec['resources_path']) != spec['resources_sha256']
+                or not prior_resources['complete'] or not prior_resources['payload_cleanup_complete']):
+            raise ValueError('retained baseline payload cleanup is not established')
+        baseline_rows = json.loads(Path(spec['rows_path']).read_text())
+        if len(baseline_rows) != 24 or {r['asset_id']:r['input_surface_sha256'] for r in baseline_rows} != expected:
+            raise ValueError('retained baseline does not cover exactly the fixed inputs')
+        write(output/(method+'_rows.json'), baseline_rows)
+        write(output/(method+'_summary.json'), summarize(baseline_rows))
+        retained_baselines[method] = spec
     for method in config['evaluation']['methods'][1:]:
+        if method in retained_baselines:
+            continue
         command=[sys.executable,'-B',str(Path(__file__).resolve()),'--config',str(config_path),
             '--output',str(output),'--mode','capacity','--baseline',method]
         env=os.environ.copy()
@@ -458,6 +475,8 @@ def complete_baselines(config, output, source, config_path):
     result={'complete':True,'passed':not failures,'source':source,'scientific_sha256':scientific_sha(config),
         'optimizer_updates':0,'assets':24,'summaries':summaries,'setup_failures':failures,
         'completed_Evoweave_not_regenerated':True,'retained_Evoweave':retained,
+        'retained_completed_baselines':retained_baselines,
+        'baseline_adapter_revision':config.get('baseline_adapter_revision'),
         'GT_skeleton_given_to_predictors':False,'greedy_all_methods':True,
         'Puppeteer_output':'raw_joint_tokens_without_geometric_postprocessing',
         'SkinTokens_output':'released_GRPO1400_skeleton_prefix_only_no_skinning_or_GT_count',

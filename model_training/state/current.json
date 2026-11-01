@@ -51,7 +51,7 @@
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102.json",
-        "config_sha256": "b1d3b4d8bf4de94028070bf77d03e66d7b747d88cf28fc8d62cb1673280451d9",
+        "config_sha256": "2ca67f8611049f443c66d9ea4b8021c95fce12cd91e5713e0f63d9388e551142",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v36"
       }
     ]

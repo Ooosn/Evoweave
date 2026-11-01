@@ -40,7 +40,7 @@
     "data_workers_per_rank": 6,
     "execution_cpu_budget": 8,
     "execution_mode": "scheduler_job",
-    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "extra_pythonpath": "/work/wangyy/paper_baselines_20261102/runtime_unirig:/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
     "gpu_memory_fraction_limit": 0.85,
     "gpu_uuids": [
       "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
@@ -71,7 +71,8 @@
       "own_memory_fraction": 0.3,
       "minimum_free_mib": 32768,
       "preserve_existing_processes": true
-    }
+    },
+    "paper_baseline_dependency_receipt": "/work/wangyy/paper_baselines_20261102/runtime_unirig/install_complete.json"
   },
   "parent_config": {
     "relative_path": "model_training/experiments/anchor_full_20261030_v1.json",

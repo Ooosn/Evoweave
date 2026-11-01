@@ -1,5 +1,11 @@
 # Hardcase3608 Joint Adaptation
 
+Current outcome: train_v30 completed at10:27:36JST on2026-11-01. No development
+checkpoint met all frozen shortlist gates; retain full300k. The conditional
+locked/official phase was not run. Training execution passed, not model-quality
+acceptance. The startup instructions below are retained history, not permission
+to rerun. See the completed review at the end.
+
 User decision, 2026-11-01: freeze the3608candidate scope and per-asset sampling
 weights3/2/1 and finish preparation. The initial04:00Asia/Tokyo start was blocked
 by other GPU workloads; the user has rescheduled the next attempt to05:00.
@@ -287,3 +293,71 @@ First evaluate the unchanged full300k on the fixed112development assets, then
 verify real updates and actual weighted indices. Successful startup is recorded
 outside the immutable live checkout, and follow-up checks should remain quiet
 while healthy, reporting completion/failure or required action.
+
+## Completed Execution And Rejected Shortlist
+
+Formal train_v30 ran05:31:32..10:27:36JST on2026-11-01 from the full300k
+complete model and retained Adam, using committed source
+`7c7214598a94db8df4dd8d166f123da6dba178bc`. It completed exactly30,000new
+asset visits,628updates and392,704input-frame visits. Both rank logs have628
+finite updates; every actual weighted index, asset ID, unique seed and LR was
+checked against the frozen plan. Visits were7088core,4474extension and18438
+background. All65recorded source files match their run hashes. No preparation,
+baseline, capacity test or training stage was repeated.
+
+Both native launcher and resource receipt passed with exit0; the supervisor
+exited, keeper2268188has no children, and GPUs3/4have no remaining processes.
+Peak host RSS was31.40GiB, below64GiB. All four full recovery checkpoints and
+all four model-only exports remain on the NVMe work volume and durable backup.
+Save-time SHA256 verification and model/Adam/rank-RNG/sampler checks passed;
+completion review confirmed identical metadata and current sizes of both copies
+without rehashing unchanged multi-GB files. Native job131170166is preserved.
+Completion was well before the20:40:04JST save-stop deadline.
+
+The unchanged source and all four candidates use identical112asset stage1
+inputs/GT and GT-reference stage2 identities. New112asset means must not be
+compared directly to the historical128asset panel. Failure scores remain zero.
+The table uses absolute percentage-point differences in edgeF1; focus means
+equal weighting of48core plus16extension assets, not3/2/1evaluation weighting.
+
+| Visits | Focus F1 change (pp) | Paired95% interval (pp) | Background change (pp) | Failures/896 | GT pose-error ratio | Eligible |
+|---|---:|---|---:|---:|---:|---|
+|5000|-0.157|[-1.169,0.821]|-0.217|38|0.999418|No|
+|10000|+0.192|[-0.907,1.232]|+0.274|22|1.031239|No|
+|20000|+0.704|[-0.447,1.830]|-0.938|32|0.987248|No|
+|30000|+0.396|[-0.636,1.383]|-0.455|30|0.971868|No|
+
+Baseline failures were30/896; baseline focusF1 was0.603457659 and background
+F1 was0.629016942. All four fail the required+3ppfocus gain. The5knode also
+increases failures,10kexceeds the1.02pose-error guard, and20kexceeds both the
+0.5ppbackground-loss guard and the failure-count guard. The30knode passes the
+three preservation guards but not focus gain. Thus selected_samples=null and
+the reference remains full300k; do not promote the stage1-best10kor stage2-best
+30kunder a different criterion after seeing results.
+
+At30k, overall stage1F1 is0.614723429 versus0.614411638, a+0.031ppchange.
+GT-reference normalized MPJPE is0.003893411 versus0.004006111, down2.813%.
+That stage2 gain does not establish missing-branch recovery or production
+predicted-reference quality. The focus F1 intervals all cross zero. Intervals
+use10,000paired-asset bootstrap resamples, seed20261101, percentile2.5/97.5;
+they are descriptive development intervals without multiplicity adjustment,
+not independent confirmation after model selection. Per-asset deltas and
+separate core/extension/background metrics are retained in the review.
+
+No candidate is eligible, so855locked-asset and32asset/two-seed official15beam
+comparisons were not run. This is the predeclared termination condition, not
+successful final quality acceptance. The trainer's generic
+locked_evaluation_pending=true and generic next string do not override a null
+selection. No automatic retuning, extra training or retry is admitted. The105
+coordinate-token replay difference remains unresolved with its failed gate
+and original outputs preserved. The follow-up heartbeat was deleted after the
+completed review; the scheduler allocation was not released.
+
+Primary review:
+`D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/train0500_completion_review.json`,
+SHA256 `bb0f440d8ed5bb5068cc0f492acb199226ef3587393f36d86769142c224ef72a`.
+Remote copies are `outputs/train_v30/primary_completion_review.json` and
+`/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/primary_completion_review.json`.
+The paired448asset/checkpoint records are stored alongside as
+`paired_development_per_asset_deltas.json`. Original result, resources,
+development selection and log hashes are recorded inside the primary review.

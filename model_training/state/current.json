@@ -13,13 +13,15 @@
     "authorization": "User2026-11-01 approved the3608candidate scope, per-asset weights3/2/1, complete training-plan preparation and waking this chat at04:00JST to start training. Implement the specified30k low-LR continuation with source Adam retained; CPU preparation now, native capacity and formal train no earlier than the stated time. No new or enlarged allocation and no automatic retry. Latest user instruction on2026-11-01 moves the next authorized launch attempt to05:00JST; supersedes the earlier04:00time and waiting-state admission closure only for this scheduled fresh check.",
     "automatic_retry_allowed": false,
     "automation": {
-      "deleted": false,
+      "deleted": true,
+      "deletion_reason": "Training and development selection finished; no eligible candidate exists for conditional locked/official verification. Follow-up deleted after completion review.",
       "id": "evoweave-3608",
       "kind": "heartbeat",
       "previous_0400_trigger": "Executed; GPU occupancy recorded; old one-shot deleted before this user-authorized reschedule.",
       "scheduled_local": "2026-11-01T05:00:00+09:00",
-      "single_use": true,
-      "status": "ACTIVE"
+      "single_use": false,
+      "follow_up_interval_minutes": 20,
+      "status": "DELETED"
     },
     "capacity": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
@@ -36,13 +38,13 @@
       "two_rank_model_Adam_RNG_and_weighted_sampler_disk_roundtrip_exact": true
     },
     "code_commit": "58600f8abc4ac79e72bd1127a85e8fc9d2d032f6",
-    "complete": false,
+    "complete": true,
     "contract": "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
     "development_assets": 112,
     "effective_batch": 48,
     "explicit_human_authorized": true,
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "initialization": "full300k_complete_model_and_Adam; fresh weighted data/RNG and low-LR phase",
     "input_manifest": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
     "label": "hardcase3608_20261101_v1",
@@ -58,7 +60,7 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30"
     },
-    "phase": "formal_training_ready",
+    "phase": "completed_no_eligible_development_candidate",
     "preparation": {
       "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/preparation_remote.json",
       "local_verified_sampling": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/data_verified/sampling_plan.json",
@@ -108,13 +110,21 @@
         "status": "completed_passed"
       },
       {
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase3608_20261101_v1.json",
         "config_sha256": "d263a58cd2cc586f55fa8e9130adc92b2c920a2de6be67d0e03d4d0df4e36387",
+        "code_commit": "7c7214598a94db8df4dd8d166f123da6dba178bc",
+        "exit_code": 0,
         "mode": "train",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30",
-        "status": "pending_capacity_primary_acceptance"
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30_resources.json",
+          "resources_sha256": "d5e059981376c9c13215619a408f5901a20a499f7aaae68442a79597b419170b",
+          "sha256": "a38d2fa9114c9d49e3334aefef4356323f70f27d4893be0d09243e4ef8b77e86"
+        },
+        "status": "completed_passed_execution_no_eligible_development_candidate"
       }
     ],
     "sampling": {
@@ -167,7 +177,40 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/checkpoint_300000.pt",
       "sha256": "a22824dd9134d1840ea60d75254589f1d95f248d495fe98381cc976dbc0fcaa7"
     },
-    "status": "capacity_passed_formal_training_ready",
+    "status": "completed_keep_full300k_no_eligible_development_candidate",
+    "model_quality_accepted": false,
+    "training_execution_accepted": true,
+    "training_review": {
+      "actual_visits": 30000,
+      "actual_optimizer_updates": 628,
+      "actual_input_frame_visits": 392704,
+      "finished_utc": "2026-11-01T01:27:36.016461+00:00",
+      "observed_utc": "2026-11-01T01:41:00.100186+00:00",
+      "code_commit": "7c7214598a94db8df4dd8d166f123da6dba178bc",
+      "local": "D:/evoweave/server_ops/outputs/hardcase_adaptation_20261101/train0500_completion_review.json",
+      "remote": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/primary_completion_review.json",
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/primary_completion_review.json",
+      "sha256": "bb0f440d8ed5bb5068cc0f492acb199226ef3587393f36d86769142c224ef72a",
+      "all_628_updates_per_rank_finite_and_actual_weighted_order_LR_verified": true,
+      "all_four_full_recovery_points_and_weight_exports_with_backups_retained": true,
+      "all_five_development_panels_have_identical_stage1_and_GT_stage2_inputs": true,
+      "source_files_verified": 65,
+      "paired_per_asset_bootstrap_resamples": 10000,
+      "native_payload_cleanup_verified": true,
+      "allocation_preserved": true
+    },
+    "development_selection": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/development_selection_result.json",
+      "sha256": "e96c63389ea1273b46b30902c0a9d7dbaa513e08fbba912ccb54edb5a1ce97f9",
+      "selected_samples": null,
+      "eligible_candidates": 0,
+      "retain_reference": "full300k",
+      "best_focus_gain": 0.0070373489780662934,
+      "required_focus_gain": 0.03,
+      "locked_855": "not_run_no_eligible_candidate",
+      "official_32_two_seed_15beam": "not_run_no_eligible_candidate",
+      "raw_pending_flag_note": "The trainer always emits locked_evaluation_pending=true and a generic next string. With selected_samples=null, the frozen plan instead terminates and retains full300k; these generic fields do not authorize an unselected comparison."
+    },
     "unresolved_prior_diagnosis": {
       "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
       "cause_established": false,
@@ -197,11 +240,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
+    "train",
     "submit",
     "matched_eval"
   ],
@@ -239,13 +282,13 @@
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "At04:03JST both allocated GPUs were occupied by separate Anigroom training processes owned bywangyy. Evoweave keeper has no children, no capacity/train outputs or requests. Preserve every process and the allocation. No Evoweave GPU work dispatched.",
-    "last_observed_utc": "2026-10-31T19:03:08.548950+00:00",
+    "last_observation_note": "At10:41JST train_v30 had exited0 with passed resources and cleanup; supervisor exited, keeper had no children and GPU3/4 had no processes. Native job131170166 and16CPUslots remain reserved. No eligible development candidate; no further GPU work is admitted.",
+    "last_observed_utc": "2026-11-01T01:41:00.100186+00:00",
     "physical_gpus": [
       3,
       4
     ],
-    "policy": "Reuse the existing2H100/16CPUslot native grant only. New user-authorized start attempt is05:00JST. Verify actual GPU3/4 idle state and16CPU binding then; preserve all other workloads and do not expand resources.",
+    "policy": "Preserve the existing2H100/16CPUslot native grant and other workloads. This bounded adaptation is complete and no further compute, retry, GPU replacement, expansion or release is authorized.",
     "previous_allocation": {
       "expiry_utc": "2026-10-31T11:55:38Z",
       "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
@@ -262,7 +305,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "native_capacity_passed_keeper_preserved_formal_train_pending_fresh_idle_check",
+    "status": "train_completed_payload_cleaned_native_allocation_preserved",
     "stop_before_utc": "2026-11-01T11:40:04Z"
   },
   "current_dataset_revision": {
@@ -273,7 +316,7 @@
     "valid_rows": 967
   },
   "established_research_decisions": {
-    "current_question": "User approved an independent3608-pool,3/2/1 weighted adaptation from full300k; freeze the complete plan, prepare now, then wake this chat and launch the gated training workflow at04:00JST on2026-11-01. Earlier exact105replay discrepancy remains unresolved and archived; it is not a demonstrated training cause.",
+    "current_question": "The user-approved3608-pool,3/2/1 adaptation completed30kvisits/628updates. None of four checkpoints met all frozen development gates, so retain full300k. Conditional locked/official verification was not run and quality acceptance is not complete. No automatic extension or retuning; any new experiment requires separate authorization. Earlier exact105replay discrepancy remains unresolved and archived, not repaired by this run.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
@@ -288,7 +331,7 @@
     "status": "baseline_replay_stopped_full105_coordinate_token_difference"
   },
   "module": "model_training",
-  "next_required_result": "Freshly plan and start train_v30 from full300k; never use the capacity checkpoint as initialization.",
+  "next_required_result": "No automatic compute remains. Retain full300k and all adaptation artifacts; report the rejected shortlist and unperformed conditional production verification. A new hypothesis or experiment requires a separately authorized plan and exact state admission.",
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -307,6 +350,6 @@
     "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase3608_capacity_ready_20261101",
-  "updated_at": "2026-10-31T20:28:18.703831+00:00"
+  "state_id": "hardcase3608_complete_no_eligible_candidate_20261101",
+  "updated_at": "2026-11-01T01:42:03+00:00"
 }

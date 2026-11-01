@@ -1,62 +1,74 @@
 {
   "active_operation": {
-    "CPU_audit": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32/result.json",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32_resources.json",
-      "resources_sha256": "efc0e5b4221963b5b2e8891efb9bb6515c27318977ef2c4e48fa63b197a6090d",
-      "sha256": "65c319215f6e02abcdad5493e02a07f689edef7f3ae359746c0ef2817053ab03"
-    },
-    "CPU_audit_accepted": true,
-    "acceptance_test": "Exact330kmodel/Adam/RNG restoration and30kweighted asset/frame/update-prefix preservation; frozen3/2/1tail70k with constant2e-6/6e-6LR; inherited unchanged native dual-H100capacity; actual first2updates and full100k/2091endpoint plus paired development and official case review. No3ppquality early stop, automatic retry or promotion.",
-    "actual_adaptation_input_frame_visits": 1283280,
-    "actual_adaptation_updates": 2091,
-    "actual_adaptation_visits": 100000,
-    "actual_new_updates": 1463,
-    "actual_new_visits": 70000,
-    "actual_total_visits": 400000,
-    "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
+    "CPU_audit_accepted": false,
+    "acceptance_test": "Preserve old directory and exact29deletion state with verified durable archive, fresh fixed-commit clean SSD checkout; native zero-update official15beam inference on fixed12cases and336target rows; exact300kand330kcanonical identities and seed; inherit accepted2048token beam capacity without new stress; independent paired scoring and matched visuals; no retraining/reselection/promotion; preserve105uncertainty.",
+    "authorization": "User2026-11-02 explicitly requests fixing code deployment, preserving the old directory and training results, then continuing the400kmodel official12case inference comparison without repeated restoration.",
     "automatic_retry_allowed": false,
-    "automation": {
-      "deleted": true,
-      "id": "evoweave-40",
-      "reason": "Training completed. Repeated source-file restoration request is superseded by confirmed5day /work retention diagnosis; formal inference needs corrected stage source deployment, not retraining."
+    "baseline": {
+      "resources": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28_resources.json",
+        "sha256": "08d32ea7fc2f26ad056a46a71eded720f8ab6a56a2fd6e6b78da0a23cb75a748"
+      },
+      "result": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28/result.json",
+        "sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a"
+      }
     },
-    "backbone_LR": 2e-06,
-    "capacity_accepted": true,
-    "capacity_inheritance_required": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30_resources.json",
-      "resources_sha256": "0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c",
-      "sha256": "aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed"
+    "capacity_accepted": false,
+    "code_commit": "7cfeed735a9bf3074111b361d1768a445d739d2e",
+    "complete": false,
+    "contract": "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
+    "experiment_id": "hardcase400k_visual12_20261102",
+    "explicit_human_authorized": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "label": "predicted_reference_20261029_v1",
+    "operation": "preserved_source_deployment_and_fixed400k_official12case_comparison",
+    "optimizer_updates": 0,
+    "phase": "preserve_old_checkout_deploy_fixed_stage",
+    "previous330k": {
+      "resources": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
+        "sha256": "388895ab2fbbe562d78e5f21ce7351614ba3c74e09e2973dbf53edc8bac50735"
+      },
+      "result": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+        "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+      }
     },
-    "capacity_inherited": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30_resources.json",
-      "resources_sha256": "0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c",
-      "sha256": "aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed"
-    },
-    "code_commit": "124f82fac0772207941d13e9b2a3a10ce68d9854",
-    "complete": true,
-    "contract": "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
-    "current_total_asset_visits": 330000,
-    "effective_batch": 48,
-    "endpoint_weights": {
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "runs": [
+      {
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
+        "config_sha256": "b69219b446008e67535ad9a4684b3c41193c45ffab133601be226e829b4b96b7",
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33",
+        "status": "admitted"
+      },
+      {
+        "approved": false,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
+        "config_sha256": "b69219b446008e67535ad9a4684b3c41193c45ffab133601be226e829b4b96b7",
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33",
+        "status": "waiting_CPU_and_deployment_review"
+      }
+    ],
+    "source_checkpoint": {
       "label": "hardcase3608_total400000",
       "layout": "anchor",
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/weights_100000.pt",
       "sha256": "b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8"
     },
-    "experiment_id": "hardcase400k_20261101",
-    "explicit_human_authorized": true,
-    "finished_utc": "2026-11-01T15:52:17.035706+00:00",
-    "formal_inference_blocker": {
-      "do_not_commit_or_restore_unrelated_deletions_without_approval": true,
-      "files_preserved_in_their_current_deleted_state": true,
-      "kind": "long_lived_source_checkout_on_age_cleaned_scratch",
-      "next_action": "Preserve the existing checkout and use a reviewed clean fixed-commit SSD stage deployment with durable packed source/Git provenance; do not keep patch-restoring historical files or bypass source admission.",
-      "previous_kind": "unsubmitted_missing_tracked_historical_files",
-      "prior_restore_question_superseded": true,
-      "remote_deleted_paths": [
+    "source_deployment": {
+      "authorized": true,
+      "deployment_id": "hardcase400k_visual12_20261102",
+      "do_not_restore_old_files": true,
+      "durable_archives": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments",
+      "expected_old_deleted_paths": [
         "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
         "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
         "model_training/docs/REFERENCE_CONDITIONED_GENERATION_REVIEW_20261027.md",
@@ -87,114 +99,14 @@
         "model_training/state/archive/seven_density20k_completed_20261027.json",
         "model_training/state/archive/two_query20k_completed_20261026.json"
       ],
-      "restoration_authorized": false,
-      "source_retention_diagnosis": {
-        "individual_unlink_trace_available": false,
-        "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_20261101\\source_retention_diagnosis.json",
-        "mechanism_confirmed": true,
-        "policy": "v /work 1777 root root 5d",
-        "policy_file": "pcg01i:/etc/tmpfiles.d/tmp.conf:26",
-        "prior18_current29_overlap": 0,
-        "sha256": "122349fdb5da7adcc3f470344b92f1ba6a7e594e015cb7feb8d5d65a203b1664"
-      },
-      "training_sources_unchanged": 66,
-      "user_restore_approval_requested": true
+      "expected_old_source": "ef4d0ffddbeb99a1ee1d52b5371880b94bc6c96b",
+      "implementation": "server_ops/hgc/deploy_stage_checkout.py",
+      "preserve_old_directory": true,
+      "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase400k_visual12_20261102.json",
+      "status": "planned"
     },
-    "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "head_LR": 6e-06,
-    "initialization": "complete330k_model_Adam_rankRNG_weighted_prefix",
-    "label": "hardcase3608_20261101_v1",
-    "model_quality_accepted": false,
-    "new_asset_visits": 70000,
-    "new_optimizer_updates": 1463,
-    "operation": "exact_weighted330k_to400k_continuation",
-    "outputs": {
-      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1",
-      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32"
-    },
-    "phase": "source_retention_root_cause_diagnosed",
-    "post_training_validation": {
-      "baseline300k_and330k_reuse_required": true,
-      "candidate_selection": "predeclared400kendpoint_no_reselection",
-      "fixed12_official_15beam": "pending_corrected_stage_source_deployment",
-      "no_automatic_model_promotion": true,
-      "quality_acceptance_complete": false
-    },
-    "required_entrypoint": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
-    "result": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/result.json",
-      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32_resources.json",
-      "resources_sha256": "5ca1d4c23d6f9100120fb212ee507cdf053306f164110497bf2429ed82c465dc",
-      "sha256": "0d46a418784d16123ee128a587e432dcfe2980c8bcaba6d7060dd375689460f8"
-    },
-    "runs": [
-      {
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
-        "config_sha256": "013bf7234be1b3981c0d4e9c0ac08930ba6682011ef63f7c39b2ebf5403ba5be",
-        "exit_code": 0,
-        "mode": "audit",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32",
-        "result": {
-          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32/result.json",
-          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32_resources.json",
-          "resources_sha256": "efc0e5b4221963b5b2e8891efb9bb6515c27318977ef2c4e48fa63b197a6090d",
-          "sha256": "65c319215f6e02abcdad5493e02a07f689edef7f3ae359746c0ef2817053ab03"
-        },
-        "status": "completed_passed"
-      },
-      {
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
-        "config_sha256": "adc53a63c6635da6258bdeec56ac0ff4030f796d7bee37f6a36dedfbb979c605",
-        "exit_code": 0,
-        "mode": "train",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32",
-        "result": {
-          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/result.json",
-          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32_resources.json",
-          "resources_sha256": "5ca1d4c23d6f9100120fb212ee507cdf053306f164110497bf2429ed82c465dc",
-          "sha256": "0d46a418784d16123ee128a587e432dcfe2980c8bcaba6d7060dd375689460f8"
-        },
-        "status": "completed_passed"
-      }
-    ],
-    "source_checkpoint": {
-      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
-      "sha256": "a62dd25991f948298889a68525ee2b0babb9cceb10cfd435e6cd0668422134f7"
-    },
-    "start_adaptation_asset_visits": 30000,
-    "start_optimizer_updates": 628,
-    "status": "training_complete_post_inference_source_deployment_hold",
-    "target_adaptation_asset_visits": 100000,
-    "target_optimizer_updates": 2091,
-    "target_total_asset_visits": 400000,
-    "training_execution_accepted": true,
-    "training_review": {
-      "backup_hash_scope": "Both copies verified by saver; final review confirmed current sizes and metadata, not a fresh full-file rehash.",
-      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1/primary_completion_review.json",
-      "full_recovery_points": 7,
-      "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_20261101\\primary_completion_review.json",
-      "model_exports": 7,
-      "remote": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/primary_completion_review.json",
-      "sha256": "d781acf2c0412f3034904e07c994d5fc959ca113909bc0003ae6da4eeb400faf",
-      "source_files_verified": 66
-    },
-    "training_source": "14695057f5d3a477c30c535cd3eaa743b94ba6bb",
-    "unresolved_prior_diagnosis": {
-      "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
-      "cause_established": false,
-      "full105_exact_coordinate_replay_difference": true,
-      "original_gate_preserved": true
-    },
-    "weights": {
-      "background": 1,
-      "core": 3,
-      "extension": 2
-    }
+    "status": "source_deployment_and_CPU_audit_admitted",
+    "unresolved_full105_exact_replay_difference": true
   },
   "allocation_defaults": {
     "explicit_user_required_for_shorter_lifetime": true,
@@ -274,7 +186,7 @@
       3,
       4
     ],
-    "policy": "Reuse verified96h native131170166with2H100/16CPUonly for the user-authorized70kcontinuation; preserve other tasks and the grant; save-stop2026-11-04T11:40:04Z. No new GPU request or count change.",
+    "policy": "Retain native96h131170166with2H100/16CPU; user authorizes preserved source replacement and zero-update400k12case official inference on existingGPU4/8CPUsubset. Preserve GPU3andother tasks, all old outputs and grant; no extra GPUs/release. Stop2026-11-04T11:40:04Z.",
     "previous_allocation": {
       "expiry_utc": "2026-10-31T11:55:38Z",
       "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
@@ -302,23 +214,24 @@
     "valid_rows": 967
   },
   "established_research_decisions": {
-    "current_question": "400ktraining source was not damaged;400ktraining is complete. The recurring missing-file pattern comes from an inappropriate long-lived /work source deployment under confirmed5day daily cleanup. Prior18andcurrent29do not overlap. Correct deployment before the authorized fixed400kcase inference; individual unlink audit is unavailable.",
+    "current_question": "Fix long-lived scratch source deployment by preserving old tree and using a fresh fixed-commit SSD stage with durable archives, then compare fixed400kendpoint to retained300k/330k on the same12official cases. No repeated file restoration or training; retain105unresolved and no promotion.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
   },
-  "human_context": "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
+  "human_context": "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
   "last_operation": {
-    "archive": "model_training/state/archive/before_hardcase400k_20261101.json",
+    "archive": "model_training/state/archive/before_hardcase400k_visual12_20261102.json",
     "complete": true,
-    "experiment_id": "hardcase_visual12_20261101",
-    "full105_replay_unresolved": true,
-    "label": "predicted_reference_20261029_v1",
-    "status": "completed_fixed12_official_case_review_no_promotion"
+    "experiment_id": "hardcase400k_20261101",
+    "label": "hardcase3608_20261101_v1",
+    "model_quality_accepted": false,
+    "status": "training_completed_preserve_results_continue_fixed400k_inference",
+    "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "400ktraining is complete. Do not repeat the superseded restore29files question. The long-lived checkout is under daily5day /work cleanup. Preserve its current state and prepare a fixed-commit, stage-scoped clean SSD deployment with durable packed source provenance before the authorized fixed12official inference. Do not alter system cleanup, touch files to evade it, hide deletions, weaken clean-source checks, retrain, reselect, promote, add GPUs or release131170166.",
+  "next_required_result": "Use reviewed deployment tool plan/execute on the fixed committed source, preserving old directory and durable verified archives without restoring files. Review actual deployment receipt, run audit_v33once, record its real CPU/native receipts and inherited beam capacity, commit/sync exact state/config and source archive, then plan and run zero-update capacity_v33for400konly. Reuse300k/330k results and inspect paired12case visuals; no new training, stress, GPU request, checkpoint/seed selection or model promotion.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -352,9 +265,10 @@
     "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
     "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
     "model_training/docs/HARDCASE_VISUAL12_20261101.md",
-    "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md"
+    "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
+    "model_training/docs/HARDCASE400K_VISUAL12_20261102.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_complete_source_retention_diagnosed_20261102",
-  "updated_at": "2026-11-01T16:47:22.819150+00:00"
+  "state_id": "hardcase400k_visual12_source_CPU_admitted_20261102",
+  "updated_at": "2026-11-01T17:19:04.016238+00:00"
 }

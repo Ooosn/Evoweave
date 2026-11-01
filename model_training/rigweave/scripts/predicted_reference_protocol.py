@@ -27,6 +27,8 @@ def scientific_sha(config):
         values['full_model_inputs'] = config['full_model_inputs']
     if 'inference_diagnosis' in config:
         values['inference_diagnosis'] = config['inference_diagnosis']
+    if 'hardcase_visual' in config:
+        values['hardcase_visual'] = config['hardcase_visual']
     return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
 
 
@@ -67,8 +69,14 @@ def validate_config(config, mode):
     if full_model:
         specs = config['checkpoints']
         expected_sha = 'bef030ac403cd26d94f493d868bf426f694f047ed93327e1df51b541fe52ba4d'
+        expected_label = 'full_joint_300000'
+        if 'hardcase_visual' in config:
+            from hardcase_visual_protocol import validate_visual
+            validate_visual(config)
+            expected_sha = 'abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018'
+            expected_label = 'hardcase3608_plus030000'
         if ('official_smoke' not in config or not expanded
-                or specs['stage1'] != specs['stage2'] or specs['stage1']['label'] != 'full_joint_300000'
+                or specs['stage1'] != specs['stage2'] or specs['stage1']['label'] != expected_label
                 or specs['stage1']['sha256'] != expected_sha or specs['stage1']['layout'] != 'anchor'
                 or smoke.get('inherited_official_capacity') is not None
                 or config['capacity']['full_official_beam_decode_per_rank'] != (0 if diagnosis else 1)

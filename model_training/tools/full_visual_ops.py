@@ -20,9 +20,10 @@ def snapshot(config, *, idle):
     require_job_membership((proc/'cgroup').read_text(), runtime['allocation'])
     assert sorted(os.sched_getaffinity(runtime['keeper_pid'])) == runtime['allocated_cpu_affinity']
     children = (proc/'task'/str(runtime['keeper_pid'])/'children').read_text().split()
-    pending = [p.name for p in (ALLOCATION/'requests').glob('*.json')
-        if not (ALLOCATION/(p.stem+'_launch.json')).exists()
-        or not json.loads((ALLOCATION/(p.stem+'_launch.json')).read_text())['complete']]
+    allocation = Path(runtime.get('allocation_directory', ALLOCATION))
+    pending = [p.name for p in (allocation/'requests').glob('*.json')
+        if not (allocation/(p.stem+'_launch.json')).exists()
+        or not json.loads((allocation/(p.stem+'_launch.json')).read_text())['complete']]
     apps = command('nvidia-smi', '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader')
     selected, other = [], []
     for line in apps.splitlines():
@@ -56,9 +57,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('plan', 'execute', 'observe'))
     parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27', 'audit_v28', 'capacity_v28',
-        'audit_v29', 'capacity_v29'), required=True)
+        'audit_v29', 'capacity_v29', 'audit_v31', 'capacity_v31'), required=True)
     args = parser.parse_args()
-    filename = 'inference_diagnosis_20261031.json' if args.stage.endswith('_v29') else 'full_model_visual12_20261031.json'
+    filename = ('hardcase_visual12_20261101.json' if args.stage.endswith('_v31') else
+        'inference_diagnosis_20261031.json' if args.stage.endswith('_v29') else 'full_model_visual12_20261031.json')
     path = ROOT/'model_training/experiments'/filename
     config = json.loads(path.read_text())
     setup(config)
@@ -99,8 +101,9 @@ def main():
                 and resources['passed'] and resources['exit_code'] == 0 and resources['payload_cleanup_complete']):
             raise RuntimeError('CPU visual admission did not pass')
     request = {'stage': args.stage, 'mode': mode, 'config': str(path), 'output': str(output), 'source': source}
-    target = ALLOCATION/'requests'/(args.stage+'.json')
-    if any(p.exists() for p in (output, target, ALLOCATION/(args.stage+'_launch.json'))):
+    allocation = Path(config['runtime'].get('allocation_directory', ALLOCATION))
+    target = allocation/'requests'/(args.stage+'.json')
+    if any(p.exists() for p in (output, target, allocation/(args.stage+'_launch.json'))):
         raise RuntimeError('visual stage already used')
     plan_path = RUN/'outputs'/('full_visual_'+args.stage+'_admission.json')
     plan = {'passed': True, 'request': request, 'config_sha256': digest(path), 'live': live}

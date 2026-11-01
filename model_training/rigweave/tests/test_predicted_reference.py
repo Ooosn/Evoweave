@@ -131,6 +131,36 @@ class PredictedReferenceTests(unittest.TestCase):
         changed['full_model_inputs']['rows']['sha256'] = '0'*64
         self.assertNotEqual(scientific_sha(config), scientific_sha(changed))
 
+    def test_final_hardcase_visual_is_independent_and_fixed(self):
+        config = json.loads((ROOT/'model_training/experiments/hardcase_visual12_20261101.json').read_text())
+        for mode in ('audit', 'capacity'):
+            validate_config(config, mode)
+        for key, value in [('candidate_additional_visits', 20000), ('promote_model', True),
+                ('previous_full105_replay_unresolved', False)]:
+            changed = copy.deepcopy(config)
+            changed['hardcase_visual'][key] = value
+            with self.assertRaises(ValueError):
+                validate_config(changed, 'capacity')
+        changed = copy.deepcopy(config)
+        changed['checkpoints']['stage1']['sha256'] = '0'*64
+        with self.assertRaises(ValueError):
+            validate_config(changed, 'capacity')
+        changed = copy.deepcopy(config)
+        changed['runtime']['allocation'] = 130675914
+        with self.assertRaises(ValueError):
+            validate_config(changed, 'capacity')
+        with self.assertRaises(ValueError):
+            validate_config(config, 'train')
+
+    def test_final_hardcase_baseline_is_scientifically_bound(self):
+        from predicted_reference_protocol import scientific_sha
+        config = json.loads((ROOT/'model_training/experiments/hardcase_visual12_20261101.json').read_text())
+        changed = copy.deepcopy(config)
+        changed['hardcase_visual']['baseline']['result']['sha256'] = '0'*64
+        self.assertNotEqual(scientific_sha(config), scientific_sha(changed))
+        with self.assertRaises(ValueError):
+            validate_config(changed, 'audit')
+
     def test_native_subset_keeps_real_grant_and_restricts_execution(self):
         from virtual_pair_guard import scheduler_runtime, allow_native_subset, verify_allocation
         config = json.loads((ROOT / 'model_training/experiments/full_model_visual12_20261031.json').read_text())

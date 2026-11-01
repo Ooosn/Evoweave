@@ -79,6 +79,10 @@ def inherited_capacity(config):
 def audit(config, output, source):
     records = load_records(config)
     capacity = inherited_capacity(config)
+    baseline = None
+    if 'hardcase_visual' in config:
+        from hardcase_visual_protocol import verify_evidence
+        baseline = verify_evidence(config, records)
     for spec in config['checkpoints'].values():
         if sha256(spec['path']) != spec['sha256']:
             raise ValueError('pipeline checkpoint changed')
@@ -94,6 +98,8 @@ def audit(config, output, source):
         'inherited_official_capacity': capacity,
         'cuda_initialized': False, 'stage1_greedy_outputs_reused': 0,
         'policy': config['official_smoke'], 'quality_accepted': False}
+    if baseline is not None:
+        result['frozen_baseline_verified'] = baseline
     write_json(output/'result.json', result)
     return result
 

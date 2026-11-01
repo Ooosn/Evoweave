@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "family": "paper_benchmark_20261102_v1",
+  "runtime": {
+    "allocated_cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "allocated_physical_gpus": [
+      3,
+      4
+    ],
+    "allocation": 131170166,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "cpu_affinity": [
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65
+    ],
+    "cpu_slots": 16,
+    "data_workers_per_rank": 6,
+    "execution_cpu_budget": 8,
+    "execution_mode": "scheduler_job",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "gpu_memory_fraction_limit": 0.85,
+    "gpu_uuids": [
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "keeper_pid": 2268188,
+    "native_subset": "full_visual_gpu4_cpu8_v1",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "output_root": "/work/wangyy/virtual_query_matched_5k_20261025/outputs",
+    "physical_gpus": [
+      4
+    ],
+    "prefetch_microbatches": 2,
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "repo": "/work/wangyy/virtual_query_matched_5k_20261025/code",
+    "require_scheduler_membership": true,
+    "required_h_rt_seconds": 345600,
+    "rss_limit_bytes": 68719476736,
+    "stop_before_utc": "2026-11-04T11:40:04Z",
+    "tokenizer_config": "/home/wangyy/evorig/model_assets/UniRig/configs/tokenizer/tokenizer_parts_articulationxl_256.yaml",
+    "tokenizer_config_sha256": "20ad7eb9b9dfec8a3d2943e8c28223adbc16da3bdb65bd94aa38d92527f51109",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "world_size": 1,
+    "paper_shared_inference": {
+      "explicit_human_authorized": true,
+      "scope": "paper_benchmark_20261102_v1",
+      "own_memory_fraction": 0.3,
+      "minimum_free_mib": 32768,
+      "preserve_existing_processes": true
+    }
+  },
+  "parent_config": {
+    "relative_path": "model_training/experiments/anchor_full_20261030_v1.json",
+    "sha256": "583b0032815d1cca616ec4e67dafcc22a1d38215fa586a6a6d31305cc5438128"
+  },
+  "full_model_inputs": {
+    "resources": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26_resources.json",
+      "sha256": "9265772aa9051c3dab221785c6b655978e5db1adeb0b77cec73dadbef6faa45f"
+    },
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/result.json",
+      "sha256": "6e2ea9986399649df3114913307655416dec13095d06e21dbdacd974e6878989"
+    },
+    "rows": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/evaluation_300000/stage1_rows.json",
+      "sha256": "55466bf9e695205899e5cc3974a71102cbe2e8fbea992a758c4aa908346fe7cf"
+    },
+    "summary": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v26/evaluation_300000/summary.json",
+      "sha256": "cc40e768b2fb43489bfa213dc141c6f6a23d72ab48a60ba9cbfee493a8283d8a"
+    }
+  },
+  "working_model": {
+    "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+    "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018",
+    "layout": "anchor"
+  },
+  "baseline_sources": {
+    "unirig_official": {
+      "path": "/home/wangyy/evorig/model_assets/UniRig",
+      "commit": "6793c6640ff01c8fb389f3993434124bb43d2933"
+    },
+    "puppeteer_official": {
+      "path": "/work/wangyy/paper_baselines_20261102/sources/Puppeteer",
+      "commit": "1c0f9fc6ad209667a0ec5ceac9b59964938a8b51"
+    }
+  },
+  "baseline_weights": {
+    "unirig_official": {
+      "path": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4"
+    },
+    "puppeteer_official": {
+      "path": "/home/wangyy/evorig/model_assets/Puppeteer/skeleton_ckpts/puppeteer_skeleton_w_diverse_pose.pth",
+      "sha256": "2af9a75294b34adde314e20a3142e025925377f31637d232456fd09acb714b43",
+      "official_repository": "Seed3D/Puppeteer",
+      "official_revision": "d83b1b73cd2e1507968d3eade2d6314082c82763"
+    }
+  },
+  "evaluation": {
+    "assets": 24,
+    "input_frames": 8,
+    "reference_slot": 0,
+    "selection_seed": 20261102,
+    "optimizer_updates": 0,
+    "payload_limit_seconds": 10800,
+    "methods": [
+      "evoweave330k",
+      "unirig_official",
+      "puppeteer_official"
+    ],
+    "retry_failed_generation": false,
+    "use_GT_reference": false,
+    "case_selection": "hash_order_excluding_development128"
+  },
+  "audit_result": null
+}

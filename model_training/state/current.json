@@ -8,7 +8,7 @@
     "operation_entrypoints": {
       "preflight": "model_training/rigweave/scripts/evaluate_paper_benchmark.py"
     },
-    "code_commit": "79279609827e9c536a1942bb418b01dd79499e3a",
+    "code_commit": "c27b15a8e07e1dae4b5c38148f0590f87aba2b71",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
@@ -22,11 +22,22 @@
       {
         "stage": "audit_v36",
         "mode": "audit",
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit.json",
         "config_sha256": "c9c26144c51e0c5ef6dffd05be7887d218218f55903af729f6299c02ee24d340",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v36"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v36",
+        "status": "rejected_before_any_input_preparation",
+        "reason": "Our CPU import check created only untracked __pycache__ directories in the fresh Puppeteer checkout. No source bytes changed. Native exit1 and cleanup confirmed."
+      },
+      {
+        "stage": "audit_v37",
+        "mode": "audit",
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit2.json",
+        "config_sha256": "c9c26144c51e0c5ef6dffd05be7887d218218f55903af729f6299c02ee24d340",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37"
       }
     ]
   },

@@ -10,8 +10,8 @@
     },
     "code_commit": "7a37dab53f0252bd3fc925d0f0a8e2351ebbaab5",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_unchanged": true,
@@ -90,11 +90,21 @@
       {
         "stage": "audit_v40",
         "mode": "audit",
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102_audit.json",
         "config_sha256": "56faafb36be596a3dd659fa4ed8b837bb4598b70c17cae89969e982b0e7f9c13",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v40"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v40",
+        "status": "passed"
+      },
+      {
+        "stage": "capacity_v40",
+        "mode": "capacity",
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102.json",
+        "config_sha256": "c7ead579c2c18c030609117711ee958539f740780b3c5d0b60e8bb30fd29255f",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40"
       }
     ]
   },
@@ -280,6 +290,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "paper_adapter_corrected_source_bound_20261102",
+  "state_id": "paper_adapter_correction_CPU_accepted_20261102",
   "updated_at": "2026-11-01T19:44:48.521212+00:00"
 }

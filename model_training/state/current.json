@@ -8,16 +8,16 @@
     "operation_entrypoints": {
       "preflight": "model_training/rigweave/scripts/evaluate_paper_benchmark.py"
     },
-    "code_commit": "c27b15a8e07e1dae4b5c38148f0590f87aba2b71",
+    "code_commit": "8812217e30307afaf9ea39874dc1dec4fd407a2c",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
-    "CPU_audit_accepted": true,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": false,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_unchanged": true,
     "optimizer_updates": 0,
     "resource_policy": "Reuse native131170166 GPU4 CPU8subset. Preserve keeper, other jobs, all results, and96h expiry. Actual free memory and native membership required. Shared timing is not isolated throughput.",
-    "acceptance_test": "Freeze24hash-selected validation assets outside the128development panel before generation. Same8pose canonical inputs, reference0. Greedy all methods. No GT skeleton enters predictors. Report all failures, raw Puppeteer joint-token output, different input pose counts, inherited data overlap, and root-RT metadata. No test-set or production-rig claim.",
+    "acceptance_test": "Finish only UniRig, Puppeteer and releasedSkinTokens skeleton-prefix predictions on the existing24fixed canonical inputs. Metadata audit inherits existing prepared cache without resampling; completed Evoweave predictions must never regenerate. No GT count, retries, training, checkpoint search or other-task changes.",
     "runs": [
       {
         "stage": "audit_v36",
@@ -48,11 +48,22 @@
       {
         "stage": "capacity_v36",
         "mode": "capacity",
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102.json",
         "config_sha256": "2ca67f8611049f443c66d9ea4b8021c95fce12cd91e5713e0f63d9388e551142",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v36"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v36",
+        "status": "partial_completed_evoweave_baseline_adapter_failure",
+        "reason": "UniRig tokenizer factory requires TokenizerConfig, not keyword expansion. It failed before any baseline generation. Retain all24completed Evoweave references and336target rows; no generation retries."
+      },
+      {
+        "stage": "audit_v38",
+        "mode": "audit",
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_baseline_completion_20261102_audit.json",
+        "config_sha256": "77271432a27c309d0db067856ad5daeba97f8e20b9a14c4aa62fc05e7d8ed463",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v38"
       }
     ]
   },
@@ -238,6 +249,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "paper_benchmark_CPU_accepted_20261102",
+  "state_id": "paper_remaining_baselines_metadata_preparation_20261102",
   "updated_at": "2026-11-01T19:44:48.521212+00:00"
 }

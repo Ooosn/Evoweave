@@ -44,6 +44,7 @@
       "zero_updates": true
     },
     "acceptance_test": "Preserve old directory and exact29deletion state with verified durable archive, fresh fixed-commit clean SSD checkout; native zero-update official15beam inference on fixed12cases and336target rows; exact300kand330kcanonical identities and seed; inherit accepted2048token beam capacity without new stress; independent paired scoring and matched visuals; no retraining/reselection/promotion; preserve105uncertainty.",
+    "actual_inference_source": "c5bcd3ec593f63e1d300821ee1a15ca13bb69a13",
     "authorization": "User2026-11-02 explicitly requests fixing code deployment, preserving the old directory and training results, then continuing the400kmodel official12case inference comparison without repeated restoration.",
     "automatic_retry_allowed": false,
     "baseline": {
@@ -58,18 +59,138 @@
     },
     "capacity_accepted": true,
     "capacity_admission_kind": "inherited_same_architecture_official15beam2048tokens_no_new_stress",
+    "case_review": {
+      "GT_reference_controls_separate": true,
+      "all12_failure_zero_target_edgeF1": {
+        "300k": 0.7302501883647087,
+        "330k": 0.7560105580176746,
+        "400k": 0.7351737799102468
+      },
+      "baseline300k_recomputed": false,
+      "baseline330k_recomputed": false,
+      "cases": 12,
+      "common_valid330k400k": {
+        "assets": 12,
+        "cases": [
+          5,
+          15,
+          23,
+          24,
+          30,
+          44,
+          54,
+          61,
+          70,
+          95,
+          105,
+          108
+        ],
+        "improved": 5,
+        "normalized_j2j": {
+          "330k": 0.01952829373595265,
+          "400k": 0.022489898931192732
+        },
+        "regressed": 7,
+        "tied": 0,
+        "views_per_model": 84
+      },
+      "common_valid_three_way": {
+        "assets": 11,
+        "cases": [
+          5,
+          15,
+          23,
+          24,
+          30,
+          44,
+          54,
+          61,
+          70,
+          95,
+          108
+        ],
+        "normalized_j2j": {
+          "300k": 0.020758631787328338,
+          "330k": 0.01839580373740719,
+          "400k": 0.020459713585366177
+        },
+        "views_per_model": 77
+      },
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/visual12_final400k_v1/comparison_review.json",
+      "evidence_archive": {
+        "bytes": 20506996,
+        "comparison_review_sha256": "8e0b1ff4df4814c8fdcf4c8744590c3d9eb31d026dd1218bf888ec07d47b2cb5",
+        "complete": true,
+        "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/visual12_final400k_v1/comparison_evidence.tar.gz",
+        "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_visual12_20261102\\comparison_evidence.tar.gz",
+        "members": 89,
+        "sha256": "8e9ce16d39a59ed6c1dccd44453f47b6e2e5f69f716731bb218460dfb221b8c1",
+        "training_weights_or_dataset_not_copied": true,
+        "verified_uncompressed_members": true,
+        "visual_inspection_sha256": "8b71534bfc85c7291f95c186e3de7f103d832631acb7ad09ab56becdecae36b4",
+        "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/comparison_evidence.tar.gz"
+      },
+      "fixed12_diagnostics_not_population_acceptance": true,
+      "full105_exact_replay_cause_unresolved": true,
+      "images": 27,
+      "independent_new_reference_scores": 12,
+      "independent_new_target_scores": 336,
+      "input_GT_policy_seed_and_camera_identical": true,
+      "key_findings": {
+        "105": "52to139joints versus136GT, but wrong/missing branches and extra displaced limbs remain. Geometry and edgeF1 worsen; count closeness is not recovery. Old exact-coordinate-token replay discrepancy remains unresolved.",
+        "108": "14to26joints versus5GT; excess branches increase and both geometry and edgeF1 worsen.",
+        "30": "75to87joints versus91GT does not fix missing lateral spans. A broad span partly present at330k is missing again at400k; target J2J worsens despite reference edgeF1 increasing.",
+        "70": "Still52versus122GTjoints and major missing branches. Small geometric/edgeF1 gains do not resolve topology."
+      },
+      "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_visual12_20261102\\comparison_review.json",
+      "local_report": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_visual12_20261102\\comparison_report.html",
+      "new_capacity_stress_repeated": false,
+      "no_model_promotion": true,
+      "references_valid": {
+        "300k": 11,
+        "330k": 12,
+        "400k": 12
+      },
+      "reviewed_utc": "2026-11-01T17:46:36.508631+00:00",
+      "sha256": "8e0b1ff4df4814c8fdcf4c8744590c3d9eb31d026dd1218bf888ec07d47b2cb5",
+      "target_rows": 336,
+      "views_per_method": 84,
+      "visual_inspection": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_visual12_20261102\\visual_inspection.json",
+      "visual_inspection_sha256": "8b71534bfc85c7291f95c186e3de7f103d832631acb7ad09ab56becdecae36b4",
+      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/comparison_review.json"
+    },
+    "case_review_accepted": true,
     "code_commit": "7cfeed735a9bf3074111b361d1768a445d739d2e",
-    "complete": false,
+    "complete": true,
     "contract": "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
     "experiment_id": "hardcase400k_visual12_20261102",
     "explicit_human_authorized": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "label": "predicted_reference_20261029_v1",
+    "model_promotion_allowed": false,
+    "model_quality_accepted": false,
     "new_capacity_stress_permitted": false,
     "operation": "preserved_source_deployment_and_fixed400k_official12case_comparison",
     "optimizer_updates": 0,
-    "phase": "official400k_fixed12_inference",
+    "phase": "completed",
+    "postrun_review": {
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/visual12_final400k_v1/postrun_review.json",
+      "execution_CPU_budget": 8,
+      "h_rt": 345600,
+      "job_id": 131170166,
+      "native_keeper_preserved": true,
+      "old_directory_inventory_present": 1016,
+      "old_files_restored": 0,
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/postrun_review.json",
+      "payload_cleanup_complete": true,
+      "physical_GPUs": [
+        4
+      ],
+      "scheduler_CPU_slots": 16,
+      "sha256": "26827ccdf8d81a556d3babd536b9d490a4088f717b47d0fa6f4322263ccfadd7",
+      "training_results_unchanged": true
+    },
     "previous330k": {
       "resources": {
         "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
@@ -99,13 +220,20 @@
         "status": "completed_passed"
       },
       {
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
         "config_sha256": "682880b3dcdb06fa810fd8842028914e83b352a1ce9a0551a2f3f4a844a2e425",
+        "exit_code": 0,
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33",
-        "status": "admitted400k_only_zero_update_inference"
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33_resources.json",
+          "resources_sha256": "7fb13ced52c265f44decc428bfbf2f1d37be547d75410b5d3aa4e49a6b030ff4",
+          "sha256": "68c1e534d3e7a8eb3f4d46a069036fca51f14f5bc089458a2c0571673f0fb2f3"
+        },
+        "status": "completed_passed_official_inference_without_new_stress"
       }
     ],
     "source_checkpoint": {
@@ -169,10 +297,10 @@
         "sha256": "da513f36a563a1d773dcea3f3f2f34f06d40f709d70fc1ce5ad5ac00f38793f8"
       },
       "source_created_utc": "2026-11-01T17:20:54.572252+00:00",
-      "status": "complete",
+      "status": "complete_preserved_old_tree_verified_archives_new_source_used_successfully",
       "valid_until_before_UTC": "2026-11-06T17:20:54.572252+00:00"
     },
-    "status": "CPU_and_preserved_source_passed_GPU_inference_admitted",
+    "status": "completed_preserved_source_and_fixed400k_official12case_review_no_promotion",
     "unresolved_full105_exact_replay_difference": true
   },
   "allocation_defaults": {
@@ -205,10 +333,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -247,8 +375,8 @@
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "Training completed with native payload cleanup; keeper and96h2H100/16CPUgrant preserved, selected GPUs idle at final review. Formal case inference blocked by29unrelated missing tracked files, all66training source hashes unchanged.",
-    "last_observed_utc": "2026-11-01T05:58:59.905451+00:00",
+    "last_observation_note": "Native capacity_v33 exited0, resource and cleanup passed. GPU4/8CPUsubset of original16slot dualH100 grant; keeper idle andGPU3/4empty in postrun review. Old directory and29deletions preserved, no training output changes. No further payload admitted; do not release native131170166.",
+    "last_observed_utc": "2026-11-01T17:44:25.218775+00:00",
     "physical_gpus": [
       3,
       4
@@ -270,7 +398,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "retained96h_native_keeper_idle_training_complete",
+    "status": "fixed400k_case_comparison_complete_payload_cleaned_native96h_grant_preserved",
     "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
   },
   "current_dataset_revision": {
@@ -281,7 +409,7 @@
     "valid_rows": 967
   },
   "established_research_decisions": {
-    "current_question": "Fix long-lived scratch source deployment by preserving old tree and using a fresh fixed-commit SSD stage with durable archives, then compare fixed400kendpoint to retained300k/330k on the same12official cases. No repeated file restoration or training; retain105unresolved and no promotion.",
+    "current_question": "Completed preserved-source deployment and same12case official300k/330k/400kcomparison.400kdoesnot outperform330kon this fixed diagnostic set:5geometry gains7regressions; predicted-reference targetF1 .7560105580to.7351737799 and paired12J2J .0195282937to.0224898989.30has87versus91GTjoints but worse geometry and missing lateral spans;70still52/122;105139/136withworse connections/positions;10826/5excessbranches. Preserve all candidates and unchangedfull300k reference, no automatic training/promotion. Prior105exact coordinate-token replay cause remains unresolved.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
@@ -298,7 +426,7 @@
     "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "Freshly plan and execute capacity_v33once on existing nativeGPU4/8CPU. Only400kendpoint official15beam inference; inherited stress means no capacity rerun. Reuse300k/330kresults, compare336targetrows and12matchedcase visuals independently. No retry/retraining/reselection/promotion; retain old105exact replay uncertainty.",
+  "next_required_result": "User-authorized source deployment and fixed400k official12case comparison are complete. Report preserved old directory/results and actual mixed/worse400kfindings versus330k. No additional compute, restore, retry, checkpoint reselection, training or model promotion is admitted. Keep full300k reference, all results and native96h grant; retain old105exact replay uncertainty. Future stages must use fresh fixed-source SSD deployments with durable packed source, not individual restoration.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -336,6 +464,6 @@
     "model_training/docs/HARDCASE400K_VISUAL12_20261102.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_visual12_GPU_admitted_20261102",
-  "updated_at": "2026-11-01T17:26:02.627733+00:00"
+  "state_id": "hardcase400k_visual12_completed_no_promotion_20261102",
+  "updated_at": "2026-11-01T17:49:32.260138+00:00"
 }

@@ -1,5 +1,9 @@
 # Fixed400k Official12Case Comparison
 
+Status2026-11-02: COMPLETE. Source deployment, audit_v33 and capacity_v33 have
+actually completed. The protocol below records that operation, not permission
+to repeat it. Read current.json and the immutable receipts before any action.
+
 User2026-11-02 explicitly authorizes replacing the long-lived scratch source
 deployment while preserving the old directory and all training results, then
 comparing the predeclared400k endpoint on the original12official cases. Do not
@@ -17,6 +21,8 @@ canonical entry. Do not release/restart the native keeper. No data or outputs
 move. Retain the old directory plus its durable verified archive. Keep pinned
 new source archives durable. New source must fit the remaining grant and the
 5day scratch policy; never disable cleanup, add exclusions or touch around it.
+The raw preserved directory remains scratch; its verified durable archive is
+the long-term recoverable copy. No raw small-file tree is moved to unknown media.
 
 The endpoint is `outputs/train_v32/weights_100000.pt`, SHA256
 `b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8`.
@@ -54,3 +60,41 @@ acceptance, and full300k remains the production reference.
 Configuration: `hardcase400k_visual12_20261102.json`.
 Work output: `outputs/capacity_v33`.
 Durable: `/home/wangyy/evorig/outputs/hardcase3608_20261101/visual12_final400k_v1`.
+
+## Actual Outcome
+
+Deployment source f8bfeb02a6737f127176a2c6368c2cf4f9796727, receipt SHA256
+156924e3748161ba999144ca05469ba98a5a234b73f6bef1491bd3342b848ec6.
+Old directory `code_preserved_ef4d0ffddbeb_before_f8bfeb02a673` retains all1016
+existing files and the29missing paths, with verified work/durable archives.
+No historical file was restored in it; all training results remain in place.
+
+Native inference source c5bcd3ec593f63e1d300821ee1a15ca13bb69a13; both stages
+exited0 with cleanup and scheduler receipts passed. Result SHA256
+68c1e534d3e7a8eb3f4d46a069036fca51f14f5bc089458a2c0571673f0fb2f3;
+resources7fb13ced52c265f44decc428bfbf2f1d37be547d75410b5d3aa4e49a6b030ff4.
+GPU4/8CPUinside original16slots; no training, baseline generation, new stress,
+GPU request, grant release, parameter changes or checkpoint reselection.
+
+All336new target scores and12reference scores were independently recomputed;
+all27paired images were checked. Reference parse counts300k/330k/400k are
+11/12,12/12,12/12. All12failure-zero predicted-reference target edgeF1:
+0.7302501884,0.7560105580,0.7351737799. Same11common-success assets across all
+three have normalized targetJ2J2.075863%,1.839580%,2.045971%;105is excluded
+only from this conditional geometric comparison, not from quality denominators.
+For330kvs400k, the same12assets/84target views haveJ2J1.952829%to2.248990%,
+5case improvements and7regressions. LowerJ2Jis better; units are target mesh
+bounding-box diagonal. GT-reference controls stay separate.
+
+30:75to87joints versus91GT, but missing lateral span and worse geometry.
+70:still52versus122GT, major branches missing.105:139versus136GT, yet worse
+connections/positions and edgeF1.108:26versus5GT, excess branches worsen.
+The old105exact-coordinate-token replay cause remains unresolved. These12cases
+do not support400kover330kand are not locked855/32population acceptance.
+full300kremains production reference; no additional compute is admitted.
+
+Local report `D:/evoweave/server_ops/outputs/hardcase400k_visual12_20261102/comparison_report.html`.
+Work and durable review, visual inspection, native postrun review and verified
+89member evidence archive are retained. Archive SHA256
+8e9ce16d39a59ed6c1dccd44453f47b6e2e5f69f716731bb218460dfb221b8c1,
+20506996bytes. Native131170166/keeper2268188 and96hgrant remain intact.

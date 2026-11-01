@@ -1,0 +1,209 @@
+{
+  "already_reviewed400k": {
+    "resources": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33_resources.json",
+      "sha256": "7fb13ced52c265f44decc428bfbf2f1d37be547d75410b5d3aa4e49a6b030ff4"
+    },
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33/result.json",
+      "sha256": "68c1e534d3e7a8eb3f4d46a069036fca51f14f5bc089458a2c0571673f0fb2f3"
+    }
+  },
+  "authorization": "User2026-11-02 authorizes two better intermediate checkpoints from existing330kto400kvalid, same12official cases, choose clearly better else330k, no further training.",
+  "base_seed": 20261029,
+  "baseline300k": {
+    "resources": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28_resources.json",
+      "sha256": "08d32ea7fc2f26ad056a46a71eded720f8ab6a56a2fd6e6b78da0a23cb75a748"
+    },
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28/result.json",
+      "sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a"
+    }
+  },
+  "baseline330k": {
+    "resources": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
+      "sha256": "388895ab2fbbe562d78e5f21ce7351614ba3c74e09e2973dbf53edc8bac50735"
+    },
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+      "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+    }
+  },
+  "case_indices": [
+    5,
+    15,
+    23,
+    24,
+    30,
+    44,
+    54,
+    61,
+    70,
+    95,
+    105,
+    108
+  ],
+  "checkpoint_candidates": {
+    "380000": {
+      "label": "hardcase3608_total380000",
+      "layout": "anchor",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/weights_080000.pt",
+      "sha256": "ba476b346c25370b917b105be43080930b4ce9a26a45032fac2044a590712c80"
+    },
+    "390000": {
+      "label": "hardcase3608_total390000",
+      "layout": "anchor",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/weights_090000.pt",
+      "sha256": "55b97d2bdc2504113b5098edac134b777ac1406b164fddfdf412e47d754ab993"
+    }
+  },
+  "decision_rule": {
+    "candidate_tie_break": "Among passing candidates, highest targetF1, then lowest pairedJ2J, then earlier checkpoint. If none passes,330kwithout another search.",
+    "fallback_total": 330000,
+    "max_relative_j2j_worsening_with_f1_gain": 0.01,
+    "max_single_case_absolute_j2j_loss": 0.01,
+    "max_target_edge_f1_loss_with_j2j_gain": 0.002,
+    "max_valid_background_f1_loss": 0.005,
+    "min_relative_j2j_gain": 0.05,
+    "min_target_edge_f1_gain": 0.01,
+    "quality_gate": "Either target edgeF1 gains1point with no more than1percent relative J2Jworsening, or J2J improves5percent with no more than0.2point F1loss. No new failures, no single-case1percent-of-diagonal geometry loss, and no more than0.5point background validF1loss.",
+    "require_no_new_reference_or_target_failures": true
+  },
+  "development_receipt": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/development_selection_result.json",
+    "sha256": "0780c5ca8f294fe4b0200f1d6506b6bacae9252ff2ae6199000b1e9b9e9a3b6a"
+  },
+  "full105_exact_replay_unresolved": true,
+  "kind": "hardcase_checkpoint_selection_20261102",
+  "no_new_training": true,
+  "population_quality_acceptance": false,
+  "scope": "Explicit user-authorized current working model choice using development evidence and fixed12diagnostics; not independent locked855/32validation.",
+  "selected_totals": [
+    380000,
+    390000
+  ],
+  "selection_basis": "Rank all six new intermediate checkpoints by existing112asset896view failure-zero stage1F1, then coreF1, failures, earlier checkpoint. Already reviewed330kand400kendpoints are retained and not regenerated.",
+  "source_training": {
+    "resources": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32_resources.json",
+      "sha256": "5ca1d4c23d6f9100120fb212ee507cdf053306f164110497bf2429ed82c465dc"
+    },
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/result.json",
+      "sha256": "0d46a418784d16123ee128a587e432dcfe2980c8bcaba6d7060dd375689460f8"
+    }
+  },
+  "user_authorized": true,
+  "valid_receipt": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/primary_completion_review.json",
+    "sha256": "d781acf2c0412f3034904e07c994d5fc959ca113909bc0003ae6da4eeb400faf"
+  },
+  "valid_table": [
+    {
+      "GT_reference_head_mpjpe": 0.0038934110313805703,
+      "additional_visits": 30000,
+      "assets": 112,
+      "background_edge_f1": 0.6244646006498952,
+      "core_edge_f1": 0.5784401218314258,
+      "extension_edge_f1": 0.6943498339519025,
+      "stage1_edge_f1_failure_zero": 0.614723428770838,
+      "stage1_failures": 30,
+      "stage1_success": 0.9665178571428571,
+      "total_visits": 330000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.0038704870895826943,
+      "additional_visits": 40000,
+      "assets": 112,
+      "background_edge_f1": 0.6292961674602912,
+      "core_edge_f1": 0.586480645077389,
+      "extension_edge_f1": 0.6921043829714149,
+      "stage1_edge_f1_failure_zero": 0.6199192600834936,
+      "stage1_failures": 22,
+      "stage1_success": 0.9754464285714286,
+      "total_visits": 340000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.0038527611269106566,
+      "additional_visits": 50000,
+      "assets": 112,
+      "background_edge_f1": 0.6219980480855771,
+      "core_edge_f1": 0.5801196720654953,
+      "extension_edge_f1": 0.692262653465961,
+      "stage1_edge_f1_failure_zero": 0.6140879734170255,
+      "stage1_failures": 35,
+      "stage1_success": 0.9609375,
+      "total_visits": 350000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.003828542734992174,
+      "additional_visits": 60000,
+      "assets": 112,
+      "background_edge_f1": 0.6259536670687025,
+      "core_edge_f1": 0.5758204803223949,
+      "extension_edge_f1": 0.7002382094836676,
+      "stage1_edge_f1_failure_zero": 0.6150800930938514,
+      "stage1_failures": 31,
+      "stage1_success": 0.9654017857142857,
+      "total_visits": 360000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.0038253375152718797,
+      "additional_visits": 70000,
+      "assets": 112,
+      "background_edge_f1": 0.6272701168805727,
+      "core_edge_f1": 0.5885152367141498,
+      "extension_edge_f1": 0.6871681647988512,
+      "stage1_edge_f1_failure_zero": 0.6192177465118598,
+      "stage1_failures": 33,
+      "stage1_success": 0.9631696428571429,
+      "total_visits": 370000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.00381632176438462,
+      "additional_visits": 80000,
+      "assets": 112,
+      "background_edge_f1": 0.6293617721792873,
+      "core_edge_f1": 0.5944557111939873,
+      "extension_edge_f1": 0.6927464480435848,
+      "stage1_edge_f1_failure_zero": 0.6234569854519155,
+      "stage1_failures": 24,
+      "stage1_success": 0.9732142857142857,
+      "total_visits": 380000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.003799389327496658,
+      "additional_visits": 90000,
+      "assets": 112,
+      "background_edge_f1": 0.6306074841538419,
+      "core_edge_f1": 0.5874712380588104,
+      "extension_edge_f1": 0.6972297777839727,
+      "stage1_edge_f1_failure_zero": 0.6216379920602756,
+      "stage1_failures": 32,
+      "stage1_success": 0.9642857142857143,
+      "total_visits": 390000,
+      "views": 896
+    },
+    {
+      "GT_reference_head_mpjpe": 0.003836474253528984,
+      "additional_visits": 100000,
+      "assets": 112,
+      "background_edge_f1": 0.6283021399760889,
+      "core_edge_f1": 0.5910150735058303,
+      "extension_edge_f1": 0.7016990413325379,
+      "stage1_edge_f1_failure_zero": 0.6228072402540422,
+      "stage1_failures": 25,
+      "stage1_success": 0.9720982142857143,
+      "total_visits": 400000,
+      "views": 896
+    }
+  ]
+}

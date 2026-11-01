@@ -57,6 +57,9 @@ def load_records(config, rank=None):
 
 
 def inherited_capacity(config):
+    if 'checkpoint_selection' in config:
+        from hardcase_checkpoint_selection_protocol import inherited_selection_capacity
+        return inherited_selection_capacity(config)
     if config.get('hardcase_visual',{}).get('kind')=='hardcase400k_fixed12_20261102':
         from hardcase_visual_protocol import inherited_final400k_capacity
         return inherited_final400k_capacity(config)
@@ -86,6 +89,9 @@ def audit(config, output, source):
     if 'hardcase_visual' in config:
         from hardcase_visual_protocol import verify_evidence
         baseline = verify_evidence(config, records)
+    if 'checkpoint_selection' in config:
+        from hardcase_checkpoint_selection_protocol import verify_selection_evidence
+        baseline = verify_selection_evidence(config,records)
     for spec in config['checkpoints'].values():
         if sha256(spec['path']) != spec['sha256']:
             raise ValueError('pipeline checkpoint changed')

@@ -120,8 +120,11 @@ def verify_evidence(config, records):
 def inherited_final400k_capacity(config):
     validate_visual(config)
     if not is_final400k(config): raise ValueError('400k-only inheritance')
-    deployment=verify_stage_deployment(config)
-    spec=FINAL400K['previous_adaptation']
+    return inherited_native_capacity(config,FINAL400K['previous_adaptation'],verify_stage_deployment(config))
+
+
+def inherited_native_capacity(config,spec,deployment):
+    """Reuse accepted native decoder memory proof when architecture and math match."""
     for item in spec.values():
         if sha256(item['path'])!=item['sha256']: raise ValueError('native15beam evidence changed')
     result,resources=(json.loads(Path(spec[k]['path']).read_text()) for k in ('result','resources'))

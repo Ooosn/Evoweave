@@ -51,3 +51,56 @@ On exit, review native cleanup, zero optimizer updates, denominators, input
 identity, independent scores and all comparison images; record and synchronize
 the result in the same operation. Report actual improvements and regressions
 without changing the earlier shortlist result or claiming generalization.
+
+## Completed Case Review
+
+capacity_v31 ran13:31:30..13:37:48JST, exit0, zero optimizer updates, passed
+native resources and payload cleanup. The full2048token/15beam check passed
+in59.46seconds with30,480,007,168bytes peak reserved memory. Job131170166and
+its16CPU grant remain reserved; the keeper has no children and both GPUs are
+idle. No additional allocation, alternative checkpoint, seed retry or training
+was used. Runtime source is318a1fae3937c513c9ff2c662e412e40f6c7930a.
+
+Independent rescoring passed for all336rows:12assets times7targets times4
+separate methods. Canonical surface, GT, raw frames, normalization, official
+policy and seeds match the frozen baseline. References valid11/12before and
+12/12after; predicted-reference target failures7/84before and0/84after.
+All cases remain in quality denominators. The baseline is the original retained
+capacity_v28output, not a newly successful exact replay.
+
+| Case | Predicted joints before -> after | GT joints | Visual interpretation |
+|---|---:|---:|---|
+|30|50 ->75|91|Major lateral spans partly recovered and follow target poses; terminal branch subdivisions remain missing.|
+|70|52 ->52|122|Same simplified structure; multiple major outer branches remain missing.|
+|105|invalid ->52|136|Now parseable with finite target predictions, but heavily simplified and misplaced; not correct reconstruction.|
+|108|13 ->14|5|Excess branches persist; slightly closer positions do not mean better topology.|
+
+Case30reference edgeF1 changes0.311212to0.440054; its mean predicted-reference
+target J2J changes0.040792to0.021801. Case70is essentially unchanged,
+0.032176to0.032243. Case108geometry improves0.096232to0.087552but reference
+edgeF1 worsens0.461538to0.436364. Case105reference edgeF1 is only0.194320,
+despite becoming parseable. The old105exact-replay discrepancy is not diagnosed
+or resolved by this new model's successful parse.
+
+For the identical11assets valid in both arms, mean predicted-reference J2J is
+0.020758632before and0.018395804after;8improve and3regress (5/15/70). J2J is
+the symmetric nearest-joint distance divided by the target mesh bbox diagonal,
+averaged within asset then equally across these same assets; lower is better.
+Do not compare the old11asset geometry mean directly with the new12asset mean.
+All12asset predicted-target edgeF1 changes0.730250to0.756011with failures zero.
+GT-reference stage2 MPJPE changes0.002163646to0.002061511on these12cases only;
+it is not predicted-reference end-to-end error or the112asset development mean.
+
+All27comparison images are retained, including prediction-only and GT-overlay
+views for every case and three contact sheets. All12cases were inspected in
+the contact sheets;30/70/105/108were expanded in both modes. Camera and scale
+match within each asset, and labels/layout were checked after rendering.
+The result supports partial case-level gains, especially30, not a blanket
+repair or independent population-quality acceptance. No model was promoted.
+
+Review: `D:/evoweave/server_ops/outputs/hardcase_visual12_20261101/comparison_review.json`
+(SHA256 `fe79a845bcc7ab40f2c394a825b019a11f101bbfc0a046d7c7aa707b8d1fa51f`).
+Visual findings: `visual_inspection.json`; figures: `comparison_images/` in
+that same local output directory. Raw generated references, examples, rows,
+native receipts and durable remote outputs remain intact. This operation's
+compute admission is closed; no automatic follow-up, retry or promotion.

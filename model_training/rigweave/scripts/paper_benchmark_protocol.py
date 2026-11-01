@@ -2,9 +2,36 @@
 import hashlib
 import json
 from pathlib import Path
+import __future__
+import importlib.abc
+import importlib.machinery
+import sys
 
 SCOPE = 'paper_benchmark_20261102_v1'
 ENTRYPOINT = 'model_training/rigweave/scripts/evaluate_paper_benchmark.py'
+
+
+def defer_official_annotations(root):
+    """Postpone legacy type hints in memory; do not edit the pinned source."""
+    root = Path(root).resolve()
+
+    class Loader(importlib.machinery.SourceFileLoader):
+        def get_code(self, fullname):
+            return compile(self.get_source(fullname), self.path, 'exec',
+                flags=__future__.annotations.compiler_flag, dont_inherit=True)
+
+    class Finder(importlib.abc.MetaPathFinder):
+        def find_spec(self, fullname, path=None, target=None):
+            spec = importlib.machinery.PathFinder.find_spec(fullname, path)
+            if (spec and spec.origin and isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+                    and Path(spec.origin).resolve().is_relative_to(root)):
+                spec.loader = Loader(fullname, spec.origin)
+                return spec
+            return None
+
+    finder = Finder()
+    sys.meta_path.insert(0, finder)
+    return finder
 
 
 def scientific_sha(config):

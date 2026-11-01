@@ -2,6 +2,8 @@ import copy
 import importlib.util
 from pathlib import Path
 import unittest
+import sys
+import tempfile
 
 PATH = Path(__file__).parents[1] / 'scripts/paper_benchmark_protocol.py'
 SPEC = importlib.util.spec_from_file_location('paper_protocol_test', PATH)
@@ -53,6 +55,23 @@ class PaperProtocolTests(unittest.TestCase):
     def test_selection_changes_science(self):
         a=example();b=copy.deepcopy(a);b['evaluation']['selection_seed']=42
         self.assertNotEqual(P.scientific_sha(a),P.scientific_sha(b))
+
+    def test_annotation_compatibility_never_edits_source(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root)/'legacy_paper_module.py'
+            text='value: UndefinedLegacyType = 7\n'
+            path.write_text(text)
+            sys.path.insert(0,root)
+            finder=P.defer_official_annotations(root)
+            try:
+                import legacy_paper_module
+                self.assertEqual(legacy_paper_module.value,7)
+                self.assertEqual(legacy_paper_module.__annotations__['value'],'UndefinedLegacyType')
+                self.assertEqual(path.read_text(),text)
+            finally:
+                sys.meta_path.remove(finder)
+                sys.path.remove(root)
+                sys.modules.pop('legacy_paper_module',None)
 
 
 if __name__ == '__main__': unittest.main()

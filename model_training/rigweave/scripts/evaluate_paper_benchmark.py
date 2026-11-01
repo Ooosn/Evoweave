@@ -14,7 +14,7 @@ import traceback
 import numpy as np
 import torch
 
-from paper_benchmark_protocol import scientific_sha, validate_config, validate_sources
+from paper_benchmark_protocol import scientific_sha, validate_config, validate_sources, defer_official_annotations
 from virtual_pair_guard import ROOT, verify_launch, deadline_due
 
 
@@ -154,6 +154,7 @@ def baseline(config, records, output, method):
     torch.backends.cudnn.allow_tf32 = False
     trace = {}
     if method == 'unirig_official':
+        defer_official_annotations(source['path'])
         import yaml
         from omegaconf import OmegaConf
         from src.model.parse import get_model
@@ -171,8 +172,12 @@ def baseline(config, records, output, method):
         from types import SimpleNamespace
         os.chdir(Path(source['path']) / 'skeleton')
         sys.path.insert(0, str(Path.cwd()))
-        from skeleton_models.skeletongen import SkeletonGPT
-        model = SkeletonGPT(SimpleNamespace(joint_token=True, n_discrete_size=128,
+        from skeleton_models import skeletongen
+        from functools import partial
+        # The released complete state strictly restores the encoder too.
+        # Avoid downloading its redundant, immediately overwritten initialization.
+        skeletongen.load_model = partial(skeletongen.load_model, ckpt_path=None)
+        model = skeletongen.SkeletonGPT(SimpleNamespace(joint_token=True, n_discrete_size=128,
             n_max_bones=100, llm=runtime['opt_config_root'], seq_shuffle=True,
             num_beams=1, batchsize_per_gpu=1))
         payload = torch.load(checkpoint, map_location='cpu', mmap=True, weights_only=False)
@@ -327,6 +332,8 @@ def run(config, output, source, config_path):
         'scope': '24_hash_selected_nonselection_validation_assets',
         'GT_skeleton_given_to_predictors': False, 'greedy_all_methods': True,
         'Puppeteer_output': 'raw_joint_tokens_without_geometric_postprocessing',
+        'Puppeteer_initialization': 'strict_complete_released_state_including_point_encoder_no_redundant_auxiliary_checkpoint',
+        'UniRig_python310_compatibility': 'deferred_source_annotations_only_no_file_edits',
         'baseline_input': 'same_canonical_reference_surface_points_and_normals',
         'sample_counts': {'unirig_official': 'retained_dense_surface', 'puppeteer_official': 8192},
         'root_RT_from_dataset_metadata': True,

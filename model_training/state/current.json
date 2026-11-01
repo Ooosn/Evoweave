@@ -8,7 +8,7 @@
     "operation_entrypoints": {
       "preflight": "model_training/rigweave/scripts/evaluate_paper_benchmark.py"
     },
-    "code_commit": "8812217e30307afaf9ea39874dc1dec4fd407a2c",
+    "code_commit": "33bca0ecbae49ec18e71ba2b371b55a4dc2dcebd",
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
@@ -62,7 +62,7 @@
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_baseline_completion_20261102_audit.json",
-        "config_sha256": "77271432a27c309d0db067856ad5daeba97f8e20b9a14c4aa62fc05e7d8ed463",
+        "config_sha256": "825f3bed83b5a45d6ba9021321cc3c91b2d82e704b2ee8bef4df6eda5c302f93",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v38"
       }
     ]

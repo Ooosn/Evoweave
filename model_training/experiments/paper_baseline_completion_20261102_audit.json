@@ -68,8 +68,8 @@
     "paper_shared_inference": {
       "explicit_human_authorized": true,
       "scope": "paper_benchmark_20261102_v1",
-      "own_memory_fraction": 0.3,
-      "minimum_free_mib": 32768,
+      "own_memory_fraction": 0.1,
+      "minimum_free_mib": 20480,
       "preserve_existing_processes": true
     },
     "paper_baseline_dependency_receipt": "/work/wangyy/paper_baselines_20261102/runtime_unirig/install_complete.json",

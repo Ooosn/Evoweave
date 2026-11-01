@@ -33,7 +33,8 @@ if __name__ == '__main__':
                'hardcase3608_20261101_v1': 'train_hardcase_adaptation.py',
                'ar_only_feedback_5k_20261029_v1': 'train_ar_only.py',
                'stage1_surface_repair_20261029_v1': 'evaluate_stage1_surface_repair.py',
-               'predicted_reference_20261029_v1': 'evaluate_predicted_reference.py'}.get(family, 'train_virtual_pair.py')
+               'predicted_reference_20261029_v1': 'evaluate_predicted_reference.py',
+               'paper_benchmark_20261102_v1': 'evaluate_paper_benchmark.py'}.get(family, 'train_virtual_pair.py')
     raise SystemExit(main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
          trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',)))

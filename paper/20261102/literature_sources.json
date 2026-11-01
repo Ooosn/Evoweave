@@ -1,0 +1,13 @@
+{
+  "schema": "evoweave-literature/v1",
+  "papers": [
+    {"key": "mocapanythingv2", "title": "MoCapAnything V2: End-to-End Motion Capture for Arbitrary Skeletons", "pdf": "https://arxiv.org/pdf/2604.28130v4", "url": "https://arxiv.org/abs/2604.28130", "role": "reference-conditioned video motion"},
+    {"key": "topocap", "title": "TopoCap: Learning Topology-Agnostic Motion Priors for Monocular Video-to-Animation", "pdf": "https://arxiv.org/pdf/2606.12153", "url": "https://arxiv.org/abs/2606.12153", "role": "target-rig-conditioned video motion"},
+    {"key": "unirig", "title": "One Model to Rig Them All: Diverse Skeleton Rigging with UniRig", "pdf": "https://arxiv.org/pdf/2504.12451", "url": "https://arxiv.org/abs/2504.12451", "role": "static generative rigging and inherited decoder"},
+    {"key": "skintokens", "title": "Skin Tokens: A Learned Compact Representation for Unified Autoregressive Rigging", "pdf": "https://arxiv.org/pdf/2602.04805v2", "url": "https://arxiv.org/abs/2602.04805", "role": "static skeleton and skinning generation"},
+    {"key": "puppeteer", "title": "Puppeteer: Rig and Animate Your 3D Models", "pdf": "https://arxiv.org/pdf/2508.10898", "url": "https://arxiv.org/abs/2508.10898", "role": "static rig generation followed by video fitting"},
+    {"key": "morig", "title": "Morig: Motion-Aware Rigging of Character Meshes from Point Clouds", "pdf": "https://arxiv.org/pdf/2210.09463", "url": "https://arxiv.org/abs/2210.09463", "role": "motion-aware learned rigging"},
+    {"key": "skerig", "title": "Robust and Accurate Skeletal Rigging from Mesh Sequences", "pdf": "https://binh.graphics/papers/2014s-ske/skeleton-draft.pdf", "url": "https://doi.org/10.1145/2601097.2601161", "role": "per-instance skeleton and skinning optimization"},
+    {"key": "rigmo", "title": "RigMo: Unifying Rig and Motion Learning for Generative Animation", "pdf": "https://arxiv.org/pdf/2601.06378", "url": "https://arxiv.org/abs/2601.06378", "role": "unified rig-motion discovery; novelty boundary"}
+  ]
+}

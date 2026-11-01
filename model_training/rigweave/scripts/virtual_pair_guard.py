@@ -20,6 +20,7 @@ from stage1_surface_repair_protocol import SCOPE as REPAIR_SCOPE, ENTRYPOINT as 
 from predicted_reference_protocol import SCOPE as PREDICTED_SCOPE, ENTRYPOINT as PREDICTED_ENTRYPOINT
 from anchor_full_protocol import SCOPE as FULL_SCOPE, ENTRYPOINT as FULL_ENTRYPOINT
 from hardcase_adaptation_protocol import SCOPE as HARDCASE_SCOPE, ENTRYPOINT as HARDCASE_ENTRYPOINT
+from paper_benchmark_protocol import SCOPE as PAPER_SCOPE, ENTRYPOINT as PAPER_ENTRYPOINT
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -50,12 +51,13 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
     expected_entrypoint = {REFERENCE_SCOPE: REFERENCE_ENTRYPOINT, FLOW_SCOPE: FLOW_ENTRYPOINT,
         ANCHOR_SCOPE: ANCHOR_ENTRYPOINT, INTEGRATION_SCOPE: INTEGRATION_ENTRYPOINT,
         AR_SCOPE: AR_ENTRYPOINT, REPAIR_SCOPE: REPAIR_ENTRYPOINT, PREDICTED_SCOPE: PREDICTED_ENTRYPOINT,
-        FULL_SCOPE: FULL_ENTRYPOINT, HARDCASE_SCOPE: HARDCASE_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
+        FULL_SCOPE: FULL_ENTRYPOINT, HARDCASE_SCOPE: HARDCASE_ENTRYPOINT,
+        PAPER_SCOPE: PAPER_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
     if op.get('required_entrypoint') != expected_entrypoint:
         raise RuntimeError('state is not bound to the matched-pair trainer')
     return op
@@ -95,12 +97,12 @@ def execution_cpu_binding(config, exception, allowed_cpus):
 
 def scheduler_runtime(config):
     runtime = config['runtime']
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     subset = runtime.get('native_subset')
     if subset is not None:
-        if (subset != 'full_visual_gpu4_cpu8_v1' or config.get('family') != PREDICTED_SCOPE
+        if (subset != 'full_visual_gpu4_cpu8_v1' or config.get('family') not in (PREDICTED_SCOPE, PAPER_SCOPE)
                 or 'full_model_inputs' not in config
                 or runtime.get('allocated_physical_gpus') != [3, 4]
                 or runtime.get('allocated_cpu_affinity') != [6, 7, 9, 10, 11, 12, 14, 15, 61, 63, 64, 65, 74, 76, 77, 78]
@@ -202,6 +204,8 @@ def deadline_due(config):
 
 def validate_stage(state, config, args):
     op = operation(state)
+    if op['label'] == PAPER_SCOPE and args.mode == 'train':
+        raise RuntimeError('paper evaluation does not authorize training')
     if op['label'] != config.get('family'):
         raise RuntimeError('active operation and experiment family differ')
     matches = [row for row in op.get('runs', []) if row.get('mode') == args.mode

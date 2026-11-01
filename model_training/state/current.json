@@ -25,7 +25,7 @@
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit.json",
-        "config_sha256": "c225658ecbed55546b6d2e515efa3f8d6f459fde9790a963ba615c0c2f09221c",
+        "config_sha256": "9118c1f4ced421065cb4df009a777a1ab55747c15353773d8f3080f7d0de46e4",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v36"
       }
     ]

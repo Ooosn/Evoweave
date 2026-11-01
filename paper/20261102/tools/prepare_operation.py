@@ -16,7 +16,7 @@ def sha(path):
 
 def write(path, value):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+    Path(path).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 
 def main():

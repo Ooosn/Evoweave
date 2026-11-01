@@ -37,7 +37,8 @@ def main():
             raise RuntimeError('a native payload is already active')
         if live['seconds_before_saved_stop'] < config['evaluation']['payload_limit_seconds'] + 60:
             raise RuntimeError('insufficient retained allocation time')
-        live['shared_GPU_admission'] = shared_gpu_admission(config)
+        live['shared_GPU_admission'] = (shared_gpu_admission(config) if mode!='audit'
+            else {'CPU_only':True,'GPU_memory_admission_deferred':True})
     allocation = Path(config['runtime']['allocation_directory'])
     output = RUN/'outputs'/args.stage
     if args.action == 'observe':

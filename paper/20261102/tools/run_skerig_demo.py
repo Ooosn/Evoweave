@@ -13,9 +13,9 @@ SOURCE=Path('C:/Users/namew/.codex/tmp/evoweave-paper-20261102/SkeRig/SkeRig_v1.
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=Path('D:/evoweave/server_ops/outputs/paper_v1_20261102/skerig_demo'))
-    parser.add_argument('--timeout',type=int,default=90);args=parser.parse_args()
-    if not 10<=args.timeout<=900:raise ValueError('bounded demo timeout required')
-    OUTPUT=args.output
+    parser.add_argument('--timeout',type=int,default=90);cli=parser.parse_args()
+    if not 10<=cli.timeout<=900:raise ValueError('bounded demo timeout required')
+    OUTPUT=cli.output
     OUTPUT.mkdir(parents=True,exist_ok=False)
     ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
     env={**os.environ,'OMP_NUM_THREADS':'1','MKL_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1'}
@@ -24,7 +24,7 @@ def main():
     with (OUTPUT/'program.log').open('x',encoding='utf-8') as log:
         p=subprocess.Popen(args,cwd=OUTPUT,env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
         try:
-            code=p.wait(timeout=args.timeout)
+            code=p.wait(timeout=cli.timeout)
         except subprocess.TimeoutExpired:
             p.kill();p.wait();code=124
     result={'example_only':True,'exit_code':code,'seconds':time.monotonic()-t,

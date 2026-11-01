@@ -145,7 +145,7 @@ def verify_allocation(checks, config, grant):
         raise RuntimeError('the authorized GPU grant changed')
 
 
-def read_gpu_memory(config):
+def read_gpu_memory(config, *, enforce_limit=True):
     runtime = config['runtime']
     uuid_binding = runtime.get('execution_mode') == 'scheduler_job'
     devices = ','.join(runtime['gpu_uuids']) if uuid_binding else ','.join(map(str, runtime['physical_gpus']))
@@ -165,7 +165,8 @@ def read_gpu_memory(config):
     else:
         memory = [[int(v) for v in row] for row in rows]
     if (sorted(row[0] for row in memory) != sorted(runtime['physical_gpus'])
-            or any(total <= 0 or used < 0 or used > total * limit for _, used, total in memory)):
+            or any(total <= 0 or used < 0 or used > total
+                or (enforce_limit and used > total * limit) for _, used, total in memory)):
         raise RuntimeError('the authorized GPUs exceeded their memory limit or changed identity')
     return sorted(memory, key=lambda row: row[0])
 
@@ -274,7 +275,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
                     last_ticks[pid] = ticks
                 except (FileNotFoundError, ProcessLookupError):
                     pass
-            memory = read_gpu_memory(config)
+            memory = read_gpu_memory(config, enforce_limit=args.mode not in cpu_modes)
             if runtime.get('gpu_uuids'):
                 applications = subprocess.check_output(['nvidia-smi',
                     '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader'], text=True, timeout=30)

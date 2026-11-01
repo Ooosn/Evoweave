@@ -58,6 +58,7 @@ def main():
             'skintokens_vae':{'path':root+'/experiments/skin_vae_2_10_32768/last.ckpt',
                 'sha256':'4843f49e58afff88345806b94ca82e6cc9d8def6e7432e2853c677b154de0ed4'}})
         config['runtime']['paper_skin_qwen_config']=root+'/Qwen3Config'
+        config['runtime']['paper_shared_inference'].update(own_memory_fraction=.10,minimum_free_mib=20480)
         config['runtime']['paper_skin_pythonpath']=':'.join([RUN+'/code/model_training/rigweave/src',
             RUN+'/code/model_training/rigweave/scripts','/work/wangyy/paper_baselines_20261102/runtime_skin',
             '/work/wangyy/paper_baselines_20261102/runtime_unirig','/home/wangyy/evorig/runtime/puppeteer_py310_hgc'])

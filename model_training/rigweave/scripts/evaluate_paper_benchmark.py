@@ -171,7 +171,7 @@ def baseline(config, records, output, method):
     os.chdir(source['path'])
     checkpoint = config['baseline_weights'][method]['path']
     device = torch.device('cuda', 0)
-    torch.cuda.set_per_process_memory_fraction(.30, device)
+    torch.cuda.set_per_process_memory_fraction(runtime['paper_shared_inference']['own_memory_fraction'], device)
     torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
     trace = {}

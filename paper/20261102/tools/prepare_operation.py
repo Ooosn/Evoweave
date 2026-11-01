@@ -31,7 +31,11 @@ def main():
             raise ValueError('paper CPU audit did not pass')
         audit_config = ROOT/'model_training/experiments/paper_benchmark_20261102_audit.json'
         gpu = json.loads(audit_config.read_text())
-        gpu['audit_result'] = {'path': RUN+'/outputs/audit_v36/result.json', 'sha256':sha(args.record_audit)}
+        stage = args.record_audit.parent.name
+        if stage not in ('audit_v36','audit_v37'):
+            raise ValueError('unexpected paper CPU stage')
+        gpu['audit_result'] = {'path': RUN+'/outputs/'+stage+'/result.json', 'sha256':sha(args.record_audit),
+            'resources_path':RUN+'/outputs/'+stage+'_resources.json'}
         gpu_path = ROOT/'model_training/experiments/paper_benchmark_20261102.json'
         write(gpu_path,gpu)
         op = state['active_operation']
@@ -39,7 +43,8 @@ def main():
             raise ValueError('unexpected active operation')
         op['CPU_audit_accepted'] = True
         op['gpu_work_allowed'] = True
-        op['runs'][0].update(approved=False,complete=True,status='passed',result=gpu['audit_result'])
+        row=next(r for r in op['runs'] if r['stage']==stage)
+        row.update(approved=False,complete=True,status='passed',result=gpu['audit_result'])
         op['runs'].append({'stage':'capacity_v36','mode':'capacity','approved':True,'complete':False,
             'config':RUN+'/code/model_training/experiments/'+gpu_path.name,
             'config_sha256':sha(gpu_path),'output':RUN+'/outputs/capacity_v36'})

@@ -37,14 +37,21 @@ raw-video evaluation and must not support a GT-free video-preprocessing claim.
 
 ## Execution
 
-The exact CPU preparation is `audit_v36`. `capacity_v36` is the framework name
+The first CPU preparation, `audit_v36`, rejected generated Python bytecode in
+the newly cloned Puppeteer source before computing any input. Its exit1 and
+successful payload cleanup remain preserved. Remove only the four bytecode
+cache directories created by our CPU import check, then use `audit_v37` with
+the identical scientific protocol. No completed preparation is repeated.
+`capacity_v36` is the framework name
 for the zero-update paper inference stage, not a repeated training stress test.
 Record the CPU receipt and successful supervised cleanup before GPU admission.
 Use `paper_eval_ops.py` plan, execute, and observe with the exact config path.
 The native keeper 2268188 dispatches under job 131170166, physical GPU4 and its
 eight-CPU subset of the retained two-H100, 16-CPU allocation. Preserve the 96h
 expiry and 2026-11-04T11:40:04Z save-stop. Preserve other workloads and the keeper.
-The stage is bounded to three hours and no optimizer updates. Shared wall times
+Other workloads may overlap host CPU cores; only our own eight-CPU native
+binding and process-tree budget are guaranteed. The stage is bounded to three
+hours and no optimizer updates. Shared wall times
 are diagnostic timing, not an isolated speed comparison.
 
 Finish source changes before dispatch; never synchronize a running checkout.

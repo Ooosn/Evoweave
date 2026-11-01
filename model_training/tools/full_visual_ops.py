@@ -12,7 +12,10 @@ from types import SimpleNamespace
 from anchor_full_ops import ROOT, RUN, ALLOCATION, command, digest, setup, write_new
 
 
-def snapshot(config, *, idle):
+def snapshot(config, *, idle, allow_shared_cpu=False):
+    if allow_shared_cpu:
+        from paper_benchmark_protocol import shared_gpu_policy
+        shared_gpu_policy(config)
     from virtual_pair_guard import scheduler_runtime, verify_allocation, require_job_membership
     runtime = scheduler_runtime(config)
     verify_allocation(config, command('qstat', '-j', str(runtime['allocation'])))
@@ -32,7 +35,7 @@ def snapshot(config, *, idle):
             selected.append(line)
         elif uuid.strip() == 'GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7':
             threads = [set(os.sched_getaffinity(int(p.name))) for p in (Path('/proc')/pid.strip()/'task').iterdir()]
-            if any(cpus & set(runtime['cpu_affinity']) for cpus in threads):
+            if not allow_shared_cpu and any(cpus & set(runtime['cpu_affinity']) for cpus in threads):
                 raise RuntimeError('other allocated-GPU workload overlaps the visual CPU subset')
             other.append({'pid': int(pid), 'GPU': uuid.strip(), 'thread_CPU_union': sorted(set.union(*threads))})
     if idle and (children or pending or selected):

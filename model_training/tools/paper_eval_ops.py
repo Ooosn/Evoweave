@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--stage', required=True)
     parser.add_argument('--config', type=Path, required=True)
     args = parser.parse_args()
-    if args.stage not in ('audit_v36','capacity_v36'):
+    if args.stage not in ('audit_v36','audit_v37','capacity_v36'):
         raise ValueError('unrecorded paper stage')
     config = json.loads(args.config.read_text())
     setup(config)
@@ -31,7 +31,7 @@ def main():
     from types import SimpleNamespace
     mode = args.stage.split('_')[0]
     validate_config(config, mode)
-    live = snapshot(config, idle=False)
+    live = snapshot(config, idle=False, allow_shared_cpu=True)
     if args.action != 'observe':
         if live['keeper_children'] or live['pending_stages']:
             raise RuntimeError('a native payload is already active')
@@ -60,7 +60,7 @@ def main():
     if mode == 'capacity':
         spec = config['audit_result']
         accepted = json.loads(Path(spec['path']).read_text())
-        resources = json.loads((RUN/'outputs/audit_v36_resources.json').read_text())
+        resources = json.loads(Path(spec['resources_path']).read_text())
         if (digest(spec['path']) != spec['sha256'] or not accepted['passed'] or not accepted['complete']
                 or accepted['scientific_sha256'] != scientific_sha(config)
                 or not resources['passed'] or not resources['payload_cleanup_complete']):

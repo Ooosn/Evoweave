@@ -1,18 +1,24 @@
 {
   "active_operation": {
-    "CPU_audit_accepted": false,
+    "CPU_audit_accepted": true,
     "CPU_audits": {
       "v34": {
         "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34/result.json",
         "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v34_resources.json",
         "resources_sha256": "021b906ef445386c60812efef5342ad7ca8b655ae3f67a4b302dc7bc2480fb5c",
         "sha256": "d1695a67a4c4774f642a6116b6883900ba3e78efe0ca1e18a36e354aff82b463"
+      },
+      "v35": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35/result.json",
+        "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35_resources.json",
+        "resources_sha256": "2d386dcc29907335faf5a1e25aa0c2b93e2228f0c531b92b69a162d32406292c",
+        "sha256": "4cab79464e01ca2ebe3d420040d2a6a3081cec14672245371b28f34840b29dfa"
       }
     },
     "acceptance_test": "Existing matched112asset896view valid only, exactly380kand390kpreselected before official inference. Each zero-update candidate12references/336targets, exact inputs/GT/normalization/seed, native131170166GPU4/8CPUsubset, inherited15beam2048token proof without stress. Independently rescore and visually inspect all12; apply frozen practical-benefit rule; publish one exact working checkpoint or330kand stop. No extra checkpoint, baseline regeneration, training, seed sweep or population-quality claim.",
     "authorization": "User2026-11-02 authorizes two better intermediate checkpoints from existing330kto400kvalid, same12official cases, choose clearly better else330k, no further training.",
     "automatic_retry_allowed": false,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "code_commit": "173cb110554ac9c86d3dd629e93c899e032f423d",
     "complete": false,
     "contract": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
@@ -33,12 +39,12 @@
     "fallback_total": 330000,
     "formal_training_allowed": false,
     "full105_exact_replay_unresolved": true,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "label": "predicted_reference_20261029_v1",
     "new_capacity_stress_permitted": false,
     "operation": "two_intermediate_official12case_reviews_then_final_working_model_choice",
     "optimizer_updates": 0,
-    "phase": "native_audit_v35",
+    "phase": "native_capacity_v34",
     "population_quality_accepted": false,
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "retained400k": {
@@ -82,18 +88,26 @@
         "total_visits": 380000
       },
       {
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase390k_visual12_20261102.json",
         "config_sha256": "4c8a04dcda0daf668c343534d709ead54cb61b0fc61d26d02d66a0979dd7c80e",
+        "exit_code": 0,
         "mode": "audit",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35_resources.json",
+          "resources_sha256": "2d386dcc29907335faf5a1e25aa0c2b93e2228f0c531b92b69a162d32406292c",
+          "sha256": "4cab79464e01ca2ebe3d420040d2a6a3081cec14672245371b28f34840b29dfa",
+          "source": "f600de8c3cef199b62333cddb6786b158bcc5b79"
+        },
         "stage": "audit_v35",
-        "status": "waiting_preceding_recorded_stage",
+        "status": "CPU_audit_passed",
         "total_visits": 390000
       },
       {
-        "approved": false,
+        "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase380k_visual12_20261102.json",
         "config_sha256": "2f2d0e7d0b65f7153466507081a515ccd43036191a0614df673f7d2036fcec9e",
@@ -107,7 +121,7 @@
         "approved": false,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase390k_visual12_20261102.json",
-        "config_sha256": "4c8a04dcda0daf668c343534d709ead54cb61b0fc61d26d02d66a0979dd7c80e",
+        "config_sha256": "c7641f915d55217033a7cc4c7cea4679c94fc3c7a0d9d58bc9a4a20bd27c9d20",
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v35",
         "stage": "capacity_v35",
@@ -133,7 +147,7 @@
       "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase_checkpoint_selection_20261102.json",
       "status": "planned"
     },
-    "status": "audit_v34_recorded",
+    "status": "audit_v35_recorded",
     "working_model_selection_authorized": true
   },
   "allocation_defaults": {
@@ -166,13 +180,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "matched_eval",
-    "preflight"
+    "matched_eval"
   ],
   "compute_allocation": {
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
@@ -258,7 +272,7 @@
     "status": "completed_fixed400k_diagnostic_new_user_authorizes_finite_intermediate_selection"
   },
   "module": "model_training",
-  "next_required_result": "Plan and execute audit_v35 once with current exact config/native resource proof. No training, repeated stress, baseline regeneration or retries.",
+  "next_required_result": "Plan and execute capacity_v34 once with current exact config/native resource proof. No training, repeated stress, baseline regeneration or retries.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -297,6 +311,6 @@
     "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase_checkpoint_selection_audit_v34_recorded_20261102",
-  "updated_at": "2026-11-01T18:13:29.178233+00:00"
+  "state_id": "hardcase_checkpoint_selection_audit_v35_recorded_20261102",
+  "updated_at": "2026-11-01T18:15:55.131963+00:00"
 }

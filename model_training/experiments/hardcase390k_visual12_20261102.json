@@ -2,7 +2,11 @@
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_390000_v1"
   },
-  "audit_result": null,
+  "audit_result": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35/result.json",
+    "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v35_resources.json",
+    "sha256": "4cab79464e01ca2ebe3d420040d2a6a3081cec14672245371b28f34840b29dfa"
+  },
   "canonical_source": null,
   "capacity": {
     "full_official_beam_decode_per_rank": 0,

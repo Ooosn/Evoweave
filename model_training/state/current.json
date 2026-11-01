@@ -1,6 +1,48 @@
 {
   "active_operation": {
-    "CPU_audit_accepted": false,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33_resources.json",
+      "resources_sha256": "89484ad1310271c6db6f4f3de091fb6d8bb87066310088b9e200510d65b24c56",
+      "sha256": "764df1a38a4c731f7329fc23853caf45980216b45c029772a85046beee4d97c7"
+    },
+    "CPU_audit_accepted": true,
+    "CPU_audit_review": {
+      "CUDA_initialized": false,
+      "accepted": true,
+      "baseline_recomputed": false,
+      "full105_replay_unresolved": true,
+      "identical300k330k_inputs_and_seeds": true,
+      "inherited_capacity": {
+        "capacity_only": true,
+        "current_checkpoint_sha256": "b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8",
+        "inherited_across_same_architecture_checkpoint": true,
+        "inherited_from": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+          "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+        },
+        "input_frames": 8,
+        "new_tokens": 2048,
+        "num_beams": 15,
+        "passed": true,
+        "peak_reserved_bytes": 30480007168,
+        "seconds": 59.46062385698315,
+        "source_deployment": {
+          "fresh_source_window_verified": true,
+          "initial_source": "f8bfeb02a6737f127176a2c6368c2cf4f9796727",
+          "old_directory_and_durable_archive_preserved": true,
+          "old_files_restored": 0,
+          "preserved_old_directory": "/work/wangyy/virtual_query_matched_5k_20261025/code_preserved_ef4d0ffddbeb_before_f8bfeb02a673",
+          "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase400k_visual12_20261102.json",
+          "sha256": "156924e3748161ba999144ca05469ba98a5a234b73f6bef1491bd3342b848ec6"
+        },
+        "stress_repeated": false
+      },
+      "observed_utc": "2026-11-01T17:26:02.627733+00:00",
+      "previous330k_recomputed": false,
+      "references": 12,
+      "zero_updates": true
+    },
     "acceptance_test": "Preserve old directory and exact29deletion state with verified durable archive, fresh fixed-commit clean SSD checkout; native zero-update official15beam inference on fixed12cases and336target rows; exact300kand330kcanonical identities and seed; inherit accepted2048token beam capacity without new stress; independent paired scoring and matched visuals; no retraining/reselection/promotion; preserve105uncertainty.",
     "authorization": "User2026-11-02 explicitly requests fixing code deployment, preserving the old directory and training results, then continuing the400kmodel official12case inference comparison without repeated restoration.",
     "automatic_retry_allowed": false,
@@ -14,18 +56,20 @@
         "sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a"
       }
     },
-    "capacity_accepted": false,
+    "capacity_accepted": true,
+    "capacity_admission_kind": "inherited_same_architecture_official15beam2048tokens_no_new_stress",
     "code_commit": "7cfeed735a9bf3074111b361d1768a445d739d2e",
     "complete": false,
     "contract": "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
     "experiment_id": "hardcase400k_visual12_20261102",
     "explicit_human_authorized": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "label": "predicted_reference_20261029_v1",
+    "new_capacity_stress_permitted": false,
     "operation": "preserved_source_deployment_and_fixed400k_official12case_comparison",
     "optimizer_updates": 0,
-    "phase": "preserve_old_checkout_deploy_fixed_stage",
+    "phase": "official400k_fixed12_inference",
     "previous330k": {
       "resources": {
         "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
@@ -39,22 +83,29 @@
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "runs": [
       {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
+        "config_sha256": "b69219b446008e67535ad9a4684b3c41193c45ffab133601be226e829b4b96b7",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33_resources.json",
+          "resources_sha256": "89484ad1310271c6db6f4f3de091fb6d8bb87066310088b9e200510d65b24c56",
+          "sha256": "764df1a38a4c731f7329fc23853caf45980216b45c029772a85046beee4d97c7"
+        },
+        "status": "completed_passed"
+      },
+      {
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
-        "config_sha256": "b69219b446008e67535ad9a4684b3c41193c45ffab133601be226e829b4b96b7",
-        "mode": "audit",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v33",
-        "status": "admitted"
-      },
-      {
-        "approved": false,
-        "complete": false,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_visual12_20261102.json",
-        "config_sha256": "b69219b446008e67535ad9a4684b3c41193c45ffab133601be226e829b4b96b7",
+        "config_sha256": "682880b3dcdb06fa810fd8842028914e83b352a1ce9a0551a2f3f4a844a2e425",
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v33",
-        "status": "waiting_CPU_and_deployment_review"
+        "status": "admitted400k_only_zero_update_inference"
       }
     ],
     "source_checkpoint": {
@@ -101,11 +152,27 @@
       ],
       "expected_old_source": "ef4d0ffddbeb99a1ee1d52b5371880b94bc6c96b",
       "implementation": "server_ops/hgc/deploy_stage_checkout.py",
+      "new_worktree_clean": true,
+      "old_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/old_checkout_before_f8bfeb02a673.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/old_checkout_before_f8bfeb02a673.tar.gz",
+        "sha256": "ca7a953d2a752da55ec6b71688cb905c08c88f4f20ec566112e1a5befbc12f2f"
+      },
+      "old_files_restored": 0,
       "preserve_old_directory": true,
+      "preserved_old_directory": "/work/wangyy/virtual_query_matched_5k_20261025/code_preserved_ef4d0ffddbeb_before_f8bfeb02a673",
       "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase400k_visual12_20261102.json",
-      "status": "planned"
+      "receipt_sha256": "156924e3748161ba999144ca05469ba98a5a234b73f6bef1491bd3342b848ec6",
+      "source_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/source_f8bfeb02a6737f127176a2c6368c2cf4f9796727.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/source_f8bfeb02a6737f127176a2c6368c2cf4f9796727.tar.gz",
+        "sha256": "da513f36a563a1d773dcea3f3f2f34f06d40f709d70fc1ce5ad5ac00f38793f8"
+      },
+      "source_created_utc": "2026-11-01T17:20:54.572252+00:00",
+      "status": "complete",
+      "valid_until_before_UTC": "2026-11-06T17:20:54.572252+00:00"
     },
-    "status": "source_deployment_and_CPU_audit_admitted",
+    "status": "CPU_and_preserved_source_passed_GPU_inference_admitted",
     "unresolved_full105_exact_replay_difference": true
   },
   "allocation_defaults": {
@@ -138,12 +205,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -231,7 +298,7 @@
     "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "Use reviewed deployment tool plan/execute on the fixed committed source, preserving old directory and durable verified archives without restoring files. Review actual deployment receipt, run audit_v33once, record its real CPU/native receipts and inherited beam capacity, commit/sync exact state/config and source archive, then plan and run zero-update capacity_v33for400konly. Reuse300k/330k results and inspect paired12case visuals; no new training, stress, GPU request, checkpoint/seed selection or model promotion.",
+  "next_required_result": "Freshly plan and execute capacity_v33once on existing nativeGPU4/8CPU. Only400kendpoint official15beam inference; inherited stress means no capacity rerun. Reuse300k/330kresults, compare336targetrows and12matchedcase visuals independently. No retry/retraining/reselection/promotion; retain old105exact replay uncertainty.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -269,6 +336,6 @@
     "model_training/docs/HARDCASE400K_VISUAL12_20261102.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_visual12_source_CPU_admitted_20261102",
-  "updated_at": "2026-11-01T17:19:04.016238+00:00"
+  "state_id": "hardcase400k_visual12_GPU_admitted_20261102",
+  "updated_at": "2026-11-01T17:26:02.627733+00:00"
 }

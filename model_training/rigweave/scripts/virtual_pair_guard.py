@@ -97,6 +97,9 @@ def execution_cpu_binding(config, exception, allowed_cpus):
 
 def scheduler_runtime(config):
     runtime = config['runtime']
+    if 'paper_shared_inference' in runtime:
+        from paper_benchmark_protocol import shared_gpu_policy
+        shared_gpu_policy(config)
     if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
@@ -293,7 +296,10 @@ def verify_launch(args, config):
     if not cpu and os.getpid() == int(supervisor):
         apps = subprocess.check_output(['nvidia-smi', '--query-compute-apps=pid,gpu_uuid',
             '--format=csv,noheader'], text=True, timeout=30)
-        if any(line.split(',')[1].strip() in uuids for line in apps.splitlines()):
+        if runtime.get('paper_shared_inference'):
+            from paper_benchmark_protocol import shared_gpu_admission
+            shared_gpu_admission(config)
+        elif any(line.split(',')[1].strip() in uuids for line in apps.splitlines()):
             raise RuntimeError('approved GPU already occupied; no process was stopped')
     if (ROOT.resolve() != Path(runtime['repo']).resolve()
             or args.config.resolve().parent != ROOT / 'model_training/experiments'

@@ -72,6 +72,9 @@ def main():
                 'methods':['evoweave330k','unirig_official','puppeteer_official'],
                 'retry_failed_generation':False,'use_GT_reference':False,
                 'case_selection':'hash_order_excluding_development128'},'audit_result':None}
+        config['runtime']['paper_shared_inference']={'explicit_human_authorized':True,
+            'scope':config['family'],'own_memory_fraction':.30,'minimum_free_mib':32768,
+            'preserve_existing_processes':True}
         config_path=ROOT/'model_training/experiments/paper_benchmark_20261102_audit.json'
         write(config_path,config)
         code_commit=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip()

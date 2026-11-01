@@ -291,20 +291,34 @@ def run(config, output, source, config_path):
             raw = score_generation(generated[0], tokenizer, record['truth'][0].numpy(),
                 record['parents'].tolist(), float(record['diagonals'][0]))
             if raw['success']:
-                row = metrics(record, raw['predicted_joints'], raw['predicted_parents'])
-                features, _ = model.encode(surface)
-                xyz = torch.tensor(raw['predicted_joints'], device=device, dtype=torch.float32)
-                prediction = head_prediction(head, features, surface, xyz, raw['predicted_parents'], 0)
-                for frame in range(1, 8):
-                    target = metrics(record, prediction[frame].cpu().numpy(), raw['predicted_parents'], frame=frame)
-                    targets.append(dict(target, method='evoweave330k_head'))
-                    targets.append(dict(metrics(record, raw['predicted_joints'], raw['predicted_parents'], frame=frame),
-                                        method='evoweave330k_reference_copy'))
+                try:
+                    row = metrics(record, raw['predicted_joints'], raw['predicted_parents'])
+                except (ValueError, IndexError, TypeError, AssertionError) as error:
+                    row = failure(record, error)
             else:
                 row = failure(record, raw['status'])
+            if row['success']:
+                dynamic_error = None
+                try:
+                    features, _ = model.encode(surface)
+                    xyz = torch.tensor(row['predicted_joints'], device=device, dtype=torch.float32)
+                    prediction = head_prediction(head, features, surface, xyz, row['predicted_parents'], 0)
+                except (ValueError, IndexError, TypeError, AssertionError) as error:
+                    dynamic_error = repr(error)
+                for frame in range(1, 8):
+                    try:
+                        if dynamic_error:
+                            raise ValueError(dynamic_error)
+                        target = metrics(record, prediction[frame].cpu().numpy(), row['predicted_parents'], frame=frame)
+                    except (ValueError, IndexError, TypeError, AssertionError) as error:
+                        target = failure(record,error,frame=frame)
+                    targets.append(dict(target, method='evoweave330k_head'))
+                    targets.append(dict(metrics(record, row['predicted_joints'], row['predicted_parents'], frame=frame),
+                                        method='evoweave330k_reference_copy'))
+            else:
                 for frame in range(1, 8):
                     for method in ('evoweave330k_head','evoweave330k_reference_copy'):
-                        targets.append(dict(failure(record,raw['status'],frame=frame),method=method))
+                        targets.append(dict(failure(record,row.get('error',raw['status']),frame=frame),method=method))
         row.update(method='evoweave330k', generation_seconds=time.monotonic()-t0,
                    raw_generated_ids=generated[0]['tokens'], input_surface_sha256=record['surface_sha256'])
         rows.append(row)

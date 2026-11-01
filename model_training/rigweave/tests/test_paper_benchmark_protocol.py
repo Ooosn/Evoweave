@@ -73,5 +73,13 @@ class PaperProtocolTests(unittest.TestCase):
                 sys.path.remove(root)
                 sys.modules.pop('legacy_paper_module',None)
 
+    def test_shared_policy_does_not_authorize_training_family(self):
+        c=example()
+        c['runtime']['paper_shared_inference']={'explicit_human_authorized':True,'scope':P.SCOPE,
+            'own_memory_fraction':.30,'minimum_free_mib':32768,'preserve_existing_processes':True}
+        P.shared_gpu_policy(c)
+        c['family']='hardcase3608_20261101_v1'
+        with self.assertRaises(ValueError): P.shared_gpu_policy(c)
+
 
 if __name__ == '__main__': unittest.main()

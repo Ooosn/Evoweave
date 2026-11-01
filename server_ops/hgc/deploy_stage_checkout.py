@@ -50,7 +50,7 @@ def write_new(path,value):
     else:
         with path.open('xb') as handle: handle.write(raw)
 
-def snapshot():
+def snapshot(shared_inference=False):
     repo=RUN/'code'; keeper=Path('/proc/2268188')
     if repo.is_symlink() or not (repo/'.git').is_dir(): raise RuntimeError('expected a standalone canonical Git checkout')
     groups=(keeper/'cgroup').read_text()
@@ -58,7 +58,19 @@ def snapshot():
     if (keeper/'task/2268188/children').read_text().strip(): raise RuntimeError('payload active; source replacement prohibited')
     grant=command('qstat','-j','131170166')
     if 'h100=2,h_rt=345600,mem_req=4G' not in grant or 'pcg01i:16' not in grant: raise RuntimeError('retained96h grant differs')
-    if command('nvidia-smi','-i','3,4','--query-compute-apps=pid,gpu_uuid','--format=csv,noheader'): raise RuntimeError('GPU3/4occupied; nothing stopped')
+    apps=command('nvidia-smi','-i','3,4','--query-compute-apps=pid,gpu_uuid','--format=csv,noheader')
+    shared=None
+    if shared_inference:
+        import sys
+        operator=Path(__file__).resolve().parents[2]
+        sys.path.insert(0,str(operator/'model_training/rigweave/scripts'))
+        from paper_benchmark_protocol import shared_gpu_admission,SCOPE
+        authorization=json.loads((operator/'model_training/state/current.json').read_text())['active_operation']
+        if authorization.get('label')!=SCOPE or authorization.get('explicit_human_authorized') is not True or authorization.get('formal_training_allowed'):
+            raise RuntimeError('shared deployment lacks exact inference-only authorization')
+        config=json.loads((operator/'model_training/experiments/paper_benchmark_20261102_audit.json').read_text())
+        shared=shared_gpu_admission(config)
+    elif apps: raise RuntimeError('GPU3/4occupied; nothing stopped')
     for proc in Path('/proc').iterdir():
         if not proc.name.isdigit(): continue
         try: cwd=(proc/'cwd').resolve(strict=True)
@@ -74,11 +86,13 @@ def snapshot():
         'status':subprocess.check_output(['git','-C',str(repo),'status','--porcelain'],text=True).splitlines(),
         'keeper_code_sha256':sha(repo/'model_training/jobs/hold_virtual_pair_allocation.py'),
         'mount_source':source,'SSD_verified':True,'keeper_pid':2268188,'job_id':131170166,
-        'keeper_affinity':sorted(os.sched_getaffinity(2268188))}
+        'keeper_affinity':sorted(os.sched_getaffinity(2268188)),
+        'shared_inference':shared_inference,'shared_GPU_admission':shared,'existing_GPU_processes_not_modified':apps}
 
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument('action',choices=('plan','execute')); parser.add_argument('--source',required=True)
     parser.add_argument('--deployment-id',required=True)
+    parser.add_argument('--shared-inference',action='store_true')
     args=parser.parse_args()
     if not re.fullmatch('[0-9a-f]{40}',args.source): raise ValueError('exact commit required')
     if not re.fullmatch('[a-z][a-z0-9_]{2,80}',args.deployment_id): raise ValueError('safe unique deployment id required')
@@ -89,12 +103,14 @@ def main():
         if receipt['complete'] and command('git','-C',str(RUN/'code'),'rev-parse','HEAD')==args.source:
             print(json.dumps(receipt)); return
         raise RuntimeError('deployment already recorded; inspect actual progress')
-    live=snapshot()
+    if args.shared_inference and command('git','-C',str(Path(__file__).resolve().parents[2]),'rev-parse','HEAD')!=args.source:
+        raise RuntimeError('shared operator must itself be the exact target source')
+    live=snapshot(args.shared_inference)
     if args.action=='plan':
         write_new(plan_path,{'complete':True,'source':args.source,'live':live,'tool_sha256':sha(__file__)})
         print(json.dumps({'planned_source':args.source,'live':live},indent=2)); return
     plan=json.loads(plan_path.read_text()); old=RUN/'code'
-    if plan['source']!=args.source or plan['tool_sha256']!=sha(__file__): raise RuntimeError('deployment plan changed')
+    if plan['source']!=args.source or plan['tool_sha256']!=sha(__file__) or plan['live'].get('shared_inference',False)!=args.shared_inference: raise RuntimeError('deployment plan changed')
     if (datetime.now(timezone.utc)-datetime.fromisoformat(plan['live']['observed_utc'])).total_seconds()>1200: raise RuntimeError('deployment plan stale')
     if any(live[k]!=plan['live'][k] for k in ('head','status','keeper_code_sha256','mount_source','keeper_affinity')): raise RuntimeError('old checkout/resources changed')
     staged=RUN/('code_staged_'+args.source[:12]); preserved=RUN/('code_preserved_'+live['head'][:12]+'_before_'+args.source[:12])
@@ -123,7 +139,7 @@ def main():
     durable_source=DURABLE/source_archive.name; shutil.copyfile(source_archive,durable_source); os.chmod(durable_source,0o600)
     if sha(source_archive)!=sha(durable_source): raise RuntimeError('new durable source archive differs')
     if old.stat().st_dev!=staged.stat().st_dev or old.parent.resolve()!=RUN.resolve(): raise RuntimeError('source replacement escaped same SSD')
-    latest=snapshot()
+    latest=snapshot(args.shared_inference)
     if any(latest[k]!=live[k] for k in ('head','status','keeper_code_sha256','keeper_affinity')): raise RuntimeError('source/resources changed before cutover')
     os.rename(old,preserved)
     os.rename(staged,old)

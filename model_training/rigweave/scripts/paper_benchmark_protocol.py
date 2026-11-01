@@ -39,6 +39,28 @@ def scientific_sha(config):
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
+def shared_gpu_policy(config):
+    policy = config['runtime'].get('paper_shared_inference')
+    expected = {'explicit_human_authorized': True, 'scope': SCOPE,
+        'own_memory_fraction': .30, 'minimum_free_mib': 32768,
+        'preserve_existing_processes': True}
+    if config.get('family') != SCOPE or policy != expected:
+        raise ValueError('shared GPU use is restricted to the authorized paper inference')
+    return policy
+
+
+def shared_gpu_admission(config):
+    import subprocess
+    policy = shared_gpu_policy(config)
+    rows = subprocess.check_output(['nvidia-smi','-i',','.join(config['runtime']['gpu_uuids']),
+        '--query-gpu=uuid,memory.free,memory.total','--format=csv,noheader,nounits'],text=True,timeout=30)
+    parsed = [[v.strip() for v in line.split(',')] for line in rows.splitlines()]
+    if ([r[0] for r in parsed] != config['runtime']['gpu_uuids']
+            or any(int(r[1]) < policy['minimum_free_mib'] for r in parsed)):
+        raise RuntimeError('shared inference needs32GiB actual free GPU memory')
+    return {'memory_free_mib':int(parsed[0][1]),'memory_total_mib':int(parsed[0][2]),'policy':policy}
+
+
 def validate_config(config, mode):
     if mode not in ('audit', 'capacity') or config.get('family') != SCOPE:
         raise ValueError('paper comparison is inference-only')

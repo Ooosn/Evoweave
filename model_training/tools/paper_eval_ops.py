@@ -26,12 +26,18 @@ def main():
         raise ValueError('unrecorded paper stage')
     config = json.loads(args.config.read_text())
     setup(config)
-    from paper_benchmark_protocol import validate_config, scientific_sha
+    from paper_benchmark_protocol import validate_config, scientific_sha, shared_gpu_admission
     from virtual_pair_guard import validate_stage
     from types import SimpleNamespace
     mode = args.stage.split('_')[0]
     validate_config(config, mode)
-    live = snapshot(config, idle=args.action != 'observe')
+    live = snapshot(config, idle=False)
+    if args.action != 'observe':
+        if live['keeper_children'] or live['pending_stages']:
+            raise RuntimeError('a native payload is already active')
+        if live['seconds_before_saved_stop'] < config['evaluation']['payload_limit_seconds'] + 60:
+            raise RuntimeError('insufficient retained allocation time')
+        live['shared_GPU_admission'] = shared_gpu_admission(config)
     allocation = Path(config['runtime']['allocation_directory'])
     output = RUN/'outputs'/args.stage
     if args.action == 'observe':

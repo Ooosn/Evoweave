@@ -10,8 +10,8 @@
     },
     "code_commit": "c27b15a8e07e1dae4b5c38148f0590f87aba2b71",
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_unchanged": true,
@@ -33,11 +33,26 @@
       {
         "stage": "audit_v37",
         "mode": "audit",
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit2.json",
         "config_sha256": "c9c26144c51e0c5ef6dffd05be7887d218218f55903af729f6299c02ee24d340",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37",
+        "status": "passed",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37/result.json",
+          "sha256": "559257e9fb5bb12a8bf19b4b64e02bbf20e815adda52d5583e56704977c78edc",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37_resources.json"
+        }
+      },
+      {
+        "stage": "capacity_v36",
+        "mode": "capacity",
+        "approved": true,
+        "complete": false,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102.json",
+        "config_sha256": "b1d3b4d8bf4de94028070bf77d03e66d7b747d88cf28fc8d62cb1673280451d9",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v36"
       }
     ]
   },
@@ -223,6 +238,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "paper_benchmark_CPU_preparation_20261102",
-  "updated_at": "2026-11-01T19:23:12.960872+00:00"
+  "state_id": "paper_benchmark_CPU_accepted_20261102",
+  "updated_at": "2026-11-01T19:44:48.521212+00:00"
 }

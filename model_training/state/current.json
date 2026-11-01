@@ -8,8 +8,19 @@
     },
     "CPU_audit_accepted": true,
     "acceptance_test": "Exact330kmodel/Adam/RNG restoration and30kweighted asset/frame/update-prefix preservation; frozen3/2/1tail70k with constant2e-6/6e-6LR; inherited unchanged native dual-H100capacity; actual first2updates and full100k/2091endpoint plus paired development and official case review. No3ppquality early stop, automatic retry or promotion.",
+    "actual_adaptation_input_frame_visits": 1283280,
+    "actual_adaptation_updates": 2091,
+    "actual_adaptation_visits": 100000,
+    "actual_new_updates": 1463,
+    "actual_new_visits": 70000,
+    "actual_total_visits": 400000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
     "automatic_retry_allowed": false,
+    "automation": {
+      "deleted": true,
+      "id": "evoweave-40",
+      "reason": "Need user approval to reconcile29remote historical file deletions before formal inference can pass clean-source admission."
+    },
     "backbone_LR": 2e-06,
     "capacity_accepted": true,
     "capacity_inheritance_required": {
@@ -25,17 +36,64 @@
       "sha256": "aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed"
     },
     "code_commit": "124f82fac0772207941d13e9b2a3a10ce68d9854",
-    "complete": false,
+    "complete": true,
     "contract": "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
     "current_total_asset_visits": 330000,
     "effective_batch": 48,
+    "endpoint_weights": {
+      "label": "hardcase3608_total400000",
+      "layout": "anchor",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/weights_100000.pt",
+      "sha256": "b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8"
+    },
     "experiment_id": "hardcase400k_20261101",
     "explicit_human_authorized": true,
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "finished_utc": "2026-11-01T15:52:17.035706+00:00",
+    "formal_inference_blocker": {
+      "do_not_commit_or_restore_unrelated_deletions_without_approval": true,
+      "files_preserved_in_their_current_deleted_state": true,
+      "kind": "unsubmitted_missing_tracked_historical_files",
+      "remote_deleted_paths": [
+        "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
+        "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
+        "model_training/docs/REFERENCE_CONDITIONED_GENERATION_REVIEW_20261027.md",
+        "model_training/docs/REFERENCE_SKELETON_XYZ_20261027.md",
+        "model_training/docs/TWO_QUERY_SUPERVISION_20261026.md",
+        "model_training/experiments/real_query_four_target_5k_20261026_v1.json",
+        "model_training/experiments/real_query_fraction_target_5k_20261026_v1.json",
+        "model_training/experiments/real_query_three_target_5k_20261026_v1.json",
+        "model_training/experiments/reference_skeleton_xyz_ar_64assets_20261027_v1.json",
+        "model_training/experiments/reference_skeleton_xyz_ar_fit_20261027_v1.json",
+        "model_training/experiments/reference_skeleton_xyz_frozen_pilot_20261027_v1.json",
+        "model_training/experiments/reference_skeleton_xyz_rigid_residual_20261027_v1.json",
+        "model_training/experiments/shared_reference_flow_5k_20261027_v1.json",
+        "model_training/experiments/virtual_query_matched_5k_20261025_v2.json",
+        "model_training/rigweave/scripts/train_reference_flow.py",
+        "model_training/rigweave/scripts/train_reference_xyz.py",
+        "model_training/rigweave/tests/test_legacy_single_target_launcher.py",
+        "model_training/rigweave/tests/test_query_density.py",
+        "model_training/rigweave/tests/test_query_density_followup.py",
+        "model_training/rigweave/tests/test_reference_coordinate_generator.py",
+        "model_training/rigweave/tests/test_reference_flow.py",
+        "model_training/rigweave/tests/test_reference_flow_runtime.py",
+        "model_training/rigweave/tests/test_reference_skeleton_xyz.py",
+        "model_training/rigweave/tests/test_reference_xyz_runtime.py",
+        "model_training/state/archive/query_density20k_completed_20261026.json",
+        "model_training/state/archive/reference_generation_before_shared_flow_20261027.json",
+        "model_training/state/archive/reference_xyz_diagnostics_completed_20261027.json",
+        "model_training/state/archive/seven_density20k_completed_20261027.json",
+        "model_training/state/archive/two_query20k_completed_20261026.json"
+      ],
+      "restoration_authorized": false,
+      "training_sources_unchanged": 66,
+      "user_restore_approval_requested": true
+    },
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "head_LR": 6e-06,
     "initialization": "complete330k_model_Adam_rankRNG_weighted_prefix",
     "label": "hardcase3608_20261101_v1",
+    "model_quality_accepted": false,
     "new_asset_visits": 70000,
     "new_optimizer_updates": 1463,
     "operation": "exact_weighted330k_to400k_continuation",
@@ -43,8 +101,21 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32"
     },
-    "phase": "formal_training_ready",
+    "phase": "training_complete_pending_user_filesystem_approval",
+    "post_training_validation": {
+      "baseline300k_and330k_reuse_required": true,
+      "candidate_selection": "predeclared400kendpoint_no_reselection",
+      "fixed12_official_15beam": "blocked_remote_worktree_deletions",
+      "no_automatic_model_promotion": true,
+      "quality_acceptance_complete": false
+    },
     "required_entrypoint": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32_resources.json",
+      "resources_sha256": "5ca1d4c23d6f9100120fb212ee507cdf053306f164110497bf2429ed82c465dc",
+      "sha256": "0d46a418784d16123ee128a587e432dcfe2980c8bcaba6d7060dd375689460f8"
+    },
     "runs": [
       {
         "approved": false,
@@ -63,13 +134,20 @@
         "status": "completed_passed"
       },
       {
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
         "config_sha256": "adc53a63c6635da6258bdeec56ac0ff4030f796d7bee37f6a36dedfbb979c605",
+        "exit_code": 0,
         "mode": "train",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32",
-        "status": "pending_CPU_restore_acceptance"
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32_resources.json",
+          "resources_sha256": "5ca1d4c23d6f9100120fb212ee507cdf053306f164110497bf2429ed82c465dc",
+          "sha256": "0d46a418784d16123ee128a587e432dcfe2980c8bcaba6d7060dd375689460f8"
+        },
+        "status": "completed_passed"
       }
     ],
     "source_checkpoint": {
@@ -78,10 +156,22 @@
     },
     "start_adaptation_asset_visits": 30000,
     "start_optimizer_updates": 628,
-    "status": "CPU_audit_admitted_training_not_yet_dispatched",
+    "status": "training_completed_post_inference_blocked_remote_deletions",
     "target_adaptation_asset_visits": 100000,
     "target_optimizer_updates": 2091,
     "target_total_asset_visits": 400000,
+    "training_execution_accepted": true,
+    "training_review": {
+      "backup_hash_scope": "Both copies verified by saver; final review confirmed current sizes and metadata, not a fresh full-file rehash.",
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1/primary_completion_review.json",
+      "full_recovery_points": 7,
+      "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_20261101\\primary_completion_review.json",
+      "model_exports": 7,
+      "remote": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32/primary_completion_review.json",
+      "sha256": "d781acf2c0412f3034904e07c994d5fc959ca113909bc0003ae6da4eeb400faf",
+      "source_files_verified": 66
+    },
+    "training_source": "14695057f5d3a477c30c535cd3eaa743b94ba6bb",
     "unresolved_prior_diagnosis": {
       "archive": "model_training/state/archive/before_hardcase3608_20261101.json",
       "cause_established": false,
@@ -124,12 +214,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
     "submit",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -166,7 +256,7 @@
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "qalter accepted96h on the existing native job; live qstat confirms345600seconds,2H100and16CPUslots. Keeper and both kernel cgroups unchanged; no release or replacement allocation.",
+    "last_observation_note": "Training completed with native payload cleanup; keeper and96h2H100/16CPUgrant preserved, selected GPUs idle at final review. Formal case inference blocked by29unrelated missing tracked files, all66training source hashes unchanged.",
     "last_observed_utc": "2026-11-01T05:58:59.905451+00:00",
     "physical_gpus": [
       3,
@@ -189,7 +279,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "native96h_extended_keeper_preserved_no_payload",
+    "status": "retained96h_native_keeper_idle_training_complete",
     "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
   },
   "current_dataset_revision": {
@@ -200,7 +290,7 @@
     "valid_rows": 967
   },
   "established_research_decisions": {
-    "current_question": "User explicitly requests continuation to total400k:330kalready completed, add70k at3/2/1andconstant2e-6/6e-6with all complete optimizer/RNG/data state retained. The96h grant correction passed. Old3ppshortlist is not an early-stop rule for this newly authorized target; no automatic model promotion.",
+    "current_question": "400ktraining finished and all seven matched112asset development checkpoints verified. Compare the predeclared400k endpoint with retained300k/330k on the fixed12official cases after resolving the remote historical file deletion blocker; no quality acceptance or promotion yet. Preserve full105exact replay uncertainty.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
@@ -216,7 +306,7 @@
     "status": "completed_fixed12_official_case_review_no_promotion"
   },
   "module": "model_training",
-  "next_required_result": "Freshly plan and start train_v32 from the complete330k checkpoint with exact Adam/RNG/weighted-prefix restoration; add70kvisits to total400k. Existing dual-GPU capacity is explicitly inherited, not rerun.",
+  "next_required_result": "Training is complete, not pending or restartable. Await explicit permission to restore exactly29remote missing historical tracked files; preserve them until approval and do not bypass clean-source admission. Then independently admit zero-update official12case inference of the fixed400kendpoint against retained300k/330k baselines, inheriting existing beam capacity rather than rerunning stress. Do not retrain, reselect, promote, request GPUs or release131170166.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -225,6 +315,7 @@
     "head_multiplier": 3,
     "restore_complete_checkpoint_and_Adam": true,
     "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
+    "status": "completed70000new_visits_training",
     "target_total_asset_visits": 400000,
     "weights": {
       "background": 1,
@@ -252,6 +343,6 @@
     "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_CPU_restore_accepted_20261101",
-  "updated_at": "2026-11-01T06:23:59.178561+00:00"
+  "state_id": "hardcase400k_training_complete_post_inference_blocked_20261102",
+  "updated_at": "2026-11-01T16:22:03.228066+00:00"
 }

@@ -66,3 +66,41 @@ Monitor actual progress quietly; report meaningful completion, failure or
 required user action, not ordinary checkpoints. Completion means100k cumulative
 adaptation visits/2091updates, exactly70k/1463new, plus the planned verification;
 training completion alone is not production-quality acceptance.
+
+## Verified Completion2026-11-02
+
+train_v32 finished2026-11-02at00:52:17JST, source14695057f5d3a477c30c535cd3eaa743b94ba6bb.
+Actual new70,000visits/1463updates, cumulative adaptation100,000visits/2091updates,
+model400,000visits and1,283,280adaptation input-frame visits all match. Both rank
+logs are finite and every actual weighted index/ID/seed/LR/frame count matches.
+All seven full checkpoints/model exports and work/durable metadata and sizes
+were verified. Saving code had verified both SHA256copies and model tensor
+roundtrips; this completion review did not rehash unchanged multi-GB files.
+All112asset/896stage1-view and1568GT-reference stage2-row identities match the
+retained300k/330k baselines. Native payload cleanup passed; grant131170166and
+keeper2268188 remain reserved, with no selected-GPU processes at final review.
+
+Final greedy stage1 F1=.6228072403(core=.5910150735, extension=.7016990413,
+background=.6283021400), success871/896 and25failures. This is development
+evidence, not the pending official15beam case comparison or quality acceptance.
+The400k endpoint was predeclared; do not switch to another milestone using
+locked or qualitative results. full300k stays the production reference.
+
+The server checkout has29uncommitted historical-file deletions, none among
+the66hashed training sources. All66source hashes still match the training
+receipt. Their origin is not established; do not restore or commit them without
+user approval. The missing paths are retained in the primary review/current
+state. This blocks clean-source admission for subsequent formal inference,
+not acceptance of the already completed training execution. User permission
+to restore exactly these29files was requested. Follow-up evoweave-40was deleted
+while user action is needed; do not restart training or bypass the blocker.
+
+Byte-identical primary review(work, durable and local), SHA256:
+`d781acf2c0412f3034904e07c994d5fc959ca113909bc0003ae6da4eeb400faf`.
+Local: `D:/evoweave/server_ops/outputs/hardcase400k_20261101/primary_completion_review.json`.
+Remote: `outputs/train_v32/primary_completion_review.json`.
+Fixed400k model export SHA256:
+`b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8`.
+Full100kadaptation checkpoint SHA256:
+`d7776b6cd249b2fff204ec4d6e6e01a76350c1d43e72675d7db802661d3a449c`.
+The105prior exact coordinate-token replay discrepancy remains unresolved.

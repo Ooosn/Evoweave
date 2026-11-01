@@ -20,11 +20,14 @@
     "acceptance_test": "Native zero-update12case official15beam inference; exact baseline mesh/GT/frame/normalization/policy/seed, full2048token capacity, all failures retained, independent paired scoring and before/after visuals. Descriptive only, no model promotion.",
     "allocation_lifetime_extension": {
       "allocation": 131170166,
-      "approved": true,
+      "approved": false,
       "authorization": "User2026-11-01 explicitly requests extending the current grant and requires96h for future allocations. No GPU/CPU/memory change or release.",
+      "complete": true,
       "entrypoint": "model_training/tools/extend_native_allocation.py",
       "requested_h_rt_seconds": 345600,
-      "status": "pending_plan_and_actual_qalter"
+      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+      "result_sha256": "2e4aa7d757d6a633b3c71db3a2d9348b1f2cc367cb7ee6a5b8bd15cec50e0754",
+      "status": "completed_scheduler_verified"
     },
     "authorization": "User2026-11-01 requests actual inference on the earlier poor cases after adaptation. Independently authorize fixed final30k, original12cases and official policy with zero updates; no retuning, checkpoint selection or automatic model promotion.",
     "automatic_retry_allowed": false,
@@ -149,22 +152,24 @@
     "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
     "gpu_type": "H100",
     "gpus": 2,
-    "h_rt_seconds": 86400,
+    "h_rt_seconds": 345600,
     "job_id": 131170166,
+    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
     "memory_per_slot": "4G",
     "observed_available_CPU_slots": 76,
     "observed_available_H100": 3,
+    "original_h_rt_seconds": 86400,
     "persistent_session": "evoweave_h100_native_20261031",
     "queue": "gpuh.q@pcg01i",
-    "status": "granted_native_keeper_verified_no_payload",
+    "status": "granted_native_lifetime_extended_to96h",
     "total_memory_reservation_GiB": 64
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -192,19 +197,19 @@
     ],
     "cpu_slots": 16,
     "execution_CPU_binding_required_before_compute": false,
-    "expiry_utc": "2026-11-01T12:40:04.726Z",
+    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
     "gpu_uuids": [
       "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
       "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
     ],
     "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
-    "h_rt_seconds": 86400,
+    "h_rt_seconds": 345600,
     "host": "pcg01i",
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "capacity_v31 exited0 with passed native resource and cleanup receipts; fresh check found keeper without children andGPU3/4empty. Preserve job131170166and16CPU grant; no further payload admitted.",
-    "last_observed_utc": "2026-11-01T04:44:42.276227+00:00",
+    "last_observation_note": "qalter accepted96h on the existing native job; live qstat confirms345600seconds,2H100and16CPUslots. Keeper and both kernel cgroups unchanged; no release or replacement allocation.",
+    "last_observed_utc": "2026-11-01T05:58:59.905451+00:00",
     "physical_gpus": [
       3,
       4
@@ -226,8 +231,8 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "visual12_completed_payload_cleaned_native_allocation_preserved",
-    "stop_before_utc": "2026-11-01T11:40:04Z"
+    "status": "native96h_extended_keeper_preserved_no_payload",
+    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
   },
   "current_dataset_revision": {
     "contract": "DATASET_SOURCE_OF_TRUTH.md",
@@ -253,7 +258,22 @@
     "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "Plan and extend current native131170166to96h without replacing/releasing resources, verify actual grant and expiry, then prepare the user-authorized70k continuation to total400k.",
+  "next_required_result": "Prepare exact330k-complete-checkpoint continuation with model/Adam/RNG and weighted-stream prefix retained, then independently admit and start70k additional visits to total400k. The current96h grant is extended and preserved; no new allocation is needed.",
+  "pending_user_authorized_continuation": {
+    "additional_asset_visits": 70000,
+    "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
+    "backbone_LR": 2e-06,
+    "current_total_asset_visits": 330000,
+    "head_multiplier": 3,
+    "restore_complete_checkpoint_and_Adam": true,
+    "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
+    "target_total_asset_visits": 400000,
+    "weights": {
+      "background": 1,
+      "core": 3,
+      "extension": 2
+    }
+  },
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -273,6 +293,6 @@
     "model_training/docs/HARDCASE_VISUAL12_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "native_allocation_96h_extension_admitted_20261101",
-  "updated_at": "2026-11-01T05:58:18.931536+00:00"
+  "state_id": "native_allocation_96h_verified_continuation_preparation_20261101",
+  "updated_at": "2026-11-01T05:59:52.677472+00:00"
 }

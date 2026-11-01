@@ -1,7 +1,7 @@
 {
   "active_operation": {
     "label": "paper_benchmark_20261102_v1",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User2026-11-02 authorizes autonomous paper writing, baseline deployments, and bounded H100 inference, including sharing with other training without stopping it. No further training or checkpoint search.",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_paper_benchmark.py",
@@ -10,7 +10,7 @@
     },
     "code_commit": "7a37dab53f0252bd3fc925d0f0a8e2351ebbaab5",
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
@@ -100,13 +100,27 @@
       {
         "stage": "capacity_v40",
         "mode": "capacity",
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102.json",
         "config_sha256": "c7ead579c2c18c030609117711ee958539f740780b3c5d0b60e8bb30fd29255f",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40"
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40",
+        "status": "passed_zero_update_frozen_cohort_inference",
+        "result": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40/result.json",
+        "result_sha256": "9e1efb31517b478ddba5061757ad41275361e3f9f5bf0a7f8344afe09e52ff00",
+        "payload_cleanup_complete": true
       }
-    ]
+    ],
+    "inference_completed": true,
+    "manuscript_completed": true,
+    "completion_evidence": {
+      "benchmark_review": "paper/20261102/evidence/benchmark_review.json",
+      "PDF": "paper/20261102/output/pdf/Evoweave_Draft_v1.pdf",
+      "PDF_sha256": "f294a198110f1ee91b5bb81bc56b16170b31ec3bd99835869276fef3c312af2c",
+      "private_evidence_archive": "/home/wangyy/evorig/outputs/paper_benchmark_20261102/v1/fixed24_inference_evidence.tar.gz",
+      "private_archive_sha256": "a41fe4a1406223955195db13e487a77041a4eef568b05b22603735257d7a3376",
+      "manuscript_publication_authorized": false
+    }
   },
   "allocation_defaults": {
     "explicit_user_required_for_shorter_lifetime": true,
@@ -241,15 +255,14 @@
   },
   "human_context": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
   "last_operation": {
-    "archive": "model_training/state/archive/before_checkpoint_selection_20261102.json",
+    "label": "paper_benchmark_20261102_v1",
     "complete": true,
-    "experiment_id": "hardcase400k_visual12_20261102",
-    "label": "predicted_reference_20261029_v1",
     "model_quality_accepted": false,
-    "status": "completed_fixed400k_diagnostic_new_user_authorizes_finite_intermediate_selection"
+    "archive": "model_training/state/archive/before_paper_draft_20261102.json",
+    "status": "complete_first_manuscript_and_frozen_reference_inference_no_new_training"
   },
   "module": "model_training",
-  "next_required_result": "Complete paper inference and record its actual outcome, then finalize the manuscript and author evidence report. Keep330kselected, no further training or checkpoint search. Do not reuse historical launch authorizations.",
+  "next_required_result": "First complete manuscript delivered with reviewed zero-update inference evidence. Await a new user direction; no automatic GPU work, training, checkpoint search or manuscript publication.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -290,6 +303,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "paper_adapter_correction_CPU_accepted_20261102",
-  "updated_at": "2026-11-01T19:44:48.521212+00:00"
+  "state_id": "paper_draft_v1_completed_20261102",
+  "updated_at": "2026-11-01T21:21:27.107084+00:00"
 }

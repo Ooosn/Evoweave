@@ -104,3 +104,22 @@ Fixed400k model export SHA256:
 Full100kadaptation checkpoint SHA256:
 `d7776b6cd249b2fff204ec4d6e6e01a76350c1d43e72675d7db802661d3a449c`.
 The105prior exact coordinate-token replay discrepancy remains unresolved.
+
+## Repeated Source Loss Diagnosed
+
+2026-11-02inspection confirms `/etc/tmpfiles.d/tmp.conf:26` on pcg01i contains
+`v /work 1777 root root 5d`; systemd-tmpfiles-clean runs daily. The long-lived
+Git checkout is inside that scratch tree. The prior18restored paths and current
+29missing paths have zero overlap; restored prior18sample files still exist
+with their2026-10-31restoration timestamps. This supports age cleanup of unused
+historical paths rather than a training requirement to keep restoring files.
+The daily mechanism and its scope are confirmed; per-file deletion journal
+access is unavailable, so no exact unlink time/process trace is claimed.
+
+The preceding request to restore29files is superseded. Preserve the existing
+checkout, retain Git/verified packed source durably, and use clean fixed-commit
+stage deployments on verified SSD. Do not alter administrator cleanup, touch
+files to evade age policy, hide Git deletions or weaken source guards. No files,
+models or data were restored/moved by this diagnosis. Formal fixed400k inference
+remains pending a corrected deployment; no new training is needed.
+Evidence: `D:/evoweave/server_ops/outputs/hardcase400k_20261101/source_retention_diagnosis.json`.

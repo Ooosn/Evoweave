@@ -41,6 +41,17 @@ quality. A metric without a matched baseline must not be described as good.
 
 ## GPU Work Gate
 
+### Scratch Source Retention
+
+On pcg01i, `/etc/tmpfiles.d/tmp.conf` applies `v /work 1777 root root 5d` via
+daily systemd cleanup. `/work` is verified NVMe but not durable source storage.
+Use fixed-commit, stage-scoped, rebuildable SSD deployments and retain Git/
+verified packed source archives durably. Preserve a damaged checkout before
+replacement; do not repeatedly restore old files as the primary remedy, hide
+Git changes, weaken source admission, or alter/touch around site cleanup rules.
+Recheck retention on a different host. Keep large-file training backups durable;
+never move raw high-file-count workloads onto unverified HDD storage.
+
 ### HGC Lifetime Default
 
 The user requires96hours for future HGC allocations, not24hours. Use

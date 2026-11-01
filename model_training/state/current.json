@@ -19,7 +19,7 @@
     "automation": {
       "deleted": true,
       "id": "evoweave-40",
-      "reason": "Need user approval to reconcile29remote historical file deletions before formal inference can pass clean-source admission."
+      "reason": "Training completed. Repeated source-file restoration request is superseded by confirmed5day /work retention diagnosis; formal inference needs corrected stage source deployment, not retraining."
     },
     "backbone_LR": 2e-06,
     "capacity_accepted": true,
@@ -52,7 +52,10 @@
     "formal_inference_blocker": {
       "do_not_commit_or_restore_unrelated_deletions_without_approval": true,
       "files_preserved_in_their_current_deleted_state": true,
-      "kind": "unsubmitted_missing_tracked_historical_files",
+      "kind": "long_lived_source_checkout_on_age_cleaned_scratch",
+      "next_action": "Preserve the existing checkout and use a reviewed clean fixed-commit SSD stage deployment with durable packed source/Git provenance; do not keep patch-restoring historical files or bypass source admission.",
+      "previous_kind": "unsubmitted_missing_tracked_historical_files",
+      "prior_restore_question_superseded": true,
       "remote_deleted_paths": [
         "model_training/docs/QUERY_DENSITY_FOLLOWUP_20261026.md",
         "model_training/docs/QUERY_DENSITY_SUPERVISION_20261026.md",
@@ -85,6 +88,15 @@
         "model_training/state/archive/two_query20k_completed_20261026.json"
       ],
       "restoration_authorized": false,
+      "source_retention_diagnosis": {
+        "individual_unlink_trace_available": false,
+        "local": "D:\\evoweave\\server_ops\\outputs\\hardcase400k_20261101\\source_retention_diagnosis.json",
+        "mechanism_confirmed": true,
+        "policy": "v /work 1777 root root 5d",
+        "policy_file": "pcg01i:/etc/tmpfiles.d/tmp.conf:26",
+        "prior18_current29_overlap": 0,
+        "sha256": "122349fdb5da7adcc3f470344b92f1ba6a7e594e015cb7feb8d5d65a203b1664"
+      },
       "training_sources_unchanged": 66,
       "user_restore_approval_requested": true
     },
@@ -101,11 +113,11 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32"
     },
-    "phase": "training_complete_pending_user_filesystem_approval",
+    "phase": "source_retention_root_cause_diagnosed",
     "post_training_validation": {
       "baseline300k_and330k_reuse_required": true,
       "candidate_selection": "predeclared400kendpoint_no_reselection",
-      "fixed12_official_15beam": "blocked_remote_worktree_deletions",
+      "fixed12_official_15beam": "pending_corrected_stage_source_deployment",
       "no_automatic_model_promotion": true,
       "quality_acceptance_complete": false
     },
@@ -156,7 +168,7 @@
     },
     "start_adaptation_asset_visits": 30000,
     "start_optimizer_updates": 628,
-    "status": "training_completed_post_inference_blocked_remote_deletions",
+    "status": "training_complete_post_inference_source_deployment_hold",
     "target_adaptation_asset_visits": 100000,
     "target_optimizer_updates": 2091,
     "target_total_asset_visits": 400000,
@@ -290,7 +302,7 @@
     "valid_rows": 967
   },
   "established_research_decisions": {
-    "current_question": "400ktraining finished and all seven matched112asset development checkpoints verified. Compare the predeclared400k endpoint with retained300k/330k on the fixed12official cases after resolving the remote historical file deletion blocker; no quality acceptance or promotion yet. Preserve full105exact replay uncertainty.",
+    "current_question": "400ktraining source was not damaged;400ktraining is complete. The recurring missing-file pattern comes from an inappropriate long-lived /work source deployment under confirmed5day daily cleanup. Prior18andcurrent29do not overlap. Correct deployment before the authorized fixed400kcase inference; individual unlink audit is unavailable.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
@@ -306,7 +318,7 @@
     "status": "completed_fixed12_official_case_review_no_promotion"
   },
   "module": "model_training",
-  "next_required_result": "Training is complete, not pending or restartable. Await explicit permission to restore exactly29remote missing historical tracked files; preserve them until approval and do not bypass clean-source admission. Then independently admit zero-update official12case inference of the fixed400kendpoint against retained300k/330k baselines, inheriting existing beam capacity rather than rerunning stress. Do not retrain, reselect, promote, request GPUs or release131170166.",
+  "next_required_result": "400ktraining is complete. Do not repeat the superseded restore29files question. The long-lived checkout is under daily5day /work cleanup. Preserve its current state and prepare a fixed-commit, stage-scoped clean SSD deployment with durable packed source provenance before the authorized fixed12official inference. Do not alter system cleanup, touch files to evade it, hide deletions, weaken clean-source checks, retrain, reselect, promote, add GPUs or release131170166.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -343,6 +355,6 @@
     "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_training_complete_post_inference_blocked_20261102",
-  "updated_at": "2026-11-01T16:22:03.228066+00:00"
+  "state_id": "hardcase400k_complete_source_retention_diagnosed_20261102",
+  "updated_at": "2026-11-01T16:47:22.819150+00:00"
 }

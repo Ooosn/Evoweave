@@ -41,6 +41,16 @@ quality. A metric without a matched baseline must not be described as good.
 
 ## GPU Work Gate
 
+### HGC Lifetime Default
+
+The user requires96hours for future HGC allocations, not24hours. Use
+`server_ops/hgc/native_request_defaults.py` for native Evoweave request argv;
+never copy a dated request containing h_rt=86400. Verify the scheduler actually
+accepted h_rt=345600. Prefer extending a retained grant with unchanged GPUs,
+CPUslots and memory over replacing it. Keep a one-hour save-stop margin before
+the verified expiry. Historical experiment configs/receipts are not defaults
+and must not be rewritten to pretend they originally requested96hours.
+
 Before any training or fine-tuning command:
 
 1. Update `model_training/state/current.json` with one `active_operation` that

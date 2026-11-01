@@ -18,6 +18,14 @@
       "zero_updates": true
     },
     "acceptance_test": "Native zero-update12case official15beam inference; exact baseline mesh/GT/frame/normalization/policy/seed, full2048token capacity, all failures retained, independent paired scoring and before/after visuals. Descriptive only, no model promotion.",
+    "allocation_lifetime_extension": {
+      "allocation": 131170166,
+      "approved": true,
+      "authorization": "User2026-11-01 explicitly requests extending the current grant and requires96h for future allocations. No GPU/CPU/memory change or release.",
+      "entrypoint": "model_training/tools/extend_native_allocation.py",
+      "requested_h_rt_seconds": 345600,
+      "status": "pending_plan_and_actual_qalter"
+    },
     "authorization": "User2026-11-01 requests actual inference on the earlier poor cases after adaptation. Independently authorize fixed final30k, original12cases and official policy with zero updates; no retuning, checkpoint selection or automatic model promotion.",
     "automatic_retry_allowed": false,
     "baseline": {
@@ -76,6 +84,9 @@
     "model_promotion_allowed": false,
     "model_quality_accepted": false,
     "operation": "fixed_final30k_official_case_diagnosis",
+    "operation_entrypoints": {
+      "preflight": "model_training/tools/extend_native_allocation.py"
+    },
     "optimizer_updates": 0,
     "phase": "completed",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
@@ -122,6 +133,13 @@
     "status": "completed_fixed12_official_case_review_no_promotion",
     "unresolved_full105_exact_replay_difference": true
   },
+  "allocation_defaults": {
+    "explicit_user_required_for_shorter_lifetime": true,
+    "h_rt": "96:00:00",
+    "h_rt_seconds": 345600,
+    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
+    "save_stop_margin_seconds": 3600
+  },
   "allocation_request": {
     "accepted_request_verified": true,
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
@@ -143,10 +161,10 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
-    "preflight",
     "train",
     "submit",
     "matched_eval"
@@ -235,7 +253,7 @@
     "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "Authorized12case diagnosis is complete; report actual partial improvements and remaining failures. No further compute or model promotion is admitted without new user direction.",
+  "next_required_result": "Plan and extend current native131170166to96h without replacing/releasing resources, verify actual grant and expiry, then prepare the user-authorized70k continuation to total400k.",
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -255,6 +273,6 @@
     "model_training/docs/HARDCASE_VISUAL12_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase_final30k_visual12_completed_20261101",
-  "updated_at": "2026-11-01T04:44:42.276227+00:00"
+  "state_id": "native_allocation_96h_extension_admitted_20261101",
+  "updated_at": "2026-11-01T05:58:18.931536+00:00"
 }

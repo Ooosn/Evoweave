@@ -87,10 +87,16 @@ def _sampling(path, expected):
 
 
 def load_sampling(spec):
+    if spec.get('continuation_target_assets') == 100000:
+        from hardcase_continuation_protocol import sampling
+        return sampling(spec['path'],spec['sha256'])
     return _sampling(spec['path'], spec['sha256'])
 
 
 def validate_config(config):
+    if config.get('continuation'):
+        from hardcase_continuation_protocol import validate_config as validate_continuation
+        return validate_continuation(config)
     from anchor_full_protocol import validate_config as validate_full
     if config.get('family') != SCOPE or config.get('schema_version') != 1:
         raise ValueError('unknown adaptation family')
@@ -173,6 +179,9 @@ def initialize_from_source(config, model, optimizer):
 
 
 def validate_resume(config, saved, names, sources, world):
+    if config.get('continuation'):
+        from hardcase_continuation_protocol import validate_resume as validate_continuation_resume
+        return validate_continuation_resume(config,saved,names,sources,world)
     samples = saved['additional_asset_exposures']
     if (saved['scientific_sha256'] != scientific_sha(config)
             or saved['optimizer_parameter_names'] != names or saved['source_sha256'] != sources

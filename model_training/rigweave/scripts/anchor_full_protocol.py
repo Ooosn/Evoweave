@@ -90,6 +90,7 @@ def source_hashes():
         'single_query_protocol.py', 'id_xyz_stages.py']
     names += ['hardcase_adaptation_protocol.py', 'prepare_hardcase_adaptation.py',
         'train_hardcase_adaptation.py', 'virtual_pair_guard.py']
+    names.append('hardcase_continuation_protocol.py')
     paths += [Path(__file__).with_name(name) for name in names]
     paths += [root/'model_training/tools/hardcase_adaptation_ops.py',
         root/'model_training/jobs/launch_virtual_pair.py']

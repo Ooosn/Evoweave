@@ -84,6 +84,8 @@ def initialize(config, device):
     optimizer.add_param_group({'params': list(head.parameters())})
     if optimizer.state or len(optimizer.param_groups) != 2:
         raise RuntimeError('new full-data optimizer is not empty')
+    if config.get('continuation') and config.get('family') == 'hardcase3608_20261101_v1':
+        return model,optimizer,tokenizer,codec,base,{}
     if config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import initialize_from_source
         initial = initialize_from_source(config, model, optimizer)
@@ -97,6 +99,9 @@ def initialize(config, device):
 
 
 def load_model(config, device, rank, world, resume=None):
+    if config.get('continuation'):
+        from hardcase_continuation_protocol import load_model as restore_continuation
+        return restore_continuation(config,device,rank,world,resume)
     model, optimizer, tokenizer, codec, base, initial = initialize(config, device)
     stream = make_stream(base, rank, world)
     samples, frames, step, best = 0, 0, 0, {}
@@ -129,6 +134,9 @@ def load_model(config, device, rank, world, resume=None):
 
 
 def audit(config, output, source):
+    if config.get('continuation'):
+        from hardcase_continuation_protocol import audit as audit_continuation
+        return audit_continuation(config,output,source)
     base, entries = read_all(config)
     base = validate_config(config)
     groups, counts = stress_groups(entries['train'])
@@ -158,6 +166,9 @@ def audit(config, output, source):
 
 
 def checked_evidence(config, key):
+    if config.get('continuation') and key == 'capacity':
+        from hardcase_continuation_protocol import inherited_capacity
+        return inherited_capacity(config)
     spec = config['execution'][key]
     if not spec or sha256(spec['path']) != spec['sha256']:
         raise RuntimeError('full-data execution evidence is missing or changed: '+key)
@@ -387,8 +398,10 @@ def train(config, output, source, device, rank, world):
     model, optimizer, tokenizer, codec, base, initial, stream, samples, frames, step, best = load_model(
         config, device, rank, world, config['training']['resume'])
     if initial != audited['initialization']:
-        raise RuntimeError('formal model was not freshly initialized from official UniRig')
+        raise RuntimeError('formal initialization provenance differs from the accepted CPU audit')
     write_json(output/f'initialization_rank_{rank}.json', initial)
+    if config.get('continuation'):
+        write_json(output/f'restoration_rank_{rank}.json',model.continuation_restore_report)
     wrapped = wrap(model, device, world)
     dataset = fixed_dataset(entries['train'], base, 2, mode='train', file_resolver=resolver)
     if config.get('family') == 'hardcase3608_20261101_v1' and samples == 0:
@@ -466,8 +479,12 @@ def train(config, output, source, device, rank, world):
             final = evaluate(model, base, config, entries, output, samples, device, rank, world, final=True)
         stopped = not final['complete']
     if not stopped and config.get('family') == 'hardcase3608_20261101_v1' and rank == 0:
-        from hardcase_adaptation_protocol import select_development_checkpoint
-        selection = select_development_checkpoint(output)
+        if config.get('continuation'):
+            from hardcase_continuation_protocol import development_result
+            selection = development_result(config,output)
+        else:
+            from hardcase_adaptation_protocol import select_development_checkpoint
+            selection = select_development_checkpoint(output)
         write_json(output/'development_selection_result.json', selection)
         mirror(output/'development_selection_result.json', 'development_selection_result.json', config)
     return {'complete': not stopped, 'passed': not stopped, 'stopped_for_deadline': stopped,

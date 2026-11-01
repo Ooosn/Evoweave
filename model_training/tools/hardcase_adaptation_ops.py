@@ -78,8 +78,10 @@ def record(config, mode, stage):
             or resources.get('kernel_scheduler_membership') is not True
             or resources.get('allocation')!=config['runtime']['allocation']):
         raise RuntimeError('primary result/resource evidence is not accepted')
+    continuation=bool(config.get('continuation'))
     if mode=='audit' and (result.get('cuda_initialized') is not False
-            or result['plan']['assets']!=30000 or result['plan']['updates']!=628
+            or result['plan']['assets']!=(100000 if continuation else 30000)
+            or result['plan']['updates']!=(2091 if continuation else 628)
             or result['plan']['unique_assets']!=18002 or result['validation_panel']!=112
             or result['initialization'].get('project_optimizer_loaded') is not True):
         raise RuntimeError('CPU audit coverage, weighted plan or Adam import is incomplete')
@@ -103,17 +105,25 @@ def record(config, mode, stage):
             row.update(approved=False,complete=True,status='completed_passed',exit_code=0,result=spec)
         elif not row.get('complete'):
             row['config_sha256']=config_sha
-            row['approved']=row['mode']==('capacity' if mode=='audit' else 'train')
-    if mode=='capacity':
+            row['approved']=row['mode']==('train' if continuation else 'capacity' if mode=='audit' else 'train')
+    if continuation:
+        from hardcase_continuation_protocol import inherited_capacity
+        inherited_capacity(config)
+        op['capacity_accepted']=True
+        op['capacity_inherited']=config['execution']['capacity']
+    if mode=='capacity' or continuation:
         op['formal_training_allowed']=True
         state['allowed_operations']=['inspect','report','preflight','train']
         state['blocked_operations']=['submit','matched_eval']
-    op['phase']='capacity_ready_at_scheduled_time' if mode=='audit' else 'formal_training_ready'
+    op['phase']='formal_training_ready' if continuation else 'capacity_ready_at_scheduled_time' if mode=='audit' else 'formal_training_ready'
     state['state_id']='hardcase3608_'+('CPU_ready' if mode=='audit' else 'capacity_ready')+'_20261101'
     state['updated_at']=datetime.now(timezone.utc).isoformat()
     state['next_required_result']=('At the authorized scheduled time, freshly plan and run capacity_v30, '
         'review its receipts, then record and commit admission before train_v30.' if mode=='audit'
         else 'Freshly plan and start train_v30 from full300k; never use the capacity checkpoint as initialization.')
+    if continuation:
+        state['state_id']='hardcase400k_CPU_restore_accepted_20261101'
+        state['next_required_result']='Freshly plan and start train_v32 from the complete330k checkpoint with exact Adam/RNG/weighted-prefix restoration; add70kvisits to total400k. Existing dual-GPU capacity is explicitly inherited, not rerun.'
     for path, content in ((CONFIG,config_text),(STATE,json.dumps(state,indent=2,sort_keys=True)+'\n')):
         temporary=path.with_suffix('.json.tmp')
         temporary.write_text(content,encoding='utf-8',newline='\n')
@@ -123,11 +133,15 @@ def record(config, mode, stage):
 
 
 def main():
+    global CONFIG
     parser=argparse.ArgumentParser()
     parser.add_argument('action',choices=('snapshot','bind','plan','execute','record'))
     parser.add_argument('--stage')
     parser.add_argument('--source')
+    parser.add_argument('--continuation',action='store_true')
     args=parser.parse_args()
+    if args.continuation:
+        CONFIG=ROOT/'model_training/experiments/hardcase400k_20261101.json'
     config=json.loads(CONFIG.read_text())
     runtime=config['runtime']
     os.environ['CUDA_VISIBLE_DEVICES']=''

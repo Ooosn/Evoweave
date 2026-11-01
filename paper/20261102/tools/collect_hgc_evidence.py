@@ -15,7 +15,7 @@ RUN='/work/wangyy/virtual_query_matched_5k_20261025'
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--stage',choices=('audit_v36','audit_v37','audit_v38','audit_v39','capacity_v36','capacity_v38','capacity_v39'),required=True)
+    p.add_argument('--stage',choices=('audit_v36','audit_v37','audit_v38','audit_v39','audit_v40','capacity_v36','capacity_v38','capacity_v39','capacity_v40'),required=True)
     p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
     secret=read_dpapi_secret(DEFAULT_SECRET)
@@ -28,14 +28,17 @@ def main():
         compute=connect_client('pcg01i','wangyy',key,secret,20,sock=channel);stack.callback(compute.close)
         ftp=compute.open_sftp();stack.callback(ftp.close)
         remote=f'{RUN}/outputs/{args.stage}'
-        candidates=[(f'{remote}/{x.filename}',Path(args.stage)/x.filename) for x in ftp.listdir_attr(remote)
+        try:entries=ftp.listdir_attr(remote)
+        except FileNotFoundError:entries=[]
+        candidates=[(f'{remote}/{x.filename}',Path(args.stage)/x.filename) for x in entries
             if x.filename.endswith(('.json','.log','.npz','.zip'))]
         candidates.extend([(f'{RUN}/outputs/{args.stage}_resources.json',Path(args.stage+'_resources.json')),
             (f'{RUN}/{args.stage}.log',Path(args.stage+'.log')),
             (f'{RUN}/allocation_binding_native_20261031/{args.stage}_launch.json',Path(args.stage+'_launch.json'))])
-        receipts=[]
+        receipts=[];missing=[]
         for source,relative in candidates:
-            size=ftp.stat(source).st_size
+            try:size=ftp.stat(source).st_size
+            except FileNotFoundError:missing.append(source);continue
             if size>100*1024**2:
                 raise ValueError('evidence exceeded100MiB per-file bound')
             _,stdout,stderr=compute.exec_command('sha256sum -- '+shlex.quote(source),timeout=60)
@@ -54,7 +57,7 @@ def main():
                 partial.replace(target)
             receipts.append({'remote':source,'relative_path':relative.as_posix(),'bytes':size,'sha256':expected})
     path=args.output/(args.stage+'_collection.json')
-    path.write_text(json.dumps({'verified':True,'files':receipts},indent=2)+'\n',encoding='utf-8',newline='\n')
+    path.write_text(json.dumps({'verified':True,'files':receipts,'missing':missing},indent=2)+'\n',encoding='utf-8',newline='\n')
     print(json.dumps({'verified':True,'files':len(receipts),'output':str(args.output)}))
 
 

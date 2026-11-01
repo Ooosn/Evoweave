@@ -16,24 +16,38 @@ def write(p,value):Path(p).write_text(json.dumps(value,indent=2)+'\n',encoding='
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--record-audit',type=Path);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--record-audit',type=Path)
+    parser.add_argument('--bind-corrected-source',action='store_true');args=parser.parse_args()
     state_path=ROOT/'model_training/state/current.json';state=read(state_path);op=state['active_operation']
     audit_path=ROOT/'model_training/experiments/paper_adapter_repair_20261102_audit.json'
     gpu_path=ROOT/'model_training/experiments/paper_adapter_repair_20261102.json'
-    if args.record_audit:
-        result=read(args.record_audit);resources=read(EVIDENCE/'audit_v39_resources.json')
+    if args.bind_corrected_source:
+        launch=read(EVIDENCE/'audit_v39_launch.json');log=(EVIDENCE/'audit_v39.log').read_text()
+        if not launch['complete'] or launch['exit_code']!=1 or 'verify_launch' not in log or "'diff', '--quiet'" not in log:
+            raise ValueError('original metadata launcher refusal is not established')
+        if (EVIDENCE/'audit_v39_resources.json').exists():raise ValueError('inspect unexpected payload execution')
+        op['code_commit']=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip()
+        next(r for r in op['runs'] if r['stage']=='audit_v39').update(complete=True,approved=False,
+            status='launcher_refused_stale_code_baseline_no_audit_or_GPU_executed')
+        if any(r['stage']=='audit_v40' for r in op['runs']):raise ValueError('new metadata binding already exists')
+        op['runs'].append({'stage':'audit_v40','mode':'audit','approved':True,'complete':False,
+            'config':RUN+'/code/model_training/experiments/'+audit_path.name,'config_sha256':sha(audit_path),
+            'output':RUN+'/outputs/audit_v40'})
+        state['state_id']='paper_adapter_corrected_source_bound_20261102'
+    elif args.record_audit:
+        result=read(args.record_audit);resources=read(EVIDENCE/'audit_v40_resources.json')
         if not all((result['complete'],result['passed'],result['prepared_inputs_inherited_without_resampling'],
                     resources['complete'],resources['passed'],resources['payload_cleanup_complete'])):
             raise ValueError('new metadata-only compatibility binding did not complete safely')
         config=read(audit_path)
-        config['audit_result']={'path':RUN+'/outputs/audit_v39/result.json','sha256':sha(args.record_audit),
-            'resources_path':RUN+'/outputs/audit_v39_resources.json'}
+        config['audit_result']={'path':RUN+'/outputs/audit_v40/result.json','sha256':sha(args.record_audit),
+            'resources_path':RUN+'/outputs/audit_v40_resources.json'}
         write(gpu_path,config)
-        next(r for r in op['runs'] if r['stage']=='audit_v39').update(complete=True,approved=False,status='passed')
+        next(r for r in op['runs'] if r['stage']=='audit_v40').update(complete=True,approved=False,status='passed')
         op['CPU_audit_accepted']=True;op['gpu_work_allowed']=True
-        op['runs'].append({'stage':'capacity_v39','mode':'capacity','approved':True,'complete':False,
+        op['runs'].append({'stage':'capacity_v40','mode':'capacity','approved':True,'complete':False,
             'config':RUN+'/code/model_training/experiments/'+gpu_path.name,'config_sha256':sha(gpu_path),
-            'output':RUN+'/outputs/capacity_v39'})
+            'output':RUN+'/outputs/capacity_v40'})
         state['state_id']='paper_adapter_correction_CPU_accepted_20261102'
     else:
         if audit_path.exists():raise ValueError('repair preparation exists; inspect actual status')

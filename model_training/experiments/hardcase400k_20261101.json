@@ -106,7 +106,12 @@
     "xyz_interval_assets": 5000
   },
   "execution": {
-    "CPU_audit": null,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32_resources.json",
+      "resources_sha256": "efc0e5b4221963b5b2e8891efb9bb6515c27318977ef2c4e48fa63b197a6090d",
+      "sha256": "65c319215f6e02abcdad5493e02a07f689edef7f3ae359746c0ef2817053ab03"
+    },
     "capacity": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
       "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30_resources.json",

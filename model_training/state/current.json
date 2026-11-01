@@ -1,12 +1,24 @@
 {
   "active_operation": {
-    "CPU_audit_accepted": false,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32_resources.json",
+      "resources_sha256": "efc0e5b4221963b5b2e8891efb9bb6515c27318977ef2c4e48fa63b197a6090d",
+      "sha256": "65c319215f6e02abcdad5493e02a07f689edef7f3ae359746c0ef2817053ab03"
+    },
+    "CPU_audit_accepted": true,
     "acceptance_test": "Exact330kmodel/Adam/RNG restoration and30kweighted asset/frame/update-prefix preservation; frozen3/2/1tail70k with constant2e-6/6e-6LR; inherited unchanged native dual-H100capacity; actual first2updates and full100k/2091endpoint plus paired development and official case review. No3ppquality early stop, automatic retry or promotion.",
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
     "automatic_retry_allowed": false,
     "backbone_LR": 2e-06,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "capacity_inheritance_required": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30_resources.json",
+      "resources_sha256": "0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c",
+      "sha256": "aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed"
+    },
+    "capacity_inherited": {
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30/result.json",
       "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v30_resources.json",
       "resources_sha256": "0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c",
@@ -19,8 +31,8 @@
     "effective_batch": 48,
     "experiment_id": "hardcase400k_20261101",
     "explicit_human_authorized": true,
-    "formal_training_allowed": false,
-    "gpu_work_allowed": false,
+    "formal_training_allowed": true,
+    "gpu_work_allowed": true,
     "head_LR": 6e-06,
     "initialization": "complete330k_model_Adam_rankRNG_weighted_prefix",
     "label": "hardcase3608_20261101_v1",
@@ -31,23 +43,30 @@
       "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/continue400k_v1",
       "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32"
     },
-    "phase": "CPU_restore_audit",
+    "phase": "formal_training_ready",
     "required_entrypoint": "model_training/rigweave/scripts/train_hardcase_adaptation.py",
     "runs": [
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
+        "config_sha256": "013bf7234be1b3981c0d4e9c0ac08930ba6682011ef63f7c39b2ebf5403ba5be",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32_resources.json",
+          "resources_sha256": "efc0e5b4221963b5b2e8891efb9bb6515c27318977ef2c4e48fa63b197a6090d",
+          "sha256": "65c319215f6e02abcdad5493e02a07f689edef7f3ae359746c0ef2817053ab03"
+        },
+        "status": "completed_passed"
+      },
       {
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
-        "config_sha256": "013bf7234be1b3981c0d4e9c0ac08930ba6682011ef63f7c39b2ebf5403ba5be",
-        "mode": "audit",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v32",
-        "status": "admitted"
-      },
-      {
-        "approved": false,
-        "complete": false,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase400k_20261101.json",
-        "config_sha256": "013bf7234be1b3981c0d4e9c0ac08930ba6682011ef63f7c39b2ebf5403ba5be",
+        "config_sha256": "adc53a63c6635da6258bdeec56ac0ff4030f796d7bee37f6a36dedfbb979c605",
         "mode": "train",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v32",
         "status": "pending_CPU_restore_acceptance"
@@ -105,11 +124,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
-    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -197,7 +216,7 @@
     "status": "completed_fixed12_official_case_review_no_promotion"
   },
   "module": "model_training",
-  "next_required_result": "Freshly plan and execute audit_v32 once; accept the actual complete330krestoration/prefix report, record inherited capacity, commit/push/sync admission, then plan and start train_v32once for70knew visits.",
+  "next_required_result": "Freshly plan and start train_v32 from the complete330k checkpoint with exact Adam/RNG/weighted-prefix restoration; add70kvisits to total400k. Existing dual-GPU capacity is explicitly inherited, not rerun.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -233,6 +252,6 @@
     "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase400k_CPU_restore_admitted_20261101",
-  "updated_at": "2026-11-01T06:14:10.347062+00:00"
+  "state_id": "hardcase400k_CPU_restore_accepted_20261101",
+  "updated_at": "2026-11-01T06:23:59.178561+00:00"
 }

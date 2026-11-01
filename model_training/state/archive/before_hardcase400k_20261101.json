@@ -1,0 +1,298 @@
+{
+  "active_operation": {
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31_resources.json",
+      "resources_sha256": "9689198e6135387c1a39d070f6d46f67b99c7c9837873d758b3a304c55cea435",
+      "sha256": "e5fbb176c8e29e885f7c8f94ac26a1fe75214692db3bd98cb248d566b4ef2d73"
+    },
+    "CPU_audit_accepted": true,
+    "CPU_audit_review": {
+      "CUDA_initialized": false,
+      "accepted": true,
+      "full105_replay_unresolved": true,
+      "identical_baseline_inputs_and_seeds": true,
+      "observed_utc": "2026-11-01T04:31:09.316088+00:00",
+      "old_valid_references": 11,
+      "references": 12,
+      "zero_updates": true
+    },
+    "acceptance_test": "Native zero-update12case official15beam inference; exact baseline mesh/GT/frame/normalization/policy/seed, full2048token capacity, all failures retained, independent paired scoring and before/after visuals. Descriptive only, no model promotion.",
+    "allocation_lifetime_extension": {
+      "allocation": 131170166,
+      "approved": false,
+      "authorization": "User2026-11-01 explicitly requests extending the current grant and requires96h for future allocations. No GPU/CPU/memory change or release.",
+      "complete": true,
+      "entrypoint": "model_training/tools/extend_native_allocation.py",
+      "requested_h_rt_seconds": 345600,
+      "result_path": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+      "result_sha256": "2e4aa7d757d6a633b3c71db3a2d9348b1f2cc367cb7ee6a5b8bd15cec50e0754",
+      "status": "completed_scheduler_verified"
+    },
+    "authorization": "User2026-11-01 requests actual inference on the earlier poor cases after adaptation. Independently authorize fixed final30k, original12cases and official policy with zero updates; no retuning, checkpoint selection or automatic model promotion.",
+    "automatic_retry_allowed": false,
+    "baseline": {
+      "resources": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28_resources.json",
+        "sha256": "08d32ea7fc2f26ad056a46a71eded720f8ab6a56a2fd6e6b78da0a23cb75a748"
+      },
+      "result": {
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v28/result.json",
+        "sha256": "fa2268f03518276c7aab5a5b545b977b99c9d71a297e721f3407b02bb12dad3a"
+      }
+    },
+    "capacity_accepted": true,
+    "case_review": {
+      "all_results_and_27_comparison_images_retained": true,
+      "baseline_recomputed": false,
+      "cases": 12,
+      "finished_utc": "2026-11-01T04:37:48.825023+00:00",
+      "full105_replay_unresolved": true,
+      "geometry_common_valid": {
+        "after": 0.01839580373740719,
+        "assets": 11,
+        "before": 0.020758631787328338
+      },
+      "geometry_improved_cases": 8,
+      "geometry_regressed_cases": 3,
+      "independent_rescoring_passed": true,
+      "input_policy_seed_and_GT_matched": true,
+      "key_findings": {
+        "105": "Now parseable, but52versus136GTjoints and wrong/incomplete structure; old replay cause unresolved.",
+        "108": "Excess branches remain; reference topology slightly worse despite closer geometry.",
+        "30": "Major lateral spans partly recovered; terminal branches still missing.",
+        "70": "Multiple major branches still missing; essentially unchanged."
+      },
+      "local": "D:/evoweave/server_ops/outputs/hardcase_visual12_20261101/comparison_review.json",
+      "native_cleanup_verified": true,
+      "no_model_promotion": true,
+      "references_valid_after": 12,
+      "references_valid_before": 11,
+      "reviewed_utc": "2026-11-01T04:39:13.836397+00:00",
+      "sha256": "fe79a845bcc7ab40f2c394a825b019a11f101bbfc0a046d7c7aa707b8d1fa51f",
+      "source": "318a1fae3937c513c9ff2c662e412e40f6c7930a",
+      "views_per_method": 84,
+      "visual_inspection": "D:/evoweave/server_ops/outputs/hardcase_visual12_20261101/visual_inspection.json",
+      "visual_inspection_sha256": "130c58300fd4e090c72e9382235839f36140c4a6be74265f922119671c8a3ac0"
+    },
+    "case_review_accepted": true,
+    "code_commit": "f07000eb58937244e5d12cf764f5559c07ec830f",
+    "complete": true,
+    "contract": "model_training/docs/HARDCASE_VISUAL12_20261101.md",
+    "experiment_id": "hardcase_visual12_20261101",
+    "explicit_human_authorized": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "label": "predicted_reference_20261029_v1",
+    "model_promotion_allowed": false,
+    "model_quality_accepted": false,
+    "operation": "fixed_final30k_official_case_diagnosis",
+    "operation_entrypoints": {
+      "preflight": "model_training/tools/extend_native_allocation.py"
+    },
+    "optimizer_updates": 0,
+    "phase": "completed",
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
+    "runs": [
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase_visual12_20261101.json",
+        "config_sha256": "311f50ebf103e56da94616a9978c32b741cfccb4c7d8e451f352bbbf12a8a31f",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31_resources.json",
+          "resources_sha256": "9689198e6135387c1a39d070f6d46f67b99c7c9837873d758b3a304c55cea435",
+          "sha256": "e5fbb176c8e29e885f7c8f94ac26a1fe75214692db3bd98cb248d566b4ef2d73"
+        },
+        "status": "completed_passed"
+      },
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase_visual12_20261101.json",
+        "config_sha256": "35cc950cde01a1dffa216e0dbef5b8eafaa26a1d105c5c21e728663f0ec804b3",
+        "exit_code": 0,
+        "mode": "capacity",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31_resources.json",
+          "resources_sha256": "388895ab2fbbe562d78e5f21ce7351614ba3c74e09e2973dbf53edc8bac50735",
+          "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+        },
+        "status": "completed_passed_zero_update_inference"
+      }
+    ],
+    "source_checkpoint": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "status": "completed_fixed12_official_case_review_no_promotion",
+    "unresolved_full105_exact_replay_difference": true
+  },
+  "allocation_defaults": {
+    "explicit_user_required_for_shorter_lifetime": true,
+    "h_rt": "96:00:00",
+    "h_rt_seconds": 345600,
+    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
+    "save_stop_margin_seconds": 3600
+  },
+  "allocation_request": {
+    "accepted_request_verified": true,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "automatic_payload_allowed": false,
+    "cpu_slots": 16,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "gpu_type": "H100",
+    "gpus": 2,
+    "h_rt_seconds": 345600,
+    "job_id": 131170166,
+    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+    "memory_per_slot": "4G",
+    "observed_available_CPU_slots": 76,
+    "observed_available_H100": 3,
+    "original_h_rt_seconds": 86400,
+    "persistent_session": "evoweave_h100_native_20261031",
+    "queue": "gpuh.q@pcg01i",
+    "status": "granted_native_lifetime_extended_to96h",
+    "total_memory_reservation_GiB": 64
+  },
+  "allowed_operations": [
+    "inspect",
+    "report"
+  ],
+  "blocked_operations": [
+    "preflight",
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "compute_allocation": {
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "cpu_slots": 16,
+    "execution_CPU_binding_required_before_compute": false,
+    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
+    "h_rt_seconds": 345600,
+    "host": "pcg01i",
+    "inherited_affinity_logical_CPU_count": 224,
+    "keeper_pid": 2268188,
+    "kernel_cpuset_and_devices_membership": true,
+    "last_observation_note": "qalter accepted96h on the existing native job; live qstat confirms345600seconds,2H100and16CPUslots. Keeper and both kernel cgroups unchanged; no release or replacement allocation.",
+    "last_observed_utc": "2026-11-01T05:58:59.905451+00:00",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "policy": "Preserve the existing2H100/16CPUslot native grant and other workloads. This bounded adaptation is complete and no further compute, retry, GPU replacement, expansion or release is authorized.",
+    "previous_allocation": {
+      "expiry_utc": "2026-10-31T11:55:38Z",
+      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
+      "qlogin_job_id": 130675914,
+      "status": "expired"
+    },
+    "qlogin_job_id": 131170166,
+    "rejected_previous_reservation": {
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload"
+    },
+    "rss_limit_bytes": 68719476736,
+    "server": "HGC",
+    "started_utc": "2026-10-31T12:40:04.726Z",
+    "status": "native96h_extended_keeper_preserved_no_payload",
+    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
+  },
+  "current_dataset_revision": {
+    "contract": "DATASET_SOURCE_OF_TRUTH.md",
+    "normalization": "input_sequence_mesh_bbox",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967
+  },
+  "established_research_decisions": {
+    "current_question": "Completed user-requested final30k fixed12case official inference.30partly recovers lateral spans;105now parses but is incomplete;70and108remain structurally wrong. Preserve descriptive paired results, unchanged full300k reference and unresolved prior105replay cause; await user direction, no automatic compute.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
+  },
+  "human_context": "model_training/docs/HARDCASE_VISUAL12_20261101.md",
+  "last_operation": {
+    "archive": "model_training/state/archive/before_hardcase_visual12_20261101.json",
+    "complete": true,
+    "label": "hardcase3608_20261101_v1",
+    "model_quality_accepted": false,
+    "status": "completed_keep_full300k_no_eligible_development_candidate",
+    "training_execution_accepted": true
+  },
+  "module": "model_training",
+  "next_required_result": "Prepare exact330k-complete-checkpoint continuation with model/Adam/RNG and weighted-stream prefix retained, then independently admit and start70k additional visits to total400k. The current96h grant is extended and preserved; no new allocation is needed.",
+  "pending_user_authorized_continuation": {
+    "additional_asset_visits": 70000,
+    "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
+    "backbone_LR": 2e-06,
+    "current_total_asset_visits": 330000,
+    "head_multiplier": 3,
+    "restore_complete_checkpoint_and_Adam": true,
+    "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
+    "target_total_asset_visits": 400000,
+    "weights": {
+      "background": 1,
+      "core": 3,
+      "extension": 2
+    }
+  },
+  "publication_authorization": {
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
+    "branch": "codex/virtual-fusion-20261013",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "isolation_required": true,
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "status": "explicit_user_approved"
+  },
+  "receipt_max_age_minutes": 240,
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
+    "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
+    "model_training/docs/HARDCASE_VISUAL12_20261101.md"
+  ],
+  "schema_version": 1,
+  "state_id": "native_allocation_96h_verified_continuation_preparation_20261101",
+  "updated_at": "2026-11-01T05:59:52.677472+00:00"
+}

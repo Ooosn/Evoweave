@@ -44,7 +44,7 @@
     "new_capacity_stress_permitted": false,
     "operation": "two_intermediate_official12case_reviews_then_final_working_model_choice",
     "optimizer_updates": 0,
-    "phase": "native_capacity_v34",
+    "phase": "native_capacity_v35",
     "population_quality_accepted": false,
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "retained400k": {
@@ -107,18 +107,26 @@
         "total_visits": 390000
       },
       {
-        "approved": true,
-        "complete": false,
+        "approved": false,
+        "complete": true,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase380k_visual12_20261102.json",
         "config_sha256": "2f2d0e7d0b65f7153466507081a515ccd43036191a0614df673f7d2036fcec9e",
+        "exit_code": 0,
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v34_resources.json",
+          "resources_sha256": "1072b76713aa85ad8b821c8f7815db7bb272075ce3fe23e3d86a9ece22e4f77a",
+          "sha256": "48ead4b9b7c62b873127d861ed74e682d6ff0ed5b706f3def518847cc52be526",
+          "source": "8c7320e06310a7b82f0663bee98fa89b3af0b5c8"
+        },
         "stage": "capacity_v34",
-        "status": "waiting_preceding_recorded_stage",
+        "status": "passed_pending_independent_case_review",
         "total_visits": 380000
       },
       {
-        "approved": false,
+        "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase390k_visual12_20261102.json",
         "config_sha256": "c7641f915d55217033a7cc4c7cea4679c94fc3c7a0d9d58bc9a4a20bd27c9d20",
@@ -147,7 +155,7 @@
       "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase_checkpoint_selection_20261102.json",
       "status": "planned"
     },
-    "status": "audit_v35_recorded",
+    "status": "capacity_v34_recorded",
     "working_model_selection_authorized": true
   },
   "allocation_defaults": {
@@ -272,7 +280,7 @@
     "status": "completed_fixed400k_diagnostic_new_user_authorizes_finite_intermediate_selection"
   },
   "module": "model_training",
-  "next_required_result": "Plan and execute capacity_v34 once with current exact config/native resource proof. No training, repeated stress, baseline regeneration or retries.",
+  "next_required_result": "Plan and execute capacity_v35 once with current exact config/native resource proof. No training, repeated stress, baseline regeneration or retries.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -311,6 +319,6 @@
     "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase_checkpoint_selection_audit_v35_recorded_20261102",
-  "updated_at": "2026-11-01T18:15:55.131963+00:00"
+  "state_id": "hardcase_checkpoint_selection_capacity_v34_recorded_20261102",
+  "updated_at": "2026-11-01T18:20:29.642031+00:00"
 }

@@ -51,6 +51,11 @@ replacement; do not repeatedly restore old files as the primary remedy, hide
 Git changes, weaken source admission, or alter/touch around site cleanup rules.
 Recheck retention on a different host. Keep large-file training backups durable;
 never move raw high-file-count workloads onto unverified HDD storage.
+Use `server_ops/hgc/deploy_stage_checkout.py` with `plan`/`execute`, an exact
+`--source COMMIT` and unique `--deployment-id STAGE` for this retained native run. It requires idle
+payloads, preserves the old directory and verified durable archive, and pins a
+fresh clean SSD checkout. Verify its receipt before inference; do not refill
+missing historical files in the old tree.
 
 ### HGC Lifetime Default
 

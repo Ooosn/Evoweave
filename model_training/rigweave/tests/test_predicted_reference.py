@@ -14,6 +14,30 @@ from predicted_reference_runtime import head_prediction, score_output, source_ro
 
 
 class PredictedReferenceTests(unittest.TestCase):
+    def test_final400k_visual_uses_fixed_endpoint_and_inherited_capacity(self):
+        config=json.loads((ROOT/'model_training/experiments/hardcase400k_visual12_20261102.json').read_text())
+        for mode in ('audit','capacity'): validate_config(config,mode)
+        for section,key,value in [('capacity','full_official_beam_decode_per_rank',1),
+                ('official_smoke','full_beam_capacity_first',True),
+                ('official_smoke','inherited_official_capacity',None),
+                ('runtime','required_h_rt_seconds',86400),
+                ('hardcase_visual','candidate_additional_visits',80000),
+                ('hardcase_visual','promote_model',True)]:
+            changed=copy.deepcopy(config); changed[section][key]=value
+            with self.assertRaises(ValueError): validate_config(changed,'capacity')
+        with self.assertRaises(ValueError): validate_config(config,'train')
+        changed=copy.deepcopy(config); changed['checkpoints']['stage1']['sha256']='0'*64
+        with self.assertRaises(ValueError): validate_config(changed,'capacity')
+
+    def test_final400k_capacity_delegates_without_new_stress(self):
+        from unittest.mock import patch
+        from predicted_reference_smoke import inherited_capacity
+        config=json.loads((ROOT/'model_training/experiments/hardcase400k_visual12_20261102.json').read_text())
+        proof={0:{'passed':True,'stress_repeated':False}}
+        with patch('hardcase_visual_protocol.inherited_final400k_capacity',return_value=proof) as fn:
+            self.assertEqual(inherited_capacity(config),proof)
+        fn.assert_called_once_with(config)
+
     def source(self):
         return {'success': True, 'status': 'eos', 'predicted_joints': [[0., 0., 0.], [1., 0., 0.]],
                 'predicted_parents': [None, 0], 'gt_joint_count': 7}

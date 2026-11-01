@@ -29,6 +29,8 @@ def scientific_sha(config):
         values['inference_diagnosis'] = config['inference_diagnosis']
     if 'hardcase_visual' in config:
         values['hardcase_visual'] = config['hardcase_visual']
+    if 'source_deployment' in config:
+        values['source_deployment'] = config['source_deployment']
     return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
 
 
@@ -42,6 +44,7 @@ def bound_config(spec):
 def validate_config(config, mode):
     full_model = 'full_model_inputs' in config
     diagnosis = 'inference_diagnosis' in config
+    final400k = config.get('hardcase_visual',{}).get('kind')=='hardcase400k_fixed12_20261102'
     expected = {'assets': 128, 'input_frames': 8, 'reference_slots': [0, 4],
         'methods': list(METHODS), 'precision': 'fp32', 'allow_tf32': False,
         'decoder_attention': 'eager', 'max_new_tokens': 2048, 'max_joints': 512,
@@ -56,7 +59,7 @@ def validate_config(config, mode):
                         stage1_cache_policy='regenerate_all_official_no_greedy_reuse')
         if ((not expanded and smoke['case_indices'] != [2, 3, 64, 127]) or smoke['policy'] != POLICY
                 or smoke['generation_kwargs'] != OFFICIAL_OPTIONS or smoke['base_seed'] != 20261029
-                or smoke['static_fallback'] or smoke['full_beam_capacity_first'] != ((not expanded or full_model) and not diagnosis)):
+                or smoke['static_fallback'] or smoke['full_beam_capacity_first'] != ((not expanded or full_model) and not diagnosis and not final400k)):
             raise ValueError('unreviewed official inference recipe')
         if expanded and ((not full_model and not smoke.get('inherited_official_capacity'))
                          or smoke.get('visual_point_limit') != 4096):
@@ -73,13 +76,13 @@ def validate_config(config, mode):
         if 'hardcase_visual' in config:
             from hardcase_visual_protocol import validate_visual
             validate_visual(config)
-            expected_sha = 'abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018'
-            expected_label = 'hardcase3608_plus030000'
+            expected_sha = ('b82aca74b6837437e39f4803025bf996b7cab2425bc681dd49b236f7ff7b98e8' if final400k else 'abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018')
+            expected_label = 'hardcase3608_total400000' if final400k else 'hardcase3608_plus030000'
         if ('official_smoke' not in config or not expanded
                 or specs['stage1'] != specs['stage2'] or specs['stage1']['label'] != expected_label
                 or specs['stage1']['sha256'] != expected_sha or specs['stage1']['layout'] != 'anchor'
-                or smoke.get('inherited_official_capacity') is not None
-                or config['capacity']['full_official_beam_decode_per_rank'] != (0 if diagnosis else 1)
+                or (not final400k and smoke.get('inherited_official_capacity') is not None)
+                or config['capacity']['full_official_beam_decode_per_rank'] != (0 if diagnosis or final400k else 1)
                 or config['parent_config'] != config['stage2_config']):
             raise ValueError('full300k pipeline checkpoint or capacity contract differs')
     elif config['checkpoints']['stage1']['label'] != 'joint_080000' or config['checkpoints']['stage2']['label'] != 'pretrained_stage2_080000':

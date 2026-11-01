@@ -57,9 +57,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('action', choices=('plan', 'execute', 'observe'))
     parser.add_argument('--stage', choices=('audit_v27', 'capacity_v27', 'audit_v28', 'capacity_v28',
-        'audit_v29', 'capacity_v29', 'audit_v31', 'capacity_v31'), required=True)
+        'audit_v29', 'capacity_v29', 'audit_v31', 'capacity_v31','audit_v33','capacity_v33'), required=True)
     args = parser.parse_args()
-    filename = ('hardcase_visual12_20261101.json' if args.stage.endswith('_v31') else
+    filename = ('hardcase400k_visual12_20261102.json' if args.stage.endswith('_v33') else
+        'hardcase_visual12_20261101.json' if args.stage.endswith('_v31') else
         'inference_diagnosis_20261031.json' if args.stage.endswith('_v29') else 'full_model_visual12_20261031.json')
     path = ROOT/'model_training/experiments'/filename
     config = json.loads(path.read_text())

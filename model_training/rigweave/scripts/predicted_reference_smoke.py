@@ -57,6 +57,9 @@ def load_records(config, rank=None):
 
 
 def inherited_capacity(config):
+    if config.get('hardcase_visual',{}).get('kind')=='hardcase400k_fixed12_20261102':
+        from hardcase_visual_protocol import inherited_final400k_capacity
+        return inherited_final400k_capacity(config)
     spec = config['official_smoke'].get('inherited_official_capacity')
     if spec is None:
         return None

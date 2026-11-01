@@ -2,7 +2,11 @@
   "artifacts": {
     "durable_root": "/home/wangyy/evorig/outputs/hardcase3608_20261101/visual12_final30k_v1"
   },
-  "audit_result": null,
+  "audit_result": {
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31/result.json",
+    "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31_resources.json",
+    "sha256": "e5fbb176c8e29e885f7c8f94ac26a1fe75214692db3bd98cb248d566b4ef2d73"
+  },
   "canonical_source": null,
   "capacity": {
     "full_official_beam_decode_per_rank": 1,

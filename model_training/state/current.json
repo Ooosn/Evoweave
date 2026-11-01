@@ -1,6 +1,22 @@
 {
   "active_operation": {
-    "CPU_audit_accepted": false,
+    "CPU_audit": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31/result.json",
+      "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31_resources.json",
+      "resources_sha256": "9689198e6135387c1a39d070f6d46f67b99c7c9837873d758b3a304c55cea435",
+      "sha256": "e5fbb176c8e29e885f7c8f94ac26a1fe75214692db3bd98cb248d566b4ef2d73"
+    },
+    "CPU_audit_accepted": true,
+    "CPU_audit_review": {
+      "CUDA_initialized": false,
+      "accepted": true,
+      "full105_replay_unresolved": true,
+      "identical_baseline_inputs_and_seeds": true,
+      "observed_utc": "2026-11-01T04:31:09.316088+00:00",
+      "old_valid_references": 11,
+      "references": 12,
+      "zero_updates": true
+    },
     "acceptance_test": "Native zero-update12case official15beam inference; exact baseline mesh/GT/frame/normalization/policy/seed, full2048token capacity, all failures retained, independent paired scoring and before/after visuals. Descriptive only, no model promotion.",
     "authorization": "User2026-11-01 requests actual inference on the earlier poor cases after adaptation. Independently authorize fixed final30k, original12cases and official policy with zero updates; no retuning, checkpoint selection or automatic model promotion.",
     "automatic_retry_allowed": false,
@@ -21,30 +37,37 @@
     "experiment_id": "hardcase_visual12_20261101",
     "explicit_human_authorized": true,
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
+    "gpu_work_allowed": true,
     "label": "predicted_reference_20261029_v1",
     "operation": "fixed_final30k_official_case_diagnosis",
     "optimizer_updates": 0,
-    "phase": "CPU_audit",
+    "phase": "official_visual_inference",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "runs": [
+      {
+        "approved": false,
+        "complete": true,
+        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase_visual12_20261101.json",
+        "config_sha256": "311f50ebf103e56da94616a9978c32b741cfccb4c7d8e451f352bbbf12a8a31f",
+        "exit_code": 0,
+        "mode": "audit",
+        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31",
+        "result": {
+          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31/result.json",
+          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31_resources.json",
+          "resources_sha256": "9689198e6135387c1a39d070f6d46f67b99c7c9837873d758b3a304c55cea435",
+          "sha256": "e5fbb176c8e29e885f7c8f94ac26a1fe75214692db3bd98cb248d566b4ef2d73"
+        },
+        "status": "completed_passed"
+      },
       {
         "approved": true,
         "complete": false,
         "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase_visual12_20261101.json",
-        "config_sha256": "311f50ebf103e56da94616a9978c32b741cfccb4c7d8e451f352bbbf12a8a31f",
-        "mode": "audit",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v31",
-        "status": "admitted"
-      },
-      {
-        "approved": false,
-        "complete": false,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/hardcase_visual12_20261101.json",
-        "config_sha256": "311f50ebf103e56da94616a9978c32b741cfccb4c7d8e451f352bbbf12a8a31f",
+        "config_sha256": "35cc950cde01a1dffa216e0dbef5b8eafaa26a1d105c5c21e728663f0ec804b3",
         "mode": "capacity",
         "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31",
-        "status": "waiting_CPU_audit"
+        "status": "admitted_zero_update_visual_only"
       }
     ],
     "source_checkpoint": {
@@ -53,7 +76,7 @@
       "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/weights_030000.pt",
       "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
     },
-    "status": "CPU_audit_pending",
+    "status": "CPU_audit_passed_GPU_inference_admitted",
     "unresolved_full105_exact_replay_difference": true
   },
   "allocation_request": {
@@ -77,13 +100,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
     "submit",
-    "matched_eval",
-    "preflight"
+    "matched_eval"
   ],
   "compute_allocation": {
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
@@ -169,7 +192,7 @@
     "training_execution_accepted": true
   },
   "module": "model_training",
-  "next_required_result": "Freshly plan and execute audit_v31 once. Review and record its actual results before admitting zero-update capacity_v31 visual inference; never train or retry automatically.",
+  "next_required_result": "Freshly plan and execute capacity_v31 once; official zero-update final30k inference on the12fixed old cases, then independent before/after review. No automatic retry, checkpoint replacement or promotion.",
   "publication_authorization": {
     "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
     "branch": "codex/virtual-fusion-20261013",
@@ -189,6 +212,6 @@
     "model_training/docs/HARDCASE_VISUAL12_20261101.md"
   ],
   "schema_version": 1,
-  "state_id": "hardcase_final30k_visual12_CPU_admitted_20261101",
-  "updated_at": "2026-11-01T04:26:08.470377+00:00"
+  "state_id": "hardcase_final30k_visual12_GPU_admitted_20261101",
+  "updated_at": "2026-11-01T04:31:09.316088+00:00"
 }

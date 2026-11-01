@@ -19,8 +19,133 @@
     "authorization": "User2026-11-02 authorizes two better intermediate checkpoints from existing330kto400kvalid, same12official cases, choose clearly better else330k, no further training.",
     "automatic_retry_allowed": false,
     "capacity_accepted": true,
+    "case_review": {
+      "GT_reference_controls_separate": true,
+      "all12_failure_zero_target_edgeF1": {
+        "330k": 0.7560105580176746,
+        "380k": 0.729235657432465,
+        "390k": 0.7540208321430079,
+        "400k": 0.7351737799102468
+      },
+      "all_input_GT_policy_seed_and_camera_matched": true,
+      "baseline_recomputed": false,
+      "candidate_assessments": {
+        "380000": {
+          "F1_gain_route": false,
+          "gates": {
+            "background_valid_preserved": true,
+            "complete_case_geometry": true,
+            "meaningful_paired_gain": false,
+            "no_large_case_regression": false,
+            "no_new_failures": true
+          },
+          "geometry_gain_route": false,
+          "qualifies": false,
+          "relative_j2j_change": 0.013292228920819937,
+          "target_edge_f1_gain": -0.026774900585209593
+        },
+        "390000": {
+          "F1_gain_route": false,
+          "gates": {
+            "background_valid_preserved": true,
+            "complete_case_geometry": true,
+            "meaningful_paired_gain": false,
+            "no_large_case_regression": true,
+            "no_new_failures": true
+          },
+          "geometry_gain_route": false,
+          "qualifies": false,
+          "relative_j2j_change": 0.09299026656181919,
+          "target_edge_f1_gain": -0.0019897258746667257
+        }
+      },
+      "cases": 12,
+      "evidence_archive": {
+        "all_uncompressed_members_verified": true,
+        "bytes": 30622624,
+        "comparison_review_sha256": "45998ae4d1681db69f2c0f22d44dd05665ceec161c65108fa939d0460101af24",
+        "complete": true,
+        "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1/comparison_evidence.tar.gz",
+        "local": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_evidence.tar.gz",
+        "members": 86,
+        "selected_total_visits": 330000,
+        "sha256": "c8b6910c9f5f667959544b0002dbff48e3314b2e826a173fa0c9e6fb2a4968cb",
+        "training_weights_or_dataset_not_copied": true,
+        "visual_inspection_sha256": "212289a2365ac0402c72117d16c04aac4ed5b097966a58df270b329cf6d993d1",
+        "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/checkpoint_selection_20261102/comparison_evidence.tar.gz",
+        "working_model_sha256": "f32efdc31c29f43258f4f78afd0e60fc4d9fff60b9bd2c8f8933a135fe2bd125"
+      },
+      "full105_exact_replay_unresolved": true,
+      "images_reviewed": 27,
+      "independent_new_reference_scores": 24,
+      "independent_new_target_scores": 672,
+      "independent_population_quality_accepted": false,
+      "local": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_review.json",
+      "local_report": "D:\\evoweave\\server_ops\\outputs\\hardcase_checkpoint_selection_20261102\\comparison_report.html",
+      "new_training_or_stress": false,
+      "paired_geometry": {
+        "380k": {
+          "assets": 12,
+          "cases": [
+            5,
+            15,
+            23,
+            24,
+            30,
+            44,
+            54,
+            61,
+            70,
+            95,
+            105,
+            108
+          ],
+          "improved": 4,
+          "normalized_j2j": {
+            "330k": 0.01952829373595265,
+            "380k": 0.019787868286723947
+          },
+          "regressed": 8,
+          "views_per_model": 84
+        },
+        "390k": {
+          "assets": 12,
+          "cases": [
+            5,
+            15,
+            23,
+            24,
+            30,
+            44,
+            54,
+            61,
+            70,
+            95,
+            105,
+            108
+          ],
+          "improved": 2,
+          "normalized_j2j": {
+            "330k": 0.01952829373595265,
+            "390k": 0.021344234975956392
+          },
+          "regressed": 10,
+          "views_per_model": 84
+        }
+      },
+      "reference_valid_counts": {
+        "330k": 12,
+        "380k": 12,
+        "390k": 12,
+        "400k": 12
+      },
+      "reviewed_utc": "2026-11-01T18:30:11.334137+00:00",
+      "sha256": "45998ae4d1681db69f2c0f22d44dd05665ceec161c65108fa939d0460101af24",
+      "views_per_model_method": 84,
+      "visual_inspection_sha256": "212289a2365ac0402c72117d16c04aac4ed5b097966a58df270b329cf6d993d1"
+    },
     "code_commit": "173cb110554ac9c86d3dd629e93c899e032f423d",
-    "complete": false,
+    "complete": true,
     "contract": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
     "decision_rule": {
       "candidate_tie_break": "Among passing candidates, highest targetF1, then lowest pairedJ2J, then earlier checkpoint. If none passes,330kwithout another search.",
@@ -37,15 +162,44 @@
     "experiment_id": "hardcase_checkpoint_selection_20261102",
     "explicit_human_authorized": true,
     "fallback_total": 330000,
+    "final_working_choice": {
+      "checkpoint": {
+        "label": "hardcase3608_plus030000",
+        "layout": "anchor",
+        "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+        "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+      },
+      "definition": "model_training/state/working_model.json",
+      "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+      "no_further_training_or_search": true,
+      "population_quality_accepted": false,
+      "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+      "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+      "selected_total_visits": 330000,
+      "work_and_durable_SHA256_verified": true,
+      "working_choice_user_authorized": true
+    },
     "formal_training_allowed": false,
     "full105_exact_replay_unresolved": true,
+    "further_checkpoint_search_allowed": false,
     "gpu_work_allowed": false,
     "label": "predicted_reference_20261029_v1",
+    "model_quality_accepted": false,
     "new_capacity_stress_permitted": false,
     "operation": "two_intermediate_official12case_reviews_then_final_working_model_choice",
     "optimizer_updates": 0,
-    "phase": "independent_review_and_final_working_choice",
+    "phase": "completed",
     "population_quality_accepted": false,
+    "postrun_review": {
+      "all_own_payloads_cleaned": true,
+      "durable": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1/postrun_review.json",
+      "native_keeper_preserved": true,
+      "old_directories_preserved": true,
+      "selected_work_and_durable_SHA256_verified": true,
+      "sha256": "d976eca2d71b1e98f76d0e6e050bd1bee2a9bc94141b357ab9e11acc8334bcc1",
+      "training_results_unchanged": true,
+      "work": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/checkpoint_selection_20261102/postrun_review.json"
+    },
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_predicted_reference.py",
     "retained400k": {
       "resources": {
@@ -145,6 +299,7 @@
         "total_visits": 390000
       }
     ],
+    "selected_total_visits": 330000,
     "selected_totals": [
       380000,
       390000
@@ -159,11 +314,28 @@
       "do_not_restore_old_files": true,
       "expected_old_source": "e145da7e70574fe739eda3c70370e5922aa62faa",
       "implementation": "server_ops/hgc/deploy_stage_checkout.py",
+      "new_worktree_clean": true,
+      "old_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/old_checkout_before_d288f7a70bd7.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/old_checkout_before_d288f7a70bd7.tar.gz",
+        "sha256": "e396b50e5024a224a66c6b40cdce9d9f637c8f3f15c462f0ef9712464cb113e1"
+      },
+      "old_files_restored": 0,
       "preserve_old_directory": true,
+      "preserved_old_directory": "/work/wangyy/virtual_query_matched_5k_20261025/code_preserved_e145da7e7057_before_d288f7a70bd7",
       "receipt": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/hardcase_checkpoint_selection_20261102.json",
-      "status": "planned"
+      "receipt_sha256": "ef8cddae6aaaf975109e1d78643a58b4d6e61e60295328f8a05d67bf1b58dc18",
+      "source_archive": {
+        "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/source_deployments/source_d288f7a70bd780fbe1c33ffa58e44a0fb9a2c7d7.tar.gz",
+        "path": "/work/wangyy/virtual_query_matched_5k_20261025/source_deployments/source_d288f7a70bd780fbe1c33ffa58e44a0fb9a2c7d7.tar.gz",
+        "sha256": "f6b63039637bbb043e2259bd8a2430c5d7e55f7955938715aa8246125ad34e5e"
+      },
+      "source_created_utc": "2026-11-01T18:10:25.359251+00:00",
+      "status": "completed_and_used_by_both_candidates",
+      "valid_until_before_UTC": "2026-11-06T18:10:25.359251+00:00"
     },
-    "status": "capacity_v35_recorded",
+    "status": "completed_final330k_working_model_selected_no_further_training_or_search",
+    "working_model_selection_accepted": true,
     "working_model_selection_authorized": true
   },
   "allocation_defaults": {
@@ -199,10 +371,10 @@
     "report"
   ],
   "blocked_operations": [
+    "preflight",
     "train",
     "submit",
-    "matched_eval",
-    "preflight"
+    "matched_eval"
   ],
   "compute_allocation": {
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
@@ -238,8 +410,8 @@
     "inherited_affinity_logical_CPU_count": 224,
     "keeper_pid": 2268188,
     "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "Native capacity_v33 exited0, resource and cleanup passed. GPU4/8CPUsubset of original16slot dualH100 grant; keeper idle andGPU3/4empty in postrun review. Old directory and29deletions preserved, no training output changes. No further payload admitted; do not release native131170166.",
-    "last_observed_utc": "2026-11-01T17:44:25.218775+00:00",
+    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
+    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
     "physical_gpus": [
       3,
       4
@@ -261,7 +433,7 @@
     "rss_limit_bytes": 68719476736,
     "server": "HGC",
     "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "fixed400k_case_comparison_complete_payload_cleaned_native96h_grant_preserved",
+    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
     "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
   },
   "current_dataset_revision": {
@@ -271,8 +443,27 @@
     "train_rows": 18002,
     "valid_rows": 967
   },
+  "current_working_model": {
+    "checkpoint": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "default_for_new_user_authorized_inference": true,
+    "definition": "model_training/state/working_model.json",
+    "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+    "historical_full300k_is_baseline_not_current_working_default": true,
+    "no_further_training_or_search": true,
+    "population_quality_accepted": false,
+    "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+    "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+    "selected_total_visits": 330000,
+    "work_and_durable_SHA256_verified": true,
+    "working_choice_user_authorized": true
+  },
   "established_research_decisions": {
-    "current_question": "User explicitly authorizes a final finite working-model choice: rank existing330kto400kmatchedvalid, review380kand390kon the same12official cases, choose clearly better else330k. No further training/search and no user-by-user checkpoint choices.400kand330kofficial outputs reused. Prior105exact replay cause remains unresolved.",
+    "current_question": "Final working model fixed to330kafter existing matched112assetvalid ranked380kand390kand both official12case reviews failed to beat330k. Same12asset targetF1:330k .7560105580,380k .7292356574,390k .7540208321; pairedJ2J .0195282937,.0197878683,.0213442350. Current default is the verified durable330kweights for both stages. Stop training/checkpoint search. Keep all checkpoints and historical300kbaseline;105old exact-token replay cause unresolved.",
     "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
     "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
@@ -288,12 +479,13 @@
     "status": "completed_fixed400k_diagnostic_new_user_authorizes_finite_intermediate_selection"
   },
   "module": "model_training",
-  "next_required_result": "Independently rescore both candidates and inspect all12cases; apply frozen working-choice rule then record one model, fallback330k. No more GPU work or training.",
+  "next_required_result": "Final delegated choice is330k. For future user-authorized inference use state/working_model.json and its verified durable checkpoint for BOTH pipeline stages. This finite selection is complete; do not add checkpoints, retrain, rerun baselines/stress or request resources. Preserve all older/newer outputs, source archives and native96h grant. Keep full300kas historical baseline only and105exact replay cause unresolved; do not claim independent population quality acceptance.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
     "backbone_LR": 2e-06,
     "current_total_asset_visits": 330000,
+    "further_training_authorized": false,
     "head_multiplier": 3,
     "restore_complete_checkpoint_and_Adam": true,
     "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
@@ -324,9 +516,10 @@
     "model_training/docs/HARDCASE_VISUAL12_20261101.md",
     "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
     "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
-    "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md"
+    "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+    "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "hardcase_checkpoint_selection_capacity_v35_recorded_20261102",
-  "updated_at": "2026-11-01T18:23:58.673101+00:00"
+  "state_id": "hardcase_checkpoint_selection_complete_working330k_20261102",
+  "updated_at": "2026-11-01T18:33:56.261997+00:00"
 }

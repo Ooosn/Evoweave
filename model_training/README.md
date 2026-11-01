@@ -3,10 +3,12 @@
 This module owns model architecture, training, generation, and evaluation.
 Data production is owned by `data_processing/`.
 
-Current execution: user-approved full18,002-asset joint training from official
-UniRig for300kasset visits. See [the full-data protocol](docs/ANCHOR_FULL_300K_20261030.md)
-and `state/current.json`; historical closed5k permissions below do not authorize
-or prohibit this separate run.
+Current working model: **330k**, fixed by the user's delegated finite checkpoint
+selection on2026-11-02. Use [the working-model definition](state/working_model.json)
+for both pipeline stages; its durable weight copy has been SHA256-verified.
+All training and checkpoint search are closed. See [the selection result](docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md)
+and `state/current.json`. Full300k remains a historical baseline, not the current
+working default; [its recipe](docs/ANCHOR_FULL_300K_20261030.md) is retained.
 
 ## Research Entry Points
 

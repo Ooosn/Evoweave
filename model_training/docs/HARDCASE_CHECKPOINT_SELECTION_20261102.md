@@ -1,5 +1,9 @@
 # Finite330kto400k Working Model Selection
 
+Status2026-11-02: COMPLETE. Final working model330k; no more training or search.
+Use`state/working_model.json`for new user-authorized inference. The protocol
+below records this completed operation, not permission to repeat its stages.
+
 The user explicitly supersedes the earlier fixed400k-only comparison: inspect
 existing matched validation, review two intermediate checkpoints on the same12
 official cases, choose a clearly better working model or settle on330k, and
@@ -41,3 +45,46 @@ Record one exact working-model checkpoint for both pipeline stages. This is
 user-authorized practical selection, not independent locked855/32population
 acceptance. Retainfull300kas historical baseline and all training/checkpoint
 results. Preserve the old105exact-coordinate-token replay cause as unresolved.
+
+## Completed Result
+
+All four native stages completed with exit0, kernel provenance and cleanup.
+380kinference source8c7320e06310a7b82f0663bee98fa89b3af0b5c8;
+390ksource864e2745767bfa59f8c31644895dcb7a65997b0c.
+Result SHA256respectively48ead4b9b7c62b873127d861ed74e682d6ff0ed5b706f3def518847cc52be526
+and94c08ee436af48f0976a53e5b48d3df2d8cbb5cdf614cddb807de0ced3470064.
+No baseline regeneration, capacity stress, parameter updates or new GPU grant.
+
+All672new target scores and24reference scores were independently recomputed;
+all27matched-camera comparison images were inspected. All four models parse
+12/12references, which does not mean their skeletons are correct. Same12assets
+and84target views, predicted-reference head only:
+
+| Model | Failure-zero target edgeF1 | J2J / target mesh diagonal |
+|---|---:|---:|
+|330k|0.7560105580|1.952829%|
+|380k|0.7292356574|1.978787%|
+|390k|0.7540208321|2.134423%|
+|400k, reused|0.7351737799|2.248990%|
+
+Both intermediate candidates are worse in both aggregate metrics than330k,
+so neither qualifies even without relying on borderline benefit thresholds.
+380khas4geometry gains/8regressions,390k2/10.380kpartly improves30but strongly
+regresses105;390kregresses30and105.70keeps52versus122GTjoints;108is not fixed.
+GT-reference head results remain separate controls and do not overturn this.
+
+Final durable checkpoint for BOTH stages:
+`/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt`,
+SHA256abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018.
+Actual working copy and durable copy were freshly rehashed and match. This is
+the300kbase plus30kadaptation, not400kweights or capacity-test weights.
+No further checkpoint search or training is admitted. Keep all newer results
+and the native96hgrant; no allocation release or other-task stop occurred.
+
+Local report`D:/evoweave/server_ops/outputs/hardcase_checkpoint_selection_20261102/comparison_report.html`.
+Work evidence`outputs/checkpoint_selection_20261102`; durable evidence
+`/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1`.
+Verified86member comparison archive SHA256
+c8b6910c9f5f667959544b0002dbff48e3314b2e826a173fa0c9e6fb2a4968cb.
+Working choice is explicit user authorization, not untouched population-test
+acceptance. Prior105exact replay cause remains unresolved.

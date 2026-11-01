@@ -1,0 +1,67 @@
+{
+  "adaptation_asset_visits": 30000,
+  "all_newer_checkpoints_and_training_results_retained": true,
+  "authoritative_storage": "durable_large_file_not_scratch",
+  "checkpoints": {
+    "stage1": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "stage2": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    }
+  },
+  "default_for_new_user_authorized_inference": true,
+  "evaluated_work_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/weights_030000.pt",
+  "full105_exact_replay_cause_unresolved": true,
+  "further_checkpoint_search_allowed": false,
+  "historical_full300k_reference_retained": true,
+  "independent_population_quality_accepted": false,
+  "new_training_allowed": false,
+  "official_inference": {
+    "allow_tf32": false,
+    "base_seed": 20261029,
+    "decoder_attention": "eager",
+    "do_sample": true,
+    "max_new_tokens": 2048,
+    "num_beams": 15,
+    "num_return_sequences": 1,
+    "precision": "fp32",
+    "repetition_penalty": 3,
+    "temperature": 1.5,
+    "top_k": 5,
+    "top_p": 0.95
+  },
+  "parent_config": {
+    "relative_path": "model_training/experiments/anchor_full_20261030_v1.json",
+    "sha256": "583b0032815d1cca616ec4e67dafcc22a1d38215fa586a6a6d31305cc5438128"
+  },
+  "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+  "schema_version": 1,
+  "selected_evaluation": {
+    "result": {
+      "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v31/result.json",
+      "sha256": "964cba9ad856de3f1c8f8e4c9e050302f5e9e3d045adaa9c978da098224441fa"
+    }
+  },
+  "selected_total_asset_visits": 330000,
+  "selection_manifest": {
+    "relative_path": "model_training/selections/hardcase_330k400k_20261102.json",
+    "sha256": "34653d80c4e0bd138b72bebf2f01df8d2018afb8bd26198589a9d23a821de151"
+  },
+  "selection_review": {
+    "durable_path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/selection_review_v1/comparison_review.json",
+    "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/checkpoint_selection_20261102/comparison_review.json",
+    "sha256": "45998ae4d1681db69f2c0f22d44dd05665ceec161c65108fa939d0460101af24"
+  },
+  "source_comparison_bundle_working_snapshot_sha256": "f32efdc31c29f43258f4f78afd0e60fc4d9fff60b9bd2c8f8933a135fe2bd125",
+  "status": "selected_current_working_model",
+  "weight_bytes": 2848850100,
+  "work_and_durable_SHA256_verified": true,
+  "working_choice_user_authorized": true
+}

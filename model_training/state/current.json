@@ -12,7 +12,7 @@
       "resources_sha256": "0d3a66453b49702cd8b6a63c6e8571f4cb9ec9a517b0404958cc9cdc1f53455c",
       "sha256": "aa788f2e4dbe4d4c949aedf783ecb71f6901e573bde62362eaea6dea5cbcaaed"
     },
-    "code_commit": "eb4ced564e4bb21c04819f943208f17ef2fdeefc",
+    "code_commit": "124f82fac0772207941d13e9b2a3a10ce68d9854",
     "complete": false,
     "contract": "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
     "current_total_asset_visits": 330000,

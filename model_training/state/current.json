@@ -10,7 +10,7 @@
       "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
       "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "145ec7881410f1958f3b6b5e4925e1205513d764",
+    "code_commit": "828b5f30c5742f35b83d4c78e543ea30b3f3b2fc",
     "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": false,
@@ -78,7 +78,7 @@
         "mode": "audit",
         "approved": true,
         "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
-        "config_sha256": "6d2c0c6d8445d8839c61cb476c4a72bcdecce79003d0419ad66cee56e18cdbe8",
+        "config_sha256": "84626f6e14835fe418db97f28c5c5df3e023ced6713d76f6b8cf10355409a8bd",
         "output": "/work/wangyy/tokenrig_full_20261104/outputs/audit"
       },
       {
@@ -86,7 +86,7 @@
         "mode": "train",
         "approved": true,
         "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
-        "config_sha256": "6d2c0c6d8445d8839c61cb476c4a72bcdecce79003d0419ad66cee56e18cdbe8",
+        "config_sha256": "84626f6e14835fe418db97f28c5c5df3e023ced6713d76f6b8cf10355409a8bd",
         "output": "/work/wangyy/tokenrig_full_20261104/outputs/train"
       }
     ]
@@ -273,5 +273,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_full300k_20261104",
-  "updated_at": "2026-11-03T19:22:17.312014+00:00"
+  "updated_at": "2026-11-03T19:23:04.885096+00:00"
 }

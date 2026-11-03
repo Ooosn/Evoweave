@@ -11,7 +11,7 @@
     "extra_pythonpath": "/work/wangyy/tokenrig_full_20261104/deps/runtime_skin:/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
     "allocation": 131351736,
     "host": "pcg01i",
-    "hostname": "pcg01i",
+    "hostname": "pcg01",
     "physical_gpus": [
       3,
       4

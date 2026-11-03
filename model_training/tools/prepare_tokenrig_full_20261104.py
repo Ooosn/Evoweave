@@ -37,7 +37,7 @@ def main():
     for key in ('source', 'checkpoint', 'qwen_config_root'):
         config['tokenrig_decoder'][key] = config['tokenrig_decoder'][key].replace(
             '/work/wangyy/paper_baselines_20261102', RUN+'/deps')
-    config['runtime'].update(repo=RUN+'/code', allocation=131351736, hostname='pcg01i',
+    config['runtime'].update(repo=RUN+'/code', allocation=131351736, hostname='pcg01',
         output_root=RUN+'/outputs', stop_before_utc='2026-11-07T16:51:44Z',
         cpu_affinity=[6,7,9,10,11,12,14,15,61,63,64,65,66,67,68,69],
         gpu_memory_fraction_limit=79872/81559)

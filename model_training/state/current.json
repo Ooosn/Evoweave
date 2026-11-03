@@ -10,7 +10,7 @@
       "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
       "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "e034af338432a881879b31aed66ced59db9cfb2d",
+    "code_commit": "145ec7881410f1958f3b6b5e4925e1205513d764",
     "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": false,
@@ -40,10 +40,10 @@
       "seed": 20261030
     },
     "decoder_initialization": {
-      "source": "/work/wangyy/paper_baselines_20261102/sources/SkinTokens",
-      "checkpoint": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+      "source": "/work/wangyy/tokenrig_full_20261104/deps/sources/SkinTokens",
+      "checkpoint": "/work/wangyy/tokenrig_full_20261104/deps/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
       "checkpoint_sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
-      "qwen_config_root": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/Qwen3Config",
+      "qwen_config_root": "/work/wangyy/tokenrig_full_20261104/deps/weights/SkinTokens/Qwen3Config",
       "qwen_config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
       "tokenizer_source_sha256": {
         "tokenizer/parse.py": "7161cdaee24bcc16575a6651930048945cedd6193017fae7e4d2ed16c3c5520d",
@@ -78,7 +78,7 @@
         "mode": "audit",
         "approved": true,
         "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
-        "config_sha256": "d7481f8857303c8155ddbf97b28a0e2c1e5a10bd388746ae66ef589e4b1d1d92",
+        "config_sha256": "6d2c0c6d8445d8839c61cb476c4a72bcdecce79003d0419ad66cee56e18cdbe8",
         "output": "/work/wangyy/tokenrig_full_20261104/outputs/audit"
       },
       {
@@ -86,7 +86,7 @@
         "mode": "train",
         "approved": true,
         "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
-        "config_sha256": "d7481f8857303c8155ddbf97b28a0e2c1e5a10bd388746ae66ef589e4b1d1d92",
+        "config_sha256": "6d2c0c6d8445d8839c61cb476c4a72bcdecce79003d0419ad66cee56e18cdbe8",
         "output": "/work/wangyy/tokenrig_full_20261104/outputs/train"
       }
     ]
@@ -273,5 +273,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_full300k_20261104",
-  "updated_at": "2026-11-03T19:21:08.429499+00:00"
+  "updated_at": "2026-11-03T19:22:17.312014+00:00"
 }

@@ -1,126 +1,95 @@
 {
   "active_operation": {
-    "label": "paper_benchmark_20261102_v1",
-    "complete": true,
+    "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_full300k_20261104",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User2026-11-02 authorizes autonomous paper writing, baseline deployments, and bounded H100 inference, including sharing with other training without stopping it. No further training or checkpoint search.",
-    "required_entrypoint": "model_training/rigweave/scripts/evaluate_paper_benchmark.py",
+    "authorization": "2026-11-04: User authorized fresh TokenRig joint training to 300000 visits at unchanged learning rates and tested enlarged physical batches.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
     "operation_entrypoints": {
-      "preflight": "model_training/rigweave/scripts/evaluate_paper_benchmark.py"
+      "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
+      "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "7a37dab53f0252bd3fc925d0f0a8e2351ebbaab5",
-    "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "code_commit": "e034af338432a881879b31aed66ced59db9cfb2d",
+    "formal_training_allowed": true,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": false,
+    "live_tokenrig_audit_required": true,
+    "capacity_accepted": true,
     "automatic_retry_allowed": false,
     "working_model_unchanged": true,
-    "optimizer_updates": 0,
-    "resource_policy": "Reuse native131170166 GPU4 CPU8subset. Preserve keeper, other jobs, all results, and96h expiry. Actual free memory and native membership required. Shared timing is not isolated throughput.",
-    "acceptance_test": "Correct only documented Puppeteer input scaling and SkinTokens BF16/eager compatibility. Reuse all fixed input data and all completed Evoweave and UniRig generations. Greedy generation, no GT count or skeleton, no failed-generation retries, no training or checkpoint search. Keep original adapter-invalid and setup-failure evidence.",
-    "runs": [
+    "manifest": {
+      "train": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "rows": 18002,
+        "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    },
+    "mesh_initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "model_config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+      "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+      "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+      "seed": 20261030
+    },
+    "decoder_initialization": {
+      "source": "/work/wangyy/paper_baselines_20261102/sources/SkinTokens",
+      "checkpoint": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+      "checkpoint_sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
+      "qwen_config_root": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/Qwen3Config",
+      "qwen_config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "tokenizer_source_sha256": {
+        "tokenizer/parse.py": "7161cdaee24bcc16575a6651930048945cedd6193017fae7e4d2ed16c3c5520d",
+        "tokenizer/spec.py": "293903541aae9aec1a5196807ddc85eb473d11bea14f7205579588616d7c17c2",
+        "tokenizer/tokenizer_part.py": "c6cceea2be8bad7185b237ecc77261c56792ba047e3a1ee4978d64f4ad079495",
+        "data/order.py": "912ab7547d6a13010c347edb27fecb56f2f6191a6c2c0e60b0e920351d573d66",
+        "data/spec.py": "d7c2c3f32e869f26dad3a3d871ccf092df56b63122b65acde8e38c63698f6061"
+      }
+    },
+    "capacity_archives": [
       {
-        "stage": "audit_v36",
-        "mode": "audit",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit.json",
-        "config_sha256": "c9c26144c51e0c5ef6dffd05be7887d218218f55903af729f6299c02ee24d340",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v36",
-        "status": "rejected_before_any_input_preparation",
-        "reason": "Our CPU import check created only untracked __pycache__ directories in the fresh Puppeteer checkout. No source bytes changed. Native exit1 and cleanup confirmed."
+        "path": "/home/wangyy/evoweave-tokenrig-8a6f9f3-capacity-receipts.tar.gz",
+        "sha256": "7b882ee3a15c9dbf538838b85e96dfff8ffe39cb1d8f9b838985bdd6f0a95bef",
+        "profiles": [
+          "default"
+        ]
       },
       {
-        "stage": "audit_v37",
-        "mode": "audit",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102_audit2.json",
-        "config_sha256": "c9c26144c51e0c5ef6dffd05be7887d218218f55903af729f6299c02ee24d340",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37",
-        "status": "passed",
-        "result": {
-          "path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37/result.json",
-          "sha256": "559257e9fb5bb12a8bf19b4b64e02bbf20e815adda52d5583e56704977c78edc",
-          "resources_path": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v37_resources.json"
-        }
-      },
-      {
-        "stage": "capacity_v36",
-        "mode": "capacity",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_benchmark_20261102.json",
-        "config_sha256": "2ca67f8611049f443c66d9ea4b8021c95fce12cd91e5713e0f63d9388e551142",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v36",
-        "status": "partial_completed_evoweave_baseline_adapter_failure",
-        "reason": "UniRig tokenizer factory requires TokenizerConfig, not keyword expansion. It failed before any baseline generation. Retain all24completed Evoweave references and336target rows; no generation retries."
-      },
-      {
-        "stage": "audit_v38",
-        "mode": "audit",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_baseline_completion_20261102_audit.json",
-        "config_sha256": "825f3bed83b5a45d6ba9021321cc3c91b2d82e704b2ee8bef4df6eda5c302f93",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v38",
-        "status": "passed"
-      },
-      {
-        "stage": "capacity_v38",
-        "mode": "capacity",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_baseline_completion_20261102.json",
-        "config_sha256": "c7a5d06e065fbf5eadbbe8206eb8972f4f98ca824e8c7afb1fcab78909defa8d",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v38",
-        "status": "partial_unirig_retained_puppeteer_invalidated_skin_setup_failed",
-        "reason": "Puppeteer adapter used half the documented input scale; invalidate those scores rather than interpret them. SkinTokens failed before generating any row due to attention dtype mismatch. Preserve all raw evidence; retain unchanged UniRig and Evoweave predictions."
-      },
-      {
-        "stage": "audit_v39",
-        "mode": "audit",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102_audit.json",
-        "config_sha256": "56faafb36be596a3dd659fa4ed8b837bb4598b70c17cae89969e982b0e7f9c13",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v39",
-        "status": "launcher_refused_stale_code_baseline_no_audit_or_GPU_executed"
-      },
-      {
-        "stage": "audit_v40",
-        "mode": "audit",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102_audit.json",
-        "config_sha256": "56faafb36be596a3dd659fa4ed8b837bb4598b70c17cae89969e982b0e7f9c13",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/audit_v40",
-        "status": "passed"
-      },
-      {
-        "stage": "capacity_v40",
-        "mode": "capacity",
-        "approved": false,
-        "complete": true,
-        "config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/paper_adapter_repair_20261102.json",
-        "config_sha256": "c7ead579c2c18c030609117711ee958539f740780b3c5d0b60e8bb30fd29255f",
-        "output": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40",
-        "status": "passed_zero_update_frozen_cohort_inference",
-        "result": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/capacity_v40/result.json",
-        "result_sha256": "9e1efb31517b478ddba5061757ad41275361e3f9f5bf0a7f8344afe09e52ff00",
-        "payload_cleanup_complete": true
+        "path": "/home/wangyy/evoweave-tokenrig-01d5b17-batch-receipts.tar.gz",
+        "sha256": "1a543c00a57d50a12a21f8666c578a00aaa728b0ef36afe2eb8de29aa1841a76",
+        "profiles": [
+          "frames12",
+          "frames24"
+        ]
       }
     ],
-    "inference_completed": true,
-    "manuscript_completed": true,
-    "completion_evidence": {
-      "benchmark_review": "paper/20261102/evidence/benchmark_review.json",
-      "PDF": "paper/20261102/output/pdf/Evoweave_Draft_v1.pdf",
-      "PDF_sha256": "f294a198110f1ee91b5bb81bc56b16170b31ec3bd99835869276fef3c312af2c",
-      "private_evidence_archive": "/home/wangyy/evorig/outputs/paper_benchmark_20261102/v1/fixed24_inference_evidence.tar.gz",
-      "private_archive_sha256": "a41fe4a1406223955195db13e487a77041a4eef568b05b22603735257d7a3376",
-      "manuscript_publication_authorized": false
-    }
+    "resource_policy": "Native HGC 131351736, GPU3/4, 16 CPUs, 78 GiB sampled whole-device ceiling. Preserve allocation and unrelated tasks.",
+    "acceptance_test": "Exact CPU audit required before GPU launch; strict pretrained weights, 300000 visits, finite joint updates and backed-up recovery points.",
+    "runs": [
+      {
+        "stage": "tokenrig_full_audit",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
+        "config_sha256": "d7481f8857303c8155ddbf97b28a0e2c1e5a10bd388746ae66ef589e4b1d1d92",
+        "output": "/work/wangyy/tokenrig_full_20261104/outputs/audit"
+      },
+      {
+        "stage": "tokenrig_full_train",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
+        "config_sha256": "d7481f8857303c8155ddbf97b28a0e2c1e5a10bd388746ae66ef589e4b1d1d92",
+        "output": "/work/wangyy/tokenrig_full_20261104/outputs/train"
+      }
+    ]
   },
   "allocation_defaults": {
     "explicit_user_required_for_shorter_lifetime": true,
@@ -153,10 +122,10 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
-    "train",
     "submit",
     "matched_eval"
   ],
@@ -253,7 +222,7 @@
     "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
     "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
   },
-  "human_context": "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+  "human_context": "model_training/docs/TOKENRIG_FULL_20261104.md",
   "last_operation": {
     "label": "paper_benchmark_20261102_v1",
     "complete": true,
@@ -262,7 +231,7 @@
     "status": "complete_first_manuscript_and_frozen_reference_inference_no_new_training"
   },
   "module": "model_training",
-  "next_required_result": "First complete manuscript delivered with reviewed zero-update inference evidence. Await a new user direction; no automatic GPU work, training, checkpoint search or manuscript publication.",
+  "next_required_result": "Pass guarded CPU audit, then verify actual TokenRig full training startup and monitor to 300000 visits.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -303,6 +272,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "paper_draft_v1_completed_20261102",
-  "updated_at": "2026-11-01T21:21:27.107084+00:00"
+  "state_id": "tokenrig_full300k_20261104",
+  "updated_at": "2026-11-03T19:21:08.429499+00:00"
 }

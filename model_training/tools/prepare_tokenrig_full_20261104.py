@@ -15,26 +15,37 @@ HOME = '/home/wangyy'
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--code-commit', required=True)
+    parser.add_argument('--restage-before-launch', action='store_true')
     args = parser.parse_args()
     model = ROOT/'model_training'
     state_path = model/'state/current.json'
     config_path = model/'experiments/tokenrig_full_20261104.json'
     archive = model/'state/archive/current_before_tokenrig_full_20261104.json'
-    if config_path.exists() or archive.exists():
+    if args.restage_before_launch:
+        if json.loads(state_path.read_bytes())['state_id'] != 'tokenrig_full300k_20261104':
+            raise RuntimeError('restaging applies only to this planned operation')
+        old_state = archive.read_bytes()
+    elif config_path.exists() or archive.exists():
         raise RuntimeError('TokenRig operation has already been prepared')
-    old_state = state_path.read_bytes()
+    else:
+        old_state = state_path.read_bytes()
     state = json.loads(old_state)
     if not state['active_operation']['complete']:
         raise RuntimeError('another model operation is still active')
     config = json.loads((model/'experiments/anchor_full_20261030_v1.json').read_text())
     config['tokenrig_decoder'] = json.loads((model/'experiments/tokenrig_decoder_20261104.json').read_text())
+    for key in ('source', 'checkpoint', 'qwen_config_root'):
+        config['tokenrig_decoder'][key] = config['tokenrig_decoder'][key].replace(
+            '/work/wangyy/paper_baselines_20261102', RUN+'/deps')
     config['runtime'].update(repo=RUN+'/code', allocation=131351736, hostname='pcg01i',
         output_root=RUN+'/outputs', stop_before_utc='2026-11-07T16:51:44Z',
         cpu_affinity=[6,7,9,10,11,12,14,15,61,63,64,65,66,67,68,69],
         gpu_memory_fraction_limit=79872/81559)
     config['runtime'].pop('keeper_pid')
-    config['runtime']['extra_pythonpath'] = ('/work/wangyy/paper_baselines_20261102/runtime_skin:'
+    config['runtime']['extra_pythonpath'] = (RUN+'/deps/runtime_skin:'
         + config['runtime']['extra_pythonpath'])
+    config['data_cache'].update(root=RUN+'/data', index=RUN+'/data/index.json',
+        reflink_source='/work/wangyy/anchor_full_20261030_data')
     config['training']['frame_policy'] = {str(t): 24 if t <= 12 else 12 for t in range(2, 25)}
     config['artifacts']['durable_root'] = HOME+'/evorig/outputs/tokenrig_full_20261104'
     config['execution'] = {
@@ -71,7 +82,8 @@ def main():
         'runs': [{'stage': 'tokenrig_full_'+mode, 'mode': mode, 'approved': True,
                   'config': config_remote, 'config_sha256': config_sha, 'output': RUN+'/outputs/'+mode}
                  for mode in ('audit', 'train')]}
-    archive.write_bytes(old_state)
+    if not args.restage_before_launch:
+        archive.write_bytes(old_state)
     config_path.write_bytes(encoded)
     state_path.write_bytes((json.dumps(state, indent=2, ensure_ascii=False)+'\n').encode())
     print(config_sha)

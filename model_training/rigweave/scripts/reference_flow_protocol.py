@@ -18,6 +18,8 @@ def load_backbone_config(config):
     if sha256(path) != spec['sha256']:
         raise ValueError('backbone configuration changed')
     base = json.loads(path.read_text())
+    if 'tokenrig_decoder' in config:
+        base['initialization']['model_config'] = str(ROOT/'model_training/experiments/shared_virtual_upstream_20261012.yaml')
     base['runtime'] = copy.deepcopy(config['runtime'])
     base['data']['stream_seed'] = config['training']['stream_seed']
     base['training']['target_assets'] = config['training']['additional_assets']

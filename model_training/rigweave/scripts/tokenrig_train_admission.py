@@ -1,5 +1,7 @@
 """Bind Qwen formal training to its completed stress tests and live CPU audit."""
 import csv
+from concurrent.futures import ThreadPoolExecutor
+import fcntl
 import io
 import json
 import math
@@ -7,6 +9,43 @@ from pathlib import Path
 import tarfile
 
 from anchor_full_protocol import scientific_sha, sha256, source_hashes
+
+
+def stage_cache_reflink(config, base):
+    from anchor_full_data import verify_ssd
+    from virtual_query_xyz_runtime import write_json
+
+    spec = config['data_cache']
+    old, new = Path(spec['reflink_source']).resolve(), Path(spec['root']).resolve()
+    if old != Path('/work/wangyy/anchor_full_20261030_data') or old == new:
+        raise RuntimeError('unexpected TokenRig cache source')
+    index = json.loads((old/'index.json').read_text())
+    if not index['complete'] or index['manifests'] != base['data']['manifests']:
+        raise RuntimeError('cache and formal manifests differ')
+    new.mkdir(exist_ok=False)
+    storage = verify_ssd(new)
+    if old.stat().st_dev != new.stat().st_dev:
+        raise RuntimeError('cache reflinks must remain on the verified SSD')
+
+    def clone(item):
+        source = Path(item['cached_path']).resolve(strict=True)
+        target = new/source.relative_to(old)
+        if source.stat().st_size != item['bytes']:
+            raise RuntimeError('source cache size differs')
+        target.parent.mkdir(exist_ok=True, parents=True)
+        with source.open('rb') as read, target.open('xb') as write:
+            fcntl.ioctl(write.fileno(), 0x40049409, read.fileno())  # Linux FICLONE
+        if target.stat().st_size != item['bytes']:
+            raise RuntimeError('reflink length differs')
+        target.chmod(0o444)
+        return {**item, 'cached_path': str(target)}
+
+    files = index['files']
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        index['files'] = dict(zip(files, pool.map(clone, files.values()), strict=True))
+    index['storage'] = storage
+    write_json(spec['index'], index)
+    return {'sha256': sha256(spec['index']), 'files': len(files), 'copy_on_write': True}
 
 
 def verify_capacity(config):

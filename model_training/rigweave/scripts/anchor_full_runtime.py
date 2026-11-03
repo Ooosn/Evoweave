@@ -147,9 +147,9 @@ def audit(config, output, source):
     panel = evaluation_rows(base, entries)
     tokenrig = 'tokenrig_decoder' in config
     if tokenrig:
-        from tokenrig_train_admission import verify_capacity
+        from tokenrig_train_admission import stage_cache_reflink, verify_capacity
         verify_capacity(config)
-        cache = {'sha256': sha256(config['data_cache']['index']), 'reused_immutable_cache': True}
+        cache = stage_cache_reflink(config, base)
     elif config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import audit_retained_cache
         cache = audit_retained_cache(config, base)

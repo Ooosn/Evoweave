@@ -69,7 +69,9 @@ def validate_config(config):
             or evaluation['ar_frame_indices'] != list(range(8)) or evaluation['max_new_tokens'] != 2048
             or evaluation['xyz_interval_assets'] != 10000 or evaluation['ar_interval_assets'] != 50000):
         raise ValueError('validation precision, coverage or generation policy changed')
-    if (config['data_cache']['root'] != '/work/wangyy/anchor_full_20261030_data'
+    cache_root = ('/work/wangyy/tokenrig_full_20261104/data' if 'tokenrig_decoder' in config
+                  else '/work/wangyy/anchor_full_20261030_data')
+    if (config['data_cache']['root'] != cache_root
             or config['data_cache']['index'] != config['data_cache']['root'] + '/index.json'
             or config['data_cache']['originals_unchanged'] is not True):
         raise ValueError('data cache escaped the declared SSD root')

@@ -75,7 +75,12 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
         lm_args['_attn_implementation'] = 'eager'
     lm_config = OPTConfig.from_pretrained(runtime['opt_config_root'], local_files_only=True, **lm_args)
     lm_config.torch_dtype = torch.float32
-    main = OPTForCausalLM(lm_config)
+    qwen = config.get('tokenrig_decoder')
+    if qwen is None:
+        main = OPTForCausalLM(lm_config)
+    else:
+        from tokenrig_decoder import build_tokenrig_decoder
+        main, tokenizer, qwen_report = build_tokenrig_decoder(qwen, load_weights=load_official_weights)
     surface_args = dict(upstream_config['mesh_encoder'])
     if surface_args.pop('__target__') != 'michelangelo_encoder':
         raise ValueError('unexpected upstream surface encoder')
@@ -85,13 +90,17 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
     projection = nn.Linear(surface.width, lm_config.hidden_size)
     report, loaded = {}, set()
     if load_official_weights:
-        for prefix, module in [('transformer.', main), ('mesh_encoder.', surface), ('output_proj.', projection)]:
+        modules = [('mesh_encoder.', surface), ('output_proj.', projection)]
+        if qwen is None:
+            modules.insert(0, ('transformer.', main))
+        for prefix, module in modules:
             selected = {k[len(prefix):]: v for k, v in state.items() if k.startswith(prefix)}
             module.load_state_dict(selected, strict=True)
             loaded.update(k for k in state if k.startswith(prefix))
             report[prefix] = {'strict': True, 'tensors': len(selected),
                               'parameters': sum(v.numel() for v in selected.values())}
-        if 'transformer.lm_head.weight' not in loaded or 'transformer.model.decoder.embed_tokens.weight' not in loaded:
+        if qwen is None and ('transformer.lm_head.weight' not in loaded
+                             or 'transformer.model.decoder.embed_tokens.weight' not in loaded):
             raise ValueError('full XYZ input embedding and output head must both load')
         report['unused_upstream_keys'] = sorted(set(state)-loaded)
         del payload, state, selected
@@ -111,7 +120,8 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
     codec = AuxSkeletonTokens(**config['auxiliary_codec'])
     torch.manual_seed(seed)
     model = VirtualQueryXYZRig(FixedQuerySurfaceTokenizer(surface, projection), main, architecture,
-                               auxiliary_vocab_size=codec.vocab_size, auxiliary_pad=codec.pad)
+                               auxiliary_vocab_size=codec.vocab_size, auxiliary_pad=codec.pad,
+                               project_decoder_condition=qwen is not None)
     model.to(device)
     initialization = {'source_commit': revision, 'checkpoint_sha256': initial['sha256'] if load_official_weights else None,
                       'model_config_sha256': sha256(initial['model_config']),
@@ -122,6 +132,8 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
                       'old_method_trained_weights_loaded': False,
                       'xyz_embedding_trainable': model.xyz_decoder.get_input_embeddings().weight.requires_grad,
                       'xyz_head_trainable': model.xyz_decoder.get_output_embeddings().weight.requires_grad}
+    if qwen is not None:
+        initialization['tokenrig_decoder'] = qwen_report
     return model, tokenizer, codec, initialization
 
 
@@ -146,5 +158,6 @@ def fixed_dataset(rows, config, frames, mode='seen_eval', *, file_resolver=None)
 def prepare_batch(batch, config, tokenizer, codec, device):
     surface, geometry = prepare_virtual_surface([batch], device, **config['surface_sampling'])
     target = build_xyz_aux_targets(geometry, tokenizer, codec, device=device,
+                                  classnames=getattr(tokenizer, 'skeleton_class', 'articulationxl'),
                                   max_main_tokens=config['data']['max_main_tokens'])
     return surface, target, geometry

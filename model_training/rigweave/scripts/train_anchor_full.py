@@ -37,7 +37,10 @@ def main():
         raise RuntimeError('exactly two approved GPUs are required')
     device = torch.device('cuda', int(os.environ['LOCAL_RANK']))
     torch.cuda.set_device(device)
-    torch.cuda.set_per_process_memory_fraction(config['runtime']['gpu_memory_fraction_limit'], device)
+    fraction = config['runtime']['gpu_memory_fraction_limit']
+    if 'tokenrig_decoder' in config:
+        fraction = min(fraction, 76000 * 2**20 / torch.cuda.get_device_properties(device).total_memory)
+    torch.cuda.set_per_process_memory_fraction(fraction, device)
     claimed = False
     try:
         dist.init_process_group('nccl', timeout=timedelta(minutes=30))

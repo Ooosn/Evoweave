@@ -276,6 +276,10 @@ def main(*, trainer_module_name='train_legacy_single_target',
                 except (FileNotFoundError, ProcessLookupError):
                     pass
             memory = read_gpu_memory(config, enforce_limit=args.mode not in cpu_modes)
+            if 'tokenrig_decoder' in config:
+                previous = receipt.get('peak_gpu_memory_mib', {})
+                receipt['peak_gpu_memory_mib'] = {
+                    str(index): max(used, previous.get(str(index), 0)) for index, used, _ in memory}
             if runtime.get('gpu_uuids'):
                 applications = subprocess.check_output(['nvidia-smi',
                     '--query-compute-apps=pid,gpu_uuid', '--format=csv,noheader'], text=True, timeout=30)

@@ -37,6 +37,8 @@ def validate_config(config):
     if train['checkpoint_assets'] != list(range(10000, 300001, 10000)):
         raise ValueError('unreviewed checkpoint/validation cadence')
     policy = {str(t): 24 if t <= 6 else 12 if t <= 12 else 6 for t in range(2, 25)}
+    if 'tokenrig_decoder' in config:
+        policy = {str(t): 24 if t <= 12 else 12 for t in range(2, 25)}
     if train['frame_policy'] != policy:
         raise ValueError('physical batch policy changed')
     base = load_backbone_config(config)
@@ -84,7 +86,8 @@ def source_hashes():
     paths = list((root/'model_training/rigweave/src').rglob('*.py'))
     names = ['anchor_full_protocol.py', 'anchor_full_data.py', 'anchor_full_runtime.py', 'anchor_full_cleanup.py',
         'anchor_full_evaluation.py', 'train_anchor_full.py', 'anchor_joint_runtime.py',
-        'virtual_query_xyz_runtime.py', 'reference_flow_runtime.py', 'reference_flow_protocol.py',
+        'virtual_query_xyz_runtime.py', 'tokenrig_decoder.py', 'tokenrig_train_admission.py',
+        'reference_flow_runtime.py', 'reference_flow_protocol.py',
         'virtual_pair_runtime.py', 'virtual_frame_runtime.py', 'virtual_pair_loading.py',
         'virtual_fusion_normal_runtime.py', 'train_virtual_query_xyz.py', 'stage1_feedback.py',
         'single_query_protocol.py', 'id_xyz_stages.py']

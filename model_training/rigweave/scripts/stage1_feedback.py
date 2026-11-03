@@ -94,7 +94,8 @@ def generate_asset(model, surface, tokenizer, *, frame_indices, max_new_tokens=2
                 raise ValueError('condition batch/frame identity differs')
             output = {}
             for frame in frames:
-                start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulationxl')],
+                start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token(
+                    getattr(tokenizer, 'skeleton_class', 'articulationxl'))],
                                      device=points.device, dtype=torch.long)
                 output[frame] = model.generate_condition(conditions[:, frame], start,
                     eos_token=tokenizer.eos, max_new_tokens=max_new_tokens,

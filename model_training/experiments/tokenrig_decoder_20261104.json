@@ -1,0 +1,14 @@
+{
+  "source": "/work/wangyy/paper_baselines_20261102/sources/SkinTokens",
+  "checkpoint": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+  "checkpoint_sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
+  "qwen_config_root": "/work/wangyy/paper_baselines_20261102/weights/SkinTokens/Qwen3Config",
+  "qwen_config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+  "tokenizer_source_sha256": {
+    "tokenizer/parse.py": "7161cdaee24bcc16575a6651930048945cedd6193017fae7e4d2ed16c3c5520d",
+    "tokenizer/spec.py": "293903541aae9aec1a5196807ddc85eb473d11bea14f7205579588616d7c17c2",
+    "tokenizer/tokenizer_part.py": "c6cceea2be8bad7185b237ecc77261c56792ba047e3a1ee4978d64f4ad079495",
+    "data/order.py": "912ab7547d6a13010c347edb27fecb56f2f6191a6c2c0e60b0e920351d573d66",
+    "data/spec.py": "d7c2c3f32e869f26dad3a3d871ccf092df56b63122b65acde8e38c63698f6061"
+  }
+}

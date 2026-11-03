@@ -104,6 +104,7 @@ def prepare(dataset, requests, config, tokenizer, codec, device):
     batches = [dataset[request] for request in requests]
     surface, geometry = prepare_virtual_surface(batches, device, **config['surface_sampling'])
     target = build_xyz_aux_targets(geometry, tokenizer, codec, device=device,
+                                  classnames=getattr(tokenizer, 'skeleton_class', 'articulationxl'),
                                   max_main_tokens=config['data']['max_main_tokens'])
     return surface, target, geometry
 

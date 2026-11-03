@@ -207,7 +207,8 @@ def original_xyz_vocabulary_processor(tokenizer, start_tokens):
 
 
 class VirtualQueryXYZRig(nn.Module):
-    def __init__(self, surface_tokenizer, xyz_decoder, config, *, auxiliary_vocab_size, auxiliary_pad=0):
+    def __init__(self, surface_tokenizer, xyz_decoder, config, *, auxiliary_vocab_size, auxiliary_pad=0,
+                 project_decoder_condition=False):
         super().__init__()
         self.config = config
         self.surface_tokenizer = surface_tokenizer
@@ -216,8 +217,14 @@ class VirtualQueryXYZRig(nn.Module):
         self.condition_norm = nn.LayerNorm(config.dim)
         self.xyz_decoder = xyz_decoder
         self.auxiliary = AuxiliaryIDDecoder(config, auxiliary_vocab_size, auxiliary_pad)
-        if xyz_decoder.get_input_embeddings().embedding_dim != config.dim:
+        width = xyz_decoder.get_input_embeddings().embedding_dim
+        if width != config.dim and not project_decoder_condition:
             raise ValueError('original XYZ decoder width differs from condition width')
+        self.decoder_condition_projection = nn.Linear(config.dim, width) if project_decoder_condition else nn.Identity()
+
+    def decoder_prefix(self, condition, ids):
+        embedding = self.xyz_decoder.get_input_embeddings()(ids)
+        return torch.cat((self.decoder_condition_projection(condition).to(embedding.dtype), embedding), dim=1)
 
     def encode(self, surface):
         points = surface['query_points']
@@ -269,8 +276,7 @@ class VirtualQueryXYZRig(nn.Module):
         return self.condition_norm(query).reshape(batch, frames, queries, dim)
 
     def main_logits(self, condition, input_ids, attention_mask):
-        embedding = self.xyz_decoder.get_input_embeddings()(input_ids)
-        prefix = torch.cat((condition.to(embedding.dtype), embedding), dim=1)
+        prefix = self.decoder_prefix(condition, input_ids)
         mask = torch.cat((attention_mask.new_ones(condition.shape[:2]), attention_mask), dim=1)
         result = self.xyz_decoder(inputs_embeds=prefix, attention_mask=mask, use_cache=False, return_dict=True)
         return result.logits[:, condition.shape[1]:]
@@ -345,9 +351,8 @@ class VirtualQueryXYZRig(nn.Module):
         if self.training or condition.shape[0] != 1 or start_tokens.ndim != 1:
             raise ValueError('generation requires eval mode and one condition sequence')
         ids = start_tokens[None].to(device=condition.device, dtype=torch.long)
-        embedding = self.xyz_decoder.get_input_embeddings()(ids)
         mask = torch.ones((1, condition.shape[1]+ids.shape[1]), dtype=torch.long, device=condition.device)
-        output = self.xyz_decoder(inputs_embeds=torch.cat((condition.to(embedding.dtype), embedding), dim=1),
+        output = self.xyz_decoder(inputs_embeds=self.decoder_prefix(condition, ids),
                                   attention_mask=mask, use_cache=True, return_dict=True)
         generated = []
         for _ in range(max_new_tokens):

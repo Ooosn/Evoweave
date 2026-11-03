@@ -40,7 +40,7 @@ def check_teacher_prefix(backbone, features, targets):
     condition = backbone.conditions(features, None)[:, 0]
     ids = targets['main_input_ids'][:1, 0, :5]
     full = backbone.main_logits(condition, ids, torch.ones_like(ids))
-    prefix = torch.cat((condition, backbone.xyz_decoder.get_input_embeddings()(ids[:, :2])), dim=1)
+    prefix = backbone.base.decoder_prefix(condition, ids[:, :2])
     cached = backbone.xyz_decoder(inputs_embeds=prefix,
         attention_mask=torch.ones(prefix.shape[:2], dtype=torch.long, device=ids.device), use_cache=True)
     errors = []
@@ -73,6 +73,10 @@ def capacity_requests(base, indices, rank, frames, size, seed):
 
 def initialize(config, device):
     base = validate_config(config)
+    if 'tokenrig_decoder' in config:
+        if config.get('family') != 'anchor_full_20261030_v1' or config.get('continuation'):
+            raise ValueError('TokenRig requires a fresh optimizer and cannot restore an OPT run')
+        base = {**base, 'tokenrig_decoder': config['tokenrig_decoder']}
     original, tokenizer, codec, official = build_model(base, device)
     backbone = VirtualPathAblationRig(original, virtual_enabled=False)
     devices = [device.index] if device.type == 'cuda' else []
@@ -141,7 +145,12 @@ def audit(config, output, source):
     base = validate_config(config)
     groups, counts = stress_groups(entries['train'])
     panel = evaluation_rows(base, entries)
-    if config.get('family') == 'hardcase3608_20261101_v1':
+    tokenrig = 'tokenrig_decoder' in config
+    if tokenrig:
+        from tokenrig_train_admission import verify_capacity
+        verify_capacity(config)
+        cache = {'sha256': sha256(config['data_cache']['index']), 'reused_immutable_cache': True}
+    elif config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import audit_retained_cache
         cache = audit_retained_cache(config, base)
     else:
@@ -151,10 +160,11 @@ def audit(config, output, source):
     model, optimizer, _, _, _, initial = initialize(config, torch.device('cpu'))
     del model, optimizer
     release()
-    loader = audit_loader(base, entries, groups, file_resolver=resolver)
+    loader = ({'unchanged_data_pipeline': True, 'validated_cached_files': len(resolver.files)}
+        if tokenrig else audit_loader(base, entries, groups, file_resolver=resolver))
     if torch.cuda.is_initialized():
         raise RuntimeError('full-data CPU audit initialized CUDA')
-    cleanup = ({'not_requested': True} if config.get('family') == 'hardcase3608_20261101_v1'
+    cleanup = ({'not_requested': True} if tokenrig or config.get('family') == 'hardcase3608_20261101_v1'
         else execute_legacy(config['execution']['cleanup_plan'], output))
     result = {'complete': True, 'passed': True, 'source': source, 'source_sha256': source_hashes(),
         'scientific_sha256': scientific_sha(config), 'train_assets': len(entries['train']),
@@ -166,6 +176,9 @@ def audit(config, output, source):
 
 
 def checked_evidence(config, key):
+    if 'tokenrig_decoder' in config:
+        from tokenrig_train_admission import verify_audit, verify_capacity
+        return verify_audit(config) if key == 'CPU_audit' else verify_capacity(config)
     if config.get('continuation') and key == 'capacity':
         from hardcase_continuation_protocol import inherited_capacity
         return inherited_capacity(config)
@@ -221,6 +234,7 @@ def export_weights(model, config, output, source, checkpoint):
     state = {k: v.detach().cpu() for k, v in model.state_dict().items()}
     payload = {'model': state, 'configuration': config, 'initialization': (
         'full300k_then_hardcase3608' if config.get('family') == 'hardcase3608_20261101_v1'
+        else 'UniRig_mesh_TokenRig_Qwen_then_full_joint' if 'tokenrig_decoder' in config
         else 'official_UniRig_then_full_joint'),
         'samples': checkpoint['samples'], 'scientific_sha256': scientific_sha(config),
         'code_commit': source, 'source_sha256': source_hashes(), 'model_only': True,
@@ -434,6 +448,9 @@ def train(config, output, source, device, rank, world):
                 write_json(output/f'progress_rank_{rank}.json', progress)
                 if rank == 0:
                     print('UPDATE '+json.dumps(progress), flush=True)
+                if step == 1 and 'tokenrig_decoder' in config:
+                    last_checkpoint = save_checkpoint(model, optimizer, stream, config, output, initial, source,
+                        samples, frames, step, best, device, rank, world)
         if samples == 0:
             raise RuntimeError('deadline arrived before any training update')
         optimizer.zero_grad(set_to_none=True)

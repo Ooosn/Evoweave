@@ -94,6 +94,8 @@ def archive_inputs(specs, output, config, *, final):
 
 
 def eager_backbone(model, base, device):
+    if 'tokenrig_decoder' in base:
+        base = {**base, 'tokenrig_decoder': {**base['tokenrig_decoder'], 'eager': True}}
     original, tokenizer, _, _ = build_model(base, torch.device('cpu'), load_official_weights=False)
     backbone = VirtualPathAblationRig(original, virtual_enabled=False)
     if backbone.xyz_decoder.config._attn_implementation != 'eager':

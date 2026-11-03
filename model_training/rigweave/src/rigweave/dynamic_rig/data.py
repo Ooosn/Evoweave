@@ -263,6 +263,8 @@ def _make_token_input(
     tokenizer: Any,
     tails: np.ndarray | None,
 ) -> np.ndarray:
+    if hasattr(tokenizer, 'tokenize_skeleton'):
+        return tokenizer.tokenize_skeleton(joints, parents, cls)
     from src.tokenizer.spec import TokenizeInput
 
     parent_joints = []

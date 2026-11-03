@@ -223,9 +223,14 @@ def validate_stage(state, config, args):
         start = datetime.fromisoformat(op['not_before_utc'].replace('Z', '+00:00'))
         if datetime.now(timezone.utc) < start:
             raise RuntimeError('scheduled GPU start time has not arrived')
-    if args.mode == 'train' and (op.get('formal_training_allowed') is not True
-            or op.get('capacity_accepted') is not True or op.get('CPU_audit_accepted') is not True):
-        raise RuntimeError('training needs primary CPU/capacity acceptance')
+    if args.mode == 'train':
+        if op.get('formal_training_allowed') is not True or op.get('capacity_accepted') is not True:
+            raise RuntimeError('training needs primary CPU/capacity acceptance')
+        if op.get('live_tokenrig_audit_required') is True and 'tokenrig_decoder' in config:
+            from tokenrig_train_admission import verify_audit
+            verify_audit(config)
+        elif op.get('CPU_audit_accepted') is not True:
+            raise RuntimeError('training needs primary CPU audit acceptance')
     return op
 
 

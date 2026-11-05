@@ -74,7 +74,38 @@
       "capacity_weights_not_reused": true,
       "quality_accepted": false
     },
-    "status": "fresh_native_training_authorized"
+    "status": "running_after_verified_first_checkpoint",
+    "launch_review": {
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_train/start_review.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/start_review.json",
+      "sha256": "065942ab1a445fe0406dd279fe112436f806526625ef7f3bbfdce06cd6d99ab3",
+      "started_utc": "2026-11-05T12:25:37.711755+00:00",
+      "observed_utc": "2026-11-05T12:31:37.641212+00:00",
+      "deployed_source_commit": "2f50732ee08e98d609c38bc2f73ec3657e5c7022",
+      "config_sha256": "e4fece4995c54dab87318bc13ab2280c47670fe1e920a371c7e63626fe159abb",
+      "native_process_ids_at_review": [1590002, 1590109, 1590987, 1590988],
+      "initial_model_sha256": "5521c8903ff81c54be5ed28a65dfd1ffaca51797627341785ada1a5de45597b8",
+      "initial_model_matches_zero_update_probe": true,
+      "fresh_optimizer_verified": true,
+      "capacity_weights_not_used": true,
+      "first_full_recovery": {
+        "samples": 48,
+        "updates": 1,
+        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_train/train/checkpoint_000048.pt",
+        "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/checkpoint_000048.pt",
+        "sha256": "ee6fc6efd490a00f76a927743f00a9e619774a65bd05ad0ab01e5f4420be574e",
+        "bytes": 8945962962,
+        "both_copies_verified": true,
+        "optimizer_and_rank_RNG_retained": true
+      },
+      "samples_at_review": 480,
+      "updates_at_review": 10,
+      "both_rank_losses_and_gradients_finite": true,
+      "all_active_gradient_groups_positive": true,
+      "sampled_peak_gpu_memory_mib_at_review": {"3": 70501, "4": 70479},
+      "running_source_clean_and_not_modified": true,
+      "old250k_and_working330k_unchanged": true
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -397,7 +428,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Launch the exact admitted fresh native300k run once, verify the first durable48-visit recovery, then monitor finite joint training and78GiB whole-device ceiling. Preserve old250k recovery and OPT330k.",
+  "next_required_result": "The fresh native300k run is already running from source2f50732; do not launch it again or modify/sync code_native_train. Monitor real train_resources/progress_rank_0/1/result and native processes under131351736; runtime complete=false/passed=false is not failure. Preserve old250k and OPT330k. On failure retain evidence and verify own payload cleanup, with no automatic retry, new allocation, batch/LR/precision change or grant release. Verify exact300000 visits, required validation and durable checkpoints before completion; no automatic working-model replacement.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -439,7 +470,7 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_native_full300k_20261105",
-  "updated_at": "2026-11-05T12:22:25.437484+00:00",
+  "updated_at": "2026-11-05T12:31:37.641212+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

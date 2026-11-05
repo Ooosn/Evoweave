@@ -12,8 +12,10 @@ working default; [its recipe](docs/ANCHOR_FULL_300K_20261030.md) is retained.
 
 The separately authorized TokenRig/Qwen experiment does not replace330k. Its
 first hybrid run is paused with a complete250k recovery; the native frontend
-alignment and independent capacity checks have passed. Exact new-run permissions
-are in `state/current.json`; see [the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
+alignment and independent capacity checks have passed. The separate fresh300k
+run actually started onNovember5 and has a verified first48-visit full recovery.
+Exact permissions and evidence are in `state/current.json`; see
+[the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
 
 ## Research Entry Points
 

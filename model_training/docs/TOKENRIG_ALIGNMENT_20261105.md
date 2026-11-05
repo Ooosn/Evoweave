@@ -95,5 +95,20 @@ The separate formal recipe is `tokenrig_native_full_20261105.json`, SHA256
 It retains300000 visits, effective batch48, per-rank24 for2-12frames and12 for
 13-24frames, original AdamW/OneCycle and all validation/save cadences. Its
 `training.resume` is null; the new output is `outputs_native_train/train`.
-The old250k optimizer is retained only for the old hybrid model. Launch and
-initial durable recovery still require actual native-process evidence.
+The old250k optimizer is retained only for the old hybrid model.
+
+Formal training actually started at2026-11-05T12:25:37Z in the retained native
+job131351736, GPU3/4,16CPU. Source is
+`2f50732ee08e98d609c38bc2f73ec3657e5c7022`; its running checkout is clean and
+must not be modified or synced. The first48-visit/one-update full checkpoint
+has verified scratch/durable copies, SHA256
+`ee6fc6efd490a00f76a927743f00a9e619774a65bd05ad0ab01e5f4420be574e`.
+Its fresh initial model digest exactly matches the zero-update12-view probe
+and the independent CPU audit; old Adam and capacity weights were not loaded.
+At12:31:37Z both ranks had completed480 visits/10 updates, with finite joint
+losses/gradients and positive gradients in every active branch. First-step
+backbone/head learning rates were2e-5/6e-5. Sampled peaks then were70501/70479MiB.
+The immutable launch review is `outputs_native_train/start_review.json`, also
+verified at `native_full/start_review.json` on durable storage, SHA256
+`065942ab1a445fe0406dd279fe112436f806526625ef7f3bbfdce06cd6d99ab3`.
+Training is in progress, not quality accepted; OPT330k remains the working model.

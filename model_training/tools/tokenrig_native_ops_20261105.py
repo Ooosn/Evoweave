@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tarfile
 import tempfile
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 MODEL = ROOT/'model_training'
@@ -116,7 +117,10 @@ def prepare_train(state, receipt, code_commit):
         raise RuntimeError('the formal native run has already been prepared')
     config = json.loads((MODEL/'experiments/tokenrig_native_capacity_20261105.json').read_text())
     sys.path.insert(0, str(MODEL/'rigweave/scripts'))
-    from tokenrig_train_admission import verify_native_capacity
+    import tokenrig_train_admission as admission
+    # The offline Windows reviewer must use Linux receipt path separators;
+    # file-content digests and all runtime admission checks remain unchanged.
+    local_sources = {k.replace('\\', '/'): v for k, v in admission.source_hashes().items()}
     checked = json.loads(json.dumps(config))
     with tempfile.TemporaryDirectory() as folder, tarfile.open(receipt) as archive:
         folder = Path(folder)
@@ -131,7 +135,8 @@ def prepare_train(state, receipt, code_commit):
             checked['execution']['CPU_audit' if stage == 'audit' else stage] = {
                 'path': str(result_path), 'sha256': digest(payload),
                 'resources_path': str(resources_path), 'resources_sha256': digest(resources)}
-        result = verify_native_capacity(checked)
+        with patch.object(admission, 'source_hashes', lambda: local_sources):
+            result = admission.verify_native_capacity(checked)
         resource_result = json.loads(resources_path.read_text())
         capacity_sha, resources_sha = digest(payload), digest(resources)
     config['execution']['capacity'] = {

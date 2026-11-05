@@ -1,24 +1,22 @@
 {
   "active_operation": {
     "label": "anchor_full_20261030_v1",
-    "experiment": "tokenrig_alignment_probe_20261105",
-    "complete": true,
+    "experiment": "tokenrig_native_full300k_20261105",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
-    "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+    "authorization": "2026-11-05 user authorized pausing the hybrid run, fixing pretrained alignment, and starting fresh if initial quality recovers. Zero-update native512 dynamic12-view edgeF1 is0.7798844100010204.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
     "operation_entrypoints": {
-      "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
-      "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
+      "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
+      "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "bb4ee0b48f31bbc8476f911279b52017e57142b4",
-    "gpu_work_allowed": true,
+    "code_commit": "fbfc051fa305f93128f2e73bd4872049858775fb",
     "formal_training_allowed": false,
+    "gpu_work_allowed": true,
     "CPU_audit_accepted": false,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_unchanged": true,
-    "optimizer_updates_allowed": 0,
-    "resource_policy": "Retain native131351736, GPU3/4,16CPU; zero-update probe only, no extra allocation.",
     "old_run_resume": {
       "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
       "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
@@ -33,91 +31,26 @@
       "payload_cleanup_complete": true,
       "allocation_released": false
     },
-    "acceptance_test": "Strict complete native mesh/projection/Qwen weights; lifted projection parity; same input fingerprints across four routes; report actual initial quality without assuming improvement.",
+    "resource_policy": "Native131351736;GPU3/4;16CPU;78GiB whole-device limit; retain allocation and unrelated tasks.",
+    "acceptance_test": "Independent extreme joint updates at6/12/24frames, FP32 cached-prefix parity, exact model/Adam/both-rank RNG/sampler disk recovery, durable backup; no diagnostic or stress weights in formal initialization.",
     "runs": [
       {
-        "stage": "alignment_audit",
+        "stage": "native_audit",
         "mode": "audit",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
-        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/audit"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_capacity/model_training/experiments/tokenrig_native_capacity_20261105.json",
+        "config_sha256": "5146cb23c042ff5c6bdbeca1fd1da3ac61eee075917dea9adb604435e88dfce2",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_capacity/audit"
       },
       {
-        "stage": "alignment_capacity",
+        "stage": "native_capacity",
         "mode": "capacity",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
-        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_capacity/model_training/experiments/tokenrig_native_capacity_20261105.json",
+        "config_sha256": "5146cb23c042ff5c6bdbeca1fd1da3ac61eee075917dea9adb604435e88dfce2",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_capacity/capacity"
       }
-    ],
-    "completed_prior_comparison": {
-      "result": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
-      "no_repetition_of_finished_variants": true,
-      "reason": "Test function-preserving initialization after observing static recovery but dynamic collapse."
-    },
-    "status": "zero_update_alignment_verified",
-    "review": {
-      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
-      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
-      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
-      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
-      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
-      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
-      "cases": 12,
-      "views_per_case": 1,
-      "precision": "fp32_noTF32",
-      "decoding": "greedy_diagnostic_not_official_15beam",
-      "optimizer_updates": 0,
-      "same_input_fingerprints_verified": true,
-      "static_dynamic_rows_identical": true,
-      "summaries": {
-        "aligned_static": {
-          "success": 1,
-          "original_edge_f1": 0.7798844100010204,
-          "exact_count": 0.3333333333333333,
-          "assets": 12,
-          "views": 12,
-          "failures": 0,
-          "original_normalized_j2j_successful_views": 0.016136285065389028,
-          "geometry_scored_assets": 12,
-          "geometry_scored_views": 12,
-          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
-          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
-        },
-        "aligned_dynamic": {
-          "success": 1,
-          "original_edge_f1": 0.7798844100010204,
-          "exact_count": 0.3333333333333333,
-          "assets": 12,
-          "views": 12,
-          "failures": 0,
-          "original_normalized_j2j_successful_views": 0.016136285065389028,
-          "geometry_scored_assets": 12,
-          "geometry_scored_views": 12,
-          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
-          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
-        },
-        "aligned_dynamic_fullprefix": {
-          "success": 0.8333333333333334,
-          "original_edge_f1": 0.43017514348256636,
-          "exact_count": 0,
-          "assets": 12,
-          "views": 12,
-          "failures": 2,
-          "original_normalized_j2j_successful_views": 0.021222685181555106,
-          "geometry_scored_assets": 10,
-          "geometry_scored_views": 10,
-          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
-          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
-        }
-      },
-      "seconds": 157.9198278579861,
-      "not_full_validation": true,
-      "stage2_evaluated": false
-    },
-    "payload_cleanup_complete": true
+    ]
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -440,7 +373,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Run independent native joint-update capacity and exact full recovery checks before fresh training.",
+  "next_required_result": "Complete the independent native CPU/capacity stage; review finite gradients and exact recovery before admitting a fresh300k run.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -481,6 +414,126 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_alignment_probe_20261105",
-  "updated_at": "2026-11-05T11:54:35.687937+00:00"
+  "state_id": "tokenrig_native_full300k_20261105",
+  "updated_at": "2026-11-05T11:55:24.592888+00:00",
+  "last_completed_alignment_operation": {
+    "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_alignment_probe_20261105",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
+    "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+      "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
+    },
+    "code_commit": "bb4ee0b48f31bbc8476f911279b52017e57142b4",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "automatic_retry_allowed": false,
+    "working_model_unchanged": true,
+    "optimizer_updates_allowed": 0,
+    "resource_policy": "Retain native131351736, GPU3/4,16CPU; zero-update probe only, no extra allocation.",
+    "old_run_resume": {
+      "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
+      "resume_checkpoint": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/checkpoint_250000.pt",
+      "resume_checkpoint_sha256": "2d2d84e82fa51b0ce1fb4b194482afdd178652241353bc7e5255c41454d57162",
+      "resume_samples": 250000,
+      "resume_updates": 5225,
+      "Adam_entries": 1003,
+      "rank_RNG_and_sampler_states": 2,
+      "live_samples_before_interrupt": 252064,
+      "unsaved_visits": 2064,
+      "payload_cleanup_complete": true,
+      "allocation_released": false
+    },
+    "acceptance_test": "Strict complete native mesh/projection/Qwen weights; lifted projection parity; same input fingerprints across four routes; report actual initial quality without assuming improvement.",
+    "runs": [
+      {
+        "stage": "alignment_audit",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/audit"
+      },
+      {
+        "stage": "alignment_capacity",
+        "mode": "capacity",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity"
+      }
+    ],
+    "completed_prior_comparison": {
+      "result": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "no_repetition_of_finished_variants": true,
+      "reason": "Test function-preserving initialization after observing static recovery but dynamic collapse."
+    },
+    "status": "zero_update_alignment_verified",
+    "review": {
+      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
+      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
+      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
+      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official_15beam",
+      "optimizer_updates": 0,
+      "same_input_fingerprints_verified": true,
+      "static_dynamic_rows_identical": true,
+      "summaries": {
+        "aligned_static": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic_fullprefix": {
+          "success": 0.8333333333333334,
+          "original_edge_f1": 0.43017514348256636,
+          "exact_count": 0,
+          "assets": 12,
+          "views": 12,
+          "failures": 2,
+          "original_normalized_j2j_successful_views": 0.021222685181555106,
+          "geometry_scored_assets": 10,
+          "geometry_scored_views": 10,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        }
+      },
+      "seconds": 157.9198278579861,
+      "not_full_validation": true,
+      "stage2_evaluated": false
+    },
+    "payload_cleanup_complete": true
+  }
 }

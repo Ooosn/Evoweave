@@ -1,0 +1,12 @@
+diff --git a/src/model/michelangelo/utils/misc.py b/src/model/michelangelo/utils/misc.py
+--- a/src/model/michelangelo/utils/misc.py
++++ b/src/model/michelangelo/utils/misc.py
+@@ -119,6 +119,8 @@ def get_free_space(path):
+     return free_space
+ 
+ def get_device_type():
++    if not torch.cuda.is_available():
++        return "cpu"
+     return torch.cuda.get_device_name(0)
+ 
+ def get_hostname():

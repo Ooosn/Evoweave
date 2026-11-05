@@ -15,6 +15,10 @@ def main():
     parser.add_argument('--code-commit', required=True)
     parser.add_argument('--revision', type=int, default=1)
     parser.add_argument('--preflight-rejection')
+    parser.add_argument('--native-source')
+    parser.add_argument('--native-source-commit')
+    parser.add_argument('--prior-source')
+    parser.add_argument('--rejection-reason')
     args = parser.parse_args()
     model = ROOT/'model_training'
     path = model/'state/current.json'
@@ -39,6 +43,13 @@ def main():
     config['tokenrig_decoder']['eager'] = True
     config['tokenrig_decoder']['conditioning'] = {'kind': 'released_mesh_projection_v1',
         'source_commit': '273b691d35989d71cd17ff2895fdc735097b92d1'}
+    if args.native_source:
+        if not args.native_source_commit:
+            raise RuntimeError('a patched native dependency needs its exact clean revision')
+        config['tokenrig_decoder']['source'] = args.native_source
+        config['tokenrig_decoder']['conditioning'].update(source_commit=args.native_source_commit,
+            upstream_source_commit='273b691d35989d71cd17ff2895fdc735097b92d1',
+            source_patch='model_training/patches/tokenrig_cpu_device_detection.patch')
     config['backbone']['initialization'] = 'released_TokenRig_mesh_projection_Qwen'
     config['artifacts']['durable_root'] = '/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe'+suffix
     config['execution'] = {'phase': 'tokenrig_alignment_probe', 'CPU_audit': {
@@ -73,10 +84,10 @@ def main():
             'config_sha256': digest, 'output': RUN+'/outputs_probe'+suffix+'/'+mode} for mode in ('audit', 'capacity')]}
     if restage:
         state['active_operation']['prior_precompute_rejection'] = {
-            'source': '8390d60b6e27178f1be3c69a39db0e5cbc15c03b',
+            'source': args.prior_source or '8390d60b6e27178f1be3c69a39db0e5cbc15c03b',
             'evidence': args.preflight_rejection, 'GPU_payload_started': False,
-            'CPU_initialization_started': False,
-            'reason': 'New diagnostic entrypoint was not yet bound in the old full-training operation validator.'}
+            'CPU_initialization_passed': False,
+            'reason': args.rejection_reason or 'New diagnostic entrypoint was not yet bound in the old full-training operation validator.'}
     state.update(state_id='tokenrig_alignment_probe_20261105',
         updated_at=datetime.now(timezone.utc).isoformat(),
         allowed_operations=['inspect', 'report', 'preflight'], blocked_operations=['train', 'submit', 'matched_eval'],

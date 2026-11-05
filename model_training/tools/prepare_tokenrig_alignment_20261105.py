@@ -13,29 +13,37 @@ ENTRY = 'model_training/rigweave/scripts/probe_tokenrig_alignment.py'
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--code-commit', required=True)
+    parser.add_argument('--revision', type=int, default=1)
+    parser.add_argument('--preflight-rejection')
     args = parser.parse_args()
     model = ROOT/'model_training'
     path = model/'state/current.json'
     previous = json.loads(path.read_text(encoding='utf-8'))
-    if (previous['active_operation']['status'] != 'paused_by_user_recovery_retained'
+    restage = args.revision > 1
+    if restage:
+        if (previous['active_operation'].get('experiment') != 'tokenrig_alignment_probe_20261105'
+                or not args.preflight_rejection):
+            raise RuntimeError('a replacement diagnostic requires its prior pre-compute rejection evidence')
+    elif (previous['active_operation'].get('status') != 'paused_by_user_recovery_retained'
             or not previous['active_operation']['complete']):
         raise RuntimeError('record and verify the interrupted run before a new operation')
+    suffix = '' if args.revision == 1 else '_r'+str(args.revision)
     archive = model/'state/archive/tokenrig_full250k_paused_20261105.json'
-    target = model/'experiments/tokenrig_alignment_probe_20261105.json'
-    if archive.exists() or target.exists():
+    target = model/('experiments/tokenrig_alignment_probe_20261105'+suffix+'.json')
+    if (archive.exists() and not restage) or target.exists():
         raise RuntimeError('the alignment comparison has already been prepared')
     config = json.loads((model/'experiments/tokenrig_full_20261104.json').read_text())
-    config['runtime'].update(repo=RUN+'/code_probe', output_root=RUN+'/outputs_probe',
+    config['runtime'].update(repo=RUN+'/code_probe'+suffix, output_root=RUN+'/outputs_probe'+suffix,
         extra_pythonpath='/work/wangyy/tokenrig_full_20261104/deps/runtime_skin:/home/wangyy/evorig/runtime/puppeteer_py310_hgc')
     config['tokenrig_decoder']['source'] = RUN+'/deps/SkinTokens'
     config['tokenrig_decoder']['eager'] = True
     config['tokenrig_decoder']['conditioning'] = {'kind': 'released_mesh_projection_v1',
         'source_commit': '273b691d35989d71cd17ff2895fdc735097b92d1'}
     config['backbone']['initialization'] = 'released_TokenRig_mesh_projection_Qwen'
-    config['artifacts']['durable_root'] = '/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe'
+    config['artifacts']['durable_root'] = '/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe'+suffix
     config['execution'] = {'phase': 'tokenrig_alignment_probe', 'CPU_audit': {
-        'path': RUN+'/outputs_probe/audit/result.json',
-        'resources_path': RUN+'/outputs_probe/audit_resources.json'}}
+        'path': RUN+'/outputs_probe'+suffix+'/audit/result.json',
+        'resources_path': RUN+'/outputs_probe'+suffix+'/audit_resources.json'}}
     config['alignment_probe'] = {
         'cases': [5, 15, 23, 24, 30, 44, 54, 61, 70, 95, 105, 108], 'frames': [0],
         'variants': ['hybrid_dynamic', 'native_static', 'aligned_static', 'aligned_dynamic'],
@@ -44,10 +52,11 @@ def main():
         'scope': '12 fixed validation assets, first frame of the same eight-frame input; diagnostic, not full validation or formal15beam'}
     encoded = (json.dumps(config, indent=2)+'\n').encode()
     digest = hashlib.sha256(encoded).hexdigest()
-    archive.write_bytes(path.read_bytes())
+    if not restage:
+        archive.write_bytes(path.read_bytes())
     target.write_bytes(encoded)
     state = previous
-    state['last_operation'] = previous['active_operation']
+    state['last_operation'] = (previous['last_operation'] if restage else previous['active_operation'])
     state['active_operation'] = {
         'label': config['family'], 'experiment': 'tokenrig_alignment_probe_20261105',
         'complete': False, 'explicit_human_authorized': True,
@@ -60,8 +69,14 @@ def main():
         'old_run_resume': state['last_operation']['pause_review'],
         'acceptance_test': 'Strict complete native mesh/projection/Qwen weights; lifted projection parity; same input fingerprints across four routes; report actual initial quality without assuming improvement.',
         'runs': [{'stage': 'alignment_'+mode, 'mode': mode, 'approved': True,
-            'config': RUN+'/code_probe/model_training/experiments/'+target.name,
-            'config_sha256': digest, 'output': RUN+'/outputs_probe/'+mode} for mode in ('audit', 'capacity')]}
+            'config': RUN+'/code_probe'+suffix+'/model_training/experiments/'+target.name,
+            'config_sha256': digest, 'output': RUN+'/outputs_probe'+suffix+'/'+mode} for mode in ('audit', 'capacity')]}
+    if restage:
+        state['active_operation']['prior_precompute_rejection'] = {
+            'source': '8390d60b6e27178f1be3c69a39db0e5cbc15c03b',
+            'evidence': args.preflight_rejection, 'GPU_payload_started': False,
+            'CPU_initialization_started': False,
+            'reason': 'New diagnostic entrypoint was not yet bound in the old full-training operation validator.'}
     state.update(state_id='tokenrig_alignment_probe_20261105',
         updated_at=datetime.now(timezone.utc).isoformat(),
         allowed_operations=['inspect', 'report', 'preflight'], blocked_operations=['train', 'submit', 'matched_eval'],

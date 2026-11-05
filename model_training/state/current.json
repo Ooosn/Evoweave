@@ -10,7 +10,7 @@
       "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
       "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
     },
-    "code_commit": "ccebd088c44af2b8d06e9fcdbe9f49ebdc07920a",
+    "code_commit": "b5ab7c7ccef87e76f07c8408458815844d502c36",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "CPU_audit_accepted": false,
@@ -39,19 +39,26 @@
         "stage": "alignment_audit",
         "mode": "audit",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe/model_training/experiments/tokenrig_alignment_probe_20261105.json",
-        "config_sha256": "326d0eaa3d099d29906917342d1796bcfb53e56c5e9df83177b15ab9e857f005",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe/audit"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r2/model_training/experiments/tokenrig_alignment_probe_20261105_r2.json",
+        "config_sha256": "05cad4035f63749404b2eefd5437f2cbd8b32023542d7d567da6545195d0ae7d",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r2/audit"
       },
       {
         "stage": "alignment_capacity",
         "mode": "capacity",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe/model_training/experiments/tokenrig_alignment_probe_20261105.json",
-        "config_sha256": "326d0eaa3d099d29906917342d1796bcfb53e56c5e9df83177b15ab9e857f005",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe/capacity"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r2/model_training/experiments/tokenrig_alignment_probe_20261105_r2.json",
+        "config_sha256": "05cad4035f63749404b2eefd5437f2cbd8b32023542d7d567da6545195d0ae7d",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r2/capacity"
       }
-    ]
+    ],
+    "prior_precompute_rejection": {
+      "source": "8390d60b6e27178f1be3c69a39db0e5cbc15c03b",
+      "evidence": "/work/wangyy/tokenrig_alignment_20261105/probe_audit.log",
+      "GPU_payload_started": false,
+      "CPU_initialization_started": false,
+      "reason": "New diagnostic entrypoint was not yet bound in the old full-training operation validator."
+    }
   },
   "allocation_defaults": {
     "explicit_user_required_for_shorter_lifetime": true,
@@ -337,5 +344,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_alignment_probe_20261105",
-  "updated_at": "2026-11-05T11:18:26.609338+00:00"
+  "updated_at": "2026-11-05T11:21:17.968056+00:00"
 }

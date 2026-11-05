@@ -1,6 +1,192 @@
 {
   "active_operation": {
     "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_alignment_probe_20261105",
+    "complete": false,
+    "explicit_human_authorized": true,
+    "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
+    "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+      "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
+    },
+    "code_commit": "ccebd088c44af2b8d06e9fcdbe9f49ebdc07920a",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "automatic_retry_allowed": false,
+    "working_model_unchanged": true,
+    "optimizer_updates_allowed": 0,
+    "resource_policy": "Retain native131351736, GPU3/4,16CPU; zero-update probe only, no extra allocation.",
+    "old_run_resume": {
+      "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
+      "resume_checkpoint": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/checkpoint_250000.pt",
+      "resume_checkpoint_sha256": "2d2d84e82fa51b0ce1fb4b194482afdd178652241353bc7e5255c41454d57162",
+      "resume_samples": 250000,
+      "resume_updates": 5225,
+      "Adam_entries": 1003,
+      "rank_RNG_and_sampler_states": 2,
+      "live_samples_before_interrupt": 252064,
+      "unsaved_visits": 2064,
+      "payload_cleanup_complete": true,
+      "allocation_released": false
+    },
+    "acceptance_test": "Strict complete native mesh/projection/Qwen weights; lifted projection parity; same input fingerprints across four routes; report actual initial quality without assuming improvement.",
+    "runs": [
+      {
+        "stage": "alignment_audit",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe/model_training/experiments/tokenrig_alignment_probe_20261105.json",
+        "config_sha256": "326d0eaa3d099d29906917342d1796bcfb53e56c5e9df83177b15ab9e857f005",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe/audit"
+      },
+      {
+        "stage": "alignment_capacity",
+        "mode": "capacity",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe/model_training/experiments/tokenrig_alignment_probe_20261105.json",
+        "config_sha256": "326d0eaa3d099d29906917342d1796bcfb53e56c5e9df83177b15ab9e857f005",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe/capacity"
+      }
+    ]
+  },
+  "allocation_defaults": {
+    "explicit_user_required_for_shorter_lifetime": true,
+    "h_rt": "96:00:00",
+    "h_rt_seconds": 345600,
+    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
+    "save_stop_margin_seconds": 3600
+  },
+  "allocation_request": {
+    "accepted_request_verified": true,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "automatic_payload_allowed": false,
+    "cpu_slots": 16,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "gpu_type": "H100",
+    "gpus": 2,
+    "h_rt_seconds": 345600,
+    "job_id": 131170166,
+    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+    "memory_per_slot": "4G",
+    "observed_available_CPU_slots": 76,
+    "observed_available_H100": 3,
+    "original_h_rt_seconds": 86400,
+    "persistent_session": "evoweave_h100_native_20261031",
+    "queue": "gpuh.q@pcg01i",
+    "status": "granted_native_lifetime_extended_to96h",
+    "total_memory_reservation_GiB": 64
+  },
+  "allowed_operations": [
+    "inspect",
+    "report",
+    "preflight"
+  ],
+  "blocked_operations": [
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "compute_allocation": {
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "cpu_slots": 16,
+    "execution_CPU_binding_required_before_compute": false,
+    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
+    "h_rt_seconds": 345600,
+    "host": "pcg01i",
+    "inherited_affinity_logical_CPU_count": 224,
+    "keeper_pid": 2268188,
+    "kernel_cpuset_and_devices_membership": true,
+    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
+    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "policy": "Retain native131170166keeper2268188,96hours2H100/16CPU. User authorizes two intermediate zero-update12case comparisons onGPU4/8CPUsubset, no extra GPUs/release/training/stress. Stop2026-11-04T11:40:04Z.",
+    "previous_allocation": {
+      "expiry_utc": "2026-10-31T11:55:38Z",
+      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
+      "qlogin_job_id": 130675914,
+      "status": "expired"
+    },
+    "qlogin_job_id": 131170166,
+    "rejected_previous_reservation": {
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload"
+    },
+    "rss_limit_bytes": 68719476736,
+    "server": "HGC",
+    "started_utc": "2026-10-31T12:40:04.726Z",
+    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
+    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
+  },
+  "current_dataset_revision": {
+    "contract": "DATASET_SOURCE_OF_TRUTH.md",
+    "normalization": "input_sequence_mesh_bbox",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967
+  },
+  "current_working_model": {
+    "checkpoint": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "default_for_new_user_authorized_inference": true,
+    "definition": "model_training/state/working_model.json",
+    "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+    "historical_full300k_is_baseline_not_current_working_default": true,
+    "no_further_training_or_search": true,
+    "population_quality_accepted": false,
+    "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+    "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+    "selected_total_visits": 330000,
+    "work_and_durable_SHA256_verified": true,
+    "working_choice_user_authorized": true
+  },
+  "established_research_decisions": {
+    "current_question": "Final working model fixed to330kafter existing matched112assetvalid ranked380kand390kand both official12case reviews failed to beat330k. Same12asset targetF1:330k .7560105580,380k .7292356574,390k .7540208321; pairedJ2J .0195282937,.0197878683,.0213442350. Current default is the verified durable330kweights for both stages. Stop training/checkpoint search. Keep all checkpoints and historical300kbaseline;105old exact-token replay cause unresolved.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
+  },
+  "human_context": "model_training/docs/TOKENRIG_ALIGNMENT_20261105.md",
+  "last_operation": {
+    "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_full300k_20261104",
     "complete": true,
     "status": "paused_by_user_recovery_retained",
@@ -108,146 +294,8 @@
       }
     ]
   },
-  "allocation_defaults": {
-    "explicit_user_required_for_shorter_lifetime": true,
-    "h_rt": "96:00:00",
-    "h_rt_seconds": 345600,
-    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
-    "save_stop_margin_seconds": 3600
-  },
-  "allocation_request": {
-    "accepted_request_verified": true,
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
-    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
-    "automatic_payload_allowed": false,
-    "cpu_slots": 16,
-    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
-    "gpu_type": "H100",
-    "gpus": 2,
-    "h_rt_seconds": 345600,
-    "job_id": 131170166,
-    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
-    "memory_per_slot": "4G",
-    "observed_available_CPU_slots": 76,
-    "observed_available_H100": 3,
-    "original_h_rt_seconds": 86400,
-    "persistent_session": "evoweave_h100_native_20261031",
-    "queue": "gpuh.q@pcg01i",
-    "status": "granted_native_lifetime_extended_to96h",
-    "total_memory_reservation_GiB": 64
-  },
-  "allowed_operations": [
-    "inspect",
-    "report"
-  ],
-  "blocked_operations": [
-    "submit",
-    "train",
-    "matched_eval"
-  ],
-  "compute_allocation": {
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
-    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
-    "cpu_affinity": [
-      6,
-      7,
-      9,
-      10,
-      11,
-      12,
-      14,
-      15,
-      61,
-      63,
-      64,
-      65,
-      74,
-      76,
-      77,
-      78
-    ],
-    "cpu_slots": 16,
-    "execution_CPU_binding_required_before_compute": false,
-    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
-    "gpu_uuids": [
-      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
-      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
-    ],
-    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
-    "h_rt_seconds": 345600,
-    "host": "pcg01i",
-    "inherited_affinity_logical_CPU_count": 224,
-    "keeper_pid": 2268188,
-    "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
-    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
-    "physical_gpus": [
-      3,
-      4
-    ],
-    "policy": "Retain native131170166keeper2268188,96hours2H100/16CPU. User authorizes two intermediate zero-update12case comparisons onGPU4/8CPUsubset, no extra GPUs/release/training/stress. Stop2026-11-04T11:40:04Z.",
-    "previous_allocation": {
-      "expiry_utc": "2026-10-31T11:55:38Z",
-      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
-      "qlogin_job_id": 130675914,
-      "status": "expired"
-    },
-    "qlogin_job_id": 131170166,
-    "rejected_previous_reservation": {
-      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
-      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
-      "job_id": 130674849,
-      "status": "canceled_before_any_payload"
-    },
-    "rss_limit_bytes": 68719476736,
-    "server": "HGC",
-    "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
-    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
-  },
-  "current_dataset_revision": {
-    "contract": "DATASET_SOURCE_OF_TRUTH.md",
-    "normalization": "input_sequence_mesh_bbox",
-    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
-    "train_rows": 18002,
-    "valid_rows": 967
-  },
-  "current_working_model": {
-    "checkpoint": {
-      "label": "hardcase3608_plus030000",
-      "layout": "anchor",
-      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
-      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
-    },
-    "default_for_new_user_authorized_inference": true,
-    "definition": "model_training/state/working_model.json",
-    "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
-    "historical_full300k_is_baseline_not_current_working_default": true,
-    "no_further_training_or_search": true,
-    "population_quality_accepted": false,
-    "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
-    "same_checkpoint_for_reference_generator_and_XYZ_head": true,
-    "selected_total_visits": 330000,
-    "work_and_durable_SHA256_verified": true,
-    "working_choice_user_authorized": true
-  },
-  "established_research_decisions": {
-    "current_question": "Final working model fixed to330kafter existing matched112assetvalid ranked380kand390kand both official12case reviews failed to beat330k. Same12asset targetF1:330k .7560105580,380k .7292356574,390k .7540208321; pairedJ2J .0195282937,.0197878683,.0213442350. Current default is the verified durable330kweights for both stages. Stop training/checkpoint search. Keep all checkpoints and historical300kbaseline;105old exact-token replay cause unresolved.",
-    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
-    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
-    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
-    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
-  },
-  "human_context": "model_training/docs/TOKENRIG_FULL_20261104.md",
-  "last_operation": {
-    "label": "paper_benchmark_20261102_v1",
-    "complete": true,
-    "model_quality_accepted": false,
-    "archive": "model_training/state/archive/before_paper_draft_20261102.json",
-    "status": "complete_first_manuscript_and_frozen_reference_inference_no_new_training"
-  },
   "module": "model_training",
-  "next_required_result": "Original Qwen run paused by explicit user request at verified full250k recovery; record a separate exact native-prefix alignment test before fresh training. Do not resume the paused run or replace OPT330k.",
+  "next_required_result": "Audit and execute the pinned no-update interface comparison; inspect actual dynamic quality before admitting a new training run. The old250k recovery and OPT330k remain unchanged.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -288,6 +336,6 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_full300k_20261104",
-  "updated_at": "2026-11-05T11:05:28.220144+00:00"
+  "state_id": "tokenrig_alignment_probe_20261105",
+  "updated_at": "2026-11-05T11:18:26.609338+00:00"
 }

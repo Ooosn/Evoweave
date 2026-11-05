@@ -18,6 +18,8 @@ from virtual_pair_guard import ROOT, verify_launch
 def models(config, device):
     from anchor_full_runtime import initialize
     aligned = initialize(config, device)
+    if 'hybrid_dynamic' not in config['alignment_probe']['variants']:
+        return aligned, None
     old_config = deepcopy(config)
     old_config['tokenrig_decoder'].pop('conditioning')
     old_config['backbone']['initialization'] = 'official_UniRig_only'
@@ -37,12 +39,14 @@ def audit(config, output, source):
     native = F.rms_norm(F.linear(value, state['output_proj.0.weight'].float(),
                                  state['output_proj.0.bias'].float()),
                         (896,), state['output_proj.1.weight'].float())
-    actual = projection(F.pad(value, (0, 512)))
+    lifted = (torch.cat((value, value), dim=-1) if config['tokenrig_decoder']['conditioning'].get(
+        'motion_initialization') == 'identity_residuals_native_norm_v1' else F.pad(value, (0, 512)))
+    actual = projection(lifted)
     torch.testing.assert_close(actual, native, atol=1e-5, rtol=1e-5)
     report = {'complete': True, 'passed': True, 'source': source,
         'scientific_sha256': scientific_sha(config), 'source_sha256': source_hashes(),
         'cuda_initialized': torch.cuda.is_initialized(), 'initialization': initial,
-        'old_hybrid_initialization': old[-1], 'optimizer_entries': len(optimizer.state),
+        'old_hybrid_initialization': old[-1] if old else None, 'optimizer_entries': len(optimizer.state),
         'projection_max_absolute_error': float((actual-native).abs().max()),
         'projection_tolerances': {'atol': 1e-5, 'rtol': 1e-5},
         'initial_model_sha256': head_digest(model), 'optimizer_updates': 0,
@@ -72,11 +76,12 @@ def probe(config, output, source, device, rank, world):
         raise RuntimeError('this exact initialization has no accepted native CPU audit')
     aligned, hybrid = models(config, device)
     model, optimizer, tokenizer, _, base, initial = aligned
-    old = hybrid[0]
+    old = hybrid[0] if hybrid else None
     if initial != audited['initialization'] or head_digest(model) != audited['initial_model_sha256']:
         raise RuntimeError('probe initialization differs from the CPU review')
     model.eval()
-    old.eval()
+    if old is not None:
+        old.eval()
     _, entries = read_all(config)
     panel = evaluation_rows(base, entries)
     selected = [panel[i-1] for i in config['alignment_probe']['cases']]
@@ -92,8 +97,10 @@ def probe(config, output, source, device, rank, world):
         surface = {k: v.to(device) for k, v in record['surface'].items()}
         features, virtual = model.backbone.encode(surface)
         dynamic = model.backbone.conditions(features, virtual)
-        old_features, old_virtual = old.backbone.encode(surface)
-        old_dynamic = old.backbone.conditions(old_features, old_virtual)
+        old_features = old_dynamic = None
+        if old is not None:
+            old_features, old_virtual = old.backbone.encode(surface)
+            old_dynamic = old.backbone.conditions(old_features, old_virtual)
         for frame in config['alignment_probe']['frames']:
             identity = canonical_identity(record, frame)
             reference = original[record['asset_id'], frame]
@@ -101,22 +108,41 @@ def probe(config, output, source, device, rank, world):
                     'raw_frame_index', 'normalization_sha256', 'surface_sha256', 'original_GT_sha256')):
                 raise RuntimeError('probe inputs differ from the retained 250k validation')
             args = [surface[k][:, frame] for k in ('dense_points', 'dense_normals', 'query_points', 'query_normals')]
-            fixed = model.backbone.surface_tokenizer(*args)
             native_encoder = model.backbone.surface_tokenizer.michelangelo_encoder
-            _, native, _, _ = native_encoder.encode_latents(pc=args[0], feats=args[1])
-            conditions = {'hybrid_dynamic': (old.backbone, old_dynamic[:, frame]),
-                'native_static': (model.backbone, F.pad(native, (0, 512))),
-                'aligned_static': (model.backbone, fixed),
+            identity_init = config['tokenrig_decoder']['conditioning'].get(
+                'motion_initialization') == 'identity_residuals_native_norm_v1'
+            if identity_init:
+                from rigweave.dynamic_rig.surface_tokenizer import FixedQuerySurfaceTokenizer
+                fixed_raw = FixedQuerySurfaceTokenizer(native_encoder)(*args)
+                fixed = torch.cat((fixed_raw, fixed_raw), dim=-1)
+            else:
+                fixed = model.backbone.surface_tokenizer(*args)
+            conditions = {'aligned_static': (model.backbone, fixed),
                 'aligned_dynamic': (model.backbone, dynamic[:, frame])}
+            if identity_init:
+                conditions['aligned_dynamic_fullprefix'] = (model.backbone, dynamic[:, frame])
+            if old is not None:
+                conditions['hybrid_dynamic'] = (old.backbone, old_dynamic[:, frame])
+            if 'native_static' in config['alignment_probe']['variants']:
+                _, native, _, _ = native_encoder.encode_latents(pc=args[0], feats=args[1])
+                native = torch.cat((native, native), dim=-1) if identity_init else F.pad(native, (0, 512))
+                conditions['native_static'] = (model.backbone, native)
             start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulation')], device=device)
             for variant in config['alignment_probe']['variants']:
                 backbone, condition = conditions[variant]
                 t0 = time.monotonic()
-                prediction = backbone.generate_condition(condition, start, eos_token=tokenizer.eos,
-                    max_new_tokens=config['evaluation']['max_new_tokens'],
-                    logits_processor=original_xyz_vocabulary_processor(tokenizer, start))
+                prefix_tokens = backbone.base.decoder_condition_tokens
+                try:
+                    if variant == 'aligned_dynamic_fullprefix':
+                        backbone.base.decoder_condition_tokens = None
+                    actual_tokens = backbone.base.decoder_condition_length(condition)
+                    prediction = backbone.generate_condition(condition, start, eos_token=tokenizer.eos,
+                        max_new_tokens=config['evaluation']['max_new_tokens'],
+                        logits_processor=original_xyz_vocabulary_processor(tokenizer, start))
+                finally:
+                    backbone.base.decoder_condition_tokens = prefix_tokens
                 row = {**identity, 'variant': variant, 'seconds': time.monotonic()-t0,
-                    'condition_tokens': condition.shape[1], 'optimizer_updates': 0,
+                    'condition_tokens': actual_tokens, 'optimizer_updates': 0,
                     **score_generation(prediction, tokenizer, record['truth'][frame].numpy(),
                         record['parents'].tolist(), float(record['diagonals'][frame]))}
                 rows.append(row)
@@ -132,7 +158,7 @@ def probe(config, output, source, device, rank, world):
         if len(group) != expected:
             raise RuntimeError('zero-update probe coverage is incomplete')
         summaries[variant] = summarize_rows(group)
-    if optimizer.state or hybrid[1].state:
+    if optimizer.state or (hybrid is not None and hybrid[1].state):
         raise RuntimeError('probe unexpectedly updated an optimizer')
     report = {'complete': True, 'passed': True, 'source': source,
         'scientific_sha256': scientific_sha(config), 'source_sha256': source_hashes(),

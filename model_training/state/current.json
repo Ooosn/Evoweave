@@ -2,7 +2,15 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
-    "complete": false,
+    "complete": true,
+    "status": "completed_zero_update_attribution",
+    "result": {
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "sha256": "5ffabe593f375a576aeb099c6bdec7f1a65e51dcc65a9797bb57a129d89426b7",
+      "optimizer_updates": 0,
+      "payload_cleanup_complete": true,
+      "training_quality_accepted": false
+    },
     "explicit_human_authorized": true,
     "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
     "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
@@ -58,6 +66,26 @@
       "GPU_payload_started": false,
       "CPU_initialization_passed": false,
       "reason": "Projection comparison used raw BF16 release tensors with FP32 audit inputs; model loading had succeeded. No GPU work or optimizer update."
+    }
+  },
+  "alignment_evidence": {
+    "four_route_probe": {
+      "source": "353899a424e0c6940a6e6413d9f410fb30e57b20",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "sha256": "5ffabe593f375a576aeb099c6bdec7f1a65e51dcc65a9797bb57a129d89426b7",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r4_receipts.tar.gz",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official15beam",
+      "same_input_fingerprints_verified": true,
+      "optimizer_updates": 0,
+      "edge_F1": {
+        "old_hybrid_dynamic": 0.0,
+        "native_static_512": 0.7756733710125523,
+        "native_weights_fixed_anchors_static_1024": 0.43017514348256636,
+        "native_weights_random_motion_dynamic_1024": 0.0
+      }
     }
   },
   "allocation_defaults": {

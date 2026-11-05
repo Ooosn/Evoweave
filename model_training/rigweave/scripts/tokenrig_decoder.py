@@ -43,6 +43,45 @@ def tokenrig_package(spec):
     return package_name
 
 
+def initialize_native_motion_identity(model):
+    """Initialize residual branches at zero while retaining the native feature basis."""
+    encoder = model.surface_tokenizer.michelangelo_encoder
+    native_norm = encoder.encoder.ln_post
+    width = encoder.width
+    if model.config.dim != 2 * width or native_norm is None:
+        raise ValueError('native identity initialization requires the reviewed doubled-width lift')
+    gamma = native_norm.weight.detach().float()
+    beta = native_norm.bias.detach().float()
+    if not torch.isfinite(gamma).all() or not torch.isfinite(beta).all() or gamma.abs().min() < 1e-4:
+        raise ValueError('native LayerNorm cannot be stably mapped into the motion feature basis')
+    lift = nn.Linear(width, 2 * width)
+    with torch.no_grad():
+        block = torch.diag(gamma.reciprocal())
+        lift.weight.copy_(torch.cat((block, block), dim=0))
+        lift.bias.copy_(torch.cat((-beta/gamma, -beta/gamma)))
+        projection = model.decoder_condition_projection
+        native_weight = projection.weight[:, :width].clone()
+        projection.weight.copy_(torch.cat((native_weight, native_weight), dim=1) * .5)
+        model.condition_norm.weight.copy_(torch.cat((gamma, gamma)))
+        model.condition_norm.bias.copy_(torch.cat((beta, beta)))
+        for block in model.motion_encoder.blocks:
+            for layer in (block.pose_inner, block.anchor_temporal):
+                layer.self_attn.out_proj.weight.zero_()
+                layer.self_attn.out_proj.bias.zero_()
+                layer.linear2.weight.zero_()
+                layer.linear2.bias.zero_()
+        for layer in model.frame_fusion:
+            layer.ffn[-1].weight.zero_()
+            layer.ffn[-1].bias.zero_()
+    model.surface_tokenizer.output_proj = lift
+    return {'kind': 'identity_residuals_native_norm_v1',
+        'native_LayerNorm_min_absolute_scale': float(gamma.abs().min()),
+        'channel_lift': 'duplicate native standardized512 features to1024; restore native affine after temporal path; average the two native decoder projections',
+        'new_residual_output_weights_start_at_zero': True,
+        'all_modules_remain_in_forward_and_trainable': True,
+        'approximation': 'Repeated LayerNorm epsilon and floating-point rounding remain; measure actual initial generation.'}
+
+
 def build_tokenrig_conditioning(spec, input_width, *, load_weights):
     from virtual_query_xyz_runtime import sha256
 
@@ -80,7 +119,8 @@ def build_tokenrig_conditioning(spec, input_width, *, load_weights):
     return encoder, projection, {
         'kind': setting['kind'], 'source_commit': revision, 'checkpoint_sha256': spec['checkpoint_sha256'],
         'mesh_tensors': len(mesh), 'native_encoder_width': encoder.width, 'motion_width': input_width,
-        'native_encoder_layers': 8, 'native_static_prefix_tokens': 512, 'dynamic_prefix_tokens': 1024,
+        'native_encoder_layers': 8, 'native_static_prefix_tokens': 512,
+        'dynamic_prefix_tokens': setting.get('prefix_tokens', 1024),
         'projection_and_RMSNorm_loaded': load_weights, 'strict_mesh_weights_loaded': load_weights,
         'channel_lift': 'append_512_zero_channels; native projection weights in first512columns; other columns zero',
         'motion_and_stage2_architecture_unchanged': True,

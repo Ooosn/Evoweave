@@ -19,6 +19,8 @@ def main():
     parser.add_argument('--native-source-commit')
     parser.add_argument('--prior-source')
     parser.add_argument('--rejection-reason')
+    parser.add_argument('--completed-probe')
+    parser.add_argument('--motion-initialization', choices=('identity_residuals_native_norm_v1',))
     args = parser.parse_args()
     model = ROOT/'model_training'
     path = model/'state/current.json'
@@ -26,7 +28,7 @@ def main():
     restage = args.revision > 1
     if restage:
         if (previous['active_operation'].get('experiment') != 'tokenrig_alignment_probe_20261105'
-                or not args.preflight_rejection):
+                or not (args.preflight_rejection or args.completed_probe)):
             raise RuntimeError('a replacement diagnostic requires its prior pre-compute rejection evidence')
     elif (previous['active_operation'].get('status') != 'paused_by_user_recovery_retained'
             or not previous['active_operation']['complete']):
@@ -50,6 +52,9 @@ def main():
         config['tokenrig_decoder']['conditioning'].update(source_commit=args.native_source_commit,
             upstream_source_commit='273b691d35989d71cd17ff2895fdc735097b92d1',
             source_patch='model_training/patches/tokenrig_cpu_device_detection.patch')
+    if args.motion_initialization:
+        config['tokenrig_decoder']['conditioning']['motion_initialization'] = args.motion_initialization
+        config['tokenrig_decoder']['conditioning']['prefix_tokens'] = 512
     config['backbone']['initialization'] = 'released_TokenRig_mesh_projection_Qwen'
     config['artifacts']['durable_root'] = '/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe'+suffix
     config['execution'] = {'phase': 'tokenrig_alignment_probe', 'CPU_audit': {
@@ -61,6 +66,9 @@ def main():
         'input_reference_rows': '/work/wangyy/tokenrig_full_20261104/outputs/train/evaluation_250000/stage1_rows.json',
         'normalization': 'unchanged_selected_input_union_mesh_bbox', 'optimizer_updates': 0,
         'scope': '12 fixed validation assets, first frame of the same eight-frame input; diagnostic, not full validation or formal15beam'}
+    if args.completed_probe:
+        config['alignment_probe']['variants'] = ['aligned_static', 'aligned_dynamic', 'aligned_dynamic_fullprefix']
+        config['alignment_probe']['completed_four_route_comparison'] = args.completed_probe
     encoded = (json.dumps(config, indent=2)+'\n').encode()
     digest = hashlib.sha256(encoded).hexdigest()
     if not restage:
@@ -82,7 +90,11 @@ def main():
         'runs': [{'stage': 'alignment_'+mode, 'mode': mode, 'approved': True,
             'config': RUN+'/code_probe'+suffix+'/model_training/experiments/'+target.name,
             'config_sha256': digest, 'output': RUN+'/outputs_probe'+suffix+'/'+mode} for mode in ('audit', 'capacity')]}
-    if restage:
+    if args.completed_probe:
+        state['active_operation']['completed_prior_comparison'] = {
+            'result': args.completed_probe, 'no_repetition_of_finished_variants': True,
+            'reason': 'Test function-preserving initialization after observing static recovery but dynamic collapse.'}
+    elif restage:
         state['active_operation']['prior_precompute_rejection'] = {
             'source': args.prior_source or '8390d60b6e27178f1be3c69a39db0e5cbc15c03b',
             'evidence': args.preflight_rejection, 'GPU_payload_started': False,

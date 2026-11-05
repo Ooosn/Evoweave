@@ -135,6 +135,18 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
                                project_decoder_condition=qwen is not None)
     if native_projection is not None:
         model.decoder_condition_projection = native_projection
+        if qwen['conditioning'].get('prefix_tokens') is not None:
+            if qwen['conditioning']['prefix_tokens'] != 512:
+                raise ValueError('native TokenRig prefix length must be512')
+            model.decoder_condition_tokens = 512
+        motion_init = qwen['conditioning'].get('motion_initialization')
+        if motion_init is not None:
+            if motion_init != 'identity_residuals_native_norm_v1':
+                raise ValueError('unreviewed motion initialization')
+            from tokenrig_decoder import initialize_native_motion_identity
+            motion_report = initialize_native_motion_identity(model)
+            qwen_report['conditioning']['motion_initialization'] = motion_report
+            qwen_report['conditioning']['channel_lift'] = motion_report['channel_lift']
     model.to(device)
     initialization = {'source_commit': (qwen['conditioning']['source_commit'] if native_conditioning else revision),
                       'checkpoint_sha256': ((qwen['checkpoint_sha256'] if native_conditioning else initial['sha256'])

@@ -221,9 +221,15 @@ class VirtualQueryXYZRig(nn.Module):
         if width != config.dim and not project_decoder_condition:
             raise ValueError('original XYZ decoder width differs from condition width')
         self.decoder_condition_projection = nn.Linear(config.dim, width) if project_decoder_condition else nn.Identity()
+        self.decoder_condition_tokens = None
+
+    def decoder_condition_length(self, condition):
+        return condition.shape[1] if self.decoder_condition_tokens is None else min(
+            condition.shape[1], self.decoder_condition_tokens)
 
     def decoder_prefix(self, condition, ids):
         embedding = self.xyz_decoder.get_input_embeddings()(ids)
+        condition = condition[:, :self.decoder_condition_length(condition)]
         return torch.cat((self.decoder_condition_projection(condition).to(embedding.dtype), embedding), dim=1)
 
     def encode(self, surface):
@@ -277,9 +283,10 @@ class VirtualQueryXYZRig(nn.Module):
 
     def main_logits(self, condition, input_ids, attention_mask):
         prefix = self.decoder_prefix(condition, input_ids)
-        mask = torch.cat((attention_mask.new_ones(condition.shape[:2]), attention_mask), dim=1)
+        length = self.decoder_condition_length(condition)
+        mask = torch.cat((attention_mask.new_ones((condition.shape[0], length)), attention_mask), dim=1)
         result = self.xyz_decoder(inputs_embeds=prefix, attention_mask=mask, use_cache=False, return_dict=True)
-        return result.logits[:, condition.shape[1]:]
+        return result.logits[:, length:]
 
     def forward_encoded(self, final_frames, virtual, targets, *, auxiliary_weight, query_points=None):
         if not math.isfinite(auxiliary_weight) or auxiliary_weight < 0:
@@ -351,7 +358,7 @@ class VirtualQueryXYZRig(nn.Module):
         if self.training or condition.shape[0] != 1 or start_tokens.ndim != 1:
             raise ValueError('generation requires eval mode and one condition sequence')
         ids = start_tokens[None].to(device=condition.device, dtype=torch.long)
-        mask = torch.ones((1, condition.shape[1]+ids.shape[1]), dtype=torch.long, device=condition.device)
+        mask = torch.ones((1, self.decoder_condition_length(condition)+ids.shape[1]), dtype=torch.long, device=condition.device)
         output = self.xyz_decoder(inputs_embeds=self.decoder_prefix(condition, ids),
                                   attention_mask=mask, use_cache=True, return_dict=True)
         generated = []

@@ -41,13 +41,14 @@ def check_teacher_prefix(backbone, features, targets):
     ids = targets['main_input_ids'][:1, 0, :5]
     full = backbone.main_logits(condition, ids, torch.ones_like(ids))
     prefix = backbone.base.decoder_prefix(condition, ids[:, :2])
+    condition_length = backbone.base.decoder_condition_length(condition)
     cached = backbone.xyz_decoder(inputs_embeds=prefix,
         attention_mask=torch.ones(prefix.shape[:2], dtype=torch.long, device=ids.device), use_cache=True)
     errors = []
     for slot in range(1, ids.shape[1]):
         if slot > 1:
             cached = backbone.xyz_decoder(input_ids=ids[:, slot:slot+1], past_key_values=cached.past_key_values,
-                attention_mask=torch.ones((1, condition.shape[1]+slot+1), dtype=torch.long, device=ids.device), use_cache=True)
+                attention_mask=torch.ones((1, condition_length+slot+1), dtype=torch.long, device=ids.device), use_cache=True)
         error = float((cached.logits[:, -1]-full[:, slot]).abs().max())
         errors.append(error)
         if not torch.allclose(cached.logits[:, -1], full[:, slot], atol=1e-4, rtol=1e-4):

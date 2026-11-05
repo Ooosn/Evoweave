@@ -74,3 +74,26 @@ archives are not admissible for the changed frontend. Reuse the verified SSD
 dataset cache without copying or changing data. Formal training is blocked
 until these new checks and their durable backups pass; capacity weights will
 not initialize formal training.
+
+The independent capacity stage completed normally onNovember5, native source
+`459a5a2395eb96ef3ba4d58f5e2f0e844cc87f9d`. Both ranks passed13 records: a
+per-rank batch1 joint contract and12 extreme updates across the six declared
+frame/stress profiles. FP32 cached-prefix maximum logit errors were3.82e-6 and
+5.73e-6, below the unchanged1e-4 absolute/relative tolerances. Twelve separate
+representative updates then saved576 visits/12 updates and restored model,
+Adam, both-rank RNG and sampler state exactly from disk. Its8,945,962,834-byte
+checkpoint has verified scratch/durable copies, SHA256
+`82944552222e0b4a503240c405a0a8472662d6f4fb4a6e498855fdab12d4a3af`.
+The capacity result SHA256 is
+`905930448d9ac65d44e616f43b7aecd7c5114a7dfc007bd67408017e8e244c8d`;
+both-rank peaks were73187/72527MiB, at most71.5GiB. Supervisor exit0, complete
+payload cleanup and the durable receipt archive are verified. No check is
+rerun and no capacity weight is used as formal initialization.
+
+The separate formal recipe is `tokenrig_native_full_20261105.json`, SHA256
+`e4fece4995c54dab87318bc13ab2280c47670fe1e920a371c7e63626fe159abb`.
+It retains300000 visits, effective batch48, per-rank24 for2-12frames and12 for
+13-24frames, original AdamW/OneCycle and all validation/save cadences. Its
+`training.resume` is null; the new output is `outputs_native_train/train`.
+The old250k optimizer is retained only for the old hybrid model. Launch and
+initial durable recovery still require actual native-process evidence.

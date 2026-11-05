@@ -6,9 +6,14 @@ Data production is owned by `data_processing/`.
 Current working model: **330k**, fixed by the user's delegated finite checkpoint
 selection on2026-11-02. Use [the working-model definition](state/working_model.json)
 for both pipeline stages; its durable weight copy has been SHA256-verified.
-All training and checkpoint search are closed. See [the selection result](docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md)
+That OPT training and checkpoint search are closed. See [the selection result](docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md)
 and `state/current.json`. Full300k remains a historical baseline, not the current
 working default; [its recipe](docs/ANCHOR_FULL_300K_20261030.md) is retained.
+
+The separately authorized TokenRig/Qwen experiment does not replace330k. Its
+first hybrid run is paused with a complete250k recovery; the native frontend
+alignment and independent capacity checks have passed. Exact new-run permissions
+are in `state/current.json`; see [the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
 
 ## Research Entry Points
 

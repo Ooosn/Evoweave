@@ -10,7 +10,7 @@
       "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
       "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
     },
-    "code_commit": "0472eabd75905ed8764b1be6f2cfb533ec4edef3",
+    "code_commit": "e86ffa3ae5101fac82e7c52c1723d3f41bb61718",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "CPU_audit_accepted": false,
@@ -39,25 +39,25 @@
         "stage": "alignment_audit",
         "mode": "audit",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r3/model_training/experiments/tokenrig_alignment_probe_20261105_r3.json",
-        "config_sha256": "b0a036e533241b87612c71885b98b3f1b5be704305e9d4baae4607deb512e8be",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r3/audit"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r4/model_training/experiments/tokenrig_alignment_probe_20261105_r4.json",
+        "config_sha256": "db26082763b79d86f6bd941d1c2032ff5fe65f31d94a086ed891b6bc5e97e192",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/audit"
       },
       {
         "stage": "alignment_capacity",
         "mode": "capacity",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r3/model_training/experiments/tokenrig_alignment_probe_20261105_r3.json",
-        "config_sha256": "b0a036e533241b87612c71885b98b3f1b5be704305e9d4baae4607deb512e8be",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r3/capacity"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r4/model_training/experiments/tokenrig_alignment_probe_20261105_r4.json",
+        "config_sha256": "db26082763b79d86f6bd941d1c2032ff5fe65f31d94a086ed891b6bc5e97e192",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity"
       }
     ],
     "prior_precompute_rejection": {
-      "source": "0fdcd99a6f0e73e1ec3eddab6ad1c35e45fcaa03",
-      "evidence": "/work/wangyy/tokenrig_alignment_20261105/probe_r2_audit.log",
+      "source": "d1c529d8af0941ed4ab14f4bef5dd0620e79586a",
+      "evidence": "/work/wangyy/tokenrig_alignment_20261105/probe_r3_audit.log",
       "GPU_payload_started": false,
       "CPU_initialization_passed": false,
-      "reason": "Native module import unconditionally queries CUDA even in a CPU-only audit; no GPU probe or optimizer update ran."
+      "reason": "Projection comparison used raw BF16 release tensors with FP32 audit inputs; model loading had succeeded. No GPU work or optimizer update."
     }
   },
   "allocation_defaults": {
@@ -344,5 +344,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_alignment_probe_20261105",
-  "updated_at": "2026-11-05T11:29:43.796458+00:00"
+  "updated_at": "2026-11-05T11:32:03.440681+00:00"
 }

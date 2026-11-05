@@ -1,6 +1,18 @@
 {
   "adaptation_asset_visits": 30000,
-  "all_newer_checkpoints_and_training_results_retained": true,
+  "all_newer_checkpoints_and_training_results_retained": false,
+  "storage_retention_review": {
+    "date_JST": "2026-11-06",
+    "user_authorized_personal_checkpoint_cleanup": true,
+    "working330k_weights_and_full_recovery_retained": true,
+    "historical300k_weights_and_full_recovery_retained": true,
+    "paused_Qwen250k_weights_and_full_recovery_retained": true,
+    "newer340k_to400k_personal_checkpoint_copies_retired": true,
+    "all_metrics_visualizations_and_original_save_receipts_retained": true,
+    "SSD_files_and_current_native_training_not_modified": true,
+    "completion": "/home/wangyy/evorig/outputs/personal_checkpoint_cleanup_20261106_v1/completion.json",
+    "completion_sha256": "929258cc941a0e17665909ed5415fee6ad14f10d2455e620bb238001f24524fb"
+  },
   "authoritative_storage": "durable_large_file_not_scratch",
   "checkpoints": {
     "stage1": {

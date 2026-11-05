@@ -17,6 +17,12 @@ run actually started onNovember5 and has a verified first48-visit full recovery.
 Exact permissions and evidence are in `state/current.json`; see
 [the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
 
+Personal checkpoint retention was reduced by the user onNovember6: keep complete
+recovery plus inference weights at OPT300k, OPT330k and paused Qwen250k.38older
+personal model files were removed, freeing about210GB; all metrics/visuals/save
+receipts remain. SSD copies and the current native run were not modified.
+See `state/current.json` for the immutable cleanup plan and completion receipt.
+
 ## Research Entry Points
 
 | Layer | Document | Purpose |

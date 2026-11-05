@@ -1,4 +1,22 @@
 {
+  "personal_checkpoint_cleanup": {
+    "complete": true,
+    "finished_utc": "2026-11-05T18:42:14.335629+00:00",
+    "user_authorized": true,
+    "personal_copies_only": true,
+    "completion": "/home/wangyy/evorig/outputs/personal_checkpoint_cleanup_20261106_v1/completion.json",
+    "completion_sha256": "929258cc941a0e17665909ed5415fee6ad14f10d2455e620bb238001f24524fb",
+    "plan_sha256": "d0e278603d9493b2339fede40128e817e24a0fb3cc4cb08224441e6a24ee9fc4",
+    "removed_files": 38,
+    "removed_bytes": 210195984416,
+    "retained_models": ["OPT300k", "OPT330k", "paused_Qwen250k"],
+    "each_retains_full_Adam_RNG_sampler_recovery_and_model_only_weights": true,
+    "all_six_retained_copies_fresh_SHA256_verified": true,
+    "historical_metrics_visuals_examples_receipts_and_sources_preserved": true,
+    "SSD_copies_not_modified": true,
+    "current_native_training_directory_and_retention_not_modified": true,
+    "older_intermediate_personal_weight_files_no_longer_available": true
+  },
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_native_full300k_20261105",
@@ -470,7 +488,7 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_native_full300k_20261105",
-  "updated_at": "2026-11-05T12:31:37.641212+00:00",
+  "updated_at": "2026-11-05T18:42:14.335629+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

@@ -20,7 +20,9 @@ def validate_config(config):
         return validate_adaptation(config)
     train, evaluation = config['training'], config['evaluation']
     if (config.get('family') != SCOPE or config.get('schema_version') != 1
-            or config['backbone'].get('initialization') != 'official_UniRig_only'
+            or config['backbone'].get('initialization') != (
+                'released_TokenRig_mesh_projection_Qwen' if config.get('tokenrig_decoder', {}).get('conditioning')
+                else 'official_UniRig_only')
             or config['backbone'].get('source_asset_exposures') != 0
             or set(config['backbone']) != {'config', 'initialization', 'source_asset_exposures'}):
         raise ValueError('full training must not inherit a project checkpoint')
@@ -89,6 +91,7 @@ def source_hashes():
     names = ['anchor_full_protocol.py', 'anchor_full_data.py', 'anchor_full_runtime.py', 'anchor_full_cleanup.py',
         'anchor_full_evaluation.py', 'train_anchor_full.py', 'anchor_joint_runtime.py',
         'virtual_query_xyz_runtime.py', 'tokenrig_decoder.py', 'tokenrig_train_admission.py',
+        'probe_tokenrig_alignment.py',
         'reference_flow_runtime.py', 'reference_flow_protocol.py',
         'virtual_pair_runtime.py', 'virtual_frame_runtime.py', 'virtual_pair_loading.py',
         'virtual_fusion_normal_runtime.py', 'train_virtual_query_xyz.py', 'stage1_feedback.py',

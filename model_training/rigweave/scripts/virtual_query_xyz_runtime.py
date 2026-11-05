@@ -43,6 +43,8 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
     if type(load_official_weights) is not bool:
         raise ValueError('load_official_weights must be a boolean')
     initial, runtime = config['initialization'], config['runtime']
+    qwen = config.get('tokenrig_decoder')
+    native_conditioning = qwen is not None and 'conditioning' in qwen
     seed = initial['seed'] if initialization_seed is None else initialization_seed
     if type(seed) is not int or not 0 <= seed < 2**31:
         raise ValueError('invalid model initialization seed')
@@ -53,7 +55,7 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
         raise ValueError('official upstream implementation is not the declared clean revision')
     if Path(initial['checkpoint']).resolve() != Path(initial['official_checkpoint']).resolve():
         raise ValueError('only the official upstream checkpoint may initialize this route')
-    if load_official_weights and sha256(initial['checkpoint']) != initial['sha256']:
+    if load_official_weights and not native_conditioning and sha256(initial['checkpoint']) != initial['sha256']:
         raise ValueError('official initialization checkpoint hash changed')
     if sha256(initial['model_config']) != initial['model_config_sha256']:
         raise ValueError('published original XYZ model configuration hash changed')
@@ -64,7 +66,7 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
     torch.manual_seed(seed)
     tokenizer = build_tokenizer(Path(runtime['tokenizer_config']))
     upstream_config = yaml.safe_load(Path(initial['model_config']).read_text())
-    if load_official_weights:
+    if load_official_weights and not native_conditioning:
         payload = torch.load(initial['checkpoint'], map_location='cpu', mmap=True, weights_only=False)
         state = {key.removeprefix('model.'): value for key, value in payload['state_dict'].items()}
     lm_args = dict(upstream_config['llm'])
@@ -75,21 +77,30 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
         lm_args['_attn_implementation'] = 'eager'
     lm_config = OPTConfig.from_pretrained(runtime['opt_config_root'], local_files_only=True, **lm_args)
     lm_config.torch_dtype = torch.float32
-    qwen = config.get('tokenrig_decoder')
     if qwen is None:
         main = OPTForCausalLM(lm_config)
     else:
         from tokenrig_decoder import build_tokenrig_decoder
         main, tokenizer, qwen_report = build_tokenrig_decoder(qwen, load_weights=load_official_weights)
-    surface_args = dict(upstream_config['mesh_encoder'])
-    if surface_args.pop('__target__') != 'michelangelo_encoder':
-        raise ValueError('unexpected upstream surface encoder')
-    if not load_official_weights and surface_args.get('pretrained_path') is not None:
-        raise ValueError('random initialization cannot use an encoder checkpoint')
-    surface = get_encoder_simplified(**surface_args)
-    projection = nn.Linear(surface.width, lm_config.hidden_size)
+    native_projection = None
+    if native_conditioning:
+        from tokenrig_decoder import build_tokenrig_conditioning
+        surface, native_projection, conditioning_report = build_tokenrig_conditioning(
+            qwen, config['architecture']['dim'], load_weights=load_official_weights)
+        projection = nn.ConstantPad1d((0, config['architecture']['dim'] - surface.width), 0.)
+        qwen_report['conditioning'] = conditioning_report
+    else:
+        surface_args = dict(upstream_config['mesh_encoder'])
+        if surface_args.pop('__target__') != 'michelangelo_encoder':
+            raise ValueError('unexpected upstream surface encoder')
+        if not load_official_weights and surface_args.get('pretrained_path') is not None:
+            raise ValueError('random initialization cannot use an encoder checkpoint')
+        surface = get_encoder_simplified(**surface_args)
+        projection = nn.Linear(surface.width, lm_config.hidden_size)
     report, loaded = {}, set()
-    if load_official_weights:
+    if native_conditioning:
+        report = {'native_TokenRig_conditioning': conditioning_report, 'UniRig_weights_loaded': False}
+    elif load_official_weights:
         modules = [('mesh_encoder.', surface), ('output_proj.', projection)]
         if qwen is None:
             modules.insert(0, ('transformer.', main))
@@ -122,8 +133,12 @@ def build_model(config, device, *, load_official_weights=True, initialization_se
     model = VirtualQueryXYZRig(FixedQuerySurfaceTokenizer(surface, projection), main, architecture,
                                auxiliary_vocab_size=codec.vocab_size, auxiliary_pad=codec.pad,
                                project_decoder_condition=qwen is not None)
+    if native_projection is not None:
+        model.decoder_condition_projection = native_projection
     model.to(device)
-    initialization = {'source_commit': revision, 'checkpoint_sha256': initial['sha256'] if load_official_weights else None,
+    initialization = {'source_commit': (qwen['conditioning']['source_commit'] if native_conditioning else revision),
+                      'checkpoint_sha256': ((qwen['checkpoint_sha256'] if native_conditioning else initial['sha256'])
+                                            if load_official_weights else None),
                       'model_config_sha256': sha256(initial['model_config']),
                       'tokenizer_config_sha256': sha256(runtime['tokenizer_config']),
                       'seed': seed, 'load_report': report, 'architecture': asdict(architecture),

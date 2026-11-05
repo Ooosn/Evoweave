@@ -7,7 +7,22 @@ from transformers import Qwen3Config, Qwen3ForCausalLM
 
 from rigweave.dynamic_rig.data import _make_token_input
 from rigweave.dynamic_rig.virtual_query_xyz import VirtualQueryXYZConfig, VirtualQueryXYZRig
-from tokenrig_decoder import TokenRigSkeletonTokenizer
+from tokenrig_decoder import NativeTokenRigProjection, TokenRigSkeletonTokenizer
+
+
+def test_native_projection_lift_preserves_pretrained_prefix():
+    torch.manual_seed(29)
+    native = nn.Sequential(nn.Linear(4, 6), nn.RMSNorm(6))
+    projection = NativeTokenRigProjection(8, 4, 6)
+    projection.load_native(native[0].weight, native[0].bias, native[1].weight)
+    value = torch.randn(2, 7, 4)
+    padded = torch.nn.functional.pad(value, (0, 4))
+    torch.testing.assert_close(projection(padded), native(value), rtol=1e-5, atol=1e-6)
+    assert torch.count_nonzero(projection.weight[:, 4:]) == 0
+    full = torch.randn(2, 7, 8, requires_grad=True)
+    projection(full).square().sum().backward()
+    assert projection.weight.grad[:, 4:].norm() > 0
+    assert projection.normalization.weight.grad.norm() > 0
 
 
 def test_native_skeleton_adapter_keeps_xyz_and_parent_identity():

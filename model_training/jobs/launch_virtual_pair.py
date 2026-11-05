@@ -24,7 +24,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--config', type=Path, required=True)
     known, _ = parser.parse_known_args()
-    family = json.loads(known.config.read_text()).get('family')
+    config = json.loads(known.config.read_text())
+    family = config.get('family')
     trainer = {'reference_skeleton_xyz_20261027_v1': 'train_reference_xyz.py',
                'shared_reference_flow_5k_20261027_v1': 'train_reference_flow.py',
                'anchor_joint_binding_5k_20261027_v1': 'train_anchor_joint.py',
@@ -35,6 +36,10 @@ if __name__ == '__main__':
                'stage1_surface_repair_20261029_v1': 'evaluate_stage1_surface_repair.py',
                'predicted_reference_20261029_v1': 'evaluate_predicted_reference.py',
                'paper_benchmark_20261102_v1': 'evaluate_paper_benchmark.py'}.get(family, 'train_virtual_pair.py')
+    if config.get('execution', {}).get('phase') == 'tokenrig_alignment_probe':
+        if family != 'anchor_full_20261030_v1':
+            raise ValueError('alignment probe must retain the full-data family contract')
+        trainer = 'probe_tokenrig_alignment.py'
     raise SystemExit(main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
          trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',)))

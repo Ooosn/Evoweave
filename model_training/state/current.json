@@ -2,15 +2,7 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
-    "complete": true,
-    "status": "completed_zero_update_attribution",
-    "result": {
-      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
-      "sha256": "5ffabe593f375a576aeb099c6bdec7f1a65e51dcc65a9797bb57a129d89426b7",
-      "optimizer_updates": 0,
-      "payload_cleanup_complete": true,
-      "training_quality_accepted": false
-    },
+    "complete": false,
     "explicit_human_authorized": true,
     "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
     "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
@@ -18,7 +10,7 @@
       "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
       "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
     },
-    "code_commit": "e86ffa3ae5101fac82e7c52c1723d3f41bb61718",
+    "code_commit": "bb4ee0b48f31bbc8476f911279b52017e57142b4",
     "gpu_work_allowed": true,
     "formal_training_allowed": false,
     "CPU_audit_accepted": false,
@@ -47,25 +39,23 @@
         "stage": "alignment_audit",
         "mode": "audit",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r4/model_training/experiments/tokenrig_alignment_probe_20261105_r4.json",
-        "config_sha256": "db26082763b79d86f6bd941d1c2032ff5fe65f31d94a086ed891b6bc5e97e192",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/audit"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/audit"
       },
       {
         "stage": "alignment_capacity",
         "mode": "capacity",
         "approved": true,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r4/model_training/experiments/tokenrig_alignment_probe_20261105_r4.json",
-        "config_sha256": "db26082763b79d86f6bd941d1c2032ff5fe65f31d94a086ed891b6bc5e97e192",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity"
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity"
       }
     ],
-    "prior_precompute_rejection": {
-      "source": "d1c529d8af0941ed4ab14f4bef5dd0620e79586a",
-      "evidence": "/work/wangyy/tokenrig_alignment_20261105/probe_r3_audit.log",
-      "GPU_payload_started": false,
-      "CPU_initialization_passed": false,
-      "reason": "Projection comparison used raw BF16 release tensors with FP32 audit inputs; model loading had succeeded. No GPU work or optimizer update."
+    "completed_prior_comparison": {
+      "result": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "no_repetition_of_finished_variants": true,
+      "reason": "Test function-preserving initialization after observing static recovery but dynamic collapse."
     }
   },
   "alignment_evidence": {
@@ -372,5 +362,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_alignment_probe_20261105",
-  "updated_at": "2026-11-05T11:32:03.440681+00:00"
+  "updated_at": "2026-11-05T11:44:47.639248+00:00"
 }

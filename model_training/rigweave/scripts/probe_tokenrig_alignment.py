@@ -34,8 +34,9 @@ def audit(config, output, source):
     state = torch.load(config['tokenrig_decoder']['checkpoint'], map_location='cpu', mmap=True, weights_only=False)['state_dict']
     generator = torch.Generator().manual_seed(20261105)
     value = torch.randn((2, 5, 512), generator=generator)
-    native = F.rms_norm(F.linear(value, state['output_proj.0.weight'], state['output_proj.0.bias']),
-                        (896,), state['output_proj.1.weight'])
+    native = F.rms_norm(F.linear(value, state['output_proj.0.weight'].float(),
+                                 state['output_proj.0.bias'].float()),
+                        (896,), state['output_proj.1.weight'].float())
     actual = projection(F.pad(value, (0, 512)))
     torch.testing.assert_close(actual, native, atol=1e-5, rtol=1e-5)
     report = {'complete': True, 'passed': True, 'source': source,

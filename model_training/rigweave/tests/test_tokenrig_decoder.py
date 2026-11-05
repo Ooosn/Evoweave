@@ -25,6 +25,17 @@ def test_native_projection_lift_preserves_pretrained_prefix():
     assert projection.normalization.weight.grad.norm() > 0
 
 
+def test_native_projection_accepts_released_bf16_weights_for_fp32_audit():
+    native = nn.Sequential(nn.Linear(4, 6), nn.RMSNorm(6)).to(torch.bfloat16)
+    projection = NativeTokenRigProjection(8, 4, 6)
+    projection.load_native(native[0].weight, native[0].bias, native[1].weight)
+    value = torch.randn(2, 7, 4)
+    expected = torch.nn.functional.rms_norm(torch.nn.functional.linear(value,
+        native[0].weight.float(), native[0].bias.float()), (6,), native[1].weight.float())
+    torch.testing.assert_close(projection(torch.nn.functional.pad(value, (0, 4))),
+                               expected, atol=1e-6, rtol=1e-5)
+
+
 def test_native_skeleton_adapter_keeps_xyz_and_parent_identity():
     native = SimpleNamespace(tokenize=lambda item: item)
     tokenizer = TokenRigSkeletonTokenizer(native, SimpleNamespace)

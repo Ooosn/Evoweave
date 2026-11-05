@@ -2,7 +2,24 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_full300k_20261104",
-    "complete": false,
+    "complete": true,
+    "status": "paused_by_user_recovery_retained",
+    "training_target_completed": false,
+    "deployed_source_commit": "6adb515908f40088f84de733c8f96347e9702afb",
+    "pause_review": {
+      "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
+      "resume_checkpoint": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/checkpoint_250000.pt",
+      "resume_checkpoint_sha256": "2d2d84e82fa51b0ce1fb4b194482afdd178652241353bc7e5255c41454d57162",
+      "resume_samples": 250000,
+      "resume_updates": 5225,
+      "Adam_entries": 1003,
+      "rank_RNG_and_sampler_states": 2,
+      "live_samples_before_interrupt": 252064,
+      "unsaved_visits": 2064,
+      "payload_cleanup_complete": true,
+      "allocation_released": false
+    },
     "explicit_human_authorized": true,
     "authorization": "2026-11-04: User authorized fresh TokenRig joint training to 300000 visits at unchanged learning rates and tested enlarged physical batches.",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
@@ -11,8 +28,8 @@
       "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
     "code_commit": "828b5f30c5742f35b83d4c78e543ea30b3f3b2fc",
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": false,
     "live_tokenrig_audit_required": true,
     "capacity_accepted": true,
@@ -121,12 +138,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -231,7 +247,7 @@
     "status": "complete_first_manuscript_and_frozen_reference_inference_no_new_training"
   },
   "module": "model_training",
-  "next_required_result": "Pass guarded CPU audit, then verify actual TokenRig full training startup and monitor to 300000 visits.",
+  "next_required_result": "Original Qwen run paused by explicit user request at verified full250k recovery; record a separate exact native-prefix alignment test before fresh training. Do not resume the paused run or replace OPT330k.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -273,5 +289,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_full300k_20261104",
-  "updated_at": "2026-11-03T19:23:04.885096+00:00"
+  "updated_at": "2026-11-05T11:05:28.220144+00:00"
 }

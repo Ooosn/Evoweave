@@ -149,8 +149,14 @@ def audit(config, output, source):
     tokenrig = 'tokenrig_decoder' in config
     if tokenrig:
         from tokenrig_train_admission import stage_cache_reflink, verify_capacity
-        verify_capacity(config)
-        cache = stage_cache_reflink(config, base)
+        if config['tokenrig_decoder'].get('conditioning'):
+            from anchor_full_data import verify_ssd
+            retained = CachedFiles(config, base)
+            cache = {'sha256': retained.index_sha256, 'files': len(retained.files),
+                'storage': verify_ssd(retained.root), 'retained_verified_cache': True}
+        else:
+            verify_capacity(config)
+            cache = stage_cache_reflink(config, base)
     elif config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import audit_retained_cache
         cache = audit_retained_cache(config, base)
@@ -171,7 +177,8 @@ def audit(config, output, source):
         'scientific_sha256': scientific_sha(config), 'train_assets': len(entries['train']),
         'valid_assets': len(entries['valid']), 'validation_panel': len(panel),
         'maximum_train_joints': max(counts), 'capacity_groups': groups, 'plan': plan,
-        'initialization': initial, 'cache': cache, 'loader': loader, 'legacy_cleanup': cleanup, 'cuda_initialized': False}
+        'initialization': initial, 'cache': cache, 'loader': loader, 'legacy_cleanup': cleanup, 'cuda_initialized': False,
+        'capacity_acceptance_separate': bool(config.get('tokenrig_decoder', {}).get('conditioning'))}
     write_json(output/'result.json', result)
     return result
 
@@ -235,6 +242,8 @@ def export_weights(model, config, output, source, checkpoint):
     state = {k: v.detach().cpu() for k, v in model.state_dict().items()}
     payload = {'model': state, 'configuration': config, 'initialization': (
         'full300k_then_hardcase3608' if config.get('family') == 'hardcase3608_20261101_v1'
+        else 'native_TokenRig_mesh_projection_Qwen_then_full_joint'
+            if config.get('tokenrig_decoder', {}).get('conditioning')
         else 'UniRig_mesh_TokenRig_Qwen_then_full_joint' if 'tokenrig_decoder' in config
         else 'official_UniRig_then_full_joint'),
         'samples': checkpoint['samples'], 'scientific_sha256': scientific_sha(config),

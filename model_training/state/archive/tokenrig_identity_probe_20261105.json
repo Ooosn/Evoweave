@@ -1,0 +1,486 @@
+{
+  "active_operation": {
+    "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_alignment_probe_20261105",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
+    "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
+      "train": "model_training/rigweave/scripts/probe_tokenrig_alignment.py"
+    },
+    "code_commit": "bb4ee0b48f31bbc8476f911279b52017e57142b4",
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "automatic_retry_allowed": false,
+    "working_model_unchanged": true,
+    "optimizer_updates_allowed": 0,
+    "resource_policy": "Retain native131351736, GPU3/4,16CPU; zero-update probe only, no extra allocation.",
+    "old_run_resume": {
+      "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
+      "resume_checkpoint": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/checkpoint_250000.pt",
+      "resume_checkpoint_sha256": "2d2d84e82fa51b0ce1fb4b194482afdd178652241353bc7e5255c41454d57162",
+      "resume_samples": 250000,
+      "resume_updates": 5225,
+      "Adam_entries": 1003,
+      "rank_RNG_and_sampler_states": 2,
+      "live_samples_before_interrupt": 252064,
+      "unsaved_visits": 2064,
+      "payload_cleanup_complete": true,
+      "allocation_released": false
+    },
+    "acceptance_test": "Strict complete native mesh/projection/Qwen weights; lifted projection parity; same input fingerprints across four routes; report actual initial quality without assuming improvement.",
+    "runs": [
+      {
+        "stage": "alignment_audit",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/audit"
+      },
+      {
+        "stage": "alignment_capacity",
+        "mode": "capacity",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_probe_r5/model_training/experiments/tokenrig_alignment_probe_20261105_r5.json",
+        "config_sha256": "d7e104c0abcf950c18536aed69f8ff10b4418a0b445399b42312eec7a5dc7f4e",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity"
+      }
+    ],
+    "completed_prior_comparison": {
+      "result": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "no_repetition_of_finished_variants": true,
+      "reason": "Test function-preserving initialization after observing static recovery but dynamic collapse."
+    },
+    "status": "zero_update_alignment_verified",
+    "review": {
+      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
+      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
+      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
+      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official_15beam",
+      "optimizer_updates": 0,
+      "same_input_fingerprints_verified": true,
+      "static_dynamic_rows_identical": true,
+      "summaries": {
+        "aligned_static": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic_fullprefix": {
+          "success": 0.8333333333333334,
+          "original_edge_f1": 0.43017514348256636,
+          "exact_count": 0,
+          "assets": 12,
+          "views": 12,
+          "failures": 2,
+          "original_normalized_j2j_successful_views": 0.021222685181555106,
+          "geometry_scored_assets": 10,
+          "geometry_scored_views": 10,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        }
+      },
+      "seconds": 157.9198278579861,
+      "not_full_validation": true,
+      "stage2_evaluated": false
+    },
+    "payload_cleanup_complete": true
+  },
+  "alignment_evidence": {
+    "four_route_probe": {
+      "source": "353899a424e0c6940a6e6413d9f410fb30e57b20",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
+      "sha256": "5ffabe593f375a576aeb099c6bdec7f1a65e51dcc65a9797bb57a129d89426b7",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r4_receipts.tar.gz",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official15beam",
+      "same_input_fingerprints_verified": true,
+      "optimizer_updates": 0,
+      "edge_F1": {
+        "old_hybrid_dynamic": 0.0,
+        "native_static_512": 0.7756733710125523,
+        "native_weights_fixed_anchors_static_1024": 0.43017514348256636,
+        "native_weights_random_motion_dynamic_1024": 0.0
+      }
+    },
+    "identity_native512_probe": {
+      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
+      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
+      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
+      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official_15beam",
+      "optimizer_updates": 0,
+      "same_input_fingerprints_verified": true,
+      "static_dynamic_rows_identical": true,
+      "summaries": {
+        "aligned_static": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic_fullprefix": {
+          "success": 0.8333333333333334,
+          "original_edge_f1": 0.43017514348256636,
+          "exact_count": 0,
+          "assets": 12,
+          "views": 12,
+          "failures": 2,
+          "original_normalized_j2j_successful_views": 0.021222685181555106,
+          "geometry_scored_assets": 10,
+          "geometry_scored_views": 10,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        }
+      },
+      "seconds": 157.9198278579861,
+      "not_full_validation": true,
+      "stage2_evaluated": false
+    }
+  },
+  "allocation_defaults": {
+    "explicit_user_required_for_shorter_lifetime": true,
+    "h_rt": "96:00:00",
+    "h_rt_seconds": 345600,
+    "native_request_builder": "server_ops/hgc/native_request_defaults.py",
+    "save_stop_margin_seconds": 3600
+  },
+  "allocation_request": {
+    "accepted_request_verified": true,
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "authorization": "User2026-10-31: H100 expired; start requesting again. Reserve only; no compute or retry is authorized by this allocation request.",
+    "automatic_payload_allowed": false,
+    "cpu_slots": 16,
+    "entrypoint": "model_training/jobs/hold_evoweave_native_20261031.sh",
+    "gpu_type": "H100",
+    "gpus": 2,
+    "h_rt_seconds": 345600,
+    "job_id": 131170166,
+    "lifetime_extension_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/lifetime_extension_96h_result.json",
+    "memory_per_slot": "4G",
+    "observed_available_CPU_slots": 76,
+    "observed_available_H100": 3,
+    "original_h_rt_seconds": 86400,
+    "persistent_session": "evoweave_h100_native_20261031",
+    "queue": "gpuh.q@pcg01i",
+    "status": "granted_native_lifetime_extended_to96h",
+    "total_memory_reservation_GiB": 64
+  },
+  "allowed_operations": [
+    "inspect",
+    "report",
+    "preflight"
+  ],
+  "blocked_operations": [
+    "train",
+    "submit",
+    "matched_eval"
+  ],
+  "compute_allocation": {
+    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
+    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      74,
+      76,
+      77,
+      78
+    ],
+    "cpu_slots": 16,
+    "execution_CPU_binding_required_before_compute": false,
+    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
+    "h_rt_seconds": 345600,
+    "host": "pcg01i",
+    "inherited_affinity_logical_CPU_count": 224,
+    "keeper_pid": 2268188,
+    "kernel_cpuset_and_devices_membership": true,
+    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
+    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "policy": "Retain native131170166keeper2268188,96hours2H100/16CPU. User authorizes two intermediate zero-update12case comparisons onGPU4/8CPUsubset, no extra GPUs/release/training/stress. Stop2026-11-04T11:40:04Z.",
+    "previous_allocation": {
+      "expiry_utc": "2026-10-31T11:55:38Z",
+      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
+      "qlogin_job_id": 130675914,
+      "status": "expired"
+    },
+    "qlogin_job_id": 131170166,
+    "rejected_previous_reservation": {
+      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
+      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
+      "job_id": 130674849,
+      "status": "canceled_before_any_payload"
+    },
+    "rss_limit_bytes": 68719476736,
+    "server": "HGC",
+    "started_utc": "2026-10-31T12:40:04.726Z",
+    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
+    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
+  },
+  "current_dataset_revision": {
+    "contract": "DATASET_SOURCE_OF_TRUTH.md",
+    "normalization": "input_sequence_mesh_bbox",
+    "root": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013",
+    "train_rows": 18002,
+    "valid_rows": 967
+  },
+  "current_working_model": {
+    "checkpoint": {
+      "label": "hardcase3608_plus030000",
+      "layout": "anchor",
+      "path": "/home/wangyy/evorig/outputs/hardcase3608_20261101/v1/weights_030000.pt",
+      "sha256": "abaa87aa7b377f17093850981024a4d63529449f68f082e7c6502ea7a5571018"
+    },
+    "default_for_new_user_authorized_inference": true,
+    "definition": "model_training/state/working_model.json",
+    "definition_sha256": "6c7a5f3d236b5e2ef9f752431e5dc3277496939dcb8da285a931dfbe4f103099",
+    "historical_full300k_is_baseline_not_current_working_default": true,
+    "no_further_training_or_search": true,
+    "population_quality_accepted": false,
+    "reason": "Neither preselected380k nor390koutperforms330kon the same official12cases. Both target edgeF1and geometry are worse in aggregate. Apply the predeclared330kfallback and stop.",
+    "same_checkpoint_for_reference_generator_and_XYZ_head": true,
+    "selected_total_visits": 330000,
+    "work_and_durable_SHA256_verified": true,
+    "working_choice_user_authorized": true
+  },
+  "established_research_decisions": {
+    "current_question": "Final working model fixed to330kafter existing matched112assetvalid ranked380kand390kand both official12case reviews failed to beat330k. Same12asset targetF1:330k .7560105580,380k .7292356574,390k .7540208321; pairedJ2J .0195282937,.0197878683,.0213442350. Current default is the verified durable330kweights for both stages. Stop training/checkpoint search. Keep all checkpoints and historical300kbaseline;105old exact-token replay cause unresolved.",
+    "generative_method_required": "User explicitly corrected the direction on2026-10-27: use generation, not an optimization/fitting route. Kabsch/local-rigid and learned geometric residual pilots are diagnostic controls only, not the main solution or evidence that generation is unnecessary. No further geometric-fit/residual experiment is admitted.",
+    "inference_policy": "Greedy is only fast validation-set feedback. Actual inference uses dynamic-model UniRig official beam sampling (15 beams, top_k5, top_p.95, temp1.5, repetition3); no static fallback. User reconfirmed2026-10-29 and requested a time-saving four-case smoke. User on2026-10-31 authorized diagnosis and better inference comparisons. Strict sampling and strict deterministic beam are separately named experimental variants; production policy is not silently replaced.",
+    "real_frame_motion_benefit": "Established project conclusion, reaffirmed by the user on 2026-10-26. Do not reopen or repeat motion-benefit ablations unless explicitly requested.",
+    "reference_input": "GT reference for XYZ training and stage2 validation; stage1 free validation uses no GT reference or teacher prefix."
+  },
+  "human_context": "model_training/docs/TOKENRIG_ALIGNMENT_20261105.md",
+  "last_operation": {
+    "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_full300k_20261104",
+    "complete": true,
+    "status": "paused_by_user_recovery_retained",
+    "training_target_completed": false,
+    "deployed_source_commit": "6adb515908f40088f84de733c8f96347e9702afb",
+    "pause_review": {
+      "path": "/work/wangyy/tokenrig_full_20261104/outputs/user_pause_review_20261105.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/user_pause_review_20261105.json",
+      "resume_checkpoint": "/home/wangyy/evorig/outputs/tokenrig_full_20261104/checkpoint_250000.pt",
+      "resume_checkpoint_sha256": "2d2d84e82fa51b0ce1fb4b194482afdd178652241353bc7e5255c41454d57162",
+      "resume_samples": 250000,
+      "resume_updates": 5225,
+      "Adam_entries": 1003,
+      "rank_RNG_and_sampler_states": 2,
+      "live_samples_before_interrupt": 252064,
+      "unsaved_visits": 2064,
+      "payload_cleanup_complete": true,
+      "allocation_released": false
+    },
+    "explicit_human_authorized": true,
+    "authorization": "2026-11-04: User authorized fresh TokenRig joint training to 300000 visits at unchanged learning rates and tested enlarged physical batches.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
+      "train": "model_training/rigweave/scripts/train_anchor_full.py"
+    },
+    "code_commit": "828b5f30c5742f35b83d4c78e543ea30b3f3b2fc",
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": false,
+    "live_tokenrig_audit_required": true,
+    "capacity_accepted": true,
+    "automatic_retry_allowed": false,
+    "working_model_unchanged": true,
+    "manifest": {
+      "train": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "rows": 18002,
+        "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    },
+    "mesh_initialization": {
+      "checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "official_checkpoint": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4",
+      "model_config": "/work/wangyy/virtual_query_matched_5k_20261025/code/model_training/experiments/shared_virtual_upstream_20261012.yaml",
+      "model_config_sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120",
+      "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+      "seed": 20261030
+    },
+    "decoder_initialization": {
+      "source": "/work/wangyy/tokenrig_full_20261104/deps/sources/SkinTokens",
+      "checkpoint": "/work/wangyy/tokenrig_full_20261104/deps/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+      "checkpoint_sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
+      "qwen_config_root": "/work/wangyy/tokenrig_full_20261104/deps/weights/SkinTokens/Qwen3Config",
+      "qwen_config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+      "tokenizer_source_sha256": {
+        "tokenizer/parse.py": "7161cdaee24bcc16575a6651930048945cedd6193017fae7e4d2ed16c3c5520d",
+        "tokenizer/spec.py": "293903541aae9aec1a5196807ddc85eb473d11bea14f7205579588616d7c17c2",
+        "tokenizer/tokenizer_part.py": "c6cceea2be8bad7185b237ecc77261c56792ba047e3a1ee4978d64f4ad079495",
+        "data/order.py": "912ab7547d6a13010c347edb27fecb56f2f6191a6c2c0e60b0e920351d573d66",
+        "data/spec.py": "d7c2c3f32e869f26dad3a3d871ccf092df56b63122b65acde8e38c63698f6061"
+      }
+    },
+    "capacity_archives": [
+      {
+        "path": "/home/wangyy/evoweave-tokenrig-8a6f9f3-capacity-receipts.tar.gz",
+        "sha256": "7b882ee3a15c9dbf538838b85e96dfff8ffe39cb1d8f9b838985bdd6f0a95bef",
+        "profiles": [
+          "default"
+        ]
+      },
+      {
+        "path": "/home/wangyy/evoweave-tokenrig-01d5b17-batch-receipts.tar.gz",
+        "sha256": "1a543c00a57d50a12a21f8666c578a00aaa728b0ef36afe2eb8de29aa1841a76",
+        "profiles": [
+          "frames12",
+          "frames24"
+        ]
+      }
+    ],
+    "resource_policy": "Native HGC 131351736, GPU3/4, 16 CPUs, 78 GiB sampled whole-device ceiling. Preserve allocation and unrelated tasks.",
+    "acceptance_test": "Exact CPU audit required before GPU launch; strict pretrained weights, 300000 visits, finite joint updates and backed-up recovery points.",
+    "runs": [
+      {
+        "stage": "tokenrig_full_audit",
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
+        "config_sha256": "84626f6e14835fe418db97f28c5c5df3e023ced6713d76f6b8cf10355409a8bd",
+        "output": "/work/wangyy/tokenrig_full_20261104/outputs/audit"
+      },
+      {
+        "stage": "tokenrig_full_train",
+        "mode": "train",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_full_20261104/code/model_training/experiments/tokenrig_full_20261104.json",
+        "config_sha256": "84626f6e14835fe418db97f28c5c5df3e023ced6713d76f6b8cf10355409a8bd",
+        "output": "/work/wangyy/tokenrig_full_20261104/outputs/train"
+      }
+    ]
+  },
+  "module": "model_training",
+  "next_required_result": "Run independent native joint-update capacity and exact full recovery checks before fresh training.",
+  "pending_user_authorized_continuation": {
+    "additional_asset_visits": 70000,
+    "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
+    "backbone_LR": 2e-06,
+    "current_total_asset_visits": 330000,
+    "further_training_authorized": false,
+    "head_multiplier": 3,
+    "restore_complete_checkpoint_and_Adam": true,
+    "source_checkpoint": "/work/wangyy/virtual_query_matched_5k_20261025/outputs/train_v30/checkpoint_030000.pt",
+    "status": "completed70000new_visits_training",
+    "target_total_asset_visits": 400000,
+    "weights": {
+      "background": 1,
+      "core": 3,
+      "extension": 2
+    }
+  },
+  "publication_authorization": {
+    "authorization": "User approved publication with a separate folder, then explicitly requested implementation of the full isolated dual-H100 plan.",
+    "branch": "codex/virtual-fusion-20261013",
+    "destination": "https://github.com/Ooosn/Evoweave.git",
+    "isolation_required": true,
+    "scope": "code, configuration and diagnostic summaries only; no datasets, weights or credentials",
+    "status": "explicit_user_approved"
+  },
+  "receipt_max_age_minutes": 240,
+  "required_context": [
+    "PROJECT_MAP.md",
+    "DATASET_SOURCE_OF_TRUTH.md",
+    "model_training/docs/CURRENT_MODEL_CONTEXT.md",
+    "model_training/docs/ANCHOR_FULL_300K_20261030.md",
+    "model_training/docs/INFERENCE_DIAGNOSIS_20261031.md",
+    "model_training/docs/HARDCASE_ADAPTATION_3608_20261101.md",
+    "model_training/docs/HARDCASE_VISUAL12_20261101.md",
+    "model_training/docs/HARDCASE_CONTINUATION_400K_20261101.md",
+    "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
+    "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
+    "model_training/state/working_model.json"
+  ],
+  "schema_version": 1,
+  "state_id": "tokenrig_alignment_probe_20261105",
+  "updated_at": "2026-11-05T11:44:47.639248+00:00"
+}

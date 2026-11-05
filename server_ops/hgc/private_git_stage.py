@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--commit')
     parser.add_argument('--bare')
     parser.add_argument('--checkout')
+    parser.add_argument('--download', action='store_true')
     args = parser.parse_args()
     destination = PurePosixPath(args.destination)
     if '..' in destination.parts or not str(destination).startswith((
@@ -27,7 +28,7 @@ def main():
         raise ValueError('private Git import needs both a commit and a bare repository')
     secret = read_dpapi_secret(DEFAULT_SECRET)
     key = str(Path.home()/'.ssh/id_rsa')
-    expected = hashlib.sha256(args.file.read_bytes()).hexdigest()
+    expected = None if args.download else hashlib.sha256(args.file.read_bytes()).hexdigest()
     with ExitStack() as stack:
         jump = connect_client('slogin.hgc.jp', 'wangyy', key, secret, 20)
         stack.callback(jump.close)
@@ -46,6 +47,21 @@ def main():
             if out.channel.recv_exit_status():
                 raise RuntimeError(error[-3000:])
             return value.strip()
+
+        if args.download:
+            if args.commit or args.checkout:
+                raise ValueError('receipt downloads cannot also deploy source')
+            expected = command(['sha256sum', str(destination)]).split()[0]
+            args.file.parent.mkdir(parents=True, exist_ok=True)
+            if args.file.exists():
+                if hashlib.sha256(args.file.read_bytes()).hexdigest() != expected:
+                    raise RuntimeError('refuse to overwrite a different local receipt')
+            else:
+                ftp.get(str(destination), str(args.file))
+            if hashlib.sha256(args.file.read_bytes()).hexdigest() != expected:
+                raise RuntimeError('downloaded receipt checksum differs')
+            print('private receipt verified', args.file, expected)
+            return
 
         for parent in reversed(destination.parents):
             if str(parent) == '/':

@@ -2,7 +2,7 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "2026-11-05: User paused the previous run and requested a fresh test after fixing pretrained loading/alignment; assess zero-update quality before a new long run.",
     "required_entrypoint": "model_training/rigweave/scripts/probe_tokenrig_alignment.py",
@@ -56,7 +56,68 @@
       "result": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r4/capacity/result.json",
       "no_repetition_of_finished_variants": true,
       "reason": "Test function-preserving initialization after observing static recovery but dynamic collapse."
-    }
+    },
+    "status": "zero_update_alignment_verified",
+    "review": {
+      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
+      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
+      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
+      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official_15beam",
+      "optimizer_updates": 0,
+      "same_input_fingerprints_verified": true,
+      "static_dynamic_rows_identical": true,
+      "summaries": {
+        "aligned_static": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic_fullprefix": {
+          "success": 0.8333333333333334,
+          "original_edge_f1": 0.43017514348256636,
+          "exact_count": 0,
+          "assets": 12,
+          "views": 12,
+          "failures": 2,
+          "original_normalized_j2j_successful_views": 0.021222685181555106,
+          "geometry_scored_assets": 10,
+          "geometry_scored_views": 10,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        }
+      },
+      "seconds": 157.9198278579861,
+      "not_full_validation": true,
+      "stage2_evaluated": false
+    },
+    "payload_cleanup_complete": true
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -76,6 +137,65 @@
         "native_weights_fixed_anchors_static_1024": 0.43017514348256636,
         "native_weights_random_motion_dynamic_1024": 0.0
       }
+    },
+    "identity_native512_probe": {
+      "source": "4ed76592881e43d0532fc92c909266ea41060d66",
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_probe_r5/capacity/result.json",
+      "sha256": "3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143",
+      "rows_sha256": "4ae3f3652f4c35d5d08b3be8c2a79ef0ee55b4c1b522ca0a8b39593a24fe48cb",
+      "durable_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/probe_r5_receipts.tar.gz",
+      "archive_sha256": "5eda5d8d33ea2fe8b5c474c36e71b16383a2c0113042aaf40d2a1ba5ed350e1a",
+      "cases": 12,
+      "views_per_case": 1,
+      "precision": "fp32_noTF32",
+      "decoding": "greedy_diagnostic_not_official_15beam",
+      "optimizer_updates": 0,
+      "same_input_fingerprints_verified": true,
+      "static_dynamic_rows_identical": true,
+      "summaries": {
+        "aligned_static": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic": {
+          "success": 1,
+          "original_edge_f1": 0.7798844100010204,
+          "exact_count": 0.3333333333333333,
+          "assets": 12,
+          "views": 12,
+          "failures": 0,
+          "original_normalized_j2j_successful_views": 0.016136285065389028,
+          "geometry_scored_assets": 12,
+          "geometry_scored_views": 12,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        },
+        "aligned_dynamic_fullprefix": {
+          "success": 0.8333333333333334,
+          "original_edge_f1": 0.43017514348256636,
+          "exact_count": 0,
+          "assets": 12,
+          "views": 12,
+          "failures": 2,
+          "original_normalized_j2j_successful_views": 0.021222685181555106,
+          "geometry_scored_assets": 10,
+          "geometry_scored_views": 10,
+          "geometry_scope": "Original-GT symmetric nearest-joint distance / target mesh bbox diagonal; successful views only, averaged within asset then across assets with successes; no alignment.",
+          "quality_scope": "All views including failed generation, averaged within asset then equally across assets."
+        }
+      },
+      "seconds": 157.9198278579861,
+      "not_full_validation": true,
+      "stage2_evaluated": false
     }
   },
   "allocation_defaults": {
@@ -320,7 +440,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Audit and execute the pinned no-update interface comparison; inspect actual dynamic quality before admitting a new training run. The old250k recovery and OPT330k remain unchanged.",
+  "next_required_result": "Run independent native joint-update capacity and exact full recovery checks before fresh training.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -362,5 +482,5 @@
   ],
   "schema_version": 1,
   "state_id": "tokenrig_alignment_probe_20261105",
-  "updated_at": "2026-11-05T11:44:47.639248+00:00"
+  "updated_at": "2026-11-05T11:54:35.687937+00:00"
 }

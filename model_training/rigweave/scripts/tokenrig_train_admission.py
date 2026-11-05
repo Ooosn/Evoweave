@@ -1,17 +1,17 @@
 """Bind Qwen formal training to its completed stress tests and live CPU audit."""
 import csv
 from concurrent.futures import ThreadPoolExecutor
-import fcntl
 import io
 import json
 import math
 from pathlib import Path
 import tarfile
 
-from anchor_full_protocol import scientific_sha, sha256, source_hashes
+from anchor_full_protocol import scientific_sha, sha256, source_hashes, validate_config
 
 
 def stage_cache_reflink(config, base):
+    import fcntl
     from anchor_full_data import verify_ssd
     from virtual_query_xyz_runtime import write_json
 
@@ -49,6 +49,8 @@ def stage_cache_reflink(config, base):
 
 
 def verify_capacity(config):
+    if config['tokenrig_decoder'].get('conditioning'):
+        return verify_native_capacity(config)
     expected = {'default': ('output', 6, 24, 1, 12),
                 'frames12': ('frames12', 12, 24, 1, 4),
                 'frames24': ('frames24', 24, 12, 2, 4)}
@@ -93,6 +95,58 @@ def verify_capacity(config):
     if set(peaks) != set(expected):
         raise RuntimeError('capacity evidence did not cover the full frame policy')
     return {'complete': True, 'passed': True, 'peak_nvml_mib_by_profile': peaks}
+
+
+def verify_native_capacity(config):
+    spec = config['execution']['capacity']
+    if (sha256(spec['path']) != spec['sha256']
+            or sha256(spec['resources_path']) != spec['resources_sha256']):
+        raise RuntimeError('native TokenRig capacity evidence changed')
+    result = json.loads(Path(spec['path']).read_text())
+    resources = json.loads(Path(spec['resources_path']).read_text())
+    audited = verify_audit(config)
+    if (result.get('complete') is not True or result.get('passed') is not True
+            or result.get('scientific_sha256') != scientific_sha(config)
+            or result.get('source_sha256') != source_hashes()
+            or result.get('initialization') != audited['initialization']
+            or result.get('profile_weights_not_training_initialization') is not True
+            or resources.get('complete') is not True or resources.get('passed') is not True
+            or resources.get('mode') != 'capacity' or resources.get('exit_code') != 0
+            or resources.get('source') != result.get('source')
+            or resources.get('allocation') != config['runtime']['allocation']
+            or not resources.get('kernel_scheduler_membership')
+            or resources.get('payload_cleanup_complete') is not True):
+        raise RuntimeError('native capacity is not bound to the exact source and recipe')
+    peaks = resources.get('peak_gpu_memory_mib', {})
+    if (set(peaks) != {str(i) for i in config['runtime']['physical_gpus']}
+            or any(not 0 < value <= 78 * 1024 for value in peaks.values())):
+        raise RuntimeError('native capacity exceeds the whole-device memory ceiling')
+    base = validate_config(config)
+    steps = config['capacity']['optimizer_steps_per_case']
+    expected = {(case['frames'], case['batch_per_rank'], case['stress_group'], step)
+        for case in base['capacity']['cases'] for step in range(1, steps + 1)}
+    ranks = result.get('ranks', [])
+    if len(ranks) != 2 or [r['rank'] for r in ranks] != [0, 1]:
+        raise RuntimeError('native capacity needs both approved ranks')
+    for rank in ranks:
+        cases = rank['cases']
+        extreme = [case for case in cases if case['profile'] == 'full_manifest_extreme']
+        if (len(cases) != len(expected) + 1 or len(extreme) != len(expected)
+                or {(c['frames'], c['batch_per_rank'], c['stress_group'], c['optimizer_step'])
+                    for c in extreme} != expected
+                or any(c['assets_in_update'] != 48 for c in extreme)
+                or any(not all(math.isfinite(c[key]) for key in
+                    ('ar_loss', 'xyz_loss', 'bone_loss', 'gradient_norm')) for c in cases)
+                or rank.get('resume_roundtrip_exact') is not True
+                or len(rank['representative_updates']) != config['capacity']['representative_updates']
+                or rank['FP32_inference']['teacher_prefix'].get('passed') is not True
+                or rank['FP32_inference'].get('XYZ_finite') is not True):
+            raise RuntimeError('native capacity lacks finite stress updates and exact recovery')
+    checkpoint = result['resume_checkpoint']
+    if (checkpoint.get('complete') is not True or checkpoint.get('both_copies_verified') is not True
+            or checkpoint.get('optimizer_and_rank_RNG_retained') is not True):
+        raise RuntimeError('native capacity recovery was not durably verified')
+    return result
 
 
 def verify_audit(config):

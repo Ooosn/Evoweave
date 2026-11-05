@@ -12,11 +12,12 @@ The old route loaded the released Qwen and skeleton table strictly, but paired
 them with the UniRig geometry encoder and a fresh condition projection. This is
 an architectural conditioning mismatch, not an established missed-key defect.
 The new isolated route strictly loads the release's eight-layer geometry encoder,
-512-to-896 Linear, RMSNorm and Qwen. Native 512-channel geometry features are
-zero-padded to the unchanged 1024-channel temporal interface; the published
-projection occupies the first 512 columns of the decoder adapter. No information
-or pretrained projection row is discarded. The remaining columns start at zero
-and are trainable. Original temporal layers, 1024 anchors, data rules, stage-two
+512-to-896 Linear, RMSNorm and Qwen. The first comparison zero-padded native
+512-channel features to the unchanged 1024-channel temporal interface; its
+published projection occupied the first 512 adapter columns. The accepted
+identity-initialized variant below instead duplicates standardized features and
+averages two native projection copies. Neither discards native feature channels
+or projection rows. Original temporal layers, 1024 anchors, data rules, stage-two
 architecture and objectives remain unchanged. This does replace the geometry
 weights and depth; it is not a decoder-only ablation anymore.
 
@@ -52,3 +53,24 @@ receipts. The next diagnostic tests only the identity-initialized native route,
 with both its native512 decoder prefix and a named1024-prefix control. All1024
 anchors still enter the encoder and temporal computation; only the decoder's
 prefix length is aligned. Data, frames, supervision and stage2 remain unchanged.
+
+The identity/native512 probe completed at2026-11-05T11:49:28Z, without optimizer
+updates, on the same12 inputs. Both aligned-static512 and aligned-dynamic512
+achieved edgeF1 of0.7798844100010204, with all12 generation sequences ending
+normally. Their per-case predictions, topology, coordinates and metrics were
+identical. The identity-dynamic1024 control remained0.43017514348256636.
+This supports recovering the pretrained prior, not a claim about motion gains,
+full-panel validation or stage-two accuracy. Peak whole-device use was9917MiB
+on each GPU; supervised payload cleanup and the durable receipt archive passed.
+Evidence: `outputs_probe_r5/capacity/result.json`, SHA256
+`3ce34ac4dbecc683fce27d0dab1a605b2c874f0b91f218b02fb9537b1697c143`.
+
+The next operation uses fresh Adam and the unchanged300k joint-training recipe.
+Its independent capacity stage exercises6/12/24frames at the actual enlarged
+physical batches, the largest-joint and largest-geometry cases, FP32 prefix
+parity and exact disk restoration of model/Adam/two-rank RNG/sampler state.
+The zero-update diagnostic is not capacity evidence. The old hybrid capacity
+archives are not admissible for the changed frontend. Reuse the verified SSD
+dataset cache without copying or changing data. Formal training is blocked
+until these new checks and their durable backups pass; capacity weights will
+not initialize formal training.

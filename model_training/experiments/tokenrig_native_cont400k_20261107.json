@@ -224,9 +224,9 @@
     "phase": "tokenrig_native_cont400k_20261107",
     "CPU_audit": {
       "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_cont400k_20261107/audit/result.json",
-      "sha256": null,
+      "sha256": "b8d9d39f41e2f639bccc9bff2d91e4abca1993b362e9252e9a0c0d5c4a945816",
       "resources_path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_cont400k_20261107/audit_resources.json",
-      "resources_sha256": null
+      "resources_sha256": "fe1a7996a983866a288147dbcebab033c596021228b5b7151729f847e302b0c6"
     },
     "capacity": {
       "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_capacity/capacity/result.json",

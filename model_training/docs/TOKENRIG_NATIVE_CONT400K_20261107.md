@@ -43,3 +43,11 @@ another stress run. A native CPU restoration audit and separate exact admission
 precede formal training. Check the two first real updates against the audited
 indices, IDs and sampling seeds. No automatic retry, cleanup of prior results,
 quota release, new GPU request, or unrelated task interruption.
+
+Native CPU audit finished Nov7 15:16 JST (exit 0, no CUDA, payload cleaned).
+It checked the full model and 916 Adam entries, both saved RNG states, the
+unchanged 300k sampling prefix and the retained validation inputs. The exact
+plan adds 1295824 input-frame visits (5215808 total). The GPU launch will
+separately verify live rank RNG restoration and its first two updates.
+The accepted result and resource hashes are pinned in the training config;
+the same receipts are retained in the durable output's `receipts` directory.

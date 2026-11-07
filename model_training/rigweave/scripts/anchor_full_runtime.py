@@ -79,7 +79,8 @@ def initialize(config, device):
             raise ValueError('TokenRig requires a fresh optimizer and cannot restore an OPT run')
         base = {**base, 'tokenrig_decoder': config['tokenrig_decoder']}
     original, tokenizer, codec, official = build_model(base, device)
-    backbone = VirtualPathAblationRig(original, virtual_enabled=False)
+    backbone = VirtualPathAblationRig(original, virtual_enabled=False,
+        frame_local=config.get('native_frame_control', {}).get('arm') == 'frame_local')
     devices = [device.index] if device.type == 'cuda' else []
     with torch.random.fork_rng(devices=devices):
         torch.manual_seed(config['training']['head_seed'])
@@ -150,7 +151,8 @@ def audit(config, output, source):
         return audit_continuation(config,output,source)
     base, entries = read_all(config)
     base = validate_config(config)
-    groups, counts = stress_groups(entries['train'])
+    frame_control = config.get('native_frame_control')
+    groups, counts = stress_groups(entries['train'], expected_rows=5000 if frame_control else 18002)
     panel = evaluation_rows(base, entries)
     tokenrig = 'tokenrig_decoder' in config
     if tokenrig:
@@ -169,6 +171,15 @@ def audit(config, output, source):
     else:
         cache = stage_cache(config, base, entries, output)
     resolver = CachedFiles(config, base)
+    if frame_control:
+        from tokenrig_native_frame_control import cache_base
+        from virtual_query_xyz_runtime import read_entries
+        full = {r['asset_id']:r for r in read_entries(cache_base(base))['train']}
+        if any(full.get(r['asset_id']) != r for r in entries['train']):
+            raise ValueError('old 5k rows do not exactly match the retained full cache')
+        for r in entries['train']:
+            resolver(r['path'])
+            resolver(r['root_rt']['cache_path'])
     plan = audit_plan(base)
     model, optimizer, _, _, _, initial = initialize(config, torch.device('cpu'))
     del model, optimizer
@@ -190,6 +201,12 @@ def audit(config, output, source):
 
 
 def checked_evidence(config, key):
+    if 'native_frame_control' in config:
+        if key == 'CPU_audit':
+            from tokenrig_train_admission import verify_audit
+            return verify_audit(config)
+        from tokenrig_native_frame_control import same_native_capacity
+        return same_native_capacity(config)
     if 'native_continuation' in config:
         from tokenrig_native_continuation import verify_audit, inherited_capacity
         return verify_audit(config) if key == 'CPU_audit' else inherited_capacity(config)
@@ -505,7 +522,8 @@ def train(config, output, source, device, rank, world):
                 best['stage1'] = {'score': score, 'samples': samples, 'metric': 'edge_F1_higher_better'}
                 changed = True
         if rank == 0:
-            if not native_resume and (changed or samples in config['artifacts']['retention']['weight_milestones']):
+            if not native_resume and 'native_frame_control' not in config and (
+                    changed or samples in config['artifacts']['retention']['weight_milestones']):
                 weights = export_weights(model, config, output, source, last_checkpoint)
                 for value in best.values():
                     if value['samples'] == samples:
@@ -519,7 +537,8 @@ def train(config, output, source, device, rank, world):
         best = gather(best if rank == 0 else None, world)[0]
         release()
     final = None
-    if not stopped and not native_resume and config.get('family') != 'hardcase3608_20261101_v1':
+    if (not stopped and not native_resume and 'native_frame_control' not in config
+            and config.get('family') != 'hardcase3608_20261101_v1'):
         with preserve_random():
             final = evaluate(model, base, config, entries, output, samples, device, rank, world, final=True)
         stopped = not final['complete']

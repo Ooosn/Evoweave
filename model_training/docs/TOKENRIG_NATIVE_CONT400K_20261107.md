@@ -62,3 +62,18 @@ terminal learning rates and finite loss/gradient checks. At 15:28 JST, both
 ranks reported 300192 visits / 6274 updates, and the sampled peaks were 72825
 MiB on each GPU. No new checkpoint was due yet. Inspect live receipts for
 subsequent progress. Do not sync the running checkout.
+
+Nov8 user-authorized native followup: run on the same job only after this
+training finishes, with no dependency on the Windows client. The followup
+checks the ten recoveries and paired validation, freezes the two candidates,
+commits a separate exact CPU/GPU visual admission, and runs the fixed 12 cases.
+After that, run the Full and frame-local joint controls in that order, each
+starting at the same released native Qwen initialization, with fresh AdamW.
+Both use the original immutable 5000 train rows, exactly 50000 visits (ten
+passes, 1045 updates), a matched 50k OneCycle schedule, and the same 128 valid
+assets. All 5000 source rows equal their counterparts in the SSD full cache.
+The frame-local arm retains every parameter and uses the former temporal
+blocks on groups within each mesh. Its motion bias gets only the unknown
+state. The explicit stage2 reference-skeleton conditioning is unchanged.
+Each actual arm has a CPU admission and monitored full-checkpoint training;
+no separate GPU stress run, split-training arm, retry, or extra allocation.

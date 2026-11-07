@@ -15,6 +15,9 @@ OFFICIAL_SHA = 'd8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4
 
 
 def validate_config(config):
+    if 'native_frame_control' in config:
+        from tokenrig_native_frame_control import validate_config as validate_frame_control
+        return validate_frame_control(config)
     if 'native_continuation' in config:
         from tokenrig_native_continuation import validate_config as validate_native
         return validate_native(config)
@@ -103,6 +106,7 @@ def source_hashes():
         'train_hardcase_adaptation.py', 'virtual_pair_guard.py']
     names.append('hardcase_continuation_protocol.py')
     names.append('tokenrig_native_continuation.py')
+    names.append('tokenrig_native_frame_control.py')
     paths += [Path(__file__).with_name(name) for name in names]
     paths += [root/'model_training/tools/hardcase_adaptation_ops.py',
         root/'model_training/jobs/launch_virtual_pair.py']

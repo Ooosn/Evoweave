@@ -25,6 +25,9 @@ from rigweave.dynamic_rig.virtual_path_ablation import VirtualPathAblationRig
 
 def canonical_input(dataset, index, base, config, mode, device):
     row = dataset.entries[index]
+    if 'native_frame_control' in config:
+        from tokenrig_native_frame_control import cache_base
+        base = cache_base(base)
     identity = {'asset_id': row['asset_id'], 'path': row['path'], 'root_rt': row['root_rt'],
         'data': base['data'], 'surface_sampling': base['surface_sampling'], 'mode': mode, 'frames': 8}
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
@@ -32,7 +35,7 @@ def canonical_input(dataset, index, base, config, mode, device):
     directory.mkdir(parents=True, exist_ok=True)
     path = directory/(key+'.pt')
     sidecar = path.with_suffix('.json')
-    if 'native_continuation' in config and not (path.is_file() and sidecar.is_file()):
+    if ('native_continuation' in config or 'native_frame_control' in config) and not (path.is_file() and sidecar.is_file()):
         raise RuntimeError('retained canonical validation input is missing; do not resample')
     if path.exists():
         spec = json.loads(sidecar.read_text())
@@ -99,7 +102,7 @@ def eager_backbone(model, base, device):
     if 'tokenrig_decoder' in base:
         base = {**base, 'tokenrig_decoder': {**base['tokenrig_decoder'], 'eager': True}}
     original, tokenizer, _, _ = build_model(base, torch.device('cpu'), load_official_weights=False)
-    backbone = VirtualPathAblationRig(original, virtual_enabled=False)
+    backbone = VirtualPathAblationRig(original, virtual_enabled=False, frame_local=model.backbone.frame_local)
     if backbone.xyz_decoder.config._attn_implementation != 'eager':
         raise RuntimeError('FP32 validation requires eager decoder attention')
     backbone.load_state_dict({name: value.detach().cpu() for name, value in model.backbone.state_dict().items()}, strict=True)
@@ -213,8 +216,12 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         mirror(path, directory.name+'/'+path.name, config)
         if rank == 0:
             if not stopped:
-                summary['canonical_input_archive'] = (config['native_continuation']['panel_archive']
-                    if 'native_continuation' in config else archive_inputs(all_inputs, output, config, final=final))
+                if 'native_frame_control' in config:
+                    from tokenrig_native_frame_control import retained_evidence
+                    summary['canonical_input_archive'] = retained_evidence()['panel_archive']
+                else:
+                    summary['canonical_input_archive'] = (config['native_continuation']['panel_archive']
+                        if 'native_continuation' in config else archive_inputs(all_inputs, output, config, final=final))
             for name, value in [('rows.json', all_rows), ('stage1_rows.json', all_ar), ('summary.json', summary)]:
                 path = directory/name
                 write_json(path, value)

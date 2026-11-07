@@ -216,6 +216,10 @@ def deadline_due(config):
 
 def validate_stage(state, config, args):
     op = operation(state)
+    if op.get('experiment') == 'tokenrig_native_frame_control_20261108':
+        if (config.get('execution', {}).get('phase') != op['experiment']
+                or 'native_frame_control' not in config or args.mode not in ('audit', 'train')):
+            raise RuntimeError('frame control permits only its exact audit and training stages')
     if op.get('experiment') == 'tokenrig_native_cont400k_20261107':
         if (config.get('execution', {}).get('phase') != 'tokenrig_native_cont400k_20261107'
                 or 'native_continuation' not in config or args.mode not in ('audit', 'train')):

@@ -25,6 +25,9 @@ def load_backbone_config(config):
     base['training']['target_assets'] = config['training']['additional_assets']
     base['training']['checkpoint_assets'] = config['training']['checkpoint_assets']
     base['training']['frame_policy'] = config['training']['frame_policy']
+    if 'native_frame_control' in config:
+        base['data']['manifests']['train'] = copy.deepcopy(config['native_frame_control']['train_manifest'])
+        base['optimization']['schedule_samples'] = config['training']['additional_assets']
     for case in base['capacity']['cases']:
         case['batch_per_rank'] = base['training']['frame_policy'][str(case['frames'])]
     return base
@@ -67,6 +70,8 @@ def scientific_sha(config):
         fields['tokenrig_decoder'] = copy.deepcopy(config['tokenrig_decoder'])
     if 'native_continuation' in config:
         fields['native_continuation'] = copy.deepcopy(config['native_continuation'])
+    if 'native_frame_control' in config:
+        fields['native_frame_control'] = copy.deepcopy(config['native_frame_control'])
     if config.get('family') == 'hardcase3608_20261101_v1':
         fields['sampling'] = copy.deepcopy(config['sampling'])
         if config.get('continuation'):

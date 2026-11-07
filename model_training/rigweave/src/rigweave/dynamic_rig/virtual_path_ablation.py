@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
 
-from .motion_evidence import grouped_motion_evidence
+from .motion_evidence import MotionEvidence, grouped_motion_evidence
 from .virtual_query_xyz import VirtualQueryXYZRig, sequence_ce
 
 
@@ -20,7 +20,7 @@ class VirtualPathAblationRig(nn.Module):
     frame and the frame-fusion cross-attention route.
     """
 
-    def __init__(self, base: VirtualQueryXYZRig, virtual_enabled: bool):
+    def __init__(self, base: VirtualQueryXYZRig, virtual_enabled: bool, *, frame_local=False):
         super().__init__()
         if not isinstance(base, VirtualQueryXYZRig):
             raise TypeError('base must be a VirtualQueryXYZRig')
@@ -30,6 +30,9 @@ class VirtualPathAblationRig(nn.Module):
             raise ValueError('VirtualPathAblationRig requires the real_queries_virtual B route')
         self.base = base
         self.virtual_enabled = virtual_enabled
+        if not isinstance(frame_local, bool) or (frame_local and virtual_enabled):
+            raise ValueError('frame-local attention requires the real-only path')
+        self.frame_local = frame_local
 
         # Auxiliary IDs are outside this causal comparison in both arms.
         self._freeze_module(self.base.auxiliary)
@@ -101,7 +104,13 @@ class VirtualPathAblationRig(nn.Module):
             else:
                 tokens.append(self.surface_tokenizer(*args))
         evidence = None
-        if self.motion_encoder.motion_evidence_fusion != 'off':
+        if self.frame_local and self.motion_encoder.motion_evidence_fusion != 'off':
+            # Keep the bias parameters, but give them no observations of motion.
+            batch, _, anchors, _ = points.shape
+            states = points.new_tensor((1., 0., 0.)).expand(batch, anchors, anchors, 3)
+            features = points.new_tensor((0., 0., 1., 0., 0.)).expand(batch, anchors, 5)
+            evidence = MotionEvidence(states, features, points.new_zeros((batch, anchors), dtype=torch.bool))
+        elif self.motion_encoder.motion_evidence_fusion != 'off':
             evidence = grouped_motion_evidence(surface['dense_points'].detach(), surface['query_indices'])
         return torch.stack(tokens, dim=1), evidence
 
@@ -113,6 +122,11 @@ class VirtualPathAblationRig(nn.Module):
         else:
             real = block.motion_injection(block.pose_inner, real, evidence)
 
+        if self.frame_local:
+            # Reuse every temporal block on small groups of tokens within a
+            # mesh. No group spans frames, and Q/K still have multiple keys.
+            return self._frame_local_attention(block, real, self.motion_encoder.temporal_chunk_size)
+
         # The same real-frame anchor_temporal module and chunk size as B, with
         # no virtual sequence appended to the temporal dimension.
         sequence = real.permute(0, 2, 1, 3).reshape(batch * slots, frames, dim)
@@ -122,6 +136,21 @@ class VirtualPathAblationRig(nn.Module):
             for part in sequence.split(chunk_size, dim=0)
         ], dim=0)
         return sequence.reshape(batch, slots, frames, dim).permute(0, 2, 1, 3)
+
+    @staticmethod
+    def _frame_local_attention(block, real, chunk_size):
+        batch, frames, slots, dim = real.shape
+        group = 16
+        complete = slots // group * group
+        parts = []
+        if complete:
+            tokens = real[:, :, :complete].reshape(-1, group, dim)
+            parts.append(torch.cat([block.anchor_temporal(x) for x in tokens.split(chunk_size)], dim=0)
+                .reshape(batch, frames, complete, dim))
+        if complete < slots:
+            tail = real[:, :, complete:].reshape(-1, slots-complete, dim)
+            parts.append(block.anchor_temporal(tail).reshape(batch, frames, slots-complete, dim))
+        return torch.cat(parts, dim=2)
 
     def _encode_real_only(self, frame_tokens: torch.Tensor, evidence: Any):
         if frame_tokens.ndim != 4 or frame_tokens.shape[2:] != (

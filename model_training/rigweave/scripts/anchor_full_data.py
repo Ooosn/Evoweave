@@ -39,9 +39,9 @@ def planned_microbatches(base, stream, limit):
         samples += goal
 
 
-def stress_groups(rows):
+def stress_groups(rows, *, expected_rows=TRAIN_ROWS):
     counts = [_joint_count(row)[0] for row in rows]
-    if len(rows) != TRAIN_ROWS or min(counts) < 1 or max(counts) > 256:
+    if len(rows) != expected_rows or min(counts) < 1 or max(counts) > 256:
         raise ValueError('full training joint-count metadata differs')
     def geometry(index):
         item = rows[index]['canonical_metrics']
@@ -143,6 +143,9 @@ class CachedFiles:
         self.root = Path(config['data_cache']['root']).resolve()
         path = Path(config['data_cache']['index'])
         index = json.loads(path.read_text())
+        if 'native_frame_control' in config:
+            from tokenrig_native_frame_control import cache_base
+            base = cache_base(base)
         if not index.get('complete') or index['manifests'] != cache_identity(base):
             raise ValueError('SSD cache is not bound to the full immutable dataset')
         self.files, self.aliases = index['files'], index['aliases']

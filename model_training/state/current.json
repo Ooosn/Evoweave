@@ -39,7 +39,7 @@
     "capacity_accepted": true,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "native_CPU_restoration_audit_passed_train_admitted",
+    "status": "running_native_continuation_first_two_updates_verified",
     "runs": [
       {
         "mode": "train",
@@ -64,6 +64,28 @@
       "exact_retained_development_panel": true,
       "cuda_initialized": false,
       "payload_cleanup_complete": true
+    },
+    "verified_start": {
+      "source": "f1817c9bde503b1c9ed1cf934e8b19db95311468",
+      "config_sha256": "fe6fdd65e82af2ac138fa7ba1887089e88b30a8ecfb6d6e5d318a23889c0f1af",
+      "source_archive_sha256": "f3897de93fa31e209a3daceb5476ae5f41239d8e97eaae4b3c4a207d8b0f5a18",
+      "runner_started_utc": "2026-11-07T06:23:37.808Z",
+      "checked_utc": "2026-11-07T06:27:59.651Z",
+      "supervisor_pid": 736385,
+      "rank_pids": [737658, 737659],
+      "kernel_scheduler_membership_verified": true,
+      "model_sha256": "295f61a0c188f7649a9696967e2f05cc477104fa99fa3531cb19dcc48f5833b8",
+      "optimizer_sha256": "c679070fec764e31719fad0792227a10341f5abf8ac5716cdfae314d83a9377b",
+      "restoration_rank_sha256": [
+        "44ec32bac3386682a3469384c6589d0d73fcb06bbdb2494895ad7288d9522d4d",
+        "1b16aa59aa131ab1f341bd61696a497340ca5fcdd77f12ee7364d8fd0c43d02e"
+      ],
+      "both_rank_RNG_states_restored": true,
+      "first_actual_updates": [6271, 6272],
+      "first_96_actual_asset_visits_matched": true,
+      "observed_updates": 6274,
+      "observed_asset_visits": 300192,
+      "observed_peak_GPU_MiB": [72825, 72825]
     },
     "native_grant": {
       "allocation": 131942123,
@@ -446,8 +468,8 @@
     "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_cont400k_train_admitted_20261107",
-  "updated_at": "2026-11-07T06:20:09.057Z",
+  "state_id": "tokenrig_native_cont400k_training_20261107",
+  "updated_at": "2026-11-07T06:27:59.651Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

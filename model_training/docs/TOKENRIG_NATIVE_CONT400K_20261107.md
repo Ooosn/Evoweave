@@ -54,3 +54,11 @@ the same receipts are retained in the durable output's `receipts` directory.
 The queue wrapper checks idle status on the two granted UUIDs only. Occupancy
 on other devices is not a conflict; scheduler membership and the allocated
 UUIDs remain independently checked by the supervisor.
+
+The native training payload started Nov7 15:23:37 JST at f1817c9bde503b1c9ed1cf934e8b19db95311468.
+Both ranks restored the 300k model, 916 Adam entries and their saved RNGs.
+Actual updates 6271 and 6272 matched all 96 planned visits, sampling seeds,
+terminal learning rates and finite loss/gradient checks. At 15:28 JST, both
+ranks reported 300192 visits / 6274 updates, and the sampled peaks were 72825
+MiB on each GPU. No new checkpoint was due yet. Inspect live receipts for
+subsequent progress. Do not sync the running checkout.

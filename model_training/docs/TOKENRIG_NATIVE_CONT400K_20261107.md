@@ -51,3 +51,6 @@ plan adds 1295824 input-frame visits (5215808 total). The GPU launch will
 separately verify live rank RNG restoration and its first two updates.
 The accepted result and resource hashes are pinned in the training config;
 the same receipts are retained in the durable output's `receipts` directory.
+The queue wrapper checks idle status on the two granted UUIDs only. Occupancy
+on other devices is not a conflict; scheduler membership and the allocated
+UUIDs remain independently checked by the supervisor.

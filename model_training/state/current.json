@@ -32,7 +32,7 @@
       "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
       "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "3806a18fdae8646462a483f4fe3aed2efa926b53",
+    "code_commit": "7ba8ec908f614b763baf9081f2f57882a2666dbd",
     "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": true,

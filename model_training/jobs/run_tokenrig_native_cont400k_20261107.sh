@@ -15,7 +15,8 @@ source /home/geadmin/N1GE/default/common/settings.sh
 source ~/1.sh
 [[ "${JOB_ID:-}" == 131942123 && "${NSLOTS:-}" == 16 ]]
 [[ "$(ulimit -v)" == unlimited ]]
-apps=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader)
+gpus=GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7,GPU-0544830a-4dac-9fe3-a099-95ddc2240b72
+apps=$(nvidia-smi -i "$gpus" --query-compute-apps=pid --format=csv,noheader)
 [[ -z "$apps" ]]
 cd "$code"
 export PYTHONDONTWRITEBYTECODE=1

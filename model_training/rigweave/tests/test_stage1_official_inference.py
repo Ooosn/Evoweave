@@ -25,6 +25,29 @@ class Tokenizer:
 
 
 class OfficialInferenceTests(unittest.TestCase):
+    def test_native_projection_prefix_and_class_are_used(self):
+        class NativeTokenizer(Tokenizer):
+            skeleton_class = 'articulation'
+            def cls_name_to_token(self, name):
+                self.asserted_class = name
+                assert name == self.skeleton_class
+                return 3
+        torch.set_num_threads(1)
+        decoder = OPTForCausalLM(OPTConfig(vocab_size=16, hidden_size=16, word_embed_proj_dim=16,
+            ffn_dim=32, num_hidden_layers=1, num_attention_heads=2, max_position_embeddings=64,
+            bos_token_id=0, pad_token_id=1, eos_token_id=2, _attn_implementation='eager')).eval()
+        condition = torch.randn(1, 8, 32)
+        projection = torch.nn.Linear(32, 16)
+        captured = []
+        def prefix(value, ids):
+            captured.append(value.shape)
+            return torch.cat((projection(value[:, :3]), decoder.get_input_embeddings()(ids)), 1)
+        with patch.object(inference, 'OFFICIAL_OPTIONS', dict(inference.OFFICIAL_OPTIONS, max_new_tokens=4)):
+            result = inference.generate_condition(decoder, condition, NativeTokenizer(), seed=7,
+                prefix_builder=prefix)
+        self.assertEqual(captured, [torch.Size([1, 8, 32])])
+        self.assertEqual(result['tokens'][:2], [0, 3])
+
     def test_visual_expansion_keeps_recipe_and_requires_inherited_capacity(self):
         config = json.loads((ROOT/'model_training/experiments/predicted_reference_visual12_20261029.json').read_text())
         validate_config(config, 'capacity')

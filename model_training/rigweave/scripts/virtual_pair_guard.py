@@ -62,6 +62,10 @@ def operation(state):
         if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
             raise RuntimeError('the alignment probe cannot authorize optimizer updates')
         expected_entrypoint = 'model_training/rigweave/scripts/probe_tokenrig_alignment.py'
+    if op.get('label') == FULL_SCOPE and op.get('experiment') == 'tokenrig_native_visual12_20261107':
+        if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
+            raise RuntimeError('native visual comparison permits no optimizer updates')
+        expected_entrypoint = 'model_training/rigweave/scripts/evaluate_tokenrig_visual12.py'
     if op.get('required_entrypoint') != expected_entrypoint:
         raise RuntimeError('state is not bound to the matched-pair trainer')
     return op
@@ -211,6 +215,11 @@ def deadline_due(config):
 
 def validate_stage(state, config, args):
     op = operation(state)
+    if op.get('experiment') == 'tokenrig_native_visual12_20261107':
+        if (config.get('execution', {}).get('phase') != 'tokenrig_native_visual12_20261107'
+                or args.mode not in ('audit', 'capacity')
+                or config.get('evaluation', {}).get('optimizer_updates') != 0):
+            raise RuntimeError('native visual comparison cannot authorize training or stress tests')
     if op.get('experiment') == 'tokenrig_alignment_probe_20261105':
         if (config.get('execution', {}).get('phase') != 'tokenrig_alignment_probe'
                 or args.mode not in ('audit', 'capacity')

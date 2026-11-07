@@ -18,12 +18,17 @@ def reference_seed(asset, raw_frame, base_seed=20261029):
 
 
 @torch.inference_mode()
-def generate_condition(decoder, condition, tokenizer, *, seed, capacity_only=False):
+def generate_condition(decoder, condition, tokenizer, *, seed, capacity_only=False,
+                       prefix_builder=None):
     if decoder.training or condition.shape[0] != 1 or condition.dtype != torch.float32:
         raise ValueError('official inference requires one FP32 evaluation condition')
-    start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token('articulationxl')],
+    start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token(
+        getattr(tokenizer, 'skeleton_class', 'articulationxl'))],
                          device=condition.device, dtype=torch.long)
-    prompt = torch.cat((condition, decoder.get_input_embeddings()(start[None])), dim=1)
+    prompt = (torch.cat((condition, decoder.get_input_embeddings()(start[None])), dim=1)
+              if prefix_builder is None else prefix_builder(condition, start[None]))
+    if prompt.shape[0] != 1 or prompt.shape[-1] != decoder.get_input_embeddings().embedding_dim:
+        raise ValueError('official decoder prefix shape differs')
     grammar = original_xyz_vocabulary_processor(tokenizer, start)
 
     def processor(ids, scores):

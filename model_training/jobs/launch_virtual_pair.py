@@ -40,6 +40,10 @@ if __name__ == '__main__':
         if family != 'anchor_full_20261030_v1':
             raise ValueError('alignment probe must retain the full-data family contract')
         trainer = 'probe_tokenrig_alignment.py'
+    if config.get('execution', {}).get('phase') == 'tokenrig_native_visual12_20261107':
+        if family != 'anchor_full_20261030_v1':
+            raise ValueError('native visual comparison must retain the declared family')
+        trainer = 'evaluate_tokenrig_visual12.py'
     raise SystemExit(main(trainer_module_name='virtual_pair_guard',
          exception_env_name='EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION',
          trainer_script=trainer, modes=('audit', 'capacity', 'train'), cpu_modes=('audit',)))

@@ -137,7 +137,10 @@ def update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, 
            samples, device, world, *, prefetch=None, check_groups=False):
     model.train()
     optimizer.zero_grad(set_to_none=True)
-    lr, beta = set_lr(optimizer, config['training'].get('learning_rate_asset_offset', 20000) + samples, base)
+    position = config['training'].get('learning_rate_asset_offset', 20000) + samples
+    if 'native_continuation' in config:
+        position = base['optimization']['schedule_samples']
+    lr, beta = set_lr(optimizer, position, base)
     optimizer.param_groups[-1]['lr'] = lr * config['training']['head_lr_multiplier']
     goal = sum(map(len, batches)) * world
     weight = config['training']['coordinate_weight'] * min(1., (samples + goal) / config['training']['warmup_assets'])

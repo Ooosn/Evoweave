@@ -15,6 +15,9 @@ OFFICIAL_SHA = 'd8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4
 
 
 def validate_config(config):
+    if 'native_continuation' in config:
+        from tokenrig_native_continuation import validate_config as validate_native
+        return validate_native(config)
     if config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import validate_config as validate_adaptation
         return validate_adaptation(config)
@@ -99,6 +102,7 @@ def source_hashes():
     names += ['hardcase_adaptation_protocol.py', 'prepare_hardcase_adaptation.py',
         'train_hardcase_adaptation.py', 'virtual_pair_guard.py']
     names.append('hardcase_continuation_protocol.py')
+    names.append('tokenrig_native_continuation.py')
     paths += [Path(__file__).with_name(name) for name in names]
     paths += [root/'model_training/tools/hardcase_adaptation_ops.py',
         root/'model_training/jobs/launch_virtual_pair.py']
@@ -106,6 +110,9 @@ def source_hashes():
 
 
 def validate_resume(config, saved, names, sources, world=2):
+    if 'native_continuation' in config:
+        from tokenrig_native_continuation import validate_saved
+        return validate_saved(config, saved, names, sources, world)
     if config.get('family') == 'hardcase3608_20261101_v1':
         from hardcase_adaptation_protocol import validate_resume as validate_adaptation_resume
         return validate_adaptation_resume(config, saved, names, sources, world)

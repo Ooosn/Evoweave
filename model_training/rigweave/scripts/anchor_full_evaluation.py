@@ -32,6 +32,8 @@ def canonical_input(dataset, index, base, config, mode, device):
     directory.mkdir(parents=True, exist_ok=True)
     path = directory/(key+'.pt')
     sidecar = path.with_suffix('.json')
+    if 'native_continuation' in config and not (path.is_file() and sidecar.is_file()):
+        raise RuntimeError('retained canonical validation input is missing; do not resample')
     if path.exists():
         spec = json.loads(sidecar.read_text())
         if spec['identity'] != identity or spec['path'] != str(path) or path.is_symlink() or sha256(path) != spec['sha256']:
@@ -211,7 +213,8 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         mirror(path, directory.name+'/'+path.name, config)
         if rank == 0:
             if not stopped:
-                summary['canonical_input_archive'] = archive_inputs(all_inputs, output, config, final=final)
+                summary['canonical_input_archive'] = (config['native_continuation']['panel_archive']
+                    if 'native_continuation' in config else archive_inputs(all_inputs, output, config, final=final))
             for name, value in [('rows.json', all_rows), ('stage1_rows.json', all_ar), ('summary.json', summary)]:
                 path = directory/name
                 write_json(path, value)

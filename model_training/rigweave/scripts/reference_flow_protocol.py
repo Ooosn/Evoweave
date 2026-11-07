@@ -65,6 +65,8 @@ def scientific_sha(config):
     fields['training'].pop('resume', None)
     if 'tokenrig_decoder' in config:
         fields['tokenrig_decoder'] = copy.deepcopy(config['tokenrig_decoder'])
+    if 'native_continuation' in config:
+        fields['native_continuation'] = copy.deepcopy(config['native_continuation'])
     if config.get('family') == 'hardcase3608_20261101_v1':
         fields['sampling'] = copy.deepcopy(config['sampling'])
         if config.get('continuation'):

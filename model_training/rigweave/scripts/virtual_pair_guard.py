@@ -215,6 +215,10 @@ def deadline_due(config):
 
 def validate_stage(state, config, args):
     op = operation(state)
+    if op.get('experiment') == 'tokenrig_native_cont400k_20261107':
+        if (config.get('execution', {}).get('phase') != 'tokenrig_native_cont400k_20261107'
+                or 'native_continuation' not in config or args.mode not in ('audit', 'train')):
+            raise RuntimeError('native continuation permits only its exact audit and training stages')
     if op.get('experiment') == 'tokenrig_native_visual12_20261107':
         if (config.get('execution', {}).get('phase') != 'tokenrig_native_visual12_20261107'
                 or args.mode not in ('audit', 'capacity')

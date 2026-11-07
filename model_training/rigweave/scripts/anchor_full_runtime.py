@@ -104,6 +104,9 @@ def initialize(config, device):
 
 
 def load_model(config, device, rank, world, resume=None):
+    if 'native_continuation' in config:
+        from tokenrig_native_continuation import restore_parent
+        return restore_parent(config, device, rank, world, resume)
     if config.get('continuation'):
         from hardcase_continuation_protocol import load_model as restore_continuation
         return restore_continuation(config,device,rank,world,resume)
@@ -139,6 +142,9 @@ def load_model(config, device, rank, world, resume=None):
 
 
 def audit(config, output, source):
+    if 'native_continuation' in config:
+        from tokenrig_native_continuation import audit as audit_native
+        return audit_native(config, output, source)
     if config.get('continuation'):
         from hardcase_continuation_protocol import audit as audit_continuation
         return audit_continuation(config,output,source)
@@ -184,6 +190,9 @@ def audit(config, output, source):
 
 
 def checked_evidence(config, key):
+    if 'native_continuation' in config:
+        from tokenrig_native_continuation import verify_audit, inherited_capacity
+        return verify_audit(config) if key == 'CPU_audit' else inherited_capacity(config)
     if 'tokenrig_decoder' in config:
         from tokenrig_train_admission import verify_audit, verify_capacity
         return verify_audit(config) if key == 'CPU_audit' else verify_capacity(config)
@@ -424,7 +433,8 @@ def train(config, output, source, device, rank, world):
     if initial != audited['initialization']:
         raise RuntimeError('formal initialization provenance differs from the accepted CPU audit')
     write_json(output/f'initialization_rank_{rank}.json', initial)
-    if config.get('continuation'):
+    native_resume = 'native_continuation' in config
+    if config.get('continuation') or native_resume:
         write_json(output/f'restoration_rank_{rank}.json',model.continuation_restore_report)
     wrapped = wrap(model, device, world)
     dataset = fixed_dataset(entries['train'], base, 2, mode='train', file_resolver=resolver)
@@ -443,15 +453,20 @@ def train(config, output, source, device, rank, world):
                     stopped = True
                     break
                 goal, batches = next_update_batches(stream, samples, world)
+                first_continuation_updates = native_resume and step < 6272
                 value = update(model, wrapped, optimizer, dataset, batches, tokenizer, codec, base, config,
-                    samples, device, world, prefetch=loader, check_groups=step == 0)
+                    samples, device, world, prefetch=loader, check_groups=step == 0 or first_continuation_updates)
                 samples += goal
                 frames += value['frames_in_update']
                 step += 1
                 value.update(step=step, additional_asset_exposures=samples,
                     global_backbone_asset_exposures=config['training'].get('backbone_exposure_offset', 0)+samples,
-                    input_frame_exposures=frames, learning_rate_asset_position=samples-goal,
+                    input_frame_exposures=frames,
+                    learning_rate_asset_position=300000 if native_resume else samples-goal,
                     regime=config['training']['regime'], code_commit=source)
+                if first_continuation_updates:
+                    from tokenrig_native_continuation import verify_first_update
+                    verify_first_update(value, audited['plan']['first_updates'][str(rank)][step-6271])
                 with (output/f'updates_rank_{rank}.jsonl').open('a') as handle:
                     handle.write(json.dumps(value)+'\n')
                 progress = {k: v for k, v in value.items() if k != 'microbatches'}
@@ -461,7 +476,7 @@ def train(config, output, source, device, rank, world):
                 if step == 1 and 'tokenrig_decoder' in config:
                     last_checkpoint = save_checkpoint(model, optimizer, stream, config, output, initial, source,
                         samples, frames, step, best, device, rank, world)
-        if samples == 0:
+        if samples == (300000 if native_resume else 0):
             raise RuntimeError('deadline arrived before any training update')
         optimizer.zero_grad(set_to_none=True)
         if last_checkpoint is None or last_checkpoint.get('samples') != samples:
@@ -475,6 +490,9 @@ def train(config, output, source, device, rank, world):
         if not result['complete']:
             stopped = True
             break
+        if native_resume and rank == 0:
+            from tokenrig_native_continuation import verify_panel
+            verify_panel(config, output, samples)
         score = next(g['normalized_mpjpe'] for g in result['groups']
             if g['split'] == 'valid' and g['method'] == 'head')
         changed = False
@@ -487,7 +505,7 @@ def train(config, output, source, device, rank, world):
                 best['stage1'] = {'score': score, 'samples': samples, 'metric': 'edge_F1_higher_better'}
                 changed = True
         if rank == 0:
-            if changed or samples in config['artifacts']['retention']['weight_milestones']:
+            if not native_resume and (changed or samples in config['artifacts']['retention']['weight_milestones']):
                 weights = export_weights(model, config, output, source, last_checkpoint)
                 for value in best.values():
                     if value['samples'] == samples:
@@ -501,7 +519,7 @@ def train(config, output, source, device, rank, world):
         best = gather(best if rank == 0 else None, world)[0]
         release()
     final = None
-    if not stopped and config.get('family') != 'hardcase3608_20261101_v1':
+    if not stopped and not native_resume and config.get('family') != 'hardcase3608_20261101_v1':
         with preserve_random():
             final = evaluate(model, base, config, entries, output, samples, device, rank, world, final=True)
         stopped = not final['complete']

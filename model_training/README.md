@@ -18,6 +18,9 @@ validation, native exit 0 and payload cleanup verified. Final/best candidate
 weights and full recovery copies are durable; the working 330k is unchanged.
 No further GPU work is automatically authorized. Evidence is in `state/current.json`; see
 [the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
+The November 7 [fixed12 comparison](docs/TOKENRIG_NATIVE_VISUAL12_20261107.md)
+is also complete. Native250k/300k do not uniformly beat OPT330k; no promotion or
+extra30k training was performed. The matched metric matrix and visuals are retained.
 
 Personal checkpoint retention was reduced by the user onNovember6: keep complete
 recovery plus inference weights at OPT300k, OPT330k and paused Qwen250k.38older

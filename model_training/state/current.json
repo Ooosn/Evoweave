@@ -24,7 +24,7 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_native_visual12_20261107",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User2026-11-07: compare existing metric matrix and run the original difficult cases on the new model. Predeclare native250k and native300k; reuse OPT300k/330k baselines. Possible extra30k is not training authorization.",
     "required_entrypoint": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py",
@@ -35,13 +35,13 @@
     "code_commit": "8a1cb9bfb95bcb86080ec278af8e1e03d891d5b0",
     "formal_training_allowed": false,
     "optimizer_updates_allowed": 0,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "quality_accepted": false,
     "working_model_change_allowed": false,
-    "status": "CPU_audit_reviewed_ready_for_exact_inference",
+    "status": "completed_zero_update_inference_and_review",
     "runs": [
       {
         "mode": "capacity",
@@ -64,6 +64,57 @@
       "candidate_weight_identities_verified": true,
       "all12_retained_input_GT_seed_identities_equal": true,
       "primary_reviewed": true
+    },
+    "completed_formal_comparison": {
+      "source": "6f88425752b63d419592422afdb8a87507dcb25e",
+      "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
+      "finished_utc": "2026-11-07T05:21:04.946784+00:00",
+      "result_sha256": "929288030609ae9ccaad8d5ac36c4c36226438355d3c32f38898481cd12653ec",
+      "resources_sha256": "134c854b7a52d81bab912b44a928630823cd6c25e7acde459305072cb1d43f30",
+      "review_sha256": "fc910e5578c0cac06fc2f0a385677b82f1a4becc6da7fd296ac3dace374b654d",
+      "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_visual12_20261107",
+      "evidence_archive_sha256": "f87bec192b1e12e7273a6ec4c7138b22a8b891908ad380d86e764a9047e8d28e",
+      "visual_archive_sha256": "2e09cf38e4e28d48e220eeb8b810d0bc02b9a462b689080076b244af27a255f0",
+      "optimizer_updates": 0,
+      "independently_rescored_reference_rows": 48,
+      "independently_rescored_target_rows": 1344,
+      "all12_retained_inputs_GT_seeds_policy_match": true,
+      "matched_camera_figures_rendered": 14,
+      "all12_case_figures_visually_inspected": true,
+      "same12_assets_84target_views_predicted_reference_head": {
+        "OPT330k": {
+          "edge_F1": 0.7560105580176746,
+          "normalized_J2J": 0.01952829373595265
+        },
+        "native250k": {
+          "edge_F1": 0.7450015619568658,
+          "normalized_J2J": 0.01643408207437647
+        },
+        "native300k": {
+          "edge_F1": 0.7204637125345555,
+          "normalized_J2J": 0.018101366108438207
+        }
+      },
+      "geometry_contribution_diagnostic": {
+        "native250k_case108_fraction_of_mean_improvement": 0.9391591885012818,
+        "not_a_changed_primary_denominator": true,
+        "case108_GT_joints": 5,
+        "native250k_joints": 102,
+        "native300k_joints": 131
+      },
+      "native_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "kernel_scheduler_membership": true,
+      "training_checkout_unchanged": true,
+      "working330k_unchanged": true,
+      "allocation_released": false,
+      "baseline_regeneration": false,
+      "capacity_stress": false,
+      "automatic_retry": false,
+      "extra30000_training_performed": false,
+      "independent_population_quality_accepted": false,
+      "case105_old_exact_token_replay_unresolved": true,
+      "local_report": "server_ops/outputs/tokenrig_native_visual12_20261107/report_v2/comparison_report.html"
     }
   },
   "alignment_evidence": {
@@ -175,13 +226,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "train",
-    "submit"
+    "preflight",
+    "submit",
+    "matched_eval"
   ],
   "compute_allocation": {
     "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
@@ -387,7 +438,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Run the exact bounded zero-update native inference on fixed native250k/native300k and original12 retained inputs/seeds only. Reuse OPT300k/330k. Independently rescore saved joints, compare the same common-success geometric sets, render matched-camera images, verify cleanup and durable evidence. No training, baseline generation, stress, retry, checkpoint mixing, promotion or allocation release.",
+  "next_required_result": "Completed the exact existing-metric matrix, native250k/native300k original12 formal comparison and all matched-camera visuals with verified durable evidence. Native candidates are not uniformly better than OPT330k; no working-model replacement or extra30k training was performed. Keep working330k and native250k/300k artifacts, preserve case105 replay uncertainty and the original grant. A new compute or adaptation operation needs a separately defined explicit authorization; otherwise report only.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -429,8 +480,8 @@
     "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_visual12_GPU_ready_20261107",
-  "updated_at": "2026-11-07T05:14:17.769Z",
+  "state_id": "tokenrig_native_visual12_completed_20261107",
+  "updated_at": "2026-11-07T05:27:43.398Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

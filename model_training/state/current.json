@@ -23,99 +23,48 @@
   },
   "active_operation": {
     "label": "anchor_full_20261030_v1",
-    "experiment": "tokenrig_native_visual12_20261107",
-    "complete": true,
+    "experiment": "tokenrig_native_cont400k_20261107",
+    "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User2026-11-07: compare existing metric matrix and run the original difficult cases on the new model. Predeclare native250k and native300k; reuse OPT300k/330k baselines. Possible extra30k is not training authorization.",
-    "required_entrypoint": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py",
+    "authorization": "User Nov7: continue native Qwen complete 300k checkpoint including optimizer to 400k, save every 10k, same validation screening then exactly two candidates on retained12 at fixed15-beam. Do not assume endpoint is best.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
     "operation_entrypoints": {
-      "preflight": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py",
-      "matched_eval": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py"
+      "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
+      "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
-    "code_commit": "8a1cb9bfb95bcb86080ec278af8e1e03d891d5b0",
+    "code_commit": "3806a18fdae8646462a483f4fe3aed2efa926b53",
     "formal_training_allowed": false,
-    "optimizer_updates_allowed": 0,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
+    "CPU_audit_accepted": false,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
-    "quality_accepted": false,
     "working_model_change_allowed": false,
-    "status": "completed_zero_update_inference_and_review",
+    "status": "awaiting_native_CPU_restoration_audit",
     "runs": [
       {
-        "mode": "capacity",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_visual12_20261107/model_training/experiments/tokenrig_native_visual12_20261107.json",
-        "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/capacity",
+        "mode": "audit",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_cont400k_20261107/model_training/experiments/tokenrig_native_cont400k_20261107.json",
+        "config_sha256": "118cafe1d7034e5c87e0e3aa54ac9ca2b04570c0b537d81cade8d303f6b51030",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_cont400k_20261107/audit",
         "approved": true
       }
     ],
-    "protocol": "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md",
-    "completed_CPU_audit": {
-      "source": "4001d32b0aff6e87b42d1dcd987d2cddf0d1eb98",
-      "config_sha256": "a8a2a70604575a1be67dd358f931dfa49d68b804a2ae7f957a66b45aaf57f412",
-      "result_sha256": "6c9cbd2fdd50cf08a5e28918e819e6f5233baa1571cb26d07686da9d5dcd5117",
-      "resources_sha256": "62c3fd9ce77daa9276885d6b305b22c420259faa8cb13fe16899e0846ee2b185",
-      "native_exit_code": 0,
-      "kernel_scheduler_membership": true,
-      "payload_cleanup_complete": true,
-      "CUDA_initialized": false,
-      "candidate_weight_identities_verified": true,
-      "all12_retained_input_GT_seed_identities_equal": true,
-      "primary_reviewed": true
+    "native_grant": {
+      "allocation": 131942123,
+      "host": "pcg01i",
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_slots": 16,
+      "h_rt_seconds": 345600,
+      "expires_utc": "2026-11-11T05:54:06.055Z",
+      "grant_save_stop_utc": "2026-11-11T04:54:06.055Z",
+      "scratch_safe_save_stop_utc": "2026-11-08T18:20:00Z",
+      "runner_root": "/home/wangyy/jobs/evoweave_h100_20261107_145343/runner",
+      "supersedes_released_allocation": 131351736
     },
-    "completed_formal_comparison": {
-      "source": "6f88425752b63d419592422afdb8a87507dcb25e",
-      "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
-      "finished_utc": "2026-11-07T05:21:04.946784+00:00",
-      "result_sha256": "929288030609ae9ccaad8d5ac36c4c36226438355d3c32f38898481cd12653ec",
-      "resources_sha256": "134c854b7a52d81bab912b44a928630823cd6c25e7acde459305072cb1d43f30",
-      "review_sha256": "fc910e5578c0cac06fc2f0a385677b82f1a4becc6da7fd296ac3dace374b654d",
-      "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_visual12_20261107",
-      "evidence_archive_sha256": "f87bec192b1e12e7273a6ec4c7138b22a8b891908ad380d86e764a9047e8d28e",
-      "visual_archive_sha256": "2e09cf38e4e28d48e220eeb8b810d0bc02b9a462b689080076b244af27a255f0",
-      "optimizer_updates": 0,
-      "independently_rescored_reference_rows": 48,
-      "independently_rescored_target_rows": 1344,
-      "all12_retained_inputs_GT_seeds_policy_match": true,
-      "matched_camera_figures_rendered": 14,
-      "all12_case_figures_visually_inspected": true,
-      "same12_assets_84target_views_predicted_reference_head": {
-        "OPT330k": {
-          "edge_F1": 0.7560105580176746,
-          "normalized_J2J": 0.01952829373595265
-        },
-        "native250k": {
-          "edge_F1": 0.7450015619568658,
-          "normalized_J2J": 0.01643408207437647
-        },
-        "native300k": {
-          "edge_F1": 0.7204637125345555,
-          "normalized_J2J": 0.018101366108438207
-        }
-      },
-      "geometry_contribution_diagnostic": {
-        "native250k_case108_fraction_of_mean_improvement": 0.9391591885012818,
-        "not_a_changed_primary_denominator": true,
-        "case108_GT_joints": 5,
-        "native250k_joints": 102,
-        "native300k_joints": 131
-      },
-      "native_exit_code": 0,
-      "payload_cleanup_complete": true,
-      "kernel_scheduler_membership": true,
-      "training_checkout_unchanged": true,
-      "working330k_unchanged": true,
-      "allocation_released": false,
-      "baseline_regeneration": false,
-      "capacity_stress": false,
-      "automatic_retry": false,
-      "extra30000_training_performed": false,
-      "independent_population_quality_accepted": false,
-      "case105_old_exact_token_replay_unresolved": true,
-      "local_report": "server_ops/outputs/tokenrig_native_visual12_20261107/report_v2/comparison_report.html"
-    }
+    "protocol": "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md"
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -226,11 +175,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "train",
-    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -438,7 +387,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Completed the exact existing-metric matrix, native250k/native300k original12 formal comparison and all matched-camera visuals with verified durable evidence. Native candidates are not uniformly better than OPT330k; no working-model replacement or extra30k training was performed. Keep working330k and native250k/300k artifacts, preserve case105 replay uncertainty and the original grant. A new compute or adaptation operation needs a separately defined explicit authorization; otherwise report only.",
+  "next_required_result": "Run native CPU restore audit only. Verify complete parent model/Adam/rank RNG/300k stream prefix, unchanged measured capacity and exact 128-asset valid inputs. Record and privately sync admission before running the new 100k continuation. No model promotion, restart, extra allocation or baseline regeneration.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -477,11 +426,12 @@
     "model_training/docs/HARDCASE400K_VISUAL12_20261102.md",
     "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
     "model_training/state/working_model.json",
-    "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md"
+    "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md",
+    "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_visual12_completed_20261107",
-  "updated_at": "2026-11-07T05:27:43.398Z",
+  "state_id": "tokenrig_native_cont400k_cpu_audit_20261107",
+  "updated_at": "2026-11-07T06:13:18.718Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
@@ -779,6 +729,102 @@
       },
       "running_source_clean_and_not_modified": true,
       "old250k_and_working330k_unchanged": true
+    }
+  },
+  "last_completed_native_visual12": {
+    "label": "anchor_full_20261030_v1",
+    "experiment": "tokenrig_native_visual12_20261107",
+    "complete": true,
+    "explicit_human_authorized": true,
+    "authorization": "User2026-11-07: compare existing metric matrix and run the original difficult cases on the new model. Predeclare native250k and native300k; reuse OPT300k/330k baselines. Possible extra30k is not training authorization.",
+    "required_entrypoint": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py",
+      "matched_eval": "model_training/rigweave/scripts/evaluate_tokenrig_visual12.py"
+    },
+    "code_commit": "8a1cb9bfb95bcb86080ec278af8e1e03d891d5b0",
+    "formal_training_allowed": false,
+    "optimizer_updates_allowed": 0,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": true,
+    "capacity_accepted": false,
+    "automatic_retry_allowed": false,
+    "quality_accepted": false,
+    "working_model_change_allowed": false,
+    "status": "completed_zero_update_inference_and_review",
+    "runs": [
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_visual12_20261107/model_training/experiments/tokenrig_native_visual12_20261107.json",
+        "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/capacity",
+        "approved": true
+      }
+    ],
+    "protocol": "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md",
+    "completed_CPU_audit": {
+      "source": "4001d32b0aff6e87b42d1dcd987d2cddf0d1eb98",
+      "config_sha256": "a8a2a70604575a1be67dd358f931dfa49d68b804a2ae7f957a66b45aaf57f412",
+      "result_sha256": "6c9cbd2fdd50cf08a5e28918e819e6f5233baa1571cb26d07686da9d5dcd5117",
+      "resources_sha256": "62c3fd9ce77daa9276885d6b305b22c420259faa8cb13fe16899e0846ee2b185",
+      "native_exit_code": 0,
+      "kernel_scheduler_membership": true,
+      "payload_cleanup_complete": true,
+      "CUDA_initialized": false,
+      "candidate_weight_identities_verified": true,
+      "all12_retained_input_GT_seed_identities_equal": true,
+      "primary_reviewed": true
+    },
+    "completed_formal_comparison": {
+      "source": "6f88425752b63d419592422afdb8a87507dcb25e",
+      "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
+      "finished_utc": "2026-11-07T05:21:04.946784+00:00",
+      "result_sha256": "929288030609ae9ccaad8d5ac36c4c36226438355d3c32f38898481cd12653ec",
+      "resources_sha256": "134c854b7a52d81bab912b44a928630823cd6c25e7acde459305072cb1d43f30",
+      "review_sha256": "fc910e5578c0cac06fc2f0a385677b82f1a4becc6da7fd296ac3dace374b654d",
+      "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_visual12_20261107",
+      "evidence_archive_sha256": "f87bec192b1e12e7273a6ec4c7138b22a8b891908ad380d86e764a9047e8d28e",
+      "visual_archive_sha256": "2e09cf38e4e28d48e220eeb8b810d0bc02b9a462b689080076b244af27a255f0",
+      "optimizer_updates": 0,
+      "independently_rescored_reference_rows": 48,
+      "independently_rescored_target_rows": 1344,
+      "all12_retained_inputs_GT_seeds_policy_match": true,
+      "matched_camera_figures_rendered": 14,
+      "all12_case_figures_visually_inspected": true,
+      "same12_assets_84target_views_predicted_reference_head": {
+        "OPT330k": {
+          "edge_F1": 0.7560105580176746,
+          "normalized_J2J": 0.01952829373595265
+        },
+        "native250k": {
+          "edge_F1": 0.7450015619568658,
+          "normalized_J2J": 0.01643408207437647
+        },
+        "native300k": {
+          "edge_F1": 0.7204637125345555,
+          "normalized_J2J": 0.018101366108438207
+        }
+      },
+      "geometry_contribution_diagnostic": {
+        "native250k_case108_fraction_of_mean_improvement": 0.9391591885012818,
+        "not_a_changed_primary_denominator": true,
+        "case108_GT_joints": 5,
+        "native250k_joints": 102,
+        "native300k_joints": 131
+      },
+      "native_exit_code": 0,
+      "payload_cleanup_complete": true,
+      "kernel_scheduler_membership": true,
+      "training_checkout_unchanged": true,
+      "working330k_unchanged": true,
+      "allocation_released": false,
+      "baseline_regeneration": false,
+      "capacity_stress": false,
+      "automatic_retry": false,
+      "extra30000_training_performed": false,
+      "independent_population_quality_accepted": false,
+      "case105_old_exact_token_replay_unresolved": true,
+      "local_report": "server_ops/outputs/tokenrig_native_visual12_20261107/report_v2/comparison_report.html"
     }
   }
 }

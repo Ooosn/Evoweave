@@ -35,30 +35,36 @@
     "code_commit": "8a1cb9bfb95bcb86080ec278af8e1e03d891d5b0",
     "formal_training_allowed": false,
     "optimizer_updates_allowed": 0,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "quality_accepted": false,
     "working_model_change_allowed": false,
-    "status": "awaiting_native_CPU_audit",
+    "status": "CPU_audit_reviewed_ready_for_exact_inference",
     "runs": [
-      {
-        "mode": "audit",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_visual12_20261107/model_training/experiments/tokenrig_native_visual12_20261107.json",
-        "config_sha256": "a8a2a70604575a1be67dd358f931dfa49d68b804a2ae7f957a66b45aaf57f412",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/audit",
-        "approved": true
-      },
       {
         "mode": "capacity",
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_visual12_20261107/model_training/experiments/tokenrig_native_visual12_20261107.json",
-        "config_sha256": "a8a2a70604575a1be67dd358f931dfa49d68b804a2ae7f957a66b45aaf57f412",
+        "config_sha256": "8c419a833fe184163f17e7670afe77dbd93d9b38741a59f34b41beb7f34f755f",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/capacity",
-        "approved": false
+        "approved": true
       }
     ],
-    "protocol": "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md"
+    "protocol": "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md",
+    "completed_CPU_audit": {
+      "source": "4001d32b0aff6e87b42d1dcd987d2cddf0d1eb98",
+      "config_sha256": "a8a2a70604575a1be67dd358f931dfa49d68b804a2ae7f957a66b45aaf57f412",
+      "result_sha256": "6c9cbd2fdd50cf08a5e28918e819e6f5233baa1571cb26d07686da9d5dcd5117",
+      "resources_sha256": "62c3fd9ce77daa9276885d6b305b22c420259faa8cb13fe16899e0846ee2b185",
+      "native_exit_code": 0,
+      "kernel_scheduler_membership": true,
+      "payload_cleanup_complete": true,
+      "CUDA_initialized": false,
+      "candidate_weight_identities_verified": true,
+      "all12_retained_input_GT_seed_identities_equal": true,
+      "primary_reviewed": true
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -381,7 +387,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Run the exact native CPU audit only, inspect strictly paired development matrix and exact retained12 input/GT/seed identities, then record and privately synchronize the accepted audit before GPU inference. No training, retry, baseline generation, checkpoint mixing, model promotion or allocation release. Keep original training checkout/results unchanged.",
+  "next_required_result": "Run the exact bounded zero-update native inference on fixed native250k/native300k and original12 retained inputs/seeds only. Reuse OPT300k/330k. Independently rescore saved joints, compare the same common-success geometric sets, render matched-camera images, verify cleanup and durable evidence. No training, baseline generation, stress, retry, checkpoint mixing, promotion or allocation release.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -423,8 +429,8 @@
     "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_visual12_CPU_audit_20261107",
-  "updated_at": "2026-11-07T05:11:23.453Z",
+  "state_id": "tokenrig_native_visual12_GPU_ready_20261107",
+  "updated_at": "2026-11-07T05:14:17.769Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

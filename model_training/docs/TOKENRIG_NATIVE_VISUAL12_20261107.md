@@ -39,3 +39,20 @@ Render all 12 matched-camera comparisons, including reference and target poses.
 Independently rescore saved joints and verify canonical identities. These are
 fixed, already inspected diagnostics, not untouched population acceptance.
 Keep the old case105 exact-token replay discrepancy explicitly unresolved.
+
+## CPU Audit Accepted
+
+Native audit source 4001d32b0aff6e87b42d1dcd987d2cddf0d1eb98 exited 0, with
+actual cpuset/devices membership under 131351736, no CUDA initialization, and
+complete owned-payload cleanup. Both candidate weights and all 12 retained
+input/GT/seed identities match. Audit result SHA256:
+`6c9cbd2fdd50cf08a5e28918e819e6f5233baa1571cb26d07686da9d5dcd5117`;
+resource receipt SHA256:
+`62c3fd9ce77daa9276885d6b305b22c420259faa8cb13fe16899e0846ee2b185`.
+
+Strict 114-asset matrix: OPT300k versus native300k has greedy edge F1
+80.1999% versus 84.2217%, GT-reference normalized MPJPE 0.290019% versus
+0.257518%, and GT-reference edge F1 96.6471% versus 97.0914%. Native250k has
+84.5156%, 0.299510% and 96.7986%, respectively. Including OPT330k leaves only
+19 strictly matched development assets, not a directly comparable full panel.
+The fixed 12-case formal comparison is therefore still required.

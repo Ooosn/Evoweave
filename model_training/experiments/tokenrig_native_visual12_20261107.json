@@ -92,5 +92,10 @@
     "quality_acceptance_scope": "fixed descriptive 12-case comparison, not a population test"
   },
   "artifacts": {"durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_visual12_20261107"},
-  "audit_result": null
+  "audit_result": {
+    "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/audit/result.json",
+    "sha256": "6c9cbd2fdd50cf08a5e28918e819e6f5233baa1571cb26d07686da9d5dcd5117",
+    "resources_path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_visual12_20261107/audit_resources.json",
+    "resources_sha256": "62c3fd9ce77daa9276885d6b305b22c420259faa8cb13fe16899e0846ee2b185"
+  }
 }

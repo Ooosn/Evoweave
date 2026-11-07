@@ -13,8 +13,10 @@ working default; [its recipe](docs/ANCHOR_FULL_300K_20261030.md) is retained.
 The separately authorized TokenRig/Qwen experiment does not replace330k. Its
 first hybrid run is paused with a complete250k recovery; the native frontend
 alignment and independent capacity checks have passed. The separate fresh300k
-run actually started onNovember5 and has a verified first48-visit full recovery.
-Exact permissions and evidence are in `state/current.json`; see
+run completed on November 7: 300,000 visits, 6,270 updates, all prescribed
+validation, native exit 0 and payload cleanup verified. Final/best candidate
+weights and full recovery copies are durable; the working 330k is unchanged.
+No further GPU work is automatically authorized. Evidence is in `state/current.json`; see
 [the alignment record](docs/TOKENRIG_ALIGNMENT_20261105.md).
 
 Personal checkpoint retention was reduced by the user onNovember6: keep complete

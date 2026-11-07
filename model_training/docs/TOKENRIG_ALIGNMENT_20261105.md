@@ -1,4 +1,4 @@
-# Pretrained TokenRig Interface Test
+# TokenRig Alignment and Full Training
 
 The user paused the first Qwen run on November 5 and authorized a fresh test of
 the pretrained interface. Its last verified full recovery is 250,000 visits,
@@ -111,4 +111,52 @@ backbone/head learning rates were2e-5/6e-5. Sampled peaks then were70501/70479Mi
 The immutable launch review is `outputs_native_train/start_review.json`, also
 verified at `native_full/start_review.json` on durable storage, SHA256
 `065942ab1a445fe0406dd279fe112436f806526625ef7f3bbfdce06cd6d99ab3`.
-Training is in progress, not quality accepted; OPT330k remains the working model.
+At that launch review training was in progress, not quality accepted;
+OPT330k remained the working model.
+
+## Completed Training, November 7
+
+The native run completed at 2026-11-07T02:30:57Z (11:30 JST): exactly 300,000 asset
+visits, 6,270 updates and 3,919,984 input-frame visits on both ranks. Both complete
+update traces match the original CPU plan; every logged loss and gradient norm
+is finite. Deployed source/config remain unchanged. Supervisor exit 0, native
+kernel provenance and complete owned-payload cleanup passed. The original
+131351736 grant is retained; no resource release or further GPU stage occurred.
+
+All 30 development XYZ validations and all six scheduled greedy AR validations
+are complete. Primary rows were independently reaggregated. All six AR panels
+have identical 128-asset/1,024-view raw-frame, normalization, surface and original
+GT fingerprints, including failed generations as zero F1.
+
+| Visits | Development stage1 edge F1 | Development GT-reference MPJPE |
+|---|---:|---:|
+|50000|0.7166585948780194|0.013535097503466074|
+|100000|0.777334079815545|0.008830309126876403|
+|150000|0.8239976055733582|0.005271318727604272|
+|200000|0.8415217750581587|0.004687252209026025|
+|250000|0.8488386104004827|0.0030259913359681635|
+|300000|0.8456850235534301|0.002601770295809404|
+
+The 300k development GT-reference edge F1 is 0.9685354066252466. Final all 967
+validation assets provide 13,538 GT-reference target pairs: normalized MPJPE
+0.002895195456472795, edge F1 0.9610352527393937. The two 32-asset training-pose
+groups also completed. Full 967 and 128-development means are different scopes;
+neither is a formal generated-reference pipeline comparison.
+
+The 1,031 canonical input records and 128-asset panel have native-verified durable
+archives. Required full recoveries at 100k/200k/290k/300k and model-only exports
+at 50k/100k/150k/200k/250k/300k remain on scratch and durable storage. Best
+development stage1 is 250,000, best stage2 is 300,000. Final 300k full recovery,
+best 250k weights and final 300k weights were freshly SHA256-verified in both
+locations. No extra pruning was
+performed; the separately requested historical personal cleanup remains intact.
+
+Primary completion review, SHA256
+`d99cca7dffc3e1dc79f26ac34871742801c9a1a6be83dbcd335e63022854630b`:
+`/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/primary_completion_review.json`.
+Compact durable receipts: `native_full/completion_receipts_20261107.tar.gz`,
+SHA256 `90030aa6fc51907912c2cee656559369efe787d493d0f91302617dde4da94b29`.
+The review verifies training completion, not independent quality acceptance.
+OPT330k remains the default. No automatic checkpoint mixing, new training or
+GPU evaluation is authorized; a formal predicted-reference comparison needs a
+separate exact configuration and fresh native admission.

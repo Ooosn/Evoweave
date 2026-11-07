@@ -20,7 +20,7 @@
   "active_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_native_full300k_20261105",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "2026-11-05 user authorized pausing the hybrid run, fixing pretrained alignment, and starting fresh if initial quality recovers. Zero-update native512 dynamic12-view edgeF1 is0.7798844100010204.",
     "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
@@ -29,8 +29,8 @@
       "train": "model_training/rigweave/scripts/train_anchor_full.py"
     },
     "code_commit": "d492544ff40e8ff4af848fc188bd0e6e08ab539f",
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "automatic_retry_allowed": false,
@@ -92,7 +92,52 @@
       "capacity_weights_not_reused": true,
       "quality_accepted": false
     },
-    "status": "running_after_verified_first_checkpoint",
+    "status": "completed_prescribed_training_and_validation",
+    "completion_review": {
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_train/primary_completion_review.json",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/primary_completion_review.json",
+      "sha256": "d99cca7dffc3e1dc79f26ac34871742801c9a1a6be83dbcd335e63022854630b",
+      "receipt_archive": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/completion_receipts_20261107.tar.gz",
+      "receipt_archive_sha256": "90030aa6fc51907912c2cee656559369efe787d493d0f91302617dde4da94b29",
+      "finished_utc": "2026-11-07T02:30:57.784716+00:00",
+      "reviewed_utc": "2026-11-07T04:53:20.737081+00:00",
+      "samples": 300000,
+      "optimizer_updates": 6270,
+      "input_frame_visits": 3919984,
+      "both_rank_trace_counts_match_CPU_plan": true,
+      "all_logged_losses_and_gradients_finite": true,
+      "scheduled_development_validations_complete": 30,
+      "scheduled_AR_validations_complete": 6,
+      "all_128_asset_AR_input_GT_fingerprints_identical": true,
+      "development300k": {
+        "stage1_assets": 128,
+        "stage1_views": 1024,
+        "stage1_greedy_edge_F1": 0.8456850235534301,
+        "stage2_GT_reference_MPJPE": 0.002601770295809404,
+        "stage2_GT_reference_edge_F1": 0.9685354066252466
+      },
+      "final967_GT_reference": {
+        "assets": 967,
+        "rows": 13538,
+        "normalized_MPJPE": 0.002895195456472795,
+        "edge_F1": 0.9610352527393937
+      },
+      "best_stage1_development": {"visits": 250000, "edge_F1": 0.8488386104004827},
+      "best_stage2_development": {"visits": 300000, "normalized_MPJPE": 0.002601770295809404},
+      "retained_full_recoveries": [100000, 200000, 290000, 300000],
+      "retained_milestone_weight_exports": [50000, 100000, 150000, 200000, 250000, 300000],
+      "critical_final_recovery_and_best250k_final300k_weights_freshly_SHA256_verified_both_copies": true,
+      "final_recovery_sha256": "743f55cc65f833c874c6c0e1ba87181f85fbe04d053d63f7be6047f15161e844",
+      "weights250k_sha256": "ea51a4ea627dc6f44e57db4ba4cfd480d061e8ab33f4d91467acdfd725cea9b8",
+      "weights300k_sha256": "4e4d077a739a4b7162c43bcb72617a3f3ee9a26ca1cc70f60578b07568b69bed",
+      "supervisor_exit_code": 0,
+      "owned_payload_cleanup_complete": true,
+      "live_source_unchanged": true,
+      "allocation_released": false,
+      "working_model330k_unchanged": true,
+      "independent_quality_accepted": false,
+      "formal_predicted_reference_comparison_not_performed": true
+    },
     "launch_review": {
       "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_train/start_review.json",
       "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/start_review.json",
@@ -234,11 +279,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
+    "train",
+    "preflight",
     "submit",
     "matched_eval"
   ],
@@ -446,7 +491,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "The fresh native300k run is already running from source2f50732; do not launch it again or modify/sync code_native_train. Monitor real train_resources/progress_rank_0/1/result and native processes under131351736; runtime complete=false/passed=false is not failure. Preserve old250k and OPT330k. On failure retain evidence and verify own payload cleanup, with no automatic retry, new allocation, batch/LR/precision change or grant release. Verify exact300000 visits, required validation and durable checkpoints before completion; no automatic working-model replacement.",
+  "next_required_result": "Native300k training and every prescribed validation are complete and independently reviewed. No automatic GPU work, retraining, checkpoint promotion, mixed-checkpoint pipeline or resource release. Keep working OPT330k unchanged and retain native250k/300k candidate weights. Any formal predicted-reference comparison requires a separately recorded configuration and fresh native admission under new user authorization.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -487,8 +532,8 @@
     "model_training/state/working_model.json"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_full300k_20261105",
-  "updated_at": "2026-11-05T18:42:14.335629+00:00",
+  "state_id": "tokenrig_native_full300k_completed_20261107",
+  "updated_at": "2026-11-07T04:53:20.737081+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

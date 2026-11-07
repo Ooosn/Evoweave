@@ -425,7 +425,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Run native CPU restore audit only. Verify complete parent model/Adam/rank RNG/300k stream prefix, unchanged measured capacity and exact 128-asset valid inputs. Record and privately sync admission before running the new 100k continuation. No model promotion, restart, extra allocation or baseline regeneration.",
+  "next_required_result": "Verify the running native continuation reaches exactly 400000 visits with all ten paired development evaluations and durable full checkpoints. Freeze two new candidates by greedy edge F1 then GT MPJPE, and admit only their fixed 12-case 15-beam comparison in a separate checkout. No model promotion, restart, extra allocation or baseline regeneration.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",

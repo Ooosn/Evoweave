@@ -1,4 +1,5 @@
 """CPU-only rescoring and compact durable evidence for the native visual run."""
+import argparse
 from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
@@ -10,9 +11,7 @@ import sys
 import tarfile
 
 ROOT = Path('/work/wangyy/tokenrig_alignment_20261105')
-CODE = ROOT / 'code_native_visual12_20261107'
-OUT = ROOT / 'outputs_native_visual12_20261107'
-DEST = Path('/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_visual12_20261107')
+DURABLE_ROOT = Path('/home/wangyy/evorig/outputs/tokenrig_alignment_20261105')
 
 
 def read(path):
@@ -35,29 +34,41 @@ def mean(rows, field):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--continuation', action='store_true')
+    continuation = parser.parse_args().continuation
+    stem = 'native_cont400k_visual12_20261107' if continuation else 'native_visual12_20261107'
+    code, out = ROOT / f'code_{stem}', ROOT / f'outputs_{stem}'
+    dest = DURABLE_ROOT / ('native_cont400k_20261107/visual12' if continuation else stem)
     os.sched_setaffinity(0, {min(os.sched_getaffinity(0) & {6, 7, 9, 10, 11, 12, 14, 15, 61, 63, 64, 65, 66, 67, 68, 69})})
     os.nice(19)
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
     for name in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'RIGWEAVE_DISABLE_OPEN3D', 'RIGWEAVE_DISABLE_LIGHTNING_IMPORT'):
         os.environ[name] = '1'
-    sys.path[:0] = [str(CODE / 'model_training/rigweave/src'), str(CODE / 'model_training/rigweave/scripts')]
+    sys.path[:0] = [str(code / 'model_training/rigweave/src'), str(code / 'model_training/rigweave/scripts')]
     import numpy as np
     import torch
     from predicted_reference_protocol import summarize
     from predicted_reference_runtime import score_output
     from stage1_surface_repair_runtime import canonical_identity
     from tokenrig_comparison_matrix import IDENTITY
+    from evaluate_tokenrig_visual12 import (ranked_artifacts, retained_native_models, scientific_sha,
+        validate_config)
     from rigweave.dynamic_rig.skeleton_topology_metrics import _topology_metrics
     torch.set_num_threads(1)
-    config_path = CODE / 'model_training/experiments/tokenrig_native_visual12_20261107.json'
-    config, result, resources = read(config_path), read(OUT / 'capacity/result.json'), read(OUT / 'capacity_resources.json')
+    config_path = code / f'model_training/experiments/tokenrig_{stem}.json'
+    config, result, resources = read(config_path), read(out / 'capacity/result.json'), read(out / 'capacity_resources.json')
+    validate_config(config)
     if (not result['complete'] or not result['passed'] or result['optimizer_updates'] != 0
             or not resources['complete'] or not resources['passed'] or resources['exit_code'] != 0
+            or resources['source'] != result['source'] or resources['allocation'] != config['runtime']['allocation']
+            or result['scientific_sha256'] != scientific_sha(config)
+            or result['policy'] != config['evaluation']
             or not resources['kernel_scheduler_membership'] or not resources['payload_cleanup_complete']):
         raise ValueError('native inference did not complete and clean up')
     if any(v > 78 * 1024 for v in resources['peak_gpu_memory_mib'].values()):
         raise ValueError('whole-card GPU ceiling exceeded')
-    audit = read(OUT / 'audit/result.json')
+    audit = read(out / 'audit/result.json')
     records = {r['asset_id']: torch.load(r['path'], map_location='cpu', weights_only=True) for r in audit['records']}
     models, files = {}, []
     for label, spec in config['baselines'].items():
@@ -73,16 +84,17 @@ def main():
             'rows': read(root / 'rows_rank_0.json'), 'summaries': old['summaries']}
         for name in ('references_rank_0.json', 'rows_rank_0.json', 'examples_rank_0.pt'):
             files.append((root / name, f'models/{label}/{name}'))
-    for label, spec in result['models'].items():
-        refs, rows = {}, []
-        for rank in spec['artifacts']:
-            for kind in ('references', 'rows', 'examples'):
-                artifact = rank[kind]
-                if sha(artifact['path']) != artifact['sha256'] or sha(artifact['durable_path']) != artifact['sha256']:
-                    raise ValueError('new inference artifact backup differs')
-                files.append((Path(artifact['path']), f'models/{label}/{kind}_rank_{rank["rank"]}.' + ('pt' if kind == 'examples' else 'json')))
-            refs.update(read(rank['references']['path']))
-            rows.extend(read(rank['rows']['path']))
+    candidates = {item['label']: item for item in config['candidates']}
+    if set(result['models']) != set(candidates):
+        raise ValueError('formal candidate coverage differs')
+    old_native = retained_native_models(config) if continuation else {}
+    for label, spec in {**old_native, **result['models']}.items():
+        if label in candidates and (spec['checkpoint'] != candidates[label] or not spec['model_weights_unchanged']):
+            raise ValueError('formal checkpoint identity differs')
+        refs, rows, shards = ranked_artifacts(spec, durable=label in old_native, verify_backup=label in candidates)
+        for rank, paths in shards:
+            for kind, path in paths.items():
+                files.append((path, f'models/{label}/{kind}_rank_{rank}{path.suffix}'))
         models[label] = {'refs': refs, 'rows': rows, 'summaries': spec['summaries']}
     summary, per_case = {}, {}
     expected_keys = {(asset, frame) for asset in records for frame in range(1, 8)}
@@ -146,12 +158,16 @@ def main():
     common = set.intersection(*({k for k, r in v['head'].items() if r['success']} for v in models.values()))
     common_scores = {label: mean([v['head'][k] for k in common], 'normalized_j2j') for label, v in models.items()}
     pairs = {}
-    for label in ('native250k', 'native300k'):
-        for old in ('OPT300k', 'OPT330k'):
+    for label in candidates:
+        for old in (*config['baselines'], *old_native):
             shared = {k for k in expected_keys if models[label]['head'][k]['success'] and models[old]['head'][k]['success']}
             a, b = ([models[n]['head'][k] for k in shared] for n in (label, old))
             wins = losses = 0
+            topology_delta = {}
             for asset in records:
+                case = str(config['evaluation']['cases'][config['evaluation']['asset_ids'].index(asset)])
+                topology_delta[case] = (per_case[label][asset]['predicted_head']['edge_f1']
+                    - per_case[old][asset]['predicted_head']['edge_f1'])
                 aa, bb = ([r for r in rows if r['asset_id'] == asset] for rows in (a, b))
                 if not aa:
                     continue
@@ -162,11 +178,13 @@ def main():
                 summary[label]['summaries']['predicted_head']['edge_f1'] - summary[old]['summaries']['predicted_head']['edge_f1'],
                 'identical_common_success_views': len(shared), 'assets': len({a for a, _ in shared}),
                 'new_J2J': mean(a, 'normalized_j2j'), 'old_J2J': mean(b, 'normalized_j2j'),
-                'geometry_case_improvements': wins, 'geometry_case_regressions': losses}
+                'geometry_case_improvements': wins, 'geometry_case_regressions': losses,
+                'target_F1_delta_by_case': topology_delta}
+    common_geometry_key = 'all_models_identical_common_success_geometry' if continuation else 'all4_identical_common_success_geometry'
     review = {'complete': True, 'passed': True, 'reviewed_utc': datetime.now(timezone.utc).isoformat(),
-        'result_sha256': sha(OUT / 'capacity/result.json'), 'resources_sha256': sha(OUT / 'capacity_resources.json'),
+        'result_sha256': sha(out / 'capacity/result.json'), 'resources_sha256': sha(out / 'capacity_resources.json'),
         'models': summary, 'per_case': per_case, 'pairwise': pairs,
-        'all4_identical_common_success_geometry': {'views': len(common),
+        common_geometry_key: {'views': len(common),
             'asset_ids': sorted({a for a, _ in common}), 'normalized_J2J': common_scores},
         'independently_rescored_reference_rows': checked_reference_rows,
         'independently_rescored_target_rows': checked_target_rows,
@@ -176,16 +194,16 @@ def main():
         'case105_old_exact_token_replay_unresolved': True, 'CUDA_used_in_review': False}
     if torch.cuda.is_initialized():
         raise ValueError('CPU review initialized CUDA')
-    review_path = OUT / 'comparison_review.json'
+    review_path = out / 'comparison_review.json'
     encoded = (json.dumps(review, indent=2) + '\n').encode()
-    for p in (review_path, DEST / 'comparison_review.json'):
+    for p in (review_path, dest / 'comparison_review.json'):
         with p.open('xb') as handle:
             handle.write(encoded)
     files += [(review_path, 'comparison_review.json'), (config_path, 'config.json'),
-        (OUT / 'audit/development_matrix.json', 'development_matrix.json'),
-        (OUT / 'capacity/result.json', 'result.json'), (OUT / 'capacity_resources.json', 'resources.json'),
-        (OUT / 'audit/result.json', 'audit.json'), (OUT / 'audit_resources.json', 'audit_resources.json')]
-    archive = DEST / 'comparison_evidence_20261107.tar.gz'
+        (out / 'audit/development_matrix.json', 'development_matrix.json'),
+        (out / 'capacity/result.json', 'result.json'), (out / 'capacity_resources.json', 'resources.json'),
+        (out / 'audit/result.json', 'audit.json'), (out / 'audit_resources.json', 'audit_resources.json')]
+    archive = dest / 'comparison_evidence_20261107.tar.gz'
     with tarfile.open(archive, 'x:gz') as handle:
         for path, name in files:
             handle.add(path, arcname=name, recursive=False)
@@ -196,7 +214,7 @@ def main():
                 raise ValueError('comparison evidence archive verification failed')
     print(json.dumps({'review': str(review_path), 'review_sha256': sha(review_path),
         'archive': str(archive), 'archive_sha256': sha(archive), 'archive_bytes': archive.stat().st_size,
-        'models': summary, 'pairwise': pairs, 'common_geometry': review['all4_identical_common_success_geometry']}), flush=True)
+        'models': summary, 'pairwise': pairs, 'common_geometry': review[common_geometry_key]}), flush=True)
 
 
 if __name__ == '__main__':

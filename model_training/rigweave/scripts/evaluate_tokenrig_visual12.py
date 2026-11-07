@@ -11,9 +11,10 @@ import time
 import traceback
 
 from tokenrig_comparison_matrix import IDENTITY, digest, matrix, read
-from virtual_pair_guard import ROOT, verify_launch
+from virtual_pair_guard import NATIVE_VISUAL_PHASES, ROOT, verify_launch
 
 CASES = [5, 15, 23, 24, 30, 44, 54, 61, 70, 95, 105, 108]
+CONTINUATION_PHASE = 'tokenrig_native_cont400k_visual12_20261107'
 
 
 def scientific_sha(config):
@@ -25,14 +26,39 @@ def scientific_sha(config):
 def validate_config(config):
     from stage1_official_inference import OFFICIAL_OPTIONS, POLICY
     spec = config['evaluation']
-    if (config['execution']['phase'] != 'tokenrig_native_visual12_20261107'
+    phase = config['execution']['phase']
+    if (phase not in NATIVE_VISUAL_PHASES
             or spec['optimizer_updates'] != 0 or spec['cases'] != CASES
             or spec['generation_kwargs'] != OFFICIAL_OPTIONS or spec['policy'] != POLICY
             or spec['base_seed'] != 20261029 or spec['precision'] != 'fp32_noTF32'
             or spec['reference_slot'] != 0 or spec['target_slots'] != list(range(1, 8))
-            or spec['capacity_stress'] or spec['automatic_retry'] or spec['static_fallback']
-            or [c['visits'] for c in config['candidates']] != [250000, 300000]):
+            or spec['capacity_stress'] or spec['automatic_retry'] or spec['static_fallback']):
         raise ValueError('unreviewed native visual comparison')
+    if phase == CONTINUATION_PHASE:
+        validate_screening(config)
+    elif [c['visits'] for c in config['candidates']] != [250000, 300000]:
+        raise ValueError('unreviewed native visual candidates')
+
+
+def validate_screening(config):
+    spec = config['screening']
+    if digest(spec['path']) != spec['sha256']:
+        raise ValueError('frozen development screening changed')
+    report = read(spec['path'])
+    curve = report['curve']
+    if (not report['complete'] or not report['passed'] or report['assets'] != 400000
+            or report['optimizer_updates'] != 8360 or not report['same_parent_panel_input_and_GT']
+            or not report['all_ten_recoveries_retained']
+            or not report['formal_results_not_used_for_selection']
+            or report['rule'] != 'descending_greedy_F1_then_lower_GT_MPJPE_then_earlier_visits'
+            or [r['visits'] for r in curve] != list(range(310000, 400001, 10000))):
+        raise ValueError('incomplete continuation screening')
+    ranked = sorted(curve, key=lambda r: (-r['stage1_edge_F1'], r['GT_MPJPE'], r['visits']))
+    expected = [{'label': f"native{r['visits']//1000}k", 'visits': r['visits'],
+        'path': r['checkpoint']['path'], 'sha256': r['checkpoint']['sha256']} for r in ranked[:2]]
+    if config['candidates'] != expected or report['selected_candidates'] != expected:
+        raise ValueError('exactly the two preselected development candidates are allowed')
+    return report
 
 
 def baseline(config, label):
@@ -50,6 +76,41 @@ def baseline(config, label):
     return refs, rows
 
 
+def retained_native_models(config):
+    spec = config['retained_native_baselines']
+    if digest(spec['path']) != spec['sha256']:
+        raise ValueError('retained native comparison changed')
+    prior = read(spec['path'])
+    if (not prior['complete'] or not prior['passed'] or prior['optimizer_updates'] != 0
+            or set(prior['models']) != {'native250k', 'native300k'}):
+        raise ValueError('retained native comparison was not completed')
+    return prior['models']
+
+
+def ranked_artifacts(model, *, durable, verify_backup=False):
+    refs, rows, examples = {}, [], []
+    if sorted(r['rank'] for r in model['artifacts']) != [0, 1]:
+        raise ValueError('two native artifact shards are required')
+    for rank in model['artifacts']:
+        paths = {}
+        for kind in ('references', 'rows', 'examples'):
+            receipt = rank[kind]
+            path = Path(receipt['durable_path' if durable else 'path'])
+            if digest(path) != receipt['sha256'] or (verify_backup
+                    and digest(receipt['durable_path']) != receipt['sha256']):
+                raise ValueError('native inference artifact differs: ' + str(path))
+            paths[kind] = path
+        shard = read(paths['references'])
+        if set(shard) & set(refs):
+            raise ValueError('duplicate reference across native artifact shards')
+        refs.update(shard)
+        rows.extend(read(paths['rows']))
+        examples.append((rank['rank'], paths))
+    if len(refs) != 12 or len(rows) != 336:
+        raise ValueError('native artifact coverage differs')
+    return refs, rows, examples
+
+
 def audit(config, output, source):
     import torch
     from fusion_evaluation import tree_fingerprint
@@ -57,6 +118,10 @@ def audit(config, output, source):
     from stage1_surface_repair_runtime import canonical_identity
     from virtual_query_xyz_runtime import write_json
     baselines = {label: baseline(config, label) for label in config['baselines']}
+    continuation = config['execution']['phase'] == CONTINUATION_PHASE
+    if continuation:
+        for label, model in retained_native_models(config).items():
+            baselines[label] = ranked_artifacts(model, durable=True)[:2]
     refs, rows = baselines['OPT300k']
     assets = config['evaluation']['asset_ids']
     if set(assets) != set(refs):
@@ -76,7 +141,7 @@ def audit(config, output, source):
     parent = ROOT / config['training_config']['relative_path']
     if digest(parent) != config['training_config']['sha256']:
         raise ValueError('native training architecture/config changed')
-    report_matrix = matrix(config)
+    report_matrix = validate_screening(config) if continuation else matrix(config)
     write_json(output / 'development_matrix.json', report_matrix)
     archive = config['canonical_archive']
     if digest(archive['path']) != archive['sha256']:
@@ -105,9 +170,10 @@ def audit(config, output, source):
             for frame in range(8):
                 identity = canonical_identity(record, frame)
                 for label, (old_refs, old_rows) in baselines.items():
-                    old = old_refs[asset] if frame == 0 else next(r for r in old_rows
-                        if r['asset_id'] == asset and r['target_slot'] == frame)
-                    if any(identity[k] != old[k] for k in IDENTITY):
+                    matches = [old_refs[asset]] if frame == 0 else [r for r in old_rows
+                        if r['asset_id'] == asset and r['target_slot'] == frame]
+                    if len(matches) != (1 if frame == 0 else 4) or any(
+                            identity[k] != old[k] for old in matches for k in IDENTITY):
                         raise ValueError('canonical input/GT differs from baseline ' + label)
             path = cache / Path(tensor_member).name
             with path.open('xb') as target:
@@ -166,8 +232,18 @@ def run(config, output, source, device, rank, world):
     if not spec or digest(spec['path']) != spec['sha256']:
         raise ValueError('independently reviewed CPU audit is not bound')
     checked = read(spec['path'])
-    if not checked['passed'] or checked['scientific_sha256'] != scientific_sha(config):
+    if (not checked['passed'] or checked['scientific_sha256'] != scientific_sha(config)
+            or checked['candidate_weights_verified'] != config['candidates']):
         raise ValueError('CPU scientific admission differs')
+    if config['execution']['phase'] == CONTINUATION_PHASE:
+        if digest(spec['resources_path']) != spec['resources_sha256']:
+            raise ValueError('independent CPU resource receipt changed')
+        resources = read(spec['resources_path'])
+        if (not resources['complete'] or not resources['passed'] or resources['exit_code'] != 0
+                or resources['source'] != checked['source'] or not resources['kernel_scheduler_membership']
+                or not resources['payload_cleanup_complete']
+                or resources['allocation'] != config['runtime']['allocation']):
+            raise ValueError('CPU audit did not pass on the retained native allocation')
     started = time.monotonic()
     def boundary():
         if deadline_due(config) or time.monotonic() - started > config['evaluation']['payload_limit_seconds']:
@@ -267,6 +343,9 @@ def run(config, output, source, device, rank, world):
             'seconds': time.monotonic() - started, 'finished_utc': datetime.now(timezone.utc).isoformat(),
             'quality_accepted': False, 'working_model_changed': False,
             'previous_case105_exact_token_replay_unresolved': True}
+        if config['execution']['phase'] == CONTINUATION_PHASE:
+            result['retained_native_baselines'] = config['retained_native_baselines']
+            result['screening'] = config['screening']
         write_json(output / 'result.json', result)
         mirror(output / 'result.json', 'result.json', config)
 

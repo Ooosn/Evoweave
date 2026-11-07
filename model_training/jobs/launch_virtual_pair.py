@@ -40,7 +40,8 @@ if __name__ == '__main__':
         if family != 'anchor_full_20261030_v1':
             raise ValueError('alignment probe must retain the full-data family contract')
         trainer = 'probe_tokenrig_alignment.py'
-    if config.get('execution', {}).get('phase') == 'tokenrig_native_visual12_20261107':
+    if config.get('execution', {}).get('phase') in ('tokenrig_native_visual12_20261107',
+            'tokenrig_native_cont400k_visual12_20261107'):
         if family != 'anchor_full_20261030_v1':
             raise ValueError('native visual comparison must retain the declared family')
         trainer = 'evaluate_tokenrig_visual12.py'

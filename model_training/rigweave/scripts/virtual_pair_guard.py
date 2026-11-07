@@ -27,6 +27,7 @@ ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
 LAUNCHER = 'model_training/jobs/launch_virtual_pair.py'
 SCOPE = 'virtual_query_matched_5k_20261025_v1'
 EXCEPTION_ENV = 'EVOWEAVE_VIRTUAL_PAIR_SSH_EXCEPTION'
+NATIVE_VISUAL_PHASES = ('tokenrig_native_visual12_20261107', 'tokenrig_native_cont400k_visual12_20261107')
 CPUS = [58, 63, 64, 65]
 
 
@@ -62,7 +63,7 @@ def operation(state):
         if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
             raise RuntimeError('the alignment probe cannot authorize optimizer updates')
         expected_entrypoint = 'model_training/rigweave/scripts/probe_tokenrig_alignment.py'
-    if op.get('label') == FULL_SCOPE and op.get('experiment') == 'tokenrig_native_visual12_20261107':
+    if op.get('label') == FULL_SCOPE and op.get('experiment') in NATIVE_VISUAL_PHASES:
         if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
             raise RuntimeError('native visual comparison permits no optimizer updates')
         expected_entrypoint = 'model_training/rigweave/scripts/evaluate_tokenrig_visual12.py'
@@ -219,8 +220,8 @@ def validate_stage(state, config, args):
         if (config.get('execution', {}).get('phase') != 'tokenrig_native_cont400k_20261107'
                 or 'native_continuation' not in config or args.mode not in ('audit', 'train')):
             raise RuntimeError('native continuation permits only its exact audit and training stages')
-    if op.get('experiment') == 'tokenrig_native_visual12_20261107':
-        if (config.get('execution', {}).get('phase') != 'tokenrig_native_visual12_20261107'
+    if op.get('experiment') in NATIVE_VISUAL_PHASES:
+        if (config.get('execution', {}).get('phase') != op['experiment']
                 or args.mode not in ('audit', 'capacity')
                 or config.get('evaluation', {}).get('optimizer_updates') != 0):
             raise RuntimeError('native visual comparison cannot authorize training or stress tests')

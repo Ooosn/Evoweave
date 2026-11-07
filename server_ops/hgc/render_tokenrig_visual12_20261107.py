@@ -73,18 +73,19 @@ def draw(ax, points, pose, label, bounds):
             fontsize=8, color='#343434')
 
 
-def figure_case(models, asset, case, path):
+def figure_case(models, asset, case, path, labels=LABELS):
     frames = [0, 2, 4, 7]
-    fig = plt.figure(figsize=(15, 10.7), facecolor='white')
+    width = len(labels)
+    fig = plt.figure(figsize=(3 * width, 10.7), facecolor='white')
     for row, frame in enumerate(frames):
         sample = models['native300k'][asset]
         points = np.asarray(sample.get('visual_points', sample['points'])[frame])
         step = max(1, len(points) // 2200)
         points = points[::step]
-        poses = [skeleton(models[label][asset] if label != 'GT' else sample, frame, label) for label in LABELS]
+        poses = [skeleton(models[label][asset] if label != 'GT' else sample, frame, label) for label in labels]
         bounds = extent(points, poses)
-        for col, (label, pose) in enumerate(zip(LABELS, poses)):
-            ax = fig.add_subplot(4, 5, row * 5 + col + 1, projection='3d', proj_type='ortho')
+        for col, (label, pose) in enumerate(zip(labels, poses)):
+            ax = fig.add_subplot(4, width, row * width + col + 1, projection='3d', proj_type='ortho')
             draw(ax, points, pose, label, bounds)
             if row == 0:
                 ax.set_title(TITLES[label], fontsize=11, color=COLORS[label], pad=2)
@@ -99,9 +100,9 @@ def figure_case(models, asset, case, path):
     plt.close(fig)
 
 
-def overview(models, assets, cases, frame, path):
-    labels = ['OPT330k', 'native250k', 'native300k', 'GT']
-    fig = plt.figure(figsize=(13, 11.3), facecolor='white')
+def overview(models, assets, cases, frame, path, labels=('OPT330k', 'native250k', 'native300k', 'GT')):
+    width = len(labels)
+    fig = plt.figure(figsize=(3.25 * width, 11.3), facecolor='white')
     for row, case in enumerate(cases):
         asset = assets[case]
         sample = models['native300k'][asset]
@@ -109,7 +110,7 @@ def overview(models, assets, cases, frame, path):
         poses = [skeleton(models[label][asset] if label != 'GT' else sample, frame, label) for label in labels]
         bounds = extent(points, poses)
         for col, (label, pose) in enumerate(zip(labels, poses)):
-            ax = fig.add_subplot(len(cases), 4, row * 4 + col + 1, projection='3d', proj_type='ortho')
+            ax = fig.add_subplot(len(cases), width, row * width + col + 1, projection='3d', proj_type='ortho')
             draw(ax, points, pose, label, bounds)
             if row == 0:
                 ax.set_title(TITLES[label], fontsize=12, color=COLORS[label], pad=2)
@@ -133,6 +134,25 @@ def table(headers, rows):
         '<tr>' + ''.join(f'<td>{html.escape(str(v))}</td>' for v in row) + '</tr>' for row in rows) + '</tbody></table>'
 
 
+def development_curve(matrix, path):
+    rows = [matrix['parent_development'], *matrix['curve']]
+    visits = [r['visits'] // 1000 for r in rows]
+    fig, axes = plt.subplots(2, 1, figsize=(8.2, 5.1), sharex=True, layout='constrained')
+    for ax, key, title, color in zip(axes, ('stage1_edge_F1', 'GT_MPJPE'),
+            ('Greedy edge F1 (%)', 'GT-reference MPJPE (%)'), ('#285c9d', '#af4e2d')):
+        values = [100 * r[key] for r in rows]
+        ax.plot(visits, values, marker='o', markersize=4, color=color)
+        for item in matrix['selected_candidates']:
+            n = item['visits'] // 1000
+            ax.scatter(n, values[visits.index(n)], s=60, facecolor='white', edgecolor=color, zorder=3)
+        ax.set_ylabel(title)
+        ax.grid(axis='y', alpha=.2)
+        ax.spines[['top', 'right']].set_visible(False)
+    axes[-1].set(xticks=visits, xlabel='Asset visits (thousands)')
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--archive', type=Path, required=True)
@@ -147,9 +167,16 @@ def main():
     config, review = read(evidence / 'config.json'), read(evidence / 'comparison_review.json')
     if not review['passed'] or review['optimizer_updates'] != 0:
         raise ValueError('only complete reviewed predictions may be rendered')
+    continuation = 'screening' in config
+    labels = list(LABELS)
+    if continuation:
+        new = [r['label'] for r in config['candidates']]
+        labels = ['OPT330k', 'native250k', 'native300k', *new, 'GT']
+        for label, color in zip(new, ('#653f91', '#266d77')):
+            TITLES[label], COLORS[label] = 'Native ' + label.removeprefix('native'), color
     models = {}
     declared_cases = dict(zip(config['evaluation']['asset_ids'], config['evaluation']['cases']))
-    for label in LABELS[:-1]:
+    for label in labels[:-1]:
         records = []
         for path in (evidence / 'models' / label).glob('examples_rank_*.pt'):
             records.extend(torch.load(path, map_location='cpu', weights_only=True))
@@ -160,14 +187,25 @@ def main():
             raise ValueError('original case indices differ')
     assets = dict(zip(config['evaluation']['cases'], config['evaluation']['asset_ids']))
     for case, asset in assets.items():
-        figure_case(models, asset, case, figures / f'case_{case:03d}.png')
+        figure_case(models, asset, case, figures / f'case_{case:03d}.png', labels)
     for frame in (0, 7):
-        overview(models, assets, [30, 70, 105, 108], frame, figures / f'hardcases_pose{frame}.png')
+        overview(models, assets, [30, 70, 105, 108], frame, figures / f'hardcases_pose{frame}.png',
+            labels if continuation else ('OPT330k', 'native250k', 'native300k', 'GT'))
     matrix = read(evidence / 'development_matrix.json')
-    matched = matrix['strictly_paired_scopes']['native_candidates_vs_OPT300k']
-    dev_rows = [[TITLES[k], pct(v['stage1_edge_F1']), pct(v['GT_MPJPE'], 4), pct(v['GT_edge_F1'])]
-        for k, v in matched['metrics'].items()]
-    common = review['all4_identical_common_success_geometry']
+    if continuation:
+        development_curve(matrix, figures / 'development_curve.png')
+        selected = {r['visits'] for r in matrix['selected_candidates']}
+        dev_rows = [[str(v['visits'] // 1000) + ('k (selected)' if v['visits'] in selected else 'k'),
+            pct(v['stage1_edge_F1']), pct(v['GT_MPJPE'], 4), pct(v['GT_edge_F1'])]
+            for v in [matrix['parent_development'], *matrix['curve']]]
+        development_assets = matrix['development_assets']
+        common = review['all_models_identical_common_success_geometry']
+    else:
+        matched = matrix['strictly_paired_scopes']['native_candidates_vs_OPT300k']
+        dev_rows = [[TITLES[k], pct(v['stage1_edge_F1']), pct(v['GT_MPJPE'], 4), pct(v['GT_edge_F1'])]
+            for k, v in matched['metrics'].items()]
+        development_assets = matched['assets']
+        common = review['all4_identical_common_success_geometry']
     official_rows = []
     for label, value in review['models'].items():
         head = value['summaries']['predicted_head']
@@ -177,32 +215,40 @@ def main():
     old_all = review['models']['OPT330k']['summaries']['predicted_head']['normalized_j2j_successful']
     old108 = review['per_case']['OPT330k'][asset108]['predicted_head']['normalized_j2j_successful']
     sensitivity = {}
-    for label in ('native250k', 'native300k'):
+    for label in (() if continuation else ('native250k', 'native300k')):
         new_all = review['models'][label]['summaries']['predicted_head']['normalized_j2j_successful']
         new108 = review['per_case'][label][asset108]['predicted_head']['normalized_j2j_successful']
         sensitivity[label] = {'case108_fraction_of_all12_J2J_improvement':
             ((old108 - new108) / 12) / (old_all - new_all),
             'other11_OPT330k_J2J': (old_all * 12 - old108) / 11,
             'other11_native_J2J': (new_all * 12 - new108) / 11}
+    intro = ('Ten checkpoints from 310k to 400k share the native 300k development panel. Only the two selected checkpoints were run on the formal cases.'
+        if continuation else 'Native 250k and 300k use one checkpoint for both stages. OPT 300k/330k results are retained baselines, not regenerated.')
     parts = ['<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
         '<title>Evoweave Native Qwen Comparison</title><style>body{font:15px/1.6 system-ui,sans-serif;color:#222;margin:0;background:#fff}main{max-width:1450px;margin:auto;padding:24px}h1{font-size:26px}h2{font-size:21px;margin-top:32px}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}td,th{text-align:right;padding:9px;border-bottom:1px solid #ddd}td:first-child,th:first-child{text-align:left}img{width:100%;height:auto}p{max-width:1100px}a{color:#285c9d}.scope{color:#555}</style><main>',
         '<h1>Native Qwen: Fixed Checkpoint Comparison</h1>',
-        '<p>Native 250k and 300k use one checkpoint for both stages. OPT 300k/330k results are retained baselines, not regenerated. No training or model promotion was performed.</p>',
-        f'<h2>Strict Development Matrix ({matched["assets"]} Assets)</h2>',
+        '<p>' + intro + ' No baseline was regenerated and no working model was changed.</p>',
+        f'<h2>Strict Development Matrix ({development_assets} Assets)</h2>',
         table(['Model', 'Greedy Skeleton F1', 'GT-Reference MPJPE', 'GT-Reference Edge F1'], dev_rows),
-        '<p class="scope">All eight raw frames, normalization, surface tensors and original GT match. MPJPE is normalized by mesh bounding-box diagonal. These GT-reference and greedy scores are not end-to-end 15-beam scores. Including the older 330k adaptation panel leaves only 19 strictly matched assets.</p>',
+        '<p class="scope">All eight raw frames, normalization, surface tensors and original GT match. MPJPE is normalized by mesh bounding-box diagonal. These GT-reference and greedy scores are not end-to-end 15-beam scores.</p>']
+    if continuation:
+        parts.append('<img src="figures/development_curve.png" alt="Matched development scores from 300k to 400k; open circles mark the two candidates">')
+    parts += [
         '<h2>Formal Fixed 12 Cases</h2>',
         table(['Model', 'Reference F1 (12)', 'Predicted-Reference Target F1 (84)', 'Matched Target J2J', 'GT-Reference MPJPE'], official_rows),
-        f'<p class="scope">F1 includes every failed generation as zero. J2J uses the identical {len(common["asset_ids"])} common-success assets / {common["views"]} target views across all four models, without alignment. GT-reference controls are separate. Fixed descriptive cases are not an untouched population test. The old case105 exact-token replay discrepancy remains unresolved.</p>',
+        f'<p class="scope">F1 includes every failed generation as zero. J2J uses the identical {len(common["asset_ids"])} common-success assets / {common["views"]} target views across the compared models, without alignment. GT-reference controls are separate. Fixed descriptive cases are not an untouched population test. The old case105 exact-token replay discrepancy remains unresolved.</p>']
+    if not continuation:
+        parts += [
         '<h2>Reading the Tradeoff</h2><p>The native 250k candidate improves case30 substantially, but neither native checkpoint uniformly beats the working 330k. Case70 still misses major branches; case105 has better edge matching but worse joint positions. Case108 overgenerates 102/131 joints at native250k/300k versus only 5 GT joints, with edge F1 zero. A lower nearest-joint distance is not sufficient evidence of a correct skeleton.</p>',
-        f'<p>Post-hoc decomposition, without changing the primary 12-case denominator: case108 contributes {100*sensitivity["native250k"]["case108_fraction_of_all12_J2J_improvement"]:.1f}% of native250k\'s aggregate J2J reduction versus OPT330k. Across the other eleven cases, mean J2J is {pct(sensitivity["native250k"]["other11_OPT330k_J2J"],4)} versus {pct(sensitivity["native250k"]["other11_native_J2J"],4)}. This diagnostic explains the aggregate; it is not a replacement benchmark or a new checkpoint selection rule.</p>',
+        f'<p>Post-hoc decomposition, without changing the primary 12-case denominator: case108 contributes {100*sensitivity["native250k"]["case108_fraction_of_all12_J2J_improvement"]:.1f}% of native250k\'s aggregate J2J reduction versus OPT330k. Across the other eleven cases, mean J2J is {pct(sensitivity["native250k"]["other11_OPT330k_J2J"],4)} versus {pct(sensitivity["native250k"]["other11_native_J2J"],4)}. This diagnostic explains the aggregate; it is not a replacement benchmark or a new checkpoint selection rule.</p>']
+    parts += [
         '<h2>Reference Skeletons</h2><img src="figures/hardcases_pose0.png" alt="Reference skeleton comparisons for cases 30,70,105,108">',
         '<h2>Target Pose 7</h2><img src="figures/hardcases_pose7.png" alt="Target pose comparisons for cases 30,70,105,108">',
         '<h2>All 12 Cases</h2>']
     case_rows = []
     for case, asset in assets.items():
-        case_rows.append([case, *[pct(review['per_case'][label][asset]['predicted_head']['edge_f1']) for label in LABELS[:-1]]])
-    parts.append(table(['Case', *[TITLES[k] + ' Target F1' for k in LABELS[:-1]]], case_rows))
+        case_rows.append([case, *[pct(review['per_case'][label][asset]['predicted_head']['edge_f1']) for label in labels[:-1]]])
+    parts.append(table(['Case', *[TITLES[k] + ' Target F1' for k in labels[:-1]]], case_rows))
     for case, asset in assets.items():
         parts.append(f'<h2>Case {case}</h2><p>{html.escape(asset)}</p><a href="figures/case_{case:03d}.png"><img src="figures/case_{case:03d}.png" alt="Case {case}, four matched poses and all model variants"></a>')
     parts.append('</main></html>')

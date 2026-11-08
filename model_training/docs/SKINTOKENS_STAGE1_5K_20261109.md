@@ -11,9 +11,10 @@ skeleton Qwen, with the same identity-initialized dynamic stack. No project
 checkpoint, optimizer, Stage 2 head, or Stage 2 loss is loaded. Keep the same
 5,000 assets, six passes, 30,000 asset visits and 627 AdamW updates with the
 same asset order and 30k OneCycle as the static baseline. The dynamic arms use
-the same 2-24-frame clips and batch-48 exposure stream, with 24 assets per rank
-through 12 input frames and 12 above 12 (two microbatches per rank). Use no
-padding of the last global-16 update at each exact 10k boundary.
+the same 2-24-frame clips and batch-48 exposure stream. Use the conservative
+base recipe's physical batches per rank: 24 for 2-6 frames, 12 for 7-12, and 6
+for 13-24, with accumulation to the same update size. Use no padding of the
+last global-16 update at each exact 10k boundary.
 
 * Frame-local and temporal multi-target use the same deterministic 20-40%
   target selection (minimum two). Frame-local keeps the same parameters,
@@ -37,5 +38,5 @@ or 15-beam scores.
 Commit and privately publish every exact admission, and record each complete
 arm before admitting the next. Use fresh stage-specific source on verified SSD
 and retain both copies of each full checkpoint. CPU audits prove common
-initial tensors and counts; native no-update 12- and 24-frame stress covers
+initial tensors and counts; native no-update 6-, 12- and 24-frame stress covers
 the largest skeleton and geometry profiles before training.

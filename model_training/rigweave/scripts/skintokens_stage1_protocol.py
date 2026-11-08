@@ -25,7 +25,8 @@ def recipe(arm):
         'runtime': {**static['runtime'], 'repo': REPO,
                     'output_root': f'{SCRATCH}/outputs_{SCOPE}/{arm}'},
         'training': {**static['training'],
-                     'frame_policy': {str(t): 24 if t <= 12 else 12 for t in range(2, 25)}},
+                     'frame_policy': {str(t): 24 if t <= 6 else 12 if t <= 12 else 6
+                                      for t in range(2, 25)}},
         'tokenrig_decoder': {**spec, 'conditioning': {**spec['conditioning'],
             'motion_initialization': 'identity_residuals_native_norm_v1'}},
         'artifacts': {'durable_root': f'{DURABLE}/{SCOPE}/{arm}'}}

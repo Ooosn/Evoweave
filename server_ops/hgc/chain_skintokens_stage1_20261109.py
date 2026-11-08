@@ -235,7 +235,7 @@ def run():
         capacity, bounded = stage(config, path, 'capacity', state, code, {'audit': audited})
         if (capacity['optimizer_updates'] != 0 or capacity['initialization'] != initial
                 or len(capacity['profiles_by_rank']) != 2
-                or any(len(p) != 4 for p in capacity['profiles_by_rank'])):
+                or any(len(p) != 6 for p in capacity['profiles_by_rank'])):
             raise ValueError('two-rank no-update capacity evidence is incomplete')
         train, trained = stage(config, path, 'train', state, code, {'audit': audited, 'capacity': bounded})
         if (train['initialization'] != initial or any(train[k] != plan[k] for k in

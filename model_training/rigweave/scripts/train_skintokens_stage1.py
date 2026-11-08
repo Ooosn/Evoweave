@@ -216,7 +216,7 @@ def capacity(config, device, rank):
     groups, _ = stress_groups(dataset.entries, expected_rows=5000)
     profiles = []
     reserve = 4 * sum(p.numel() * p.element_size() for p in model.parameters() if p.requires_grad)
-    for frames in (12, 24):
+    for frames in (6, 12, 24):
         for label, indices in groups.items():
             if shared_deadline_due(config, device, 2):
                 raise RuntimeError('save-stop line reached before completing capacity')

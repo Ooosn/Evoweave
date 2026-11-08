@@ -49,7 +49,7 @@
   "active_operation": {
     "label": "skintokens_static_5k_20261109",
     "experiment": "skintokens_static_5k_20261109",
-    "complete": false,
+    "complete": true,
     "explicit_human_authorized": true,
     "authorization": "User Nov9 JST: start the original SkinTokens single-frame baseline first, on fixed 5k data for 30000 visits, Stage1 skeleton only, one fixed reference frame per validation asset. No other arms admitted.",
     "code_commit": "319f719651a645232533b73a2dccc1359704a33d",
@@ -58,13 +58,13 @@
       "preflight": "model_training/rigweave/scripts/train_skintokens_static.py",
       "train": "model_training/rigweave/scripts/train_skintokens_static.py"
     },
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "running_verified_first_update_and_zero_baseline",
+    "status": "skintokens_static_5k_20261109_complete",
     "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
     "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
@@ -134,7 +134,7 @@
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
         "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train",
-        "approved": true
+        "approved": false
       }
     ],
     "capacity_first_attempt": {
@@ -180,7 +180,25 @@
       ],
       "stage2_enabled": false,
       "both_ranks_match": true
-    }
+    },
+    "completion_review": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/completion_review.json",
+      "sha256": "351861392eea33e2a2f13228edabf9f4d816d54883207a1e505f2b1ccccc195d"
+    },
+    "samples": 30000,
+    "optimizer_updates": 627,
+    "latest_checkpoint": {
+      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train/checkpoint_030000.pt",
+      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/checkpoint_030000.pt",
+      "sha256": "58a999bde6669cb43ced784dc679f9a99675230ace7a27bd5ceeb33f3a378b59",
+      "bytes": 4974563338,
+      "samples": 30000,
+      "step": 627,
+      "complete": true,
+      "both_copies_verified": true,
+      "optimizer_and_rank_RNG_retained": true
+    },
+    "quality_accepted": false
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -291,12 +309,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -462,11 +480,11 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Verify zero-update baseline, exact 30000 Stage1 visits, and the fixed one-frame curve; no other arm or promotion.",
+  "next_required_result": "Sequentially audit, capacity-check and train the three Stage 1-only controls.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
-    "backbone_LR": 0.000002,
+    "backbone_LR": 2e-06,
     "current_total_asset_visits": 330000,
     "further_training_authorized": false,
     "head_multiplier": 3,
@@ -506,8 +524,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_static_5k_20261109_train",
-  "updated_at": "2026-11-08T17:24:27.651376+00:00",
+  "state_id": "skintokens_static_5k_20261109_complete",
+  "updated_at": "2026-11-08T18:21:43.593840+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
@@ -902,5 +920,21 @@
       "case105_old_exact_token_replay_unresolved": true,
       "local_report": "server_ops/outputs/tokenrig_native_visual12_20261107/report_v2/comparison_report.html"
     }
+  },
+  "skintokens_stage1_followup_20261109": {
+    "authorization": "User directed analysis and launch after the baseline completes.",
+    "explicit_human_authorized": true,
+    "ordered_arms": [
+      "frame_local",
+      "temporal_multi",
+      "temporal_query"
+    ],
+    "static_review": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/completion_review.json",
+      "sha256": "351861392eea33e2a2f13228edabf9f4d816d54883207a1e505f2b1ccccc195d"
+    },
+    "completed": {},
+    "automatic_retry_allowed": false,
+    "working_model_change_allowed": false
   }
 }

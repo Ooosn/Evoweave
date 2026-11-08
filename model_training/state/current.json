@@ -21,88 +21,86 @@
     "current_native_training_directory_and_retention_not_modified": true,
     "older_intermediate_personal_weight_files_no_longer_available": true
   },
+  "recent_closed_native_runs_20261109": {
+    "native_joint_continuation": {
+      "complete": true,
+      "samples": 400000,
+      "output": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_cont400k_20261107",
+      "no_working_model_promotion": true
+    },
+    "frame_controls": {
+      "complete": true,
+      "each_samples": 50000,
+      "output": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_frame_control_20261108",
+      "both_stage1_and_stage2_joint": true
+    },
+    "native_stage1_continuation": {
+      "complete": false,
+      "status": "closed_at_user_request",
+      "finished_utc": "2026-11-08T16:40:38.631939Z",
+      "samples": 344800,
+      "latest_complete_recovery": 340000,
+      "latest_checkpoint_sha256": "408eacfd283322b912deca22465202f4c8120b20d546d08a0081823b8a6fa88c",
+      "output": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_stage1_300k400k_20261108",
+      "payload_cleanup_complete": true,
+      "automatic_restart": false
+    }
+  },
   "active_operation": {
-    "label": "anchor_full_20261030_v1",
-    "experiment": "tokenrig_native_cont400k_20261107",
+    "label": "skintokens_static_5k_20261109",
+    "experiment": "skintokens_static_5k_20261109",
     "complete": false,
     "explicit_human_authorized": true,
-    "authorization": "User Nov7: continue native Qwen complete 300k checkpoint including optimizer to 400k, save every 10k, same validation screening then exactly two candidates on retained12 at fixed15-beam. Do not assume endpoint is best.",
-    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_full.py",
+    "authorization": "User Nov9 JST: start the original SkinTokens single-frame baseline first, on fixed 5k data for 30000 visits, Stage1 skeleton only, one fixed reference frame per validation asset. No other arms admitted.",
+    "code_commit": "7607e557ea691d1fe3498b4f691f402905f78de0",
+    "required_entrypoint": "model_training/rigweave/scripts/train_skintokens_static.py",
     "operation_entrypoints": {
-      "preflight": "model_training/rigweave/scripts/train_anchor_full.py",
-      "train": "model_training/rigweave/scripts/train_anchor_full.py"
+      "preflight": "model_training/rigweave/scripts/train_skintokens_static.py",
+      "train": "model_training/rigweave/scripts/train_skintokens_static.py"
     },
-    "code_commit": "7ba8ec908f614b763baf9081f2f57882a2666dbd",
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "running_native_continuation_first_two_updates_verified",
+    "status": "exact_CPU_audit_admitted",
+    "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
+    "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
+    "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
+    "training_manifest": {
+      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
+      "rows": 5000
+    },
+    "initialization": {
+      "checkpoint": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+      "sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
+      "project_checkpoint_loaded": false
+    },
+    "validation": {
+      "assets": 128,
+      "reference_slot": 0,
+      "optimizer_visit_checkpoints": [
+        0,
+        10000,
+        20000,
+        30000
+      ]
+    },
+    "acceptance_test": "Strict release restore and exact fixed data/validation audit, no-update B24 per GPU finite forward/backward and resource margin, then 30000 visits/627 updates, four one-pose panels and all three complete durable recoveries.",
+    "stage_evidence": {},
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109",
     "runs": [
       {
-        "mode": "train",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_native_cont400k_20261107/model_training/experiments/tokenrig_native_cont400k_20261107.json",
-        "config_sha256": "fe6fdd65e82af2ac138fa7ba1887089e88b30a8ecfb6d6e5d318a23889c0f1af",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_native_cont400k_20261107/train",
+        "mode": "audit",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
+        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/audit",
         "approved": true
       }
-    ],
-    "completed_CPU_audit": {
-      "source": "d32ba7c761a65a5279941b79a846624d25746fa4",
-      "config_sha256": "118cafe1d7034e5c87e0e3aa54ac9ca2b04570c0b537d81cade8d303f6b51030",
-      "result_sha256": "b8d9d39f41e2f639bccc9bff2d91e4abca1993b362e9252e9a0c0d5c4a945816",
-      "resources_sha256": "fe1a7996a983866a288147dbcebab033c596021228b5b7151729f847e302b0c6",
-      "durable_receipts": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_cont400k_20261107/receipts",
-      "optimizer_state_entries": 916,
-      "samples": 300000,
-      "step": 6270,
-      "planned_new_samples": 100000,
-      "planned_new_updates": 2090,
-      "planned_new_input_frame_visits": 1295824,
-      "exact_retained_development_panel": true,
-      "cuda_initialized": false,
-      "payload_cleanup_complete": true
-    },
-    "verified_start": {
-      "source": "f1817c9bde503b1c9ed1cf934e8b19db95311468",
-      "config_sha256": "fe6fdd65e82af2ac138fa7ba1887089e88b30a8ecfb6d6e5d318a23889c0f1af",
-      "source_archive_sha256": "f3897de93fa31e209a3daceb5476ae5f41239d8e97eaae4b3c4a207d8b0f5a18",
-      "runner_started_utc": "2026-11-07T06:23:37.808Z",
-      "checked_utc": "2026-11-07T06:27:59.651Z",
-      "supervisor_pid": 736385,
-      "rank_pids": [737658, 737659],
-      "kernel_scheduler_membership_verified": true,
-      "model_sha256": "295f61a0c188f7649a9696967e2f05cc477104fa99fa3531cb19dcc48f5833b8",
-      "optimizer_sha256": "c679070fec764e31719fad0792227a10341f5abf8ac5716cdfae314d83a9377b",
-      "restoration_rank_sha256": [
-        "44ec32bac3386682a3469384c6589d0d73fcb06bbdb2494895ad7288d9522d4d",
-        "1b16aa59aa131ab1f341bd61696a497340ca5fcdd77f12ee7364d8fd0c43d02e"
-      ],
-      "both_rank_RNG_states_restored": true,
-      "first_actual_updates": [6271, 6272],
-      "first_96_actual_asset_visits_matched": true,
-      "observed_updates": 6274,
-      "observed_asset_visits": 300192,
-      "observed_peak_GPU_MiB": [72825, 72825]
-    },
-    "native_grant": {
-      "allocation": 131942123,
-      "host": "pcg01i",
-      "physical_gpus": [
-        3,
-        4
-      ],
-      "cpu_slots": 16,
-      "h_rt_seconds": 345600,
-      "expires_utc": "2026-11-11T05:54:06.055Z",
-      "grant_save_stop_utc": "2026-11-11T04:54:06.055Z",
-      "scratch_safe_save_stop_utc": "2026-11-08T18:20:00Z",
-      "runner_root": "/home/wangyy/jobs/evoweave_h100_20261107_145343/runner",
-      "supersedes_released_allocation": 131351736
-    },
-    "protocol": "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md"
+    ]
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -214,72 +212,31 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight",
-    "train"
+    "preflight"
   ],
   "blocked_operations": [
     "submit",
-    "matched_eval"
+    "matched_eval",
+    "train"
   ],
   "compute_allocation": {
-    "allocation_directory": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031",
-    "binding_receipt": "/work/wangyy/virtual_query_matched_5k_20261025/allocation_binding_native_20261031/hardcase3608_cpu_binding.json",
-    "cpu_affinity": [
-      6,
-      7,
-      9,
-      10,
-      11,
-      12,
-      14,
-      15,
-      61,
-      63,
-      64,
-      65,
-      74,
-      76,
-      77,
-      78
-    ],
-    "cpu_slots": 16,
-    "execution_CPU_binding_required_before_compute": false,
-    "expiry_utc": "2026-11-04T12:40:04.726000+00:00",
-    "gpu_uuids": [
-      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
-      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
-    ],
-    "grant_receipt": "/home/wangyy/jobs/evoweave_h100_native_20261031/accepted_request.json",
-    "h_rt_seconds": 345600,
+    "server": "HGC",
+    "qlogin_job_id": 131942123,
+    "status": "retained_native_idle_before_static_baseline",
     "host": "pcg01i",
-    "inherited_affinity_logical_CPU_count": 224,
-    "keeper_pid": 2268188,
-    "kernel_cpuset_and_devices_membership": true,
-    "last_observation_note": "All four selection stages exited0 with native resource/cleanup receipts; GPU4/8CPUsubset of original16slots. Keeper idle, GPU3/4empty in postrun check, no grant release. No more GPU work admitted.",
-    "last_observed_utc": "2026-11-01T18:24:54.247671+00:00",
+    "cpu_slots": 16,
     "physical_gpus": [
       3,
       4
     ],
-    "policy": "Retain native131170166keeper2268188,96hours2H100/16CPU. User authorizes two intermediate zero-update12case comparisons onGPU4/8CPUsubset, no extra GPUs/release/training/stress. Stop2026-11-04T11:40:04Z.",
+    "h_rt_seconds": 345600,
+    "expiry_utc": "2026-11-11T05:54:06.055Z",
+    "stop_before_utc": "2026-11-11T04:50:00Z",
+    "runner_root": "/home/wangyy/jobs/evoweave_h100_20261107_145343/runner",
     "previous_allocation": {
-      "expiry_utc": "2026-10-31T11:55:38Z",
-      "prior_state_commit": "e6201fb245c1bde40ab7dac36a34a60f80b05398",
-      "qlogin_job_id": 130675914,
-      "status": "expired"
-    },
-    "qlogin_job_id": 131170166,
-    "rejected_previous_reservation": {
-      "binding_correction": "AGE installed qsub manual states binding amount is per PE task. Initial linear:16 with16tasks requested excessive cores and remained qw. Correct pending job to linear:1 per task, keeping16CPUslots,2H100,64GiB and24h unchanged. No GPU payload has run.",
-      "evidence": "Granted2H100/16CPU at11:48:33UTC; keeper1103820 has devices:/AGE/130674849.1/master but cpuset:/, despite scheduler affinity32logical threads. No stage requests/children/GPU allocations. This fails mandatory BOTH-cgroup admission; cancel only this unused qsub reservation, then use native qrsh with unchanged resources. Never move cgroups or claim affinity equals membership.",
-      "job_id": 130674849,
-      "status": "canceled_before_any_payload"
-    },
-    "rss_limit_bytes": 68719476736,
-    "server": "HGC",
-    "started_utc": "2026-10-31T12:40:04.726Z",
-    "status": "selection_complete_all_payloads_cleaned_native96h_grant_preserved",
-    "stop_before_utc": "2026-11-04T11:40:04.726000+00:00"
+      "qlogin_job_id": 131170166,
+      "status": "historical_expired"
+    }
   },
   "current_dataset_revision": {
     "contract": "DATASET_SOURCE_OF_TRUTH.md",
@@ -425,7 +382,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Verify the running native continuation reaches exactly 400000 visits with all ten paired development evaluations and durable full checkpoints. Freeze two new candidates by greedy edge F1 then GT MPJPE, and admit only their fixed 12-case 15-beam comparison in a separate checkout. No model promotion, restart, extra allocation or baseline regeneration.",
+  "next_required_result": "Verify the exact CPU audit of the single-pose SkinTokens baseline; no GPU training until the separate no-update capacity check passes.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -465,11 +422,12 @@
     "model_training/docs/HARDCASE_CHECKPOINT_SELECTION_20261102.md",
     "model_training/state/working_model.json",
     "model_training/docs/TOKENRIG_NATIVE_VISUAL12_20261107.md",
-    "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md"
+    "model_training/docs/TOKENRIG_NATIVE_CONT400K_20261107.md",
+    "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "tokenrig_native_cont400k_training_20261107",
-  "updated_at": "2026-11-07T06:27:59.651Z",
+  "state_id": "skintokens_static_5k_20261109_audit",
+  "updated_at": "2026-11-08T17:09:43.309Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

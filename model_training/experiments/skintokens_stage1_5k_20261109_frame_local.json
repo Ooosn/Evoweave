@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "family": "skintokens_stage1_5k_20261109",
+  "execution": {
+    "phase": "skintokens_stage1_5k_20261109"
+  },
+  "stage2_enabled": false,
+  "runtime": {
+    "repo": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "opt_config_root": "/home/wangyy/evorig/model_assets/hf_configs/facebook-opt-350m",
+    "extra_pythonpath": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/runtime_skin:/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 131942123,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
+    ],
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/frame_local",
+    "world_size": 2,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.9793155874888118,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "required_h_rt_seconds": 345600,
+    "stop_before_utc": "2026-11-11T04:50:00Z",
+    "data_workers_per_rank": 6,
+    "prefetch_microbatches": 2
+  },
+  "base_recipe": {
+    "path": "model_training/experiments/anchor_full_backbone_20261030_v1.json",
+    "sha256": "bf988674d47c991a31b17ba7dcceda79474a7bfbf1af04459d96b6f899b2de8f"
+  },
+  "train_manifest": {
+    "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+    "rows": 5000,
+    "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88"
+  },
+  "training": {
+    "additional_assets": 30000,
+    "effective_assets_per_update": 48,
+    "frame_policy": {
+      "2": 24,
+      "3": 24,
+      "4": 24,
+      "5": 24,
+      "6": 24,
+      "7": 12,
+      "8": 12,
+      "9": 12,
+      "10": 12,
+      "11": 12,
+      "12": 12,
+      "13": 6,
+      "14": 6,
+      "15": 6,
+      "16": 6,
+      "17": 6,
+      "18": 6,
+      "19": 6,
+      "20": 6,
+      "21": 6,
+      "22": 6,
+      "23": 6,
+      "24": 6
+    },
+    "checkpoint_assets": [
+      10000,
+      20000,
+      30000
+    ],
+    "stream_seed": 20261030,
+    "initialization_seed": 20261030,
+    "resume": null
+  },
+  "evaluation": {
+    "assets": 128,
+    "reference_slot": 0,
+    "checkpoints": [
+      0,
+      10000,
+      20000,
+      30000
+    ],
+    "decoding": "greedy",
+    "precision": "fp32_noTF32",
+    "decoder_attention": "eager",
+    "max_new_tokens": 2048,
+    "panel_archive": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/canonical_train_panel128.tar",
+      "sha256": "02c67d4828b8fe4972aadd947986741857107aebaf77e5db252efb24438697d8"
+    }
+  },
+  "data_cache": {
+    "root": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/data",
+    "index": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/data/index.json",
+    "index_sha256": "b41a37a96f595608df1c11b6b5339c39fca2e7b6033778ca1879f12659d29e20"
+  },
+  "tokenrig_decoder": {
+    "source": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/SkinTokens_cpu_safe_r1",
+    "checkpoint": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
+    "checkpoint_sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
+    "qwen_config_root": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/weights/SkinTokens/Qwen3Config",
+    "qwen_config_sha256": "660db3b73d788119c04535e48cf9be5f55bc3100841a718637ae695b442f27dd",
+    "tokenizer_source_sha256": {
+      "tokenizer/parse.py": "7161cdaee24bcc16575a6651930048945cedd6193017fae7e4d2ed16c3c5520d",
+      "tokenizer/spec.py": "293903541aae9aec1a5196807ddc85eb473d11bea14f7205579588616d7c17c2",
+      "tokenizer/tokenizer_part.py": "c6cceea2be8bad7185b237ecc77261c56792ba047e3a1ee4978d64f4ad079495",
+      "data/order.py": "912ab7547d6a13010c347edb27fecb56f2f6191a6c2c0e60b0e920351d573d66",
+      "data/spec.py": "d7c2c3f32e869f26dad3a3d871ccf092df56b63122b65acde8e38c63698f6061"
+    },
+    "conditioning": {
+      "kind": "released_mesh_projection_v1",
+      "source_commit": "da2000e60f24ace2303a7fdd27784473380f5249",
+      "upstream_source_commit": "273b691d35989d71cd17ff2895fdc735097b92d1",
+      "prefix_tokens": 512,
+      "motion_initialization": "identity_residuals_native_norm_v1"
+    }
+  },
+  "artifacts": {
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/frame_local"
+  },
+  "arm": "frame_local"
+}

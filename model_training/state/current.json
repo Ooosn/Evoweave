@@ -47,158 +47,75 @@
     }
   },
   "active_operation": {
-    "label": "skintokens_static_5k_20261109",
-    "experiment": "skintokens_static_5k_20261109",
-    "complete": true,
+    "label": "skintokens_stage1_5k_20261109",
+    "experiment": "skintokens_stage1_5k_20261109",
+    "arm": "frame_local",
+    "complete": false,
+    "status": "exact_audit_admitted",
+    "code_commit": "1332e150cdb6b78baab3542236781f591febe5a3",
     "explicit_human_authorized": true,
-    "authorization": "User Nov9 JST: start the original SkinTokens single-frame baseline first, on fixed 5k data for 30000 visits, Stage1 skeleton only, one fixed reference frame per validation asset. No other arms admitted.",
-    "code_commit": "319f719651a645232533b73a2dccc1359704a33d",
-    "required_entrypoint": "model_training/rigweave/scripts/train_skintokens_static.py",
+    "authorization": "User directed analysis and launch after the baseline completes.",
+    "required_entrypoint": "model_training/rigweave/scripts/train_skintokens_stage1.py",
     "operation_entrypoints": {
-      "preflight": "model_training/rigweave/scripts/train_skintokens_static.py",
-      "train": "model_training/rigweave/scripts/train_skintokens_static.py"
+      "preflight": "model_training/rigweave/scripts/train_skintokens_stage1.py",
+      "train": "model_training/rigweave/scripts/train_skintokens_stage1.py"
     },
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "automatic_retry_allowed": false,
-    "working_model_change_allowed": false,
-    "status": "skintokens_static_5k_20261109_complete",
-    "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
-    "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
-    "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "stage_evidence": {},
     "training_manifest": {
       "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
-      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88",
-      "rows": 5000
+      "rows": 5000,
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88"
     },
     "initialization": {
       "checkpoint": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/deps/weights/SkinTokens/experiments/articulation_xl_quantization_256_token_4/grpo_1400.ckpt",
-      "sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692",
-      "project_checkpoint_loaded": false
+      "sha256": "f4e4706a11cfb520cdde65156a0358545e4fbf8f36237aca01ea5e79d5cb5692"
+    },
+    "resource_binding": {
+      "allocation": 131942123,
+      "host": "pcg01i",
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_slots": 16,
+      "stop_before_utc": "2026-11-11T04:50:00Z"
     },
     "validation": {
       "assets": 128,
       "reference_slot": 0,
-      "optimizer_visit_checkpoints": [
+      "checkpoints": [
         0,
         10000,
         20000,
         30000
-      ]
-    },
-    "acceptance_test": "Strict release restore and exact fixed data/validation audit, no-update B24 per GPU finite forward/backward and resource margin, then 30000 visits/627 updates, four one-pose panels and all three complete durable recoveries.",
-    "stage_evidence": {
-      "audit": {
-        "result_sha256": "d450bfd27c63f9167cf98ce6f0f2f65c9dc06a4af3e67da037e559339c8f2fb3",
-        "resources_sha256": "416d7725b571d350e331882b3d5dfc240fb45ca68e7f700d023f33794e5e27ff",
-        "source": "2b6421dedff901ae687a65d951ca07354a00f5dd",
-        "optimizer_updates": 0,
-        "output_name": "audit"
-      },
-      "capacity": {
-        "result_sha256": "405d8621091fe532aae13dbd7520e958d94ce3ccc65cb1caf1fb232d7239652c",
-        "resources_sha256": "a5b62ee2838252a09ddd577467f5e37c6adda12397cc01ed0c8b165d72792737",
-        "source": "32b79253f26d6f909400a53a2237ff5794b1b254",
-        "optimizer_updates": 0,
-        "output_name": "capacity_recompute"
+      ],
+      "decoding": "greedy",
+      "precision": "fp32_noTF32",
+      "decoder_attention": "eager",
+      "max_new_tokens": 2048,
+      "panel_archive": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/canonical_train_panel128.tar",
+        "sha256": "02c67d4828b8fe4972aadd947986741857107aebaf77e5db252efb24438697d8"
       }
     },
-    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109",
-    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109",
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/frame_local",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/frame_local",
+    "acceptance_test": "Strict release, matched fixed inputs, no stage 2; bounded finite capacity then 30000 visits/627 updates and all durable checkpoints.",
+    "automatic_retry_allowed": false,
+    "working_model_change_allowed": false,
     "runs": [
       {
         "mode": "audit",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
-        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/audit",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
-        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/capacity",
-        "approved": false
-      },
-      {
-        "mode": "capacity",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
-        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/capacity_recompute",
-        "approved": false
-      },
-      {
-        "mode": "train",
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
-        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train",
-        "approved": false
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_frame_local.json",
+        "config_sha256": "bab720416b0b11c5c2801308518fd0fb0082c8d829011117946398912522ad02",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/frame_local/audit"
       }
-    ],
-    "capacity_first_attempt": {
-      "complete": true,
-      "passed": false,
-      "optimizer_updates": 0,
-      "payload_cleanup_complete": true,
-      "resources_sha256": "d07d05514779e7532e8d97cf2549cf892fa23813afe1df30b963d63f4514deb0",
-      "failure": "Both ranks reached the per-process cap during long-sequence Qwen forward; standalone entry had not enabled the existing non-reentrant activation recomputation.",
-      "durable_log": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/capacity.log"
-    },
-    "CPU_audit_inheritance": "No config, eager CPU path, model, dataset, or input-panel changes. Only the non-eager training path restores Qwen activation recomputation.",
-    "verified_start": {
-      "source": "771fd057a52fc4c03e86ba163aae5b7c47971984",
-      "observed_utc": "2026-11-08T17:20:41.129538Z",
-      "allocation": 131942123,
-      "kernel_scheduler_membership": true,
-      "child_pid": 550205,
-      "reference_validation_samples": 0,
-      "completed_views_at_observation": 3,
-      "stage2_enabled": false,
-      "trainable_parameters": 414497536,
-      "resource_receipt": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train_resources.json",
-      "no_other_arm_queued": true
-    },
-    "zero_step_reference_validation": {
-      "assets": 128,
-      "views": 128,
-      "reference_slot": 0,
-      "edge_F1": 0.7394813640026484,
-      "normalized_J2J": 0.017593366424761503,
-      "durable_summary": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/evaluation_000000/summary.json",
-      "sha256": "b3e9d103388e768912c5bc612c91cf3d6b6c4d279b8d366a93c92a82bbd1d86d"
-    },
-    "verified_first_update": {
-      "observed_utc": "2026-11-08T17:24:27.651376+00:00",
-      "actual_asset_and_frame_visits": 48,
-      "loss": 1.538993000984192,
-      "gradient_norm": 6.075977802276611,
-      "latest_visits_by_rank": [
-        624,
-        624
-      ],
-      "stage2_enabled": false,
-      "both_ranks_match": true
-    },
-    "completion_review": {
-      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/completion_review.json",
-      "sha256": "351861392eea33e2a2f13228edabf9f4d816d54883207a1e505f2b1ccccc195d"
-    },
-    "samples": 30000,
-    "optimizer_updates": 627,
-    "latest_checkpoint": {
-      "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train/checkpoint_030000.pt",
-      "durable_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/checkpoint_030000.pt",
-      "sha256": "58a999bde6669cb43ced784dc679f9a99675230ace7a27bd5ceeb33f3a378b59",
-      "bytes": 4974563338,
-      "samples": 30000,
-      "step": 627,
-      "complete": true,
-      "both_copies_verified": true,
-      "optimizer_and_rank_RNG_retained": true
-    },
-    "quality_accepted": false
+    ]
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -309,13 +226,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "submit",
-    "train",
-    "preflight",
-    "matched_eval"
+    "matched_eval",
+    "train"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -480,7 +397,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Sequentially audit, capacity-check and train the three Stage 1-only controls.",
+  "next_required_result": "Verify this exact native stage before admitting the next one.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -524,8 +441,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_static_5k_20261109_complete",
-  "updated_at": "2026-11-08T18:21:43.593840+00:00",
+  "state_id": "skintokens_stage1_5k_20261109_frame_local_audit",
+  "updated_at": "2026-11-08T18:22:37.051187+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

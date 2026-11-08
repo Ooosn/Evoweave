@@ -50,8 +50,8 @@
     "label": "skintokens_stage1_5k_20261109",
     "experiment": "skintokens_stage1_5k_20261109",
     "arm": "frame_local",
-    "complete": false,
-    "status": "exact_train_admitted",
+    "complete": true,
+    "status": "skintokens_stage1_5k_20261109_frame_local_complete",
     "code_commit": "1332e150cdb6b78baab3542236781f591febe5a3",
     "explicit_human_authorized": true,
     "authorization": "User directed analysis and launch after the baseline completes.",
@@ -60,8 +60,8 @@
       "preflight": "model_training/rigweave/scripts/train_skintokens_stage1.py",
       "train": "model_training/rigweave/scripts/train_skintokens_stage1.py"
     },
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "stage_evidence": {
@@ -137,12 +137,16 @@
     "runs": [
       {
         "mode": "train",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_frame_local.json",
         "config_sha256": "bab720416b0b11c5c2801308518fd0fb0082c8d829011117946398912522ad02",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/frame_local/train"
       }
-    ]
+    ],
+    "completion_review": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/frame_local/receipts/completion_review.json",
+      "sha256": "fafe6602ff964f53851fe0ce85c57bd15155de35b8076b7b888b3782287497b7"
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -253,12 +257,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -468,8 +472,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_stage1_5k_20261109_frame_local_train",
-  "updated_at": "2026-11-08T18:29:26.073443+00:00",
+  "state_id": "skintokens_stage1_5k_20261109_frame_local_complete",
+  "updated_at": "2026-11-08T22:01:17.791298+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
@@ -877,7 +881,12 @@
       "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/completion_review.json",
       "sha256": "351861392eea33e2a2f13228edabf9f4d816d54883207a1e505f2b1ccccc195d"
     },
-    "completed": {},
+    "completed": {
+      "frame_local": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/frame_local/receipts/completion_review.json",
+        "sha256": "fafe6602ff964f53851fe0ce85c57bd15155de35b8076b7b888b3782287497b7"
+      }
+    },
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false
   }

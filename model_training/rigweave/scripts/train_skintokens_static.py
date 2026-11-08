@@ -84,7 +84,7 @@ def make_stream(config, rank):
         update_boundaries=train['checkpoint_assets'])
 
 
-def data_context(config):
+def data_context(config, *, frames=1):
     recipe = config['base_recipe']
     path = ROOT / recipe['path']
     if sha256(path) != recipe['sha256'] or sha256(config['data_cache']['index']) != config['data_cache']['index_sha256']:
@@ -99,7 +99,7 @@ def data_context(config):
     if {r['asset_id'] for r in train} & {r['asset_id'] for r in entries['valid']}:
         raise ValueError('training and validation overlap')
     resolver = CachedFiles(config, base)
-    dataset = fixed_dataset(train, base, 1, mode='train', file_resolver=resolver)
+    dataset = fixed_dataset(train, base, frames, mode='train', file_resolver=resolver)
     base['optimization']['schedule_samples'] = config['training']['additional_assets']
     return base, dataset, evaluation_rows(base, entries)
 
@@ -244,13 +244,14 @@ def gradient_groups(model):
 
 
 @torch.inference_mode()
-def evaluate(model, panel, base, config, output, samples, device, rank):
+def evaluate(model, panel, base, config, output, samples, device, rank, *,
+             initialize_model=initialize, reference_condition=None):
     rows = []
     tf32 = torch.backends.cuda.matmul.allow_tf32, torch.backends.cudnn.allow_tf32
     with preserve_random():
         torch.backends.cuda.matmul.allow_tf32 = torch.backends.cudnn.allow_tf32 = False
         try:
-            eager, tokenizer, _ = initialize(config, device, eager=True, load_weights=False)
+            eager, tokenizer, _ = initialize_model(config, device, eager=True, load_weights=False)
             eager.load_state_dict(model.state_dict(), strict=True)
             eager.eval()
             start = torch.tensor([tokenizer.bos, tokenizer.cls_name_to_token(tokenizer.skeleton_class)], device=device)
@@ -262,7 +263,10 @@ def evaluate(model, panel, base, config, output, samples, device, rank):
                 surface = record['surface']
                 seed = sample_seed(base['evaluation']['seed'], record['asset_id'], 'native-static-512')
                 torch.manual_seed(seed)
-                condition = eager.encode(surface['dense_points'][:, 0].to(device), surface['dense_normals'][:, 0].to(device))
+                if reference_condition is None:
+                    condition = eager.encode(surface['dense_points'][:, 0].to(device), surface['dense_normals'][:, 0].to(device))
+                else:
+                    condition = reference_condition(eager, surface, device)
                 prediction = eager.generate_condition(condition, start, eos_token=tokenizer.eos,
                     max_new_tokens=config['evaluation']['max_new_tokens'], logits_processor=processor)
                 identity = canonical_identity(record, 0)
@@ -278,6 +282,8 @@ def evaluate(model, panel, base, config, output, samples, device, rank):
         raise RuntimeError('not exactly one reference result per fixed asset')
     summary = {'complete': True, 'samples': samples, 'stage1': summarize_rows(rows),
         'stage2_enabled': False, 'reference_slot': 0, 'policy': 'greedy_fp32_native_skeleton'}
+    if reference_condition is not None:
+        summary.update(arm=config['arm'], input_frames=8)
     if rank == 0:
         directory = output / f'evaluation_{samples:06d}'
         directory.mkdir(exist_ok=False)
@@ -290,7 +296,7 @@ def evaluate(model, panel, base, config, output, samples, device, rank):
     return summary
 
 
-def checkpoint(model, optimizer, stream, config, output, initial, source, samples, step, rank):
+def checkpoint(model, optimizer, stream, config, output, initial, source, samples, step, rank, *, exposure=None):
     states = gather({'rank': rank, 'stream': stream.state_dict(), **random_state()}, 2)
     spec = None
     if rank == 0:
@@ -301,6 +307,8 @@ def checkpoint(model, optimizer, stream, config, output, initial, source, sample
         payload = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'rank_states': states,
             'initialization': initial, 'configuration': config, 'code_commit': source,
             'samples': samples, 'step': step, 'input_frame_visits': samples, 'stage2_enabled': False}
+        if exposure is not None:
+            payload.update(exposure)
         torch.save(payload, temp)
         saved = torch.load(temp, map_location='cpu', mmap=True, weights_only=False)
         if (saved['samples'] != samples or saved['step'] != step or len(saved['rank_states']) != 2
@@ -310,6 +318,8 @@ def checkpoint(model, optimizer, stream, config, output, initial, source, sample
         temp.replace(path)
         spec = {**mirror(path, path.name, config), 'samples': samples, 'step': step,
                 'complete': True, 'both_copies_verified': True, 'optimizer_and_rank_RNG_retained': True}
+        if exposure is not None:
+            spec.update(exposure)
         write_json(path.with_suffix('.json'), spec)
         write_json(Path(spec['durable_path']).with_suffix('.json'), spec)
     return gather(spec, 2)[0]
@@ -383,21 +393,22 @@ def train(config, output, source, device, rank):
             'checkpoints': checkpoints, 'validation': curve, 'working_model_changed': False}
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(*, validate=validate_config, audit_model=audit, capacity_model=capacity,
+         train_model=train, description=__doc__):
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--config', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--mode', choices=('audit', 'capacity', 'train'), required=True)
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
-    validate_config(config)
+    validate(config)
     source = verify_launch(args, config)
     config_sha = sha256(args.config)
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     if args.mode == 'audit':
         args.output.mkdir(parents=True, exist_ok=False)
-        write_json(args.output / 'result.json', {**audit(config), 'source': source, 'config_sha256': config_sha,
+        write_json(args.output / 'result.json', {**audit_model(config), 'source': source, 'config_sha256': config_sha,
                                                'stage2_enabled': False})
         return
     rank = int(os.environ['RANK'])
@@ -413,8 +424,8 @@ def main():
         if rank == 0:
             args.output.mkdir(parents=True, exist_ok=False)
         dist.barrier(device_ids=[device.index])
-        value = (capacity(config, device, rank) if args.mode == 'capacity'
-                 else train(config, args.output, source, device, rank))
+        value = (capacity_model(config, device, rank) if args.mode == 'capacity'
+                 else train_model(config, args.output, source, device, rank))
         value.update(source=source, config_sha256=config_sha, stage2_enabled=False,
                      finished_utc=datetime.now(timezone.utc).isoformat())
         write_json(args.output / f'result_rank_{rank}.json', value)

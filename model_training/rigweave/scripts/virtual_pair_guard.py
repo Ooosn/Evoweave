@@ -22,6 +22,7 @@ from anchor_full_protocol import SCOPE as FULL_SCOPE, ENTRYPOINT as FULL_ENTRYPO
 from hardcase_adaptation_protocol import SCOPE as HARDCASE_SCOPE, ENTRYPOINT as HARDCASE_ENTRYPOINT
 from paper_benchmark_protocol import SCOPE as PAPER_SCOPE, ENTRYPOINT as PAPER_ENTRYPOINT
 from skintokens_static_protocol import SCOPE as SKINTOKENS_SCOPE, ENTRYPOINT as SKINTOKENS_ENTRYPOINT
+from skintokens_stage1_protocol import SCOPE as SKINTOKENS_STAGE1_SCOPE, ENTRYPOINT as SKINTOKENS_STAGE1_ENTRYPOINT
 
 ROOT = Path(__file__).resolve().parents[3]
 ENTRYPOINT = 'model_training/rigweave/scripts/train_virtual_pair.py'
@@ -53,13 +54,14 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
     expected_entrypoint = {REFERENCE_SCOPE: REFERENCE_ENTRYPOINT, FLOW_SCOPE: FLOW_ENTRYPOINT,
         ANCHOR_SCOPE: ANCHOR_ENTRYPOINT, INTEGRATION_SCOPE: INTEGRATION_ENTRYPOINT,
         AR_SCOPE: AR_ENTRYPOINT, REPAIR_SCOPE: REPAIR_ENTRYPOINT, PREDICTED_SCOPE: PREDICTED_ENTRYPOINT,
         FULL_SCOPE: FULL_ENTRYPOINT, HARDCASE_SCOPE: HARDCASE_ENTRYPOINT,
-        PAPER_SCOPE: PAPER_ENTRYPOINT, SKINTOKENS_SCOPE: SKINTOKENS_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
+        PAPER_SCOPE: PAPER_ENTRYPOINT, SKINTOKENS_SCOPE: SKINTOKENS_ENTRYPOINT,
+        SKINTOKENS_STAGE1_SCOPE: SKINTOKENS_STAGE1_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
     if op.get('label') == FULL_SCOPE and op.get('experiment') == 'tokenrig_alignment_probe_20261105':
         if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
             raise RuntimeError('the alignment probe cannot authorize optimizer updates')
@@ -110,7 +112,7 @@ def scheduler_runtime(config):
     if 'paper_shared_inference' in runtime:
         from paper_benchmark_protocol import shared_gpu_policy
         shared_gpu_policy(config)
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     subset = runtime.get('native_subset')
@@ -261,6 +263,9 @@ def validate_stage(state, config, args):
             raise RuntimeError('training needs primary CPU audit acceptance')
     if op['label'] == SKINTOKENS_SCOPE:
         from skintokens_static_protocol import verify_evidence
+        verify_evidence(op, config, args.mode, matches[0]['config_sha256'])
+    if op['label'] == SKINTOKENS_STAGE1_SCOPE:
+        from skintokens_stage1_protocol import verify_evidence
         verify_evidence(op, config, args.mode, matches[0]['config_sha256'])
     return op
 

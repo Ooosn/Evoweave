@@ -152,6 +152,12 @@ class VirtualPathAblationRig(nn.Module):
             parts.append(block.anchor_temporal(tail).reshape(batch, frames, slots-complete, dim))
         return torch.cat(parts, dim=2)
 
+    def _real_roles(self, batch, frames):
+        return self.motion_encoder.role_token[:, 1:2].expand(batch, frames, -1, -1)
+
+    def _real_readout(self, real):
+        return real
+
     def _encode_real_only(self, frame_tokens: torch.Tensor, evidence: Any):
         if frame_tokens.ndim != 4 or frame_tokens.shape[2:] != (
                 self.config.query_tokens, self.config.dim):
@@ -166,7 +172,7 @@ class VirtualPathAblationRig(nn.Module):
                      if self.motion_encoder.register is not None
                      else frame_tokens.new_empty(batch, 0, dim))
         real = torch.cat((
-            self.motion_encoder.role_token[:, 1:2].expand(batch, frames, -1, -1),
+            self._real_roles(batch, frames),
             registers[:, None].expand(-1, frames, -1, -1),
             frame_tokens,
         ), dim=2)
@@ -177,7 +183,7 @@ class VirtualPathAblationRig(nn.Module):
             else:
                 real = self._real_block(block, real, evidence)
         offset = 1 + self.motion_encoder.register_tokens
-        return self.motion_encoder.norm(real)[:, :, offset:], None
+        return self.motion_encoder.norm(self._real_readout(real))[:, :, offset:], None
 
     def encode(self, surface):
         if self.virtual_enabled:

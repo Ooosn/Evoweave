@@ -40,14 +40,19 @@ def validate_config(config):
 
 def verify_evidence(op, config, mode, config_sha):
     validate_config(config)
-    if op.get('experiment') != SCOPE or mode not in ('audit', 'capacity', 'train'):
-        raise ValueError('unexpected native single-pose stage')
+    check_preflights(op, config, mode, config_sha, scope=SCOPE, allow_recompute=True)
+
+
+def check_preflights(op, config, mode, config_sha, *, scope, allow_recompute=False):
+    if op.get('experiment') != scope or mode not in ('audit', 'capacity', 'train'):
+        raise ValueError('unexpected skeleton-only stage')
     needed = () if mode == 'audit' else ('audit',) if mode == 'capacity' else ('audit', 'capacity')
     for stage in needed:
         evidence = op['stage_evidence'][stage]
         root = Path(config['runtime']['output_root'])
         output = evidence.get('output_name', stage)
-        if output not in (('audit',) if stage == 'audit' else ('capacity', 'capacity_recompute')):
+        names = ('capacity', 'capacity_recompute') if stage == 'capacity' and allow_recompute else (stage,)
+        if output not in names:
             raise ValueError(f'unreviewed {stage} evidence path')
         paths = (root / output / 'result.json', root / f'{output}_resources.json')
         if any(sha256(path) != evidence[key] for path, key in
@@ -55,6 +60,7 @@ def verify_evidence(op, config, mode, config_sha):
             raise ValueError(f'{stage} evidence differs')
         result, resources = (json.loads(path.read_text()) for path in paths)
         if (result.get('config_sha256') != config_sha or result.get('source') != resources.get('source')
+                or result.get('source') != evidence['source']
                 or result.get('stage2_enabled') is not False
                 or not all(value.get('complete') and value.get('passed') for value in (result, resources))
                 or not resources.get('kernel_scheduler_membership')

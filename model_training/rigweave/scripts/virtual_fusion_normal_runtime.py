@@ -24,8 +24,8 @@ class MatchedFrameStream:
         if (len(dataset) < 1 or not 0 < target_assets < 2**32 or effective_assets < 1
                 or target_assets % world_size or effective_assets % world_size):
             raise ValueError('sampling needs rank-divisible global asset updates')
-        if not 2 <= min_frames <= max_frames <= 24:
-            raise ValueError('normal frame counts must stay within2..24')
+        if (min_frames, max_frames) != (1, 1) and not 2 <= min_frames <= max_frames <= 24:
+            raise ValueError('frame counts must be fixed at one or stay within 2..24')
         if (not isinstance(manifest_sha256, str) or len(manifest_sha256) != 64
                 or any(char not in '0123456789abcdef' for char in manifest_sha256)):
             raise ValueError('sampling needs the immutable ordered manifest fingerprint')
@@ -194,7 +194,8 @@ class MatchedFrameStream:
         frames, counts = np.unique(self.frame_counts, return_counts=True)
         return {'algorithm': 'matched_asset_exposure_v1', 'plan_sha256': self.plan_sha256,
                 'contract': deepcopy(self.contract), 'sampling_seed_rule': '(seed << 32) + global_exposure_index',
-                'frame_count_rule': 'uniform2..24 per global optimizer update, shared by both ranks',
+                'frame_count_rule': ('one pose per visit' if set(self.policy) == {'1'}
+                    else 'uniform2..24 per global optimizer update, shared by both ranks'),
                 'asset_order_rule': 'seeded full permutations, independent of physical microbatch size',
                 'update_sizes': self.update_sizes.tolist(),
                 'supervised_frame_exposures': int(np.dot(self.update_sizes.astype(np.int64), self.frame_counts)),

@@ -86,7 +86,7 @@ def build_tokenrig_conditioning(spec, input_width, *, load_weights):
     from virtual_query_xyz_runtime import sha256
 
     setting = spec['conditioning']
-    if setting['kind'] != 'released_mesh_projection_v1' or input_width != 1024:
+    if setting['kind'] != 'released_mesh_projection_v1' or input_width not in (512, 1024):
         raise ValueError('unreviewed TokenRig conditioning route')
     source = Path(spec['source']).resolve()
     revision = subprocess.check_output(['git', '-C', str(source), 'rev-parse', 'HEAD'], text=True).strip()
@@ -116,6 +116,14 @@ def build_tokenrig_conditioning(spec, input_width, *, load_weights):
         encoder.load_state_dict(mesh, strict=True)
         projection.load_native(*(state[k] for k in (
             'output_proj.0.weight', 'output_proj.0.bias', 'output_proj.1.weight')))
+    if input_width == encoder.width:
+        return encoder, projection, {
+            'kind': 'native_single_pose_512', 'source_commit': revision,
+            'checkpoint_sha256': spec['checkpoint_sha256'], 'mesh_tensors': len(mesh),
+            'native_encoder_width': encoder.width, 'native_encoder_layers': 8,
+            'native_static_prefix_tokens': 512, 'projection_and_RMSNorm_loaded': load_weights,
+            'strict_mesh_weights_loaded': load_weights,
+        }
     return encoder, projection, {
         'kind': setting['kind'], 'source_commit': revision, 'checkpoint_sha256': spec['checkpoint_sha256'],
         'mesh_tensors': len(mesh), 'native_encoder_width': encoder.width, 'motion_width': input_width,

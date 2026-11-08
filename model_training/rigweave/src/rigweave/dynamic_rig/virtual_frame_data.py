@@ -76,12 +76,16 @@ class VirtualFrameDataset(Dataset):
             train, heldout = partition_raw_frames(
                 len(vertices), partition_seed(self.frame_seed, entry["asset_id"]), self.heldout_frames)
             eligible = heldout if self.mode == "heldout_eval" else train
-            slots = select_mesh_frame_ids(
-                vertices[eligible], frame_count=frames, path=path, index=index,
-                random_query=True, seed=self.sampling_seed, sampling_seed=seed,
-                motion_fps_ratio=self.motion_fps_ratio, motion_vertex_samples=self.motion_vertex_samples,
-                minimum_random_frames=self.minimum_random_frames,
-            )
+            if frames == 1:
+                # Use the same seeded query draw as the multi-frame selector.
+                slots = np.array([np.random.default_rng(seed).integers(0, len(eligible))])
+            else:
+                slots = select_mesh_frame_ids(
+                    vertices[eligible], frame_count=frames, path=path, index=index,
+                    random_query=True, seed=self.sampling_seed, sampling_seed=seed,
+                    motion_fps_ratio=self.motion_fps_ratio, motion_vertex_samples=self.motion_vertex_samples,
+                    minimum_random_frames=self.minimum_random_frames,
+                )
             selected = eligible[slots]
             if self.mode != "heldout_eval" and np.intersect1d(selected, heldout).size:
                 raise RuntimeError("heldout geometry entered an optimization/seen view")

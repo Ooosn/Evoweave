@@ -64,7 +64,7 @@
     "capacity_accepted": true,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "exact_native_training_admitted",
+    "status": "running_zero_step_reference_validation",
     "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
     "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
@@ -146,7 +146,20 @@
       "failure": "Both ranks reached the per-process cap during long-sequence Qwen forward; standalone entry had not enabled the existing non-reentrant activation recomputation.",
       "durable_log": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/receipts/capacity.log"
     },
-    "CPU_audit_inheritance": "No config, eager CPU path, model, dataset, or input-panel changes. Only the non-eager training path restores Qwen activation recomputation."
+    "CPU_audit_inheritance": "No config, eager CPU path, model, dataset, or input-panel changes. Only the non-eager training path restores Qwen activation recomputation.",
+    "verified_start": {
+      "source": "771fd057a52fc4c03e86ba163aae5b7c47971984",
+      "observed_utc": "2026-11-08T17:20:41.129538Z",
+      "allocation": 131942123,
+      "kernel_scheduler_membership": true,
+      "child_pid": 550205,
+      "reference_validation_samples": 0,
+      "completed_views_at_observation": 3,
+      "stage2_enabled": false,
+      "trainable_parameters": 414497536,
+      "resource_receipt": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train_resources.json",
+      "no_other_arm_queued": true
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -473,7 +486,7 @@
   ],
   "schema_version": 1,
   "state_id": "skintokens_static_5k_20261109_train",
-  "updated_at": "2026-11-08T17:19:42.706Z",
+  "updated_at": "2026-11-08T17:21:09.690Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

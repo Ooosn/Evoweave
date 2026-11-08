@@ -64,7 +64,7 @@
     "capacity_accepted": true,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "running_zero_step_reference_validation",
+    "status": "running_verified_first_update_and_zero_baseline",
     "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
     "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
@@ -159,6 +159,27 @@
       "trainable_parameters": 414497536,
       "resource_receipt": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/train_resources.json",
       "no_other_arm_queued": true
+    },
+    "zero_step_reference_validation": {
+      "assets": 128,
+      "views": 128,
+      "reference_slot": 0,
+      "edge_F1": 0.7394813640026484,
+      "normalized_J2J": 0.017593366424761503,
+      "durable_summary": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109/evaluation_000000/summary.json",
+      "sha256": "b3e9d103388e768912c5bc612c91cf3d6b6c4d279b8d366a93c92a82bbd1d86d"
+    },
+    "verified_first_update": {
+      "observed_utc": "2026-11-08T17:24:27.651376+00:00",
+      "actual_asset_and_frame_visits": 48,
+      "loss": 1.538993000984192,
+      "gradient_norm": 6.075977802276611,
+      "latest_visits_by_rank": [
+        624,
+        624
+      ],
+      "stage2_enabled": false,
+      "both_ranks_match": true
     }
   },
   "alignment_evidence": {
@@ -486,7 +507,7 @@
   ],
   "schema_version": 1,
   "state_id": "skintokens_static_5k_20261109_train",
-  "updated_at": "2026-11-08T17:21:09.690Z",
+  "updated_at": "2026-11-08T17:24:27.651376+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

@@ -46,7 +46,10 @@ def verify_evidence(op, config, mode, config_sha):
     for stage in needed:
         evidence = op['stage_evidence'][stage]
         root = Path(config['runtime']['output_root'])
-        paths = (root / stage / 'result.json', root / f'{stage}_resources.json')
+        output = evidence.get('output_name', stage)
+        if output not in (('audit',) if stage == 'audit' else ('capacity', 'capacity_recompute')):
+            raise ValueError(f'unreviewed {stage} evidence path')
+        paths = (root / output / 'result.json', root / f'{output}_resources.json')
         if any(sha256(path) != evidence[key] for path, key in
                zip(paths, ('result_sha256', 'resources_sha256'))):
             raise ValueError(f'{stage} evidence differs')

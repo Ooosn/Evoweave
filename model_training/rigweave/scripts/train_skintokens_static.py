@@ -66,6 +66,9 @@ def initialize(config, device, *, eager=False, load_weights=True):
     spec = {**config['tokenrig_decoder'], 'eager': eager}
     encoder, projection, mesh = build_tokenrig_conditioning(spec, 512, load_weights=load_weights)
     decoder, tokenizer, ar = build_tokenrig_decoder(spec, load_weights=load_weights)
+    if not eager:
+        decoder.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
+    ar['activation_recomputation'] = not eager
     model = SinglePoseSkeleton(encoder, projection, decoder).to(device)
     return model, tokenizer, {'mesh': mesh, 'decoder': ar, 'project_checkpoint_loaded': False,
         'stage2_enabled': False, 'trainable_parameters': sum(
@@ -204,6 +207,10 @@ def capacity(config, device, rank):
     model, tokenizer, initial = initialize(config, device)
     groups, _ = stress_groups(dataset.entries, expected_rows=5000)
     profiles = []
+    # Reserve space for Adam moments, DDP buckets, and optimizer temporaries.
+    optimizer_reserve = 4 * sum(p.numel() * p.element_size() for p in model.parameters() if p.requires_grad)
+    ceiling = min(76000 * 2**20, config['runtime']['gpu_memory_fraction_limit']
+                  * torch.cuda.get_device_properties(device).total_memory)
     for profile, indices in groups.items():
         model.zero_grad(set_to_none=True)
         torch.cuda.reset_peak_memory_stats(device)
@@ -216,8 +223,11 @@ def capacity(config, device, rank):
         losses.mean().backward()
         norms = gradient_groups(model)
         torch.cuda.synchronize(device)
+        peak = torch.cuda.max_memory_reserved(device)
+        if peak + optimizer_reserve >= ceiling:
+            raise RuntimeError('capacity lacks Adam/DDP memory headroom')
         profiles.append({'profile': profile, 'assets_per_rank': len(losses), 'gradient_groups': norms,
-                         'peak_reserved_bytes': torch.cuda.max_memory_reserved(device)})
+                         'peak_reserved_bytes': peak, 'Adam_DDP_reserve_bytes': optimizer_reserve})
         del inputs, losses, batch
     return {'complete': True, 'passed': True, 'optimizer_updates': 0, 'initialization': initial,
             'profiles_by_rank': gather(profiles, 2)}

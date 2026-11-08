@@ -51,7 +51,7 @@
     "experiment": "skintokens_stage1_5k_20261109",
     "arm": "temporal_multi",
     "complete": false,
-    "status": "exact_capacity_admitted",
+    "status": "exact_train_admitted",
     "code_commit": "1332e150cdb6b78baab3542236781f591febe5a3",
     "explicit_human_authorized": true,
     "authorization": "User directed analysis and launch after the baseline completes.",
@@ -60,10 +60,10 @@
       "preflight": "model_training/rigweave/scripts/train_skintokens_stage1.py",
       "train": "model_training/rigweave/scripts/train_skintokens_stage1.py"
     },
-    "formal_training_allowed": false,
+    "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
+    "capacity_accepted": true,
     "stage_evidence": {
       "audit": {
         "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/audit/result.json",
@@ -75,6 +75,19 @@
         "peak_gpu_memory_mib": {
           "3": 0,
           "4": 0
+        },
+        "payload_cleanup_complete": true
+      },
+      "capacity": {
+        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/capacity/result.json",
+        "result_sha256": "4166f889b9e87379e43c320d1bf76343426c1636b70c54facaddfbbe540a3145",
+        "resources_path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/capacity_resources.json",
+        "resources_sha256": "79aa7e08f4351bc45c38ce0d8939eedd256c40c863bcb86c346faf11c6ff8c7b",
+        "source": "587a51a1289c5efd835cb5bb73bda73facbfa61f",
+        "output_name": "capacity",
+        "peak_gpu_memory_mib": {
+          "3": 36481,
+          "4": 36489
         },
         "payload_cleanup_complete": true
       }
@@ -123,11 +136,11 @@
     "working_model_change_allowed": false,
     "runs": [
       {
-        "mode": "capacity",
+        "mode": "train",
         "approved": true,
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_temporal_multi.json",
         "config_sha256": "53332caeb84d591d02e3333e9ef2127eb80fd0f2514e1a8a8c10038afd5ecbc1",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/capacity"
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/train"
       }
     ]
   },
@@ -241,12 +254,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "matched_eval",
-    "train"
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -455,8 +468,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_stage1_5k_20261109_temporal_multi_capacity",
-  "updated_at": "2026-11-08T22:06:33.059044+00:00",
+  "state_id": "skintokens_stage1_5k_20261109_temporal_multi_train",
+  "updated_at": "2026-11-08T22:11:14.180756+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

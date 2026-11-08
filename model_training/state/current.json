@@ -59,12 +59,12 @@
       "train": "model_training/rigweave/scripts/train_skintokens_static.py"
     },
     "formal_training_allowed": false,
-    "gpu_work_allowed": false,
-    "CPU_audit_accepted": false,
+    "gpu_work_allowed": true,
+    "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
-    "status": "exact_CPU_audit_admitted",
+    "status": "exact_no_update_GPU_capacity_admitted",
     "protocol": "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md",
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
     "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
@@ -89,7 +89,14 @@
       ]
     },
     "acceptance_test": "Strict release restore and exact fixed data/validation audit, no-update B24 per GPU finite forward/backward and resource margin, then 30000 visits/627 updates, four one-pose panels and all three complete durable recoveries.",
-    "stage_evidence": {},
+    "stage_evidence": {
+      "audit": {
+        "result_sha256": "d450bfd27c63f9167cf98ce6f0f2f65c9dc06a4af3e67da037e559339c8f2fb3",
+        "resources_sha256": "416d7725b571d350e331882b3d5dfc240fb45ca68e7f700d023f33794e5e27ff",
+        "source": "2b6421dedff901ae687a65d951ca07354a00f5dd",
+        "optimizer_updates": 0
+      }
+    },
     "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109",
     "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_static_5k_20261109",
     "runs": [
@@ -98,6 +105,13 @@
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
         "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/audit",
+        "approved": false
+      },
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_static_5k_20261109/model_training/experiments/skintokens_static_5k_20261109.json",
+        "config_sha256": "211e31d1b57ec23924166d12c2ebf6977cc2c980916d9144addc9fe76da59aa6",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_static_5k_20261109/capacity",
         "approved": true
       }
     ]
@@ -382,7 +396,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Verify the exact CPU audit of the single-pose SkinTokens baseline; no GPU training until the separate no-update capacity check passes.",
+  "next_required_result": "Complete only the no-update single-frame memory/gradient check before admitting formal training.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -426,8 +440,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_static_5k_20261109_audit",
-  "updated_at": "2026-11-08T17:09:43.309Z",
+  "state_id": "skintokens_static_5k_20261109_capacity",
+  "updated_at": "2026-11-08T17:15:06.932Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

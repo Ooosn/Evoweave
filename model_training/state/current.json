@@ -47,6 +47,47 @@
     }
   },
   "active_operation": {
+    "label": "anchor_stage2_input_replay_20261110",
+    "experiment": "anchor_stage2_input_replay_20261110",
+    "status": "input_replay_admitted",
+    "complete": false,
+    "explicit_human_authorized": true,
+    "authorization": "User asked to find the exact cause of the validation identity failure and report back. Bounded replay of validation inputs only; do not resume or start training.",
+    "code_commit": "0ea0199de5c854a1c54dc02d89d485195faa4ed7",
+    "required_entrypoint": "model_training/rigweave/scripts/probe_anchor_stage2_surface_replay.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/probe_anchor_stage2_surface_replay.py"
+    },
+    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "optimizer_updates_allowed": 0,
+    "working_model_change_allowed": false,
+    "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_input_replay_20261110/model_training/experiments/anchor_stage2_input_replay_20261110.json",
+    "config_sha256": "3860ebef6a726945372704f69a51bfef7cf621f9a07cc6bf1291c414438afdb3",
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_input_replay_20261110",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_input_replay_20261110",
+    "runs": [
+      {
+        "mode": "capacity",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_input_replay_20261110/model_training/experiments/anchor_stage2_input_replay_20261110.json",
+        "config_sha256": "3860ebef6a726945372704f69a51bfef7cf621f9a07cc6bf1291c414438afdb3",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_input_replay_20261110/probe",
+        "approved": true
+      }
+    ],
+    "resource_binding": {
+      "allocation": 131942123,
+      "host": "pcg01i",
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_slots": 16,
+      "stop_before_utc": "2026-11-11T04:50:00Z"
+    },
+    "acceptance_test": "Exact retained validation rows and data configuration; isolate field-level differences on the same rank and GPU; no model weights loaded or optimizer updates; retain both historical and replay digests."
+  },
+  "anchor_stage2_chunk4_failure_20261109": {
     "label": "anchor_stage2_5k_20261109",
     "experiment": "anchor_stage2_5k_20261109",
     "complete": true,
@@ -625,11 +666,11 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "submit",
-    "preflight",
     "train",
     "matched_eval"
   ],
@@ -796,7 +837,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Review matched Stage 2 evidence; no automatic model change.",
+  "next_required_result": "Identify the field that changed between the two fixed-panel validations, then report without resuming training.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -840,8 +881,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "anchor_stage2_5k_20261109_failed_or_stopped",
-  "updated_at": "2026-11-09T11:01:43.212823+00:00",
+  "state_id": "anchor_stage2_input_replay_20261110_admitted",
+  "updated_at": "2026-11-09T17:02:22Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

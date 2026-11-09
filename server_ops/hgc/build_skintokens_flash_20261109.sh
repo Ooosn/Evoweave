@@ -6,7 +6,7 @@ grep -Eq '^[0-9]+:cpuset:/AGE/131942123\.1/master$' /proc/self/cgroup
 grep -Eq '^[0-9]+:devices:/AGE/131942123\.1/master$' /proc/self/cgroup
 root=/work/wangyy/skintokens_original_test_20261109
 py=$root/venv/bin/python
-build=$root/flash_build
+build=$root/flash_build_headers
 affinity=6,7,9,10,11,12,14,15,61,63,64,65,66,67,68,69
 umask 077
 mkdir "$build"
@@ -14,6 +14,8 @@ export CUDA_VISIBLE_DEVICES='' PYTHONDONTWRITEBYTECODE=1 PIP_DISABLE_PIP_VERSION
 export TMPDIR="$build" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 export CUDA_HOME=/opt/cuda/12.4.1 FLASH_ATTENTION_FORCE_BUILD=TRUE FLASH_ATTN_CUDA_ARCHS=90
 export MAX_JOBS=8 NVCC_THREADS=2
+test -f "$root/cpython_headers/Include/Python.h"
+export CPATH="$root/cpython_headers/Include${CPATH:+:$CPATH}"
 sdist=$build/flash_attn-2.8.3.tar.gz
 curl --fail --location --silent --show-error --connect-timeout 10 --max-time 120 --output "$sdist" \
   https://files.pythonhosted.org/packages/3b/b2/8d76c41ad7974ee264754709c22963447f7f8134613fd9ce80984ed0dab7/flash_attn-2.8.3.tar.gz

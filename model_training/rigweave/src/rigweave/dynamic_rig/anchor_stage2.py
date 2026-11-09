@@ -7,7 +7,7 @@ from torch.utils.checkpoint import checkpoint
 
 from .anchor_joint_binding import coordinate_objective
 from .motion_encoder import AnchorWiseAlternatingBlock
-from .motion_evidence import MotionEvidenceInjection, grouped_motion_evidence
+from .motion_evidence import MotionEvidence, MotionEvidenceInjection, grouped_motion_evidence
 from .reference_skeleton_xyz import reference_slots
 
 
@@ -24,12 +24,13 @@ class AnchorStage2Config:
     motion_evidence_heads: int = 8
     gradient_checkpointing: bool = True
     temporal_chunk_size: int = 4096
+    checkpoint_asset_chunk_size: int = 0
 
     def __post_init__(self):
         if not self.temporal_layers or self.spatial_layers not in (
                 self.temporal_layers, 2 * self.temporal_layers):
             raise ValueError('use one or two spatial layers per temporal layer')
-        if self.dim % self.heads or not 1 <= self.temporal_chunk_size:
+        if self.dim % self.heads or not 1 <= self.temporal_chunk_size or self.checkpoint_asset_chunk_size < 0:
             raise ValueError('invalid attention dimensions or chunk size')
 
 
@@ -74,6 +75,21 @@ class AnchorStage2Encoder(nn.Module):
             tokens = self.extra_spatial[index](tokens, evidence)
         return self.blocks[index](tokens, evidence)
 
+    def _checkpoint_group(self, index, tokens, evidence):
+        size = self.config.checkpoint_asset_chunk_size
+        if not size or tokens.shape[0] <= size:
+            return checkpoint(self._group, index, tokens, evidence, use_reentrant=False)
+        # A group never attends across assets. Recompute one independent slice at a time.
+        result = []
+        for start in range(0, tokens.shape[0], size):
+            stop = start + size
+            part = None if evidence is None else MotionEvidence(
+                evidence.states[start:stop], evidence.anchor_features[start:stop],
+                evidence.valid_groups[start:stop])
+            result.append(checkpoint(self._group, index, tokens[start:stop], part,
+                                     use_reentrant=False))
+        return torch.cat(result, dim=0)
+
     def encode(self, surface):
         config = self.config
         points = surface['query_points']
@@ -95,7 +111,7 @@ class AnchorStage2Encoder(nn.Module):
                           self.register.expand(batch, frames, -1, -1),
                           torch.stack(tokens, dim=1)), dim=2)
         for index in range(len(self.blocks)):
-            real = (checkpoint(self._group, index, real, evidence, use_reentrant=False)
+            real = (self._checkpoint_group(index, real, evidence)
                     if recompute else self._group(index, real, evidence))
         return self.norm(real)[:, :, 1 + config.register_tokens:], None
 

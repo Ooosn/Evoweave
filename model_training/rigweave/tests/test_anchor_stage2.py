@@ -1,4 +1,5 @@
 import copy
+from dataclasses import replace
 
 import pytest
 import torch
@@ -102,3 +103,26 @@ def test_two_spatial_layers_have_gradient_and_share_common_initialization():
         assert torch.isfinite(layer.layer.linear1.weight.grad).all()
         assert layer.layer.linear1.weight.grad.norm() > 0
         assert torch.isfinite(layer.injection.bias_weights.grad).all()
+
+
+@pytest.mark.parametrize('schedule', [(2, 2), (4, 2)])
+def test_independent_asset_recomputation_keeps_values_and_gradients(schedule):
+    args = dict(dim=16, heads=4, query_tokens=4, register_tokens=2, max_frames=4,
+                motion_evidence_fusion='bias', motion_evidence_heads=4, temporal_chunk_size=7)
+    plain = AnchorStage2(AnchorStage2Encoder(Surface(), AnchorStage2Config(*schedule, **args)), head())
+    with torch.no_grad():
+        for name, weight in plain.named_parameters():
+            if name.endswith('bias_weights'):
+                weight.normal_()
+    chunked = copy.deepcopy(plain)
+    chunked.backbone.config = replace(chunked.backbone.config, checkpoint_asset_chunk_size=1)
+    surface, geometry, ref = sample()
+    a = plain(surface, geometry, ref, 10., .25)['loss_per_asset']
+    b = chunked(surface, geometry, ref, 10., .25)['loss_per_asset']
+    torch.testing.assert_close(a, b)
+    a.mean().backward()
+    b.mean().backward()
+    for x, y in zip(plain.parameters(), chunked.parameters(), strict=True):
+        assert (x.grad is None) == (y.grad is None)
+        if x.grad is not None:
+            torch.testing.assert_close(x.grad, y.grad, atol=1e-6, rtol=1e-4)

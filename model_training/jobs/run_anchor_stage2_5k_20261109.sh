@@ -5,6 +5,6 @@ set -euo pipefail
 [[ "$(ulimit -v)" == unlimited ]]
 source /home/geadmin/N1GE/default/common/settings.sh
 source ~/1.sh
-cd /work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109
+cd /work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109
 export PYTHONDONTWRITEBYTECODE=1 GIT_TERMINAL_PROMPT=0
 exec /home/wangyy/miniconda3/envs/mygs/bin/python -B server_ops/hgc/chain_anchor_stage2_20261109.py

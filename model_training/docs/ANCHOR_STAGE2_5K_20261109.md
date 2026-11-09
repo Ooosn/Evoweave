@@ -20,6 +20,14 @@ capacity, retest both with 12 per rank and accumulation 2 for 13-24 frames.
 Short frames stay at 24 per rank. The whole-device limit remains 78 GiB;
 capacity acceptance requires a 3 GiB margin. No fallback on non-memory errors.
 
+The unchunked first attempt could not keep the 24-asset high profile in memory.
+In particular, the SST schedule exhausted the cap while recomputing its
+two-spatial group even at the 12-frame stress case. Preserve those receipts.
+For the new isolated attempt, checkpoint a group on independent slices of at
+most four assets; this does not split an asset or change its temporal
+attention, precision, data, objective or optimizer update. Test the 24-frame
+case first in each arm.
+
 Save and verify full recovery states at the first update and every 10,000
 visits. Evaluate the fixed 128-asset panel at initialization and every 10,000
 visits using eight input poses and GT references at slots 0 and 4. Encode each

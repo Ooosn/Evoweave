@@ -14,7 +14,7 @@ from anchor_stage2_protocol import (ACCEPTED_WHOLE_GPU_MIB, ARMS, ENTRYPOINT, MI
 
 STATE = CODE/'model_training/state/current.json'
 CONFIG = CODE/'model_training/experiments'/f'{SCOPE}.json'
-REF = 'refs/heads/codex/anchor-stage2-5k-20261109'
+REF = 'refs/heads/codex/anchor-stage2-5k-chunk4-20261109'
 
 
 def now():

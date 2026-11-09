@@ -1,7 +1,7 @@
 {
   "family": "anchor_stage2_5k_20261109",
   "runtime": {
-    "repo": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109",
+    "repo": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109",
     "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
     "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
     "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
@@ -34,7 +34,7 @@
       68,
       69
     ],
-    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_5k_20261109",
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109",
     "world_size": 2,
     "cpu_slots": 16,
     "execution_cpu_budget": 16,
@@ -69,7 +69,8 @@
       "motion_evidence_fusion": "bias",
       "motion_evidence_heads": 8,
       "gradient_checkpointing": true,
-      "temporal_chunk_size": 4096
+      "temporal_chunk_size": 4096,
+      "checkpoint_asset_chunk_size": 4
     },
     "head": {
       "input_dim": 1024,
@@ -202,14 +203,14 @@
   },
   "capacity": {
     "frames": [
-      12,
-      24
+      24,
+      12
     ],
     "updates_per_cohort": 2,
     "process_limit_mib": 76000,
     "hard_limit_mib": 79872
   },
   "artifacts": {
-    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_5k_20261109"
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109"
   }
 }

@@ -39,8 +39,9 @@ def validate_config(config):
             or config['evaluation']['valid_assets'] != 128 or config['evaluation']['input_frames'] != 8
             or config['evaluation']['reference_slots'] != [0, 4]
             or {k: tuple(v) for k, v in config['architecture']['schedules'].items()} != ARMS
-            or config['capacity'] != {'frames': [12, 24], 'updates_per_cohort': 2,
+            or config['capacity'] != {'frames': [24, 12], 'updates_per_cohort': 2,
                                       'process_limit_mib': PROCESS_MIB, 'hard_limit_mib': HARD_MIB}
+            or config['architecture']['motion']['checkpoint_asset_chunk_size'] != 4
             or {'tokenrig_decoder', 'auxiliary_codec'} & config.keys()
             or 'opt_config_root' in config['runtime']):
         raise ValueError('standalone Stage 2 configuration differs from the approved scope')
@@ -89,7 +90,7 @@ def verify_evidence(op, config, mode, name, config_sha):
                 or not resource['payload_cleanup_complete']):
             raise RuntimeError('capacity did not bind both ranks and the selected batch profile')
         for rows in result['profiles_by_rank']:
-            for row, frames in zip(rows, [12] * 4 + [24] * 4, strict=True):
+            for row, frames in zip(rows, [24] * 4 + [12] * 4, strict=True):
                 expected = frame_policy(size)[str(frames)]
                 if (row['frames'] != frames or row['batch_per_rank'] != expected
                         or row['accumulation'] != 24 // expected or row['assets_in_update'] != 48

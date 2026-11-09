@@ -49,8 +49,8 @@
   "active_operation": {
     "label": "skintokens_original_test_20261109",
     "experiment": "skintokens_original_test_20261109",
-    "complete": false,
-    "status": "compiled_official_backend_verified_GPU_entry_pending",
+    "complete": true,
+    "status": "completed_paired_diagnostic",
     "explicit_human_authorized": true,
     "authorization": "User requested a small before/after comparison on the original published test split using the official SkinTokens GitHub inference instructions.",
     "code_commit": "0c0ea26821a1b4a950791c011e6cdac7be3174a0",
@@ -59,7 +59,7 @@
       "matched_eval": "server_ops/hgc/run_skintokens_original_test_20261109.py"
     },
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "optimizer_updates_allowed": 0,
     "working_model_change_allowed": false,
     "config": "/work/wangyy/skintokens_original_test_20261109/code/model_training/experiments/skintokens_original_test_20261109.json",
@@ -101,7 +101,61 @@
       "cpu_help_failure": "Unmodified upstream module queries CUDA during import. Check the unmodified CLI in the admitted GPU environment."
     },
     "protocol": "model_training/docs/SKINTOKENS_ORIGINAL_TEST_20261109.md",
-    "acceptance_test": "Unmodified official CLI and loopback-only service; exact 12 paired seeds and inputs, no GT fed to inference, validated output geometry, no optimizer step, and durable case evidence."
+    "acceptance_test": "Unmodified official CLI and loopback-only service; exact 12 paired seeds and inputs, no GT fed to inference, validated output geometry, no optimizer step, and durable case evidence.",
+    "completion": {
+      "accepted_as": "paired_diagnostic_only",
+      "started_utc": "2026-11-09T06:25:30.997936+00:00",
+      "finished_utc": "2026-11-09T06:42:54.946769+00:00",
+      "source_commit": "9792bb3f0fa598388254ced1180c456bec395057",
+      "runner_task": "skintokens_original_test_20261109_eval_uuid.sh",
+      "optimizer_updates": 0,
+      "working_model_unchanged": true,
+      "payload_cleanup_complete": true,
+      "native_allocation_retained": true,
+      "peak_gpu_memory_mib": 5541,
+      "pairs_attempted": 12,
+      "paired_assets": 11,
+      "valid_by_arm": {
+        "release": 12,
+        "fine_tuned": 11
+      },
+      "mean_on_paired": {
+        "J2J_percent": {
+          "release": 1.8996187397826356,
+          "fine_tuned": 2.535218122262245,
+          "fine_tuned_minus_release": 0.6355993824796093,
+          "fine_tuned_better_assets": 1
+        },
+        "J2B_percent": {
+          "release": 1.2726087665057144,
+          "fine_tuned": 1.8170906455026703,
+          "fine_tuned_minus_release": 0.544481878996956,
+          "fine_tuned_better_assets": 1
+        },
+        "B2B_percent": {
+          "release": 1.0612288706058999,
+          "fine_tuned": 1.4459707963921593,
+          "fine_tuned_minus_release": 0.38474192578625926,
+          "fine_tuned_better_assets": 2
+        }
+      },
+      "non_exported": {
+        "ordinal": 3,
+        "asset_id": "f03c70f6-7855-5717-a48e-1a1f3b94f579",
+        "arm": "fine_tuned",
+        "log": "03_fine_tuned.log",
+        "reason": "Official decode raised ValueError: No EOS token found in inputs_ids. No retry or replacement."
+      },
+      "conclusion": "The 30k single-frame fine-tune did not transfer its in-domain improvement to this held-out public subset under the official sampled decode. This is not a replication of the complete paper test or a model promotion decision.",
+      "durable_evidence": {
+        "result_sha256": "6385f24d32e476799d7611c5c26e252eb584be11a13079a05e4e3f5bc2dabaa6",
+        "resources_sha256": "2fe29b2017f5a890b8d8acf5a3604501d101e6faee47e32e20c36776d2067ffd",
+        "paired_rows_sha256": "55b887c28cf112ea7625836f9b2b130b42dc5074507915d7b0f76c07d2db232a",
+        "weights_review_sha256": "8aa30df28e05607c46b30c148cd8a2627a27e364ada51380f9083bcbcba3015c",
+        "archive_path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_original_test_20261109/outputs.tar.gz",
+        "archive_sha256": "c37cf3c9400c210a1f2c30c0747fa308efb279771a0c25a0a1277fb6f6a3479d"
+      }
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -212,13 +266,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "matched_eval"
+    "report"
   ],
   "blocked_operations": [
     "submit",
     "train",
-    "preflight"
+    "preflight",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -383,7 +437,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Run the pinned SkinTokens official test-split diagnostic and retain the paired scores and outputs.",
+  "next_required_result": "Requested SkinTokens paired diagnostic recorded. No additional GPU run or working-model change is authorized by this result.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -427,8 +481,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_original_test_20261109_admitted",
-  "updated_at": "2026-11-09T06:03:09Z",
+  "state_id": "skintokens_original_test_20261109_complete",
+  "updated_at": "2026-11-09T06:45:03Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

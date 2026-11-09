@@ -15,6 +15,7 @@ from reference_xyz_protocol import SCOPE as REFERENCE_SCOPE, ENTRYPOINT as REFER
 from reference_flow_protocol import SCOPE as FLOW_SCOPE, ENTRYPOINT as FLOW_ENTRYPOINT
 from anchor_joint_protocol import SCOPE as ANCHOR_SCOPE, ENTRYPOINT as ANCHOR_ENTRYPOINT
 from anchor_integration_protocol import SCOPE as INTEGRATION_SCOPE, ENTRYPOINT as INTEGRATION_ENTRYPOINT
+from anchor_stage2_protocol import SCOPE as STAGE2_SCOPE, ENTRYPOINT as STAGE2_ENTRYPOINT
 from ar_only_protocol import SCOPE as AR_SCOPE, ENTRYPOINT as AR_ENTRYPOINT
 from stage1_surface_repair_protocol import SCOPE as REPAIR_SCOPE, ENTRYPOINT as REPAIR_ENTRYPOINT
 from predicted_reference_protocol import SCOPE as PREDICTED_SCOPE, ENTRYPOINT as PREDICTED_ENTRYPOINT
@@ -54,14 +55,15 @@ def require_job_membership(text, job):
 
 def operation(state):
     op = state.get('active_operation', {})
-    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE) or op.get('explicit_human_authorized') is not True:
+    if op.get('label') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE, STAGE2_SCOPE) or op.get('explicit_human_authorized') is not True:
         raise RuntimeError('matched pair lacks explicit human authorization')
     expected_entrypoint = {REFERENCE_SCOPE: REFERENCE_ENTRYPOINT, FLOW_SCOPE: FLOW_ENTRYPOINT,
         ANCHOR_SCOPE: ANCHOR_ENTRYPOINT, INTEGRATION_SCOPE: INTEGRATION_ENTRYPOINT,
         AR_SCOPE: AR_ENTRYPOINT, REPAIR_SCOPE: REPAIR_ENTRYPOINT, PREDICTED_SCOPE: PREDICTED_ENTRYPOINT,
         FULL_SCOPE: FULL_ENTRYPOINT, HARDCASE_SCOPE: HARDCASE_ENTRYPOINT,
         PAPER_SCOPE: PAPER_ENTRYPOINT, SKINTOKENS_SCOPE: SKINTOKENS_ENTRYPOINT,
-        SKINTOKENS_STAGE1_SCOPE: SKINTOKENS_STAGE1_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
+        SKINTOKENS_STAGE1_SCOPE: SKINTOKENS_STAGE1_ENTRYPOINT,
+        STAGE2_SCOPE: STAGE2_ENTRYPOINT}.get(op.get('label'), ENTRYPOINT)
     if op.get('label') == FULL_SCOPE and op.get('experiment') == 'tokenrig_alignment_probe_20261105':
         if op.get('optimizer_updates_allowed') != 0 or op.get('formal_training_allowed') is not False:
             raise RuntimeError('the alignment probe cannot authorize optimizer updates')
@@ -112,7 +114,7 @@ def scheduler_runtime(config):
     if 'paper_shared_inference' in runtime:
         from paper_benchmark_protocol import shared_gpu_policy
         shared_gpu_policy(config)
-    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
+    if (config.get('family') not in (SCOPE, SINGLE_SCOPE, TWO_SCOPE, DENSITY_SCOPE, REFERENCE_SCOPE, FLOW_SCOPE, ANCHOR_SCOPE, INTEGRATION_SCOPE, AR_SCOPE, REPAIR_SCOPE, PREDICTED_SCOPE, FULL_SCOPE, HARDCASE_SCOPE, PAPER_SCOPE, SKINTOKENS_SCOPE, SKINTOKENS_STAGE1_SCOPE, STAGE2_SCOPE) or runtime.get('execution_mode') != 'scheduler_job'
             or runtime.get('require_scheduler_membership') is not True):
         raise RuntimeError('scheduler-owned execution must require job membership')
     subset = runtime.get('native_subset')
@@ -267,6 +269,9 @@ def validate_stage(state, config, args):
     if op['label'] == SKINTOKENS_STAGE1_SCOPE:
         from skintokens_stage1_protocol import verify_evidence
         verify_evidence(op, config, args.mode, matches[0]['config_sha256'])
+    if op['label'] == STAGE2_SCOPE:
+        from anchor_stage2_protocol import verify_evidence
+        verify_evidence(op, config, args.mode, args.output.name, matches[0]['config_sha256'])
     return op
 
 

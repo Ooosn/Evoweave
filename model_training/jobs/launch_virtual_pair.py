@@ -37,6 +37,7 @@ if __name__ == '__main__':
                'predicted_reference_20261029_v1': 'evaluate_predicted_reference.py',
                'paper_benchmark_20261102_v1': 'evaluate_paper_benchmark.py',
                'skintokens_static_5k_20261109': 'train_skintokens_static.py',
+               'anchor_stage2_5k_20261109': 'train_anchor_stage2.py',
                'skintokens_stage1_5k_20261109': 'train_skintokens_stage1.py'}.get(family, 'train_virtual_pair.py')
     if config.get('execution', {}).get('phase') == 'tokenrig_alignment_probe':
         if family != 'anchor_full_20261030_v1':

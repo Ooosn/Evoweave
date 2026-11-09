@@ -216,7 +216,11 @@ def main(*, trainer_module_name='train_legacy_single_target',
         'HF_HUB_OFFLINE', 'TRANSFORMERS_OFFLINE', 'RIGWEAVE_DISABLE_OPEN3D',
         'RIGWEAVE_DISABLE_LIGHTNING_IMPORT')})
     os.environ.update(PYTORCH_CUDA_ALLOC_CONF='expandable_segments:True', CUDA_MODULE_LOADING='LAZY',
-        EVOWEAVE_UNIRIG_ROOT=runtime['unirig_root'], EVOWEAVE_OPT_CONFIG_ROOT=runtime['opt_config_root'])
+        EVOWEAVE_UNIRIG_ROOT=runtime['unirig_root'])
+    if 'opt_config_root' in runtime:
+        os.environ['EVOWEAVE_OPT_CONFIG_ROOT'] = runtime['opt_config_root']
+    else:
+        os.environ.pop('EVOWEAVE_OPT_CONFIG_ROOT', None)
     os.environ['PYTHONPATH'] = os.pathsep.join((str(root / 'model_training/rigweave/src'),
         str(root / 'model_training/rigweave/scripts'), runtime['unirig_root'], runtime['extra_pythonpath']))
     source = verify_launch(args, config)
@@ -276,7 +280,7 @@ def main(*, trainer_module_name='train_legacy_single_target',
                 except (FileNotFoundError, ProcessLookupError):
                     pass
             memory = read_gpu_memory(config, enforce_limit=args.mode not in cpu_modes)
-            if 'tokenrig_decoder' in config:
+            if 'tokenrig_decoder' in config or runtime.get('record_gpu_peaks') is True:
                 previous = receipt.get('peak_gpu_memory_mib', {})
                 receipt['peak_gpu_memory_mib'] = {
                     str(index): max(used, previous.get(str(index), 0)) for index, used, _ in memory}

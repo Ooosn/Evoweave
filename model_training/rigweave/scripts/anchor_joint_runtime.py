@@ -300,7 +300,8 @@ def joint_metrics(prediction, truth, parents, diagonal):
 
 
 @torch.no_grad()
-def evaluate(model, base, config, entries, output, samples, device, rank, world, *, final=False):
+def evaluate(model, base, config, entries, output, samples, device, rank, world, *, final=False,
+             file_resolver=None, record_input_identity=False):
     model.eval()
     panel = evaluation_rows(base, entries)
     panel_ids = {r['asset_id'] for r in panel}
@@ -310,9 +311,10 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         splits += [('train_eligible', train, 'seen_eval'), ('train_heldout', train, 'heldout_eval')]
     directory = output / (f'final_{samples:06d}' if final else f'evaluation_{samples:06d}')
     directory.mkdir(parents=True, exist_ok=True)
-    rows, examples, consistency = [], [], []
+    rows, examples, consistency, identities = [], [], [], []
+    started = time.monotonic()
     for split, selected, mode in splits:
-        dataset = fixed_dataset(selected, base, 8, mode=mode)
+        dataset = fixed_dataset(selected, base, 8, mode=mode, file_resolver=file_resolver)
         for index in range(rank, len(selected), world):
             batch = dataset[index]
             surface, geometry = prepare_virtual_surface([batch], device, **base['surface_sampling'])
@@ -322,6 +324,12 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
             mask, raw = geometry['joint_mask'], geometry['selected_frames'][0].tolist()
             vertices = batch['frame_vertices'][0]
             diagonals = torch.linalg.vector_norm(vertices.amax(1) - vertices.amin(1), dim=-1)
+            if record_input_identity:
+                from fusion_evaluation import tree_fingerprint
+                identities.append({'asset_id': batch['asset_id'], 'raw_frames': raw,
+                    'surface_sha256': tree_fingerprint(surface),
+                    'gt_sha256': tree_fingerprint({'joints': target, 'parents': parents,
+                                                   'diagonals': diagonals})})
             heldout = set(batch['heldout_raw_ids'])
             if (mode == 'heldout_eval' and not set(raw) <= heldout) or (mode != 'heldout_eval' and set(raw) & heldout):
                 raise RuntimeError('raw-frame partition leakage')
@@ -371,6 +379,10 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         'diagnostic_scope': 'anchor permutation at stage2 interface only; backbone features kept, not a whole-model causal ablation'}
     if config['training'].get('regime') is not None:
         summary['regime'] = config['training']['regime']
+    if record_input_identity:
+        ordered = sorted(sum(gather(identities, world), []), key=lambda x: x['asset_id'])
+        summary['input_sha256'] = hashlib.sha256(json.dumps(ordered, sort_keys=True).encode()).hexdigest()
+        summary['evaluation_seconds'] = time.monotonic() - started
     if final:
         summary['nonselection839_groups'] = summarize([v for v in all_rows
             if v['split'] == 'valid' and not v['selection_panel']])

@@ -1,0 +1,35 @@
+# Standalone Stage 2 Schedule Comparison
+
+Compare 12 spatial + 12 same-anchor temporal layers (ST repeated 12 times)
+with 16 spatial + 8 same-anchor temporal layers (SST repeated 8 times).
+Keep the surface query count, width, registers, learned motion bias, target
+loss and reference-anchor transport readout. Do not instantiate a skeleton
+decoder or construct a skeleton token target. The CPU audit extracts only the
+released UniRig mesh encoder and its projection into a verified mesh-only pack;
+both runs use that pack, the same common block initialization and the same
+readout initialization. No joint-trained donor or capacity weights initialize
+formal training.
+
+Use the retained immutable 5,000-asset manifest and verified SSD cache. Each
+arm runs 100,000 asset visits over 20 passes with effective batch 48 on two
+H100s. Compare the exact asset, frame, sampling seed and reference streams.
+At 12 and 24 frames use the largest-joint and largest-geometry stress cohorts
+with forward, backward, AdamW updates and a second step per cohort. Attempt
+24 assets per rank at 24 frames independently for both arms. If either lacks
+capacity, retest both with 12 per rank and accumulation 2 for 13-24 frames.
+Short frames stay at 24 per rank. The whole-device limit remains 78 GiB;
+capacity acceptance requires a 3 GiB margin. No fallback on non-memory errors.
+
+Save and verify full recovery states at the first update and every 10,000
+visits. Evaluate the fixed 128-asset panel at initialization and every 10,000
+visits using eight input poses and GT references at slots 0 and 4. Encode each
+mesh clip once and read both references. Retain paired geometry and input
+fingerprints, MPJPE, PCK, bone-vector error and measured evaluation time.
+This measures coordinate prediction given a reference skeleton, not an
+end-to-end claim about a predicted reference. The working model stays unchanged.
+
+Use native job 131942123 on pcg01i, GPU3/4 and 16 CPUs, with save-stop at
+2026-11-11 13:50 JST. Stages are admitted and recorded on a private branch
+without changing the checkout during a payload. If any stage fails, retain
+the resource and rank evidence, preserve the grant and do not retry unless
+the explicit 24-to-12 capacity fallback applies.

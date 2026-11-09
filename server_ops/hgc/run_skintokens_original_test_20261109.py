@@ -136,6 +136,9 @@ def worker():
     panel = read(PANEL/'manifest.json')
     if len(panel['cases']) != CASES:
         raise ValueError('panel size changed')
+    with (OUTPUT/'upstream_help.log').open('xb') as stream:
+        subprocess.run([str(PYTHON), '-B', 'demo.py', '--help'], cwd=UPSTREAM,
+            stdout=stream, stderr=subprocess.STDOUT, check=True, timeout=90)
     outputs = []
     for case in panel['cases']:
         mesh = Path(case['mesh'])
@@ -204,7 +207,7 @@ def supervise():
         'OMP_NUM_THREADS': '1', 'MKL_NUM_THREADS': '1', 'OPENBLAS_NUM_THREADS': '1',
         'TOKENIZERS_PARALLELISM': 'false'}
     for name in tuple(env):
-        if name.lower().endswith('_proxy') or name == 'PYTHONPATH':
+        if name.lower().endswith('_proxy') or name in ('PYTHONPATH', 'USE_FLASH3'):
             env.pop(name)
     cmd = ['unshare','--user','--map-root-user','--net','/bin/bash','-c',
            'set -e; ip link set lo up; exec "$@"','loopback',str(PYTHON),'-B',str(CODE/ENTRY),'worker']

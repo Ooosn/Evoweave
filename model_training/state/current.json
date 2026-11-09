@@ -50,7 +50,7 @@
     "label": "anchor_stage2_5k_20261109",
     "experiment": "anchor_stage2_5k_20261109",
     "complete": false,
-    "status": "capacity_sst8_24_admitted",
+    "status": "st12_admitted",
     "explicit_human_authorized": true,
     "authorization": "User authorized a standalone no-OPT/no-Qwen Stage 2 comparison: 12+12 versus 16+8, both at 24 frames and batch 24 per rank first; common batch 12 with accumulation 2 if required, then 100000 visits per arm on the fixed 5k at effective batch 48 and 10000-visit validation.",
     "code_commit": "52eeab9d0540bea49c77b868483e9f14180e03ff",
@@ -60,8 +60,8 @@
       "train": "model_training/rigweave/scripts/train_anchor_stage2.py"
     },
     "CPU_audit_accepted": true,
-    "capacity_accepted": false,
-    "formal_training_allowed": false,
+    "capacity_accepted": true,
+    "formal_training_allowed": true,
     "gpu_work_allowed": true,
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
     "config_sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c",
@@ -119,10 +119,10 @@
     },
     "runs": [
       {
-        "mode": "capacity",
+        "mode": "train",
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
         "config_sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109/capacity_sst8_24",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109/st12",
         "approved": true
       }
     ],
@@ -138,7 +138,89 @@
         "sha256": "466521079ef20b4ac0ee73cb6e8c200236a158689c1602d79a3533b12478646f"
       }
     },
-    "capacity_attempts": {}
+    "capacity_attempts": {
+      "24": {
+        "st12": {
+          "passed": true,
+          "result": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/result.json",
+            "sha256": "387e52e45ebae7e351143e2058f96adb8ae0b1563f0ff80290c2384fb0e98494"
+          },
+          "resources": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/capacity_st12_24_resources.json",
+            "sha256": "10a020302dd57faf70d018c1154ac49d9790dabf073af3492d021effc4f3f303"
+          },
+          "peak_gpu_memory_mib": {
+            "3": 68903,
+            "4": 68505
+          }
+        },
+        "sst8": {
+          "passed": true,
+          "result": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/result.json",
+            "sha256": "a6642c45cabe6514536b6a20b5754a06689b9d0f82e39818fab4d32135a53179"
+          },
+          "resources": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/capacity_sst8_24_resources.json",
+            "sha256": "91c475f138d2b1a37480845baa8be1f64141f19d66fd76fcfe8fd7c248e011ea"
+          },
+          "peak_gpu_memory_mib": {
+            "3": 58223,
+            "4": 57965
+          }
+        }
+      }
+    },
+    "capacity_selection": {
+      "long_batch_per_rank": 24,
+      "frame_policy": {
+        "2": 24,
+        "3": 24,
+        "4": 24,
+        "5": 24,
+        "6": 24,
+        "7": 24,
+        "8": 24,
+        "9": 24,
+        "10": 24,
+        "11": 24,
+        "12": 24,
+        "13": 24,
+        "14": 24,
+        "15": 24,
+        "16": 24,
+        "17": 24,
+        "18": 24,
+        "19": 24,
+        "20": 24,
+        "21": 24,
+        "22": 24,
+        "23": 24,
+        "24": 24
+      },
+      "results": {
+        "st12": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/result.json",
+          "sha256": "387e52e45ebae7e351143e2058f96adb8ae0b1563f0ff80290c2384fb0e98494"
+        },
+        "sst8": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/result.json",
+          "sha256": "a6642c45cabe6514536b6a20b5754a06689b9d0f82e39818fab4d32135a53179"
+        }
+      },
+      "resources": {
+        "st12": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/capacity_st12_24_resources.json",
+          "sha256": "10a020302dd57faf70d018c1154ac49d9790dabf073af3492d021effc4f3f303"
+        },
+        "sst8": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/capacity_sst8_24_resources.json",
+          "sha256": "91c475f138d2b1a37480845baa8be1f64141f19d66fd76fcfe8fd7c248e011ea"
+        }
+      }
+    },
+    "training_results": {}
   },
   "anchor_stage2_unchunked_capacity_20261109": {
     "label": "anchor_stage2_5k_20261109",
@@ -542,12 +624,12 @@
   "allowed_operations": [
     "inspect",
     "report",
-    "preflight"
+    "preflight",
+    "train"
   ],
   "blocked_operations": [
     "submit",
-    "matched_eval",
-    "train"
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -712,7 +794,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Complete and verify the pinned capacity_sst8_24 stage.",
+  "next_required_result": "Complete and verify the pinned st12 stage.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -756,8 +838,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "anchor_stage2_5k_20261109_capacity_sst8_24_admitted",
-  "updated_at": "2026-11-09T10:04:54.777017+00:00",
+  "state_id": "anchor_stage2_5k_20261109_st12_admitted",
+  "updated_at": "2026-11-09T10:09:06.467498+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

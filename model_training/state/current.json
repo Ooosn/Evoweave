@@ -47,6 +47,92 @@
     }
   },
   "active_operation": {
+    "label": "anchor_stage2_5k_20261109",
+    "experiment": "anchor_stage2_5k_20261109",
+    "complete": false,
+    "status": "authorized_cpu_audit_pending",
+    "explicit_human_authorized": true,
+    "authorization": "User authorized a standalone no-OPT/no-Qwen Stage 2 comparison: 12+12 versus 16+8, both at 24 frames and batch 24 per rank first; common batch 12 with accumulation 2 if required, then 100000 visits per arm on the fixed 5k at effective batch 48 and 10000-visit validation.",
+    "code_commit": "83465f8efb1519d962d29329656c0b3b2e2a8910",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_stage2.py",
+    "operation_entrypoints": {
+      "preflight": "model_training/rigweave/scripts/train_anchor_stage2.py",
+      "train": "model_training/rigweave/scripts/train_anchor_stage2.py"
+    },
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
+    "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
+    "config_sha256": "65af6554ea89a112d18ccab45b1a37e9eeb76f4b164d8061b27f5dc54465b067",
+    "training_manifest": {
+      "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+      "rows": 5000,
+      "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88"
+    },
+    "initialization": {
+      "path": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4"
+    },
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_5k_20261109",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_5k_20261109",
+    "resource_binding": {
+      "allocation": 131942123,
+      "host": "pcg01i",
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_slots": 16,
+      "stop_before_utc": "2026-11-11T04:50:00Z",
+      "gpu_uuids": [
+        "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+        "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+      ]
+    },
+    "validation": {
+      "valid_assets": 128,
+      "input_frames": 8,
+      "reference_slots": [
+        0,
+        4
+      ],
+      "selection": {
+        "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_selection.json",
+        "sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
+      },
+      "seed": 20261028,
+      "reference_kind": "GT_only",
+      "checkpoints": [
+        0,
+        10000,
+        20000,
+        30000,
+        40000,
+        50000,
+        60000,
+        70000,
+        80000,
+        90000,
+        100000
+      ]
+    },
+    "runs": [
+      {
+        "mode": "audit",
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
+        "config_sha256": "65af6554ea89a112d18ccab45b1a37e9eeb76f4b164d8061b27f5dc54465b067",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_5k_20261109/audit",
+        "approved": true
+      }
+    ],
+    "acceptance_test": "Exact CPU mesh-only audit; independently complete both high batch profiles, use a common passing batch, then verify 100000 visits, 2090 updates and 10 matched GT-reference evaluations per arm with durable recovery.",
+    "working_model_change_allowed": false,
+    "automatic_retry_allowed": false,
+    "authorized_memory_fallback_per_rank": 12,
+    "protocol": "model_training/docs/ANCHOR_STAGE2_5K_20261109.md"
+  },
+  "skintokens_original_test_20261109": {
     "label": "skintokens_original_test_20261109",
     "experiment": "skintokens_original_test_20261109",
     "complete": true,
@@ -437,7 +523,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Requested SkinTokens paired diagnostic recorded. No additional GPU run or working-model change is authorized by this result.",
+  "next_required_result": "Run the standalone Stage 2 CPU audit before either capacity trial.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -481,8 +567,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_original_test_20261109_complete",
-  "updated_at": "2026-11-09T06:45:03Z",
+  "state_id": "anchor_stage2_5k_20261109_audit_pending",
+  "updated_at": "2026-11-09T09:44:32Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

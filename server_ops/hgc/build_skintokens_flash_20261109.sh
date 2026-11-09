@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SLOTS: 16
+# SLOTS: 8
 set -euo pipefail
 [[ "${JOB_ID:-}" == 131942123 && "${NSLOTS:-}" == 16 && "$(hostname -s)" == pcg01 ]]
 grep -Eq '^[0-9]+:cpuset:/AGE/131942123\.1/master$' /proc/self/cgroup

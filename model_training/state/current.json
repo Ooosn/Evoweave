@@ -47,6 +47,126 @@
     }
   },
   "active_operation": {
+    "label": "anchor_stage2_5k_20261109",
+    "experiment": "anchor_stage2_frozen_eval_20261110",
+    "status": "frozen_evaluation_recovery_pending_audit",
+    "complete": false,
+    "explicit_human_authorized": true,
+    "authorization": "User requested the full-run frozen evaluation interface for all current training recipes and approved using it to resolve the held Stage 2 experiment. Continue ST12 from the retained full 10k state; start the already approved SST8 arm after ST12. Do not change the recipe or working model.",
+    "code_commit": "0f75e17a0458579e8f7a5de6ad1604947de9f585",
+    "required_entrypoint": "model_training/rigweave/scripts/train_anchor_stage2.py",
+    "operation_entrypoints": {
+      "train": "model_training/rigweave/scripts/train_anchor_stage2.py",
+      "preflight": "model_training/rigweave/scripts/train_anchor_stage2.py"
+    },
+    "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_frozen_eval_20261110/model_training/experiments/anchor_stage2_frozen_eval_20261110.json",
+    "config_sha256": "784f69d013338022e9385ae0851df17e13314daf705c9a8df83ad9df6f7aa236",
+    "input_manifests": {
+      "train": {
+        "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+        "rows": 5000,
+        "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    },
+    "source_checkpoint_receipts": [
+      {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/checkpoint_000048.json",
+        "sha256": "45307771cc574dd6321de070234008de1d641506af0f4a59d4ac01550d9949f5"
+      },
+      {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/checkpoint_010000.json",
+        "sha256": "1c54dbf7766780c6453809632f802a74fb131440b6bb81864d75d7395e764bd3"
+      }
+    ],
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_frozen_eval_20261110",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_frozen_eval_20261110",
+    "runner_task": "anchor_stage2_frozen_eval_20261110.sh",
+    "command": "bash /work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_frozen_eval_20261110/model_training/jobs/run_anchor_stage2_frozen_eval_20261110.sh",
+    "resource_binding": {
+      "allocation": 131942123,
+      "host": "pcg01i",
+      "physical_gpus": [
+        3,
+        4
+      ],
+      "cpu_slots": 16,
+      "h_rt_seconds": 345600,
+      "hard_gpu_memory_limit_mib": 79872,
+      "stop_before_utc": "2026-11-11T04:50:00Z"
+    },
+    "panel_archive": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/canonical_train_panel128.tar",
+      "sha256": "02c67d4828b8fe4972aadd947986741857107aebaf77e5db252efb24438697d8"
+    },
+    "stage_evidence": {
+      "audit": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/audit/result.json",
+        "sha256": "466521079ef20b4ac0ee73cb6e8c200236a158689c1602d79a3533b12478646f"
+      }
+    },
+    "capacity_selection": {
+      "long_batch_per_rank": 24,
+      "frame_policy": {
+        "2": 24,
+        "3": 24,
+        "4": 24,
+        "5": 24,
+        "6": 24,
+        "7": 24,
+        "8": 24,
+        "9": 24,
+        "10": 24,
+        "11": 24,
+        "12": 24,
+        "13": 24,
+        "14": 24,
+        "15": 24,
+        "16": 24,
+        "17": 24,
+        "18": 24,
+        "19": 24,
+        "20": 24,
+        "21": 24,
+        "22": 24,
+        "23": 24,
+        "24": 24
+      },
+      "results": {
+        "st12": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/result.json",
+          "sha256": "387e52e45ebae7e351143e2058f96adb8ae0b1563f0ff80290c2384fb0e98494"
+        },
+        "sst8": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/result.json",
+          "sha256": "a6642c45cabe6514536b6a20b5754a06689b9d0f82e39818fab4d32135a53179"
+        }
+      },
+      "resources": {
+        "st12": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_st12_24/capacity_st12_24_resources.json",
+          "sha256": "10a020302dd57faf70d018c1154ac49d9790dabf073af3492d021effc4f3f303"
+        },
+        "sst8": {
+          "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/capacity_sst8_24/capacity_sst8_24_resources.json",
+          "sha256": "91c475f138d2b1a37480845baa8be1f64141f19d66fd76fcfe8fd7c248e011ea"
+        }
+      }
+    },
+    "CPU_audit_accepted": true,
+    "capacity_accepted": true,
+    "gpu_work_allowed": false,
+    "formal_training_allowed": false,
+    "runs": [],
+    "working_model_change_allowed": false,
+    "automatic_retry_allowed": false,
+    "acceptance_test": "Before training verify all 128 archived surface/anchor/GT inputs and the stopped run's 1792 raw-frame target rows once on CPU, restore exact model/Adam/both rank RNG/stream counters at 10k (209 updates), reevaluate both ST12 points on that panel, and finish both arms to 100k visits/2090 updates with each 10k evaluation and durable recovery. Audit final paired coverage and training input traces; no recurring full tensor identity audit."
+  },
+  "anchor_stage2_input_replay_20261110": {
     "label": "anchor_stage2_input_replay_20261110",
     "experiment": "anchor_stage2_input_replay_20261110",
     "status": "sampling_discrepancy_reproduced_training_held",
@@ -704,7 +824,7 @@
   "compute_allocation": {
     "server": "HGC",
     "qlogin_job_id": 131942123,
-    "status": "retained_native_idle_before_static_baseline",
+    "status": "retained_native_idle_before_stage2_recovery",
     "host": "pcg01i",
     "cpu_slots": 16,
     "physical_gpus": [
@@ -864,7 +984,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Report the reproduced CUDA face-sampling discrepancy; hold both Stage 2 schedules pending the user's recovery decision.",
+  "next_required_result": "Audit the retained frozen panel and checkpoint once, then recover ST12 and run the matched SST8 arm on the existing allocation.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -908,8 +1028,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "anchor_stage2_input_replay_20261110_complete",
-  "updated_at": "2026-11-09T17:08:55Z",
+  "state_id": "anchor_stage2_frozen_eval_20261110_pending_audit",
+  "updated_at": "2026-11-09T17:29:01Z",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

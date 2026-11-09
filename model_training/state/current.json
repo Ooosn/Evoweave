@@ -50,10 +50,10 @@
     "label": "skintokens_original_test_20261109",
     "experiment": "skintokens_original_test_20261109",
     "complete": false,
-    "status": "official_pair_prepared_awaiting_native_backend",
+    "status": "compiled_official_backend_verified_GPU_entry_pending",
     "explicit_human_authorized": true,
     "authorization": "User requested a small before/after comparison on the original published test split using the official SkinTokens GitHub inference instructions.",
-    "code_commit": "f34deb7e4cd76cf2cb7038b38724d7c4a3802240",
+    "code_commit": "a867479764df8056dcec052ca0e51fa2fa12372f",
     "required_entrypoint": "server_ops/hgc/run_skintokens_original_test_20261109.py",
     "operation_entrypoints": {
       "matched_eval": "server_ops/hgc/run_skintokens_original_test_20261109.py"
@@ -93,6 +93,12 @@
     },
     "upstream_commit": "273b691d35989d71cd17ff2895fdc735097b92d1",
     "build_task": "skintokens_original_flash_headers_20261109.sh",
+    "backend_acceptance": {
+      "build_result": "FlashAttention 2.8.3 H100 wheel compiled, installed, and imported with PyTorch 2.7.0+cu128.",
+      "wheel_sha256": "431729697a4191c33a1189a4e96884905d4e754af6ccdd35c010338d535cf21b",
+      "initial_eval_gpu_started": false,
+      "cpu_help_failure": "Unmodified upstream module queries CUDA during import. Check the unmodified CLI in the admitted GPU environment."
+    },
     "protocol": "model_training/docs/SKINTOKENS_ORIGINAL_TEST_20261109.md",
     "acceptance_test": "Unmodified official CLI and loopback-only service; exact 12 paired seeds and inputs, no GT fed to inference, validated output geometry, no optimizer step, and durable case evidence."
   },

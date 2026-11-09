@@ -10,7 +10,9 @@ import torch
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'model_training/rigweave/scripts'))
-from anchor_full_evaluation import archive_inputs, canonical_input, evaluate
+from anchor_evaluation_inputs import archived_panel, canonical_input, panel_digest, read_record, verify_source
+from anchor_full_evaluation import archive_inputs, evaluate
+from fusion_evaluation import tree_fingerprint
 
 
 class FakeDataset:
@@ -20,6 +22,7 @@ class FakeDataset:
         self.geometry = {'joint_mask': torch.ones(1, 3, dtype=torch.bool),
             'frame_target_joints': torch.randn(1, 8, 3, 3), 'target_parents': torch.tensor([[-1, 0, 1]]),
             'selected_frames': torch.tensor([raw]), 'query_center': torch.zeros(1, 3), 'query_scale': torch.ones(1)}
+        self.batch.update(self.geometry)
         self.surface = {'dense_points': torch.randn(1, 8, 16, 3), 'dense_normals': torch.randn(1, 8, 16, 3),
             'query_points': torch.randn(1, 8, 4, 3), 'query_normals': torch.randn(1, 8, 4, 3),
             'query_indices': torch.zeros(1, 8, 4, dtype=torch.long)}
@@ -43,30 +46,57 @@ class CanonicalInputTests(unittest.TestCase):
 
     def test_seen_inputs_replay_without_resampling_and_archive_verifies(self):
         dataset = FakeDataset(list(range(8)), list(range(8, 16)))
-        with patch('anchor_full_evaluation.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
+        with patch('anchor_evaluation_inputs.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
             first, spec = canonical_input(dataset, 0, self.base, self.config, 'seen_eval', torch.device('cpu'))
-        with patch('anchor_full_evaluation.prepare_virtual_surface', side_effect=AssertionError('resampled')):
+        with (patch('anchor_evaluation_inputs.prepare_virtual_surface', side_effect=AssertionError('resampled')),
+              patch('anchor_evaluation_inputs.sha256', side_effect=AssertionError('rehashed')),
+              patch('anchor_evaluation_inputs.tree_fingerprint', side_effect=AssertionError('rehash tensors'))):
             second, repeated = canonical_input(dataset, 0, self.base, self.config, 'seen_eval', torch.device('cpu'))
         self.assertEqual(dataset.calls, 1)
         self.assertEqual(spec, repeated)
-        torch.testing.assert_close(first['surface']['dense_points'], second['surface']['dense_points'], rtol=0, atol=0)
+        self.assertEqual(tree_fingerprint(first), tree_fingerprint(second))
+        verify_source(second, dataset.batch)
+        with self.assertRaisesRegex(RuntimeError, 'source differs'):
+            verify_source(second, {**dataset.batch, 'frame_target_joints': dataset.batch['frame_target_joints']+1})
         output = self.root/'train_v26'
         output.mkdir()
         archive = archive_inputs([spec], output, self.config, final=False)
         self.assertTrue(archive['all_input_members_verified'])
         self.assertEqual(archive['canonical_assets'], 1)
         self.assertTrue(Path(archive['durable_path']).exists())
+        other_training = {**self.base, 'data': {'manifests': {'train': 'other'}, 'stream_seed': 19}}
+        panel = archived_panel(archive, dataset.entries, other_training, Path(spec['path']).parent,
+                               verify_archive=True)
+        self.assertEqual(panel_digest([spec]), panel_digest(panel))
+        self.assertEqual(tree_fingerprint(read_record(panel[0], verify=True)), tree_fingerprint(first))
+        with self.assertRaisesRegex(RuntimeError, 'geometry differs'):
+            archived_panel(archive, dataset.entries, {**other_training, 'surface_sampling': {'query_tokens': 8}},
+                           Path(spec['path']).parent)
+
+    def test_missing_frozen_record_does_not_resample(self):
+        dataset = FakeDataset(list(range(8)), list(range(8, 16)))
+        with self.assertRaisesRegex(RuntimeError, 'do not resample'):
+            canonical_input(dataset, 0, self.base, self.config, 'seen_eval', torch.device('cpu'),
+                            require_existing=True)
+        self.assertEqual(dataset.calls, 0)
+
+    def test_audit_rejects_wrong_artifact_digest(self):
+        dataset = FakeDataset(list(range(8)), list(range(8, 16)))
+        with patch('anchor_evaluation_inputs.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
+            _, spec = canonical_input(dataset, 0, self.base, self.config, 'seen_eval', torch.device('cpu'))
+        with self.assertRaisesRegex(RuntimeError, 'file digest differs'):
+            read_record({**spec, 'sha256': '0'*64}, verify=True)
 
     def test_reserved_pose_diagnostic_uses_reserved_input_partition(self):
         dataset = FakeDataset(list(range(8, 16)), list(range(8, 16)))
-        with patch('anchor_full_evaluation.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
+        with patch('anchor_evaluation_inputs.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
             result, _ = canonical_input(dataset, 0, self.base, self.config, 'heldout_eval', torch.device('cpu'))
         self.assertEqual(result['frame_partition'], 'heldout_eval')
         self.assertEqual(result['raw_frames'], list(range(8, 16)))
 
     def test_seen_input_cannot_use_reserved_frames(self):
         dataset = FakeDataset(list(range(8, 16)), list(range(8, 16)))
-        with patch('anchor_full_evaluation.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
+        with patch('anchor_evaluation_inputs.prepare_virtual_surface', return_value=(dataset.surface, dataset.geometry)):
             with self.assertRaises(RuntimeError):
                 canonical_input(dataset, 0, self.base, self.config, 'seen_eval', torch.device('cpu'))
 
@@ -86,14 +116,15 @@ class EvaluationCoverageTests(unittest.TestCase):
         class Dataset:
             def __init__(self, rows):
                 self.entries = rows
-        def record(dataset, index, base, config, mode, device):
+        def record(dataset, index, base, config, mode, device, **kwargs):
             raw = list(range(8, 16)) if mode == 'heldout_eval' else list(range(8))
             asset = dataset.entries[index]['asset_id']
             value = {'asset_id': asset, 'surface': {'query_points': torch.zeros(1, 8, 4, 3),
                 'query_normals': torch.zeros(1, 8, 4, 3)}, 'truth': torch.zeros(8, 3, 3),
                 'parents': torch.tensor([-1, 0, 1]), 'raw_frames': raw, 'diagonals': torch.ones(8),
                 'normalization_sha256': 'norm', 'surface_sha256': 'surface'}
-            return value, {'path': asset+'_'+mode, 'sha256': 'test'}
+            return value, {'path': asset+'_'+mode, 'sha256': 'test',
+                           'identity': {'asset_id': asset, 'mode': mode}}
         metric = {'edge_f1': 1., 'normalized_j2j': 0., 'normalized_mpjpe': 0., 'pck_005': 1.,
                   'normalized_bone_vector_error': 0.}
         ar_metric = {'success': True, 'status': 'eos', 'original_edge_f1': 1., 'exact_count': True,

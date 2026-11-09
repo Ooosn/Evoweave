@@ -9,64 +9,16 @@ import torch
 import torch.distributed as dist
 
 from anchor_full_data import CachedFiles
-from anchor_full_protocol import scientific_sha, sha256
+from anchor_evaluation_inputs import canonical_input, panel_digest
+from anchor_full_protocol import scientific_sha
 from anchor_joint_runtime import joint_metrics
 from reference_flow_protocol import sample_seed
 from reference_flow_runtime import mirror, summarize
 from stage1_feedback import generate_asset, score_generation, summarize_rows
 from stage1_surface_repair_runtime import canonical_identity
-from fusion_evaluation import tree_fingerprint
 from virtual_pair_runtime import evaluation_rows, gather, shared_deadline_due
 from virtual_query_xyz_runtime import build_model, fixed_dataset, write_json
-from rigweave.dynamic_rig.reference_skeleton_xyz import reference_slots
-from rigweave.dynamic_rig.virtual_frame_data import prepare_virtual_surface
 from rigweave.dynamic_rig.virtual_path_ablation import VirtualPathAblationRig
-
-
-def canonical_input(dataset, index, base, config, mode, device):
-    row = dataset.entries[index]
-    if 'native_frame_control' in config:
-        from tokenrig_native_frame_control import cache_base
-        base = cache_base(base)
-    identity = {'asset_id': row['asset_id'], 'path': row['path'], 'root_rt': row['root_rt'],
-        'data': base['data'], 'surface_sampling': base['surface_sampling'], 'mode': mode, 'frames': 8}
-    key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
-    directory = Path(config['data_cache']['root'])/'evaluation_inputs'
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory/(key+'.pt')
-    sidecar = path.with_suffix('.json')
-    if ('native_continuation' in config or 'native_frame_control' in config) and not (path.is_file() and sidecar.is_file()):
-        raise RuntimeError('retained canonical validation input is missing; do not resample')
-    if path.exists():
-        spec = json.loads(sidecar.read_text())
-        if spec['identity'] != identity or spec['path'] != str(path) or path.is_symlink() or sha256(path) != spec['sha256']:
-            raise RuntimeError('immutable evaluation input changed')
-        record = torch.load(path, map_location='cpu', mmap=True, weights_only=False)
-    else:
-        batch = dataset[index]
-        surface, geometry = prepare_virtual_surface([batch], device, **base['surface_sampling'])
-        count = int(geometry['joint_mask'][0].sum())
-        vertices = batch['frame_vertices'][0]
-        record = {'asset_id': batch['asset_id'], 'surface': {k: v.detach().cpu() for k, v in surface.items()},
-            'truth': geometry['frame_target_joints'][0, :, :count].cpu(),
-            'parents': geometry['target_parents'][0, :count].cpu(),
-            'raw_frames': geometry['selected_frames'][0].tolist(),
-            'diagonals': torch.linalg.vector_norm(vertices.amax(1)-vertices.amin(1), dim=-1).cpu(),
-            'normalization_sha256': tree_fingerprint({k: geometry[k] for k in ('query_center', 'query_scale')}),
-            'surface_sha256': tree_fingerprint(surface), 'heldout_raw_ids': batch['heldout_raw_ids'],
-            'frame_partition': mode}
-        raw, heldout = set(record['raw_frames']), set(record['heldout_raw_ids'])
-        if (mode == 'heldout_eval' and not raw <= heldout) or (mode != 'heldout_eval' and raw & heldout):
-            raise RuntimeError('canonical evaluation frame partition leaked')
-        temporary = path.with_suffix('.pt.tmp')
-        torch.save(record, temporary)
-        temporary.replace(path)
-        path.chmod(0o444)
-        spec = {'path': str(path), 'sha256': sha256(path), 'identity': identity}
-        write_json(sidecar, spec)
-    if tree_fingerprint(record['surface']) != record['surface_sha256']:
-        raise RuntimeError('canonical evaluation surface tensor digest differs')
-    return record, spec
 
 
 def archive_inputs(specs, output, config, *, final):
@@ -123,6 +75,7 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
     resolver = CachedFiles(config, base)
     panel = evaluation_rows(base, entries)
     panel_ids = {row['asset_id'] for row in panel}
+    panel_frozen = (output/f'canonical_{output.name}_panel_archive.json').is_file()
     directory = output / (f'final_{samples:06d}' if final else f'evaluation_{samples:06d}')
     if rank == 0:
         directory.mkdir(parents=True, exist_ok=False)
@@ -145,7 +98,8 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
                 index = offset * world + rank
                 if index >= len(selected):
                     continue
-                record, input_spec = canonical_input(dataset, index, base, config, mode, device)
+                record, input_spec = canonical_input(dataset, index, base, config, mode, device,
+                    require_existing=panel_frozen and split == 'valid' and selected[index]['asset_id'] in panel_ids)
                 input_specs.append(input_spec)
                 surface = {k: v.to(device) for k, v in record['surface'].items()}
                 features, _ = backbone.encode(surface)
@@ -202,7 +156,8 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
             'stage1': summarize_rows(all_ar) if all_ar else None,
             'stage1_decoding': 'greedy_fast_validation_not_official_beam_inference',
             'stage1_GT_reference_or_teacher_prefix': False,
-            'stage2_reference': 'GT_only', 'data_cache_index_sha256': resolver.index_sha256}
+            'stage2_reference': 'GT_only', 'data_cache_index_sha256': resolver.index_sha256,
+            'input_panel_sha256': panel_digest(all_inputs)}
         if config.get('family') == 'hardcase3608_20261101_v1':
             from hardcase_adaptation_protocol import load_sampling
             strata = load_sampling(config['sampling'])['validation_strata']

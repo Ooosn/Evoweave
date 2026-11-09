@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import random
-import tarfile
 
 import numpy as np
 import torch
@@ -14,6 +13,7 @@ from torch import nn
 import torch.distributed as dist
 
 from anchor_full_data import CachedFiles, stress_groups, verify_ssd
+from anchor_evaluation_inputs import archived_panel, panel_digest, read_record as panel_record
 from id_xyz_stages import preserve_random, random_state
 from reference_flow_protocol import sample_seed
 from reference_flow_runtime import mirror
@@ -105,45 +105,10 @@ def data_context(config, *, frames=1):
 
 
 def panel_specs(config, base, selected, *, verify_archive=False):
-    archive = config['evaluation']['panel_archive']
-    if verify_archive and sha256(archive['path']) != archive['sha256']:
-        raise ValueError('retained 128-asset input archive changed')
-    specs = {}
-    with tarfile.open(archive['path'], 'r:') as tar:
-        for member in tar:
-            if not member.name.endswith('.json'):
-                continue
-            if not member.isfile():
-                raise ValueError('canonical archive metadata must be regular files')
-            spec = json.load(tar.extractfile(member))
-            key = spec['identity']['asset_id']
-            if key in specs:
-                raise ValueError('duplicate canonical asset')
-            specs[key] = spec
-    if set(specs) != {row['asset_id'] for row in selected} or len(selected) != config['evaluation']['assets']:
-        raise ValueError('canonical archive and fixed panel differ')
-    root = Path(config['data_cache']['root']) / 'evaluation_inputs'
-    panel = []
-    for row in selected:
-        spec = specs[row['asset_id']]
-        identity = {**{key: row[key] for key in ('asset_id', 'path', 'root_rt')},
-                    'data': base['data'], 'surface_sampling': base['surface_sampling'],
-                    'mode': 'seen_eval', 'frames': 8}
-        path = root / Path(spec['path']).name
-        if spec['identity'] != identity or path.is_symlink() or not path.is_file():
-            raise ValueError('canonical frame input identity or cache changed')
-        panel.append((path, spec['sha256'], row['asset_id']))
-    return panel
-
-
-def panel_record(spec):
-    path, expected, asset_id = spec
-    if sha256(path) != expected:
-        raise ValueError('cached validation geometry differs from the retained archive')
-    record = torch.load(path, map_location='cpu', mmap=True, weights_only=True)
-    if record['asset_id'] != asset_id or record['raw_frames'][0] in record['heldout_raw_ids']:
-        raise ValueError('canonical reference frame changed')
-    return record
+    if len(selected) != config['evaluation']['assets']:
+        raise ValueError('fixed panel count differs')
+    return archived_panel(config['evaluation']['panel_archive'], selected, base,
+        Path(config['data_cache']['root'])/'evaluation_inputs', verify_archive=verify_archive)
 
 
 def tokenize(geometry, tokenizer, max_tokens, device):
@@ -182,7 +147,7 @@ def audit(config):
         raise RuntimeError('audit cannot initialize CUDA')
     base, dataset, selected = data_context(config)
     panel = panel_specs(config, base, selected, verify_archive=True)
-    identities = [canonical_identity(panel_record(spec), 0) for spec in panel]
+    identities = [canonical_identity(panel_record(spec, verify=True), 0) for spec in panel]
     stream = make_stream(config, 0)
     if (len(stream.global_ends) != 627 or int(stream.global_ends[-1]) != 30000
             or any(len(set(stream.order[i:i+5000])) != 5000 for i in range(0, 30000, 5000))):
@@ -278,9 +243,10 @@ def evaluate(model, panel, base, config, output, samples, device, rank, *,
         finally:
             torch.backends.cuda.matmul.allow_tf32, torch.backends.cudnn.allow_tf32 = tf32
     rows = sum(gather(rows, 2), [])
-    if len(rows) != len(panel) or {r['asset_id'] for r in rows} != {spec[2] for spec in panel}:
+    if len(rows) != len(panel) or {r['asset_id'] for r in rows} != {s['identity']['asset_id'] for s in panel}:
         raise RuntimeError('not exactly one reference result per fixed asset')
     summary = {'complete': True, 'samples': samples, 'stage1': summarize_rows(rows),
+        'input_panel_sha256': panel_digest(panel),
         'stage2_enabled': False, 'reference_slot': 0, 'policy': 'greedy_fp32_native_skeleton'}
     if reference_condition is not None:
         summary.update(arm=config['arm'], input_frames=8)

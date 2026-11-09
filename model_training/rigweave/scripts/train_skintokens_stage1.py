@@ -167,7 +167,7 @@ def audit(config):
     device = torch.device('cpu')
     base, dataset, selected = data_context(config, frames=2)
     panel = panel_specs(config, base, selected, verify_archive=True)
-    identities = [canonical_identity(panel_record(spec), 0) for spec in panel]
+    identities = [canonical_identity(panel_record(spec, verify=True), 0) for spec in panel]
     plan = plan_for(config, base)
     if (plan['samples'], plan['updates']) != (30000, 627):
         raise ValueError('expected 30k exact visits with the original batch-48 plan')

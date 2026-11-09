@@ -11,6 +11,7 @@ import numpy as np
 import torch
 import torch.distributed as dist
 
+from anchor_evaluation_inputs import canonical_input, panel_digest, read_record
 from anchor_joint_protocol import (VARIANTS, load_backbone_config, sample_seed, scientific_sha,
     sha256, should_extend, validate_prior_capacity)
 from fit_cohort_selection import _joint_count
@@ -301,9 +302,11 @@ def joint_metrics(prediction, truth, parents, diagonal):
 
 @torch.no_grad()
 def evaluate(model, base, config, entries, output, samples, device, rank, world, *, final=False,
-             file_resolver=None, record_input_identity=False):
+             input_panel=None, file_resolver=None):
     model.eval()
-    panel = evaluation_rows(base, entries)
+    if final and input_panel is not None:
+        raise ValueError('the development panel cannot serve as the final validation split')
+    panel = evaluation_rows(base, entries) if input_panel is None else [s['identity'] for s in input_panel]
     panel_ids = {r['asset_id'] for r in panel}
     train = sorted(entries['train'], key=lambda r: sample_seed(config['evaluation']['seed'], r['asset_id'], 'train-eval'))[:32]
     splits = [('valid', entries['valid'] if final else panel, 'seen_eval')]
@@ -311,28 +314,27 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
         splits += [('train_eligible', train, 'seen_eval'), ('train_heldout', train, 'heldout_eval')]
     directory = output / (f'final_{samples:06d}' if final else f'evaluation_{samples:06d}')
     directory.mkdir(parents=True, exist_ok=True)
-    rows, examples, consistency, identities = [], [], [], []
+    rows, examples, consistency, input_specs = [], [], [], []
     started = time.monotonic()
     for split, selected, mode in splits:
-        dataset = fixed_dataset(selected, base, 8, mode=mode, file_resolver=file_resolver)
+        dataset = None if input_panel is not None else fixed_dataset(
+            selected, base, 8, mode=mode, file_resolver=file_resolver)
         for index in range(rank, len(selected), world):
-            batch = dataset[index]
-            surface, geometry = prepare_virtual_surface([batch], device, **base['surface_sampling'])
+            if input_panel is None:
+                record, spec = canonical_input(dataset, index, base, config, mode, device,
+                    directory=output.parent/'evaluation_inputs',
+                    require_existing=samples > 0 and split == 'valid' and selected[index]['asset_id'] in panel_ids)
+            else:
+                spec = input_panel[index]
+                record = read_record(spec)
+            input_specs.append(spec)
+            asset = record['asset_id']
+            surface = {k: v.to(device) for k, v in record['surface'].items()}
             with torch.autocast('cuda', dtype=torch.bfloat16):
                 features, _ = model.backbone.encode(surface)
-            target, parents = geometry['frame_target_joints'][0], geometry['target_parents'][0]
-            mask, raw = geometry['joint_mask'], geometry['selected_frames'][0].tolist()
-            vertices = batch['frame_vertices'][0]
-            diagonals = torch.linalg.vector_norm(vertices.amax(1) - vertices.amin(1), dim=-1)
-            if record_input_identity:
-                from fusion_evaluation import tree_fingerprint
-                identities.append({'asset_id': batch['asset_id'], 'raw_frames': raw,
-                    'surface_sha256': tree_fingerprint(surface),
-                    'gt_sha256': tree_fingerprint({'joints': target, 'parents': parents,
-                                                   'diagonals': diagonals})})
-            heldout = set(batch['heldout_raw_ids'])
-            if (mode == 'heldout_eval' and not set(raw) <= heldout) or (mode != 'heldout_eval' and set(raw) & heldout):
-                raise RuntimeError('raw-frame partition leakage')
+            target, parents = record['truth'].to(device), record['parents'].to(device)
+            mask = torch.ones((1, len(parents)), dtype=torch.bool, device=device)
+            raw, diagonals = record['raw_frames'], record['diagonals']
             predictions = []
             for ref in config['evaluation']['reference_slots']:
                 reference = torch.tensor([ref], device=device)
@@ -342,8 +344,8 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
                     prediction = model.head(*args)[0]
                 predictions.append(prediction)
                 methods = {'head': prediction, 'copy': target[ref:ref+1].expand_as(target)}
-                if final and split == 'valid' and batch['asset_id'] in panel_ids:
-                    gen = torch.Generator().manual_seed(sample_seed(config['evaluation']['seed'], batch['asset_id'], f'permute:{ref}'))
+                if final and split == 'valid' and asset in panel_ids:
+                    gen = torch.Generator().manual_seed(sample_seed(config['evaluation']['seed'], asset, f'permute:{ref}'))
                     permutation = torch.randperm(features.shape[2], generator=gen).to(device)
                     changed = [v.clone() for v in args[:3]]
                     for tensor in changed:
@@ -356,33 +358,32 @@ def evaluate(model, base, config, entries, output, samples, device, rank, world,
                     for frame in range(8):
                         if frame == ref:
                             continue
-                        rows.append({'split': split, 'asset_id': batch['asset_id'], 'selection_panel': batch['asset_id'] in panel_ids,
+                        rows.append({'split': split, 'asset_id': asset, 'selection_panel': asset in panel_ids,
                             'reference_kind': 'GT', 'reference_slot': ref, 'reference_raw_frame': raw[ref],
                             'target_slot': frame, 'target_raw_frame': raw[frame], 'method': method,
                             'reference_success': True, 'joint_count': len(parents),
                             **joint_metrics(values[frame], target[frame], parents.tolist(), float(diagonals[frame]))})
                 if split == 'valid' and len(examples) < 8:
-                    examples.append({'asset_id': batch['asset_id'], 'reference_slot': ref,
+                    examples.append({'asset_id': asset, 'reference_slot': ref,
                         'reference_kind': 'GT', 'prediction': prediction.cpu(), 'reference_xyz': target[ref].cpu(),
                         'truth': target.cpu(), 'parents': parents.cpu(), 'points': surface['query_points'][0].cpu(), 'raw_frames': raw})
             slots = [i for i in range(8) if i not in config['evaluation']['reference_slots']]
             discrepancy = torch.linalg.vector_norm(predictions[0][slots] - predictions[1][slots], dim=-1).mean(1)
-            consistency.append({'split': split, 'asset_id': batch['asset_id'],
+            consistency.append({'split': split, 'asset_id': asset,
                 'normalized_cross_reference_difference': float((discrepancy / diagonals[slots].to(device)).mean())})
-            del features, surface, geometry, predictions
+            del features, surface, record, predictions
             if (index - rank) // world % 16 == 0:
                 write_json(directory / f'progress_rank_{rank}.json', {'split': split, 'processed_local': (index-rank)//world+1,
                     'total_split': len(selected), 'rows': len(rows)})
     all_rows, all_consistency = sum(gather(rows, world), []), sum(gather(consistency, world), [])
     summary = {'complete': True, 'samples': samples, 'final': final, 'variant': model.head.mode,
         'groups': summarize(all_rows), 'reference': 'GT_only', 'scientific_sha256': scientific_sha(config),
+        'input_panel_sha256': panel_digest(input_panel if input_panel is not None
+                                           else sum(gather(input_specs, world), [])),
+        'evaluation_seconds': time.monotonic() - started,
         'diagnostic_scope': 'anchor permutation at stage2 interface only; backbone features kept, not a whole-model causal ablation'}
     if config['training'].get('regime') is not None:
         summary['regime'] = config['training']['regime']
-    if record_input_identity:
-        ordered = sorted(sum(gather(identities, world), []), key=lambda x: x['asset_id'])
-        summary['input_sha256'] = hashlib.sha256(json.dumps(ordered, sort_keys=True).encode()).hexdigest()
-        summary['evaluation_seconds'] = time.monotonic() - started
     if final:
         summary['nonselection839_groups'] = summarize([v for v in all_rows
             if v['split'] == 'valid' and not v['selection_panel']])

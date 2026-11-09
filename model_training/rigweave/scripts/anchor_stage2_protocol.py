@@ -27,6 +27,25 @@ def capacity_stage(arm, long_batch):
     return f'capacity_{arm}_{long_batch}'
 
 
+def predecessor_config(config):
+    recovery = config['recovery']
+    spec = recovery['config']
+    path = ROOT / 'model_training/experiments' / f'{SCOPE}.json'
+    if ROOT / spec['path'] != path or sha256(path) != spec['sha256']:
+        raise ValueError('retained Stage 2 configuration changed')
+    previous = json.loads(path.read_text())
+    expected = {**previous, 'recovery': recovery, 'artifacts': config['artifacts'],
+        'runtime': {**previous['runtime'], **{k: config['runtime'][k] for k in ('repo', 'output_root')}},
+        'evaluation': {**previous['evaluation'], 'panel_archive': config['evaluation']['panel_archive']}}
+    if (config != expected or recovery['arm'] != 'st12' or recovery['samples'] != 10000
+            or len(recovery['traces']) != 2 or len(recovery['checkpoints']) != 2
+            or config['runtime']['repo'] == previous['runtime']['repo']
+            or config['runtime']['output_root'] == previous['runtime']['output_root']
+            or config['artifacts'] == previous['artifacts']):
+        raise ValueError('recovery must preserve the exact training recipe and isolate outputs')
+    return previous
+
+
 def validate_config(config):
     data = config['data']
     training = config['training']
@@ -45,6 +64,8 @@ def validate_config(config):
             or {'tokenrig_decoder', 'auxiliary_codec'} & config.keys()
             or 'opt_config_root' in config['runtime']):
         raise ValueError('standalone Stage 2 configuration differs from the approved scope')
+    if 'recovery' in config:
+        predecessor_config(config)
 
 
 def read_evidence(spec):
@@ -63,12 +84,16 @@ def verify_evidence(op, config, mode, name, config_sha):
         if name != 'audit':
             raise ValueError('wrong Stage 2 audit output')
         return
+    inherited = config.get('recovery')
+    evidence_sha = inherited['config']['sha256'] if inherited else config_sha
     audit = read_evidence(op['stage_evidence']['audit'])
-    if (audit['config_sha256'] != config_sha or audit['cuda_initialized']
+    if (audit['config_sha256'] != evidence_sha or audit['cuda_initialized']
             or audit['optimizer_updates'] or audit['plan']['samples'] != 100000
             or set(audit['initialization']) != ARMS.keys()):
         raise RuntimeError('Stage 2 CPU evidence does not match this run')
     if mode == 'capacity':
+        if inherited:
+            raise ValueError('recovery inherits the accepted capacity profiles')
         if name not in {capacity_stage(arm, size) for arm in ARMS for size in LONG_BATCHES}:
             raise ValueError('unknown Stage 2 capacity profile')
         return
@@ -76,10 +101,18 @@ def verify_evidence(op, config, mode, name, config_sha):
     size = selected['long_batch_per_rank']
     if name not in ARMS or selected['frame_policy'] != frame_policy(size):
         raise ValueError('training must use the same accepted physical batches for both arms')
+    if inherited:
+        proof = read_evidence(op['stage_evidence']['recovery'])
+        if (proof['config_sha256'] != config_sha or proof['optimizer_updates']
+                or proof['cuda_initialized'] or proof['plan'] != audit['plan']
+                or proof['predecessor'] != inherited['source']
+                or proof['archive'] != config['evaluation']['panel_archive']
+                or len(proof['inputs']) != config['evaluation']['valid_assets']):
+            raise RuntimeError('standalone Stage 2 recovery audit does not match this run')
     for arm in ARMS:
         result = read_evidence(selected['results'][arm])
         resource = read_evidence(selected['resources'][arm])
-        if (result['config_sha256'] != config_sha or result['source'] != resource['source']
+        if (result['config_sha256'] != evidence_sha or result['source'] != resource['source']
                 or result['arm'] != arm or result['long_batch_per_rank'] != size
                 or result['initialization'] != audit['initialization'][arm]
                 or len(result['profiles_by_rank']) != 2

@@ -1,4 +1,5 @@
 """Run the admitted Stage 2 CPU audit, both capacity trials and matched training."""
+import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -15,6 +16,7 @@ from anchor_stage2_protocol import (ACCEPTED_WHOLE_GPU_MIB, ARMS, ENTRYPOINT, MI
 STATE = CODE/'model_training/state/current.json'
 CONFIG = CODE/'model_training/experiments'/f'{SCOPE}.json'
 REF = 'refs/heads/codex/anchor-stage2-5k-chunk4-20261109'
+RECOVERY_REF = 'refs/heads/codex/anchor-stage2-frozen-eval-20261110'
 
 
 def now():
@@ -38,14 +40,14 @@ def git(*args):
     return subprocess.check_output(['git', '-C', str(CODE), *args], text=True, timeout=120).strip()
 
 
-def publish(state, message):
+def publish(state, message, ref):
     state['updated_at'] = now()
     write(STATE, state)
     git('-c', 'user.name=Evoweave native runner', '-c', 'user.email=evoweave-runner@localhost',
         'commit', '--only', '-m', message, '--', str(STATE.relative_to(CODE)))
     head = git('rev-parse', 'HEAD')
-    git('push', 'origin', 'HEAD:'+REF)
-    if git('ls-remote', 'origin', REF).split() != [head, REF] or git('status', '--porcelain'):
+    git('push', 'origin', 'HEAD:'+ref)
+    if git('ls-remote', 'origin', ref).split() != [head, ref] or git('status', '--porcelain'):
         raise RuntimeError('private state publication did not verify')
     return head
 
@@ -54,7 +56,7 @@ def spec(path):
     return {'path': str(path), 'sha256': sha256(path)}
 
 
-def stage(state, config, mode, name):
+def stage(state, config, config_path, ref, mode, name):
     op = state['active_operation']
     root = Path(config['runtime']['output_root'])
     out, resources = root/name, root/f'{name}_resources.json'
@@ -63,16 +65,16 @@ def stage(state, config, mode, name):
     if out.exists() or resources.exists() or receipts.exists():
         raise RuntimeError('refuse to overwrite a retained attempt')
     receipts.mkdir(parents=True)
-    config_sha = sha256(CONFIG)
+    config_sha = sha256(config_path)
     op.update(status=f'{name}_admitted', gpu_work_allowed=mode != 'audit',
               formal_training_allowed=mode == 'train',
-              runs=[{'mode': mode, 'config': str(CONFIG), 'config_sha256': config_sha,
+              runs=[{'mode': mode, 'config': str(config_path), 'config_sha256': config_sha,
                      'output': str(out), 'approved': True}])
-    state.update(state_id=f'{SCOPE}_{name}_admitted',
+    state.update(state_id=f'{config_path.stem}_{name}_admitted',
                  allowed_operations=['inspect', 'report', 'preflight'] + (['train'] if mode == 'train' else []),
                  blocked_operations=['submit', 'matched_eval'] + ([] if mode == 'train' else ['train']),
                  next_required_result=f'Complete and verify the pinned {name} stage.')
-    head = publish(state, f'Admit standalone Stage 2 {name}')
+    head = publish(state, f'Admit standalone Stage 2 {name}', ref)
     write(receipts/'admission.json', {'source': head, 'operation': op})
     write(durable/'status.json', {'complete': False, 'stage': name, 'mode': mode, 'source': head,
                                  'started_utc': now(), 'output': str(out)})
@@ -80,7 +82,7 @@ def stage(state, config, mode, name):
                    cwd=CODE, check=True, stdout=subprocess.DEVNULL)
     with (receipts/'stage.log').open('xb') as log:
         run = subprocess.run([sys.executable, '-B', str(CODE/'model_training/jobs/launch_virtual_pair.py'),
-            '--mode', mode, '--config', str(CONFIG), '--output', str(out)], cwd=CODE,
+            '--mode', mode, '--config', str(config_path), '--output', str(out)], cwd=CODE,
             stdout=log, stderr=subprocess.STDOUT)
     for path in (resources, out/'result.json', *out.glob('failure_rank_*.json'),
                  *out.glob('result_rank_*.json'), *out.glob('progress_rank_*.json')):
@@ -153,7 +155,7 @@ def training_inputs(root):
     return identities
 
 
-def run(state, config):
+def run(state, config, config_path, ref):
     from virtual_pair_guard import deadline_due, require_job_membership, verify_allocation
 
     op = state['active_operation']
@@ -163,33 +165,42 @@ def run(state, config):
                                                       text=True, timeout=30))
     if deadline_due(config):
         raise RuntimeError('native allocation reached its save-stop line')
-    audited = stage(state, config, 'audit', 'audit')
+    audited = stage(state, config, config_path, ref, 'audit', 'audit')
     audit = read(Path(audited['result']['path']))
-    if audit['cuda_initialized'] or audit['optimizer_updates'] or audit['train_assets'] != 5000:
-        raise RuntimeError('Stage 2 CPU audit did not verify no-GPU initialization and fixed inputs')
-    op.update(CPU_audit_accepted=True, stage_evidence={'audit': audited['result']}, capacity_attempts={})
-    for size in (24, 12):
-        results = {arm: stage(state, config, 'capacity', capacity_stage(arm, size)) for arm in ARMS}
-        op['capacity_attempts'][str(size)] = results
-        if all(v['passed'] for v in results.values()):
-            op.update(capacity_accepted=True, capacity_selection={'long_batch_per_rank': size,
-                'frame_policy': frame_policy(size), 'results': {k: v['result'] for k, v in results.items()},
-                'resources': {k: v['resources'] for k, v in results.items()}})
-            break
+    if audit['cuda_initialized'] or audit['optimizer_updates']:
+        raise RuntimeError('Stage 2 CPU audit must not use CUDA or update a model')
+    if 'recovery' in config:
+        if audit['matched_target_rows'] != 1792:
+            raise RuntimeError('frozen panel must match all retained development targets')
+        op['stage_evidence']['recovery'] = audited['result']
     else:
-        raise RuntimeError('neither user-authorized shared batch passed both arms')
+        if audit['train_assets'] != 5000:
+            raise RuntimeError('Stage 2 CPU audit did not verify the fixed train inputs')
+        op.update(CPU_audit_accepted=True, stage_evidence={'audit': audited['result']}, capacity_attempts={})
+        for size in (24, 12):
+            results = {arm: stage(state, config, config_path, ref, 'capacity', capacity_stage(arm, size)) for arm in ARMS}
+            op['capacity_attempts'][str(size)] = results
+            if all(v['passed'] for v in results.values()):
+                op.update(capacity_accepted=True, capacity_selection={'long_batch_per_rank': size,
+                    'frame_policy': frame_policy(size), 'results': {k: v['result'] for k, v in results.items()},
+                    'resources': {k: v['resources'] for k, v in results.items()}})
+                break
+        else:
+            raise RuntimeError('neither user-authorized shared batch passed both arms')
     durable = Path(config['artifacts']['durable_root'])
     op['training_results'] = {}
     curves, reference = {}, None
+    initial = read(Path(op['stage_evidence']['audit']['path']))['initialization']
     for arm in ARMS:
-        trained = stage(state, config, 'train', arm)
+        trained = stage(state, config, config_path, ref, 'train', arm)
         result = read(Path(trained['result']['path']))
         check_training(result, audit['plan'])
-        if result['initialization'] != audit['initialization'][arm]:
+        if result['initialization'] != initial[arm]:
             raise RuntimeError('formal initialization changed after profiling')
         identity = training_inputs(durable/arm)
-        valid = [v['input_sha256'] for v in result['validation']]
-        if len(set(valid)) != 1 or reference is not None and reference != (identity, valid):
+        valid = {v['input_panel_sha256'] for v in result['validation']}
+        if (len(valid) != 1 or ('recovery' in config and valid != {audit['input_panel_sha256']})
+                or (reference is not None and reference != (identity, valid))):
             raise RuntimeError('actual training inputs or validation identities differ')
         reference = (identity, valid)
         op['training_results'][arm] = trained
@@ -200,44 +211,49 @@ def run(state, config):
     write(result_path, {'complete': True, 'passed': True, 'arms': ARMS, 'samples_per_arm': 100000,
         'updates_per_arm': audit['plan']['updates'], 'long_batch_per_rank': op['capacity_selection']['long_batch_per_rank'],
         'input_frame_visits_per_arm': audit['plan']['input_frame_visits'],
-        'training_input_sha256_by_rank': reference[0], 'validation_input_sha256': reference[1][0],
+        'training_input_sha256_by_rank': reference[0], 'input_panel_sha256': next(iter(reference[1])),
         'validation': curves, 'reference': 'GT_only', 'working_model_changed': False})
     return spec(result_path)
 
 
-def close(state, config, evidence, error=None):
+def close(state, config, config_path, ref, evidence, error=None):
     op = state['active_operation']
     status = 'complete' if not error else 'failed_or_stopped'
     op.update(complete=True, status=status, formal_training_allowed=False, gpu_work_allowed=False,
               completion=evidence, error=error)
     for row in op['runs']:
         row['approved'] = False
-    state.update(state_id=f'{SCOPE}_{status}', allowed_operations=['inspect', 'report'],
+    state.update(state_id=f'{config_path.stem}_{status}', allowed_operations=['inspect', 'report'],
                  blocked_operations=['submit', 'preflight', 'train', 'matched_eval'],
                  next_required_result='Review matched Stage 2 evidence; no automatic model change.')
-    head = publish(state, f'Record standalone Stage 2 {status}')
+    head = publish(state, f'Record standalone Stage 2 {status}', ref)
     write(Path(config['artifacts']['durable_root'])/'status.json', {'complete': True, 'passed': not error,
           'source': head, 'evidence': evidence, 'error': error, 'finished_utc': now()})
 
 
 def main():
-    state, config = read(STATE), read(CONFIG)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config', type=Path, default=CONFIG)
+    config_path = parser.parse_args().config.resolve()
+    state, config = read(STATE), read(config_path)
     validate_config(config)
+    ref = RECOVERY_REF if 'recovery' in config else REF
     op = state['active_operation']
     head = git('rev-parse', 'HEAD')
     if (CODE != Path(config['runtime']['repo']) or git('status', '--porcelain')
-            or git('ls-remote', 'origin', REF).split() != [head, REF]
-            or op['experiment'] != SCOPE or op['explicit_human_authorized'] is not True
+            or config_path.parent != CONFIG.parent
+            or git('ls-remote', 'origin', ref).split() != [head, ref]
+            or op['experiment'] != config_path.stem or op['explicit_human_authorized'] is not True
             or op['required_entrypoint'] != ENTRYPOINT or op['complete']
-            or op['config_sha256'] != sha256(CONFIG)
+            or op['config_sha256'] != sha256(config_path)
             or (Path(config['artifacts']['durable_root'])/'status.json').exists()):
         raise RuntimeError('new private checkout and exact Stage 2 authorization required')
     try:
-        evidence = run(state, config)
+        evidence = run(state, config, config_path, ref)
     except BaseException as exc:
-        close(state, config, None, str(exc))
+        close(state, config, config_path, ref, None, str(exc))
         raise
-    close(state, config, evidence)
+    close(state, config, config_path, ref, evidence)
 
 
 if __name__ == '__main__':

@@ -95,7 +95,7 @@ def source_hashes():
     root = Path(__file__).resolve().parents[3]
     paths = list((root/'model_training/rigweave/src').rglob('*.py'))
     names = ['anchor_full_protocol.py', 'anchor_full_data.py', 'anchor_full_runtime.py', 'anchor_full_cleanup.py',
-        'anchor_full_evaluation.py', 'train_anchor_full.py', 'anchor_joint_runtime.py',
+        'anchor_full_evaluation.py', 'anchor_evaluation_inputs.py', 'train_anchor_full.py', 'anchor_joint_runtime.py',
         'virtual_query_xyz_runtime.py', 'tokenrig_decoder.py', 'tokenrig_train_admission.py',
         'probe_tokenrig_alignment.py',
         'reference_flow_runtime.py', 'reference_flow_protocol.py',

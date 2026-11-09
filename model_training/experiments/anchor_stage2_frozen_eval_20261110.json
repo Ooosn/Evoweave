@@ -1,0 +1,253 @@
+{
+  "family": "anchor_stage2_5k_20261109",
+  "runtime": {
+    "repo": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_frozen_eval_20261110",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 131942123,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
+    ],
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_frozen_eval_20261110",
+    "world_size": 2,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.9793155874888118,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "required_h_rt_seconds": 345600,
+    "stop_before_utc": "2026-11-11T04:50:00Z",
+    "data_workers_per_rank": 6,
+    "prefetch_microbatches": 2,
+    "record_gpu_peaks": true
+  },
+  "backbone": {
+    "mesh_checkpoint": {
+      "path": "/home/wangyy/evorig/model_assets/UniRig_hf/skeleton/articulation-xl_quantization_256/model.ckpt",
+      "sha256": "d8cf9b42d56e7bc316d293597ecf8c4c39a8631cdd44a261ecf388242fabd0f4"
+    },
+    "upstream_source_commit": "6793c6640ff01c8fb389f3993434124bb43d2933",
+    "model_config": {
+      "relative_path": "model_training/experiments/shared_virtual_upstream_20261012.yaml",
+      "sha256": "fe18a89c1d27f9fe1a82ab99749ca0f80ed3e8c799a29bfd0f133d3bf8432120"
+    }
+  },
+  "architecture": {
+    "motion": {
+      "dim": 1024,
+      "heads": 8,
+      "query_tokens": 1024,
+      "register_tokens": 96,
+      "max_frames": 24,
+      "motion_evidence_fusion": "bias",
+      "motion_evidence_heads": 8,
+      "gradient_checkpointing": true,
+      "temporal_chunk_size": 4096,
+      "checkpoint_asset_chunk_size": 4
+    },
+    "head": {
+      "input_dim": 1024,
+      "dim": 256,
+      "heads": 8,
+      "reference_depth": 2,
+      "target_depth": 4,
+      "max_joints": 512,
+      "max_hop": 8,
+      "gradient_checkpointing": true
+    },
+    "schedules": {
+      "st12": [
+        12,
+        12
+      ],
+      "sst8": [
+        16,
+        8
+      ]
+    }
+  },
+  "surface_sampling": {
+    "surface_samples": 65536,
+    "vertex_samples": 8192,
+    "query_tokens": 1024
+  },
+  "data": {
+    "frame_seed": 20261013,
+    "surface_seed": 20260529,
+    "heldout_frames": 8,
+    "normalization": "input_sequence_mesh_bbox",
+    "global_rt_removal": true,
+    "coordinate_clipping": false,
+    "manifests": {
+      "train": {
+        "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
+        "rows": 5000,
+        "sha256": "a17b6be96fb33a32a1bee7117b07789da6261c6b5693104f3d2cce07c09bab88"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    },
+    "frames_min": 2,
+    "frames_max": 24,
+    "stream_seed": 20261028
+  },
+  "data_cache": {
+    "root": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/data",
+    "index": "/work/wangyy/evw_qwen_stage1_300k400k_20261108/data/index.json",
+    "index_sha256": "b41a37a96f595608df1c11b6b5339c39fca2e7b6033778ca1879f12659d29e20",
+    "full_manifests": {
+      "train": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/train_manifest.jsonl",
+        "rows": 18002,
+        "sha256": "653f496d6610caee5d1ba6aa8dc26b2d656665c31aad05aead93be97a07f3b27"
+      },
+      "valid": {
+        "path": "/home/wangyy/evorig/evoweave_rootless_v3_rootrt_v1_hgc_20261013/quality_distributions/rootless_bbox_consistency/final_manifests/valid_manifest.jsonl",
+        "rows": 967,
+        "sha256": "fd2be7b5885833946e68dc186300a820757ae652c487749eec1b049d381e230a"
+      }
+    }
+  },
+  "training": {
+    "target_assets": 100000,
+    "effective_assets_per_update": 48,
+    "checkpoint_assets": [
+      10000,
+      20000,
+      30000,
+      40000,
+      50000,
+      60000,
+      70000,
+      80000,
+      90000,
+      100000
+    ],
+    "candidate_long_batches": [
+      24,
+      12
+    ],
+    "initialization_seed": 20261109,
+    "head_seed": 20261028,
+    "coordinate_weight": 10,
+    "bone_weight": 0.25,
+    "warmup_assets": 1000,
+    "head_lr_multiplier": 3
+  },
+  "optimization": {
+    "schedule": "onecycle",
+    "peak_lr": 0.0001,
+    "warmup_fraction": 0.1,
+    "div_factor": 5,
+    "final_div_factor": 10,
+    "weight_decay": 0,
+    "schedule_samples": 100000,
+    "clip_grad_norm": 1
+  },
+  "evaluation": {
+    "valid_assets": 128,
+    "input_frames": 8,
+    "reference_slots": [
+      0,
+      4
+    ],
+    "selection": {
+      "path": "/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal_b_lr3e5_80000_v1/evaluation_selection.json",
+      "sha256": "9f7ffbf45d518cd6e26a23e4d9c417495bf30c2504bd805b391aa25c76ad8274"
+    },
+    "seed": 20261028,
+    "reference_kind": "GT_only",
+    "checkpoints": [
+      0,
+      10000,
+      20000,
+      30000,
+      40000,
+      50000,
+      60000,
+      70000,
+      80000,
+      90000,
+      100000
+    ],
+    "panel_archive": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/native_full/canonical_train_panel128.tar",
+      "sha256": "02c67d4828b8fe4972aadd947986741857107aebaf77e5db252efb24438697d8"
+    }
+  },
+  "capacity": {
+    "frames": [
+      24,
+      12
+    ],
+    "updates_per_cohort": 2,
+    "process_limit_mib": 76000,
+    "hard_limit_mib": 79872
+  },
+  "artifacts": {
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_frozen_eval_20261110"
+  },
+  "recovery": {
+    "source": "57e40cb552b937bef7939b3c619ff2e1ae0c83a4",
+    "config": {
+      "path": "model_training/experiments/anchor_stage2_5k_20261109.json",
+      "sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c"
+    },
+    "arm": "st12",
+    "checkpoints": [
+      {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/checkpoint_000048.json",
+        "sha256": "45307771cc574dd6321de070234008de1d641506af0f4a59d4ac01550d9949f5"
+      },
+      {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/checkpoint_010000.json",
+        "sha256": "1c54dbf7766780c6453809632f802a74fb131440b6bb81864d75d7395e764bd3"
+      }
+    ],
+    "traces": [
+      {
+        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109/st12/updates_rank_0.jsonl",
+        "sha256": "ec640a758cf86c47d5e34e1071e1dbf02d117a97d84e2dda28d3b17c5b19ca1b"
+      },
+      {
+        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109/st12/updates_rank_1.jsonl",
+        "sha256": "4985afc351187fae3a3ae1b532cdb44f595449f8be63b2348ed899243082b053"
+      }
+    ],
+    "previous_validation": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/evaluation_010000/rows.json",
+      "sha256": "bb4055aa7658e92d3a47c21aaf5e2ee68ad7ab259f9c725123a11b10e7918330"
+    },
+    "samples": 10000
+  }
+}

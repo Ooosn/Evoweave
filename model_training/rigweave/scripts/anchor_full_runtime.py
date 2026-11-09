@@ -378,7 +378,7 @@ def capacity(config, output, source, device, rank, world):
                        ([entries['train'][i] for i in groups['largest_joints']], 'heldout_eval')]:
         fixed = fixed_dataset(rows, base, 8, mode=mode, file_resolver=resolver)
         record, input_spec = canonical_input(fixed, rank, base, config, mode, device)
-        repeated, repeated_spec = canonical_input(fixed, rank, base, config, mode, device)
+        repeated, repeated_spec = canonical_input(fixed, rank, base, config, mode, device, verify=True)
         if tree_fingerprint(record) != tree_fingerprint(repeated) or input_spec != repeated_spec:
             raise RuntimeError('canonical validation input replay changed')
         with torch.no_grad():

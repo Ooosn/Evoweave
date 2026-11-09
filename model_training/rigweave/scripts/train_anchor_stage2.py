@@ -7,6 +7,7 @@ import gc
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import time
 
@@ -19,6 +20,7 @@ from anchor_full_data import CachedFiles, make_stream, planned_microbatches, str
 from anchor_joint_runtime import clip_branch_gradients, evaluate, head_digest, reference_indices
 from anchor_stage2_protocol import (ARMS, LONG_BATCHES, MILESTONES, PROCESS_MIB, ROOT, capacity_stage,
                                     frame_policy, read_evidence, sha256, validate_config)
+from anchor_stage2_recovery import audit_recovery, restore
 from id_xyz_stages import preserve_random
 from reference_flow_runtime import mirror, save
 from virtual_pair_guard import verify_launch
@@ -232,7 +234,7 @@ def capacity(config, output, arm, long_batch, admitted, device, rank):
             'optimizer_updates': len(profiles), 'profile_weights_discarded': True}
 
 
-def train(config, output, arm, long_batch, admitted, source, device, rank):
+def train(config, output, arm, long_batch, admitted, source, device, rank, proof=None):
     base, entries, dataset, resolver = context(config, long_batch)
     run = {**base, 'training': {**base['training'], 'backbone_exposure_offset': 0, 'arm': arm},
            'artifacts': {'durable_root': str(Path(config['artifacts']['durable_root'])/arm)}}
@@ -243,16 +245,36 @@ def train(config, output, arm, long_batch, admitted, source, device, rank):
     samples = step = frames = 0
     started = time.monotonic()
     phase = output/f'progress_rank_{rank}.json'
+    resume = proof is not None and arm == config['recovery']['arm']
 
     def validation():
         with preserve_random():
+            if shared_deadline_due(config, device, 2):
+                raise RuntimeError('save-stop line reached before Stage 2 evaluation')
             write_json(phase, {'phase': 'evaluation', 'samples': samples, 'step': step, 'arm': arm})
             return evaluate(model, base, run, entries, output, samples, device, rank, 2,
-                            file_resolver=resolver, record_input_identity=True)
+                            input_panel=proof['inputs'] if proof else None, file_resolver=resolver)
 
     curve.append(validation())
+    if resume:
+        gc.collect()
+        torch.cuda.empty_cache()
+        stream, samples, frames, step = restore(config, base, proof, admitted, model, optimizer, rank)
+        checkpoints.extend(proof['checkpoints'])
+        path = output/f'restoration_rank_{rank}.json'
+        write_json(path, {'checkpoint': checkpoints[-1], 'samples': samples, 'updates': step,
+            'input_frame_visits': frames, 'adam_states': len(optimizer.state), 'restored_rank': rank,
+            'stream_cursor': stream.cursor, 'input_panel_sha256': proof['input_panel_sha256']})
+        mirror(path, path.name, run)
+        curve.append(validation())
     with (output/f'updates_rank_{rank}.jsonl').open('x', encoding='utf-8') as trace:
+        if resume:
+            with Path(proof['traces'][rank]['durable_path']).open(encoding='utf-8') as prefix:
+                shutil.copyfileobj(prefix, trace)
+            trace.flush()
         for boundary in MILESTONES:
+            if boundary <= samples:
+                continue
             with prefetch(dataset, planned_microbatches(base, stream, boundary), config) as loader:
                 while samples < boundary:
                     if shared_deadline_due(config, device, 2):
@@ -283,10 +305,7 @@ def train(config, output, arm, long_batch, admitted, source, device, rank):
                                     samples, frames, step, device, rank, 2))
             gc.collect()
             torch.cuda.empty_cache()
-            summary = validation()
-            if summary['input_sha256'] != curve[0]['input_sha256']:
-                raise ValueError('validation surface/frame/GT identity changed')
-            curve.append(summary)
+            curve.append(validation())
     export = None
     if rank == 0:
         path = output/'weights_100000.pt'
@@ -316,12 +335,21 @@ def main():
     config_sha = sha256(args.config)
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
+    op = json.loads((ROOT/'model_training/state/current.json').read_text())['active_operation']
     if args.mode == 'audit':
         args.output.mkdir()
-        write_json(args.output/'result.json', {**audit(config, args.output), 'source': source,
-                                               'config_sha256': config_sha})
+        if 'recovery' in config:
+            admitted = read_evidence(op['stage_evidence']['audit'])
+            base, entries, _, resolver = context(config, op['capacity_selection']['long_batch_per_rank'])
+            if plan(base) != admitted['plan']:
+                raise ValueError('restored Stage 2 plan differs')
+            fixed = fixed_dataset(evaluation_rows(base, entries), base,
+                config['evaluation']['input_frames'], file_resolver=resolver)
+            result = audit_recovery(config, base, fixed, admitted)
+        else:
+            result = audit(config, args.output)
+        write_json(args.output/'result.json', {**result, 'source': source, 'config_sha256': config_sha})
         return
-    op = json.loads((ROOT/'model_training/state/current.json').read_text())['active_operation']
     admitted = read_evidence(op['stage_evidence']['audit'])
     rank = int(os.environ['RANK'])
     if int(os.environ['WORLD_SIZE']) != 2 or torch.cuda.device_count() != 2:
@@ -340,8 +368,9 @@ def main():
                              if args.output.name == capacity_stage(arm, size))
             result = capacity(config, args.output, arm, size, admitted, device, rank)
         else:
+            proof = read_evidence(op['stage_evidence']['recovery']) if 'recovery' in config else None
             result = train(config, args.output, args.output.name, op['capacity_selection']['long_batch_per_rank'],
-                           admitted, source, device, rank)
+                           admitted, source, device, rank, proof)
         result.update(source=source, config_sha256=config_sha, rank=rank,
                       finished_utc=datetime.now(timezone.utc).isoformat())
         write_json(args.output/f'result_rank_{rank}.json', result)

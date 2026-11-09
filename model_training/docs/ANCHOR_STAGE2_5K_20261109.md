@@ -41,3 +41,25 @@ Use native job 131942123 on pcg01i, GPU3/4 and 16 CPUs, with save-stop at
 without changing the checkout during a payload. If any stage fails, retain
 the resource and rank evidence, preserve the grant and do not retry unless
 the explicit 24-to-12 capacity fallback applies.
+
+## Fixed evaluation inputs and continuation
+
+Full-data, anchor readout, and SkinTokens fine-tuning use the same frozen
+evaluation record. It stores dense points and normals, tracked anchor indices,
+positions and normals, GT joints and parents, raw frame IDs, and the
+normalization fingerprint and per-frame mesh diagonals. Each panel can select
+its own assets and frames. An existing panel is read from disk, not resampled;
+different metrics, decoding rules, or checkpoint weights do not change it.
+Full hashes and source/GT checks belong to materialization or an offline audit.
+Checkpoint evaluation reads the frozen tensors and checks only basic identity
+and coverage. It does not rerun a surface sampler or hash its output.
+
+The original Stage 2 run stopped after saving ST12 at 10,000 visits because
+the legacy evaluator resampled the same mesh on CUDA and got different face
+and anchor draws. Keep those historical metrics separate from the frozen
+panel. The recovery configuration binds both arms to the retained full-run
+128-asset archive, after verifying all source frames, normalization and GT.
+Re-evaluate ST12 at initialization and at the saved 10k point, restore the
+model, Adam, both ranks' RNG and sampler cursors, and continue from update 210.
+SST8 starts from its audited initialization. The existing capacity evidence,
+24 assets per card, 100k target and 10k interval are unchanged.

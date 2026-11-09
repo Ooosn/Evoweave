@@ -100,9 +100,9 @@ def verify_launch(config):
     branch = 'refs/heads/codex/skintokens-original-test-20261109'
     if command(['git','ls-remote','origin',branch]).split() != [head, branch]:
         raise RuntimeError('exact inference admission was not published privately')
-    if command(['nvidia-smi','-i','3','--query-gpu=uuid','--format=csv,noheader']) != DEVICE:
+    if command(['nvidia-smi','-i',DEVICE,'--query-gpu=uuid','--format=csv,noheader']) != DEVICE:
         raise RuntimeError('H100 identity changed')
-    if command(['nvidia-smi','-i','3','--query-compute-apps=pid','--format=csv,noheader']):
+    if command(['nvidia-smi','-i',DEVICE,'--query-compute-apps=pid','--format=csv,noheader']):
         raise RuntimeError('approved inference GPU is occupied; no process was stopped')
     for path, sha in ((RELEASE, RELEASE_SHA), (VAE, VAE_SHA), (OVERLAY, config['overlay_sha256'])):
         require_digest(path, sha)

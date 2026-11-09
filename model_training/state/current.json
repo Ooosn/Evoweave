@@ -49,8 +49,8 @@
   "active_operation": {
     "label": "anchor_stage2_5k_20261109",
     "experiment": "anchor_stage2_5k_20261109",
-    "complete": false,
-    "status": "capacity_sst8_12_admitted",
+    "complete": true,
+    "status": "failed_or_stopped",
     "explicit_human_authorized": true,
     "authorization": "User authorized a standalone no-OPT/no-Qwen Stage 2 comparison: 12+12 versus 16+8, both at 24 frames and batch 24 per rank first; common batch 12 with accumulation 2 if required, then 100000 visits per arm on the fixed 5k at effective batch 48 and 10000-visit validation.",
     "code_commit": "83465f8efb1519d962d29329656c0b3b2e2a8910",
@@ -62,7 +62,7 @@
     "CPU_audit_accepted": true,
     "capacity_accepted": false,
     "formal_training_allowed": false,
-    "gpu_work_allowed": true,
+    "gpu_work_allowed": false,
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
     "config_sha256": "65af6554ea89a112d18ccab45b1a37e9eeb76f4b164d8061b27f5dc54465b067",
     "training_manifest": {
@@ -123,7 +123,7 @@
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_5k_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
         "config_sha256": "65af6554ea89a112d18ccab45b1a37e9eeb76f4b164d8061b27f5dc54465b067",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_5k_20261109/capacity_sst8_12",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance_test": "Exact CPU mesh-only audit; independently complete both high batch profiles, use a common passing batch, then verify 100000 visits, 2090 updates and 10 matched GT-reference evaluations per arm with durable recovery.",
@@ -183,8 +183,49 @@
             "sha256": "b269e2db887a8094133afbaf9b03b3f1638332f55d79ac0af92f63d0ea170397"
           }
         }
+      },
+      "12": {
+        "st12": {
+          "passed": true,
+          "result": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_5k_20261109/receipts/capacity_st12_12/result.json",
+            "sha256": "83006705c11ed32809aab8477c8fff1609cc4cb95abbfc118016734d48186546"
+          },
+          "resources": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_5k_20261109/receipts/capacity_st12_12/capacity_st12_12_resources.json",
+            "sha256": "d1cd6fbdf0d4e4ecee3f300217ee58d54c77bf814749ca3050c21f6477f9d7dc"
+          },
+          "peak_gpu_memory_mib": {
+            "3": 66531,
+            "4": 66251
+          }
+        },
+        "sst8": {
+          "passed": false,
+          "reason": "insufficient capacity",
+          "failures": [
+            {
+              "type": "OutOfMemoryError",
+              "reason": "CUDA out of memory. Tried to allocate 192.00 MiB. GPU 0 has a total capacity of 79.18 GiB of which 3.19 GiB is free. Including non-PyTorch memory, this process has 75.98 GiB memory in use. 74.22 GiB allowed; Of the allocated memory 73.33 GiB is allocated by PyTorch, and 747.10 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+              "cuda_oom": true,
+              "rank": 0
+            },
+            {
+              "type": "OutOfMemoryError",
+              "reason": "CUDA out of memory. Tried to allocate 192.00 MiB. GPU 1 has a total capacity of 79.18 GiB of which 3.19 GiB is free. Including non-PyTorch memory, this process has 75.98 GiB memory in use. 74.22 GiB allowed; Of the allocated memory 73.33 GiB is allocated by PyTorch, and 745.10 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)",
+              "cuda_oom": true,
+              "rank": 1
+            }
+          ],
+          "resources": {
+            "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_5k_20261109/receipts/capacity_sst8_12/capacity_sst8_12_resources.json",
+            "sha256": "b96404c286f6c069cd636717c50690c1cc599978bcdf97594db517eb672f32e5"
+          }
+        }
       }
-    }
+    },
+    "completion": null,
+    "error": "neither user-authorized shared batch passed both arms"
   },
   "skintokens_original_test_20261109": {
     "label": "skintokens_original_test_20261109",
@@ -406,13 +447,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight"
+    "report"
   ],
   "blocked_operations": [
     "submit",
-    "matched_eval",
-    "train"
+    "preflight",
+    "train",
+    "matched_eval"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -577,7 +618,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Complete and verify the pinned capacity_sst8_12 stage.",
+  "next_required_result": "Review matched Stage 2 evidence; no automatic model change.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -621,8 +662,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "anchor_stage2_5k_20261109_capacity_sst8_12_admitted",
-  "updated_at": "2026-11-09T09:57:10.696389+00:00",
+  "state_id": "anchor_stage2_5k_20261109_failed_or_stopped",
+  "updated_at": "2026-11-09T09:57:50.684880+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

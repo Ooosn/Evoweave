@@ -50,8 +50,8 @@
     "label": "skintokens_stage1_5k_20261109",
     "experiment": "skintokens_stage1_5k_20261109",
     "arm": "temporal_query",
-    "complete": false,
-    "status": "exact_train_admitted",
+    "complete": true,
+    "status": "skintokens_stage1_5k_20261109_temporal_query_complete",
     "code_commit": "1332e150cdb6b78baab3542236781f591febe5a3",
     "explicit_human_authorized": true,
     "authorization": "User directed analysis and launch after the baseline completes.",
@@ -60,8 +60,8 @@
       "preflight": "model_training/rigweave/scripts/train_skintokens_stage1.py",
       "train": "model_training/rigweave/scripts/train_skintokens_stage1.py"
     },
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
     "stage_evidence": {
@@ -137,12 +137,16 @@
     "runs": [
       {
         "mode": "train",
-        "approved": true,
+        "approved": false,
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_temporal_query.json",
         "config_sha256": "a25a776f78bc2ab96e1a1dd83f1d5b3087ea18b8ff6874023d0fe2a4f2dc466d",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_query/train"
       }
-    ]
+    ],
+    "completion_review": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_query/receipts/completion_review.json",
+      "sha256": "29db3f2d8da9b8d08546a2138962e34db450c0e94100a0e53f612e7339053b7d"
+    }
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -253,12 +257,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "train",
+    "preflight",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -468,8 +472,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_stage1_5k_20261109_temporal_query_train",
-  "updated_at": "2026-11-09T01:59:36.268806+00:00",
+  "state_id": "skintokens_stage1_5k_20261109_temporal_query_complete",
+  "updated_at": "2026-11-09T05:07:46.966121+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
@@ -885,6 +889,10 @@
       "temporal_multi": {
         "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_multi/receipts/completion_review.json",
         "sha256": "73aeba5b1180822295afb53df8d937157efee011b2873287afff401fb66c7f30"
+      },
+      "temporal_query": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_query/receipts/completion_review.json",
+        "sha256": "29db3f2d8da9b8d08546a2138962e34db450c0e94100a0e53f612e7339053b7d"
       }
     },
     "automatic_retry_allowed": false,

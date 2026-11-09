@@ -1,0 +1,77 @@
+{
+  "family": "anchor_stage2_input_replay_20261110",
+  "runtime": {
+    "repo": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_input_replay_20261110",
+    "python": "/home/wangyy/miniconda3/envs/mygs/bin/python",
+    "unirig_root": "/home/wangyy/evorig/model_assets/UniRig",
+    "extra_pythonpath": "/home/wangyy/evorig/runtime/puppeteer_py310_hgc",
+    "allocation": 131942123,
+    "host": "pcg01i",
+    "hostname": "pcg01",
+    "physical_gpus": [
+      3,
+      4
+    ],
+    "gpu_uuids": [
+      "GPU-1fb4221b-91b0-0df6-8615-b36fbdd55bf7",
+      "GPU-0544830a-4dac-9fe3-a099-95ddc2240b72"
+    ],
+    "cpu_affinity": [
+      6,
+      7,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      61,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
+    ],
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_input_replay_20261110",
+    "world_size": 2,
+    "cpu_slots": 16,
+    "execution_cpu_budget": 16,
+    "rss_limit_bytes": 68719476736,
+    "gpu_memory_fraction_limit": 0.2,
+    "execution_mode": "scheduler_job",
+    "require_scheduler_membership": true,
+    "required_h_rt_seconds": 345600,
+    "stop_before_utc": "2026-11-11T04:50:00Z",
+    "data_workers_per_rank": 6,
+    "prefetch_microbatches": 2,
+    "record_gpu_peaks": true
+  },
+  "replay": {
+    "optimizer_updates": 0,
+    "repeats": 12,
+    "max_seconds": 600,
+    "failed_config": {
+      "relative_path": "model_training/experiments/anchor_stage2_5k_20261109.json",
+      "sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c"
+    },
+    "rows": {
+      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/evaluation_000000/rows.json",
+      "sha256": "528b2fb7fda43a58fdfab3f1a7210e8587e184687aa81b54e0eeb5c5ba5c122e"
+    },
+    "summaries": {
+      "0": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/evaluation_000000/summary.json",
+        "sha256": "55a7db1751037a86a914d332fe909475034a6b015829f5787f97282cae0e3da7"
+      },
+      "10000": {
+        "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/st12/evaluation_010000/summary.json",
+        "sha256": "5c8d666f387835dbb709693d3d38b54b819c236ec98ac4ddf0c02a039800918f"
+      }
+    }
+  },
+  "artifacts": {
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_input_replay_20261110"
+  }
+}

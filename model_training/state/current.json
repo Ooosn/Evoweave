@@ -49,9 +49,9 @@
   "active_operation": {
     "label": "skintokens_stage1_5k_20261109",
     "experiment": "skintokens_stage1_5k_20261109",
-    "arm": "temporal_multi",
-    "complete": true,
-    "status": "skintokens_stage1_5k_20261109_temporal_multi_complete",
+    "arm": "temporal_query",
+    "complete": false,
+    "status": "exact_audit_admitted",
     "code_commit": "1332e150cdb6b78baab3542236781f591febe5a3",
     "explicit_human_authorized": true,
     "authorization": "User directed analysis and launch after the baseline completes.",
@@ -62,36 +62,9 @@
     },
     "formal_training_allowed": false,
     "gpu_work_allowed": false,
-    "CPU_audit_accepted": true,
-    "capacity_accepted": true,
-    "stage_evidence": {
-      "audit": {
-        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/audit/result.json",
-        "result_sha256": "3d1d4ed66b3e54323f51aa8dee81ab0ee41cebefaf15d250839118cb8d7c3964",
-        "resources_path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/audit_resources.json",
-        "resources_sha256": "e8a5b9a57123069ea72b9d68c5b2f5cf4bc78cf317345900ca7513a7f56c1ac6",
-        "source": "888e13ac1942a4240f877e4d4ea7d3f5fb621124",
-        "output_name": "audit",
-        "peak_gpu_memory_mib": {
-          "3": 0,
-          "4": 0
-        },
-        "payload_cleanup_complete": true
-      },
-      "capacity": {
-        "path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/capacity/result.json",
-        "result_sha256": "4166f889b9e87379e43c320d1bf76343426c1636b70c54facaddfbbe540a3145",
-        "resources_path": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/capacity_resources.json",
-        "resources_sha256": "79aa7e08f4351bc45c38ce0d8939eedd256c40c863bcb86c346faf11c6ff8c7b",
-        "source": "587a51a1289c5efd835cb5bb73bda73facbfa61f",
-        "output_name": "capacity",
-        "peak_gpu_memory_mib": {
-          "3": 36481,
-          "4": 36489
-        },
-        "payload_cleanup_complete": true
-      }
-    },
+    "CPU_audit_accepted": false,
+    "capacity_accepted": false,
+    "stage_evidence": {},
     "training_manifest": {
       "path": "/hshare1/ZETTAI_path_WA_slash_home_KARA/home/wangyy/evorig/outputs/virtual_fusion_normal_20261014/normal5000_inputs_v1/train5000_manifest.jsonl",
       "rows": 5000,
@@ -129,24 +102,20 @@
         "sha256": "02c67d4828b8fe4972aadd947986741857107aebaf77e5db252efb24438697d8"
       }
     },
-    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi",
-    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_multi",
+    "output_root": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_query",
+    "durable_root": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_query",
     "acceptance_test": "Strict release, matched fixed inputs, no stage 2; bounded finite capacity then 30000 visits/627 updates and all durable checkpoints.",
     "automatic_retry_allowed": false,
     "working_model_change_allowed": false,
     "runs": [
       {
-        "mode": "train",
-        "approved": false,
-        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_temporal_multi.json",
-        "config_sha256": "53332caeb84d591d02e3333e9ef2127eb80fd0f2514e1a8a8c10038afd5ecbc1",
-        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_multi/train"
+        "mode": "audit",
+        "approved": true,
+        "config": "/work/wangyy/tokenrig_alignment_20261105/code_skintokens_stage1_5k_20261109/model_training/experiments/skintokens_stage1_5k_20261109_temporal_query.json",
+        "config_sha256": "a25a776f78bc2ab96e1a1dd83f1d5b3087ea18b8ff6874023d0fe2a4f2dc466d",
+        "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_skintokens_stage1_5k_20261109/temporal_query/audit"
       }
-    ],
-    "completion_review": {
-      "path": "/home/wangyy/evorig/outputs/tokenrig_alignment_20261105/skintokens_stage1_5k_20261109/temporal_multi/receipts/completion_review.json",
-      "sha256": "73aeba5b1180822295afb53df8d937157efee011b2873287afff401fb66c7f30"
-    }
+    ]
   },
   "alignment_evidence": {
     "four_route_probe": {
@@ -257,13 +226,13 @@
   },
   "allowed_operations": [
     "inspect",
-    "report"
+    "report",
+    "preflight"
   ],
   "blocked_operations": [
     "submit",
-    "train",
-    "preflight",
-    "matched_eval"
+    "matched_eval",
+    "train"
   ],
   "compute_allocation": {
     "server": "HGC",
@@ -472,8 +441,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "skintokens_stage1_5k_20261109_temporal_multi_complete",
-  "updated_at": "2026-11-09T01:47:36.115594+00:00",
+  "state_id": "skintokens_stage1_5k_20261109_temporal_query_audit",
+  "updated_at": "2026-11-09T01:47:38.096520+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",

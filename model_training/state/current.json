@@ -49,8 +49,8 @@
   "active_operation": {
     "label": "anchor_stage2_5k_20261109",
     "experiment": "anchor_stage2_5k_20261109",
-    "complete": false,
-    "status": "st12_admitted",
+    "complete": true,
+    "status": "failed_or_stopped",
     "explicit_human_authorized": true,
     "authorization": "User authorized a standalone no-OPT/no-Qwen Stage 2 comparison: 12+12 versus 16+8, both at 24 frames and batch 24 per rank first; common batch 12 with accumulation 2 if required, then 100000 visits per arm on the fixed 5k at effective batch 48 and 10000-visit validation.",
     "code_commit": "52eeab9d0540bea49c77b868483e9f14180e03ff",
@@ -61,8 +61,8 @@
     },
     "CPU_audit_accepted": true,
     "capacity_accepted": true,
-    "formal_training_allowed": true,
-    "gpu_work_allowed": true,
+    "formal_training_allowed": false,
+    "gpu_work_allowed": false,
     "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
     "config_sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c",
     "training_manifest": {
@@ -123,7 +123,7 @@
         "config": "/work/wangyy/tokenrig_alignment_20261105/code_anchor_stage2_chunk4_20261109/model_training/experiments/anchor_stage2_5k_20261109.json",
         "config_sha256": "7876b11fdbc9e2a062b9e1e2d24718f3089fd9a6f4ae28629895d276e67e4e6c",
         "output": "/work/wangyy/tokenrig_alignment_20261105/outputs_anchor_stage2_chunk4_20261109/st12",
-        "approved": true
+        "approved": false
       }
     ],
     "acceptance_test": "Exact CPU mesh-only audit; independently complete both high batch profiles, use a common passing batch, then verify 100000 visits, 2090 updates and 10 matched GT-reference evaluations per arm with durable recovery.",
@@ -220,7 +220,9 @@
         }
       }
     },
-    "training_results": {}
+    "training_results": {},
+    "completion": null,
+    "error": "st12 failed; see /home/wangyy/evorig/outputs/tokenrig_alignment_20261105/anchor_stage2_chunk4_20261109/receipts/st12/stage.log"
   },
   "anchor_stage2_unchunked_capacity_20261109": {
     "label": "anchor_stage2_5k_20261109",
@@ -623,12 +625,12 @@
   },
   "allowed_operations": [
     "inspect",
-    "report",
-    "preflight",
-    "train"
+    "report"
   ],
   "blocked_operations": [
     "submit",
+    "preflight",
+    "train",
     "matched_eval"
   ],
   "compute_allocation": {
@@ -794,7 +796,7 @@
     ]
   },
   "module": "model_training",
-  "next_required_result": "Complete and verify the pinned st12 stage.",
+  "next_required_result": "Review matched Stage 2 evidence; no automatic model change.",
   "pending_user_authorized_continuation": {
     "additional_asset_visits": 70000,
     "authorization": "User2026-11-01: directly run to400k;30k adaptation already done, add70k. Then explicitly extend current grant to96h and persist96h future defaults.",
@@ -838,8 +840,8 @@
     "model_training/docs/SKINTOKENS_STATIC_5K_20261109.md"
   ],
   "schema_version": 1,
-  "state_id": "anchor_stage2_5k_20261109_st12_admitted",
-  "updated_at": "2026-11-09T10:09:06.467498+00:00",
+  "state_id": "anchor_stage2_5k_20261109_failed_or_stopped",
+  "updated_at": "2026-11-09T11:01:43.212823+00:00",
   "last_completed_alignment_operation": {
     "label": "anchor_full_20261030_v1",
     "experiment": "tokenrig_alignment_probe_20261105",
